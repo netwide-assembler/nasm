@@ -635,9 +635,21 @@ static uint16_t write_symbolinfo_properties(struct coff_Section *sect,
 
     creator_len = 2 + 4 + 2 + 3*2 + 3*2 + strlen(creator_str)+1 + 2;
 
+    /*
+     * We used to use a language ID of 3 for "MASM", since it's closest of the
+     * options available; however, BinScope from WACK (the Windows Application
+     * Certification Kit) tests for specific minimum MASM versions and trying to
+     * match an increasing sequence of random MASM version/build numbers seems
+     * like a fool's errand.
+     *
+     * Instead, use a different language ID (NASM is, after all, not MASM
+     * syntax) and just write the actual NASM version number. BinScope appears
+     * to be happy with that.
+     */
+
     section_write16(sect, creator_len);
     section_write16(sect, 0x1116);
-    section_write32(sect, 3); /* language/flags */
+    section_write32(sect, 'N'); /* language: 'N' (0x4e) for "NASM"; flags are 0 */
     if (win64)
         section_write16(sect, 0x00D0); /* machine */
     else if (win32)
@@ -649,9 +661,9 @@ static uint16_t write_symbolinfo_properties(struct coff_Section *sect,
     section_write16(sect, 0); /* verFEBuild */
 
     /* BinScope/WACK insist on version >= 8.0.50727 */
-    section_write16(sect, 8); /* verMajor */
-    section_write16(sect, 0); /* verMinor */
-    section_write16(sect, 50727); /* verBuild */
+    section_write16(sect, NASM_MAJOR_VER); /* verMajor */
+    section_write16(sect, NASM_MINOR_VER); /* verMinor */
+    section_write16(sect, NASM_SUBMINOR_VER*100 + NASM_PATCHLEVEL_VER); /* verBuild */
 
     section_wbytes(sect, creator_str, strlen(creator_str)+1); /* verSt */
     /*
