@@ -6,8 +6,9 @@ a widespread (thus netwide), portable (thus netwide!), very flexible
 and mature assembler tool with support for many output formats (thus netwide!!).
 
 Now we have good news for you: NASM is licensed under the "simplified"
-(2-clause) BSD license. This means its development is open to even wider
-society of programmers wishing to improve their lovely assembler.
+[(2-clause) BSD license](https://opensource.org/licenses/BSD-2-Clause).
+This means its development is open to even wider society of programmers
+wishing to improve their lovely assembler.
 
 Visit our [nasm.us](https://www.nasm.us/) website for more details.
 We are gradually moving services away from Sourceforge. For our remaining
