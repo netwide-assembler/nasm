@@ -1,6 +1,8 @@
 NASM, the Netwide Assembler
 ===========================
 
+[![master](https://travis-ci.org/netwide-assembler/nasm.svg?branch=master)](https://travis-ci.org/netwide-assembler/nasm)
+
 Many many developers all over the net respect NASM for what it is:
 a widespread (thus netwide), portable (thus netwide!), very flexible
 and mature assembler tool with support for many output formats (thus netwide!!).
