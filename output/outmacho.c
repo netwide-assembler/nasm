@@ -690,8 +690,8 @@ static void macho_output(int32_t secto, const void *data,
         break;
     }
 
+    case OUT_REL1ADR:
     case OUT_REL2ADR:
-	nasm_assert(section != secto);
 
         p = mydata;
 	offset = *(int64_t *)data;
@@ -708,15 +708,16 @@ static void macho_output(int32_t secto, const void *data,
 		       " this use of WRT");
 	    wrt = NO_SEG;	/* we can at least _try_ to continue */
 	} else {
-	    addr += add_reloc(s, section, addr+size, RL_REL, 2);
+	    addr += add_reloc(s, section, addr+size, RL_REL,
+                              type == OUT_REL1ADR ? 1 : 2);
 	}
 
         WRITESHORT(p, addr);
-        sect_write(s, mydata, 2);
+        sect_write(s, mydata, type == OUT_REL1ADR ? 1 : 2);
         break;
 
     case OUT_REL4ADR:
-	nasm_assert(section != secto);
+    case OUT_REL8ADR:
 
         p = mydata;
 	offset = *(int64_t *)data;
@@ -770,9 +771,10 @@ static void macho_output(int32_t secto, const void *data,
 	    /* continue with RL_REL */
 	}
 
-	addr += add_reloc(s, section, offset, reltype, 4);
+	addr += add_reloc(s, section, offset, reltype,
+                          type == OUT_REL4ADR ? 4 : 8);
         WRITELONG(p, addr);
-        sect_write(s, mydata, 4);
+        sect_write(s, mydata, type == OUT_REL4ADR ? 4 : 8);
         break;
 
     default:
@@ -2321,7 +2323,7 @@ const struct ofmt of_macho32 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (i386) object files",
     "macho32",
     ".o",
-    0,
+    OFMT_KEEP_ADDR,
     32,
     macho32_df_arr,
     &macho32_df_dwarf,
@@ -2386,7 +2388,7 @@ const struct ofmt of_macho64 = {
     "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (x86_64) object files",
     "macho64",
     ".o",
-    0,
+    OFMT_KEEP_ADDR,
     64,
     macho64_df_arr,
     &macho64_df_dwarf,

@@ -786,7 +786,9 @@ struct ofmt {
     /*
      * Output format flags.
      */
-#define OFMT_TEXT   1		/* Text file format */
+#define OFMT_TEXT		1	/* Text file format */
+#define OFMT_KEEP_ADDR	2	/* Keep addr; no conversion to data */
+
     unsigned int flags;
 
     int maxbits;                /* Maximum segment bits supported */

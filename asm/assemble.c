@@ -366,7 +366,8 @@ static void out(struct out_data *data)
         nasm_assert(data->size <= 8);
         asize = data->size;
         amax = ofmt->maxbits >> 3; /* Maximum address size in bytes */
-        if (data->tsegment == fixseg && data->twrt == NO_SEG) {
+        if ((ofmt->flags & OFMT_KEEP_ADDR) == 0 && data->tsegment == fixseg &&
+            data->twrt == NO_SEG) {
             warn_overflow_out(addrval, asize, data->sign);
             xdata.q = cpu_to_le64(addrval);
             data->data = xdata.b;
