@@ -105,6 +105,8 @@ static const char *listname;
 static const char *errname;
 
 static int globallineno;        /* for forward-reference tracking */
+#define GLOBALLINENO_MAX    INT32_MAX
+
 /* static int pass = 0; */
 const struct ofmt *ofmt = &OF_DEFAULT;
 const struct ofmt_alias *ofmt_alias = NULL;
@@ -1342,7 +1344,10 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
         location.offset = offs = get_curr_offs();
 
         while ((line = preproc->getline())) {
-            globallineno++;
+            if (globallineno++ == GLOBALLINENO_MAX)
+                nasm_error(ERR_FATAL,
+                    "overall line number reaches the maximum %d\n",
+                    GLOBALLINENO_MAX);
 
             /*
              * Here we parse our directives; this is not handled by the
