@@ -58,14 +58,12 @@
 #include "macho.h"
 
 /* Mach-O in-file header structure sizes */
-#define MACHO_HEADER_SIZE		28
 #define MACHO_SEGCMD_SIZE		56
 #define MACHO_SECTCMD_SIZE		68
 #define MACHO_SYMCMD_SIZE		24
 #define MACHO_NLIST_SIZE		12
 #define MACHO_RELINFO_SIZE		8
 
-#define MACHO_HEADER64_SIZE		32
 #define MACHO_SEGCMD64_SIZE		72
 #define MACHO_SECTCMD64_SIZE		80
 #define MACHO_NLIST64_SIZE		16
@@ -90,10 +88,7 @@ enum reltype {
 
 struct macho_fmt {
     uint32_t ptrsize;		/* Pointer size in bytes */
-    uint32_t mh_magic;		/* Which magic number to use */
-    uint32_t cpu_type;		/* Which CPU type */
     uint32_t lc_segment;	/* Which segment load command */
-    uint32_t header_size;	/* Header size */
     uint32_t segcmd_size;	/* Segment command size */
     uint32_t sectcmd_size;	/* Section command size */
     uint32_t nlist_size;	/* Nlist (symbol) size */
@@ -105,6 +100,9 @@ struct macho_fmt {
 };
 
 static struct macho_fmt fmt;
+
+static bool is_macho64(void);
+static bool is_macho32(void);
 
 static void fwriteptr(uint64_t data, FILE * fp)
 {
@@ -1236,16 +1234,33 @@ static void macho_calculate_sizes (void)
 
 /* Write out the header information for the file.  */
 
-static void macho_write_header (void)
+static uint64_t macho_write_header(void)
 {
-    fwriteint32_t(fmt.mh_magic, ofile);	/* magic */
-    fwriteint32_t(fmt.cpu_type, ofile);	/* CPU type */
-    fwriteint32_t(CPU_SUBTYPE_I386_ALL, ofile);	/* CPU subtype */
-    fwriteint32_t(MH_OBJECT, ofile);	/* Mach-O file type */
-    fwriteint32_t(head_ncmds, ofile);	/* number of load commands */
-    fwriteint32_t(head_sizeofcmds, ofile);	/* size of load commands */
-    fwriteint32_t(head_flags, ofile);		/* flags, if any */
-    fwritezero(fmt.header_size - 7*4, ofile);	/* reserved fields */
+    union {
+        macho_header_t      hdr32;
+        macho_header_64_t   hdr64;
+    } hdr;
+    uint64_t size;
+
+    if (!is_macho32()) {
+        nasm_assert(is_macho64());
+    }
+
+    nasm_zero(hdr);
+
+    /* Since macho_header_t is a subset, reuse the fields */
+    hdr.hdr64.magic         = cpu_to_le32(is_macho64() ? MH_MAGIC_64 : MH_MAGIC);
+    hdr.hdr64.cputype       = cpu_to_le32(is_macho64() ? CPU_TYPE_X86_64 : CPU_TYPE_I386);
+    hdr.hdr64.cpusubtype    = cpu_to_le32(CPU_SUBTYPE_I386_ALL);
+    hdr.hdr64.filetype      = cpu_to_le32(MH_OBJECT);
+    hdr.hdr64.ncmds         = cpu_to_le32(head_ncmds);
+    hdr.hdr64.sizeofcmds    = cpu_to_le32(head_sizeofcmds);
+    hdr.hdr64.flags         = cpu_to_le32(head_flags);
+
+    size = is_macho64() ? sizeof(hdr.hdr64) : sizeof(hdr.hdr32);
+    nasm_write(&hdr, size, ofile);
+
+    return size;
 }
 
 /* Write out the segment load command at offset.  */
@@ -1590,9 +1605,7 @@ static void macho_write (void)
     */
 
     /* Emit the Mach-O header.  */
-    macho_write_header();
-
-    offset = fmt.header_size + head_sizeofcmds;
+    offset = macho_write_header() + head_sizeofcmds;
 
     /* emit the segment load command */
     if (seg_nsects > 0)
@@ -2204,10 +2217,7 @@ static void macho_dbg_cleanup(void)
 
 static const struct macho_fmt macho32_fmt = {
     4,
-    MH_MAGIC,
-    CPU_TYPE_I386,
     LC_SEGMENT,
-    MACHO_HEADER_SIZE,
     MACHO_SEGCMD_SIZE,
     MACHO_SECTCMD_SIZE,
     MACHO_NLIST_SIZE,
@@ -2239,6 +2249,11 @@ static const struct dfmt macho32_df_dwarf = {
     NULL /*pragma list*/
 };
 
+static bool is_macho32(void)
+{
+    return ofmt == &of_macho32;
+}
+
 static const struct dfmt * const macho32_df_arr[2] =
  { &macho32_df_dwarf, NULL };
 
@@ -2265,10 +2280,7 @@ const struct ofmt of_macho32 = {
 
 static const struct macho_fmt macho64_fmt = {
     8,
-    MH_MAGIC_64,
-    CPU_TYPE_X86_64,
     LC_SEGMENT_64,
-    MACHO_HEADER64_SIZE,
     MACHO_SEGCMD64_SIZE,
     MACHO_SECTCMD64_SIZE,
     MACHO_NLIST64_SIZE,
@@ -2325,6 +2337,11 @@ const struct ofmt of_macho64 = {
     macho_cleanup,
     macho_pragma_list,
 };
+
+static bool is_macho64(void)
+{
+    return ofmt == &of_macho64;
+}
 
 /*
  * Local Variables:
