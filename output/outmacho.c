@@ -734,41 +734,41 @@ static void macho_output(int32_t secto, const void *data,
     }
 }
 
+#define S_CODE  (S_REGULAR | S_ATTR_SOME_INSTRUCTIONS | S_ATTR_PURE_INSTRUCTIONS)
+#define NO_TYPE S_NASM_TYPE_MASK
+
 /* Translation table from traditional Unix section names to Mach-O */
 static const struct sectmap {
-    const char *nasmsect;
-    const char *segname;
-    const char *sectname;
-    const uint32_t flags;
+    const char      *nasmsect;
+    const char      *segname;
+    const char      *sectname;
+    const uint32_t  flags;
 } sectmap[] = {
-    {".text", "__TEXT", "__text",
-     S_REGULAR|S_ATTR_SOME_INSTRUCTIONS|S_ATTR_PURE_INSTRUCTIONS},
-    {".data", "__DATA", "__data", S_REGULAR},
-    {".rodata", "__DATA", "__const", S_REGULAR},
-    {".bss", "__DATA", "__bss", S_ZEROFILL},
-    {".debug_abbrev", "__DWARF", "__debug_abbrev", S_ATTR_DEBUG},
-    {".debug_info", "__DWARF", "__debug_info", S_ATTR_DEBUG},
-    {".debug_line", "__DWARF", "__debug_line", S_ATTR_DEBUG},
-    {".debug_str", "__DWARF", "__debug_str", S_ATTR_DEBUG},
-    {NULL, NULL, NULL, 0}
+    { ".text",          "__TEXT",   "__text",           S_CODE          },
+    { ".data",          "__DATA",   "__data",           S_REGULAR       },
+    { ".rodata",        "__DATA",   "__const",          S_REGULAR       },
+    { ".bss",           "__DATA",   "__bss",            S_ZEROFILL      },
+    { ".debug_abbrev",  "__DWARF",  "__debug_abbrev",   S_ATTR_DEBUG    },
+    { ".debug_info",    "__DWARF",  "__debug_info",     S_ATTR_DEBUG    },
+    { ".debug_line",    "__DWARF",  "__debug_line",     S_ATTR_DEBUG    },
+    { ".debug_str",     "__DWARF",  "__debug_str",      S_ATTR_DEBUG    },
+    { NULL, NULL, NULL, 0 }
 };
-
-#define NO_TYPE S_NASM_TYPE_MASK
 
 /* Section type or attribute directives */
 static const struct sect_attribs {
-    const char *name;
-    uint32_t flags;
+    const char      *name;
+    uint32_t        flags;
 } sect_attribs[] = {
-    { "data", S_REGULAR },
-    { "code", S_REGULAR|S_ATTR_SOME_INSTRUCTIONS|S_ATTR_PURE_INSTRUCTIONS },
-    { "mixed", S_REGULAR|S_ATTR_SOME_INSTRUCTIONS },
-    { "bss", S_ZEROFILL },
-    { "zerofill", S_ZEROFILL },
-    { "no_dead_strip", NO_TYPE|S_ATTR_NO_DEAD_STRIP },
-    { "live_support", NO_TYPE|S_ATTR_LIVE_SUPPORT },
-    { "strip_static_syms", NO_TYPE|S_ATTR_STRIP_STATIC_SYMS },
-    { "debug", NO_TYPE|S_ATTR_DEBUG },
+    { "data",               S_REGULAR                               },
+    { "code",               S_CODE                                  },
+    { "mixed",              S_REGULAR | S_ATTR_SOME_INSTRUCTIONS    },
+    { "bss",                S_ZEROFILL                              },
+    { "zerofill",           S_ZEROFILL                              },
+    { "no_dead_strip",      NO_TYPE | S_ATTR_NO_DEAD_STRIP          },
+    { "live_support",       NO_TYPE | S_ATTR_LIVE_SUPPORT           },
+    { "strip_static_syms",  NO_TYPE | S_ATTR_STRIP_STATIC_SYMS      },
+    { "debug",              NO_TYPE | S_ATTR_DEBUG                  },
     { NULL, 0 }
 };
 
