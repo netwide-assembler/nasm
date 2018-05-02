@@ -56,6 +56,7 @@
 #include "outlib.h"
 #include "ver.h"
 #include "dwarf.h"
+#include "macho.h"
 
 #if defined(OF_MACHO) || defined(OF_MACHO64)
 
@@ -72,44 +73,7 @@
 #define MACHO_SECTCMD64_SIZE		80
 #define MACHO_NLIST64_SIZE		16
 
-/* Mach-O file header values */
-#define	MH_MAGIC		0xfeedface
-#define	MH_MAGIC_64		0xfeedfacf
-#define CPU_TYPE_I386		7		/* x86 platform */
-#define CPU_TYPE_X86_64		0x01000007	/* x86-64 platform */
-#define	CPU_SUBTYPE_I386_ALL	3		/* all-x86 compatible */
-#define	MH_OBJECT		0x1		/* object file */
-
-/* Mach-O header flags */
-#define MH_SUBSECTIONS_VIA_SYMBOLS 0x2000
-
-/* Mach-O load commands */
-#define LC_SEGMENT		0x1		/* 32-bit segment load cmd */
-#define LC_SEGMENT_64		0x19		/* 64-bit segment load cmd */
-#define LC_SYMTAB		0x2		/* symbol table load command */
-
 /* Mach-O relocations numbers */
-
-/* Generic relocs, used by i386 Mach-O */
-#define GENERIC_RELOC_VANILLA   0               /* Generic relocation */
-#define GENERIC_RELOC_TLV	5		/* Thread local */
-
-#define X86_64_RELOC_UNSIGNED   0               /* Absolute address */
-#define X86_64_RELOC_SIGNED     1               /* Signed 32-bit disp */
-#define X86_64_RELOC_BRANCH     2		/* CALL/JMP with 32-bit disp */
-#define X86_64_RELOC_GOT_LOAD   3		/* MOVQ of GOT entry */
-#define X86_64_RELOC_GOT        4		/* Different GOT entry */
-#define X86_64_RELOC_SUBTRACTOR 5		/* Subtracting two symbols */
-#define X86_64_RELOC_SIGNED_1   6		/* SIGNED with -1 addend */
-#define X86_64_RELOC_SIGNED_2   7		/* SIGNED with -2 addend */
-#define X86_64_RELOC_SIGNED_4   8		/* SIGNED with -4 addend */
-#define X86_64_RELOC_TLV        9		/* Thread local */
-
-/* Mach-O VM permission constants */
-#define	VM_PROT_NONE	(0x00)
-#define VM_PROT_READ	(0x01)
-#define VM_PROT_WRITE	(0x02)
-#define VM_PROT_EXECUTE	(0x04)
 
 #define VM_PROT_DEFAULT	(VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
 #define VM_PROT_ALL	(VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
@@ -175,25 +139,6 @@ struct section {
     uint32_t extreloc;     /* external relocations */
 };
 
-#define SECTION_TYPE	0x000000ff      /* section type mask */
-
-#define	S_REGULAR		(0x0)   /* standard section */
-#define	S_ZEROFILL		(0x1)   /* zerofill, in-memory only */
-
-#define SECTION_ATTRIBUTES_SYS   0x00ffff00     /* system setable attributes */
-#define S_ATTR_SOME_INSTRUCTIONS 0x00000400     /* section contains some
-						   machine instructions */
-#define S_ATTR_EXT_RELOC         0x00000200     /* section has external relocation entries */
-#define S_ATTR_LOC_RELOC         0x00000100     /* section has local relocation entries */
-#define S_ATTR_DEBUG		 0x02000000
-#define S_ATTR_SELF_MODIFYING_CODE 0x04000000
-#define S_ATTR_LIVE_SUPPORT	 0x08000000
-#define S_ATTR_NO_DEAD_STRIP	 0x10000000     /* no dead stripping */
-#define S_ATTR_STRIP_STATIC_SYMS 0x20000000
-#define S_ATTR_NO_TOC            0x40000000
-#define S_ATTR_PURE_INSTRUCTIONS 0x80000000	/* section uses pure machine instructions */
-#define S_ATTR_DEBUG 0x02000000 /* debug section */
-
 #define S_NASM_TYPE_MASK	 0x800004ff	/* we consider these bits "section type" */
 
 /* fake section for absolute symbols, *not* part of the section linked list */
@@ -214,10 +159,6 @@ struct reloc {
 	type:4;                 /* reloc type */
 };
 
-#define	R_ABS		0       /* absolute relocation */
-#define R_SCATTERED	0x80000000      /* reloc entry is scattered if
-					** highest bit == 1 */
-
 struct symbol {
     /* nasm internal data */
     struct rbtree symv[2];	/* All/global symbol rbtrees; "key" contains the
@@ -234,22 +175,7 @@ struct symbol {
     uint16_t desc;		/* for stab debugging, 0 for us */
 };
 
-/* symbol type bits */
-#define	N_EXT	0x01            /* global or external symbol */
-#define	N_PEXT	0x10            /* private external symbol */
-
-#define	N_UNDF	0x0             /* undefined symbol | n_sect == */
-#define	N_ABS	0x2             /* absolute symbol  |  NO_SECT */
-#define	N_SECT	0xe             /* defined symbol, n_sect holds
-				** section number */
-
-#define	N_TYPE	0x0e            /* type bit mask */
-
 #define DEFAULT_SECTION_ALIGNMENT 0 /* byte (i.e. no) alignment */
-
-/* special section number values */
-#define	NO_SECT		0       /* no section, invalid */
-#define MAX_SECT	255     /* maximum number of sections */
 
 static struct section *sects, **sectstail, **sectstab;
 static struct symbol *syms, **symstail;
