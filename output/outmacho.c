@@ -61,12 +61,10 @@
 #define MACHO_SEGCMD_SIZE		56
 #define MACHO_SECTCMD_SIZE		68
 #define MACHO_SYMCMD_SIZE		24
-#define MACHO_NLIST_SIZE		12
 #define MACHO_RELINFO_SIZE		8
 
 #define MACHO_SEGCMD64_SIZE		72
 #define MACHO_SECTCMD64_SIZE		80
-#define MACHO_NLIST64_SIZE		16
 
 /* Mach-O relocations numbers */
 
@@ -91,7 +89,6 @@ struct macho_fmt {
     uint32_t lc_segment;	/* Which segment load command */
     uint32_t segcmd_size;	/* Segment command size */
     uint32_t sectcmd_size;	/* Section command size */
-    uint32_t nlist_size;	/* Nlist (symbol) size */
     enum reltype maxreltype;	/* Maximum entry in enum reltype permitted */
     uint32_t reloc_abs;		/* Absolute relocation type */
     uint32_t reloc_rel;		/* Relative relocation type */
@@ -1614,15 +1611,24 @@ static void macho_write (void)
         nasm_error(ERR_WARNING, "no sections?");
 
     if (nsyms > 0) {
-        /* write out symbol command */
-        fwriteint32_t(LC_SYMTAB, ofile); /* cmd == LC_SYMTAB */
-        fwriteint32_t(MACHO_SYMCMD_SIZE, ofile); /* size of load command */
-        fwriteint32_t(offset, ofile);    /* symbol table offset */
-        fwriteint32_t(nsyms, ofile);     /* number of symbol
-                                         ** table entries */
-        offset += nsyms * fmt.nlist_size;
-        fwriteint32_t(offset, ofile);    /* string table offset */
-        fwriteint32_t(strslen, ofile);   /* string table size */
+        macho_symtab_command_t symtab;
+
+        symtab.cmd      = cpu_to_le32(LC_SYMTAB);
+        symtab.cmdsize  = cpu_to_le32(sizeof(symtab));
+        symtab.symoff   = cpu_to_le32(offset);
+        symtab.nsyms    = cpu_to_le32(nsyms);
+
+        if (is_macho64()) {
+            offset += nsyms * sizeof(macho_nlist_64_t);
+        } else {
+            nasm_assert(is_macho32());
+            offset += nsyms * sizeof(macho_nlist_64_t);
+        }
+
+        symtab.stroff   = offset;
+        symtab.strsize  = strslen;
+
+        nasm_write(&symtab, sizeof(symtab), ofile);
     }
 
     /* emit section data */
@@ -2220,7 +2226,6 @@ static const struct macho_fmt macho32_fmt = {
     LC_SEGMENT,
     MACHO_SEGCMD_SIZE,
     MACHO_SECTCMD_SIZE,
-    MACHO_NLIST_SIZE,
     RL_MAX_32,
     GENERIC_RELOC_VANILLA,
     GENERIC_RELOC_VANILLA,
@@ -2283,7 +2288,6 @@ static const struct macho_fmt macho64_fmt = {
     LC_SEGMENT_64,
     MACHO_SEGCMD64_SIZE,
     MACHO_SECTCMD64_SIZE,
-    MACHO_NLIST64_SIZE,
     RL_MAX_64,
     X86_64_RELOC_UNSIGNED,
     X86_64_RELOC_SIGNED,
