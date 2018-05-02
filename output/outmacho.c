@@ -57,8 +57,6 @@
 #include "dwarf.h"
 #include "macho.h"
 
-#if defined(OF_MACHO) || defined(OF_MACHO64)
-
 /* Mach-O in-file header structure sizes */
 #define MACHO_HEADER_SIZE		28
 #define MACHO_SEGCMD_SIZE		56
@@ -2204,7 +2202,6 @@ static void macho_dbg_cleanup(void)
     }
 }
 
-#ifdef OF_MACHO32
 static const struct macho_fmt macho32_fmt = {
     4,
     MH_MAGIC,
@@ -2265,9 +2262,7 @@ const struct ofmt of_macho32 = {
     macho_cleanup,
     macho_pragma_list
 };
-#endif
 
-#ifdef OF_MACHO64
 static const struct macho_fmt macho64_fmt = {
     8,
     MH_MAGIC_64,
@@ -2330,9 +2325,6 @@ const struct ofmt of_macho64 = {
     macho_cleanup,
     macho_pragma_list,
 };
-#endif
-
-#endif
 
 /*
  * Local Variables:
