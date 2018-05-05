@@ -1361,17 +1361,21 @@ static uint32_t macho_write_segment (uint64_t offset)
 static void macho_write_relocs (struct reloc *r)
 {
     while (r) {
-	uint32_t word2;
+        macho_relocation_info_t info;
 
-	fwriteint32_t(r->addr, ofile); /* reloc offset */
+        info.r_address          = cpu_to_le32(r->addr);
 
-	word2 = r->snum;
-	word2 |= r->pcrel << 24;
-	word2 |= r->length << 25;
-	word2 |= r->ext << 27;
-	word2 |= r->type << 28;
-	fwriteint32_t(word2, ofile); /* reloc data */
-	r = r->next;
+        info.u.r_symbolnum      = r->snum;
+        info.u.r_pcrel          = r->pcrel;
+        info.u.r_length         = r->length;
+        info.u.r_extern         = r->ext;
+        info.u.r_type           = r->type;
+
+        info.u.r_raw            = cpu_to_le32(info.u.r_raw);
+
+        nasm_write(&info, sizeof(info), ofile);
+
+        r = r->next;
     }
 }
 
