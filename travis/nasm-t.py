@@ -285,7 +285,7 @@ def exec_nasm(desc):
     wait_rc = pnasm.wait();
     if desc['_wait'] != wait_rc:
         test_fail(desc['_test-name'],
-                  "Unexpected ret code: " + string(wait_rc))
+                  "Unexpected ret code: " + str(wait_rc))
         return None
     return pnasm
 
