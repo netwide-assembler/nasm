@@ -723,7 +723,7 @@ static const struct macho_known_section {
 };
 
 /* Section type or attribute directives */
-static const struct sect_attribs {
+static const struct macho_known_section_attr {
     const char      *name;
     uint32_t        flags;
 } sect_attribs[] = {
@@ -760,11 +760,11 @@ lookup_known_section(const char *name, bool by_sectname)
 static int32_t macho_section(char *name, int pass, int *bits)
 {
     const struct macho_known_section *known_section;
+    const struct macho_known_section_attr *sa;
     char *sectionAttributes;
     struct section *s;
     const char *section, *segment;
     uint32_t flags;
-    const struct sect_attribs *sa;
     char *currentAttribute;
     char *comma;
 
