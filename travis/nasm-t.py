@@ -283,23 +283,28 @@ def exec_nasm(desc):
         test_fail(desc['_test-name'], "Unable to execute test")
         return None
     wait_rc = pnasm.wait();
-    if desc['_wait'] != wait_rc:
-        test_fail(desc['_test-name'],
-                  "Unexpected ret code: " + str(wait_rc))
-        return None
-    return pnasm
-
-def test_run(desc):
-    print("=== Running %s ===" % (desc['_test-name']))
-
-    pnasm = exec_nasm(desc)
-    if pnasm == None:
-        return False
 
     stdout = pnasm.stdout.read().decode("utf-8").strip("\n")
     stderr = pnasm.stderr.read().decode("utf-8").strip("\n")
     pnasm.stdout.close()
     pnasm.stderr.close()
+
+    if desc['_wait'] != wait_rc:
+        if stdout != "":
+            show_std("stdout", stdout)
+        if stderr != "":
+            show_std("stderr", stderr)
+        test_fail(desc['_test-name'],
+                  "Unexpected ret code: " + str(wait_rc))
+        return None, None, None
+    return pnasm, stdout, stderr
+
+def test_run(desc):
+    print("=== Running %s ===" % (desc['_test-name']))
+
+    pnasm, stdout, stderr = exec_nasm(desc)
+    if pnasm == None:
+        return False
 
     for t in desc['target']:
         if 'output' in t:
