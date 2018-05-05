@@ -1355,23 +1355,20 @@ static uint32_t macho_write_segment (uint64_t offset)
     return offset;
 }
 
-/* For a given chain of relocs r, write out the entire relocation
-   chain to the object file.  */
-
-static void macho_write_relocs (struct reloc *r)
+static void macho_write_relocs(struct reloc *r)
 {
     while (r) {
         macho_relocation_info_t info;
 
-        info.r_address          = cpu_to_le32(r->addr);
+        info.r_address      = cpu_to_le32(r->addr);
 
-        info.u.r_symbolnum      = r->snum;
-        info.u.r_pcrel          = r->pcrel;
-        info.u.r_length         = r->length;
-        info.u.r_extern         = r->ext;
-        info.u.r_type           = r->type;
+        info.u.s.r_symbolnum= r->snum;
+        info.u.s.r_pcrel    = r->pcrel;
+        info.u.s.r_length   = r->length;
+        info.u.s.r_extern   = r->ext;
+        info.u.s.r_type     = r->type;
 
-        info.u.r_raw            = cpu_to_le32(info.u.r_raw);
+        info.u.r_raw        = cpu_to_le32(info.u.r_raw);
 
         nasm_write(&info, sizeof(info), ofile);
 
