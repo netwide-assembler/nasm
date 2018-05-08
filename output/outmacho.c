@@ -670,8 +670,7 @@ static void macho_output(int32_t secto, const void *data,
                 nasm_error(ERR_NONFATAL, "Mach-O format does not support"
 			   " section base references");
             } else if (wrt == NO_SEG) {
-	        if (fmt.ptrsize == 8 &&
-	            (asize != 8 || addr <= UINT32_MAX)) {
+		if (fmt.ptrsize == 8 && asize != 8) {
 		    nasm_error(ERR_NONFATAL,
 			       "Mach-O 64-bit format does not support"
 			       " 32-bit absolute addresses");
