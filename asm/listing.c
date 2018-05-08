@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -213,10 +213,11 @@ static void list_output(const struct out_data *data)
         if (size > 16) {
             snprintf(q, sizeof(q), "<zero %08"PRIX64">", size);
             list_out(offset, q);
+            break;
         } else {
             p = zero_buffer;
-            /* fall through */
         }
+        /* fall through */
     case OUT_RAWDATA:
     {
 	if (size == 0 && !listdata[0])
