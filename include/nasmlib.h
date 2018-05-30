@@ -79,6 +79,8 @@ void * safe_realloc(2) nasm_realloc(void *, size_t);
 void nasm_free(void *);
 char * safe_alloc nasm_strdup(const char *);
 char * safe_alloc nasm_strndup(const char *, size_t);
+char * safe_alloc nasm_strcat(const char *one, const char *two);
+char * safe_alloc end_with_null nasm_strcatn(const char *one, ...);
 
 /* Assert the argument is a pointer without evaluating it */
 #define nasm_assert_pointer(p) ((void)sizeof(*(p)))
@@ -281,8 +283,6 @@ void src_set(int32_t line, const char *filename);
  * checked, -2 if the name changed and (new-old) if just the line changed.
  */
 int32_t src_get(int32_t *xline, const char **xname);
-
-char *nasm_strcat(const char *one, const char *two);
 
 char *nasm_skip_spaces(const char *p);
 char *nasm_skip_word(const char *p);

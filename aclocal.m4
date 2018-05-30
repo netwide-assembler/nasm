@@ -106,10 +106,11 @@ AC_DEFUN(PA_FUNC_ATTRIBUTE,
 AC_INCLUDES_DEFAULT
 extern ifelse([$3],[],[void *],[$3])  __attribute__(($1$2))
   bar(ifelse([$4],[],[int],[$4]));
-void *foo(void);
-void *foo(void)
+ifelse([$3],[],[void *],[$3]) foo(void);
+ifelse([$3],[],[void *],[$3]) foo(void)
 {
-	return bar(ifelse([$5],[],[1],[$5]));
+	ifelse([$3],[void],[],[return])
+		bar(ifelse([$5],[],[1],[$5]));
 }
  ])],
  [AC_MSG_RESULT([yes])

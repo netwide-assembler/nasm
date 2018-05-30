@@ -264,7 +264,7 @@ size_t strnlen(const char *s, size_t maxlen);
 #ifdef HAVE_FUNC_ATTRIBUTE_MALLOC
 # define safe_alloc never_null __attribute__((malloc))
 #else
-# define safe_alloc
+# define safe_alloc never_null
 #endif
 
 #ifdef HAVE_FUNC_ATTRIBUTE_ALLOC_SIZE
@@ -275,6 +275,12 @@ size_t strnlen(const char *s, size_t maxlen);
 # define safe_malloc(s) safe_alloc
 # define safe_malloc2(s1,s2) safe_alloc
 # define safe_realloc(s) never_null
+#endif
+
+#ifdef HAVE_FUNC_ATTRIBUTE_SENTINEL
+# define end_with_null __attribute__((sentinel))
+#else
+# define end_with_null
 #endif
 
 /*
