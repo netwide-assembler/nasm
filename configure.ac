@@ -260,6 +260,12 @@ PA_ARG_ENABLED([sanitizer],
   PA_ADD_CLDFLAGS([-fsanitize=address])
   PA_ADD_CLDFLAGS([-fsanitize=undefined])])
 
+dnl
+dnl Don't make symbols visible, there is no point and it just
+dnl makes the code slower.
+dnl
+PA_ADD_CLDFLAGS([-fvisibility=hidden])
+
 dnl If we have gcc, add appropriate code cleanliness options
 PA_ADD_CFLAGS([-W])
 PA_ADD_CFLAGS([-Wall])
