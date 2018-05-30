@@ -251,9 +251,8 @@ bool process_directives(char *directive)
             nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_PANIC,
                        "segment name `%s' not recognized", value);
         } else {
-            in_absolute = false;
-            location.segment = seg;
             globalbits = sb;
+            switch_segment(seg);
         }
         break;
     }

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -60,6 +60,8 @@ struct Section {
 
 static unsigned long dbg_max_data_dump = 128;
 static bool section_labels = true;
+static bool subsections_via_symbols = false;
+static int32_t init_seg;
 
 const struct ofmt of_dbg;
 static void dbg_init(void)
@@ -68,6 +70,12 @@ static void dbg_init(void)
     fprintf(ofile, "NASM Output format debug dump\n");
     fprintf(ofile, "input file  = %s\n", inname);
     fprintf(ofile, "output file = %s\n", outname);
+    init_seg = seg_alloc();
+}
+
+static void dbg_reset(void)
+{
+    fprintf(ofile, "*** pass reset: pass0 = %d, passn = %d\n", pass0, passn);
 }
 
 static void dbg_cleanup(void)
@@ -93,8 +101,8 @@ static int32_t dbg_add_section(char *name, int pass, int *bits,
         *bits = 16;
 
     if (!name) {
-        fprintf(ofile, "section_name on init: returning %d\n",
-                seg = seg_alloc());
+        fprintf(ofile, "section_name on init: returning %d\n", init_seg);
+        seg = init_seg;
     } else {
         int n = strcspn(name, " \t");
         char *sname = nasm_strndup(name, n);
@@ -125,6 +133,19 @@ static int32_t dbg_add_section(char *name, int pass, int *bits,
 static int32_t dbg_section_names(char *name, int pass, int *bits)
 {
     return dbg_add_section(name, pass, bits, "section_names");
+}
+
+static int32_t dbg_herelabel(const char *name, int32_t seg)
+{
+    int32_t newseg = seg;
+    
+    if (subsections_via_symbols && name[0] != 'L')
+        newseg += 0x10000;
+    
+    fprintf(ofile, "herelabel %s (seg %08x) -> %08x\n",
+            name, seg, newseg);
+
+    return newseg;
 }
 
 static void dbg_deflabel(char *name, int32_t segment, int64_t offset,
@@ -363,7 +384,9 @@ dbg_pragma(const struct pragma *pragma)
         case D_NOSECLABELS:
             section_labels = false;
             break;
-
+        case D_SUBSECTIONS_VIA_SYMBOLS:
+            subsections_via_symbols = true;
+            break;
         default:
             break;
         }
@@ -447,10 +470,12 @@ const struct ofmt of_dbg = {
     &debug_debug_form,
     dbg_stdmac,
     dbg_init,
+    dbg_reset,
     dbg_out,
     dbg_legacy_out,
     dbg_deflabel,
     dbg_section_names,
+    dbg_herelabel,
     dbg_sectalign,
     dbg_segbase,
     dbg_directive,

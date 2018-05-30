@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -153,16 +153,17 @@ struct section {
     /* nasm internal data */
     struct section *next;
     struct SAA *data;
-    int32_t index;
+    uint16_t index;		/* Main section index */
+    uint16_t subsection;	/* Current subsection */
     int32_t fileindex;
     struct reloc *relocs;
     struct rbtree *syms[2]; /* All/global symbols symbols in section */
     int align;
-    bool by_name;		/* This section was specified by full MachO name */
+    bool by_name;	    /* This section was specified by full MachO name */
 
     /* data that goes into the file */
-    char sectname[16];          /* what this section is called */
-    char segname[16];           /* segment this section will be in */
+    char sectname[16];     /* what this section is called */
+    char segname[16];      /* segment this section will be in */
     uint64_t addr;         /* in-memory address (subject to alignment) */
     uint64_t size;         /* in-memory and -file size  */
     uint64_t offset;	   /* in-file offset */
@@ -321,9 +322,11 @@ static struct section *get_section_by_name(const char *segname,
     return s;
 }
 
-static struct section *get_section_by_index(const int32_t index)
+static struct section *get_section_by_index(int32_t index)
 {
     struct section *s;
+
+    index &= 0x4000fffe;	/* Strip subsection but not absolute flag */
 
     for (s = sects; s != NULL; s = s->next)
         if (index == s->index)
@@ -410,6 +413,14 @@ static void macho_init(void)
     macho_tlvp_sect = seg_alloc() + 1;
     define_label("..tlvp", macho_tlvp_sect, 0L, NULL, false, false);
 
+}
+
+static void macho_reset(void)
+{
+    /* Reset all subsection numbers */
+    struct section *s;
+    for (s = sects; s != NULL; s = s->next)
+	s->subsection = 0;
 }
 
 static void sect_write(struct section *sect,
@@ -905,6 +916,7 @@ static int32_t macho_section(char *name, int pass, int *bits)
 
 	s->data = saa_init(1L);
 	s->index = seg_alloc();
+	s->subsection = 0;
 	s->fileindex = ++seg_nsects;
 	s->align = -1;
 	s->pad = -1;
@@ -987,7 +999,26 @@ static int32_t macho_section(char *name, int pass, int *bits)
 	s->flags |= flags & ~S_NASM_TYPE_MASK;
     }
 
-    return s->index;
+    return s->index | (s->subsection << 16);
+}
+
+static int32_t macho_herelabel(const char *name, int32_t section)
+{
+    struct section *s;
+    
+    if (!(head_flags & MH_SUBSECTIONS_VIA_SYMBOLS))
+	return section;
+
+    /* If it starts with L, it doesn't start a new subsection */
+    if (name[0] == 'L')
+	return section;
+    
+    s = get_section_by_index(section);
+    if (!s)
+	return section;
+
+    s->subsection++;
+    return s->index | (s->subsection << 16);
 }
 
 static void macho_symdef(char *name, int32_t section, int64_t offset,
@@ -1740,6 +1771,7 @@ static void macho_cleanup(void)
     }
 
     saa_free(strs);
+
     raa_free(extsyms);
 
     while (syms) {
@@ -2328,10 +2360,12 @@ const struct ofmt of_macho32 = {
     &macho32_df_dwarf,
     macho_stdmac,
     macho32_init,
+    macho_reset,
     nasm_do_legacy_output,
     macho_output,
     macho_symdef,
     macho_section,
+    macho_herelabel,
     macho_sectalign,
     macho_segbase,
     null_directive,
@@ -2393,10 +2427,12 @@ const struct ofmt of_macho64 = {
     &macho64_df_dwarf,
     macho_stdmac,
     macho64_init,
+    macho_reset,
     nasm_do_legacy_output,
     macho_output,
     macho_symdef,
     macho_section,
+    macho_herelabel,
     macho_sectalign,
     macho_segbase,
     null_directive,

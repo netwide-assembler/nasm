@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -43,6 +43,7 @@ uint64_t realsize(enum out_type type, uint64_t size);
 enum directive_result
 null_directive(enum directive directive, char *value, int pass);
 void null_sectalign(int32_t seg, unsigned int value);
+void null_reset(void);
 
 /* Do-nothing versions of all the debug routines */
 void null_debug_init(void);

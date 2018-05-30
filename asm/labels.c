@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -231,6 +231,32 @@ bool is_extern(const char *label)
     return (lptr && (lptr->defn.is_global & EXTERN_BIT));
 }
 
+static void handle_herelabel(const char *label,
+                             int32_t *segment, int64_t *offset)
+{
+    int32_t oldseg;
+
+    if (likely(!ofmt->herelabel))
+        return;
+
+    if (unlikely(location.segment == NO_SEG))
+        return;
+
+    oldseg = *segment;
+
+    if (oldseg == location.segment && *offset == location.offset) {
+        /* This label is defined at this location */
+        int32_t newseg;
+
+        newseg = ofmt->herelabel(label, oldseg);
+        if (likely(newseg == oldseg))
+            return;
+
+        *segment = newseg;
+        *offset  = switch_segment(newseg);
+    }
+}
+
 void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
                     bool is_norm, bool isextrn)
 {
@@ -253,6 +279,8 @@ void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
         nasm_error(ERR_DEBUG, "redefine_label (%s, %"PRIx32", %"PRIx64", %s, %d, %d)",
               label, segment, offset, special, is_norm, isextrn);
 #endif
+
+    handle_herelabel(label, &segment, &offset);
 
     lptr = find_label(label, 1, &created);
     if (!lptr)
@@ -310,6 +338,9 @@ void define_label(char *label, int32_t segment, int64_t offset, char *special,
         nasm_error(ERR_DEBUG, "define_label (%s, %"PRIx32", %"PRIx64", %s, %d, %d)",
               label, segment, offset, special, is_norm, isextrn);
 #endif
+
+    handle_herelabel(label, &segment, &offset);
+
     lptr = find_label(label, 1, NULL);
     if (!lptr)
         return;

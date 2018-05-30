@@ -819,6 +819,11 @@ struct ofmt {
     void (*init)(void);
 
     /*
+     * This procedure is called at the start of each pass.
+     */
+    void (*reset)(void);
+    
+    /*
      * This is the modern output function, which gets passed
      * a struct out_data with much more information.  See the
      * definition of struct out_data.
@@ -890,6 +895,16 @@ struct ofmt {
      * doesn't wish to define a default, it can leave `bits' alone.
      */
     int32_t (*section)(char *name, int pass, int *bits);
+
+    /*
+     * This function is called when a label is defined
+     * in the source code. It is allowed to change the section
+     * number as a result, but not the bits value.
+     * This is *only* called if the symbol defined is at the
+     * current offset, i.e. "foo:" or "foo equ $".
+     * The offset isn't passed; and may not be stable at this point.
+     */
+    int32_t (*herelabel)(const char *name, int32_t seg);
 
     /*
      * This procedure is called to modify section alignment,
@@ -1230,5 +1245,10 @@ extern int globalbnd;           /* default to using bnd prefix? */
 
 extern const char *inname;	/* primary input filename */
 extern const char *outname;     /* output filename */
+
+/*
+ * Switch to a different segment and return the current offset
+ */
+int64_t switch_segment(int32_t segment);
 
 #endif

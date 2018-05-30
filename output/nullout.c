@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -48,4 +48,9 @@ void null_sectalign(int32_t seg, unsigned int value)
 {
     (void)seg;
     (void)value;
+}
+
+void null_reset(void)
+{
+    /* Nothing to do */
 }

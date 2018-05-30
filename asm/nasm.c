@@ -153,9 +153,17 @@ static char *quote_for_pmake(const char *str);
 static char *quote_for_wmake(const char *str);
 static char *(*quote_for_make)(const char *) = quote_for_pmake;
 
-static int64_t get_curr_offs(void)
+int64_t switch_segment(int32_t segment)
 {
-    return in_absolute ? absolute.offset : raa_read(offsets, location.segment);
+    location.segment = segment;
+    if (segment == NO_SEG) {
+        location.offset = absolute.offset;
+        in_absolute = true;
+    } else {
+        location.offset = raa_read(offsets, segment);
+        in_absolute = false;
+    }
+    return location.offset;
 }
 
 static void set_curr_offs(int64_t l_off)
@@ -164,6 +172,15 @@ static void set_curr_offs(int64_t l_off)
             absolute.offset = l_off;
         else
             offsets = raa_write(offsets, location.segment, l_off);
+}
+
+static void increment_offset(int64_t delta)
+{
+    if (unlikely(delta == 0))
+        return;
+
+    location.offset += delta;
+    set_curr_offs(location.offset);
 }
 
 static void nasm_fputs(const char *line, FILE * outfile)
@@ -1285,7 +1302,6 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
     char *line;
     insn output_ins;
     int i;
-    int64_t offs;
     int pass_max;
     uint64_t prev_offset_changed;
     unsigned int stall_count = 0; /* Make sure we make forward progress... */
@@ -1326,22 +1342,25 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
         }
         in_absolute = false;
         global_offset_changed = 0;  /* set by redefine_label */
-        location.segment = ofmt->section(NULL, pass2, &globalbits);
+        seg_alloc_reset();
         if (passn > 1) {
             saa_rewind(forwrefs);
             forwref = saa_rstruct(forwrefs);
             raa_free(offsets);
             offsets = raa_init();
         }
+        location.segment = NO_SEG;
+        location.offset  = 0;
+        if (passn == 1)
+            location.known = true;
+        ofmt->reset();
+        switch_segment(ofmt->section(NULL, pass2, &globalbits));
         preproc->reset(fname, pass1, pass1 == 2 ? depend_ptr : NULL);
 
 	/* Revert all warnings to the default state */
 	memcpy(warning_state, warning_state_init, sizeof warning_state);
 
         globallineno = 0;
-        if (passn == 1)
-            location.known = true;
-        location.offset = offs = get_curr_offs();
 
         while ((line = preproc->getline())) {
             if (globallineno++ == GLOBALLINENO_MAX)
@@ -1459,7 +1478,8 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
 
                 for (n = 1; n <= output_ins.times; n++) {
                     if (pass1 == 1) {
-                        int64_t l = insn_size(location.segment, offs,
+                        int64_t l = insn_size(location.segment,
+                                              location.offset,
                                               globalbits, &output_ins);
 
                         /* if (using_debug_info)  && output_ins.opcode != -1) */
@@ -1542,8 +1562,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
                          * input file over and over.
                          */
                         if (l != -1) {
-                            offs += l;
-                            set_curr_offs(offs);
+                            increment_offset(l);
                         }
                         /*
                          * else l == -1 => invalid instruction, which will be
@@ -1552,9 +1571,9 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
                     } else {
                         if (n == 2)
                             lfmt->uplevel(LIST_TIMES);
-                        offs += assemble(location.segment, offs,
-                                         globalbits, &output_ins);
-                        set_curr_offs(offs);
+                        increment_offset(assemble(location.segment,
+                                                  location.offset,
+                                                  globalbits, &output_ins));
                     }
                 }               /* not an EQU */
             }
@@ -1565,7 +1584,6 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
 
         end_of_line:
             nasm_free(line);
-            location.offset = offs = get_curr_offs();
         }                       /* end while (line = preproc->getline... */
 
         if (pass0 == 2 && global_offset_changed && !terminate_after_phase)

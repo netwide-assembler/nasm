@@ -193,6 +193,7 @@ int64_t readstrnum(char *str, int length, bool *warn);
 /*
  * seg_alloc: allocate a hitherto unused segment number.
  */
+void seg_alloc_reset(void);
 int32_t seg_alloc(void);
 
 /*
