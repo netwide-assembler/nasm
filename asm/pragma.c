@@ -83,13 +83,15 @@
  */
 static struct pragma_facility global_pragmas[] =
 {
-    { "preproc",	NULL }, /* This shouldn't happen... */
     { "asm",		NULL },
     { "list",		NULL },
     { "file",		NULL },
     { "input",		NULL },
+
+    /* None of these should actually happen... */
+    { "preproc",	NULL }, /* This shouldn't happen... */
     { "output",		NULL },
-    { "debug",		NULL },
+    { "debug",	        NULL },
     { "ignore",		NULL },
     { NULL, NULL }
 };
@@ -184,6 +186,15 @@ void process_pragma(char *str)
      */
     if (!nasm_stricmp(pragma.facility_name, "ignore"))
         return;
+
+    /*
+     * The "output" and "debug" facilities are aliases for the
+     * current output and debug formats, respectively.
+     */
+    if (!nasm_stricmp(pragma.facility_name, "output"))
+        pragma.facility_name = ofmt->shortname;
+    if (!nasm_stricmp(pragma.facility_name, "debug"))
+        pragma.facility_name = dfmt->shortname;
 
     pragma.opname = nasm_get_word(p, &p);
     if (!pragma.opname)
