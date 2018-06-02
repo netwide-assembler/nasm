@@ -332,13 +332,14 @@ bool process_directives(char *directive)
         }
 
         if (nasm_isspace(*q)) {
-            sizestr = q = nasm_zap_spaces_fwd(q);
+            *q++ = '\0';
+            sizestr = q = nasm_skip_spaces(q);
             q = strchr(q, ':');
         } else {
             sizestr = NULL;
         }
 
-        if (*q == ':') {
+        if (q && *q == ':') {
             *q++ = '\0';
             special = q;
         } else {

@@ -345,6 +345,12 @@ handle_herelabel(const union label *lptr, int32_t *segment, int64_t *offset)
 static bool declare_label_lptr(union label *lptr,
                                enum label_type type, const char *special)
 {
+    if (special && !special[0])
+        special = NULL;
+
+    printf("declare_label %s type %d special %s\n",
+           lptr->defn.label, lptr->defn.type, lptr->defn.special);
+    
     if (lptr->defn.type == type ||
         (pass0 == 0 && lptr->defn.type == LBL_LOCAL)) {
         lptr->defn.type = type;
@@ -514,6 +520,8 @@ static void init_block(union label *blk)
 
 static char * safe_alloc perm_alloc(size_t len)
 {
+    char *p;
+    
     if (perm_tail->size - perm_tail->usage < len) {
         size_t alloc_len = (len > PERMTS_SIZE) ? len : PERMTS_SIZE;
         perm_tail->next = nasm_malloc(PERMTS_HEADER + alloc_len);
@@ -522,8 +530,9 @@ static char * safe_alloc perm_alloc(size_t len)
         perm_tail->size = alloc_len;
         perm_tail->usage = 0;
     }
+    p = perm_tail->data + perm_tail->usage;
     perm_tail->usage += len;
-    return perm_tail->data + perm_tail->usage;
+    return p;
 }
 
 static char *perm_copy(const char *string)
@@ -542,7 +551,7 @@ static char *perm_copy(const char *string)
     return p;
 }
 
-static char * safe_alloc
+static char *
 perm_copy3(const char *s1, const char *s2, const char *s3)
 {
     char *p;
