@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -426,7 +426,7 @@ static int value_to_extop(expr * vect, extop *eop, int32_t myseg)
     return 0;
 }
 
-insn *parse_line(int pass, char *buffer, insn *result, ldfunc ldef)
+insn *parse_line(int pass, char *buffer, insn *result)
 {
     bool insn_is_label = false;
     struct eval_hints hints;
@@ -485,8 +485,8 @@ restart_parse:
              * Generally fix things. I think this is right as it is, but
              * am still not certain.
              */
-            ldef(result->label, in_absolute ? absolute.segment : location.segment,
-                 location.offset, NULL, true, false);
+            define_label(result->label, location.segment,
+                         location.offset, true);
         }
     }
 

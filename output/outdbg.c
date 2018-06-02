@@ -124,7 +124,7 @@ static int32_t dbg_add_section(char *name, int pass, int *bits,
                     whatwecallit, name, tail, pass, seg);
 
             if (section_labels)
-                define_label(s->name, s->number + 1, 0, NULL, false, false);
+                backend_label(s->name, s->number + 1, 0);
         }
     }
     return seg;
@@ -135,15 +135,16 @@ static int32_t dbg_section_names(char *name, int pass, int *bits)
     return dbg_add_section(name, pass, bits, "section_names");
 }
 
-static int32_t dbg_herelabel(const char *name, int32_t seg)
+static int32_t dbg_herelabel(const char *name, enum label_type type,
+                             int32_t seg)
 {
     int32_t newseg = seg;
     
-    if (subsections_via_symbols && name[0] != 'L')
+    if (subsections_via_symbols && type != LBL_LOCAL)
         newseg += 0x10000;
     
-    fprintf(ofile, "herelabel %s (seg %08x) -> %08x\n",
-            name, seg, newseg);
+    fprintf(ofile, "herelabel %s type %d (seg %08x) -> %08x\n",
+            name, type, seg, newseg);
 
     return newseg;
 }

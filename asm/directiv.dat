@@ -66,6 +66,7 @@ default
 extern
 float
 global
+static
 list
 section
 segment
@@ -84,6 +85,14 @@ org				; outbin
 osabi				; outelf
 safeseh				; outcoff
 uppercase			; outieee, outobj
+
+; --- Assembler pragmas
+prefix
+suffix
+gprefix
+gsuffix
+lprefix
+lsuffix
 
 ; --- Pragma operations
 subsections_via_symbols		; macho

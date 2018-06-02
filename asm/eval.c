@@ -767,7 +767,7 @@ static expr *expr6(int critical)
     int64_t label_ofs;
     int64_t tmpval;
     bool rn_warn;
-    char *scope;
+    const char *scope;
 
     switch (i) {
     case '-':

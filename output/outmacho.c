@@ -411,7 +411,7 @@ static void macho_init(void)
 
     /* add special symbol for TLVP */
     macho_tlvp_sect = seg_alloc() + 1;
-    define_label("..tlvp", macho_tlvp_sect, 0L, NULL, false, false);
+    backend_label("..tlvp", macho_tlvp_sect, 0L);
 
 }
 
@@ -1002,15 +1002,17 @@ static int32_t macho_section(char *name, int pass, int *bits)
     return s->index | (s->subsection << 16);
 }
 
-static int32_t macho_herelabel(const char *name, int32_t section)
+static int32_t macho_herelabel(const char *name, enum label_type type,
+			       int32_t section)
 {
     struct section *s;
+    (void)name;
     
     if (!(head_flags & MH_SUBSECTIONS_VIA_SYMBOLS))
 	return section;
 
-    /* If it starts with L, it doesn't start a new subsection */
-    if (name[0] == 'L')
+    /* No subsection only for local labels */
+    if (type == LBL_LOCAL)
 	return section;
     
     s = get_section_by_index(section);
@@ -2398,7 +2400,7 @@ static void macho64_init(void)
 
     /* add special symbol for ..gotpcrel */
     macho_gotpcrel_sect = seg_alloc() + 1;
-    define_label("..gotpcrel", macho_gotpcrel_sect, 0L, NULL, false, false);
+    backend_label("..gotpcrel", macho_gotpcrel_sect, 0L);
 }
 
 static const struct dfmt macho64_df_dwarf = {

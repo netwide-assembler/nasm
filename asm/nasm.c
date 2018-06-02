@@ -718,21 +718,25 @@ enum text_options {
     OPT_BOGUS,
     OPT_VERSION,
     OPT_ABORT_ON_PANIC,
-    OPT_PREFIX,
-    OPT_POSTFIX
+    OPT_MANGLE
 };
 struct textargs {
     const char *label;
     enum text_options opt;
     bool need_arg;
+    int pvt;
 };
 static const struct textargs textopts[] = {
-    {"v", OPT_VERSION, false},
-    {"version", OPT_VERSION, false},
-    {"abort-on-panic", OPT_ABORT_ON_PANIC, false},
-    {"prefix", OPT_PREFIX, true},
-    {"postfix", OPT_POSTFIX, true},
-    {NULL, OPT_BOGUS, false}
+    {"v", OPT_VERSION, false, 0},
+    {"version", OPT_VERSION, false, 0},
+    {"abort-on-panic", OPT_ABORT_ON_PANIC, false, 0},
+    {"prefix",   OPT_MANGLE, true, LM_GPREFIX},
+    {"postfix",  OPT_MANGLE, true, LM_GSUFFIX},
+    {"gprefix",  OPT_MANGLE, true, LM_GPREFIX},
+    {"gpostfix", OPT_MANGLE, true, LM_GSUFFIX},
+    {"lprefix",  OPT_MANGLE, true, LM_LPREFIX},
+    {"lpostfix", OPT_MANGLE, true, LM_LSUFFIX},
+    {NULL, OPT_BOGUS, false, 0}
 };
 
 static void show_version(void)
@@ -930,7 +934,10 @@ static bool process_arg(char *p, char *q, int pass)
                 "    -h           show invocation summary and exit\n\n"
                  "--prefix,--postfix\n"
                  "                these options prepend or append the given string\n"
-                 "                to all extern and global variables\n"
+                 "                to all extern, common and global symbols\n"
+                 "--lprefix,--lportfix\n"
+                 "                these options prepend or append the given string\n"
+                 "                to all other symbols\n"
 		 "\n"
 		 "Response files should contain command line parameters,\n"
                  "one per line.\n"
@@ -1081,13 +1088,9 @@ static bool process_arg(char *p, char *q, int pass)
                 case OPT_ABORT_ON_PANIC:
                     abort_on_panic = true;
                     break;
-                case OPT_PREFIX:
+                case OPT_MANGLE:
                     if (pass == 2)
-                        strlcpy(lprefix, q, PREFIX_MAX);
-                    break;
-                case OPT_POSTFIX:
-                    if (pass == 2)
-                        strlcpy(lpostfix, q, POSTFIX_MAX);
+                        set_label_mangle(tx->pvt, q);
                     break;
                 case OPT_BOGUS:
                     nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
@@ -1324,13 +1327,9 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
 
     pass_max = prev_offset_changed = (INT_MAX >> 1) + 2; /* Almost unlimited */
     for (passn = 1; pass0 <= 2; passn++) {
-        ldfunc def_label;
-
         pass1 = pass0 == 2 ? 2 : 1;     /* 1, 1, 1, ..., 1, 2 */
         pass2 = passn > 1  ? 2 : 1;     /* 1, 2, 2, ..., 2, 2 */
         /* pass0                           0, 0, 0, ..., 1, 2 */
-
-        def_label = passn > 1 ? redefine_label : define_label;
 
         globalbits = cmd_sb;  /* set 'bits' to command line default */
         cpu = cmd_cpu;
@@ -1376,8 +1375,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
                 goto end_of_line; /* Just do final cleanup */
 
             /* Not a directive, or even something that starts with [ */
-
-            parse_line(pass1, line, &output_ins, def_label);
+            parse_line(pass1, line, &output_ins);
 
             if (optimizing > 0) {
                 if (forwref != NULL && globallineno == forwref->lineno) {
@@ -1405,71 +1403,29 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
 
             /*  forw_ref */
             if (output_ins.opcode == I_EQU) {
-                if (pass1 == 1) {
-                    /*
-                     * Special `..' EQUs get processed in pass two,
-                     * except `..@' macro-processor EQUs which are done
-                     * in the normal place.
-                     */
-                    if (!output_ins.label)
-                        nasm_error(ERR_NONFATAL,
-                                   "EQU not preceded by label");
-
-                    else if (output_ins.label[0] != '.' ||
-                             output_ins.label[1] != '.' ||
-                             output_ins.label[2] == '@') {
-                        if (output_ins.operands == 1 &&
-                            (output_ins.oprs[0].type & IMMEDIATE) &&
-                            output_ins.oprs[0].wrt == NO_SEG) {
-                            bool isext = !!(output_ins.oprs[0].opflags & OPFLAG_EXTERN);
-                            def_label(output_ins.label,
-                                      output_ins.oprs[0].segment,
-                                      output_ins.oprs[0].offset, NULL,
-                                      false, isext);
-                        } else if (output_ins.operands == 2
-                                   && (output_ins.oprs[0].type & IMMEDIATE)
-                                   && (output_ins.oprs[0].type & COLON)
-                                   && output_ins.oprs[0].segment == NO_SEG
-                                   && output_ins.oprs[0].wrt == NO_SEG
-                                   && (output_ins.oprs[1].type & IMMEDIATE)
-                                   && output_ins.oprs[1].segment == NO_SEG
-                                   && output_ins.oprs[1].wrt == NO_SEG) {
-                            def_label(output_ins.label,
-                                      output_ins.oprs[0].offset | SEG_ABS,
-                                      output_ins.oprs[1].offset,
-                                      NULL, false, false);
-                        } else
-                            nasm_error(ERR_NONFATAL,
-                                       "bad syntax for EQU");
-                    }
+                if (!output_ins.label)
+                    nasm_error(ERR_NONFATAL,
+                               "EQU not preceded by label");
+                
+                if (output_ins.operands == 1 &&
+                    (output_ins.oprs[0].type & IMMEDIATE) &&
+                    output_ins.oprs[0].wrt == NO_SEG) {
+                    define_label(output_ins.label,
+                                 output_ins.oprs[0].segment,
+                                 output_ins.oprs[0].offset, false);
+                } else if (output_ins.operands == 2
+                           && (output_ins.oprs[0].type & IMMEDIATE)
+                           && (output_ins.oprs[0].type & COLON)
+                           && output_ins.oprs[0].segment == NO_SEG
+                           && output_ins.oprs[0].wrt == NO_SEG
+                           && (output_ins.oprs[1].type & IMMEDIATE)
+                           && output_ins.oprs[1].segment == NO_SEG
+                           && output_ins.oprs[1].wrt == NO_SEG) {
+                    define_label(output_ins.label,
+                                 output_ins.oprs[0].offset | SEG_ABS,
+                                 output_ins.oprs[1].offset, false);
                 } else {
-                    /*
-                     * Special `..' EQUs get processed here, except
-                     * `..@' macro processor EQUs which are done above.
-                     */
-                    if (output_ins.label[0] == '.' &&
-                        output_ins.label[1] == '.' &&
-                        output_ins.label[2] != '@') {
-                        if (output_ins.operands == 1 &&
-                            (output_ins.oprs[0].type & IMMEDIATE)) {
-                            define_label(output_ins.label,
-                                         output_ins.oprs[0].segment,
-                                         output_ins.oprs[0].offset,
-                                         NULL, false, false);
-                        } else if (output_ins.operands == 2
-                                   && (output_ins.oprs[0].type & IMMEDIATE)
-                                   && (output_ins.oprs[0].type & COLON)
-                                   && output_ins.oprs[0].segment == NO_SEG
-                                   && (output_ins.oprs[1].type & IMMEDIATE)
-                                   && output_ins.oprs[1].segment == NO_SEG) {
-                            define_label(output_ins.label,
-                                         output_ins.oprs[0].offset | SEG_ABS,
-                                         output_ins.oprs[1].offset,
-                                         NULL, false, false);
-                        } else
-                            nasm_error(ERR_NONFATAL,
-                                       "bad syntax for EQU");
-                    }
+                    nasm_error(ERR_NONFATAL, "bad syntax for EQU");
                 }
             } else {        /* instruction isn't an EQU */
                 int32_t n;

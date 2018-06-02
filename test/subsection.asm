@@ -5,12 +5,13 @@
 ;
 
 %pragma output subsections_via_symbols
+%pragma asm gprefix _
+%pragma asm lprefix L_
 
 	bits 32
 
-	global foo, bar, quux
-
-%define baz Lbaz
+	global foo, bar
+	static quux
 
 foo:
 	jmp foo

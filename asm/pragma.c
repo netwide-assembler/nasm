@@ -49,6 +49,8 @@
 #include "assemble.h"
 #include "error.h"
 
+static enum directive_result asm_pragma(const struct pragma *pragma);
+
 /*
  * Handle [pragma] directives.  [pragma] is generally produced by
  * the %pragma preprocessor directive, which simply passes on any
@@ -83,7 +85,7 @@
  */
 static struct pragma_facility global_pragmas[] =
 {
-    { "asm",		NULL },
+    { "asm",		asm_pragma },
     { "list",		NULL },
     { "file",		NULL },
     { "input",		NULL },
@@ -202,7 +204,7 @@ void process_pragma(char *str)
     else
         pragma.opcode = directive_find(pragma.opname);
 
-    pragma.tail = nasm_skip_spaces(p);
+    pragma.tail = nasm_trim_spaces(p);
 
     /* Look for a global pragma namespace */
     if (search_pragma_list(global_pragmas, NULL, &pragma))
@@ -226,4 +228,29 @@ void process_pragma(char *str)
      * Leave this for the future, however, the warning classes are
      * already defined for future compatibility.
      */
+}
+
+/*
+ * Pragmas for the assembler proper
+ */
+static enum directive_result asm_pragma(const struct pragma *pragma)
+{
+    switch (pragma->opcode) {
+    case D_PREFIX:
+    case D_GPREFIX:
+        set_label_mangle(LM_GPREFIX, pragma->tail);
+        return DIRR_OK;
+    case D_SUFFIX:
+    case D_GSUFFIX:
+        set_label_mangle(LM_GSUFFIX, pragma->tail);
+        return DIRR_OK;
+    case D_LPREFIX:
+        set_label_mangle(LM_LPREFIX, pragma->tail);
+        return DIRR_OK;
+    case D_LSUFFIX:
+        set_label_mangle(LM_LSUFFIX, pragma->tail);
+        return DIRR_OK;
+    default:
+        return DIRR_UNKNOWN;
+    }
 }

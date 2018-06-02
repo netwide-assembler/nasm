@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -40,20 +40,34 @@
 
 #include "compiler.h"
 
-extern char lprefix[PREFIX_MAX];
-extern char lpostfix[PREFIX_MAX];
+enum mangle_index {
+    LM_LPREFIX,                 /* Local variable prefix */
+    LM_LSUFFIX,                 /* Local variable suffix */
+    LM_GPREFIX,                 /* Global variable prefix */
+    LM_GSUFFIX                  /* GLobal variable suffix */
+};
+
+enum label_type {
+    LBL_LOCAL,                  /* Must be zero */
+    LBL_GLOBAL,
+    LBL_STATIC,
+    LBL_EXTERN,
+    LBL_COMMON,
+    LBL_SPECIAL,                /* Magic symbols like ..start */
+    LBL_BACKEND                 /* Backend-defined symbols like ..got */
+};
 
 bool lookup_label(const char *label, int32_t *segment, int64_t *offset);
 bool is_extern(const char *label);
-void define_label(char *label, int32_t segment, int64_t offset, char *special,
-                  bool is_norm, bool isextrn);
-void redefine_label(char *label, int32_t segment, int64_t offset, char *special,
-                    bool is_norm, bool isextrn);
-void define_common(char *label, int32_t segment, int32_t size, char *special);
-void declare_as_global(char *label, char *special);
+void define_label(const char *label, int32_t segment, int64_t offset,
+                  bool normal);
+void backend_label(const char *label, int32_t segment, int64_t offset);
+bool declare_label(const char *label, enum label_type type,
+                   const char *special);
+void set_label_mangle(enum mangle_index which, const char *what);
 int init_labels(void);
 void cleanup_labels(void);
-char *local_scope(char *label);
+const char *local_scope(const char *label);
 
 extern uint64_t global_offset_changed;
 

@@ -1540,11 +1540,9 @@ static int32_t obj_segment(char *name, int pass, int *bits)
 
         obj_seg_needs_update = seg;
         if (seg->align >= SEG_ABS)
-            define_label(name, NO_SEG, seg->align - SEG_ABS,
-			 NULL, false, false);
+            define_label(name, NO_SEG, seg->align - SEG_ABS, false);
         else
-            define_label(name, seg->index + 1, 0L,
-			 NULL, false, false);
+            define_label(name, seg->index + 1, 0L, false);
         obj_seg_needs_update = NULL;
 
         /*
@@ -1647,7 +1645,7 @@ obj_directive(enum directive directive, char *value, int pass)
             grp->name = NULL;
 
             obj_grp_needs_update = grp;
-            define_label(v, grp->index + 1, 0L, NULL, false, false);
+            backend_label(v, grp->index + 1, 0L);
             obj_grp_needs_update = NULL;
 
             while (*q) {

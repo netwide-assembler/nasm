@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -48,6 +48,7 @@
 #include "preproc.h"
 #include "insnsi.h"     /* For enum opcode */
 #include "directiv.h"   /* For enum directive */
+#include "labels.h"     /* For enum mangle_index, enum label_type */
 #include "opflags.h"
 #include "regs.h"
 
@@ -61,7 +62,7 @@ struct compile_time {
 };
 extern struct compile_time official_compile_time;
 
-#define NO_SEG -1L              /* null segment value */
+#define NO_SEG  INT32_C(-1)     /* null segment value */
 #define SEG_ABS 0x40000000L     /* mask for far-absolute segments */
 
 #ifndef PREFIX_MAX
@@ -142,21 +143,13 @@ struct out_data {
 };
 
 /*
- * A label-lookup function.
- */
-typedef bool (*lfunc)(char *label, int32_t *segment, int64_t *offset);
-
-/*
  * And a label-definition function. The boolean parameter
  * `is_norm' states whether the label is a `normal' label (which
  * should affect the local-label system), or something odder like
  * an EQU or a segment-base symbol, which shouldn't.
  */
 typedef void (*ldfunc)(char *label, int32_t segment, int64_t offset,
-                       char *special, bool is_norm, bool isextrn);
-
-void define_label(char *label, int32_t segment, int64_t offset,
-                  char *special, bool is_norm, bool isextrn);
+                       char *special, bool is_norm);
 
 /*
  * Token types returned by the scanner, in addition to ordinary
@@ -904,7 +897,7 @@ struct ofmt {
      * current offset, i.e. "foo:" or "foo equ $".
      * The offset isn't passed; and may not be stable at this point.
      */
-    int32_t (*herelabel)(const char *name, int32_t seg);
+    int32_t (*herelabel)(const char *name, enum label_type type, int32_t seg);
 
     /*
      * This procedure is called to modify section alignment,

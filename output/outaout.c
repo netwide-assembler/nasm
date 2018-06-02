@@ -198,15 +198,15 @@ static void aoutb_init(void)
     is_pic = 0x00;              /* may become 0x40 */
 
     aout_gotpc_sect = seg_alloc();
-    define_label("..gotpc", aout_gotpc_sect + 1, 0L, NULL, false, false);
+    backend_label("..gotpc", aout_gotpc_sect + 1, 0L);
     aout_gotoff_sect = seg_alloc();
-    define_label("..gotoff", aout_gotoff_sect + 1, 0L, NULL, false, false);
+    backend_label("..gotoff", aout_gotoff_sect + 1, 0L);
     aout_got_sect = seg_alloc();
-    define_label("..got", aout_got_sect + 1, 0L, NULL, false, false);
+    backend_label("..got", aout_got_sect + 1, 0L);
     aout_plt_sect = seg_alloc();
-    define_label("..plt", aout_plt_sect + 1, 0L, NULL, false, false);
+    backend_label("..plt", aout_plt_sect + 1, 0L);
     aout_sym_sect = seg_alloc();
-    define_label("..sym", aout_sym_sect + 1, 0L, NULL, false, false);
+    backend_label("..sym", aout_sym_sect + 1, 0L);
 }
 
 #endif
