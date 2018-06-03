@@ -46,6 +46,7 @@
 #include "error.h"
 #include "hashtbl.h"
 #include "labels.h"
+#include "mempool.h"
 
 /*
  * A dot-local label is one that begins with exactly one period. Things
@@ -89,19 +90,12 @@ static const char * const types[] =
 {"local", "global", "static", "extern", "common", "special",
  "output format special"};
 
-union label {                   /* actual label structures */
-    struct {
-        int32_t segment;
-        int64_t offset;
-        char *label, *mangled, *special;
-        enum label_type type, mangled_type;
-        bool defined;
-    } defn;
-    struct {
-        int32_t movingon;
-        int64_t dummy;
-        union label *next;
-    } admin;
+struct label {                   /* actual label structures */
+    int32_t segment;
+    int64_t offset;
+    char *label, *mangled, *special;
+    enum label_type type, mangled_type;
+    bool defined;
 };
 
 struct permts {                 /* permanent text storage */
@@ -114,37 +108,31 @@ struct permts {                 /* permanent text storage */
 uint64_t global_offset_changed;		/* counter for global offset changes */
 
 static struct hash_table ltab;          /* labels hash table */
-static union label *ldata;              /* all label data blocks */
-static union label *lfree;              /* labels free block */
-static struct permts *perm_head;        /* start of perm. text storage */
-static struct permts *perm_tail;        /* end of perm. text storage */
 
-static void init_block(union label *blk);
-static char *perm_alloc(size_t len);
-static char *perm_copy(const char *string);
-static char *perm_copy3(const char *s1, const char *s2, const char *s3);
-static const char *mangle_label_name(union label *lptr);
+static const char *mangle_label_name(struct label *lptr);
 
 static const char *prevlabel;
 
 static bool initialized = false;
 
+static mempool mempool_labels;
+
 /*
  * Emit a symdef to the output and the debug format backends.
  */
-static void out_symdef(union label *lptr)
+static void out_symdef(struct label *lptr)
 {
     int backend_type;
 
     /* Backend-defined special segments are passed to symdef immediately */
     if (pass0 == 2) {
         /* Emit special fixups for globals and commons */
-        switch (lptr->defn.type) {
+        switch (lptr->type) {
         case LBL_GLOBAL:
         case LBL_COMMON:
         case LBL_EXTERN:
-            if (lptr->defn.special)
-                ofmt->symdef(lptr->defn.label, 0, 0, 3, lptr->defn.special);
+            if (lptr->special)
+                ofmt->symdef(lptr->label, 0, 0, 3, lptr->special);
             break;
         default:
             break;
@@ -152,11 +140,11 @@ static void out_symdef(union label *lptr)
         return;
     }
 
-    if (pass0 != 1 && lptr->defn.type != LBL_BACKEND)
+    if (pass0 != 1 && lptr->type != LBL_BACKEND)
         return;
 
     /* Clean up this hack... */
-    switch(lptr->defn.type) {
+    switch(lptr->type) {
     case LBL_GLOBAL:
         backend_type = 1;
         break;
@@ -171,37 +159,36 @@ static void out_symdef(union label *lptr)
     /* Might be necessary for a backend symbol */
     mangle_label_name(lptr);
 
-    ofmt->symdef(lptr->defn.mangled, lptr->defn.segment,
-                 lptr->defn.offset, backend_type,
-                 lptr->defn.special);
+    ofmt->symdef(lptr->mangled, lptr->segment,
+                 lptr->offset, backend_type,
+                 lptr->special);
 
     /*
      * NASM special symbols are not passed to the debug format; none
      * of the current backends want to see them.
      */
-    if (lptr->defn.type == LBL_SPECIAL || lptr->defn.type == LBL_BACKEND)
+    if (lptr->type == LBL_SPECIAL || lptr->type == LBL_BACKEND)
         return;
 
-    dfmt->debug_deflabel(lptr->defn.mangled, lptr->defn.segment,
-                         lptr->defn.offset, backend_type,
-                         lptr->defn.special);
+    dfmt->debug_deflabel(lptr->mangled, lptr->segment,
+                         lptr->offset, backend_type,
+                         lptr->special);
 }
 
 /*
- * Internal routine: finds the `union label' corresponding to the
+ * Internal routine: finds the `struct label' corresponding to the
  * given label name. Creates a new one, if it isn't found, and if
  * `create' is true.
  */
-static union label *find_label(const char *label, bool create, bool *created)
+static struct label *find_label(const char *label, bool create, bool *created)
 {
-    union label *lptr, **lpp;
-    char *label_str = NULL;
+    struct label *lptr, **lpp;
     struct hash_insert ip;
 
     if (islocal(label))
-        label = label_str = nasm_strcat(prevlabel, label);
+        label = mempool_cat(mempool_line, prevlabel, label);
 
-    lpp = (union label **) hash_find(&ltab, label, &ip);
+    lpp = (struct label **) hash_find(&ltab, label, &ip);
     lptr = lpp ? *lpp : NULL;
 
     if (lptr || !create) {
@@ -210,40 +197,27 @@ static union label *find_label(const char *label, bool create, bool *created)
         return lptr;
     }
 
-    /* Create a new label... */
-    if (lfree->admin.movingon == END_BLOCK) {
-        /*
-         * must allocate a new block
-         */
-        lfree->admin.next = nasm_malloc(LBLK_SIZE);
-        lfree = lfree->admin.next;
-        init_block(lfree);
-    }
-
+    mempool_new(mempool_labels, lptr);
     if (created)
         *created = true;
 
-    nasm_zero(*lfree);
-    lfree->admin.movingon = BOGUS_VALUE;
-    lfree->defn.label     = perm_copy(label);
-    if (label_str)
-        nasm_free(label_str);
-
-    hash_add(&ip, lfree->defn.label, lfree);
-    return lfree++;
+    nasm_zero(*lptr);
+    lptr->label = perm_copy(label);
+    hash_add(&ip, lptr->label, lptr);
+    return lptr;
 }
 
 bool lookup_label(const char *label, int32_t *segment, int64_t *offset)
 {
-    union label *lptr;
+    struct label *lptr;
 
     if (!initialized)
         return false;
 
     lptr = find_label(label, false, NULL);
-    if (lptr && lptr->defn.defined) {
-        *segment = lptr->defn.segment;
-        *offset = lptr->defn.offset;
+    if (lptr && lptr->defined) {
+        *segment = lptr->segment;
+        *offset = lptr->offset;
         return true;
     }
 
@@ -252,13 +226,13 @@ bool lookup_label(const char *label, int32_t *segment, int64_t *offset)
 
 bool is_extern(const char *label)
 {
-    union label *lptr;
+    struct label *lptr;
 
     if (!initialized)
         return false;
 
     lptr = find_label(label, false, NULL);
-    return lptr && lptr->defn.type == LBL_EXTERN;
+    return lptr && lptr->type == LBL_EXTERN;
 }
 
 static const char *mangle_strings[] = {"", "", "", ""};
@@ -279,16 +253,16 @@ void set_label_mangle(enum mangle_index which, const char *what)
 /*
  * Format a label name with appropriate prefixes and suffixes
  */
-static const char *mangle_label_name(union label *lptr)
+static const char *mangle_label_name(struct label *lptr)
 {
     const char *prefix;
     const char *suffix;
 
-    if (likely(lptr->defn.mangled &&
-               lptr->defn.mangled_type == lptr->defn.type))
-        return lptr->defn.mangled; /* Already mangled */
+    if (likely(lptr->mangled &&
+               lptr->mangled_type == lptr->type))
+        return lptr->mangled; /* Already mangled */
 
-    switch (lptr->defn.type) {
+    switch (lptr->type) {
     case LBL_GLOBAL:
     case LBL_STATIC:
     case LBL_EXTERN:
@@ -305,18 +279,18 @@ static const char *mangle_label_name(union label *lptr)
         break;
     }
 
-    lptr->defn.mangled_type = lptr->defn.type;
+    lptr->mangled_type = lptr->type;
 
     if (!(*prefix) && !(*suffix))
-        lptr->defn.mangled = lptr->defn.label;
+        lptr->mangled = lptr->label;
     else
-        lptr->defn.mangled = perm_copy3(prefix, lptr->defn.label, suffix);
+        lptr->mangled = perm_copy3(prefix, lptr->label, suffix);
 
-    return lptr->defn.mangled;
+    return lptr->mangled;
 }
 
 static void
-handle_herelabel(const union label *lptr, int32_t *segment, int64_t *offset)
+handle_herelabel(const struct label *lptr, int32_t *segment, int64_t *offset)
 {
     int32_t oldseg;
 
@@ -332,8 +306,8 @@ handle_herelabel(const union label *lptr, int32_t *segment, int64_t *offset)
         /* This label is defined at this location */
         int32_t newseg;
 
-        nasm_assert(lptr->defn.mangled);
-        newseg = ofmt->herelabel(lptr->defn.mangled, lptr->defn.type, oldseg);
+        nasm_assert(lptr->mangled);
+        newseg = ofmt->herelabel(lptr->mangled, lptr->type, oldseg);
         if (likely(newseg == oldseg))
             return;
 
@@ -342,56 +316,53 @@ handle_herelabel(const union label *lptr, int32_t *segment, int64_t *offset)
     }
 }
 
-static bool declare_label_lptr(union label *lptr,
+static bool declare_label_lptr(struct label *lptr,
                                enum label_type type, const char *special)
 {
     if (special && !special[0])
         special = NULL;
 
-    printf("declare_label %s type %d special %s\n",
-           lptr->defn.label, lptr->defn.type, lptr->defn.special);
-    
-    if (lptr->defn.type == type ||
-        (pass0 == 0 && lptr->defn.type == LBL_LOCAL)) {
-        lptr->defn.type = type;
+    if (lptr->type == type ||
+        (pass0 == 0 && lptr->type == LBL_LOCAL)) {
+        lptr->type = type;
         if (special) {
-            if (!lptr->defn.special)
-                lptr->defn.special = perm_copy(special);
-            else if (nasm_stricmp(lptr->defn.special, special))
+            if (!lptr->special)
+                lptr->special = perm_copy(special);
+            else if (nasm_stricmp(lptr->special, special))
                 nasm_error(ERR_NONFATAL,
                            "symbol `%s' has inconsistent attributes `%s' and `%s'",
-                           lptr->defn.label, lptr->defn.special, special);
+                           lptr->label, lptr->special, special);
         }
         return true;
     }
 
     /* EXTERN can be replaced with GLOBAL or COMMON */
-    if (lptr->defn.type == LBL_EXTERN &&
+    if (lptr->type == LBL_EXTERN &&
         (type == LBL_GLOBAL || type == LBL_COMMON)) {
-        lptr->defn.type = type;
+        lptr->type = type;
         /* Override special unconditionally */
         if (special)
-            lptr->defn.special = perm_copy(special);
+            lptr->special = perm_copy(special);
         return true;
     }
 
     /* GLOBAL or COMMON ignore subsequent EXTERN */
-    if ((lptr->defn.type == LBL_GLOBAL || lptr->defn.type == LBL_COMMON) &&
+    if ((lptr->type == LBL_GLOBAL || lptr->type == LBL_COMMON) &&
         type == LBL_EXTERN) {
-        if (!lptr->defn.special)
-            lptr->defn.special = perm_copy(special);
+        if (!lptr->special)
+            lptr->special = perm_copy(special);
         return true;
     }
 
     nasm_error(ERR_NONFATAL, "symbol `%s' declared both as %s and %s",
-               lptr->defn.label, types[lptr->defn.type], types[type]);
+               lptr->label, types[lptr->type], types[type]);
 
     return false;
 }
 
 bool declare_label(const char *label, enum label_type type, const char *special)
 {
-    union label *lptr;
+    struct label *lptr;
     bool created;
 
     lptr = find_label(label, true, &created);
@@ -405,7 +376,7 @@ bool declare_label(const char *label, enum label_type type, const char *special)
 void define_label(const char *label, int32_t segment,
                   int64_t offset, bool normal)
 {
-    union label *lptr;
+    struct label *lptr;
     bool created, changed;
 
     /*
@@ -420,21 +391,21 @@ void define_label(const char *label, int32_t segment,
 	    nasm_error(ERR_WARNING, "label `%s' defined on pass two", label);
     }
 
-    if (lptr->defn.defined || lptr->defn.type == LBL_BACKEND) {
+    if (lptr->defined || lptr->type == LBL_BACKEND) {
         /* We have seen this on at least one previous pass */
         mangle_label_name(lptr);
         handle_herelabel(lptr, &segment, &offset);
     }
 
-    if (ismagic(label) && lptr->defn.type == LBL_LOCAL)
-        lptr->defn.type = LBL_SPECIAL;
+    if (ismagic(label) && lptr->type == LBL_LOCAL)
+        lptr->type = LBL_SPECIAL;
     
     if (!islocal(label) && normal) {
-        prevlabel = lptr->defn.label;
+        prevlabel = lptr->label;
     }
 
-    changed = !lptr->defn.defined || lptr->defn.segment != segment ||
-        lptr->defn.offset != offset;
+    changed = !lptr->defined || lptr->segment != segment ||
+        lptr->offset != offset;
     global_offset_changed += changed;
 
     /*
@@ -442,13 +413,13 @@ void define_label(const char *label, int32_t segment,
      * special case, LBL_SPECIAL symbols are allowed to be changed
      * even during the last pass.
      */
-    if (changed && pass0 == 2 && lptr->defn.type != LBL_SPECIAL)
+    if (changed && pass0 == 2 && lptr->type != LBL_SPECIAL)
         nasm_error(ERR_WARNING, "label `%s' changed during code generation",
-                   lptr->defn.label);
+                   lptr->label);
 
-    lptr->defn.segment = segment;
-    lptr->defn.offset  = offset;
-    lptr->defn.defined = true;
+    lptr->segment = segment;
+    lptr->offset  = offset;
+    lptr->defined = true;
 
     out_symdef(lptr);
 }
@@ -467,17 +438,6 @@ void backend_label(const char *label, int32_t segment, int64_t offset)
 int init_labels(void)
 {
     hash_init(&ltab, HASH_LARGE);
-
-    ldata = lfree = nasm_malloc(LBLK_SIZE);
-    init_block(lfree);
-
-    perm_head = perm_tail =
-        nasm_malloc(sizeof(struct permts));
-
-    perm_head->next = NULL;
-    perm_head->size = PERMTS_SIZE;
-    perm_head->usage = 0;
-
     prevlabel = "";
 
     initialized = true;
@@ -487,84 +447,10 @@ int init_labels(void)
 
 void cleanup_labels(void)
 {
-    union label *lptr, *lhold;
-
     initialized = false;
 
     hash_free(&ltab);
-
-    lptr = lhold = ldata;
-    while (lptr) {
-        lptr = &lptr[LABEL_BLOCK-1];
-        lptr = lptr->admin.next;
-        nasm_free(lhold);
-        lhold = lptr;
-    }
-
-    while (perm_head) {
-        perm_tail = perm_head;
-        perm_head = perm_head->next;
-        nasm_free(perm_tail);
-    }
-}
-
-static void init_block(union label *blk)
-{
-    int j;
-
-    for (j = 0; j < LABEL_BLOCK - 1; j++)
-        blk[j].admin.movingon = END_LIST;
-    blk[LABEL_BLOCK - 1].admin.movingon = END_BLOCK;
-    blk[LABEL_BLOCK - 1].admin.next = NULL;
-}
-
-static char * safe_alloc perm_alloc(size_t len)
-{
-    char *p;
-    
-    if (perm_tail->size - perm_tail->usage < len) {
-        size_t alloc_len = (len > PERMTS_SIZE) ? len : PERMTS_SIZE;
-        perm_tail->next = nasm_malloc(PERMTS_HEADER + alloc_len);
-        perm_tail = perm_tail->next;
-        perm_tail->next = NULL;
-        perm_tail->size = alloc_len;
-        perm_tail->usage = 0;
-    }
-    p = perm_tail->data + perm_tail->usage;
-    perm_tail->usage += len;
-    return p;
-}
-
-static char *perm_copy(const char *string)
-{
-    char *p;
-    size_t len;
-
-    if (!string)
-        return NULL;
-
-    len = strlen(string)+1; /* Include final NUL */
-
-    p = perm_alloc(len);
-    memcpy(p, string, len);
-
-    return p;
-}
-
-static char *
-perm_copy3(const char *s1, const char *s2, const char *s3)
-{
-    char *p;
-    size_t l1 = strlen(s1);
-    size_t l2 = strlen(s2);
-    size_t l3 = strlen(s3)+1;   /* Include final NUL */
-    
-    p = perm_alloc(l1+l2+l3);
-    memcpy(p, s1, l1);
-    memcpy(p+l1, s2, l2);
-    memcpy(p+l1+l2, s3, l3);
-
-    return p;
+    mempool_free(mempool_labels);
 }
 
 const char *local_scope(const char *label)
