@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 2007-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 2007-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -71,17 +71,17 @@
 #define __STDC_LIMIT_MACROS	1
 #define __STDC_FORMAT_MACROS	1
 
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h>
-#else
-# include "nasmint.h"
-#endif
-
 #include <assert.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <limits.h>
+
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#else
+# include "nasmint.h"
+#endif
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -184,6 +184,37 @@ typedef enum bool { false, true } bool;
    *p is a member. */
 #ifndef container_of
 # define container_of(p, c, m) ((c *)((char *)(p) - offsetof(c,m)))
+#endif
+
+/*
+ * alignof(), and make a best guess at what the maximum alignment we
+ * may need might be
+ */
+#ifdef HAVE_STDALIGN_H
+# include <stdalign.h>
+#endif
+#ifdef HAVE_MAX_ALIGN_T
+typedef max_align_t nasm_max_align_t;
+#else
+typedef union {
+    void *p;
+    uint64_t i;
+} nasm_max_align_t;
+#endif
+#if !defined(HAVE_ALIGNOF) && !defined(alignof) && defined(HAVE__ALIGNOF)
+# define alignof(x) _Alignof(x)
+# define HAVE_ALIGNOF 1
+#endif
+#ifdef __BIGGEST_ALIGNMENT__
+# define MAX_ALIGNMENT __BIGGEST_ALIGNMENT__
+#elif defined(HAVE_ALIGNOF)
+# define MAX_ALIGNMENT alignof(nasm_max_align_t)
+#elif
+# define MAX_ALIGNMENT sizeof(nasm_max_align_t)
+#endif
+
+#ifndef HAVE_ALIGNOF
+# define alignof(x) MAX_ALIGNMENT /* Safe but probably inefficient */
 #endif
 
 /* Some misguided platforms hide the defs for these */

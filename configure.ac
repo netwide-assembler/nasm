@@ -147,6 +147,12 @@ PA_HAVE_FUNC(__builtin_clzll, (0ULL))
 PA_HAVE_FUNC(_BitScanReverse, (0))
 PA_HAVE_FUNC(_BitScanReverse64, (0))
 
+dnl alignment stuff
+PA_ADD_HEADERS(stdalign.h)
+PA_HAVE_FUNC(alignof,(0))
+PA_HAVE_FUNC(_Alignof,(0))
+AC_CHECK_TYPES(max_align_t)
+
 dnl Functions for which we have replacements available in stdlib/
 AC_CHECK_FUNCS([vsnprintf _vsnprintf])
 AC_CHECK_FUNCS([snprintf _snprintf])
@@ -258,7 +264,8 @@ PA_ARG_ENABLED([sanitizer],
  [compile with sanitizers enabled],
  [PA_ADD_CFLAGS([-fno-omit-frame-pointer])
   PA_ADD_CLDFLAGS([-fsanitize=address])
-  PA_ADD_CLDFLAGS([-fsanitize=undefined])])
+  PA_ADD_CLDFLAGS([-fsanitize=undefined])
+  AC_DEFINE([WITH_SANITIZER], 1, [Define to 1 to enable sanitizer options])])
 
 dnl
 dnl Don't make symbols visible, there is no point and it just

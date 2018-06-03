@@ -60,6 +60,7 @@
 #include "outform.h"
 #include "listing.h"
 #include "iflag.h"
+#include "mempool.h"
 #include "ver.h"
 
 /*
@@ -502,7 +503,6 @@ int main(int argc, char **argv)
 
         if (!terminate_after_phase) {
             ofmt->cleanup();
-            cleanup_labels();
             fflush(ofile);
             if (ferror(ofile)) {
                 nasm_error(ERR_NONFATAL|ERR_NOFILE,
@@ -525,11 +525,14 @@ int main(int argc, char **argv)
     if (want_usage)
         usage();
 
+    cleanup_labels();
     raa_free(offsets);
     saa_free(forwrefs);
     eval_cleanup();
     stdscan_cleanup();
     src_free();
+    mempool_free(mempool_perm);
+    mempool_reclaim();
 
     return terminate_after_phase;
 }
@@ -1540,6 +1543,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
 
         end_of_line:
             nasm_free(line);
+            mempool_free(mempool_line);
         }                       /* end while (line = preproc->getline... */
 
         if (pass0 == 2 && global_offset_changed && !terminate_after_phase)
@@ -1559,10 +1563,12 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
             stall_count++;
         }
 
+        mempool_free(mempool_pass);
         if (terminate_after_phase)
             break;
 
-        if ((stall_count > 997U) || (passn >= pass_max)) {
+        if (!terminate_after_phase &&
+            ((stall_count > 997U) || (passn >= pass_max))) {
             /* We get here if the labels don't converge
              * Example: FOO equ FOO + 1
              */
@@ -1571,10 +1577,11 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
                           "after %d passes, giving up.", passn);
              nasm_error(ERR_NONFATAL,
                         "Possible causes: recursive EQUs, macro abuse.");
-             break;
+             terminate_after_phase = true;
         }
     }
 
+    mempool_free(mempool_pass);
     preproc->cleanup(0);
     lfmt->cleanup();
     if (!terminate_after_phase && opt_verbose_info) {

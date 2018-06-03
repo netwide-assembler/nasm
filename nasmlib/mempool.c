@@ -52,37 +52,15 @@
 #include "nasmlib.h"
 #include "ilog2.h"
 
+#ifdef WITH_SANITIZER
+# undef DEBUG_MEMPOOL
+#endif
+
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 
-/*
- * Make a best guess at what the maximum alignment we may need might be
- */
-#ifdef HAVE_STDALIGN_H
-# include <stdalign.h>
-#endif
-#if !defined(HAVE_ALIGNOF) && defined(HAVE__ALIGNOF)
-# define HAVE_ALIGNOF 1
-# define alignof(x) _Alignof(x)
-#endif
-#ifdef __BIGGEST_ALIGNMENT__    /* gcc at least provides this */
-# define SYS_ALIGNMENT __BIGGEST_ALIGNMENT__
-#elif defined(HAVE_ALIGNOF)
-# ifdef HAVE_MAX_ALIGN_T
-#  define SYS_ALIGNMENT alignof(max_align_t)
-# else
-   /* Best guess for what we may actually need */
-#  define SYS_ALIGNMENT MAX(alignof(void *), alignof(uint64_t))
-# endif
-#else
-# define SYS_ALIGNMENT sizeof(void *)
-#endif
-
-/* Always align to a multiple of uint64_t even if not required by the system */
-#define MY_ALIGNMENT MAX(SYS_ALIGNMENT, sizeof(uint64_t)) /* Chaotic good? */
-
-#define ALLOC_ALIGN(x) (((size_t)(x) + MY_ALIGNMENT - 1) & \
-                        ~((size_t)MY_ALIGNMENT - 1))
+#define ALLOC_ALIGN(x) (((size_t)(x) + MAX_ALIGNMENT - 1) & \
+                        ~((size_t)MAX_ALIGNMENT - 1))
 
 /*
  * Sizes of allocation blocks. We default to ALLOC_START, but allocate
@@ -132,9 +110,9 @@ void mempool_free(struct mempool *sp)
  */
 void mempool_reclaim(void)
 {
-    struct mempool_storage *s;
+    struct mempool_storage *s, *sn;
 
-    list_for_each(s, ssfree)
+    list_for_each_safe(s, sn, ssfree)
         nasm_free(s);
     ssfree = NULL;
 }
@@ -142,14 +120,9 @@ void mempool_reclaim(void)
 static struct mempool_storage *mempool_more(struct mempool *sp, size_t l)
 {
     struct mempool_storage *sps, **ssp;
-    size_t n;
-    size_t nmin;
-    const size_t header = ALLOC_ALIGN(sizeof(struct mempool_storage));
+    size_t n, nmin;
 
-    sps = sp->sstail;
-    ssp = sps ? &sps->next : &sp->sshead;
-
-    l += header;
+    l += ALLOC_ALIGN(sizeof(struct mempool_storage));
     nmin = ALLOC_ALIGN(MAX(l, ALLOC_MIN));
 
     /* Is the top block on the free list which is big enough for us? */
@@ -159,7 +132,7 @@ static struct mempool_storage *mempool_more(struct mempool *sp, size_t l)
         goto have_sps;
     }
 
-    n = sps ? sp->totalbytes : ALLOC_START;
+    n = MAX(sp->totalbytes, ALLOC_START);
     n = MIN(n, ALLOC_MAX);
     n = MAX(n, nmin);
     n = ((size_t)2) << ilog2_64(n-1); /* Round up to a power of 2 */
@@ -181,44 +154,52 @@ static struct mempool_storage *mempool_more(struct mempool *sp, size_t l)
     sps->nbytes = nmin;
 
 have_sps:
+    ssp = sp->sstail ? &sps->next : &sp->sshead;
     *ssp = sp->sstail = sps;
     if (!sp->sshead)
         sp->sshead = sp->sstail;
     sps->next = NULL;
-    sps->idx = header;
+    sps->idx = sizeof *sps;
     sp->totalbytes += sps->nbytes;
     return sps;
 }
 
-static inline void *
-mempool_get_aligned(struct mempool *sp, size_t l, const size_t align)
+void *mempool_align(struct mempool *sp, size_t l, const size_t align)
 {
     struct mempool_storage *sps;
     char *p;
     size_t idx;
 
     sps = sp->sstail;
+    if (unlikely(!sps))
+        goto need_more;
+
     idx = (sps->idx + align - 1) & ~(align - 1);
-    if (unlikely(l > sps->nbytes - idx)) {
-        sps = mempool_more(sp, l);
-        idx = sps->idx;
-    }
+    if (unlikely(l > sps->nbytes - idx))
+        goto need_more;
+
+ok:
     p = (char *)sps + idx;
     sps->idx = idx+l;
     return p;
+
+need_more:
+    sps = mempool_more(sp, l);
+    idx = sps->idx;
+    goto ok;
 }
 
 static inline char *mempool_get(struct mempool *sp, size_t l)
 {
-    return mempool_get_aligned(sp, l, 1);
+    return mempool_align(sp, l, 1);
 }
 
 void *mempool_alloc(struct mempool *sp, size_t l)
 {
-    return mempool_get_aligned(sp, l, MY_ALIGNMENT);
+    return mempool_align(sp, l, MAX_ALIGNMENT);
 }
 
-char *mempool_add(struct mempool *sp, const char *str)
+char *mempool_cpy(struct mempool *sp, const char *str)
 {
     char *p;
     size_t l = strlen(str) + 1;
@@ -306,4 +287,22 @@ char *mempool_printf(struct mempool *sp, const char *fmt, ...)
     va_end(va);
 
     return p;
+}
+
+/*
+ * Common memory pools that are freed after every line, pass, or session,
+ * respectively.
+ */
+mempool mempool_perm;
+mempool mempool_pass;
+mempool mempool_line;
+
+char *perm_copy(const char *string)
+{
+    return mempool_cpy(mempool_perm, string);
+}
+
+char *perm_copy3(const char *s1, const char *s2, const char *s3)
+{
+    return mempool_cat3(mempool_perm, s1, s2, s3);
 }

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 2017 The NASM Authors - All Rights Reserved
+ *   Copyright 2017-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -51,15 +51,36 @@ struct mempool {
 /* A single-member array which can decay to a pointer for simplicity */
 typedef struct mempool mempool[1];
 
-char *mempool_add(struct mempool *pool, const char *str);
-char *mempool_cat(struct mempool *pool, const char *str1, const char *str2);
-char *mempool_cat3(struct mempool *pool, const char *str1,
+char * safe_alloc mempool_cpy(struct mempool *pool, const char *str);
+char * safe_alloc mempool_cat(struct mempool *pool, const char *str1, const char *str2);
+char * safe_alloc mempool_cat3(struct mempool *pool, const char *str1,
                          const char *str2, const char *str3);
-char *mempool_vprintf(struct mempool *pool, const char *fmt, va_list va);
-char *mempool_printf(struct mempool *pool, const char *fmt, ...);
+char * safe_alloc mempool_vprintf(struct mempool *pool, const char *fmt, va_list va);
+char * safe_alloc mempool_printf(struct mempool *pool, const char *fmt, ...);
 
-void *mempool_alloc(struct mempool *pool, size_t bytes);
+void * safe_malloc(2) mempool_alloc(struct mempool *pool, size_t bytes);
+void * safe_malloc(2) mempool_align(struct mempool *pool, size_t bytes, size_t align);
 void mempool_free(struct mempool *pool);
 void mempool_reclaim(void);
+
+#ifdef HAVE_ALIGNOF
+#define mempool_new(pool,ptr)                           \
+    ((ptr) = mempool_align(pool, sizeof *(ptr), alignof(*(ptr))))
+#else
+#define mempool_new(pool,ptr)                         \
+    ((ptr) = mempool_alloc(pool, sizeof *(ptr)))
+#endif
+
+/*
+ * Common memory pools that are freed after every line, pass, or session,
+ * respectively.
+ */
+extern mempool mempool_perm;
+extern mempool mempool_pass;
+extern mempool mempool_line;
+
+/* Routines to copy strings into mempool_perm */
+char *perm_copy(const char *string);
+char *perm_copy3(const char *s1, const char *s2, const char *s3);
 
 #endif /* NASM_STRPOOL_H */
