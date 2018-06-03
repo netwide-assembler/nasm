@@ -82,6 +82,7 @@ LIBOBJ = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) \
 	nasmlib\raa.$(O) nasmlib\saa.$(O) \
 	nasmlib\strlist.$(O) \
 	nasmlib\perfhash.$(O) nasmlib\badenum.$(O) \
+	nasmlib\mempool.$(O) \
 	\
 	common\common.$(O) \
 	\
