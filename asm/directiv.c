@@ -102,7 +102,7 @@ static iflag_t get_cpu(const char *value)
     iflag_clear_all(&r);
 
     for (cpu = cpunames; cpu->name; cpu++) {
-        if (!strcmp(value, cpu->name))
+        if (!nasm_stricmp(value, cpu->name))
             break;
     }
 
