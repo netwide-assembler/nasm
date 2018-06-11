@@ -718,7 +718,10 @@ enum text_options {
     OPT_BOGUS,
     OPT_VERSION,
     OPT_ABORT_ON_PANIC,
-    OPT_MANGLE
+    OPT_MANGLE,
+    OPT_INCLUDE,
+    OPT_PRAGMA,
+    OPT_BEFORE
 };
 struct textargs {
     const char *label;
@@ -736,6 +739,9 @@ static const struct textargs textopts[] = {
     {"gpostfix", OPT_MANGLE, true, LM_GSUFFIX},
     {"lprefix",  OPT_MANGLE, true, LM_LPREFIX},
     {"lpostfix", OPT_MANGLE, true, LM_LSUFFIX},
+    {"include",  OPT_INCLUDE, true, 0},
+    {"pragma",   OPT_PRAGMA,  true, 0},
+    {"before",   OPT_BEFORE,  true, 0},
     {NULL, OPT_BOGUS, false, 0}
 };
 
@@ -899,45 +905,47 @@ static bool process_arg(char *p, char *q, int pass)
                  "[-l listfile]\n"
                  "            [options...] [--] filename\n"
                  "    or nasm -v (or --v) for version info\n\n"
-                 "    -t          assemble in SciTech TASM compatible mode\n");
+                 "    -t            assemble in SciTech TASM compatible mode\n");
             printf
-                ("    -E (or -e)  preprocess only (writes output to stdout by default)\n"
-                 "    -a          don't preprocess (assemble only)\n"
-                 "    -M          generate Makefile dependencies on stdout\n"
-                 "    -MG         d:o, missing files assumed generated\n"
-                 "    -MF <file>  set Makefile dependency file\n"
-                 "    -MD <file>  assemble and generate dependencies\n"
-                 "    -MT <file>  dependency target name\n"
-                 "    -MQ <file>  dependency target name (quoted)\n"
-                 "    -MP         emit phony target\n\n"
-                 "    -Z<file>    redirect error messages to file\n"
-                 "    -s          redirect error messages to stdout\n\n"
-                 "    -g          generate debugging information\n\n"
-                 "    -F format   select a debugging format\n\n"
-                 "    -gformat    same as -g -F format\n\n"
-                 "    -o outfile  write output to an outfile\n\n"
-                 "    -f format   select an output format\n\n"
-                 "    -l listfile write listing to a listfile\n\n"
-                 "    -I<path>    adds a pathname to the include file path\n");
+                ("    -E (or -e)    preprocess only (writes output to stdout by default)\n"
+                 "    -a            don't preprocess (assemble only)\n"
+                 "    -M            generate Makefile dependencies on stdout\n"
+                 "    -MG           d:o, missing files assumed generated\n"
+                 "    -MF file      set Makefile dependency file\n"
+                 "    -MD file      assemble and generate dependencies\n"
+                 "    -MT file      dependency target name\n"
+                 "    -MQ file      dependency target name (quoted)\n"
+                 "    -MP           emit phony target\n\n"
+                 "    -Zfile        redirect error messages to file\n"
+                 "    -s            redirect error messages to stdout\n\n"
+                 "    -g            generate debugging information\n\n"
+                 "    -F format     select a debugging format\n\n"
+                 "    -gformat      same as -g -F format\n\n"
+                 "    -o outfile    write output to an outfile\n\n"
+                 "    -f format     select an output format\n\n"
+                 "    -l listfile   write listing to a listfile\n\n"
+                 "    -Ipath        add a pathname to the include file path\n");
             printf
-                ("    -O<digit>   optimize branch offsets\n"
-                 "                -O0: No optimization\n"
-                 "                -O1: Minimal optimization\n"
-                 "                -Ox: Multipass optimization (default)\n\n"
-                 "    -P<file>    pre-includes a file\n"
-                 "    -D<macro>[=<value>] pre-defines a macro\n"
-                 "    -U<macro>   undefines a macro\n"
-                 "    -X<format>  specifies error reporting format (gnu or vc)\n"
-                 "    -w+foo      enables warning foo (equiv. -Wfoo)\n"
-                 "    -w-foo      disable warning foo (equiv. -Wno-foo)\n\n"
-                 "    -w[+-]error[=foo] can be used to promote warnings to errors\n"
-                "    -h           show invocation summary and exit\n\n"
-                 "--prefix,--postfix\n"
-                 "                these options prepend or append the given string\n"
-                 "                to all extern, common and global symbols\n"
-                 "--lprefix,--lportfix\n"
-                 "                these options prepend or append the given string\n"
-                 "                to all other symbols\n"
+                ("    -Olevel       optimize opcodes, immediates and branch offsets\n"
+                 "       -O0        no optimization\n"
+                 "       -O1        minimal optimization\n"
+                 "       -Ox        multipass optimization (default)\n"
+                 "    -Pfile        pre-include a file (also --include)\n"
+                 "    -Dmacro[=str] pre-define a macro\n"
+                 "    -Umacro       undefine a macro\n"
+                 "    -Xformat      specifiy error reporting format (gnu or vc)\n"
+                 "    -w+foo        enable warning foo (equiv. -Wfoo)\n"
+                 "    -w-foo        disable warning foo (equiv. -Wno-foo)\n"
+                 "    -w[+-]error[=foo]\n"
+                 "                  promote [specific] warnings to errors\n"
+                 "    -h            show invocation summary and exit\n\n"
+                 "   --pragma str   pre-executes a specific %%pragma\n"
+                 "   --before str   add line (usually a preprocessor statement) before the input\n"
+                 "   --prefix str   prepend the given string to all the given string\n"
+                 "                  to all extern, common and global symbols\n"
+                 "   --suffix str   append the given string to all the given string\n"
+                 "                  to all extern, common and global symbols\n"
+                 "   --lprefix str  prepend the given string to all other symbols\n"
 		 "\n"
 		 "Response files should contain command line parameters,\n"
                  "one per line.\n"
@@ -1091,6 +1099,18 @@ static bool process_arg(char *p, char *q, int pass)
                 case OPT_MANGLE:
                     if (pass == 2)
                         set_label_mangle(tx->pvt, q);
+                    break;
+                case OPT_INCLUDE:
+                    if (pass == 2)
+                        preproc->pre_include(q);
+                    break;
+                case OPT_PRAGMA:
+                    if (pass == 2)
+                        preproc->pre_command("pragma", q);
+                    break;
+                case OPT_BEFORE:
+                    if (pass == 2)
+                        preproc->pre_command(NULL, q);
                     break;
                 case OPT_BOGUS:
                     nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,

@@ -365,6 +365,9 @@ struct preproc_ops {
     /* Include file from command line */
     void (*pre_include)(char *fname);
 
+    /* Add a command from the command line */
+    void (*pre_command)(const char *what, char *str);
+
     /* Include path from command line */
     void (*include_path)(char *path);
 

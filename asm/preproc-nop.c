@@ -164,6 +164,12 @@ static void nop_pre_include(char *fname)
     (void)fname;
 }
 
+static void nop_pre_command(const char *what, char *string)
+{
+    (void)what;
+    (void)string;
+}
+
 static void nop_include_path(char *path)
 {
     (void)path;
@@ -183,6 +189,7 @@ const struct preproc_ops preproc_nop = {
     nop_pre_define,
     nop_pre_undefine,
     nop_pre_include,
+    nop_pre_command,
     nop_include_path,
     nop_error_list_macros,
 };

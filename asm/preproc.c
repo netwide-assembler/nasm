@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -5389,6 +5389,27 @@ static void pp_pre_undefine(char *definition)
     predef = l;
 }
 
+/* Insert an early preprocessor command that doesn't need special handling */
+static void pp_pre_command(const char *what, char *string)
+{
+    char *cmd;
+    Token *def, *space;
+    Line *l;
+
+    def = tokenize(string);
+    if (what) {
+        cmd = nasm_strcat(what[0] == '%' ? "" : "%", what);
+        space = new_Token(def, TOK_WHITESPACE, NULL, 0);
+        def = new_Token(space, TOK_PREPROC_ID, cmd, 0);
+    }
+
+    l = nasm_malloc(sizeof(Line));
+    l->next = predef;
+    l->first = def;
+    l->finishes = NULL;
+    predef = l;
+}
+
 static void pp_add_stdmac(macros_t *macros)
 {
     macros_t **mp;
@@ -5454,6 +5475,7 @@ const struct preproc_ops nasmpp = {
     pp_pre_define,
     pp_pre_undefine,
     pp_pre_include,
+    pp_pre_command,
     pp_include_path,
     pp_error_list_macros,
 };
