@@ -317,17 +317,24 @@ bool process_directives(char *directive)
         char *sizestr;
         bool rn_error;
 
+        if (*value == '$')
+            value++;        /* skip initial $ if present */
+
         q = value;
-        if (!isidstart(*q))
+        if (!isidstart(*q)) {
             validid = false;
-        while (*q && *q != ':' && !nasm_isspace(*q)) {
-            if (!isidchar(*q))
-                validid = false;
+        } else {
             q++;
+            while (*q && *q != ':' && !nasm_isspace(*q)) {
+                if (!isidchar(*q))
+                    validid = false;
+                q++;
+            }
         }
         if (!validid) {
             nasm_error(ERR_NONFATAL,
-                       "identifier expected after %s", directive);
+                       "identifier expected after %s, got `%s'",
+                       directive, value);
             break;
         }
 
@@ -358,14 +365,11 @@ bool process_directives(char *directive)
                        directive);
         }
 
-        if (*value == '$')
-            value++;        /* skip initial $ if present */
-
         if (!declare_label(value, type, special))
             break;
         
         if (type == LBL_COMMON || type == LBL_EXTERN)
-            define_label(value, 0, size, false);
+            define_label(value, seg_alloc(), size, false);
 
     	break;
     }

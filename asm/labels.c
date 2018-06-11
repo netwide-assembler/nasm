@@ -93,6 +93,7 @@ union label {                   /* actual label structures */
     struct {
         int32_t segment;
         int64_t offset;
+        int64_t size;
         char *label, *mangled, *special;
         enum label_type type, mangled_type;
         bool defined;
@@ -135,14 +136,15 @@ static bool initialized = false;
 static void out_symdef(union label *lptr)
 {
     int backend_type;
+    int64_t backend_offset;
 
     /* Backend-defined special segments are passed to symdef immediately */
     if (pass0 == 2) {
         /* Emit special fixups for globals and commons */
         switch (lptr->defn.type) {
         case LBL_GLOBAL:
-        case LBL_COMMON:
         case LBL_EXTERN:
+        case LBL_COMMON:
             if (lptr->defn.special)
                 ofmt->symdef(lptr->defn.label, 0, 0, 3, lptr->defn.special);
             break;
@@ -159,12 +161,15 @@ static void out_symdef(union label *lptr)
     switch(lptr->defn.type) {
     case LBL_GLOBAL:
         backend_type = 1;
+        backend_offset = lptr->defn.offset;
         break;
     case LBL_COMMON:
         backend_type = 2;
+        backend_offset = lptr->defn.size;
         break;
     default:
         backend_type = 0;
+        backend_offset = lptr->defn.offset;
         break;
     }
 
@@ -172,7 +177,7 @@ static void out_symdef(union label *lptr)
     mangle_label_name(lptr);
 
     ofmt->symdef(lptr->defn.mangled, lptr->defn.segment,
-                 lptr->defn.offset, backend_type,
+                 backend_offset, backend_type,
                  lptr->defn.special);
 
     /*
@@ -348,9 +353,6 @@ static bool declare_label_lptr(union label *lptr,
     if (special && !special[0])
         special = NULL;
 
-    printf("declare_label %s type %d special %s\n",
-           lptr->defn.label, lptr->defn.type, lptr->defn.special);
-    
     if (lptr->defn.type == type ||
         (pass0 == 0 && lptr->defn.type == LBL_LOCAL)) {
         lptr->defn.type = type;
@@ -407,6 +409,7 @@ void define_label(const char *label, int32_t segment,
 {
     union label *lptr;
     bool created, changed;
+    int64_t size;
 
     /*
      * Phase errors here can be one of two types: a new label appears,
@@ -428,13 +431,20 @@ void define_label(const char *label, int32_t segment,
 
     if (ismagic(label) && lptr->defn.type == LBL_LOCAL)
         lptr->defn.type = LBL_SPECIAL;
-    
+
     if (!islocal(label) && normal) {
         prevlabel = lptr->defn.label;
     }
 
+    if (lptr->defn.type == LBL_COMMON) {
+        size = offset;
+        offset = 0;
+    } else {
+        size = 0;               /* This is a hack... */
+    }
+
     changed = !lptr->defn.defined || lptr->defn.segment != segment ||
-        lptr->defn.offset != offset;
+        lptr->defn.offset != offset || lptr->defn.size != size;
     global_offset_changed += changed;
 
     /*
@@ -448,6 +458,7 @@ void define_label(const char *label, int32_t segment,
 
     lptr->defn.segment = segment;
     lptr->defn.offset  = offset;
+    lptr->defn.size    = size;
     lptr->defn.defined = true;
 
     out_symdef(lptr);
@@ -521,7 +532,7 @@ static void init_block(union label *blk)
 static char * safe_alloc perm_alloc(size_t len)
 {
     char *p;
-    
+
     if (perm_tail->size - perm_tail->usage < len) {
         size_t alloc_len = (len > PERMTS_SIZE) ? len : PERMTS_SIZE;
         perm_tail->next = nasm_malloc(PERMTS_HEADER + alloc_len);
@@ -558,7 +569,7 @@ perm_copy3(const char *s1, const char *s2, const char *s3)
     size_t l1 = strlen(s1);
     size_t l2 = strlen(s2);
     size_t l3 = strlen(s3)+1;   /* Include final NUL */
-    
+
     p = perm_alloc(l1+l2+l3);
     memcpy(p, s1, l1);
     memcpy(p+l1, s2, l2);

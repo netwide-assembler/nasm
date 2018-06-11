@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -194,6 +194,7 @@ int64_t readstrnum(char *str, int length, bool *warn);
  * seg_alloc: allocate a hitherto unused segment number.
  */
 void seg_alloc_reset(void);
+void seg_alloc_setup_done(void);
 int32_t seg_alloc(void);
 
 /*

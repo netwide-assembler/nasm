@@ -1345,6 +1345,9 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
         break;
     }
 
+    /* Any segment numbers allocated before this point are permanent */
+    seg_alloc_setup_done();
+
     pass_max = prev_offset_changed = (INT_MAX >> 1) + 2; /* Almost unlimited */
     for (passn = 1; pass0 <= 2; passn++) {
         pass1 = pass0 == 2 ? 2 : 1;     /* 1, 1, 1, ..., 1, 2 */
@@ -1426,7 +1429,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
                 if (!output_ins.label)
                     nasm_error(ERR_NONFATAL,
                                "EQU not preceded by label");
-                
+
                 if (output_ins.operands == 1 &&
                     (output_ins.oprs[0].type & IMMEDIATE) &&
                     output_ins.oprs[0].wrt == NO_SEG) {
