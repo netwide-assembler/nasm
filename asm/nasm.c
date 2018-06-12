@@ -175,19 +175,24 @@ static const struct limit_info limit_info[LIMIT_MAX+1] = {
     { "eval", "expression evaluation descent"}
 };
 
-enum directive_result nasm_set_limit(const char *limit, const char *valstr)
+enum directive_result
+nasm_set_limit(const char *limit, const char *valstr)
 {
     int i;
     int64_t val;
     bool rn_error;
+    int errlevel;
 
     for (i = 0; i <= LIMIT_MAX; i++) {
         if (!nasm_stricmp(limit, limit_info[i].name))
             break;
     }
     if (i > LIMIT_MAX) {
-        nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_UNKNOWN_PRAGMA,
-                   "unknown limit: `%s'", limit);
+        if (passn == 0)
+            errlevel = ERR_WARNING|ERR_NOFILE|ERR_USAGE;
+        else
+            errlevel = ERR_WARNING|ERR_PASS1|ERR_WARN_UNKNOWN_PRAGMA;
+        nasm_error(errlevel, "unknown limit: `%s'", limit);
         return DIRR_ERROR;
     }
 
@@ -196,12 +201,15 @@ enum directive_result nasm_set_limit(const char *limit, const char *valstr)
     } else {
         val = readnum(valstr, &rn_error);
         if (rn_error || val < 0) {
-            nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_BAD_PRAGMA,
-                       "invalid limit value: `%s'", limit);
+            if (passn == 0)
+                errlevel = ERR_WARNING|ERR_NOFILE|ERR_USAGE;
+            else
+                errlevel = ERR_WARNING|ERR_PASS1|ERR_WARN_BAD_PRAGMA;
+            nasm_error(errlevel, "invalid limit value: `%s'", limit);
             return DIRR_ERROR;
-        } else if (val > LIMIT_MAX_VAL) {
-            val = LIMIT_MAX_VAL;
         }
+        if (val > LIMIT_MAX_VAL)
+            val = LIMIT_MAX_VAL;
     }
 
     nasm_limit[i] = val;
@@ -1063,6 +1071,7 @@ static bool process_arg(char *p, char *q, int pass)
             {
                 const struct textargs *tx;
                 size_t olen, plen;
+                char *eqsave;
 
                 p += 2;
 
@@ -1093,7 +1102,7 @@ static bool process_arg(char *p, char *q, int pass)
                                "unrecognized option `--%s'", p);
                 }
 
-                param = strchr(p+olen, '=');
+                eqsave = param = strchr(p+olen, '=');
                 if (param)
                     *param++ = '\0';
 
@@ -1152,6 +1161,10 @@ static bool process_arg(char *p, char *q, int pass)
                 default:
                     panic();
                 }
+
+                if (eqsave)
+                    *eqsave = '='; /* Restore = argument separator */
+
                 break;
             }
 
@@ -1739,7 +1752,7 @@ static inline bool is_valid_warning(int severity)
 static bool is_suppressed_warning(int severity)
 {
     /* Might be a warning but suppresed explicitly */
-    if (is_valid_warning(severity))
+    if (is_valid_warning(severity) && !(severity & ERR_USAGE))
         return !(warning_state[WARN_IDX(severity)] & WARN_ST_ENABLED);
     else
         return false;
