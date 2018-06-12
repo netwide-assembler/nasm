@@ -759,6 +759,22 @@ struct pragma {
 };
 
 /*
+ * These are semi-arbitrary limits to keep the assembler from going
+ * into a black hole on certain kinds of bugs.  They can be overridden
+ * by command-line options or %pragma.
+ */
+enum nasm_limit {
+    LIMIT_PASSES,
+    LIMIT_STALLED,
+    LIMIT_MACROS,
+    LIMIT_REP,
+    LIMIT_EVAL
+};
+#define LIMIT_MAX LIMIT_EVAL
+extern int nasm_limit[LIMIT_MAX+1];
+extern enum directive_result  nasm_set_limit(const char *, const char *);
+
+/*
  * The data structure defining an output format driver, and the
  * interfaces to the functions therein.
  */

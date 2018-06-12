@@ -50,6 +50,7 @@
 #include "error.h"
 
 static enum directive_result asm_pragma(const struct pragma *pragma);
+static enum directive_result limit_pragma(const struct pragma *pragma);
 
 /*
  * Handle [pragma] directives.  [pragma] is generally produced by
@@ -66,6 +67,7 @@ static enum directive_result asm_pragma(const struct pragma *pragma);
  * so far none of these have any defined pragmas at all:
  *
  * preproc	- preprocessor
+ * limit	- limit setting
  * asm		- assembler
  * list		- listing generator
  * file		- generic file handling
@@ -86,6 +88,7 @@ static enum directive_result asm_pragma(const struct pragma *pragma);
 static struct pragma_facility global_pragmas[] =
 {
     { "asm",		asm_pragma },
+    { "limit",          limit_pragma },
     { "list",		NULL },
     { "file",		NULL },
     { "input",		NULL },
@@ -253,4 +256,9 @@ static enum directive_result asm_pragma(const struct pragma *pragma)
     default:
         return DIRR_UNKNOWN;
     }
+}
+
+static enum directive_result limit_pragma(const struct pragma *pragma)
+{
+    return nasm_set_limit(pragma->opname, pragma->tail);
 }

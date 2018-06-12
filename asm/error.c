@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -68,6 +68,7 @@ const struct warning warnings[ERR_WARN_ALL+1] = {
     {"unknown-pragma", "unknown %pragma facility or directive", false},
     {"not-my-pragma", "%pragma not applicable to this compilation", false},
     {"unknown-warning", "unknown warning in -W/-w or warning directive", false},
+    {"negative-rep", "regative %rep count", true},
 
     /* THIS ENTRY MUST COME LAST */
     {"all", "all possible warnings", false}

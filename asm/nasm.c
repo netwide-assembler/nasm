@@ -82,6 +82,7 @@ static void nasm_verror_gnu(int severity, const char *fmt, va_list args);
 static void nasm_verror_vc(int severity, const char *fmt, va_list args);
 static void nasm_verror_common(int severity, const char *fmt, va_list args);
 static void usage(void);
+static void help(char xopt);
 
 static bool using_debug_info, opt_verbose_info;
 static const char *debug_format;
@@ -152,6 +153,60 @@ bool user_nolist = false;
 static char *quote_for_pmake(const char *str);
 static char *quote_for_wmake(const char *str);
 static char *(*quote_for_make)(const char *) = quote_for_pmake;
+
+/*
+ * Execution limits that can be set via a command-line option or %pragma
+ */
+
+#define LIMIT_MAX_VAL	(INT_MAX >> 1) /* Effectively unlimited */
+
+int nasm_limit[LIMIT_MAX+1] =
+{ LIMIT_MAX_VAL, 1000, 1000000, 1000000, 1000000 };
+
+struct limit_info {
+    const char *name;
+    const char *help;
+};
+static const struct limit_info limit_info[LIMIT_MAX+1] = {
+    { "passes", "total number of passes" },
+    { "stalled-passes", "number of passes without forward progress" },
+    { "macro-levels", "levels of macro expansion"},
+    { "rep", "%rep count" },
+    { "eval", "expression evaluation descent"}
+};
+
+enum directive_result nasm_set_limit(const char *limit, const char *valstr)
+{
+    int i;
+    int64_t val;
+    bool rn_error;
+
+    for (i = 0; i <= LIMIT_MAX; i++) {
+        if (!nasm_stricmp(limit, limit_info[i].name))
+            break;
+    }
+    if (i > LIMIT_MAX) {
+        nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_UNKNOWN_PRAGMA,
+                   "unknown limit: `%s'", limit);
+        return DIRR_ERROR;
+    }
+
+    if (!nasm_stricmp(valstr, "unlimited")) {
+        val = LIMIT_MAX_VAL;
+    } else {
+        val = readnum(valstr, &rn_error);
+        if (rn_error || val < 0) {
+            nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_BAD_PRAGMA,
+                       "invalid limit value: `%s'", limit);
+            return DIRR_ERROR;
+        } else if (val > LIMIT_MAX_VAL) {
+            val = LIMIT_MAX_VAL;
+        }
+    }
+
+    nasm_limit[i] = val;
+    return DIRR_OK;
+}
 
 int64_t switch_segment(int32_t segment)
 {
@@ -717,11 +772,13 @@ static char *quote_for_wmake(const char *str)
 enum text_options {
     OPT_BOGUS,
     OPT_VERSION,
+    OPT_HELP,
     OPT_ABORT_ON_PANIC,
     OPT_MANGLE,
     OPT_INCLUDE,
     OPT_PRAGMA,
-    OPT_BEFORE
+    OPT_BEFORE,
+    OPT_LIMIT
 };
 struct textargs {
     const char *label;
@@ -732,6 +789,7 @@ struct textargs {
 static const struct textargs textopts[] = {
     {"v", OPT_VERSION, false, 0},
     {"version", OPT_VERSION, false, 0},
+    {"help",     OPT_HELP,  false, 0},
     {"abort-on-panic", OPT_ABORT_ON_PANIC, false, 0},
     {"prefix",   OPT_MANGLE, true, LM_GPREFIX},
     {"postfix",  OPT_MANGLE, true, LM_GSUFFIX},
@@ -742,6 +800,7 @@ static const struct textargs textopts[] = {
     {"include",  OPT_INCLUDE, true, 0},
     {"pragma",   OPT_PRAGMA,  true, 0},
     {"before",   OPT_BEFORE,  true, 0},
+    {"limit-",   OPT_LIMIT,   true, 0},
     {NULL, OPT_BOGUS, false, 0}
 };
 
@@ -756,7 +815,6 @@ static bool stopoptions = false;
 static bool process_arg(char *p, char *q, int pass)
 {
     char *param;
-    int i;
     bool advance = false;
 
     if (!p || !p[0])
@@ -900,71 +958,7 @@ static bool process_arg(char *p, char *q, int pass)
             break;
 
         case 'h':
-            printf
-                ("usage: nasm [-@ response file] [-o outfile] [-f format] "
-                 "[-l listfile]\n"
-                 "            [options...] [--] filename\n"
-                 "    or nasm -v (or --v) for version info\n\n"
-                 "    -t            assemble in SciTech TASM compatible mode\n");
-            printf
-                ("    -E (or -e)    preprocess only (writes output to stdout by default)\n"
-                 "    -a            don't preprocess (assemble only)\n"
-                 "    -M            generate Makefile dependencies on stdout\n"
-                 "    -MG           d:o, missing files assumed generated\n"
-                 "    -MF file      set Makefile dependency file\n"
-                 "    -MD file      assemble and generate dependencies\n"
-                 "    -MT file      dependency target name\n"
-                 "    -MQ file      dependency target name (quoted)\n"
-                 "    -MP           emit phony target\n\n"
-                 "    -Zfile        redirect error messages to file\n"
-                 "    -s            redirect error messages to stdout\n\n"
-                 "    -g            generate debugging information\n\n"
-                 "    -F format     select a debugging format\n\n"
-                 "    -gformat      same as -g -F format\n\n"
-                 "    -o outfile    write output to an outfile\n\n"
-                 "    -f format     select an output format\n\n"
-                 "    -l listfile   write listing to a listfile\n\n"
-                 "    -Ipath        add a pathname to the include file path\n");
-            printf
-                ("    -Olevel       optimize opcodes, immediates and branch offsets\n"
-                 "       -O0        no optimization\n"
-                 "       -O1        minimal optimization\n"
-                 "       -Ox        multipass optimization (default)\n"
-                 "    -Pfile        pre-include a file (also --include)\n"
-                 "    -Dmacro[=str] pre-define a macro\n"
-                 "    -Umacro       undefine a macro\n"
-                 "    -Xformat      specifiy error reporting format (gnu or vc)\n"
-                 "    -w+foo        enable warning foo (equiv. -Wfoo)\n"
-                 "    -w-foo        disable warning foo (equiv. -Wno-foo)\n"
-                 "    -w[+-]error[=foo]\n"
-                 "                  promote [specific] warnings to errors\n"
-                 "    -h            show invocation summary and exit\n\n"
-                 "   --pragma str   pre-executes a specific %%pragma\n"
-                 "   --before str   add line (usually a preprocessor statement) before the input\n"
-                 "   --prefix str   prepend the given string to all the given string\n"
-                 "                  to all extern, common and global symbols\n"
-                 "   --suffix str   append the given string to all the given string\n"
-                 "                  to all extern, common and global symbols\n"
-                 "   --lprefix str  prepend the given string to all other symbols\n"
-		 "\n"
-		 "Response files should contain command line parameters,\n"
-                 "one per line.\n"
-		 "\n"
-                 "Warnings for the -W/-w options:\n");
-            for (i = 0; i <= ERR_WARN_ALL; i++)
-                printf("    %-23s %s%s\n",
-                       warnings[i].name, warnings[i].help,
-		       i == ERR_WARN_ALL ? "\n" :
-                       warnings[i].enabled ? " (default on)" :
-		       " (default off)");
-            if (p[2] == 'f') {
-                printf("valid output formats for -f are"
-                       " (`*' denotes default):\n");
-                ofmt_list(ofmt, stdout);
-            } else {
-                printf("For a list of valid output formats, use -hf.\n");
-                printf("For a list of debug formats, use -f <form> -y.\n");
-            }
+            help(p[2]);
             exit(0);    /* never need usage message here */
             break;
 
@@ -1068,25 +1062,61 @@ static bool process_arg(char *p, char *q, int pass)
         case '-':
             {
                 const struct textargs *tx;
+                size_t olen, plen;
 
-                if (p[2] == 0) {        /* -- => stop processing options */
+                p += 2;
+
+                if (!*p) {        /* -- => stop processing options */
                     stopoptions = true;
                     break;
                 }
 
+                plen = strlen(p);
                 for (tx = textopts; tx->label; tx++) {
-                    if (!nasm_stricmp(p + 2, tx->label))
-                        break;
+                    olen = strlen(tx->label);
+
+                    if (olen > plen)
+                        continue;
+
+                    if (nasm_memicmp(p, tx->label, olen))
+                        continue;
+
+                    if (tx->label[olen-1] == '-')
+                        break;  /* Incomplete option */
+
+                    if (!p[olen] || p[olen] == '=')
+                        break;  /* Complete option */
                 }
 
+                if (!tx->label) {
+                    nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
+                               "unrecognized option `--%s'", p);
+                }
+
+                param = strchr(p+olen, '=');
+                if (param)
+                    *param++ = '\0';
+
                 if (tx->need_arg) {
-                    if (!q) {
+                    if (!param) {
+                        param = q;
+                        advance = true;
+                    }
+
+                    /* Note: a null string is a valid parameter */
+                    if (!param) {
                         nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
                                    "option `--%s' requires an argument",
-                                   p + 2);
+                                   p);
                         break;
                     }
-                    advance = true;
+                } else {
+                    if (param) {
+                        nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
+                                   "option `--%s' does not take an argument",
+                                   p);
+
+                    }
                 }
 
                 switch (tx->opt) {
@@ -1098,7 +1128,7 @@ static bool process_arg(char *p, char *q, int pass)
                     break;
                 case OPT_MANGLE:
                     if (pass == 2)
-                        set_label_mangle(tx->pvt, q);
+                        set_label_mangle(tx->pvt, param);
                     break;
                 case OPT_INCLUDE:
                     if (pass == 2)
@@ -1106,16 +1136,19 @@ static bool process_arg(char *p, char *q, int pass)
                     break;
                 case OPT_PRAGMA:
                     if (pass == 2)
-                        preproc->pre_command("pragma", q);
+                        preproc->pre_command("pragma", param);
                     break;
                 case OPT_BEFORE:
                     if (pass == 2)
-                        preproc->pre_command(NULL, q);
+                        preproc->pre_command(NULL, param);
                     break;
-                case OPT_BOGUS:
-                    nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                               "unrecognized option `--%s'", p + 2);
+                case OPT_LIMIT:
+                    if (pass == 2)
+                        nasm_set_limit(p+olen, param);
                     break;
+                case OPT_HELP:
+                    help(0);
+                    exit(0);
                 default:
                     panic();
                 }
@@ -1325,9 +1358,8 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
     char *line;
     insn output_ins;
     int i;
-    int pass_max;
     uint64_t prev_offset_changed;
-    unsigned int stall_count = 0; /* Make sure we make forward progress... */
+    int stall_count = 0;   /* Make sure we make forward progress... */
 
     switch (cmd_sb) {
     case 16:
@@ -1348,7 +1380,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
     /* Any segment numbers allocated before this point are permanent */
     seg_alloc_setup_done();
 
-    pass_max = prev_offset_changed = (INT_MAX >> 1) + 2; /* Almost unlimited */
+    prev_offset_changed = nasm_limit[LIMIT_PASSES];
     for (passn = 1; pass0 <= 2; passn++) {
         pass1 = pass0 == 2 ? 2 : 1;     /* 1, 1, 1, ..., 1, 2 */
         pass2 = passn > 1  ? 2 : 1;     /* 1, 2, 2, ..., 2, 2 */
@@ -1585,7 +1617,8 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
         if (terminate_after_phase)
             break;
 
-        if ((stall_count > 997U) || (passn >= pass_max)) {
+        if ((stall_count > nasm_limit[LIMIT_STALLED]) ||
+            (passn >= nasm_limit[LIMIT_PASSES])) {
             /* We get here if the labels don't converge
              * Example: FOO equ FOO + 1
              */
@@ -1843,4 +1876,89 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
 static void usage(void)
 {
     fputs("type `nasm -h' for help\n", error_file);
+}
+
+static void help(const char xopt)
+{
+    int i;
+
+    printf
+        ("usage: nasm [-@ response file] [-o outfile] [-f format] "
+         "[-l listfile]\n"
+         "            [options...] [--] filename\n"
+         "    or nasm -v (or --v) for version info\n\n"
+         "\n"
+         "Response files should contain command line parameters,\n"
+         "one per line.\n"
+         "\n"
+         "    -t            assemble in SciTech TASM compatible mode\n");
+    printf
+        ("    -E (or -e)    preprocess only (writes output to stdout by default)\n"
+         "    -a            don't preprocess (assemble only)\n"
+         "    -M            generate Makefile dependencies on stdout\n"
+         "    -MG           d:o, missing files assumed generated\n"
+         "    -MF file      set Makefile dependency file\n"
+         "    -MD file      assemble and generate dependencies\n"
+         "    -MT file      dependency target name\n"
+         "    -MQ file      dependency target name (quoted)\n"
+         "    -MP           emit phony target\n\n"
+         "    -Zfile        redirect error messages to file\n"
+         "    -s            redirect error messages to stdout\n\n"
+         "    -g            generate debugging information\n\n"
+         "    -F format     select a debugging format\n\n"
+         "    -gformat      same as -g -F format\n\n"
+         "    -o outfile    write output to an outfile\n\n"
+         "    -f format     select an output format\n\n"
+         "    -l listfile   write listing to a listfile\n\n"
+         "    -Ipath        add a pathname to the include file path\n");
+    printf
+        ("    -Olevel       optimize opcodes, immediates and branch offsets\n"
+         "       -O0        no optimization\n"
+         "       -O1        minimal optimization\n"
+         "       -Ox        multipass optimization (default)\n"
+         "    -Pfile        pre-include a file (also --include)\n"
+         "    -Dmacro[=str] pre-define a macro\n"
+         "    -Umacro       undefine a macro\n"
+         "    -Xformat      specifiy error reporting format (gnu or vc)\n"
+         "    -w+foo        enable warning foo (equiv. -Wfoo)\n"
+         "    -w-foo        disable warning foo (equiv. -Wno-foo)\n"
+         "    -w[+-]error[=foo]\n"
+         "                  promote [specific] warnings to errors\n"
+         "    -h            show invocation summary and exit\n\n"
+         "   --pragma str   pre-executes a specific %%pragma\n"
+         "   --before str   add line (usually a preprocessor statement) before the input\n"
+         "   --prefix str   prepend the given string to all the given string\n"
+         "                  to all extern, common and global symbols\n"
+         "   --suffix str   append the given string to all the given string\n"
+         "                  to all extern, common and global symbols\n"
+         "   --lprefix str  prepend the given string to all other symbols\n"
+         "   --limit-X val  set execution limit X\n");
+
+    for (i = 0; i <= LIMIT_MAX; i++) {
+        printf("                     %-15s %s (default ",
+               limit_info[i].name, limit_info[i].help);
+        if (nasm_limit[i] < LIMIT_MAX_VAL) {
+            printf("%d)\n", nasm_limit[i]);
+        } else {
+            printf("unlimited)\n");
+        }
+    }
+
+    printf("\nWarnings for the -W/-w options:\n");
+
+    for (i = 0; i <= ERR_WARN_ALL; i++)
+        printf("    %-23s %s%s\n",
+               warnings[i].name, warnings[i].help,
+               i == ERR_WARN_ALL ? "\n" :
+               warnings[i].enabled ? " (default on)" :
+               " (default off)");
+
+    if (xopt == 'f') {
+        printf("valid output formats for -f are"
+               " (`*' denotes default):\n");
+        ofmt_list(ofmt, stdout);
+    } else {
+        printf("For a list of valid output formats, use -hf.\n");
+        printf("For a list of debug formats, use -f <format> -y.\n");
+    }
 }

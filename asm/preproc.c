@@ -339,12 +339,6 @@ enum {
 #define NO_DIRECTIVE_FOUND  0
 #define DIRECTIVE_FOUND     1
 
-/*
- * This define sets the upper limit for smacro and recursive mmacro
- * expansions
- */
-#define DEADMAN_LIMIT (1 << 20)
-
 /* max reps */
 #define REP_LIMIT ((INT64_C(1) << 62))
 
@@ -2875,8 +2869,8 @@ issue_error:
             return DIRECTIVE_FOUND;
         }
         defining = nasm_zalloc(sizeof(MMacro));
-        defining->max_depth =
-            (i == PP_RMACRO) || (i == PP_IRMACRO) ? DEADMAN_LIMIT : 0;
+        defining->max_depth = ((i == PP_RMACRO) || (i == PP_IRMACRO))
+            ? nasm_limit[LIMIT_MACROS] : 0;
         defining->casesense = (i == PP_MACRO) || (i == PP_RMACRO);
         if (!parse_mmacro_spec(tline, defining, pp_directives[i])) {
             nasm_free(defining);
@@ -3048,11 +3042,18 @@ issue_error:
                 return DIRECTIVE_FOUND;
             }
             count = reloc_value(evalresult);
-            if (count >= REP_LIMIT) {
-                nasm_error(ERR_NONFATAL, "`%%rep' value exceeds limit");
+            if (count > nasm_limit[LIMIT_REP]) {
+                nasm_error(ERR_NONFATAL,
+                           "`%%rep' count %"PRId64" exceeds limit (currently %d)",
+                           count, nasm_limit[LIMIT_REP]);
                 count = 0;
-            } else
+            } else if (count < 0) {
+                nasm_error(ERR_WARNING|ERR_PASS2|ERR_WARN_NEG_REP,
+                           "negative `%%rep' count: %"PRId64, count);
+                count = 0;
+            } else {
                 count++;
+            }
         } else {
             nasm_error(ERR_NONFATAL, "`%%rep' expects a repeat count");
             count = 0;
@@ -4194,7 +4195,7 @@ static Token *expand_smacro(Token * tline)
     Token *org_tline = tline;
     Context *ctx;
     const char *mname;
-    int deadman = DEADMAN_LIMIT;
+    int deadman = nasm_limit[LIMIT_MACROS];
     bool expanded;
 
     /*

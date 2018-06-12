@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -72,6 +72,7 @@ static void *scpriv;
 static int *opflags;
 
 static struct eval_hints *hint;
+static int deadman;
 
 
 /*
@@ -769,6 +770,11 @@ static expr *expr6(int critical)
     bool rn_warn;
     const char *scope;
 
+    if (++deadman > nasm_limit[LIMIT_EVAL]) {
+        nasm_error(ERR_NONFATAL, "expression too long");
+        return NULL;
+    }
+
     switch (i) {
     case '-':
         i = scan(scpriv, tokval);
@@ -954,6 +960,8 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
     expr *e;
     expr *f = NULL;
 
+    deadman = 0;
+    
     hint = hints;
     if (hint)
         hint->type = EAH_NOHINT;

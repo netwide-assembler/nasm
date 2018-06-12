@@ -65,9 +65,9 @@ static int radix_letter(char c)
     }
 }
 
-int64_t readnum(char *str, bool *error)
+int64_t readnum(const char *str, bool *error)
 {
-    char *r = str, *q;
+    const char *r = str, *q;
     int32_t pradix, sradix, radix;
     int plen, slen, len;
     uint64_t result, checklimit;

@@ -180,7 +180,7 @@ size_t pure_func strnlen(const char *, size_t);
  * Convert a string into a number, using NASM number rules. Sets
  * `*error' to true if an error occurs, and false otherwise.
  */
-int64_t readnum(char *str, bool *error);
+int64_t readnum(const char *str, bool *error);
 
 /*
  * Convert a character constant into a number. Sets

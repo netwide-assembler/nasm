@@ -93,6 +93,7 @@ gprefix
 gsuffix
 lprefix
 lsuffix
+limit
 
 ; --- Pragma operations
 subsections_via_symbols		; macho
