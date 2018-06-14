@@ -41,21 +41,6 @@
 #include "insns.h"
 
 static int32_t next_seg  = 2;
-static int32_t seg_start = 2;
-
-void seg_alloc_reset(void)
-{
-    next_seg = seg_start;
-}
-
-/*
- * This gets called after special segments are allocated, typically by
- * backends; this only gets done once.
- */
-void seg_alloc_setup_done(void)
-{
-    seg_start = next_seg;
-}
 
 int32_t seg_alloc(void)
 {

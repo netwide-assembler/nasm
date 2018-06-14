@@ -1390,9 +1390,6 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
         break;
     }
 
-    /* Any segment numbers allocated before this point are permanent */
-    seg_alloc_setup_done();
-
     prev_offset_changed = nasm_limit[LIMIT_PASSES];
     for (passn = 1; pass0 <= 2; passn++) {
         pass1 = pass0 == 2 ? 2 : 1;     /* 1, 1, 1, ..., 1, 2 */
@@ -1409,7 +1406,6 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
         }
         in_absolute = false;
         global_offset_changed = 0;  /* set by redefine_label */
-        seg_alloc_reset();
         if (passn > 1) {
             saa_rewind(forwrefs);
             forwref = saa_rstruct(forwrefs);
