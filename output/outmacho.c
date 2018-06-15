@@ -1003,10 +1003,11 @@ static int32_t macho_section(char *name, int pass, int *bits)
 }
 
 static int32_t macho_herelabel(const char *name, enum label_type type,
-			       int32_t section)
+			       int32_t section, int32_t *subsection)
 {
     struct section *s;
     (void)name;
+    (void)subsection;
     
     if (!(head_flags & MH_SUBSECTIONS_VIA_SYMBOLS))
 	return section;
@@ -1014,7 +1015,7 @@ static int32_t macho_herelabel(const char *name, enum label_type type,
     /* No subsection only for local labels */
     if (type == LBL_LOCAL)
 	return section;
-    
+
     s = get_section_by_index(section);
     if (!s)
 	return section;

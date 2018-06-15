@@ -91,6 +91,7 @@ static const char *debug_format;
 # define ABORT_ON_PANIC 0
 #endif
 static bool abort_on_panic = ABORT_ON_PANIC;
+static bool keep_all;
 
 bool tasm_compatible_mode = false;
 int pass0, passn;
@@ -540,7 +541,7 @@ int main(int argc, char **argv)
             preproc->cleanup(0);
             if (ofile)
                 fclose(ofile);
-            if (ofile && terminate_after_phase)
+            if (ofile && terminate_after_phase && !keep_all)
                 remove(outname);
             ofile = NULL;
     }
@@ -576,7 +577,7 @@ int main(int argc, char **argv)
 
         if (ofile) {
             fclose(ofile);
-            if (terminate_after_phase)
+            if (terminate_after_phase && !keep_all)
                 remove(outname);
             ofile = NULL;
         }
@@ -786,7 +787,8 @@ enum text_options {
     OPT_INCLUDE,
     OPT_PRAGMA,
     OPT_BEFORE,
-    OPT_LIMIT
+    OPT_LIMIT,
+    OPT_KEEP_ALL
 };
 struct textargs {
     const char *label;
@@ -809,6 +811,7 @@ static const struct textargs textopts[] = {
     {"pragma",   OPT_PRAGMA,  true, 0},
     {"before",   OPT_BEFORE,  true, 0},
     {"limit-",   OPT_LIMIT,   true, 0},
+    {"keep-all", OPT_KEEP_ALL, false, 0},
     {NULL, OPT_BOGUS, false, 0}
 };
 
@@ -1155,6 +1158,9 @@ static bool process_arg(char *p, char *q, int pass)
                     if (pass == 2)
                         nasm_set_limit(p+olen, param);
                     break;
+                case OPT_KEEP_ALL:
+                    keep_all = true;
+                    break;
                 case OPT_HELP:
                     help(0);
                     exit(0);
@@ -1400,7 +1406,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
         cpu = cmd_cpu;
         if (pass0 == 2) {
 	    lfmt->init(listname);
-        } else if (passn == 1 && listname) {
+        } else if (passn == 1 && listname && !keep_all) {
             /* Remove the list file in case we die before the output pass */
             remove(listname);
         }
@@ -1859,7 +1865,8 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
     case ERR_FATAL:
         if (ofile) {
             fclose(ofile);
-            remove(outname);
+            if (!keep_all)
+                remove(outname);
             ofile = NULL;
         }
         if (want_usage)
@@ -1874,7 +1881,8 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
 
         if (ofile) {
             fclose(ofile);
-            remove(outname);
+            if (!keep_all)
+                remove(outname);
             ofile = NULL;
         }
         exit(3);

@@ -92,6 +92,7 @@ static const char * const types[] =
 union label {                   /* actual label structures */
     struct {
         int32_t segment;
+        int32_t subsection;     /* Available for ofmt->herelabel() */
         int64_t offset;
         int64_t size;
         char *label, *mangled, *special;
@@ -231,6 +232,7 @@ static union label *find_label(const char *label, bool create, bool *created)
     nasm_zero(*lfree);
     lfree->admin.movingon = BOGUS_VALUE;
     lfree->defn.label     = perm_copy(label);
+    lfree->defn.subsection = NO_SEG;
     if (label_str)
         nasm_free(label_str);
 
@@ -321,7 +323,7 @@ static const char *mangle_label_name(union label *lptr)
 }
 
 static void
-handle_herelabel(const union label *lptr, int32_t *segment, int64_t *offset)
+handle_herelabel(union label *lptr, int32_t *segment, int64_t *offset)
 {
     int32_t oldseg;
 
@@ -338,7 +340,8 @@ handle_herelabel(const union label *lptr, int32_t *segment, int64_t *offset)
         int32_t newseg;
 
         nasm_assert(lptr->defn.mangled);
-        newseg = ofmt->herelabel(lptr->defn.mangled, lptr->defn.type, oldseg);
+        newseg = ofmt->herelabel(lptr->defn.mangled, lptr->defn.type,
+                                 oldseg, &lptr->defn.subsection);
         if (likely(newseg == oldseg))
             return;
 

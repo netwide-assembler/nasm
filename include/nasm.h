@@ -915,8 +915,11 @@ struct ofmt {
      * This is *only* called if the symbol defined is at the
      * current offset, i.e. "foo:" or "foo equ $".
      * The offset isn't passed; and may not be stable at this point.
+     * The subsection number is a field available for use by the
+     * backend. It is initialized to NO_SEG.
      */
-    int32_t (*herelabel)(const char *name, enum label_type type, int32_t seg);
+    int32_t (*herelabel)(const char *name, enum label_type type,
+                         int32_t seg, int32_t *subsection);
 
     /*
      * This procedure is called to modify section alignment,
