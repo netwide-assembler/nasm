@@ -77,7 +77,6 @@ static bool ismagic(const char *l)
 
 #define END_LIST        -3      /* don't clash with NO_SEG! */
 #define END_BLOCK       -2
-#define BOGUS_VALUE     -4
 
 #define PERMTS_SIZE     16384   /* size of text blocks */
 #if (PERMTS_SIZE < IDLEN_MAX)
@@ -230,7 +229,6 @@ static union label *find_label(const char *label, bool create, bool *created)
         *created = true;
 
     nasm_zero(*lfree);
-    lfree->admin.movingon = BOGUS_VALUE;
     lfree->defn.label     = perm_copy(label);
     lfree->defn.subsection = NO_SEG;
     if (label_str)
@@ -424,6 +422,12 @@ void define_label(const char *label, int32_t segment,
     if (pass0 > 1) {
         if (created)
 	    nasm_error(ERR_WARNING, "label `%s' defined on pass two", label);
+    }
+
+    if (!segment) {
+        segment = lptr->defn.segment;
+        if (!segment)
+            segment = lptr->defn.segment = seg_alloc();
     }
 
     if (lptr->defn.defined || lptr->defn.type == LBL_BACKEND) {
