@@ -889,11 +889,6 @@ static void aout_sect_write(struct Section *sect,
     sect->len += len;
 }
 
-static int32_t aout_segbase(int32_t segment)
-{
-    return segment;
-}
-
 extern macros_t aout_stdmac[];
 
 #endif                          /* OF_AOUT || OF_AOUTB */
@@ -917,7 +912,7 @@ const struct ofmt of_aout = {
     aout_section_names,
     NULL,
     null_sectalign,
-    aout_segbase,
+    null_segbase,
     null_directive,
     aout_cleanup,
     NULL                        /* pragma list */
@@ -944,7 +939,7 @@ const struct ofmt of_aoutb = {
     aout_section_names,
     NULL,
     null_sectalign,
-    aout_segbase,
+    null_segbase,
     null_directive,
     aout_cleanup,
     NULL                        /* pragma list */

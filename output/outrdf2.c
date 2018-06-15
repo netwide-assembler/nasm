@@ -712,11 +712,6 @@ static void rdf2_cleanup(void)
     fwriteint16_t(0, ofile);
 }
 
-static int32_t rdf2_segbase(int32_t segment)
-{
-    return segment;
-}
-
 /*
  * Handle RDOFF2 specific directives
  */
@@ -779,7 +774,7 @@ const struct ofmt of_rdf2 = {
     rdf2_section_names,
     NULL,
     null_sectalign,
-    rdf2_segbase,
+    null_segbase,
     rdf2_directive,
     rdf2_cleanup,
     NULL                        /* pragma list */

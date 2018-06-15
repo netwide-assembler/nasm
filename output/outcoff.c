@@ -1135,11 +1135,6 @@ static void coff_sectalign(int32_t seg, unsigned int value)
         s->flags = (s->flags & ~IMAGE_SCN_ALIGN_MASK) | value;
 }
 
-static int32_t coff_segbase(int32_t segment)
-{
-    return segment;
-}
-
 extern macros_t coff_stdmac[];
 
 #endif /* defined(OF_COFF) || defined(OF_WIN32) */
@@ -1163,7 +1158,7 @@ const struct ofmt of_coff = {
     coff_section_names,
     NULL,
     coff_sectalign,
-    coff_segbase,
+    null_segbase,
     coff_directives,
     coff_cleanup,
     NULL                        /* pragma list */
@@ -1194,7 +1189,7 @@ const struct ofmt of_win32 = {
     coff_section_names,
     NULL,
     coff_sectalign,
-    coff_segbase,
+    null_segbase,
     coff_directives,
     coff_cleanup,
     NULL                        /* pragma list */
@@ -1223,7 +1218,7 @@ const struct ofmt of_win64 = {
     coff_section_names,
     NULL,
     coff_sectalign,
-    coff_segbase,
+    null_segbase,
     coff_directives,
     coff_cleanup,
     NULL                        /* pragma list */

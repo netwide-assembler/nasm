@@ -1191,11 +1191,6 @@ static void macho_sectalign(int32_t seg, unsigned int value)
         s->align = align;
 }
 
-static int32_t macho_segbase(int32_t section)
-{
-    return section;
-}
-
 extern macros_t macho_stdmac[];
 
 /* Comparison function for qsort symbol layout.  */
@@ -2394,7 +2389,7 @@ const struct ofmt of_macho32 = {
     macho_section,
     macho_herelabel,
     macho_sectalign,
-    macho_segbase,
+    null_segbase,
     null_directive,
     macho_cleanup,
     macho_pragma_list
@@ -2461,7 +2456,7 @@ const struct ofmt of_macho64 = {
     macho_section,
     macho_herelabel,
     macho_sectalign,
-    macho_segbase,
+    null_segbase,
     null_directive,
     macho_cleanup,
     macho_pragma_list,

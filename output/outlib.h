@@ -44,6 +44,7 @@ enum directive_result
 null_directive(enum directive directive, char *value, int pass);
 void null_sectalign(int32_t seg, unsigned int value);
 void null_reset(void);
+int32_t null_segbase(int32_t seg);
 
 /* Do-nothing versions of all the debug routines */
 void null_debug_init(void);

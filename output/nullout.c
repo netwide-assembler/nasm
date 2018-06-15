@@ -54,3 +54,8 @@ void null_reset(void)
 {
     /* Nothing to do */
 }
+
+int32_t null_segbase(int32_t segment)
+{
+    return segment;
+}

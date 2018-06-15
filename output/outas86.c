@@ -605,11 +605,6 @@ static void as86_sect_write(struct Section *sect,
     sect->datalen += len;
 }
 
-static int32_t as86_segbase(int32_t segment)
-{
-    return segment;
-}
-
 extern macros_t as86_stdmac[];
 
 const struct ofmt of_as86 = {
@@ -629,7 +624,7 @@ const struct ofmt of_as86 = {
     as86_section_names,
     NULL,
     null_sectalign,
-    as86_segbase,
+    null_segbase,
     null_directive,
     as86_cleanup,
     NULL                        /* pragma list */

@@ -318,11 +318,6 @@ static void dbg_sectalign(int32_t seg, unsigned int value)
             seg, value);
 }
 
-static int32_t dbg_segbase(int32_t segment)
-{
-    return segment;
-}
-
 static enum directive_result
 dbg_directive(enum directive directive, char *value, int pass)
 {
@@ -480,7 +475,7 @@ const struct ofmt of_dbg = {
     dbg_section_names,
     dbg_herelabel,
     dbg_sectalign,
-    dbg_segbase,
+    null_segbase,
     dbg_directive,
     dbg_cleanup,
     dbg_pragma_list

@@ -1373,11 +1373,6 @@ bin_directive(enum directive directive, char *args, int pass)
     }
 }
 
-static int32_t bin_segbase(int32_t segment)
-{
-    return segment;
-}
-
 const struct ofmt of_bin, of_ith, of_srec;
 static void binfmt_init(void);
 static void do_output_bin(void);
@@ -1645,7 +1640,7 @@ const struct ofmt of_bin = {
     bin_secname,
     NULL,
     bin_sectalign,
-    bin_segbase,
+    null_segbase,
     bin_directive,
     bin_cleanup,
     NULL                        /* pragma list */
@@ -1668,7 +1663,7 @@ const struct ofmt of_ith = {
     bin_secname,
     NULL,
     bin_sectalign,
-    bin_segbase,
+    null_segbase,
     bin_directive,
     bin_cleanup,
     NULL                        /* pragma list */
@@ -1691,7 +1686,7 @@ const struct ofmt of_srec = {
     bin_secname,
     NULL,
     bin_sectalign,
-    bin_segbase,
+    null_segbase,
     bin_directive,
     bin_cleanup,
     NULL                        /* pragma list */

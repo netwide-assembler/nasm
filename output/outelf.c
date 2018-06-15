@@ -2220,11 +2220,6 @@ static void elf_sectalign(int32_t seg, unsigned int value)
         s->align = value;
 }
 
-static int32_t elf_segbase(int32_t segment)
-{
-    return segment;
-}
-
 extern macros_t elf_stdmac[];
 
 /* Claim "elf" as a pragma namespace, for the future */
@@ -2281,7 +2276,7 @@ const struct ofmt of_elf32 = {
     elf_section_names,
     NULL,
     elf_sectalign,
-    elf_segbase,
+    null_segbase,
     elf_directive,
     elf_cleanup,
     elf_pragma_list,
@@ -2333,7 +2328,7 @@ const struct ofmt of_elf64 = {
     elf_section_names,
     NULL,
     elf_sectalign,
-    elf_segbase,
+    null_segbase,
     elf_directive,
     elf_cleanup,
     elf_pragma_list,
@@ -2385,7 +2380,7 @@ const struct ofmt of_elfx32 = {
     elf_section_names,
     NULL,
     elf_sectalign,
-    elf_segbase,
+    null_segbase,
     elf_directive,
     elf_cleanup,
     NULL                        /* pragma list */
