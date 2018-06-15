@@ -37,12 +37,13 @@
 #include "compiler.h"
 
 struct RAA;
+typedef uint64_t raaindex;
 
-struct RAA * never_null raa_init(void);
+#define raa_init() NULL
 void raa_free(struct RAA *);
-int64_t raa_read(struct RAA *, int32_t);
-void *raa_read_ptr(struct RAA *, int32_t);
-struct RAA * never_null raa_write(struct RAA *r, int32_t posn, int64_t value);
-struct RAA * never_null raa_write_ptr(struct RAA *r, int32_t posn, void *value);
+int64_t raa_read(struct RAA *, raaindex);
+void *raa_read_ptr(struct RAA *, raaindex);
+struct RAA * never_null raa_write(struct RAA *r, raaindex posn, int64_t value);
+struct RAA * never_null raa_write_ptr(struct RAA *r, raaindex posn, void *value);
 
 #endif                          /* NASM_RAA_H */
