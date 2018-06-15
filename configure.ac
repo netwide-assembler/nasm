@@ -24,24 +24,23 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 
-dnl If the user did not specify a CFLAGS default, change default -O2
-dnl to either -O3 (normal) or -O0 (for debugging)
+pa_no_optimize=false
+
+dnl If the user did not specify a CFLAGS default, change default
+dnl to -O0 for debugging
 PA_ARG_DISABLED([optimization],
  [compile without optimization (-O0) to help debugging],
- [pa_optimize=-O0], [pa_optimize=-O3])
+ [pa_no_optimize=true])
 
 dnl Compile and link with dwarf debug
 PA_ARG_ENABLED([gdb],
  [disable optimization and compile with extra debug information for GDB debugger],
- [pa_optimize='-O0'
-  PA_ADD_CFLAGS([-ggdb3])
- ])
+ [PA_ADD_CFLAGS([-ggdb3])
+  pa_no_optimize=true])
 
-AS_IF([test x"$pa_init_cflags" = x],
-      [CFLAGS=`echo "$CFLAGS" | sed -e "s/-O2/$pa_optimize/"`])
-
-AS_IF([test x"$pa_optimize" = "x-O0"],
-      [PA_ADD_CFLAGS([-fno-omit-frame-pointer])])
+AS_IF([$pa_no_optimize],
+      [PA_ADD_CFLAGS([-O0])
+       PA_ADD_CFLAGS([-fno-omit-frame-pointer])])
 
 dnl Abort on panic
 PA_ARG_ENABLED([panic-abort],
