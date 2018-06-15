@@ -424,11 +424,8 @@ void define_label(const char *label, int32_t segment,
 	    nasm_error(ERR_WARNING, "label `%s' defined on pass two", label);
     }
 
-    if (!segment) {
-        segment = lptr->defn.segment;
-        if (!segment)
-            segment = lptr->defn.segment = seg_alloc();
-    }
+    if (!segment)
+        segment = lptr->defn.segment ? lptr->defn.segment : seg_alloc();
 
     if (lptr->defn.defined || lptr->defn.type == LBL_BACKEND) {
         /* We have seen this on at least one previous pass */
