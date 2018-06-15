@@ -399,16 +399,6 @@ static void ieee_out(int32_t segto, const void *data,
     struct ieeeSection *seg;
 
     /*
-     * handle absolute-assembly (structure definitions)
-     */
-    if (segto == NO_SEG) {
-        if (type != OUT_RESERVE)
-            nasm_error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
-                  " space");
-        return;
-    }
-
-    /*
      * If `any_segs' is still false, we must define a default
      * segment.
      */

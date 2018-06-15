@@ -586,16 +586,6 @@ static void aout_out(int32_t segto, const void *data,
     int32_t addr;
     uint8_t mydata[4], *p;
 
-    /*
-     * handle absolute-assembly (structure definitions)
-     */
-    if (segto == NO_SEG) {
-        if (type != OUT_RESERVE)
-            nasm_error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
-                  " space");
-        return;
-    }
-
     if (segto == stext.index)
         s = &stext;
     else if (segto == sdata.index)
@@ -626,8 +616,6 @@ static void aout_out(int32_t segto, const void *data,
         } else
             sbss.len += size;
     } else if (type == OUT_RAWDATA) {
-        if (segment != NO_SEG)
-            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
         aout_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
         int asize = abs((int)size);
@@ -678,8 +666,6 @@ static void aout_out(int32_t segto, const void *data,
             WRITELONG(p, addr);
         aout_sect_write(s, mydata, asize);
     } else if (type == OUT_REL2ADR) {
-        if (segment == segto)
-            nasm_panic(0, "intra-segment OUT_REL2ADR");
         if (segment != NO_SEG && segment % 2) {
             nasm_error(ERR_NONFATAL, "a.out format does not support"
                   " segment base references");
@@ -708,8 +694,6 @@ static void aout_out(int32_t segto, const void *data,
         WRITESHORT(p, *(int64_t *)data - (size + s->len));
         aout_sect_write(s, mydata, 2L);
     } else if (type == OUT_REL4ADR) {
-        if (segment == segto)
-            nasm_panic(0, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
             nasm_error(ERR_NONFATAL, "a.out format does not support"
                   " segment base references");

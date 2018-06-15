@@ -533,13 +533,6 @@ static void rdf2_out(int32_t segto, const void *data,
     uint8_t databuf[8], *pd;
     int seg;
 
-    if (segto == NO_SEG) {
-        if (type != OUT_RESERVE)
-            nasm_error(ERR_NONFATAL,
-                  "attempt to assemble code in ABSOLUTE space");
-        return;
-    }
-
     segto >>= 1;                /* convert NASM segment no to RDF number */
 
     for (seg = 0; seg < nsegments; seg++) {
@@ -576,9 +569,6 @@ static void rdf2_out(int32_t segto, const void *data,
             while (size--)
                 membufwrite(segto, databuf, 1);
     } else if (type == OUT_RAWDATA) {
-        if (segment != NO_SEG)
-            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
-
         membufwrite(segto, data, size);
     } else if (type == OUT_ADDRESS) {
         int asize = abs((int)size);

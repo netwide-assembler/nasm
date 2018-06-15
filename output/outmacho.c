@@ -635,13 +635,6 @@ static void macho_output(int32_t secto, const void *data,
     bool is_bss;
     enum reltype reltype;
 
-    if (secto == NO_SEG) {
-        if (type != OUT_RESERVE)
-            nasm_error(ERR_NONFATAL, "attempt to assemble code in "
-                  "[ABSOLUTE] space");
-        return;
-    }
-
     s = get_section_by_index(secto);
     if (!s) {
         nasm_error(ERR_WARNING, "attempt to assemble code in"
@@ -687,9 +680,6 @@ static void macho_output(int32_t secto, const void *data,
         break;
 
     case OUT_RAWDATA:
-        if (section != NO_SEG)
-            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
-
         sect_write(s, data, size);
         break;
 

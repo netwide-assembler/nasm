@@ -297,16 +297,6 @@ static void as86_out(int32_t segto, const void *data,
         nasm_error(ERR_NONFATAL, "WRT not supported by as86 output format");
     }
 
-    /*
-     * handle absolute-assembly (structure definitions)
-     */
-    if (segto == NO_SEG) {
-        if (type != OUT_RESERVE)
-            nasm_error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
-                  " space");
-        return;
-    }
-
     if (segto == stext.index)
         s = &stext;
     else if (segto == sdata.index)
@@ -338,8 +328,6 @@ static void as86_out(int32_t segto, const void *data,
         } else
             bsslen += size;
     } else if (type == OUT_RAWDATA) {
-        if (segment != NO_SEG)
-            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
         as86_sect_write(s, data, size);
         as86_add_piece(s, 0, 0L, 0L, size, 0);
     } else if (type == OUT_ADDRESS) {
@@ -359,8 +347,6 @@ static void as86_out(int32_t segto, const void *data,
             as86_add_piece(s, 0, 0L, 0L, asize, 0);
         }
     } else if (type == OUT_REL2ADR) {
-        if (segment == segto)
-            nasm_panic(0, "intra-segment OUT_REL2ADR");
         if (segment != NO_SEG) {
             if (segment % 2) {
                 nasm_error(ERR_NONFATAL, "as86 format does not support"
@@ -372,8 +358,6 @@ static void as86_out(int32_t segto, const void *data,
             }
         }
     } else if (type == OUT_REL4ADR) {
-        if (segment == segto)
-            nasm_panic(0, "intra-segment OUT_REL4ADR");
         if (segment != NO_SEG) {
             if (segment % 2) {
                 nasm_error(ERR_NONFATAL, "as86 format does not support"

@@ -415,7 +415,18 @@ static void out(struct out_data *data)
         data->size = amax;
     }
     lfmt->output(data);
-    ofmt->output(data);
+
+    if (likely(data->segment != NO_SEG)) {
+        ofmt->output(data);
+    } else {
+        /* Outputting to ABSOLUTE section - only reserve is permitted */
+        if (data->type != OUT_RESERVE) {
+            nasm_error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
+                       " space");
+        }
+        /* No need to push to the backend */
+    }
+
     data->offset  += data->size;
     data->insoffs += data->size;
 

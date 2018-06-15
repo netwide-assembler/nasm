@@ -737,14 +737,6 @@ static void bin_out(int32_t segto, const void *data,
         nasm_error(ERR_NONFATAL, "WRT not supported by binary output format");
     }
 
-    /* Handle absolute-assembly (structure definitions). */
-    if (segto == NO_SEG) {
-        if (type != OUT_RESERVE)
-            nasm_error(ERR_NONFATAL, "attempt to assemble code in"
-                  " [ABSOLUTE] space");
-        return;
-    }
-
     /* Find the segment we are targeting. */
     s = find_section_by_index(segto);
     if (!s)

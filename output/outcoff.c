@@ -559,16 +559,6 @@ static void coff_out(int32_t segto, const void *data,
         nasm_error(ERR_NONFATAL, "WRT not supported by COFF output formats");
     }
 
-    /*
-     * handle absolute-assembly (structure definitions)
-     */
-    if (segto == NO_SEG) {
-        if (type != OUT_RESERVE)
-            nasm_error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
-                  " space");
-        return;
-    }
-
     s = NULL;
     for (i = 0; i < coff_nsects; i++) {
         if (segto == coff_sects[i]->index) {
@@ -621,8 +611,6 @@ static void coff_out(int32_t segto, const void *data,
         } else
             s->len += size;
     } else if (type == OUT_RAWDATA) {
-        if (segment != NO_SEG)
-            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
         coff_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
         int asize = abs((int)size);
