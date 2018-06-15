@@ -51,6 +51,7 @@
 #include "saa.h"
 #include "raa.h"
 #include "rbtree.h"
+#include "hashtbl.h"
 #include "outform.h"
 #include "outlib.h"
 #include "ver.h"
@@ -153,13 +154,14 @@ struct section {
     /* nasm internal data */
     struct section *next;
     struct SAA *data;
-    uint16_t index;		/* Main section index */
-    uint16_t subsection;	/* Current subsection */
+    int32_t index;		/* Main section index */
+    int32_t subsection;		/* Current subsection index */
     int32_t fileindex;
     struct reloc *relocs;
     struct rbtree *syms[2]; /* All/global symbols symbols in section */
     int align;
     bool by_name;	    /* This section was specified by full MachO name */
+    char namestr[34];	    /* segment,section as a C string */
 
     /* data that goes into the file */
     char sectname[16];     /* what this section is called */
@@ -310,29 +312,58 @@ static uint64_t rel_padcnt = 0;
 #define alignptr(x) \
     ALIGN(x, fmt.ptrsize)	/* align x to output format width */
 
-static struct section *get_section_by_name(const char *segname,
-                                           const char *sectname)
-{
-    struct section *s;
+static struct hash_table section_by_name;
+static struct RAA *section_by_index;
 
-    for (s = sects; s != NULL; s = s->next)
-        if (!xstrncmp(s->segname, segname) && !xstrncmp(s->sectname, sectname))
-            break;
+static struct section * never_null
+find_or_add_section(const char *segname, const char *sectname)
+{
+    struct hash_insert hi;
+    void **sp;
+    struct section *s;
+    char sect[34];
+
+    snprintf(sect, sizeof sect, "%-16s,%-16s", segname, sectname);
+
+    sp = hash_find(&section_by_name, sect, &hi);
+    if (sp)
+	return (struct section *)(*sp);
+
+    s = nasm_zalloc(sizeof *s);
+    xstrncpy(s->segname, segname);
+    xstrncpy(s->sectname, sectname);
+    xstrncpy(s->namestr, sect);
+    hash_add(&hi, s->namestr, s);
+
+    s->index = s->subsection = seg_alloc();
+    section_by_index = raa_write_ptr(section_by_index, s->index >> 1, s);
 
     return s;
 }
 
+static inline bool is_new_section(const struct section *s)
+{
+    return !s->data;
+}
+
+static struct section *get_section_by_name(const char *segname,
+                                           const char *sectname)
+{
+    char sect[34];
+    void **sp;
+
+    snprintf(sect, sizeof sect, "%-16s,%-16s", segname, sectname);
+
+    sp = hash_find(&section_by_name, sect, NULL);
+    return sp ? (struct section *)(*sp) : NULL;
+}
+
 static struct section *get_section_by_index(int32_t index)
 {
-    struct section *s;
+    if (index < 0 || index >= SEG_ABS || (index & 1))
+	return NULL;
 
-    index &= 0x4000fffe;	/* Strip subsection but not absolute flag */
-
-    for (s = sects; s != NULL; s = s->next)
-        if (index == s->index)
-            break;
-
-    return s;
+    return (struct section *)raa_read(section_by_index, index >> 1);
 }
 
 struct dir_list {
@@ -405,6 +436,9 @@ static void macho_init(void)
     extsyms = raa_init();
     strs = saa_init(1L);
 
+    section_by_index = raa_init();
+    hash_init(&section_by_name, HASH_MEDIUM);
+
     /* string table starts with a zero byte so index 0 is an empty string */
     saa_wbytes(strs, zero_buffer, 1);
     strslen = 1;
@@ -412,15 +446,6 @@ static void macho_init(void)
     /* add special symbol for TLVP */
     macho_tlvp_sect = seg_alloc() + 1;
     backend_label("..tlvp", macho_tlvp_sect, 0L);
-
-}
-
-static void macho_reset(void)
-{
-    /* Reset all subsection numbers */
-    struct section *s;
-    for (s = sects; s != NULL; s = s->next)
-	s->subsection = 0;
 }
 
 static void sect_write(struct section *sect,
@@ -480,9 +505,7 @@ static int64_t add_reloc(struct section *sect, int32_t section,
     r->pcrel = 0;
     r->snum = R_ABS;
 
-    s = NULL;
-    if (section != NO_SEG)
-	s = get_section_by_index(section);
+    s = get_section_by_index(section);
     fi = s ? s->fileindex : NO_SECT;
 
     /* absolute relocation */
@@ -620,14 +643,13 @@ static void macho_output(int32_t secto, const void *data,
     }
 
     s = get_section_by_index(secto);
-
-    if (s == NULL) {
+    if (!s) {
         nasm_error(ERR_WARNING, "attempt to assemble code in"
               " section %d: defaulting to `.text'", secto);
         s = get_section_by_name("__TEXT", "__text");
 
         /* should never happen */
-        if (s == NULL)
+        if (!s)
             nasm_panic(0, "text section not found");
     }
 
@@ -904,32 +926,25 @@ static int32_t macho_section(char *name, int pass, int *bits)
     }
 
  found:
-    /* try to find section with that name */
-    s = get_section_by_name(segment, section);
+    /* try to find section with that name, or create it */
+    s = find_or_add_section(segment, section);
+    new_seg = is_new_section(s);
 
-    /* create it if it doesn't exist yet */
-    if (!s) {
-	new_seg = true;
-
-	s = *sectstail = nasm_zalloc(sizeof(struct section));
+    /* initialize it if it is a brand new section */
+    if (new_seg) {
+	*sectstail = s;
 	sectstail = &s->next;
 
 	s->data = saa_init(1L);
-	s->index = seg_alloc();
-	s->subsection = 0;
 	s->fileindex = ++seg_nsects;
 	s->align = -1;
 	s->pad = -1;
 	s->offset = -1;
 	s->by_name = false;
 
-	xstrncpy(s->segname, segment);
-	xstrncpy(s->sectname, section);
 	s->size = 0;
 	s->nreloc = 0;
 	s->flags = flags;
-    } else {
-	new_seg = false;
     }
 
     if (comma)
@@ -999,16 +1014,16 @@ static int32_t macho_section(char *name, int pass, int *bits)
 	s->flags |= flags & ~S_NASM_TYPE_MASK;
     }
 
-    return s->index | (s->subsection << 16);
+    return s->subsection;
 }
 
 static int32_t macho_herelabel(const char *name, enum label_type type,
 			       int32_t section, int32_t *subsection)
 {
     struct section *s;
+    int32_t subsec;
     (void)name;
-    (void)subsection;
-    
+
     if (!(head_flags & MH_SUBSECTIONS_VIA_SYMBOLS))
 	return section;
 
@@ -1020,8 +1035,15 @@ static int32_t macho_herelabel(const char *name, enum label_type type,
     if (!s)
 	return section;
 
-    s->subsection++;
-    return s->index | (s->subsection << 16);
+    subsec = *subsection;
+    if (subsec == NO_SEG) {
+	/* Allocate a new subsection index */
+	subsec = *subsection = seg_alloc();
+	section_by_index = raa_write_ptr(section_by_index, subsec >> 1, s);
+    }
+
+    s->subsection = subsec;
+    return subsec;
 }
 
 static void macho_symdef(char *name, int32_t section, int64_t offset,
@@ -1786,6 +1808,8 @@ static void macho_cleanup(void)
     nasm_free(extdefsyms);
     nasm_free(undefsyms);
     nasm_free(sectstab);
+    raa_free(section_by_index);
+    hash_free(&section_by_name);
 }
 
 static bool macho_set_section_attribute_by_symbol(const char *label, uint32_t flags)
@@ -2363,7 +2387,7 @@ const struct ofmt of_macho32 = {
     &macho32_df_dwarf,
     macho_stdmac,
     macho32_init,
-    macho_reset,
+    null_reset,
     nasm_do_legacy_output,
     macho_output,
     macho_symdef,
@@ -2430,7 +2454,7 @@ const struct ofmt of_macho64 = {
     &macho64_df_dwarf,
     macho_stdmac,
     macho64_init,
-    macho_reset,
+    null_reset,
     nasm_do_legacy_output,
     macho_output,
     macho_symdef,
