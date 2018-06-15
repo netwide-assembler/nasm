@@ -65,14 +65,6 @@ extern struct compile_time official_compile_time;
 #define NO_SEG  INT32_C(-1)     /* null segment value */
 #define SEG_ABS 0x40000000L     /* mask for far-absolute segments */
 
-#ifndef PREFIX_MAX
-#define PREFIX_MAX 10
-#endif
-
-#ifndef POSTFIX_MAX
-#define POSTFIX_MAX 10
-#endif
-
 #define IDLEN_MAX 4096
 #define DECOLEN_MAX 32
 
