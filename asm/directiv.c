@@ -369,7 +369,7 @@ bool process_directives(char *directive)
             break;
         
         if (type == LBL_COMMON || type == LBL_EXTERN)
-            define_label(value, seg_alloc(), size, false);
+            define_label(value, 0, size, false);
 
     	break;
     }
