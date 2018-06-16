@@ -278,6 +278,9 @@ dnl Suppress format warning on Windows targets due to their <inttypes.h>
 PA_ADD_CFLAGS([-Wpedantic-ms-format],[-Wno-pedantic-ms-format])
 PA_ADD_CFLAGS([-Wc90-c99-compat])
 PA_ADD_CFLAGS([-Wlong-long],[-Wno-long-long])
+dnl This is needed because we intentionally expect strncpy() to fill
+dnl in a zero-padded (not zero-terminated) buffer in several backends
+PA_ADD_CFLAGS([-Wstringop-truncation],[-Wno-stringop-truncation])
 dnl PA_ADD_CFLAGS([-Wwrite-strings])
 PA_ARG_ENABLED([werror],
  [compile with -Werror to error out on any warning],

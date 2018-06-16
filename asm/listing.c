@@ -199,7 +199,7 @@ static void list_address(int64_t offset, const char *brackets,
 
 static void list_output(const struct out_data *data)
 {
-    char q[20];
+    char q[24];
     uint64_t size = data->size;
     uint64_t offset = data->offset;
     const uint8_t *p = data->data;
