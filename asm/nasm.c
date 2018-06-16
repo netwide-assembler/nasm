@@ -463,7 +463,7 @@ int main(int argc, char **argv)
     } else {
         dfmt = dfmt_find(ofmt, debug_format);
         if (!dfmt) {
-            nasm_fatal(ERR_NOFILE | ERR_USAGE,
+            nasm_fatal_fl(ERR_NOFILE | ERR_USAGE,
                        "unrecognized debug format `%s' for"
                        " output format `%s'",
                        debug_format, ofmt->shortname);
@@ -505,7 +505,7 @@ int main(int argc, char **argv)
             if (outname) {
                 ofile = nasm_open_write(outname, NF_TEXT);
                 if (!ofile)
-                    nasm_fatal(ERR_NOFILE,
+                    nasm_fatal_fl(ERR_NOFILE,
                                  "unable to open output file `%s'",
                                  outname);
             } else
@@ -550,7 +550,7 @@ int main(int argc, char **argv)
     if (operating_mode & OP_NORMAL) {
         ofile = nasm_open_write(outname, (ofmt->flags & OFMT_TEXT) ? NF_TEXT : NF_BINARY);
         if (!ofile)
-            nasm_fatal(ERR_NOFILE,
+            nasm_fatal_fl(ERR_NOFILE,
                        "unable to open output file `%s'", outname);
 
         /*
@@ -623,7 +623,7 @@ static char *get_param(char *p, char *q, bool *advance)
 static void copy_filename(const char **dst, const char *src, const char *what)
 {
     if (*dst)
-        nasm_fatal(0, "more than one %s file specified: %s\n", what, src);
+        nasm_fatal("more than one %s file specified: %s\n", what, src);
 
     *dst = nasm_strdup(src);
 }
@@ -854,7 +854,7 @@ static bool process_arg(char *p, char *q, int pass)
             if (pass == 1) {
                 ofmt = ofmt_find(param, &ofmt_alias);
                 if (!ofmt) {
-                    nasm_fatal(ERR_NOFILE | ERR_USAGE,
+                    nasm_fatal_fl(ERR_NOFILE | ERR_USAGE,
                                "unrecognised output format `%s' - "
                                "use -hf for a list", param);
                 }
@@ -895,8 +895,7 @@ static bool process_arg(char *p, char *q, int pass)
                             break;
 
                         default:
-                            nasm_fatal(0,
-                                       "unknown optimization option -O%c\n",
+                            nasm_fatal("unknown optimization option -O%c\n",
                                        *param);
                             break;
                         }
@@ -955,7 +954,7 @@ static bool process_arg(char *p, char *q, int pass)
                 else if (nasm_stricmp("gnu", param) == 0)
                     nasm_set_verror(nasm_verror_gnu);
                 else
-                    nasm_fatal(ERR_NOFILE | ERR_USAGE,
+                    nasm_fatal_fl(ERR_NOFILE | ERR_USAGE,
                                "unrecognized error reporting format `%s'",
                                param);
             }
@@ -1354,19 +1353,19 @@ static void parse_cmdline(int argc, char **argv, int pass)
         return;
 
     if (!inname)
-        nasm_fatal(ERR_NOFILE | ERR_USAGE, "no input file specified");
+        nasm_fatal_fl(ERR_NOFILE | ERR_USAGE, "no input file specified");
 
     else if ((errname && !strcmp(inname, errname)) ||
              (outname && !strcmp(inname, outname)) ||
              (listname &&  !strcmp(inname, listname))  ||
              (depend_file && !strcmp(inname, depend_file)))
-        nasm_fatal(ERR_USAGE, "will not overwrite input file");
+        nasm_fatal_fl(ERR_USAGE, "will not overwrite input file");
 
     if (errname) {
         error_file = nasm_open_write(errname, NF_TEXT);
         if (!error_file) {
             error_file = stderr;        /* Revert to default! */
-            nasm_fatal(ERR_NOFILE | ERR_USAGE,
+            nasm_fatal_fl(ERR_NOFILE | ERR_USAGE,
                        "cannot open file `%s' for error messages",
                        errname);
         }
@@ -1386,11 +1385,11 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
         break;
     case 32:
         if (!iflag_cpu_level_ok(&cmd_cpu, IF_386))
-            nasm_fatal(0, "command line: 32-bit segment size requires a higher cpu");
+            nasm_fatal("command line: 32-bit segment size requires a higher cpu");
         break;
     case 64:
         if (!iflag_cpu_level_ok(&cmd_cpu, IF_X86_64))
-            nasm_fatal(0, "command line: 64-bit segment size requires a higher cpu");
+            nasm_fatal("command line: 64-bit segment size requires a higher cpu");
         break;
     default:
         panic();
@@ -1434,8 +1433,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
 
         while ((line = preproc->getline())) {
             if (++globallineno > nasm_limit[LIMIT_LINES])
-                nasm_fatal(0,
-                           "overall line count exceeds the maximum %"PRId64"\n",
+                nasm_fatal("overall line count exceeds the maximum %"PRId64"\n",
                            nasm_limit[LIMIT_LINES]);
 
             /*

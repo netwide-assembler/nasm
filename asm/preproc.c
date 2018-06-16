@@ -1607,7 +1607,7 @@ static FILE *inc_fopen(const char *file,
 
     if (!path) {
         if (omode == INC_NEEDED)
-            nasm_fatal(0, "unable to open include file `%s'", file);
+            nasm_fatal("unable to open include file `%s'", file);
 
         if (found_path)
             *found_path = NULL;
@@ -2821,7 +2821,7 @@ issue_error:
             nasm_error(ERR_WARNING|ERR_PASS1|ERR_PP_PRECOND,
 		       "trailing garbage after `%%else' ignored");
         if (!istk->conds)
-	    nasm_fatal(0, "`%%else: no matching `%%if'");
+	    nasm_fatal("`%%else: no matching `%%if'");
         switch(istk->conds->state) {
         case COND_IF_TRUE:
         case COND_DONE:
@@ -4986,7 +4986,7 @@ pp_reset(const char *file, int apass, StrList **deplist)
     src_set(0, file);
     istk->lineinc = 1;
     if (!istk->fp)
-	nasm_fatal(ERR_NOFILE, "unable to open input file `%s'", file);
+	nasm_fatal_fl(ERR_NOFILE, "unable to open input file `%s'", file);
     defining = NULL;
     nested_mac_count = 0;
     nested_rep_count = 0;
@@ -5094,9 +5094,9 @@ static char *pp_getline(void)
                  */
                 if (defining) {
                     if (defining->name)
-                        nasm_panic(0, "defining with name in expansion");
+                        nasm_panic("defining with name in expansion");
                     else if (istk->mstk->name)
-                        nasm_fatal(0, "`%%rep' without `%%endrep' within"
+                        nasm_fatal("`%%rep' without `%%endrep' within"
 				   " expansion of macro `%s'",
 				   istk->mstk->name);
                 }
@@ -5171,8 +5171,7 @@ static char *pp_getline(void)
                 fclose(i->fp);
                 if (i->conds) {
                     /* nasm_error can't be conditionally suppressed */
-                    nasm_fatal(0,
-                               "expected `%%endif' before end of file");
+                    nasm_fatal("expected `%%endif' before end of file");
                 }
                 /* only set line and file name if there's a next node */
                 if (i->next)

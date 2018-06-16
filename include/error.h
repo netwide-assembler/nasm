@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -44,8 +44,10 @@
  * An error reporting function should look like this.
  */
 void printf_func(2, 3) nasm_error(int severity, const char *fmt, ...);
-fatal_func printf_func(2, 3) nasm_fatal(int flags, const char *fmt, ...);
-fatal_func printf_func(2, 3) nasm_panic(int flags, const char *fmt, ...);
+fatal_func printf_func(1, 2) nasm_fatal(const char *fmt, ...);
+fatal_func printf_func(1, 2) nasm_panic(const char *fmt, ...);
+fatal_func printf_func(2, 3) nasm_fatal_fl(int flags, const char *fmt, ...);
+fatal_func printf_func(2, 3) nasm_panic_fl(int flags, const char *fmt, ...);
 fatal_func nasm_panic_from_macro(const char *file, int line);
 #define panic() nasm_panic_from_macro(__FILE__, __LINE__);
 

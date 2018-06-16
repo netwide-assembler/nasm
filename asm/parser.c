@@ -98,7 +98,7 @@ static int prefix_slot(int prefix)
     case P_VEX2:
         return PPS_VEX;
     default:
-        nasm_panic(0, "Invalid value %d passed to prefix_slot()", prefix);
+        nasm_panic("Invalid value %d passed to prefix_slot()", prefix);
         return -1;
     }
 }

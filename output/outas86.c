@@ -498,7 +498,7 @@ static void as86_set_rsize(int size)
             fputc(0x03, ofile);
             break;
         default:
-            nasm_panic(0, "bizarre relocation size %d", size);
+            nasm_panic("bizarre relocation size %d", size);
 	    break;
         }
     }

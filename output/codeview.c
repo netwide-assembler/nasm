@@ -480,7 +480,7 @@ static void register_reloc(struct coff_Section *const sect,
                 return;
         }
     }
-    nasm_panic(0, "codeview: relocation for unregistered symbol: %s", sym);
+    nasm_panic("codeview: relocation for unregistered symbol: %s", sym);
 }
 
 static inline void section_write32(struct coff_Section *sect, uint32_t val)

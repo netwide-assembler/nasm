@@ -405,7 +405,7 @@ static void ieee_out(int32_t segto, const void *data,
     if (!any_segs) {
         int tempint;            /* ignored */
         if (segto != ieee_segment("__NASMDEFSEG", 2, &tempint))
-            nasm_panic(0, "strange segment conditions in IEEE driver");
+            nasm_panic("strange segment conditions in IEEE driver");
     }
 
     /*
@@ -415,7 +415,7 @@ static void ieee_out(int32_t segto, const void *data,
         if (seg->index == segto)
             break;
     if (!seg)
-        nasm_panic(0, "code directed to nonexistent segment?");
+        nasm_panic("code directed to nonexistent segment?");
 
     if (type == OUT_RAWDATA) {
         ucdata = data;
@@ -521,8 +521,7 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
                     }
 
                 } else
-                    nasm_panic(0,
-                          "unrecognised WRT value in ieee_write_fixup");
+                    nasm_panic("unrecognised WRT value in ieee_write_fixup");
             } else
                 nasm_error(ERR_NONFATAL, "target of WRT must be a section ");
         }
@@ -563,8 +562,7 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
                  */
                 if (eb) {
                     if (realtype == OUT_REL2ADR || realtype == OUT_REL4ADR) {
-                        nasm_panic(0,
-                              "Segment of a rel not supported in ieee_write_fixup");
+                        nasm_panic("Segment of a rel not supported in ieee_write_fixup");
                     } else {
                         /* If we want the segment */
                         s.ftype = FT_EXTSEG;
@@ -574,8 +572,7 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
 
                 } else
                     /* If we get here the seg value doesn't make sense */
-                    nasm_panic(0,
-                          "unrecognised segment value in ieee_write_fixup");
+                    nasm_panic("unrecognised segment value in ieee_write_fixup");
             }
 
         } else {
@@ -629,8 +626,7 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
 
                 } else
                     /* If we get here the seg value doesn't make sense */
-                    nasm_panic(0,
-                          "unrecognised segment value in ieee_write_fixup");
+                    nasm_panic("unrecognised segment value in ieee_write_fixup");
             }
         }
         if (size != 2 && s.ftype == FT_SEG)
@@ -969,7 +965,7 @@ static void ieee_write_file(void)
             if (seg->index == ieee_entry_seg)
                 break;
         if (!seg)
-            nasm_panic(0, "Start address records are incorrect");
+            nasm_panic("Start address records are incorrect");
         else
             ieee_putascii("ASG,R%X,%lX,+.\n", seg->ieee_index,
                           ieee_entry_ofs);
@@ -1332,7 +1328,7 @@ static void dbgls_linnum(const char *lnfname, int32_t lineno, int32_t segto)
     if (!any_segs) {
         int tempint;            /* ignored */
         if (segto != ieee_segment("__NASMDEFSEG", 2, &tempint))
-            nasm_panic(0, "strange segment conditions in OBJ driver");
+            nasm_panic("strange segment conditions in OBJ driver");
     }
 
     /*
@@ -1342,7 +1338,7 @@ static void dbgls_linnum(const char *lnfname, int32_t lineno, int32_t segto)
         if (seg->index == segto)
             break;
     if (!seg)
-        nasm_panic(0, "lineno directed to nonexistent segment?");
+        nasm_panic("lineno directed to nonexistent segment?");
 
     for (fn = fnhead; fn; fn = fn->next) {
         if (!nasm_stricmp(lnfname, fn->name))

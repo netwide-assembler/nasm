@@ -643,7 +643,7 @@ static void macho_output(int32_t secto, const void *data,
 
         /* should never happen */
         if (!s)
-            nasm_panic(0, "text section not found");
+            nasm_panic("text section not found");
     }
 
     /* debug code generation only for sections tagged with
@@ -1146,7 +1146,7 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
                 /* give an error on unfound section if it's not an
                  ** external or common symbol (assemble_file() does a
                  ** seg_alloc() on every call for them) */
-                nasm_panic(0, "in-file index for section %d not found, is_global = %d", section, is_global);
+                nasm_panic("in-file index for section %d not found, is_global = %d", section, is_global);
 		break;
             }
 	}
@@ -1339,7 +1339,7 @@ static void macho_calculate_sizes (void)
     }
 
     if (seg_nsects > MAX_SECT) {
-	nasm_fatal(0, "MachO output is limited to %d sections\n",
+	nasm_fatal("MachO output is limited to %d sections\n",
 		   MAX_SECT);
     }
 

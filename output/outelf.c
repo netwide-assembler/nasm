@@ -554,7 +554,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             /* we have to be sure at least text section is there */
             int tempint;
             if (segment != elf_section_names(".text", 2, &tempint))
-                nasm_panic(0, "strange segment conditions in ELF driver");
+                nasm_panic("strange segment conditions in ELF driver");
         }
         for (i = 0; i < nsects; i++) {
             if (segment == sects[i]->index) {
@@ -808,7 +808,7 @@ static void elf32_out(int32_t segto, const void *data,
     if (!s) {
         int tempint;            /* ignored */
         if (segto != elf_section_names(".text", 2, &tempint))
-            nasm_panic(0, "strange segment conditions in ELF driver");
+            nasm_panic("strange segment conditions in ELF driver");
         else {
             s = sects[nsects - 1];
             i = nsects - 1;
@@ -963,7 +963,7 @@ rel12adr:
     case OUT_REL4ADR:
         addr = *(int64_t *)data - size;
         if (segment == segto)
-            nasm_panic(0, "intra-segment OUT_REL4ADR");
+            nasm_panic("intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
             nasm_error(ERR_NONFATAL, "ELF format does not support"
                   " segment base references");
@@ -1015,7 +1015,7 @@ static void elf64_out(int32_t segto, const void *data,
     if (!s) {
         int tempint;            /* ignored */
         if (segto != elf_section_names(".text", 2, &tempint))
-            nasm_panic(0, "strange segment conditions in ELF driver");
+            nasm_panic("strange segment conditions in ELF driver");
         else {
             s = sects[nsects - 1];
             i = nsects - 1;
@@ -1049,7 +1049,7 @@ static void elf64_out(int32_t segto, const void *data,
 
     case OUT_RAWDATA:
         if (segment != NO_SEG)
-            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
+            nasm_panic("OUT_RAWDATA with other than NO_SEG");
         elf_sect_write(s, data, size);
         break;
 
@@ -1086,7 +1086,7 @@ static void elf64_out(int32_t segto, const void *data,
                     elf_add_reloc(s, segment, addr, R_X86_64_64);
                     break;
                 default:
-                    nasm_panic(0, "internal error elf64-hpa-871");
+                    nasm_panic("internal error elf64-hpa-871");
                     break;
                 }
                 addr = 0;
@@ -1154,7 +1154,7 @@ static void elf64_out(int32_t segto, const void *data,
                     addr = 0;
                     break;
                 default:
-                    nasm_panic(0, "internal error elf64-hpa-903");
+                    nasm_panic("internal error elf64-hpa-903");
                     break;
                 }
             } else if (wrt == elf_plt_sect + 1) {
@@ -1182,7 +1182,7 @@ static void elf64_out(int32_t segto, const void *data,
 rel12adr:
         addr = *(int64_t *)data - size;
         if (segment == segto)
-            nasm_panic(0, "intra-segment OUT_REL1ADR");
+            nasm_panic("intra-segment OUT_REL1ADR");
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {
@@ -1203,7 +1203,7 @@ rel12adr:
     case OUT_REL4ADR:
         addr = *(int64_t *)data - size;
         if (segment == segto)
-            nasm_panic(0, "intra-segment OUT_REL4ADR");
+            nasm_panic("intra-segment OUT_REL4ADR");
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {
@@ -1241,7 +1241,7 @@ rel12adr:
     case OUT_REL8ADR:
         addr = *(int64_t *)data - size;
         if (segment == segto)
-            nasm_panic(0, "intra-segment OUT_REL8ADR");
+            nasm_panic("intra-segment OUT_REL8ADR");
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {
@@ -1295,7 +1295,7 @@ static void elfx32_out(int32_t segto, const void *data,
     if (!s) {
         int tempint;            /* ignored */
         if (segto != elf_section_names(".text", 2, &tempint))
-            nasm_panic(0, "strange segment conditions in ELF driver");
+            nasm_panic("strange segment conditions in ELF driver");
         else {
             s = sects[nsects - 1];
             i = nsects - 1;
@@ -1329,7 +1329,7 @@ static void elfx32_out(int32_t segto, const void *data,
 
     case OUT_RAWDATA:
         if (segment != NO_SEG)
-            nasm_panic(0, "OUT_RAWDATA with other than NO_SEG");
+            nasm_panic("OUT_RAWDATA with other than NO_SEG");
         elf_sect_write(s, data, size);
         break;
 
@@ -1366,7 +1366,7 @@ static void elfx32_out(int32_t segto, const void *data,
                     elf_add_reloc(s, segment, addr, R_X86_64_64);
                     break;
                 default:
-                    nasm_panic(0, "internal error elfx32-hpa-871");
+                    nasm_panic("internal error elfx32-hpa-871");
                     break;
                 }
                 addr = 0;
@@ -1424,7 +1424,7 @@ static void elfx32_out(int32_t segto, const void *data,
                     addr = 0;
                     break;
                 default:
-                    nasm_panic(0, "internal error elfx32-hpa-903");
+                    nasm_panic("internal error elfx32-hpa-903");
                     break;
                 }
             } else if (wrt == elf_plt_sect + 1) {
@@ -1452,7 +1452,7 @@ static void elfx32_out(int32_t segto, const void *data,
 rel12adr:
         addr = *(int64_t *)data - size;
         if (segment == segto)
-            nasm_panic(0, "intra-segment OUT_REL1ADR");
+            nasm_panic("intra-segment OUT_REL1ADR");
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {
@@ -1473,7 +1473,7 @@ rel12adr:
     case OUT_REL4ADR:
         addr = *(int64_t *)data - size;
         if (segment == segto)
-            nasm_panic(0, "intra-segment OUT_REL4ADR");
+            nasm_panic("intra-segment OUT_REL4ADR");
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {

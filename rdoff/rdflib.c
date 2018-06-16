@@ -374,7 +374,7 @@ int main(int argc, char **argv)
             /* check against desired name */
             if (!strcmp(buf, argv[3])) {
                 if (fread(p = rdbuf, 1, sizeof(rdbuf), fptmp) < 10) {
-                    nasm_fatal(0, "short read on input");
+                    nasm_fatal("short read on input");
                 }
                 l = *(int32_t *)(p + 6);
                 fseek(fptmp, l, SEEK_CUR);

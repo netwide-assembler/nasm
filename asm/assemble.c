@@ -1317,7 +1317,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
 
         default:
-            nasm_panic(0, "internal instruction table corrupt"
+            nasm_panic("internal instruction table corrupt"
                     ": instruction code \\%o (0x%02X) given", c, c);
             break;
         }
@@ -1548,7 +1548,7 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
         case P_none:
             break;
         default:
-            nasm_panic(0, "invalid instruction prefix");
+            nasm_panic("invalid instruction prefix");
         }
         if (c) {
             if (data)
@@ -1866,7 +1866,7 @@ static void gencode(struct out_data *data, insn *ins)
 
         case 0340:
             if (ins->oprs[0].segment != NO_SEG)
-                nasm_panic(0, "non-constant BSS size in pass two");
+                nasm_panic("non-constant BSS size in pass two");
 
             out_reserve(data, ins->oprs[0].offset);
             break;
@@ -1976,7 +1976,7 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         default:
-            nasm_panic(0, "internal instruction table corrupt"
+            nasm_panic("internal instruction table corrupt"
                     ": instruction code \\%o (0x%02X) given", c, c);
             break;
         }
@@ -1986,14 +1986,14 @@ static void gencode(struct out_data *data, insn *ins)
 static opflags_t regflag(const operand * o)
 {
     if (!is_register(o->basereg))
-        nasm_panic(0, "invalid operand passed to regflag()");
+        nasm_panic("invalid operand passed to regflag()");
     return nasm_reg_flags[o->basereg];
 }
 
 static int32_t regval(const operand * o)
 {
     if (!is_register(o->basereg))
-        nasm_panic(0, "invalid operand passed to regval()");
+        nasm_panic("invalid operand passed to regval()");
     return nasm_regvals[o->basereg];
 }
 
@@ -2003,7 +2003,7 @@ static int op_rexflags(const operand * o, int mask)
     int val;
 
     if (!is_register(o->basereg))
-        nasm_panic(0, "invalid operand passed to op_rexflags()");
+        nasm_panic("invalid operand passed to op_rexflags()");
 
     flags = nasm_reg_flags[o->basereg];
     val = nasm_regvals[o->basereg];

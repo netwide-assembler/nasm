@@ -395,7 +395,7 @@ bool process_directives(char *directive)
         } else if (passn == 1)
             absolute.offset = 0x100;     /* don't go near zero in case of / */
         else
-            nasm_panic(0, "invalid ABSOLUTE address "
+            nasm_panic("invalid ABSOLUTE address "
                        "in pass two");
         in_absolute = true;
         location.segment = NO_SEG;

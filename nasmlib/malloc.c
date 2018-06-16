@@ -44,7 +44,7 @@
 
 static no_return nasm_alloc_failed(void)
 {
-    nasm_fatal(0, "out of memory");
+    nasm_fatal("out of memory");
 }
 
 static inline void *validate_ptr(void *p)

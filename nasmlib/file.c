@@ -37,9 +37,9 @@ void nasm_read(void *ptr, size_t size, FILE *f)
 {
     size_t n = fread(ptr, 1, size, f);
     if (ferror(f)) {
-        nasm_fatal(0, "unable to read input: %s", strerror(errno));
+        nasm_fatal("unable to read input: %s", strerror(errno));
     } else if (n != size || feof(f)) {
-        nasm_fatal(0, "fatal short read on input");
+        nasm_fatal("fatal short read on input");
     }
 }
 
@@ -47,7 +47,7 @@ void nasm_write(const void *ptr, size_t size, FILE *f)
 {
     size_t n = fwrite(ptr, 1, size, f);
     if (n != size || ferror(f) || feof(f))
-        nasm_fatal(0, "unable to write output: %s", strerror(errno));
+        nasm_fatal("unable to write output: %s", strerror(errno));
 }
 
 void fwriteint16_t(uint16_t data, FILE * fp)
@@ -119,7 +119,7 @@ FILE *nasm_open_read(const char *filename, enum file_flags flags)
         f = fopen(filename, (flags & NF_TEXT) ? "rt" : "rb");
 
     if (!f && (flags & NF_FATAL))
-        nasm_fatal(ERR_NOFILE, "unable to open input file: `%s': %s",
+        nasm_fatal_fl(ERR_NOFILE, "unable to open input file: `%s': %s",
                    filename, strerror(errno));
 
     return f;
@@ -132,7 +132,7 @@ FILE *nasm_open_write(const char *filename, enum file_flags flags)
     f = fopen(filename, (flags & NF_TEXT) ? "wt" : "wb");
 
     if (!f && (flags & NF_FATAL))
-        nasm_fatal(ERR_NOFILE, "unable to open output file: `%s': %s",
+        nasm_fatal_fl(ERR_NOFILE, "unable to open output file: `%s': %s",
                    filename, strerror(errno));
 
     return f;

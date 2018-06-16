@@ -26,15 +26,14 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap)
     int rv, bytes;
 
     if (size > BUFFER_SIZE) {
-        nasm_panic(ERR_NOFILE,
-                   "vsnprintf: size (%d) > BUFFER_SIZE (%d)",
+        nasm_panic("vsnprintf: size (%d) > BUFFER_SIZE (%d)",
                    size, BUFFER_SIZE);
         size = BUFFER_SIZE;
     }
 
     rv = vsprintf(snprintf_buffer, format, ap);
     if (rv >= BUFFER_SIZE)
-        nasm_panic(ERR_NOFILE, "vsnprintf buffer overflow");
+        nasm_panic("vsnprintf buffer overflow");
 
     if (size > 0) {
         if ((size_t)rv < size-1)
