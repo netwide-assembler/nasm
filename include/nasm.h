@@ -165,8 +165,9 @@ enum token_type { /* token types, other than chars */
     TOKEN_BASE,         /* $$ */
     TOKEN_SPECIAL,      /* BYTE, WORD, DWORD, QWORD, FAR, NEAR, etc */
     TOKEN_PREFIX,       /* A32, O16, LOCK, REPNZ, TIMES, etc */
-    TOKEN_SHL,          /* << */
+    TOKEN_SHL,          /* << or <<< */
     TOKEN_SHR,          /* >> */
+    TOKEN_SAR,          /* >>> */
     TOKEN_SDIV,         /* // */
     TOKEN_SMOD,         /* %% */
     TOKEN_GE,           /* >= */

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -305,10 +305,15 @@ int stdscan(void *private_data, struct tokenval *tv)
         /* a comment has happened - stay */
         return tv->t_type = TOKEN_EOS;
     } else if (stdscan_bufptr[0] == '>' && stdscan_bufptr[1] == '>') {
-        stdscan_bufptr += 2;
-        return tv->t_type = TOKEN_SHR;
+        if (stdscan_bufptr[2] == '>') {
+            stdscan_bufptr += 3;
+            return tv->t_type = TOKEN_SAR;
+        } else {
+            stdscan_bufptr += 2;
+            return tv->t_type = TOKEN_SHR;
+        }
     } else if (stdscan_bufptr[0] == '<' && stdscan_bufptr[1] == '<') {
-        stdscan_bufptr += 2;
+        stdscan_bufptr += stdscan_bufptr[2] == '<' ? 3 : 2;
         return tv->t_type = TOKEN_SHL;
     } else if (stdscan_bufptr[0] == '/' && stdscan_bufptr[1] == '/') {
         stdscan_bufptr += 2;

@@ -509,7 +509,7 @@ static expr *expr3(int critical)
     if (!e)
         return NULL;
 
-    while (i == TOKEN_SHL || i == TOKEN_SHR) {
+    while (i == TOKEN_SHL || i == TOKEN_SHR || i == TOKEN_SAR) {
         int j = i;
         i = scan(scpriv, tokval);
         f = expr4(critical);
@@ -521,7 +521,7 @@ static expr *expr3(int critical)
                   " scalar values");
         } else if (is_just_unknown(e) || is_just_unknown(f)) {
             e = unknown_expr();
-        } else
+        } else {
             switch (j) {
             case TOKEN_SHL:
                 e = scalarvect(reloc_value(e) << reloc_value(f));
@@ -530,7 +530,12 @@ static expr *expr3(int critical)
                 e = scalarvect(((uint64_t)reloc_value(e)) >>
                                reloc_value(f));
                 break;
+            case TOKEN_SAR:
+                e = scalarvect(((int64_t)reloc_value(e)) >>
+                               reloc_value(f));
+                break;
             }
+        }
     }
     return e;
 }
