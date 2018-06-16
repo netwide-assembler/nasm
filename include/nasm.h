@@ -173,6 +173,7 @@ enum token_type { /* token types, other than chars */
     TOKEN_GE,           /* >= */
     TOKEN_LE,           /* <= */
     TOKEN_NE,           /* <> (!= is same as <>) */
+    TOKEN_LEG,          /* <=> */
     TOKEN_DBL_AND,      /* && */
     TOKEN_DBL_OR,       /* || */
     TOKEN_DBL_XOR,      /* ^^ */

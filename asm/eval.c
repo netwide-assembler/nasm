@@ -375,7 +375,8 @@ static expr *rexp3(int critical)
         return NULL;
 
     while (i == TOKEN_EQ || i == TOKEN_LT || i == TOKEN_GT ||
-           i == TOKEN_NE || i == TOKEN_LE || i == TOKEN_GE) {
+           i == TOKEN_NE || i == TOKEN_LE || i == TOKEN_GE ||
+           i == TOKEN_LEG) {
         int j = i;
         i = scan(scpriv, tokval);
         f = expr0(critical);
@@ -400,12 +401,18 @@ static expr *rexp3(int critical)
             else if (!is_really_simple(e)) {
                 nasm_error(ERR_NONFATAL,
                       "`%s': operands differ by a non-scalar",
-                      (j == TOKEN_LE ? "<=" : j == TOKEN_LT ? "<" : j ==
-                       TOKEN_GE ? ">=" : ">"));
+                      (j == TOKEN_LE ? "<=" :
+                       j == TOKEN_LT ? "<" :
+                       j == TOKEN_GE ? ">=" :
+                       j == TOKEN_GT ? ">" :
+                       j == TOKEN_LEG ? "<=>" :
+                       "<internal error>"));
                 v = 0;          /* must set it to _something_ */
             } else {
                 int64_t vv = reloc_value(e);
-                if (vv == 0)
+                if (j == TOKEN_LEG)
+                    v = (vv < 0) ? -1 : (vv > 0) ? 1 : 0;
+                else if (vv == 0)
                     v = (j == TOKEN_LE || j == TOKEN_GE);
                 else if (vv > 0)
                     v = (j == TOKEN_GE || j == TOKEN_GT);
