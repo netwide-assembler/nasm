@@ -436,6 +436,8 @@ insn *parse_line(int pass, char *buffer, insn *result)
     bool recover;
     int i;
 
+    nasm_static_assert(P_none == 0);
+
 restart_parse:
     first               = true;
     result->forw_ref    = false;
@@ -444,7 +446,6 @@ restart_parse:
     stdscan_set(buffer);
     i = stdscan(NULL, &tokval);
 
-    nasm_static_assert(P_none == 0);
     memset(result->prefixes, P_none, sizeof(result->prefixes));
     result->times       = 1;    /* No TIMES either yet */
     result->label       = NULL; /* Assume no label */
