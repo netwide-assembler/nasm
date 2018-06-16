@@ -3044,7 +3044,7 @@ issue_error:
             count = reloc_value(evalresult);
             if (count > nasm_limit[LIMIT_REP]) {
                 nasm_error(ERR_NONFATAL,
-                           "`%%rep' count %"PRId64" exceeds limit (currently %d)",
+                           "`%%rep' count %"PRId64" exceeds limit (currently %"PRId64")",
                            count, nasm_limit[LIMIT_REP]);
                 count = 0;
             } else if (count < 0) {
@@ -4195,7 +4195,7 @@ static Token *expand_smacro(Token * tline)
     Token *org_tline = tline;
     Context *ctx;
     const char *mname;
-    int deadman = nasm_limit[LIMIT_MACROS];
+    int64_t deadman = nasm_limit[LIMIT_MACROS];
     bool expanded;
 
     /*

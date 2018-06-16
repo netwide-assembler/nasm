@@ -72,7 +72,7 @@ static void *scpriv;
 static int *opflags;
 
 static struct eval_hints *hint;
-static int deadman;
+static int64_t deadman;
 
 
 /*
