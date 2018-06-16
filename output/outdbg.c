@@ -75,7 +75,8 @@ static void dbg_init(void)
 
 static void dbg_reset(void)
 {
-    fprintf(ofile, "*** pass reset: pass0 = %d, passn = %d\n", pass0, passn);
+    fprintf(ofile, "*** pass reset: pass0 = %d, passn = %"PRId64"\n",
+            pass0, passn);
 }
 
 static void dbg_cleanup(void)

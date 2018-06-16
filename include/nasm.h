@@ -760,10 +760,11 @@ enum nasm_limit {
     LIMIT_STALLED,
     LIMIT_MACROS,
     LIMIT_REP,
-    LIMIT_EVAL
+    LIMIT_EVAL,
+    LIMIT_LINES
 };
-#define LIMIT_MAX LIMIT_EVAL
-extern int nasm_limit[LIMIT_MAX+1];
+#define LIMIT_MAX LIMIT_LINES
+extern int64_t nasm_limit[LIMIT_MAX+1];
 extern enum directive_result  nasm_set_limit(const char *, const char *);
 
 /*
@@ -1242,7 +1243,7 @@ enum decorator_tokens {
  */
 
 extern int pass0;
-extern int passn;               /* Actual pass number */
+extern int64_t passn;           /* Actual pass number */
 
 extern bool tasm_compatible_mode;
 extern int optimizing;

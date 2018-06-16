@@ -94,7 +94,8 @@ static bool abort_on_panic = ABORT_ON_PANIC;
 static bool keep_all;
 
 bool tasm_compatible_mode = false;
-int pass0, passn;
+int pass0;
+int64_t passn;
 static int pass1, pass2;	/* XXX: Get rid of these, they are redundant */
 int globalrel = 0;
 int globalbnd = 0;
@@ -106,8 +107,7 @@ const char *outname;
 static const char *listname;
 static const char *errname;
 
-static int globallineno;        /* for forward-reference tracking */
-#define GLOBALLINENO_MAX    INT32_MAX
+static int64_t globallineno;    /* for forward-reference tracking */
 
 /* static int pass = 0; */
 const struct ofmt *ofmt = &OF_DEFAULT;
@@ -159,10 +159,10 @@ static char *(*quote_for_make)(const char *) = quote_for_pmake;
  * Execution limits that can be set via a command-line option or %pragma
  */
 
-#define LIMIT_MAX_VAL	(INT_MAX >> 1) /* Effectively unlimited */
+#define LIMIT_MAX_VAL	(INT64_MAX >> 1) /* Effectively unlimited */
 
-int nasm_limit[LIMIT_MAX+1] =
-{ LIMIT_MAX_VAL, 1000, 1000000, 1000000, 1000000 };
+int64_t nasm_limit[LIMIT_MAX+1] =
+{ LIMIT_MAX_VAL, 1000, 1000000, 1000000, 1000000, 2000000000 };
 
 struct limit_info {
     const char *name;
@@ -173,7 +173,8 @@ static const struct limit_info limit_info[LIMIT_MAX+1] = {
     { "stalled-passes", "number of passes without forward progress" },
     { "macro-levels", "levels of macro expansion"},
     { "rep", "%rep count" },
-    { "eval", "expression evaluation descent"}
+    { "eval", "expression evaluation descent"},
+    { "lines", "total source lines processed"}
 };
 
 enum directive_result
@@ -1378,7 +1379,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
     insn output_ins;
     int i;
     uint64_t prev_offset_changed;
-    int stall_count = 0;   /* Make sure we make forward progress... */
+    int64_t stall_count = 0; /* Make sure we make forward progress... */
 
     switch (cmd_sb) {
     case 16:
@@ -1432,10 +1433,10 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
         globallineno = 0;
 
         while ((line = preproc->getline())) {
-            if (globallineno++ == GLOBALLINENO_MAX)
-                nasm_error(ERR_FATAL,
-                    "overall line number reaches the maximum %d\n",
-                    GLOBALLINENO_MAX);
+            if (++globallineno > nasm_limit[LIMIT_LINES])
+                nasm_fatal(0,
+                           "overall line count exceeds the maximum %"PRId64"\n",
+                           nasm_limit[LIMIT_LINES]);
 
             /*
              * Here we parse our directives; this is not handled by the
@@ -1639,7 +1640,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
              */
              nasm_error(ERR_NONFATAL,
                           "Can't find valid values for all labels "
-                          "after %d passes, giving up.", passn);
+                          "after %"PRId64" passes, giving up.", passn);
              nasm_error(ERR_NONFATAL,
                         "Possible causes: recursive EQUs, macro abuse.");
              break;
@@ -1650,7 +1651,8 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
     lfmt->cleanup();
     if (!terminate_after_phase && opt_verbose_info) {
         /*  -On and -Ov switches */
-        fprintf(stdout, "info: assembly required 1+%d+1 passes\n", passn-3);
+        fprintf(stdout, "info: assembly required 1+%"PRId64"+1 passes\n",
+                passn-3);
     }
 }
 
@@ -1955,7 +1957,7 @@ static void help(const char xopt)
         printf("                     %-15s %s (default ",
                limit_info[i].name, limit_info[i].help);
         if (nasm_limit[i] < LIMIT_MAX_VAL) {
-            printf("%d)\n", nasm_limit[i]);
+            printf("%"PRId64")\n", nasm_limit[i]);
         } else {
             printf("unlimited)\n");
         }
