@@ -363,7 +363,7 @@ static struct section *get_section_by_index(int32_t index)
     if (index < 0 || index >= SEG_ABS || (index & 1))
 	return NULL;
 
-    return (struct section *)raa_read(section_by_index, index >> 1);
+    return raa_read_ptr(section_by_index, index >> 1);
 }
 
 struct dir_list {
