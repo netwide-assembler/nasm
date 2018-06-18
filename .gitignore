@@ -40,6 +40,7 @@ TAGS
 /*.1
 /Makefile
 /asm/directbl.c
+/asm/directbl.h
 /asm/directiv.h
 /asm/pptok.c
 /asm/pptok.h
