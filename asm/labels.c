@@ -146,7 +146,7 @@ static void out_symdef(union label *lptr)
         case LBL_EXTERN:
         case LBL_COMMON:
             if (lptr->defn.special)
-                ofmt->symdef(lptr->defn.label, 0, 0, 3, lptr->defn.special);
+                ofmt->symdef(lptr->defn.mangled, 0, 0, 3, lptr->defn.special);
             break;
         default:
             break;
