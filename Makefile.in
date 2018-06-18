@@ -67,7 +67,7 @@ ifeq ($(TRACE),1)
 endif
 
 .SUFFIXES:
-.SUFFIXES: .c .i .s .$(O) .$(A) $(X) .1 .txt .xml
+.SUFFIXES: $(X) .$(O) .$(A) .xml .1 .c .i .s .txt
 
 .PHONY: all doc rdf install clean distclean cleaner spotless install_rdf test
 .PHONY: install_doc everything install_everything strip perlreq dist tags TAGS
