@@ -727,10 +727,11 @@ enum directive_result {
  * as part of the struct pragma.
  */
 struct pragma;
+typedef enum directive_result (*pragma_handler)(const struct pragma *);
 
 struct pragma_facility {
     const char *name;
-    enum directive_result (*handler)(const struct pragma *);
+    pragma_handler handler;
 };
 
 /*
