@@ -313,7 +313,7 @@ static uint64_t rel_padcnt = 0;
     ALIGN(x, fmt.ptrsize)	/* align x to output format width */
 
 static struct hash_table section_by_name;
-static struct RAA *section_by_index;
+static struct RAAPTR *section_by_index;
 
 static struct section * never_null
 find_or_add_section(const char *segname, const char *sectname)
@@ -436,7 +436,7 @@ static void macho_init(void)
     extsyms = raa_init();
     strs = saa_init(1L);
 
-    section_by_index = raa_init();
+    section_by_index = raa_init_ptr();
     hash_init(&section_by_name, HASH_MEDIUM);
 
     /* string table starts with a zero byte so index 0 is an empty string */
@@ -1808,7 +1808,7 @@ static void macho_cleanup(void)
     nasm_free(extdefsyms);
     nasm_free(undefsyms);
     nasm_free(sectstab);
-    raa_free(section_by_index);
+    raa_free_ptr(section_by_index);
     hash_free(&section_by_name);
 }
 
