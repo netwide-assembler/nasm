@@ -5851,7 +5851,7 @@ non-Mach-O builds of the same source code:
 
 \c      %pragma macho no_dead_strip symbol...
 
-\S{machosect} \c{macho} specific extensions to the \c{GLOBAL}
+\S{macho-pext} \c{macho} specific extensions to the \c{GLOBAL}
 Directive: \i\c{private_extern}
 
 The directive extension to \c{GLOBAL} marks the symbol with limited
