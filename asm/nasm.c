@@ -1943,14 +1943,16 @@ static void help(const char xopt)
          "    -w-foo        disable warning foo (equiv. -Wno-foo)\n"
          "    -w[+-]error[=foo]\n"
          "                  promote [specific] warnings to errors\n"
-         "    -h            show invocation summary and exit\n\n"
+         "    -h            show invocation summary and exit (also --help)\n\n"
          "   --pragma str   pre-executes a specific %%pragma\n"
          "   --before str   add line (usually a preprocessor statement) before the input\n"
          "   --prefix str   prepend the given string to all the given string\n"
-         "                  to all extern, common and global symbols\n"
-         "   --suffix str   append the given string to all the given string\n"
-         "                  to all extern, common and global symbols\n"
+         "                  to all extern, common and global symbols (also --gprefix)\n"
+         "   --postfix str  append the given string to all the given string\n"
+         "                  to all extern, common and global symbols (also --gpostfix)\n"
          "   --lprefix str  prepend the given string to all other symbols\n"
+         "   --lpostfix str append the given string to all other symbols\n"
+         "   --keep-all     output files will not be removed even if an error happens\n"
          "   --limit-X val  set execution limit X\n");
 
     for (i = 0; i <= LIMIT_MAX; i++) {
