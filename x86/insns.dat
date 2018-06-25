@@ -5332,6 +5332,16 @@ VPSHUFBITQMB		kreg|mask,xmmreg,xmmrm128		[rvm:fvm: evex.nds.128.66.0f38.w0 8f /r
 VPSHUFBITQMB		kreg|mask,ymmreg,ymmrm256		[rvm:fvm: evex.nds.256.66.0f38.w0 8f /r]	AVX512BITALG,AVX512VL,FUTURE
 VPSHUFBITQMB		kreg|mask,zmmreg,zmmrm512		[rvm:fvm: evex.nds.512.66.0f38.w0 8f /r]	AVX512BITALG,FUTURE
 
+;# AVX512 4-iteration Multiply-Add
+V4FMADDPS		zmmreg|mask|z,zmmreg,mem128		[rvm:m128:evex.dds.512.f2.0f38.w0 9a /r]	AVX5124FMAPS,FUTURE
+V4FNMADDPS		zmmreg|mask|z,zmmreg,mem128		[rvm:m128:evex.dds.512.f2.0f38.w0 9a /r]	AVX5124FMAPS,FUTURE
+V4FMADDSS		zmmreg|mask|z,zmmreg,mem128		[rvm:m128:evex.dds.512.f2.0f38.w0 9b /r]	AVX5124FMAPS,FUTURE
+V4FNMADDSS		zmmreg|mask|z,zmmreg,mem128		[rvm:m128:evex.dds.512.f2.0f38.w0 9b /r]	AVX5124FMAPS,FUTURE
+
+;# AVX512 4-iteration Dot Product
+V4DPWSSDS		zmmreg|mask|z,zmmreg,mem128		[rvm:m128:evex.dds.512.f2.0f38.w0 53 /r]	AVX5124VNNIW,FUTURE
+V4DPWSSD		zmmreg|mask|z,zmmreg,mem128		[rvm:m128:evex.dds.512.f2.0f38.w0 52 /r]	AVX5124VNNIW,FUTURE
+
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
 HINT_NOP0	rm16				[m:	o16 0f 18 /0]				P6,UNDOC

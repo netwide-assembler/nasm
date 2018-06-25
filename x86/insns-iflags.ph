@@ -148,6 +148,8 @@ my %insns_flag_bit = (
     "AVX512VNNI"        => [$f++, "AVX-512 VNNI instructions"],
     "AVX512BITALG"	=> [$f++, "AVX-512 Bit Algorithm instructions"],
     "AVX512VPOPCNTDQ"	=> [$f++, "AVX-512 VPOPCNTD/VPOPCNTQ"],
+    "AVX5124FMAPS"	=> [$f++, "AVX-512 4-iteration multiply-add"],
+    "AVX5124VNNIW"	=> [$f++, "AVX-512 4-iteration dot product"],
 
     # Put these last
     "OBSOLETE"          => [$f++, "Instruction removed from architecture"],
