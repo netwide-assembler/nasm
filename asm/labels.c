@@ -434,8 +434,14 @@ void define_label(const char *label, int32_t segment,
      */
     lptr = find_label(label, true, &created);
 
-    if (!segment)
+    if (segment) {
+        /* We are actually defining this label */
+        if (lptr->defn.type == LBL_EXTERN) /* auto-promote EXTERN to GLOBAL */
+            lptr->defn.type = LBL_GLOBAL;
+    } else {
+        /* It's a pseudo-segment (extern, common) */
         segment = lptr->defn.segment ? lptr->defn.segment : seg_alloc();
+    }
 
     if (lptr->defn.defined || lptr->defn.type == LBL_BACKEND) {
         /* We have seen this on at least one previous pass */
