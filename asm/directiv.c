@@ -399,6 +399,7 @@ bool process_directives(char *directive)
                        "in pass two");
         in_absolute = true;
         location.segment = NO_SEG;
+        location.offset = absolute.offset;
         break;
     }
 

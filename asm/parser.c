@@ -486,7 +486,8 @@ restart_parse:
              * Generally fix things. I think this is right as it is, but
              * am still not certain.
              */
-            define_label(result->label, location.segment,
+            define_label(result->label,
+                         in_absolute ? absolute.segment : location.segment,
                          location.offset, true);
         }
     }
