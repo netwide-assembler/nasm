@@ -72,6 +72,21 @@ static bool ismagic(const char *l)
     return l[0] == '.' && l[1] == '.' && l[2] != '@';
 }
 
+/*
+ * Return true if we should update the local label base
+ * as a result of this symbol.  We must exclude local labels
+ * as well as any kind of special labels, including ..@ ones.
+ */
+static bool set_prevlabel(const char *l)
+{
+    if (tasm_compatible_mode) {
+        if (l[0] == '@' && l[1] == '@')
+            return false;
+    }
+
+    return l[0] != '.';
+}
+
 #define LABEL_BLOCK     128     /* no. of labels/block */
 #define LBLK_SIZE       (LABEL_BLOCK * sizeof(union label))
 
@@ -419,11 +434,6 @@ void define_label(const char *label, int32_t segment,
      */
     lptr = find_label(label, true, &created);
 
-    if (pass0 > 1) {
-        if (created)
-	    nasm_error(ERR_WARNING, "label `%s' defined on pass two", label);
-    }
-
     if (!segment)
         segment = lptr->defn.segment ? lptr->defn.segment : seg_alloc();
 
@@ -436,9 +446,8 @@ void define_label(const char *label, int32_t segment,
     if (ismagic(label) && lptr->defn.type == LBL_LOCAL)
         lptr->defn.type = LBL_SPECIAL;
 
-    if (!islocal(label) && normal) {
+    if (set_prevlabel(label) && normal)
         prevlabel = lptr->defn.label;
-    }
 
     if (lptr->defn.type == LBL_COMMON) {
         size = offset;
@@ -447,7 +456,8 @@ void define_label(const char *label, int32_t segment,
         size = 0;               /* This is a hack... */
     }
 
-    changed = !lptr->defn.defined || lptr->defn.segment != segment ||
+    changed = created || !lptr->defn.defined ||
+        lptr->defn.segment != segment ||
         lptr->defn.offset != offset || lptr->defn.size != size;
     global_offset_changed += changed;
 
@@ -456,9 +466,11 @@ void define_label(const char *label, int32_t segment,
      * special case, LBL_SPECIAL symbols are allowed to be changed
      * even during the last pass.
      */
-    if (changed && pass0 == 2 && lptr->defn.type != LBL_SPECIAL)
-        nasm_error(ERR_WARNING, "label `%s' changed during code generation",
+    if (changed && pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
+        nasm_error(ERR_WARNING, "label `%s' %s during code generation",
+                   created ? "defined" : "changed",
                    lptr->defn.label);
+    }
 
     lptr->defn.segment = segment;
     lptr->defn.offset  = offset;
