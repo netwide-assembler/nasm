@@ -14,28 +14,33 @@ since 2007.
 \b Support to mangle labels based on the types through \c{%pragma}. See
 \k{mangling}.
 
-\b Added \c{--gprefix}, \c{--gpostfix}, \c{--lprefix}, and \c{--lpostfix}
-that allows commandline base symbol mangling. See \k{opt-pfix}.
+\b Added the \c{--gprefix}, \c{--gpostfix}, \c{--lprefix}, and
+\c{--lpostfix} command line options, to allow command line base symbol
+mangling. See \k{opt-pfix}.
 
 \b Supported generic \c{%pragma} namespaces, \c{output} and \c{debug}. See
 \k{gen-namespace}.
 
-\b Added \c{--pragma} argument as \c{%pragma} option.  See \k{opt-pragma}.
+\b Added the \c{--pragma} command line option to inject a \c{%pragma}
+directive.  See \k{opt-pragma}.
 
-\b Added \c{--before} to accept preprocess statement before input. See \k{opt-before}.
+\b Added the \c{--before} command line option to accept preprocess
+statement before input. See \k{opt-before}.
 
 \b Added \c{AVX512} \c{VBMI2} (Additional Bit Manipulation), \c{VNNI} (Vector
 Neural Network), \c{BITALG} (Bit Algorithm), and \c{GFNI} (Galois Field New
 Instruction) instructions.
 
-\b Support \c{STATIC} directive. See \k{static}.
+\b Added the \c{STATIC} directive for local symbols that should be
+renamed using global-symbol rules. See \k{static}.
 
 \b Support \c{private_extern} as \c{macho} specific extension to the
-\c{GLOBAL} Directive. See \k{macho-pext}.
+\c{GLOBAL} directive. See \k{macho-pext}.
 
 \b Updated \c{UD0} encoding to match with the specification
 
-\b Added \c{--limit-X} to set execution limit. See \k{opt-limit}.
+\b Added the \c{--limit-X} command line option to set execution
+limits. See \k{opt-limit}.
 
 \b Fixed \c{CPU} directive case insensitive
 
@@ -44,17 +49,14 @@ Instruction) instructions.
 \b Fixed to build \c{rdoff} tool and resolve to handle dependencies correctly
 with \c{Microsoft Visual Studio}
 
-\b Fixed \c{Codeview} version number to be aligned with \c{NASM}’s
+\b Fixed \c{Codeview} version number to be aligned with \c{MASM}.
 
-\b Fixed to assign (internal) segment number correctly and efficiently
+\b Added the \c{--keep-all} command line option to preserve output
+files. See \k{opt-keep-all}.
 
-\b Added \c{--keep-all}. See \k{opt-keep-all}.
+\b Added the \c{--include} command line option, an alias to \c{-P} (\k{opt-p}).
 
-\b Added \c{--include} that is an alias to -P (\k{opt-p}).
-
-\b Added \c{--help} as an alias to -h (\k{syntax}).
-
-\S{cl-2.13.04} Version 2.13.04
+\b Added the \c{--help} command line option as an alias to \c{-h} (\k{syntax}).
 
 \b Added \c{-W}, \c{-D}, and \c{-Q} suffix aliases for \c{RET}
    instructions so the operand sizes of these instructions can be
