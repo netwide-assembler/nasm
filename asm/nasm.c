@@ -424,6 +424,13 @@ int main(int argc, char **argv)
     tolower_init();
     src_init();
 
+    /*
+     * We must call init_labels() before the command line parsing,
+     * because we may be setting prefixes/suffixes from the command
+     * line.
+     */
+    init_labels();
+
     offsets = raa_init();
     forwrefs = saa_init((int32_t)sizeof(struct forwrefinfo));
 
@@ -552,13 +559,6 @@ int main(int argc, char **argv)
         if (!ofile)
             nasm_fatal(ERR_NOFILE,
                        "unable to open output file `%s'", outname);
-
-        /*
-         * We must call init_labels() before ofmt->init() since
-         * some object formats will want to define labels in their
-         * init routines. (eg OS/2 defines the FLAT group)
-         */
-        init_labels();
 
         ofmt->init();
         dfmt->init();
