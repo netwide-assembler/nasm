@@ -5197,6 +5197,10 @@ PCOMMIT         void                            [       66 0f ae f8]            
 ; AMD Zen v1
 CLZERO		void				[	0f 01 fc]				FUTURE,AMD
 
+;# Processor trace write
+PTWRITE		rm32				[m:	np 0f ae /4]				FUTURE
+PTWRITE		rm64				[m:	o64 np 0f ae /4]			X64,FUTURE
+
 ;# Instructions from the Intel Instruction Set Extensions,
 ;# doc 319433-034 May 2018
 CLDEMOTE	mem				[m:	np 0f 1c /0]				FUTURE
