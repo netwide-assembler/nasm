@@ -398,7 +398,7 @@ static bool declare_label_lptr(union label *lptr,
         type == LBL_EXTERN) {
         if (!lptr->defn.special)
             lptr->defn.special = perm_copy(special);
-        return true;
+        return false;           /* Don't call define_label() after this! */
     }
 
     nasm_error(ERR_NONFATAL, "symbol `%s' declared both as %s and %s",
