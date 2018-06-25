@@ -468,8 +468,8 @@ void define_label(const char *label, int32_t segment,
      */
     if (changed && pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
         nasm_error(ERR_WARNING, "label `%s' %s during code generation",
-                   created ? "defined" : "changed",
-                   lptr->defn.label);
+                   lptr->defn.label,
+                   created ? "defined" : "changed");
     }
 
     lptr->defn.segment = segment;
