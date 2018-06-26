@@ -353,7 +353,7 @@ bool process_directives(char *directive)
         }
 
         if (*q && *q != ':') {
-            sizestr = q = nasm_skip_spaces(q);
+            sizestr = q;
             q = strchr(q, ':');
         }
 
