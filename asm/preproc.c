@@ -479,11 +479,28 @@ static Token *delete_Token(Token * t);
 #define tok_isnt_(x,v)  ((x) && ((x)->type!=TOK_OTHER || strcmp((x)->text,(v))))
 
 /*
- * Wrapper for nasm_unquote_cstr()
+ * nasm_unquote with error if the string contains NUL characters.
+ * If the string contains NUL characters, issue an error and return
+ * the C len, i.e. truncate at the NUL.
+ *
+ * This explicitly permits unquoted strings copied verbatim.
  */
 static void nasm_unquote_pp(char *qstr, enum preproc_token directive)
 {
-    nasm_unquote_cstr(qstr, pp_directives[directive]);
+    char qchar = *qstr;
+    char *ep;
+    size_t len = nasm_unquote(qstr, &ep);
+    size_t clen = strlen(qstr);
+
+    if (len != clen) {
+        nasm_error(ERR_NONFATAL,
+                   "NUL character in `%s' directive",
+                   pp_directives[directive]);
+    } else if (isquote(qchar) && *ep != qchar) {
+        nasm_error(ERR_WARNING|ERR_PASS2,
+                   "unterminated string in `%s' directive",
+                   pp_directives[directive]);
+    }
 }
 
 /*

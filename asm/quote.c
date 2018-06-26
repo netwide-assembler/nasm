@@ -498,7 +498,7 @@ char *nasm_unquote_cstr(char *qstr, const char *where)
     else
         ep++;                   /* Skip closing quote */
 
-    for (clen = 0; qstr[clen] >= ' ' || qstr[clen] == '\t'; clen++)
+    for (clen = 0; qstr[clen] >= ' '; clen++)
         ;
 
     qstr[clen] = '\0';          /* Truncate string if necessary */
