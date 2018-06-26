@@ -479,20 +479,11 @@ static Token *delete_Token(Token * t);
 #define tok_isnt_(x,v)  ((x) && ((x)->type!=TOK_OTHER || strcmp((x)->text,(v))))
 
 /*
- * nasm_unquote with error if the string contains NUL characters.
- * If the string contains NUL characters, issue an error and return
- * the C len, i.e. truncate at the NUL.
+ * Wrapper for nasm_unquote_cstr()
  */
-static size_t nasm_unquote_cstr(char *qstr, enum preproc_token directive)
+static void nasm_unquote_pp(char *qstr, enum preproc_token directive)
 {
-    size_t len = nasm_unquote(qstr, NULL);
-    size_t clen = strlen(qstr);
-
-    if (len != clen)
-        nasm_error(ERR_NONFATAL, "NUL character in `%s' directive",
-              pp_directives[directive]);
-
-    return clen;
+    nasm_unquote_cstr(qstr, pp_directives[directive]);
 }
 
 /*
@@ -1819,7 +1810,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             if (tline->type == TOK_PREPROC_ID)
                 p += 2;         /* Skip leading %! */
             if (*p == '\'' || *p == '\"' || *p == '`')
-                nasm_unquote_cstr(p, ct);
+                nasm_unquote_pp(p, ct);
             if (getenv(p))
                 j = true;
             tline = tline->next;
@@ -2600,7 +2591,7 @@ static int do_directive(Token *tline, char **output)
                   "trailing garbage after `%%depend' ignored");
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
-            nasm_unquote_cstr(p, i);
+            nasm_unquote_pp(p, i);
         nasm_add_string_to_strlist(dephead, p);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -2620,7 +2611,7 @@ static int do_directive(Token *tline, char **output)
                   "trailing garbage after `%%include' ignored");
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
-            nasm_unquote_cstr(p, i);
+            nasm_unquote_pp(p, i);
         inc = nasm_malloc(sizeof(Include));
         inc->next = istk;
         inc->conds = NULL;
@@ -2662,7 +2653,7 @@ static int do_directive(Token *tline, char **output)
             nasm_error(ERR_WARNING|ERR_PASS1,
                   "trailing garbage after `%%use' ignored");
         if (tline->type == TOK_STRING)
-            nasm_unquote_cstr(tline->text, i);
+            nasm_unquote_pp(tline->text, i);
         use_pkg = nasm_stdmac_find_package(tline->text);
         if (!use_pkg)
             nasm_error(ERR_NONFATAL, "unknown `%%use' package: %s", tline->text);
@@ -3321,7 +3312,7 @@ issue_error:
          * are stored with the token stream reversed, so we have to
          * reverse the output of tokenize().
          */
-        nasm_unquote_cstr(t->text, i);
+        nasm_unquote_pp(t->text, i);
         macro_start = reverse_tokens(tokenize(t->text));
 
         /*

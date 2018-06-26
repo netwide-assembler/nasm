@@ -41,6 +41,7 @@
 
 #include "nasmlib.h"
 #include "quote.h"
+#include "error.h"
 
 char *nasm_quote(const char *str, size_t len)
 {
@@ -255,7 +256,6 @@ size_t nasm_unquote(char *str, char **ep)
 	    p++;
 	    *q++ = c;
 	}
-	*q = '\0';
 	break;
 
     case '`':
@@ -417,6 +417,8 @@ size_t nasm_unquote(char *str, char **ep)
 
     if (ep)
 	*ep = p;
+
+    *q = '\0';
     return q-str;
 }
 
@@ -476,4 +478,38 @@ char *nasm_skip_string(char *str)
     } else {
 	return str;		/* Not a string... */
     }
+}
+
+/*
+ * nasm_unquote with error if the string is malformed or contains
+ * control characters.
+ *
+ * Returns a pointer to the first input character after the string;
+ * qstr will be a valid C string on return.
+ */
+char *nasm_unquote_cstr(char *qstr, const char *where)
+{
+    char *ep;
+    size_t len = nasm_unquote(qstr, &ep);
+    size_t clen;
+
+    if (!*ep)
+        nasm_error(ERR_NONFATAL, "invalid quoted string");
+    else
+        ep++;                   /* Skip closing quote */
+
+    for (clen = 0; qstr[clen] >= ' ' || qstr[clen] == '\t'; clen++)
+        ;
+
+    qstr[clen] = '\0';          /* Truncate string if necessary */
+
+    if (len != clen) {
+        if (where) {
+            nasm_error(ERR_NONFATAL, "control character in `%s' directive", where);
+        } else {
+            nasm_error(ERR_NONFATAL, "invalid control character in string");
+        }
+    }
+
+    return ep;
 }

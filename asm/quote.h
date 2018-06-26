@@ -36,9 +36,16 @@
 
 #include "compiler.h"
 
+/* Is it the leading character in a quoted string? */
+static inline bool isquote(char c)
+{
+    return c == '\'' || c == '\"' || c == '`';
+}
+
 char *nasm_quote(const char *str, size_t len);
 size_t nasm_unquote(char *str, char **endptr);
 char *nasm_skip_string(char *str);
+char *nasm_unquote_cstr(char *str, const char *where);
 
 #endif /* NASM_QUOTE_H */
 
