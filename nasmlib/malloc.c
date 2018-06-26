@@ -110,6 +110,25 @@ char *nasm_strcat(const char *one, const char *two)
     return rslt;
 }
 
+/* Unlike nasm_strcat() this frees the initial string, which can be NULL */
+char *nasm_strappend(char *one, const char *two)
+{
+    size_t l1, l2;
+
+    if (!two)
+        return one;
+
+    if (!one)
+        return nasm_strdup(two);
+
+    l1 = strlen(one);
+    l2 = strlen(two) + 1;
+    one = nasm_realloc(one, l1+l2);
+    memcpy(one + l1, two, l2);
+
+    return one;
+}
+
 char *nasm_strcatn(const char *str1, ...)
 {
     va_list ap;

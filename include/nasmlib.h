@@ -80,6 +80,7 @@ void nasm_free(void *);
 char * safe_alloc nasm_strdup(const char *);
 char * safe_alloc nasm_strndup(const char *, size_t);
 char * safe_alloc nasm_strcat(const char *one, const char *two);
+char * never_null nasm_strappend(char *one, const char *two);
 char * safe_alloc end_with_null nasm_strcatn(const char *one, ...);
 
 /* Assert the argument is a pointer without evaluating it */
