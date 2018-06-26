@@ -504,11 +504,11 @@ static void nasm_unquote_pp(char *qstr, enum preproc_token directive)
 }
 
 /*
- * In-place reverse a list of tokens; optionally link the last
- * (formerly first) element to a different token.
+ * In-place reverse a list of tokens.
  */
-static Token *reverse_tokens(Token *t, Token *prev)
+static Token *reverse_tokens(Token *t)
 {
+    Token *prev = NULL;
     Token *next;
 
     while (t) {
@@ -519,6 +519,68 @@ static Token *reverse_tokens(Token *t, Token *prev)
     }
 
     return prev;
+}
+
+/*
+ * Quote an arbitrary string into a valid identifier.
+ * 1. Prepend a $ to make sure we don't step on any other namespace;
+ * 2. Any character not valid in a NASM identifier is escaped as @xx;
+ * 3. A leading $ or . is escaped as @$ and @. respectively;
+ * 4. @ itself is escaped as @_.
+ */
+static Token *make_identifier(const char *str)
+{
+    Token *t;
+    const char *p;
+    char *q;
+    size_t n = 2;               /* Leading $ + final NUL */
+
+    if (!str || !*str)          /* Nothing there? */
+        return NULL;
+
+    n += (*str == '@' || *str == '$' || *str == '.') ? 2 :
+        isidstart(*str) ? 1 : 3;
+
+    for (p = str+1; *p; p++)
+        n += (*p == '@') ? 2 : isidchar(*p) ? 1 : 3;
+
+    t = new_Token(NULL, TOK_ID, NULL, 0);
+    t->text = q = nasm_malloc(n);
+
+    *q++ = '$';
+
+    switch (*str) {
+    case '$':
+    case '.':
+        *q++ = '@';
+        *q++ = *str;
+        break;
+
+    case '@':
+        *q++ = '@';
+        *q++ = '_';
+        break;
+
+    default:
+        if (isidstart(*str))
+            *q++ = *str;
+        else
+            q += snprintf(q, 4, "@%02x", (unsigned char)(*str));
+    }
+
+    for (p = str+1; *p; p++) {
+        if (*str == '@') {
+            *q++ = '@';
+            *q++ = '@';
+        } else if (isidchar(*p)) {
+            *q++ = *str;
+        } else {
+            q += snprintf(q, 4, "@%02x", (unsigned char)(*p));
+        }
+    }
+    *q = '\0';
+
+    return t;
 }
 
 /*
@@ -1768,7 +1830,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 {
     enum pp_conditional i = PP_COND(ct);
     bool j;
-    Token *t, *ttwhi, **tptr, *origline;
+    Token *t, *tt, **tptr, *origline;
     struct tokenval tokval;
     expr *evalresult;
     enum pp_token_type needtype;
@@ -3295,10 +3357,12 @@ issue_error:
 
     case PP_DEFTOK:
     case PP_IDEFTOK:
+    case PP_DEFID:
+    case PP_IDEFID:
     {
-        char *xstr, *ystr;
+        char *xstr;
 
-        casesense = (i == PP_DEFTOK);
+        casesense = (i == PP_DEFTOK) || (i == PP_DEFID);
 
         tline = tline->next;
         skip_white_(tline);
@@ -3337,7 +3401,11 @@ issue_error:
          * are stored with the token stream reversed, so we have to
          * reverse the output of tokenize().
          */
-        macro_start = reverse_tokens(tokenize(xstr));
+        if (i == PP_DEFTOK || i == PP_IDEFTOK) {
+            macro_start = reverse_tokens(tokenize(xstr));
+        } else {
+            macro_start = make_identifier(xstr);
+        }
         nasm_free(xstr);
 
         /*
@@ -3349,6 +3417,7 @@ issue_error:
         free_tlist(tline);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
+    }
 
     case PP_PATHSEARCH:
     {

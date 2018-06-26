@@ -51,6 +51,7 @@
 %assign
 %clear
 %define
+%defid
 %defstr
 %deftok
 %depend
@@ -66,6 +67,7 @@
 %fatal
 %iassign
 %idefine
+%idefid
 %idefstr
 %ideftok
 %if*
