@@ -5335,8 +5335,8 @@ VPSHUFBITQMB		kreg|mask,zmmreg,zmmrm512		[rvm:fvm: evex.nds.512.66.0f38.w0 8f /r
 ;# AVX512 4-iteration Multiply-Add
 V4FMADDPS		zmmreg|mask|z,zmmreg|rs4,mem		[rvm:m128:evex.dds.512.f2.0f38.w0 9a /r]	AVX5124FMAPS,FUTURE,SO
 V4FNMADDPS		zmmreg|mask|z,zmmreg|rs4,mem		[rvm:m128:evex.dds.512.f2.0f38.w0 aa /r]	AVX5124FMAPS,FUTURE,SO
-V4FMADDSS		zmmreg|mask|z,zmmreg|rs4,mem		[rvm:m128:evex.dds.512.f2.0f38.w0 9b /r]	AVX5124FMAPS,FUTURE,SO
-V4FNMADDSS		zmmreg|mask|z,zmmreg|rs4,mem		[rvm:m128:evex.dds.512.f2.0f38.w0 ab /r]	AVX5124FMAPS,FUTURE,SO
+V4FMADDSS		zmmreg|mask|z,zmmreg|rs4,mem		[rvm:m128:evex.dds.lig.f2.0f38.w0 9b /r]	AVX5124FMAPS,FUTURE,SO
+V4FNMADDSS		zmmreg|mask|z,zmmreg|rs4,mem		[rvm:m128:evex.dds.lig.f2.0f38.w0 ab /r]	AVX5124FMAPS,FUTURE,SO
 
 ;# AVX512 4-iteration Dot Product
 V4DPWSSDS		zmmreg|mask|z,zmmreg|rs4,mem		[rvm:m128:evex.dds.512.f2.0f38.w0 53 /r]	AVX5124VNNIW,FUTURE,SO
