@@ -19,7 +19,7 @@ here:
 everywhere:
 	ret
 
-	global everywhere
+	global everywhere "hejsan"
 
 tjosan:
 	ret

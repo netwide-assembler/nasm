@@ -305,7 +305,8 @@ static const char *mangle_label_name(union label *lptr)
     const char *suffix;
 
     if (likely(lptr->defn.mangled &&
-               lptr->defn.mangled_type == lptr->defn.type))
+               (lptr->defn.mangled_type == lptr->defn.type ||
+                lptr->defn.mangled_type == LBL_SPECIAL)))
         return lptr->defn.mangled; /* Already mangled */
 
     switch (lptr->defn.type) {
@@ -363,11 +364,22 @@ handle_herelabel(union label *lptr, int32_t *segment, int64_t *offset)
     }
 }
 
-static bool declare_label_lptr(union label *lptr,
-                               enum label_type type, const char *special)
+static bool declare_label_lptr(union label *lptr, enum label_type type,
+                               const char *mangled, const char *special)
 {
     if (special && !special[0])
         special = NULL;
+
+    if (mangled) {
+        if (lptr->defn.mangled && lptr->defn.mangled_type == LBL_SPECIAL) {
+            if (strcmp(lptr->defn.mangled, mangled))
+                nasm_error(ERR_NONFATAL, "symbol `%s' has inconsistent external names: `%s' and `%s'",
+                           lptr->defn.label, lptr->defn.mangled, mangled);
+        } else {
+            lptr->defn.mangled = perm_copy(mangled);
+            lptr->defn.mangled_type = LBL_SPECIAL; /* Forced manually */
+        }
+    }
 
     if (lptr->defn.type == type ||
         (pass0 == 0 && lptr->defn.type == LBL_LOCAL)) {
@@ -407,13 +419,14 @@ static bool declare_label_lptr(union label *lptr,
     return false;
 }
 
-bool declare_label(const char *label, enum label_type type, const char *special)
+bool declare_label(const char *label, enum label_type type,
+                   const char *mangled, const char *special)
 {
     union label *lptr;
     bool created;
 
     lptr = find_label(label, true, &created);
-    return declare_label_lptr(lptr, type, special);
+    return declare_label_lptr(lptr, type, mangled, special);
 }
 
 /*
@@ -491,7 +504,7 @@ void define_label(const char *label, int32_t segment,
  */
 void backend_label(const char *label, int32_t segment, int64_t offset)
 {
-    if (!declare_label(label, LBL_BACKEND, NULL))
+    if (!declare_label(label, LBL_BACKEND, NULL, NULL))
         return;
 
     define_label(label, segment, offset, false);

@@ -55,6 +55,7 @@
 #include "listing.h"
 #include "labels.h"
 #include "iflag.h"
+#include "quote.h"
 
 struct cpunames {
     const char *name;
@@ -314,8 +315,10 @@ bool process_directives(char *directive)
     {
         bool validid = true;
         int64_t size = 0;
-        char *sizestr;
+        char *mangled, *sizestr;
         bool rn_error;
+
+        mangled = sizestr = NULL;
 
         if (*value == '$')
             value++;        /* skip initial $ if present */
@@ -340,10 +343,18 @@ bool process_directives(char *directive)
 
         if (nasm_isspace(*q)) {
             *q++ = '\0';
+            q = nasm_skip_spaces(q);
+            if (isquote(*q)) {
+                mangled = q;
+                q = nasm_unquote_cstr(q, directive);
+                if (nasm_isspace(*q))
+                    q = nasm_skip_spaces(q);
+            }
+        }
+
+        if (*q && *q != ':') {
             sizestr = q = nasm_skip_spaces(q);
             q = strchr(q, ':');
-        } else {
-            sizestr = NULL;
         }
 
         if (q && *q == ':') {
@@ -365,13 +376,13 @@ bool process_directives(char *directive)
                        directive);
         }
 
-        if (!declare_label(value, type, special))
+        if (!declare_label(value, type, mangled, special))
             break;
-        
+
         if (type == LBL_COMMON || type == LBL_EXTERN)
             define_label(value, 0, size, false);
 
-    	break;
+	break;
     }
 
     case D_ABSOLUTE:        /* [ABSOLUTE address] */

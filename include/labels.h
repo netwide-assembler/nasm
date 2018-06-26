@@ -63,7 +63,7 @@ void define_label(const char *label, int32_t segment, int64_t offset,
                   bool normal);
 void backend_label(const char *label, int32_t segment, int64_t offset);
 bool declare_label(const char *label, enum label_type type,
-                   const char *special);
+                   const char *mangled, const char *special);
 void set_label_mangle(enum mangle_index which, const char *what);
 int init_labels(void);
 void cleanup_labels(void);
