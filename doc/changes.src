@@ -11,12 +11,12 @@ since 2007.
 
 \b Fixed \c{subsections_via_symbols} for \c{macho} object format.
 
-\b Support to mangle labels based on the types through \c{%pragma}. See
-\k{mangling}.
-
 \b Added the \c{--gprefix}, \c{--gpostfix}, \c{--lprefix}, and
 \c{--lpostfix} command line options, to allow command line base symbol
-mangling. See \k{opt-pfix}.
+renaming. See \k{opt-pfix}.
+
+\b Allow label renaming to be specified by \c{%pragma} in addition to
+from the command line.  See \k{mangling}.
 
 \b Supported generic \c{%pragma} namespaces, \c{output} and \c{debug}. See
 \k{gen-namespace}.
@@ -34,6 +34,13 @@ Instruction) instructions.
 \b Added the \c{STATIC} directive for local symbols that should be
 renamed using global-symbol rules. See \k{static}.
 
+\b Allow a symbol to be defined as \c{EXTERN} and then later
+overridden as \c{GLOBAL} or \c{COMMON}. Furthermore, a symbol declared
+\c{EXTERN} and then defined will be treated as \c{GLOBAL}. See \k{extern}.
+
+\b The \c{GLOBAL} directive no longer is required to precede the
+definition of the symbol.
+
 \b Support \c{private_extern} as \c{macho} specific extension to the
 \c{GLOBAL} directive. See \k{macho-pext}.
 
@@ -42,14 +49,7 @@ renamed using global-symbol rules. See \k{static}.
 \b Added the \c{--limit-X} command line option to set execution
 limits. See \k{opt-limit}.
 
-\b Fixed \c{CPU} directive case insensitive
-
-\b Fixed modules name for \c{ELF}, \c{IEEE}, \c{macho}, \c{obj} output format
-
-\b Fixed to build \c{rdoff} tool and resolve to handle dependencies correctly
-with \c{Microsoft Visual Studio}
-
-\b Fixed \c{Codeview} version number to be aligned with \c{MASM}.
+\b Updated the \c{Codeview} version number to be aligned with \c{MASM}.
 
 \b Added the \c{--keep-all} command line option to preserve output
 files. See \k{opt-keep-all}.

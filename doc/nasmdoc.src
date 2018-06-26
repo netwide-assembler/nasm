@@ -4604,8 +4604,12 @@ only in that it can take only one argument at a time: the support
 for multiple arguments is implemented at the preprocessor level.
 
 You can declare the same variable as \c{EXTERN} more than once: NASM
-will quietly ignore the second and later redeclarations. You can't
-declare a variable as \c{EXTERN} as well as something else, though.
+will quietly ignore the second and later redeclarations.
+
+If a variable is declared both \c{GLOBAL} and \c{EXTERN}, or if it is
+declared as \c{EXTERN} and then defined, it will be treated as
+\c{GLOBAL}. If a variable is declared both as \c{COMMON} and
+\c{EXTERN}, it will be treated as \c{COMMON}.
 
 
 \H{global} \i\c{GLOBAL}: \i{Exporting Symbols} to Other Modules
@@ -4615,9 +4619,6 @@ symbol as \c{EXTERN} and refers to it, then in order to prevent
 linker errors, some other module must actually \e{define} the
 symbol and declare it as \c{GLOBAL}. Some assemblers use the name
 \i\c{PUBLIC} for this purpose.
-
-The \c{GLOBAL} directive applying to a symbol must appear \e{before}
-the definition of the symbol.
 
 \c{GLOBAL} uses the same syntax as \c{EXTERN}, except that it must
 refer to symbols which \e{are} defined in the same module as the
@@ -4673,11 +4674,10 @@ only one argument at a time.
 
 \H{static} \i\c{STATIC}: Local Symbols within Modules
 
-Opposite to \c{EXTERN} and \c{GLOBAL}, \c{STATIC} is local symbol,
-but should be named according to the global mangling rules (named
-by analogy with the C keyword "static" as applied to the functions).
-And like \c{GLOBAL} directive, the directive applying to a symbol
-should be \i{before} the definition of the symbol. For example:
+Opposite to \c{EXTERN} and \c{GLOBAL}, \c{STATIC} is local symbol, but
+should be named according to the global mangling rules (named by
+analogy with the C keyword \c{static} as applied to functions or
+global variables).
 
 \c static foo
 \c foo:
