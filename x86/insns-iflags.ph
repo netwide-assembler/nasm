@@ -150,6 +150,7 @@ my %insns_flag_bit = (
     "AVX512VPOPCNTDQ"	=> [$f++, "AVX-512 VPOPCNTD/VPOPCNTQ"],
     "AVX5124FMAPS"	=> [$f++, "AVX-512 4-iteration multiply-add"],
     "AVX5124VNNIW"	=> [$f++, "AVX-512 4-iteration dot product"],
+    "SGX"		=> [$f++, "Intel Software Guard Extensions (SGX)"],
 
     # Put these last
     "OBSOLETE"          => [$f++, "Instruction removed from architecture"],

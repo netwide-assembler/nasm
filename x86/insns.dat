@@ -5342,6 +5342,11 @@ V4FNMADDSS		zmmreg|mask|z,zmmreg|rs4,mem		[rvm:m128:evex.dds.lig.f2.0f38.w0 ab /
 V4DPWSSDS		zmmreg|mask|z,zmmreg|rs4,mem		[rvm:m128:evex.dds.512.f2.0f38.w0 53 /r]	AVX5124VNNIW,FUTURE,SO
 V4DPWSSD		zmmreg|mask|z,zmmreg|rs4,mem		[rvm:m128:evex.dds.512.f2.0f38.w0 52 /r]	AVX5124VNNIW,FUTURE,SO
 
+;# Intel Software Guard Extensions (SGX)
+ENCLS			void					[         np 0f 01 cf]				SGX,FUTURE
+ENCLU			void					[ 	  np 0f 01 d7]				SGX,FUTURE
+ENCLV			void					[	  np 0f 01 c0]				SGX,FUTURE
+
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
 HINT_NOP0	rm16				[m:	o16 0f 18 /0]				P6,UNDOC
