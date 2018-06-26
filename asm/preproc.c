@@ -504,11 +504,11 @@ static void nasm_unquote_pp(char *qstr, enum preproc_token directive)
 }
 
 /*
- * In-place reverse a list of tokens.
+ * In-place reverse a list of tokens; optionally link the last
+ * (formerly first) element to a different token.
  */
-static Token *reverse_tokens(Token *t)
+static Token *reverse_tokens(Token *t, Token *prev)
 {
-    Token *prev = NULL;
     Token *next;
 
     while (t) {
@@ -904,6 +904,9 @@ static Token *tokenize(char *line)
     enum pp_token_type type;
     Token *list = NULL;
     Token *t, **tail = &list;
+
+    if (!line)
+        return NULL;
 
     while (*line) {
         p = line;
@@ -1765,7 +1768,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
 {
     enum pp_conditional i = PP_COND(ct);
     bool j;
-    Token *t, *tt, **tptr, *origline;
+    Token *t, *ttwhi, **tptr, *origline;
     struct tokenval tokval;
     expr *evalresult;
     enum pp_token_type needtype;
@@ -3292,6 +3295,9 @@ issue_error:
 
     case PP_DEFTOK:
     case PP_IDEFTOK:
+    {
+        char *xstr, *ystr;
+
         casesense = (i == PP_DEFTOK);
 
         tline = tline->next;
@@ -3311,17 +3317,19 @@ issue_error:
         tline = expand_smacro(tline->next);
         last->next = NULL;
 
-        t = tline;
-        while (tok_type_(t, TOK_WHITESPACE))
-            t = t->next;
-        /* t should now point to the string */
-        if (!tok_type_(t, TOK_STRING)) {
-            nasm_error(ERR_NONFATAL,
-                  "`%s` requires string as second parameter",
-                  pp_directives[i]);
-            free_tlist(tline);
-            free_tlist(origline);
-            return DIRECTIVE_FOUND;
+        xstr = NULL;
+
+        for (t = tline; t; t = t->next) {
+            if (tok_type_(t, TOK_COMMENT))
+                break;
+
+            if (!t->text)
+                continue;
+
+            if (tok_type_(t, TOK_STRING))
+                nasm_unquote_pp(t->text, i);
+
+            xstr = nasm_strappend(xstr, t->text);
         }
 
         /*
@@ -3329,8 +3337,8 @@ issue_error:
          * are stored with the token stream reversed, so we have to
          * reverse the output of tokenize().
          */
-        nasm_unquote_pp(t->text, i);
-        macro_start = reverse_tokens(tokenize(t->text));
+        macro_start = reverse_tokens(tokenize(xstr));
+        nasm_free(xstr);
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -5024,7 +5032,7 @@ pp_reset(const char *file, int apass, StrList **deplist)
 
     dephead = deplist;
     nasm_add_string_to_strlist(dephead, file);
-    
+
     /*
      * Define the __PASS__ macro.  This is defined here unlike
      * all the other builtins, because it is special -- it varies between
