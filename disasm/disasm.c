@@ -1431,6 +1431,9 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                 slen += snprintf(output + slen, outbufsize - slen, "to ");
             slen += snprintf(output + slen, outbufsize - slen, "%s",
                     nasm_reg_names[reg-EXPR_REG_START]);
+            if (t & REGSET_MASK)
+                slen += snprintf(output + slen, outbufsize - slen, "+%d",
+                                 (int)((t & REGSET_MASK) >> (REGSET_SHIFT-1))-1);
             if (is_evex && deco)
                 slen += append_evex_reg_deco(output + slen, outbufsize - slen,
                                              deco, ins.evex_p);

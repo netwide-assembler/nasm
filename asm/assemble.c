@@ -208,6 +208,8 @@ enum match_result {
     MERR_ENCMISMATCH,
     MERR_BADBND,
     MERR_BADREPNE,
+    MERR_REGSETSIZE,
+    MERR_REGSET,
     /*
      * Matching success; the conditional ones first
      */
@@ -791,6 +793,12 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                 nasm_error(ERR_NONFATAL, "%s prefix is not allowed",
                            (has_prefix(instruction, PPS_REP, P_REPNE) ?
                             "repne" : "repnz"));
+                break;
+            case MERR_REGSETSIZE:
+                nasm_error(ERR_NONFATAL, "invalid register set size");
+                break;
+            case MERR_REGSET:
+                nasm_error(ERR_NONFATAL, "register set not valid for operand");
                 break;
             default:
                 nasm_error(ERR_NONFATAL,
@@ -2162,7 +2170,6 @@ static enum match_result matches(const struct itemplate *itemp,
                                  insn *instruction, int bits)
 {
     opflags_t size[MAX_OPERANDS], asize;
-    bool opsizemissing = false;
     int i, oprs;
 
     /*
@@ -2323,9 +2330,14 @@ static enum match_result matches(const struct itemplate *itemp,
         if (~ideco & deco & (Z_MASK|STATICRND_MASK|SAE_MASK))
             return MERR_DECONOTHERE;
 
-        if (itemp->opd[i] & ~type & ~SIZE_MASK) {
+        if (itemp->opd[i] & ~type & ~(SIZE_MASK|REGSET_MASK))
             return MERR_INVALOP;
-        } else if (template_opsize) {
+
+        if (~itemp->opd[i] & type & REGSET_MASK)
+            return (itemp->opd[i] & REGSET_MASK)
+                ? MERR_REGSETSIZE : MERR_REGSET;
+
+        if (template_opsize) {
             if (template_opsize != insn_opsize) {
                 if (insn_opsize) {
                     return MERR_INVALOP;
@@ -2335,7 +2347,7 @@ static enum match_result matches(const struct itemplate *itemp,
                      * so "missing operand size" for a register should be
                      * considered a wildcard match rather than an error.
                      */
-                    opsizemissing = true;
+                    return MERR_OPSIZEMISSING;
                 }
             } else if (is_broadcast &&
                        (brcast_num !=
@@ -2350,9 +2362,6 @@ static enum match_result matches(const struct itemplate *itemp,
             }
         }
     }
-
-    if (opsizemissing)
-        return MERR_OPSIZEMISSING;
 
     /*
      * Check operand sizes

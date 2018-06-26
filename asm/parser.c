@@ -1078,6 +1078,7 @@ is_expression:
                 }
             } else {            /* it's a register */
                 opflags_t rs;
+                uint64_t regset_size = 0;
 
                 if (value->type >= EXPR_SIMPLE || value->value != 1) {
                     nasm_error(ERR_NONFATAL, "invalid operand type");
@@ -1085,13 +1086,32 @@ is_expression:
                 }
 
                 /*
-                 * check that its only 1 register, not an expression...
+                 * We do not allow any kind of expression, except for
+                 * reg+value in which case it is a register set.
                  */
-                for (i = 1; value[i].type; i++)
-                    if (value[i].value) {
+                for (i = 1; value[i].type; i++) {
+                    if (!value[i].value)
+                        continue;
+
+                    switch (value[i].type) {
+                    case EXPR_SIMPLE:
+                        if (!regset_size) {
+                            regset_size = value[i].value + 1;
+                            break;
+                        }
+                        /* fallthrough */
+                    default:
                         nasm_error(ERR_NONFATAL, "invalid operand type");
                         goto fail;
                     }
+                }
+
+                if ((regset_size & (regset_size - 1)) ||
+                    regset_size >= (UINT64_C(1) << REGSET_BITS)) {
+                    nasm_error(ERR_NONFATAL | ERR_PASS2,
+                               "invalid register set size");
+                    regset_size = 0;
+                }
 
                 /* clear overrides, except TO which applies to FPU regs */
                 if (op->type & ~TO) {
@@ -1100,12 +1120,14 @@ is_expression:
                      * is different from the register size
                      */
                     rs = op->type & SIZE_MASK;
-                } else
+                } else {
                     rs = 0;
+                }
 
                 op->type      &= TO;
                 op->type      |= REGISTER;
                 op->type      |= nasm_reg_flags[value->type];
+                op->type      |= (regset_size >> 1) << REGSET_SHIFT;
                 op->decoflags |= brace_flags;
                 op->basereg   = value->type;
 
