@@ -206,7 +206,7 @@ static enum directive parse_directive_line(char **directive, char **value)
 bool process_directives(char *directive)
 {
     enum directive d;
-    char *value, *p, *q, *special;
+    char *value, *p, *q;
     struct tokenval tokval;
     bool bad_param = false;
     int pass2 = passn > 1 ? 2 : 1;
@@ -315,10 +315,10 @@ bool process_directives(char *directive)
     {
         bool validid = true;
         int64_t size = 0;
-        char *mangled, *sizestr;
+        char *mangled, *sizestr, *special;
         bool rn_error;
 
-        mangled = sizestr = NULL;
+        mangled = sizestr = special = NULL;
 
         if (*value == '$')
             value++;        /* skip initial $ if present */
@@ -360,8 +360,6 @@ bool process_directives(char *directive)
         if (q && *q == ':') {
             *q++ = '\0';
             special = q;
-        } else {
-            special = NULL;
         }
 
         if (type == LBL_COMMON) {
