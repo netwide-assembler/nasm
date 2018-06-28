@@ -1620,7 +1620,14 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
         if (pass1 == 1)
             preproc->cleanup(1);
 
-        if ((passn > 1 && !global_offset_changed) || pass0 == 2) {
+        /*
+         * Always run at least two optimization passes (pass0 == 0);
+         * things like subsections will fail miserably without that.
+         * Once we commit to a stabilization pass (pass0 == 1), we can't
+         * go back, and if something goes bad, we can only hope
+         * that we don't end up with a phase error at the end.
+         */
+        if ((passn > 1 && !global_offset_changed) || pass0 > 0) {
             pass0++;
         } else if (global_offset_changed &&
                    global_offset_changed < prev_offset_changed) {
