@@ -2170,6 +2170,7 @@ static enum match_result matches(const struct itemplate *itemp,
                                  insn *instruction, int bits)
 {
     opflags_t size[MAX_OPERANDS], asize;
+    bool opsizemissing = false;
     int i, oprs;
 
     /*
@@ -2347,7 +2348,7 @@ static enum match_result matches(const struct itemplate *itemp,
                      * so "missing operand size" for a register should be
                      * considered a wildcard match rather than an error.
                      */
-                    return MERR_OPSIZEMISSING;
+                    opsizemissing = true;
                 }
             } else if (is_broadcast &&
                        (brcast_num !=
@@ -2362,6 +2363,9 @@ static enum match_result matches(const struct itemplate *itemp,
             }
         }
     }
+
+    if (opsizemissing)
+        return MERR_OPSIZEMISSING;
 
     /*
      * Check operand sizes
