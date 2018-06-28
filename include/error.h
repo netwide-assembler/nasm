@@ -113,9 +113,10 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define ERR_WARN_NOTMY_PRAGMA	WARN(19) /* pragma inapplicable */
 #define ERR_WARN_UNK_WARNING	WARN(20) /* unknown warning */
 #define ERR_WARN_NEG_REP	WARN(21) /* negative repeat count */
+#define ERR_WARN_PHASE		WARN(22) /* phase error in pass 1 */
 
 /* The "all" warning acts as a global switch, it must come last */
-#define ERR_WARN_ALL            22 /* Do not use WARN() here */
+#define ERR_WARN_ALL            23 /* Do not use WARN() here */
 
 struct warning {
     const char *name;

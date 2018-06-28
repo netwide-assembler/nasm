@@ -1613,9 +1613,23 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
             nasm_free(line);
         }                       /* end while (line = preproc->getline... */
 
-        if (pass0 == 2 && global_offset_changed && !terminate_after_phase)
-            nasm_error(ERR_NONFATAL,
-                       "phase error detected at end of assembly.");
+        if (global_offset_changed && !terminate_after_phase) {
+            switch (pass0) {
+            case 1:
+                nasm_error(ERR_WARNING|ERR_WARN_PHASE,
+                           "phase error during stabilization pass, hoping for the best");
+                break;
+
+            case 2:
+                nasm_error(ERR_NONFATAL,
+                           "phase error during code generation pass");
+                break;
+
+            default:
+                /* This is normal, we'll keep going... */
+                break;
+            }
+        }
 
         if (pass1 == 1)
             preproc->cleanup(1);
