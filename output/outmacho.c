@@ -1018,7 +1018,8 @@ static int32_t macho_section(char *name, int pass, int *bits)
 }
 
 static int32_t macho_herelabel(const char *name, enum label_type type,
-			       int32_t section, int32_t *subsection)
+			       int32_t section, int32_t *subsection,
+			       bool *copyoffset)
 {
     struct section *s;
     int32_t subsec;
@@ -1043,6 +1044,7 @@ static int32_t macho_herelabel(const char *name, enum label_type type,
     }
 
     s->subsection = subsec;
+    *copyoffset = true;		/* Maintain previous offset */
     return subsec;
 }
 
@@ -1055,8 +1057,8 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
 
 #if defined(DEBUG) && DEBUG>2
     nasm_error(ERR_DEBUG,
-            " macho_symdef: %s, sec=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
-            name, section, offset, is_global, special);
+            " macho_symdef: %s, pass0=%d, passn=%"PRId64", sec=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
+	       name, pass0, passn, section, offset, is_global, special);
 #endif
 
     if (is_global == 3) {

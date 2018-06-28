@@ -351,15 +351,23 @@ handle_herelabel(union label *lptr, int32_t *segment, int64_t *offset)
     if (oldseg == location.segment && *offset == location.offset) {
         /* This label is defined at this location */
         int32_t newseg;
+        bool copyoffset = false;
 
         nasm_assert(lptr->defn.mangled);
         newseg = ofmt->herelabel(lptr->defn.mangled, lptr->defn.type,
-                                 oldseg, &lptr->defn.subsection);
+                                 oldseg, &lptr->defn.subsection, &copyoffset);
         if (likely(newseg == oldseg))
             return;
 
         *segment = newseg;
-        *offset  = switch_segment(newseg);
+        if (copyoffset) {
+            /* Maintain the offset from the old to the new segment */
+            switch_segment(newseg);
+            location.offset = *offset;
+        } else {
+            /* Keep a separate offset for the new segment */
+            *offset  = switch_segment(newseg);
+        }
     }
 }
 

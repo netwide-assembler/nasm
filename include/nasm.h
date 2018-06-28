@@ -911,9 +911,14 @@ struct ofmt {
      * The offset isn't passed; and may not be stable at this point.
      * The subsection number is a field available for use by the
      * backend. It is initialized to NO_SEG.
+     *
+     * If "copyoffset" is set by the backend then the offset is
+     * copied from the previous segment, otherwise the new segment
+     * is treated as a new segment the normal way.
      */
     int32_t (*herelabel)(const char *name, enum label_type type,
-                         int32_t seg, int32_t *subsection);
+                         int32_t seg, int32_t *subsection,
+                         bool *copyoffset);
 
     /*
      * This procedure is called to modify section alignment,

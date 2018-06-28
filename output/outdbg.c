@@ -137,14 +137,17 @@ static int32_t dbg_section_names(char *name, int pass, int *bits)
 }
 
 static int32_t dbg_herelabel(const char *name, enum label_type type,
-                             int32_t oldseg, int32_t *subsection)
+                             int32_t oldseg, int32_t *subsection,
+                             bool *copyoffset)
 {
     int32_t newseg = oldseg;
     
     if (subsections_via_symbols && type != LBL_LOCAL) {
         newseg = *subsection;
-        if (newseg == NO_SEG)
+        if (newseg == NO_SEG) {
             newseg = *subsection = seg_alloc();
+            *copyoffset = true; /* Minic MachO for now */
+        }
     }
     fprintf(ofile, "herelabel %s type %d (seg %08x) -> %08x\n",
             name, type, oldseg, newseg);
