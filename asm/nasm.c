@@ -1802,6 +1802,12 @@ static bool skip_this_pass(int severity)
 	return false;
 
     /*
+     * We *never* print a message for ERR_NOTE.
+     */
+    if ((severity & ERR_MASK) == ERR_NOTE)
+        return true;
+
+    /*
      * passn is 1 on the very first pass only.
      * pass0 is 2 on the code-generation (final) pass only.
      * These are the passes we care about in this case.
@@ -1826,6 +1832,12 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
     const char *pfx;
 
     switch (severity & (ERR_MASK|ERR_NO_SEVERITY)) {
+    case ERR_NOTE:
+        pfx = "note: ";
+        break;
+    case ERR_DEBUG:
+        pfx = "debug: ";
+        break;
     case ERR_WARNING:
         pfx = "warning: ";
         break;
@@ -1837,9 +1849,6 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         break;
     case ERR_PANIC:
         pfx = "panic: ";
-        break;
-    case ERR_DEBUG:
-        pfx = "debug: ";
         break;
     default:
         pfx = "";
@@ -1861,7 +1870,7 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
 
     /*
      * Don't suppress this with skip_this_pass(), or we don't get
-     * pass1 or preprocessor warnings in the list file
+     * pass1 or preprocessor warnings or notes in the list file
      */
     lfmt->error(severity, pfx, msg);
 
@@ -1874,6 +1883,7 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
     preproc->error_list_macros(severity);
 
     switch (severity & ERR_MASK) {
+    case ERR_NOTE:
     case ERR_DEBUG:
         /* no further action, by definition */
         break;

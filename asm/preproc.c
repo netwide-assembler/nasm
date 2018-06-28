@@ -2735,6 +2735,9 @@ static int do_directive(Token *tline, char **output)
     case PP_WARNING:
         severity = ERR_WARNING|ERR_WARN_USER;
         goto issue_error;
+    case PP_NOTE:
+        severity = ERR_NOTE;
+        goto issue_error;
 
 issue_error:
     {
@@ -2759,6 +2762,10 @@ issue_error:
             nasm_free(p);
         }
         free_tlist(origline);
+
+        if (severity == ERR_NOTE)
+            lfmt->drop();       /* Suppress printing the actual %note */
+
         return DIRECTIVE_FOUND;
     }
 
