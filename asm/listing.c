@@ -49,6 +49,7 @@
 #include "listing.h"
 
 #define LIST_MAX_LEN 216        /* something sensible */
+#define LIST_MAX_ERRORS 256     /* errors on a single line */
 #define LIST_INDENT  40
 #define LIST_HEXBIT  18
 
@@ -60,14 +61,16 @@ static struct MacroInhibit {
     int inhibiting;
 } *mistack;
 
-static char xdigit[] = "0123456789ABCDEF";
+static const char xdigit[16] = "0123456789ABCDEF";
 
 #define HEX(a,b) (*(a)=xdigit[((b)>>4)&15],(a)[1]=xdigit[(b)&15]);
 
 static char listline[LIST_MAX_LEN];
 static bool listlinep;
 
-static char listerror[LIST_MAX_LEN];
+static char *listerror[LIST_MAX_ERRORS];
+static int listerrors;
+static char err_hex[LIST_HEXBIT+1];
 
 static char listdata[2 * LIST_INDENT];  /* we need less than that actually */
 static int32_t listoffset;
@@ -86,44 +89,41 @@ static void list_emit(void)
 {
     int i;
 
-    if (!listlinep && !listdata[0])
-        return;
+    if (listlinep || listdata[0]) {
+        fprintf(listfp, "%6"PRId32" ", listlineno);
 
-    fprintf(listfp, "%6"PRId32" ", listlineno);
+        if (listdata[0])
+            fprintf(listfp, "%08"PRIX32" %-*s", listoffset, LIST_HEXBIT + 1,
+                    listdata);
+        else
+            fprintf(listfp, "%*s", LIST_HEXBIT + 10, "");
 
-    if (listdata[0])
-        fprintf(listfp, "%08"PRIX32" %-*s", listoffset, LIST_HEXBIT + 1,
-                listdata);
-    else
-        fprintf(listfp, "%*s", LIST_HEXBIT + 10, "");
+        if (listlevel_e)
+            fprintf(listfp, "%s<%d>", (listlevel < 10 ? " " : ""),
+                    listlevel_e);
+        else if (listlinep)
+            fprintf(listfp, "    ");
 
-    if (listlevel_e)
-        fprintf(listfp, "%s<%d>", (listlevel < 10 ? " " : ""),
-                listlevel_e);
-    else if (listlinep)
-        fprintf(listfp, "    ");
+        if (listlinep)
+            fprintf(listfp, " %s", listline);
 
-    if (listlinep)
-        fprintf(listfp, " %s", listline);
+        putc('\n', listfp);
+        listlinep = false;
+        listdata[0] = '\0';
+    }
 
-    putc('\n', listfp);
-    listlinep = false;
-    listdata[0] = '\0';
-
-    if (listerror[0]) {
-	fprintf(listfp, "%6"PRId32"          ", listlineno);
-	for (i = 0; i < LIST_HEXBIT; i++)
-	    putc('*', listfp);
-
+    for (i = 0; i < listerrors; i++) {
+	fprintf(listfp, "%6"PRId32"          %s", listlineno, err_hex);
 	if (listlevel_e)
 	    fprintf(listfp, " %s<%d>", (listlevel < 10 ? " " : ""),
 		    listlevel_e);
 	else
 	    fprintf(listfp, "     ");
 
-	fprintf(listfp, "  %s\n", listerror);
-	listerror[0] = '\0';
+	fprintf(listfp, "  %s\n", listerror[i]);
+        nasm_free(listerror[i]);
     }
+    listerrors = 0;
 }
 
 static void list_init(const char *fname)
@@ -142,7 +142,7 @@ static void list_init(const char *fname)
 
     *listline = '\0';
     listlineno = 0;
-    *listerror = '\0';
+    listerrors = 0;
     listp = true;
     listlevel = 0;
     suppress = 0;
@@ -150,6 +150,7 @@ static void list_init(const char *fname)
     mistack->next = NULL;
     mistack->level = 0;
     mistack->inhibiting = true;
+    memset(err_hex, '*', sizeof(err_hex) - 1);
 }
 
 static void list_cleanup(void)
@@ -280,6 +281,12 @@ static void list_line(int type, char *line)
     listlevel_e = listlevel;
 }
 
+static void list_drop(void)
+{
+    listlinep = false;
+    list_emit();
+}
+
 static void list_uplevel(int type)
 {
     if (!listp)
@@ -330,7 +337,10 @@ static void list_error(int severity, const char *pfx, const char *msg)
     if (!listfp)
 	return;
 
-    snprintf(listerror, sizeof listerror, "%s%s", pfx, msg);
+    if (listerrors >= LIST_MAX_ERRORS)
+        return;                 /* We have *HOW* many errors on this line? */
+
+    listerror[listerrors++] = nasm_strcat(pfx, msg);
 
     if ((severity & ERR_MASK) >= ERR_FATAL)
 	list_emit();
@@ -346,6 +356,7 @@ static const struct lfmt nasm_list = {
     list_cleanup,
     list_output,
     list_line,
+    list_drop,
     list_uplevel,
     list_downlevel,
     list_error,
