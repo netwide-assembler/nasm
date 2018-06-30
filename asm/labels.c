@@ -417,10 +417,7 @@ static bool declare_label_lptr(union label *lptr,
 
 bool declare_label(const char *label, enum label_type type, const char *special)
 {
-    union label *lptr;
-    bool created;
-
-    lptr = find_label(label, true, &created);
+    union label *lptr = find_label(label, true, NULL);
     return declare_label_lptr(lptr, type, special);
 }
 
