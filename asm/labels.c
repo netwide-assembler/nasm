@@ -175,6 +175,7 @@ static void out_symdef(union label *lptr)
     /* Clean up this hack... */
     switch(lptr->defn.type) {
     case LBL_GLOBAL:
+    case LBL_EXTERN:
         backend_type = 1;
         backend_offset = lptr->defn.offset;
         break;
