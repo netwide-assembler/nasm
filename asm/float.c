@@ -608,6 +608,8 @@ static void ieee_shr(fp_limb *mant, int i)
         if (offs)
             for (j = MANT_LIMBS-1; j >= offs; j--)
                 mant[j] = mant[j-offs];
+    } else if (MANT_LIMBS-1-offs < 0) {
+        j = MANT_LIMBS-1;
     } else {
         n = mant[MANT_LIMBS-1-offs] >> sr;
         for (j = MANT_LIMBS-1; j > offs; j--) {
