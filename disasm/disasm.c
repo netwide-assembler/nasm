@@ -49,6 +49,15 @@
 #include "regdis.h"
 #include "disp8.h"
 
+#define fetch_safe(_start, _ptr, _size, _need, _op)         \
+    do {                                                    \
+        if (((_ptr) - (_start)) >= ((_size) - (_need)))     \
+            _op;                                            \
+    } while (0)
+
+#define fetch_or_return(_start, _ptr, _size, _need)         \
+    fetch_safe(_start, _ptr, _size, _need, return 0)
+
 /*
  * Flags that go into the `segment' field of `insn' structures
  * during disassembly.
@@ -1108,8 +1117,8 @@ static const char * const condition_name[16] = {
     "s", "ns", "pe", "po", "l", "nl", "ng", "g"
 };
 
-int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
-	       int64_t offset, int autosync, iflag_t *prefer)
+int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, int segsize,
+               int64_t offset, int autosync, iflag_t *prefer)
 {
     const struct itemplate * const *p, * const *best_p;
     const struct disasm_index *ix;
@@ -1144,41 +1153,52 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         switch (*data) {
         case 0xF2:
         case 0xF3:
+            fetch_or_return(origdata, data, data_size, 1);
             prefix.rep = *data++;
             break;
 
         case 0x9B:
+            fetch_or_return(origdata, data, data_size, 1);
             prefix.wait = *data++;
             break;
 
         case 0xF0:
+            fetch_or_return(origdata, data, data_size, 1);
             prefix.lock = *data++;
             break;
 
         case 0x2E:
+            fetch_or_return(origdata, data, data_size, 1);
             segover = "cs", prefix.seg = *data++;
             break;
         case 0x36:
+            fetch_or_return(origdata, data, data_size, 1);
             segover = "ss", prefix.seg = *data++;
             break;
         case 0x3E:
+            fetch_or_return(origdata, data, data_size, 1);
             segover = "ds", prefix.seg = *data++;
             break;
         case 0x26:
+            fetch_or_return(origdata, data, data_size, 1);
             segover = "es", prefix.seg = *data++;
             break;
         case 0x64:
+            fetch_or_return(origdata, data, data_size, 1);
             segover = "fs", prefix.seg = *data++;
             break;
         case 0x65:
+            fetch_or_return(origdata, data, data_size, 1);
             segover = "gs", prefix.seg = *data++;
             break;
 
         case 0x66:
+            fetch_or_return(origdata, data, data_size, 1);
             prefix.osize = (segsize == 16) ? 32 : 16;
             prefix.osp = *data++;
             break;
         case 0x67:
+            fetch_or_return(origdata, data, data_size, 1);
             prefix.asize = (segsize == 32) ? 16 : 32;
             prefix.asp = *data++;
             break;
@@ -1186,6 +1206,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         case 0xC4:
         case 0xC5:
             if (segsize == 64 || (data[1] & 0xc0) == 0xc0) {
+                fetch_or_return(origdata, data, data_size, 2);
                 prefix.vex[0] = *data++;
                 prefix.vex[1] = *data++;
 
@@ -1193,6 +1214,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
                 prefix.vex_c = RV_VEX;
 
                 if (prefix.vex[0] == 0xc4) {
+                    fetch_or_return(origdata, data, data_size, 1);
                     prefix.vex[2] = *data++;
                     prefix.rex |= (~prefix.vex[1] >> 5) & 7; /* REX_RXB */
                     prefix.rex |= (prefix.vex[2] >> (7-3)) & REX_W;
@@ -1214,6 +1236,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         case 0x62:
         {
             if (segsize == 64 || ((data[1] & 0xc0) == 0xc0)) {
+                fetch_or_return(origdata, data, data_size, 4);
                 data++;        /* 62h EVEX prefix */
                 prefix.evex[0] = *data++;
                 prefix.evex[1] = *data++;
@@ -1237,6 +1260,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         case 0x8F:
             if ((data[1] & 030) != 0 &&
                     (segsize == 64 || (data[1] & 0xc0) == 0xc0)) {
+                fetch_or_return(origdata, data, data_size, 3);
                 prefix.vex[0] = *data++;
                 prefix.vex[1] = *data++;
                 prefix.vex[2] = *data++;
@@ -1272,6 +1296,7 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         case REX_P + 0xE:
         case REX_P + 0xF:
             if (segsize == 64) {
+                fetch_or_return(origdata, data, data_size, 1);
                 prefix.rex = *data++;
                 if (prefix.rex & REX_W)
                     prefix.osize = 64;
@@ -1293,8 +1318,10 @@ int32_t disasm(uint8_t *data, char *output, int outbufsize, int segsize,
         return 0;        /* No instruction table at all... */
 
     dp = data;
+    fetch_or_return(origdata, dp, data_size, 1);
     ix += *dp++;
     while (ix->n == -1) {
+        fetch_or_return(origdata, dp, data_size, 1);
         ix = (const struct disasm_index *)ix->p + *dp++;
     }
 
