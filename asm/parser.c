@@ -1028,7 +1028,7 @@ is_expression:
                 op->segment   = NO_SEG;   /* don't care again */
                 op->wrt       = NO_SEG;   /* still don't care */
 
-                if(optimizing >= 0 && !(op->type & STRICT)) {
+                if(optimizing.level >= 0 && !(op->type & STRICT)) {
                     /* Be optimistic */
                     op->type |=
                         UNITY | SBYTEWORD | SBYTEDWORD | UDWORD | SDWORD;
@@ -1045,7 +1045,7 @@ is_expression:
                 if (is_simple(value)) {
                     if (n == 1)
                         op->type |= UNITY;
-                    if (optimizing >= 0 && !(op->type & STRICT)) {
+                    if (optimizing.level >= 0 && !(op->type & STRICT)) {
                         if ((uint32_t) (n + 128) <= 255)
                             op->type |= SBYTEDWORD;
                         if ((uint16_t) (n + 128) <= 255)

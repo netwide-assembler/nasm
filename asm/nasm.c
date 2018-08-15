@@ -117,7 +117,8 @@ const struct dfmt *dfmt;
 static FILE *error_file;        /* Where to write error messages */
 
 FILE *ofile = NULL;
-int optimizing = MAX_OPTIMIZE; /* number of optimization passes to take */
+struct optimization optimizing =
+    { MAX_OPTIMIZE, OPTIM_ALL_ENABLED }; /* number of optimization passes to take */
 static int cmd_sb = 16;    /* by default */
 
 iflag_t cpu;
@@ -867,7 +868,7 @@ static bool process_arg(char *p, char *q, int pass)
 
                 if (!*param) {
                     /* Naked -O == -Ox */
-                    optimizing = MAX_OPTIMIZE;
+                    optimizing.level = MAX_OPTIMIZE;
                 } else {
                     while (*param) {
                         switch (*param) {
@@ -875,12 +876,12 @@ static bool process_arg(char *p, char *q, int pass)
                         case '5': case '6': case '7': case '8': case '9':
                             opt = strtoul(param, &param, 10);
 
-                            /* -O0 -> optimizing == -1, 0.98 behaviour */
-                            /* -O1 -> optimizing == 0, 0.98.09 behaviour */
+                            /* -O0 -> optimizing.level == -1, 0.98 behaviour */
+                            /* -O1 -> optimizing.level == 0, 0.98.09 behaviour */
                             if (opt < 2)
-                                optimizing = opt - 1;
+                                optimizing.level = opt - 1;
                             else
-                                optimizing = opt;
+                                optimizing.level = opt;
                             break;
 
                         case 'v':
@@ -891,7 +892,7 @@ static bool process_arg(char *p, char *q, int pass)
 
                         case 'x':
                             param++;
-                            optimizing = MAX_OPTIMIZE;
+                            optimizing.level = MAX_OPTIMIZE;
                             break;
 
                         default:
@@ -901,8 +902,8 @@ static bool process_arg(char *p, char *q, int pass)
                             break;
                         }
                     }
-                    if (optimizing > MAX_OPTIMIZE)
-                        optimizing = MAX_OPTIMIZE;
+                    if (optimizing.level > MAX_OPTIMIZE)
+                        optimizing.level = MAX_OPTIMIZE;
                 }
             }
             break;
@@ -1448,7 +1449,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
             /* Not a directive, or even something that starts with [ */
             parse_line(pass1, line, &output_ins);
 
-            if (optimizing > 0) {
+            if (optimizing.level > 0) {
                 if (forwref != NULL && globallineno == forwref->lineno) {
                     output_ins.forw_ref = true;
                     do {

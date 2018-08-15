@@ -1248,11 +1248,25 @@ enum decorator_tokens {
  *       2 = pass 2
  */
 
+/* 
+ * flag to disable optimizations selectively 
+ * this is useful to turn-off certain optimizations
+ */
+enum optimization_disable_flag {
+    OPTIM_ALL_ENABLED       = 0,
+    OPTIM_DISABLE_JMP_MATCH = 1
+};
+
+struct optimization {
+    int level;
+    int flag;
+};
+
 extern int pass0;
 extern int64_t passn;           /* Actual pass number */
 
 extern bool tasm_compatible_mode;
-extern int optimizing;
+extern struct optimization optimizing;
 extern int globalbits;          /* 16, 32 or 64-bit mode */
 extern int globalrel;           /* default to relative addressing? */
 extern int globalbnd;           /* default to using bnd prefix? */
