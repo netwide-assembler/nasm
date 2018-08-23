@@ -5778,7 +5778,7 @@ comma.  The following flags can also be specified:
 
 \b \c{data} - this section contains initialized data items
 
-\b \c{text} - this section contains code exclusively
+\b \c{code} - this section contains code exclusively
 
 \b \c{mixed} - this section contains both code and data
 
