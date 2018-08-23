@@ -559,6 +559,8 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	    /* local */
 	    r->ext = 0;
 	    r->snum = fi;
+	    if (reltype == RL_BRANCH)
+		r->type = X86_64_RELOC_BRANCH;
 	    adjust = -sect->size;
 	}
 	break;
