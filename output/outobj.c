@@ -1392,9 +1392,10 @@ static int32_t obj_segment(char *name, int pass, int *bits)
             attrs++;
         }
 
-        obj_idx = 1;
-        for (seg = seghead; seg; seg = seg->next) {
-            obj_idx++;
+        for (seg = seghead, obj_idx = 1; ; seg = seg->next, obj_idx++) {
+            if (!seg)
+                break;
+
             if (!strcmp(seg->name, name)) {
                 if (attrs > 0 && pass == 1)
                     nasm_error(ERR_WARNING, "segment attributes specified on"
@@ -1415,7 +1416,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
         seg->obj_index = obj_idx;
         seg->grp = NULL;
         any_segs = true;
-        seg->name = NULL;
+        seg->name = nasm_strdup(name);
         seg->currentpos = 0;
         seg->align = 1;         /* default */
         seg->use32 = false;     /* default */
