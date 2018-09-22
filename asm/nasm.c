@@ -481,9 +481,15 @@ int main(int argc, char **argv)
     if (ofmt->stdmac)
         preproc->extra_stdmac(ofmt->stdmac);
 
-    /* no output file name? */
-    if (!outname)
-        outname = filename_set_extension(inname, ofmt->extension);
+    /*
+     * If no output file name provided and this
+     * is not preprocess mode, we're perfectly
+     * fine to output into stdout
+     */
+    if (!outname) {
+        if (!(operating_mode & OP_PREPROCESS))
+            outname = filename_set_extension(inname, ofmt->extension);
+    }
 
     /* define some macros dependent of command-line */
     define_macros_late();
