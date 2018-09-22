@@ -483,8 +483,8 @@ int main(int argc, char **argv)
 
     /*
      * If no output file name provided and this
-     * is not preprocess mode, we're perfectly
-     * fine to output into stdout
+     * is a preprocess mode, we're perfectly
+     * fine to output into stdout.
      */
     if (!outname) {
         if (!(operating_mode & OP_PREPROCESS))
