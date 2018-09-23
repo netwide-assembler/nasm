@@ -9,6 +9,12 @@ since 2007.
 
 \S{cl-2.14} Version 2.14
 
+\b Fixed buffer underflow in float parsing.
+
+\b Added \c{SGX} (Intel Software Guard Extensions) instructions.
+
+\b Added \c{+n} syntax for multiple contiguous registers.
+
 \b Fixed \c{subsections_via_symbols} for \c{macho} object format.
 
 \b Added the \c{--gprefix}, \c{--gpostfix}, \c{--lprefix}, and
