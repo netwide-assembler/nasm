@@ -122,10 +122,10 @@
  *
  * Bits: 47 - 43
  */
-#define REGSET_SHIFT		(43)
-#define REGSET_BITS		(5)
-#define REGSET_MASK		OP_GENMASK(REGSET_BITS, REGSET_SHIFT)
-#define GEN_REGSET(bit)		OP_GENBIT(bit, REGSET_SHIFT)
+#define REGSET_SHIFT            (43)
+#define REGSET_BITS             (5)
+#define REGSET_MASK             OP_GENMASK(REGSET_BITS, REGSET_SHIFT)
+#define GEN_REGSET(bit)         OP_GENBIT(bit, REGSET_SHIFT)
 
 /*
  * Bits distribution (counted from 0)
@@ -280,10 +280,10 @@
 #define ZMM_L16                 (                  GEN_SUBCLASS(6) | ZMMREG)                            /* ZMM register  0 ~ 15 */
 
 /* Register set sizes */
-#define RS2			GEN_REGSET(0)
-#define RS4			GEN_REGSET(1)
-#define RS8			GEN_REGSET(2)
-#define RS16			GEN_REGSET(3)
-#define RS32			GEN_REGSET(4)
+#define RS2                     GEN_REGSET(0)
+#define RS4                     GEN_REGSET(1)
+#define RS8                     GEN_REGSET(2)
+#define RS16                    GEN_REGSET(3)
+#define RS32                    GEN_REGSET(4)
 
 #endif /* NASM_OPFLAGS_H */
