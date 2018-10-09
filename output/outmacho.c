@@ -665,6 +665,9 @@ static void macho_output(int32_t secto, const void *data,
     if (is_bss && type != OUT_RESERVE) {
         nasm_error(ERR_WARNING, "attempt to initialize memory in "
               "BSS section: ignored");
+        /* FIXME */
+        nasm_error(ERR_WARNING, "section size may be negative"
+            "with address symbols");
         s->size += realsize(type, size);
         return;
     }
