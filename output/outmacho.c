@@ -705,8 +705,11 @@ static void macho_output(int32_t secto, const void *data,
 			       "Mach-O 64-bit format does not support"
 			       " 32-bit absolute addresses");
 		} else {
-		    add_reloc(s, section, addr, RL_ABS, asize);
+		    addr += add_reloc(s, section, addr, RL_ABS, asize);
 		}
+	    } else if (wrt == macho_tlvp_sect && fmt.ptrsize != 8 &&
+		       asize == (int) fmt.ptrsize) {
+		addr += add_reloc(s, section, addr, RL_TLV, asize);
 	    } else {
 		nasm_error(ERR_NONFATAL, "Mach-O format does not support"
 			   " this use of WRT");
