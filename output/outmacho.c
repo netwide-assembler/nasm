@@ -795,7 +795,7 @@ static void macho_output(int32_t secto, const void *data,
 		    reltype = RL_GOTLOAD;
 		}
 	    }
-	} else if (wrt == macho_tlvp_sect) {
+	} else if (wrt == macho_tlvp_sect && fmt.ptrsize == 8) {
 	    reltype = RL_TLV;
 	} else {
 	    nasm_error(ERR_NONFATAL, "Mach-O format does not support"
