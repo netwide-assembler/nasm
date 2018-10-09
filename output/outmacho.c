@@ -1123,6 +1123,9 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
         special_used = true;
     }
 
+    /* track the initially allocated symbol number for use in future fix-ups */
+    sym->initial_snum = nsyms;
+
     if (section == NO_SEG) {
         /* symbols in no section get absolute */
         sym->type |= N_ABS;
@@ -1136,9 +1139,6 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
 
         /* get the in-file index of the section the symbol was defined in */
         sym->sect = s ? s->fileindex : NO_SECT;
-
-	/* track the initially allocated symbol number for use in future fix-ups */
-	sym->initial_snum = nsyms;
 
         if (!s) {
             /* remember symbol number of references to external
