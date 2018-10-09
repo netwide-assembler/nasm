@@ -514,7 +514,6 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	if (section == NO_SEG) {
 	    /* absolute (can this even happen?) */
 	    r->ext = 0;
-	    r->snum = NO_SECT;
 	} else if (fi == NO_SECT) {
 	    /* external */
 	    r->snum = raa_read(extsyms, section);
@@ -593,9 +592,13 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	break;
     }
 
-    /* For 64-bit Mach-O, force a symbol reference if at all possible */
-    if (!r->ext && r->snum != NO_SECT && fmt.forcesym) {
-	struct symbol *sym = macho_find_sym(s, offset, false, false);
+    /*
+     * For 64-bit Mach-O, force a symbol reference if at all possible
+     * Allow for r->snum == R_ABS by searching absolute_sect
+     */
+    if (!r->ext && fmt.forcesym) {
+	struct symbol *sym = macho_find_sym(s ? s : &absolute_sect,
+					    offset, false, false);
 	if (sym) {
 	    adjust = bytes - sym->symv[0].key;
 	    r->snum = sym->initial_snum;
