@@ -569,18 +569,22 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	goto needsym;
 
     needsym:
-	r->pcrel = 1;
+	r->pcrel = (fmt.ptrsize == 8 ? 1 : 0);
 	if (section == NO_SEG) {
 	    nasm_error(ERR_NONFATAL, "Unsupported use of use of WRT");
+	    goto bail;
 	} else if (fi == NO_SECT) {
 	    /* external */
 	    r->snum = raa_read(extsyms, section);
 	} else {
-	    /* internal - does it really need to be global? */
-	    struct symbol *sym = macho_find_sym(s, offset, true,
-						reltype != RL_TLV);
-	    if (!sym)
+	    /* internal - GOTPCREL doesn't need to be in global */
+	    struct symbol *sym = macho_find_sym(s, offset,
+						false, /* reltype != RL_TLV */
+						true);
+	    if (!sym) {
+		nasm_error(ERR_NONFATAL, "Symbol for WRT not found");
 		goto bail;
+	    }
 
 	    r->snum = sym->initial_snum;
 	}
