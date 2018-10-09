@@ -531,22 +531,8 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	r->type = fmt.reloc_rel;
 	r->pcrel = 1;
 	if (section == NO_SEG) {
-	    /* absolute - seems to produce garbage no matter what */
-	    nasm_error(ERR_NONFATAL, "Mach-O does not support relative "
-		       "references to absolute addresses");
-	    goto bail;
-#if 0
-	    /* This "seems" to be how it ought to work... */
-
-	    struct symbol *sym = macho_find_sym(&absolute_sect, offset,
-						false, false);
-	    if (!sym)
-		goto bail;
-
-	    sect->extreloc = 1;
-	    r->snum = NO_SECT;
-	    adjust = -sect->size;
-#endif
+	    /* may optionally be converted below by fmt.forcesym */
+	    r->ext = 0;
 	} else if (fi == NO_SECT) {
 	    /* external */
 	    sect->extreloc = 1;
