@@ -495,7 +495,7 @@ static int64_t add_reloc(struct section *sect, int32_t section,
     r = nasm_malloc(sizeof(struct reloc));
     r->addr = sect->size & ~R_SCATTERED;
     r->ext = 1;
-    adjust = bytes;
+    adjust = 0;
 
     /* match byte count 1, 2, 4, 8 to length codes 0, 1, 2, 3 respectively */
     r->length = ilog2_32(bytes);
@@ -521,7 +521,6 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	    /* local */
 	    r->ext = 0;
 	    r->snum = fi;
-	    adjust = -sect->size;
 	}
 	break;
 
@@ -538,15 +537,12 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	    r->snum = raa_read(extsyms, section);
 	    if (reltype == RL_BRANCH)
 		r->type = X86_64_RELOC_BRANCH;
-	    else if (r->type == GENERIC_RELOC_VANILLA)
-		adjust = -sect->size;
 	} else {
 	    /* local */
 	    r->ext = 0;
 	    r->snum = fi;
 	    if (reltype == RL_BRANCH)
 		r->type = X86_64_RELOC_BRANCH;
-	    adjust = -sect->size;
 	}
 	break;
 
@@ -587,6 +583,7 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 		goto bail;
 	    }
 
+	    adjust -= sym->symv[0].key;
 	    r->snum = sym->initial_snum;
 	}
 	break;
@@ -600,11 +597,14 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	struct symbol *sym = macho_find_sym(s ? s : &absolute_sect,
 					    offset, false, false);
 	if (sym) {
-	    adjust = bytes - sym->symv[0].key;
+	    adjust -= sym->symv[0].key;
 	    r->snum = sym->initial_snum;
 	    r->ext = 1;
 	}
     }
+
+    if (r->pcrel)
+	adjust += ((r->ext && fmt.ptrsize == 8) ? bytes : -(int64_t)sect->size);
 
     /* NeXT as puts relocs in reversed order (address-wise) into the
      ** files, so we do the same, doesn't seem to make much of a
