@@ -3947,6 +3947,8 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
      * only first token will be passed.
      */
     tm = mac->params[(fst + mac->rotate) % mac->nparam];
+    if (!tm)
+        goto err;
     head = new_Token(NULL, tm->type, tm->text, 0);
     tt = &head->next, tm = tm->next;
     while (tok_isnt_(tm, ",")) {
