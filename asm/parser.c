@@ -1124,6 +1124,23 @@ is_expression:
                     rs = 0;
                 }
 
+                /*
+                 * Make sure we're not out of nasm_reg_flags, still
+                 * probably this should be fixed when we're defining
+                 * the label.
+                 *
+                 * An easy trigger is
+                 *
+                 *      e equ 0x80000000:0
+                 *      pshufw word e-0
+                 *
+                 */
+                if (value->type < EXPR_REG_START ||
+                    value->type > EXPR_REG_END) {
+                        nasm_error(ERR_NONFATAL, "invalid operand type");
+                        goto fail;
+                }
+
                 op->type      &= TO;
                 op->type      |= REGISTER;
                 op->type      |= nasm_reg_flags[value->type];
