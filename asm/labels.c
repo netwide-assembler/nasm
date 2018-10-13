@@ -219,6 +219,8 @@ static union label *find_label(const char *label, bool create, bool *created)
     char *label_str = NULL;
     struct hash_insert ip;
 
+    nasm_assert(label != NULL);
+
     if (islocal(label))
         label = label_str = nasm_strcat(prevlabel, label);
 
