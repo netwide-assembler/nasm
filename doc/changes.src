@@ -9,6 +9,8 @@ since 2007.
 
 \S{cl-2.14} Version 2.14
 
+\b Fixed out of bound access in certain \c{EQU} parsing.
+
 \b Fixed buffer underflow in float parsing.
 
 \b Added \c{SGX} (Intel Software Guard Extensions) instructions.
