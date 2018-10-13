@@ -40,6 +40,7 @@
 
 #include "compiler.h"
 #include "tables.h"     /* for opflags_t and nasm_reg_flags[] */
+#include "regs.h"
 
 /*
  * Here we define the operand types. These are implemented as bit
@@ -176,8 +177,17 @@
 #define REG_CLASS_OPMASK        GEN_REG_CLASS(8)
 #define REG_CLASS_BND           GEN_REG_CLASS(9)
 
-#define is_class(class, op)         (!((opflags_t)(class) & ~(opflags_t)(op)))
-#define is_reg_class(class, reg)    is_class((class), nasm_reg_flags[(reg)])
+static inline bool is_class(opflags_t class, opflags_t op)
+{
+	return !(class & ~op);
+}
+
+static inline bool is_reg_class(opflags_t class, opflags_t reg)
+{
+	if (reg >= EXPR_REG_START && reg <= EXPR_REG_END)
+		return is_class(class, nasm_reg_flags[reg]);
+	return false;
+}
 
 #define IS_SREG(reg)                is_reg_class(REG_SREG, (reg))
 #define IS_FSGS(reg)                is_reg_class(REG_FSGS, (reg))
