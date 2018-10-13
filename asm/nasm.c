@@ -1481,13 +1481,11 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
 
             /*  forw_ref */
             if (output_ins.opcode == I_EQU) {
-                if (!output_ins.label)
-                    nasm_error(ERR_NONFATAL,
-                               "EQU not preceded by label");
-
-                if (output_ins.operands == 1 &&
-                    (output_ins.oprs[0].type & IMMEDIATE) &&
-                    output_ins.oprs[0].wrt == NO_SEG) {
+                if (!output_ins.label) {
+                    nasm_error(ERR_NONFATAL, "EQU not preceded by label");
+                } else if (output_ins.operands == 1 &&
+                           (output_ins.oprs[0].type & IMMEDIATE) &&
+                           output_ins.oprs[0].wrt == NO_SEG) {
                     define_label(output_ins.label,
                                  output_ins.oprs[0].segment,
                                  output_ins.oprs[0].offset, false);
