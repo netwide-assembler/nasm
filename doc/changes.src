@@ -9,6 +9,10 @@ since 2007.
 
 \S{cl-2.14} Version 2.14
 
+\b Fixed null dereference in corrupted invalid single line macros.
+
+\b Fixed division by zero which may happen if source code is malformed.
+
 \b Fixed out of bound access in processing of malformed segment override.
 
 \b Fixed out of bound access in certain \c{EQU} parsing.
