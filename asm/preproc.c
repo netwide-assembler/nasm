@@ -4473,7 +4473,9 @@ again:
         }
 
         if (tline->type == TOK_SMAC_END) {
-            tline->a.mac->in_progress = false;
+            /* On error path it might already be dropped */
+            if (tline->a.mac)
+                tline->a.mac->in_progress = false;
             tline = delete_Token(tline);
         } else {
             t = *tail = tline;
