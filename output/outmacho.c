@@ -363,7 +363,7 @@ static struct section *get_section_by_index(int32_t index)
     if (index < 0 || index >= SEG_ABS || (index & 1))
 	return NULL;
 
-    return (struct section *)raa_read(section_by_index, index >> 1);
+    return raa_read_ptr(section_by_index, index >> 1);
 }
 
 struct dir_list {
@@ -495,7 +495,7 @@ static int64_t add_reloc(struct section *sect, int32_t section,
     r = nasm_malloc(sizeof(struct reloc));
     r->addr = sect->size & ~R_SCATTERED;
     r->ext = 1;
-    adjust = bytes;
+    adjust = 0;
 
     /* match byte count 1, 2, 4, 8 to length codes 0, 1, 2, 3 respectively */
     r->length = ilog2_32(bytes);
@@ -514,7 +514,6 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	if (section == NO_SEG) {
 	    /* absolute (can this even happen?) */
 	    r->ext = 0;
-	    r->snum = NO_SECT;
 	} else if (fi == NO_SECT) {
 	    /* external */
 	    r->snum = raa_read(extsyms, section);
@@ -522,7 +521,6 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	    /* local */
 	    r->ext = 0;
 	    r->snum = fi;
-	    adjust = -sect->size;
 	}
 	break;
 
@@ -531,40 +529,27 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	r->type = fmt.reloc_rel;
 	r->pcrel = 1;
 	if (section == NO_SEG) {
-	    /* absolute - seems to produce garbage no matter what */
-	    nasm_error(ERR_NONFATAL, "Mach-O does not support relative "
-		       "references to absolute addresses");
-	    goto bail;
-#if 0
-	    /* This "seems" to be how it ought to work... */
-
-	    struct symbol *sym = macho_find_sym(&absolute_sect, offset,
-						false, false);
-	    if (!sym)
-		goto bail;
-
-	    sect->extreloc = 1;
-	    r->snum = NO_SECT;
-	    adjust = -sect->size;
-#endif
+	    /* may optionally be converted below by fmt.forcesym */
+	    r->ext = 0;
 	} else if (fi == NO_SECT) {
 	    /* external */
 	    sect->extreloc = 1;
 	    r->snum = raa_read(extsyms, section);
 	    if (reltype == RL_BRANCH)
 		r->type = X86_64_RELOC_BRANCH;
-	    else if (r->type == GENERIC_RELOC_VANILLA)
-		adjust = -sect->size;
 	} else {
 	    /* local */
 	    r->ext = 0;
 	    r->snum = fi;
-	    adjust = -sect->size;
+	    if (reltype == RL_BRANCH)
+		r->type = X86_64_RELOC_BRANCH;
 	}
 	break;
 
-    case RL_SUB:
-	r->pcrel = 0;
+    case RL_SUB: /* obsolete */
+	nasm_error(ERR_WARNING, "relcation with subtraction"
+		   "becomes to be obsolete");
+	r->ext = 0;
 	r->type = X86_64_RELOC_SUBTRACTOR;
 	break;
 
@@ -581,33 +566,45 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	goto needsym;
 
     needsym:
-	r->pcrel = 1;
+	r->pcrel = (fmt.ptrsize == 8 ? 1 : 0);
 	if (section == NO_SEG) {
 	    nasm_error(ERR_NONFATAL, "Unsupported use of use of WRT");
+	    goto bail;
 	} else if (fi == NO_SECT) {
 	    /* external */
 	    r->snum = raa_read(extsyms, section);
 	} else {
-	    /* internal - does it really need to be global? */
-	    struct symbol *sym = macho_find_sym(s, offset, true,
-						reltype != RL_TLV);
-	    if (!sym)
+	    /* internal - GOTPCREL doesn't need to be in global */
+	    struct symbol *sym = macho_find_sym(s, offset,
+						false, /* reltype != RL_TLV */
+						true);
+	    if (!sym) {
+		nasm_error(ERR_NONFATAL, "Symbol for WRT not found");
 		goto bail;
+	    }
 
+	    adjust -= sym->symv[0].key;
 	    r->snum = sym->initial_snum;
 	}
 	break;
     }
 
-    /* For 64-bit Mach-O, force a symbol reference if at all possible */
-    if (!r->ext && r->snum != NO_SECT && fmt.forcesym) {
-	struct symbol *sym = macho_find_sym(s, offset, false, false);
+    /*
+     * For 64-bit Mach-O, force a symbol reference if at all possible
+     * Allow for r->snum == R_ABS by searching absolute_sect
+     */
+    if (!r->ext && fmt.forcesym) {
+	struct symbol *sym = macho_find_sym(s ? s : &absolute_sect,
+					    offset, false, false);
 	if (sym) {
-	    adjust = bytes - sym->symv[0].key;
+	    adjust -= sym->symv[0].key;
 	    r->snum = sym->initial_snum;
 	    r->ext = 1;
 	}
     }
+
+    if (r->pcrel)
+	adjust += ((r->ext && fmt.ptrsize == 8) ? bytes : -(int64_t)sect->size);
 
     /* NeXT as puts relocs in reversed order (address-wise) into the
      ** files, so we do the same, doesn't seem to make much of a
@@ -661,6 +658,9 @@ static void macho_output(int32_t secto, const void *data,
     if (is_bss && type != OUT_RESERVE) {
         nasm_error(ERR_WARNING, "attempt to initialize memory in "
               "BSS section: ignored");
+        /* FIXME */
+        nasm_error(ERR_WARNING, "section size may be negative"
+            "with address symbols");
         s->size += realsize(type, size);
         return;
     }
@@ -698,8 +698,11 @@ static void macho_output(int32_t secto, const void *data,
 			       "Mach-O 64-bit format does not support"
 			       " 32-bit absolute addresses");
 		} else {
-		    add_reloc(s, section, addr, RL_ABS, asize);
+		    addr += add_reloc(s, section, addr, RL_ABS, asize);
 		}
+	    } else if (wrt == macho_tlvp_sect && fmt.ptrsize != 8 &&
+		       asize == (int) fmt.ptrsize) {
+		addr += add_reloc(s, section, addr, RL_TLV, asize);
 	    } else {
 		nasm_error(ERR_NONFATAL, "Mach-O format does not support"
 			   " this use of WRT");
@@ -785,7 +788,7 @@ static void macho_output(int32_t secto, const void *data,
 		    reltype = RL_GOTLOAD;
 		}
 	    }
-	} else if (wrt == macho_tlvp_sect) {
+	} else if (wrt == macho_tlvp_sect && fmt.ptrsize == 8) {
 	    reltype = RL_TLV;
 	} else {
 	    nasm_error(ERR_NONFATAL, "Mach-O format does not support"
@@ -1008,7 +1011,8 @@ static int32_t macho_section(char *name, int pass, int *bits)
 }
 
 static int32_t macho_herelabel(const char *name, enum label_type type,
-			       int32_t section, int32_t *subsection)
+			       int32_t section, int32_t *subsection,
+			       bool *copyoffset)
 {
     struct section *s;
     int32_t subsec;
@@ -1033,6 +1037,7 @@ static int32_t macho_herelabel(const char *name, enum label_type type,
     }
 
     s->subsection = subsec;
+    *copyoffset = true;		/* Maintain previous offset */
     return subsec;
 }
 
@@ -1045,8 +1050,8 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
 
 #if defined(DEBUG) && DEBUG>2
     nasm_error(ERR_DEBUG,
-            " macho_symdef: %s, sec=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
-            name, section, offset, is_global, special);
+            " macho_symdef: %s, pass0=%d, passn=%"PRId64", sec=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
+	       name, pass0, passn, section, offset, is_global, special);
 #endif
 
     if (is_global == 3) {
@@ -1109,6 +1114,9 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
         special_used = true;
     }
 
+    /* track the initially allocated symbol number for use in future fix-ups */
+    sym->initial_snum = nsyms;
+
     if (section == NO_SEG) {
         /* symbols in no section get absolute */
         sym->type |= N_ABS;
@@ -1122,9 +1130,6 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
 
         /* get the in-file index of the section the symbol was defined in */
         sym->sect = s ? s->fileindex : NO_SECT;
-
-	/* track the initially allocated symbol number for use in future fix-ups */
-	sym->initial_snum = nsyms;
 
         if (!s) {
             /* remember symbol number of references to external
@@ -1873,6 +1878,9 @@ macho_pragma(const struct pragma *pragma)
 
 	if (real)
 	    head_flags |= MH_SUBSECTIONS_VIA_SYMBOLS;
+
+        /* Jmp-match optimization conflicts */
+        optimizing.flag |= OPTIM_DISABLE_JMP_MATCH;
 
 	return DIRR_OK;
 

@@ -208,6 +208,8 @@ enum match_result {
     MERR_ENCMISMATCH,
     MERR_BADBND,
     MERR_BADREPNE,
+    MERR_REGSETSIZE,
+    MERR_REGSET,
     /*
      * Matching success; the conditional ones first
      */
@@ -537,9 +539,9 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
 
     if (((c & ~1) != 0370) || (ins->oprs[0].type & STRICT))
         return false;
-    if (!optimizing)
+    if (!optimizing.level || (optimizing.flag & OPTIM_DISABLE_JMP_MATCH))
         return false;
-    if (optimizing < 0 && c == 0371)
+    if (optimizing.level < 0 && c == 0371)
         return false;
 
     isize = calcsize(segment, offset, bits, ins, temp);
@@ -802,6 +804,12 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                 nasm_error(ERR_NONFATAL, "%s prefix is not allowed",
                            (has_prefix(instruction, PPS_REP, P_REPNE) ?
                             "repne" : "repnz"));
+                break;
+            case MERR_REGSETSIZE:
+                nasm_error(ERR_NONFATAL, "invalid register set size");
+                break;
+            case MERR_REGSET:
+                nasm_error(ERR_NONFATAL, "register set not valid for operand");
                 break;
             default:
                 nasm_error(ERR_NONFATAL,
@@ -2191,7 +2199,7 @@ static enum match_result matches(const struct itemplate *itemp,
     /*
      * Is it legal?
      */
-    if (!(optimizing > 0) && itemp_has(itemp, IF_OPT))
+    if (!(optimizing.level > 0) && itemp_has(itemp, IF_OPT))
 	return MERR_INVALOP;
 
     /*
@@ -2334,9 +2342,14 @@ static enum match_result matches(const struct itemplate *itemp,
         if (~ideco & deco & (Z_MASK|STATICRND_MASK|SAE_MASK))
             return MERR_DECONOTHERE;
 
-        if (itemp->opd[i] & ~type & ~SIZE_MASK) {
+        if (itemp->opd[i] & ~type & ~(SIZE_MASK|REGSET_MASK))
             return MERR_INVALOP;
-        } else if (template_opsize) {
+
+        if (~itemp->opd[i] & type & REGSET_MASK)
+            return (itemp->opd[i] & REGSET_MASK)
+                ? MERR_REGSETSIZE : MERR_REGSET;
+
+        if (template_opsize) {
             if (template_opsize != insn_opsize) {
                 if (insn_opsize) {
                     return MERR_INVALOP;

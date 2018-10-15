@@ -117,7 +117,8 @@ const struct dfmt *dfmt;
 static FILE *error_file;        /* Where to write error messages */
 
 FILE *ofile = NULL;
-int optimizing = MAX_OPTIMIZE; /* number of optimization passes to take */
+struct optimization optimizing =
+    { MAX_OPTIMIZE, OPTIM_ALL_ENABLED }; /* number of optimization passes to take */
 static int cmd_sb = 16;    /* by default */
 
 iflag_t cpu;
@@ -424,6 +425,13 @@ int main(int argc, char **argv)
     tolower_init();
     src_init();
 
+    /*
+     * We must call init_labels() before the command line parsing,
+     * because we may be setting prefixes/suffixes from the command
+     * line.
+     */
+    init_labels();
+
     offsets = raa_init();
     forwrefs = saa_init((int32_t)sizeof(struct forwrefinfo));
 
@@ -473,9 +481,15 @@ int main(int argc, char **argv)
     if (ofmt->stdmac)
         preproc->extra_stdmac(ofmt->stdmac);
 
-    /* no output file name? */
-    if (!outname)
-        outname = filename_set_extension(inname, ofmt->extension);
+    /*
+     * If no output file name provided and this
+     * is a preprocess mode, we're perfectly
+     * fine to output into stdout.
+     */
+    if (!outname) {
+        if (!(operating_mode & OP_PREPROCESS))
+            outname = filename_set_extension(inname, ofmt->extension);
+    }
 
     /* define some macros dependent of command-line */
     define_macros_late();
@@ -552,13 +566,6 @@ int main(int argc, char **argv)
         if (!ofile)
             nasm_fatal_fl(ERR_NOFILE,
                        "unable to open output file `%s'", outname);
-
-        /*
-         * We must call init_labels() before ofmt->init() since
-         * some object formats will want to define labels in their
-         * init routines. (eg OS/2 defines the FLAT group)
-         */
-        init_labels();
 
         ofmt->init();
         dfmt->init();
@@ -867,7 +874,7 @@ static bool process_arg(char *p, char *q, int pass)
 
                 if (!*param) {
                     /* Naked -O == -Ox */
-                    optimizing = MAX_OPTIMIZE;
+                    optimizing.level = MAX_OPTIMIZE;
                 } else {
                     while (*param) {
                         switch (*param) {
@@ -875,12 +882,12 @@ static bool process_arg(char *p, char *q, int pass)
                         case '5': case '6': case '7': case '8': case '9':
                             opt = strtoul(param, &param, 10);
 
-                            /* -O0 -> optimizing == -1, 0.98 behaviour */
-                            /* -O1 -> optimizing == 0, 0.98.09 behaviour */
+                            /* -O0 -> optimizing.level == -1, 0.98 behaviour */
+                            /* -O1 -> optimizing.level == 0, 0.98.09 behaviour */
                             if (opt < 2)
-                                optimizing = opt - 1;
+                                optimizing.level = opt - 1;
                             else
-                                optimizing = opt;
+                                optimizing.level = opt;
                             break;
 
                         case 'v':
@@ -891,7 +898,7 @@ static bool process_arg(char *p, char *q, int pass)
 
                         case 'x':
                             param++;
-                            optimizing = MAX_OPTIMIZE;
+                            optimizing.level = MAX_OPTIMIZE;
                             break;
 
                         default:
@@ -900,8 +907,8 @@ static bool process_arg(char *p, char *q, int pass)
                             break;
                         }
                     }
-                    if (optimizing > MAX_OPTIMIZE)
-                        optimizing = MAX_OPTIMIZE;
+                    if (optimizing.level > MAX_OPTIMIZE)
+                        optimizing.level = MAX_OPTIMIZE;
                 }
             }
             break;
@@ -1434,7 +1441,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
         while ((line = preproc->getline())) {
             if (++globallineno > nasm_limit[LIMIT_LINES])
                 nasm_fatal("overall line count exceeds the maximum %"PRId64"\n",
-                           nasm_limit[LIMIT_LINES]);
+			   nasm_limit[LIMIT_LINES]);
 
             /*
              * Here we parse our directives; this is not handled by the
@@ -1446,7 +1453,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
             /* Not a directive, or even something that starts with [ */
             parse_line(pass1, line, &output_ins);
 
-            if (optimizing > 0) {
+            if (optimizing.level > 0) {
                 if (forwref != NULL && globallineno == forwref->lineno) {
                     output_ins.forw_ref = true;
                     do {
@@ -1472,13 +1479,11 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
 
             /*  forw_ref */
             if (output_ins.opcode == I_EQU) {
-                if (!output_ins.label)
-                    nasm_error(ERR_NONFATAL,
-                               "EQU not preceded by label");
-
-                if (output_ins.operands == 1 &&
-                    (output_ins.oprs[0].type & IMMEDIATE) &&
-                    output_ins.oprs[0].wrt == NO_SEG) {
+                if (!output_ins.label) {
+                    nasm_error(ERR_NONFATAL, "EQU not preceded by label");
+                } else if (output_ins.operands == 1 &&
+                           (output_ins.oprs[0].type & IMMEDIATE) &&
+                           output_ins.oprs[0].wrt == NO_SEG) {
                     define_label(output_ins.label,
                                  output_ins.oprs[0].segment,
                                  output_ins.oprs[0].offset, false);
@@ -1611,14 +1616,35 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
             nasm_free(line);
         }                       /* end while (line = preproc->getline... */
 
-        if (pass0 == 2 && global_offset_changed && !terminate_after_phase)
-            nasm_error(ERR_NONFATAL,
-                       "phase error detected at end of assembly.");
+        if (global_offset_changed && !terminate_after_phase) {
+            switch (pass0) {
+            case 1:
+                nasm_error(ERR_WARNING|ERR_WARN_PHASE,
+                           "phase error during stabilization pass, hoping for the best");
+                break;
+
+            case 2:
+                nasm_error(ERR_NONFATAL,
+                           "phase error during code generation pass");
+                break;
+
+            default:
+                /* This is normal, we'll keep going... */
+                break;
+            }
+        }
 
         if (pass1 == 1)
             preproc->cleanup(1);
 
-        if ((passn > 1 && !global_offset_changed) || pass0 == 2) {
+        /*
+         * Always run at least two optimization passes (pass0 == 0);
+         * things like subsections will fail miserably without that.
+         * Once we commit to a stabilization pass (pass0 == 1), we can't
+         * go back, and if something goes bad, we can only hope
+         * that we don't end up with a phase error at the end.
+         */
+        if ((passn > 1 && !global_offset_changed) || pass0 > 0) {
             pass0++;
         } else if (global_offset_changed &&
                    global_offset_changed < prev_offset_changed) {
@@ -1941,14 +1967,16 @@ static void help(const char xopt)
          "    -w-foo        disable warning foo (equiv. -Wno-foo)\n"
          "    -w[+-]error[=foo]\n"
          "                  promote [specific] warnings to errors\n"
-         "    -h            show invocation summary and exit\n\n"
+         "    -h            show invocation summary and exit (also --help)\n\n"
          "   --pragma str   pre-executes a specific %%pragma\n"
          "   --before str   add line (usually a preprocessor statement) before the input\n"
          "   --prefix str   prepend the given string to all the given string\n"
-         "                  to all extern, common and global symbols\n"
-         "   --suffix str   append the given string to all the given string\n"
-         "                  to all extern, common and global symbols\n"
+         "                  to all extern, common and global symbols (also --gprefix)\n"
+         "   --postfix str  append the given string to all the given string\n"
+         "                  to all extern, common and global symbols (also --gpostfix)\n"
          "   --lprefix str  prepend the given string to all other symbols\n"
+         "   --lpostfix str append the given string to all other symbols\n"
+         "   --keep-all     output files will not be removed even if an error happens\n"
          "   --limit-X val  set execution limit X\n");
 
     for (i = 0; i <= LIMIT_MAX; i++) {

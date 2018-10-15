@@ -2210,8 +2210,7 @@ static int parse_size(const char *str) {
         { "byte", "dword", "oword", "qword", "tword", "word", "yword" };
     static const int sizes[] =
         { 0, 1, 4, 16, 8, 10, 2, 32 };
-
-    return sizes[bsii(str, size_names, ARRAY_SIZE(size_names))+1];
+    return str ? sizes[bsii(str, size_names, ARRAY_SIZE(size_names))+1] : 0;
 }
 
 /*
@@ -3948,6 +3947,8 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
      * only first token will be passed.
      */
     tm = mac->params[(fst + mac->rotate) % mac->nparam];
+    if (!tm)
+        goto err;
     head = new_Token(NULL, tm->type, tm->text, 0);
     tt = &head->next, tm = tm->next;
     while (tok_isnt_(tm, ",")) {
@@ -4472,7 +4473,9 @@ again:
         }
 
         if (tline->type == TOK_SMAC_END) {
-            tline->a.mac->in_progress = false;
+            /* On error path it might already be dropped */
+            if (tline->a.mac)
+                tline->a.mac->in_progress = false;
             tline = delete_Token(tline);
         } else {
             t = *tail = tline;

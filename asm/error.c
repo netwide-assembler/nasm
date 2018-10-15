@@ -69,6 +69,7 @@ const struct warning warnings[ERR_WARN_ALL+1] = {
     {"not-my-pragma", "%pragma not applicable to this compilation", false},
     {"unknown-warning", "unknown warning in -W/-w or warning directive", false},
     {"negative-rep", "regative %rep count", true},
+    {"phase", "phase error during stabilization", false},
 
     /* THIS ENTRY MUST COME LAST */
     {"all", "all possible warnings", false}

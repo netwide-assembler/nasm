@@ -368,6 +368,8 @@ To get further usage instructions from NASM, try typing
 
 \c nasm -h
 
+\c{--help} option is also the same.
+
 As \c{-hf}, this will also list the available output file formats, and what they
 are.
 
@@ -657,8 +659,11 @@ option. So running
 is equivalent to running \c{nasm myfile.asm} and placing the
 directive \c{%include "myinc.inc"} at the start of the file.
 
+\c{--include} option is also accepted.
+
 For consistency with the \c{-I}, \c{-D} and \c{-U} options, this
 option can also be specified as \c{-P}.
+
 
 
 \S{opt-d} The \i\c{-d}\I\c{-D} Option: \I{pre-defining macros}Pre-Define a Macro
@@ -917,13 +922,72 @@ is indicated by an asterisk. For example:
 \c     dwarf     elf32 (i386) dwarf debug format for Linux
 
 
-\S{opt-pfix} The \i\c{--prefix} and \i\c{--postfix} Options.
+\S{opt-pfix} The \i\c{--(g|l)prefix}, \i\c{--(g|l)postfix} Options.
 
-The \c{--prefix} and \c{--postfix} options prepend or append
-(respectively) the given argument to all \c{global} or
-\c{extern} variables. E.g. \c{--prefix _} will prepend the
-underscore to all global and external variables, as C requires it in
-some, but not all, system calling conventions.
+The \c{--(g)prefix} options prepend the given argument
+to all \c{extern}, \c{common}, \c{static}, and \c{global} symbols, and the
+\c{--lprefix} option prepends to all other symbols. Similarly,
+\c{--(g)postfix} and \c{--lpostfix} options append
+the argument in the exactly same way as the \c{--xxprefix} options does.
+
+Running this:
+
+\c nasm -f macho --gprefix _
+
+is equivalent to place the directive with \c{%pragma macho gprefix _}
+at the start of the file (\k{mangling}). It will prepend the underscore
+to all global and external variables, as C requires it in some, but not all,
+system calling conventions.
+
+\S{opt-pragma} The \i\c{--pragma} Option
+
+NASM accepts an argument as \c{%pragma} option, which is like placing
+a \c{%pragma} preprocess statement at the beginning of the source.
+Running this:
+
+\c nasm -f macho --pragma "macho gprefix _"
+
+is equivalent to the example in \k{opt-pfix}.
+
+
+\S{opt-before} The \i\c{--before} Option
+
+A preprocess statement can be accepted with this option. The example
+shown in \k{opt-pragma} is the same as running this:
+
+\c nasm -f macho --before "%pragma macho gprefix _"
+
+
+\S{opt-limit} The \i\c{--limit-X} Option
+
+This option allows user to setup various maximum values for these:
+
+\b\c{--limit-passes}: Number of maximum allowed passes. Default is
+effectively unlimited.
+
+\b\c{--limit-stalled-passes}: Maximum number of allowed unfinished
+passes. Default is 1000.
+
+\b\c{--limit-macro-levels}: Define maximum depth of macro expansion
+(in preprocess). Default is 1000000.
+
+\b\c{--limit-rep}: Maximum number of allowed preprocessor loop, defined
+under \c{%rep}. Default is 1000000.
+
+\b\c{--limit-eval}: This number sets the boundary condition of allowed
+expression length. Default is 1000000.
+
+\b\c{--limit-lines}: Total number of source lines as allowed to be
+processed. Default is 2000000000.
+
+In example, running this limits the maximum line count to be 1000.
+
+\c nasm --limit-lines 1000
+
+
+\S{opt-keep-all} The \i\c{--keep-all} Option
+
+This option doesn't delete any output files even if an error happens.
 
 
 \S{nasmenv} The \i\c{NASMENV} \i{Environment} Variable
@@ -4540,8 +4604,12 @@ only in that it can take only one argument at a time: the support
 for multiple arguments is implemented at the preprocessor level.
 
 You can declare the same variable as \c{EXTERN} more than once: NASM
-will quietly ignore the second and later redeclarations. You can't
-declare a variable as \c{EXTERN} as well as something else, though.
+will quietly ignore the second and later redeclarations.
+
+If a variable is declared both \c{GLOBAL} and \c{EXTERN}, or if it is
+declared as \c{EXTERN} and then defined, it will be treated as
+\c{GLOBAL}. If a variable is declared both as \c{COMMON} and
+\c{EXTERN}, it will be treated as \c{COMMON}.
 
 
 \H{global} \i\c{GLOBAL}: \i{Exporting Symbols} to Other Modules
@@ -4551,9 +4619,6 @@ symbol as \c{EXTERN} and refers to it, then in order to prevent
 linker errors, some other module must actually \e{define} the
 symbol and declare it as \c{GLOBAL}. Some assemblers use the name
 \i\c{PUBLIC} for this purpose.
-
-The \c{GLOBAL} directive applying to a symbol must appear \e{before}
-the definition of the symbol.
 
 \c{GLOBAL} uses the same syntax as \c{EXTERN}, except that it must
 refer to symbols which \e{are} defined in the same module as the
@@ -4606,6 +4671,61 @@ specify the alignment requirements of a common variable:
 Once again, like \c{EXTERN} and \c{GLOBAL}, the primitive form of
 \c{COMMON} differs from the user-level form only in that it can take
 only one argument at a time.
+
+\H{static} \i\c{STATIC}: Local Symbols within Modules
+
+Opposite to \c{EXTERN} and \c{GLOBAL}, \c{STATIC} is local symbol, but
+should be named according to the global mangling rules (named by
+analogy with the C keyword \c{static} as applied to functions or
+global variables).
+
+\c static foo
+\c foo:
+\c          ; codes
+
+Unlike \c{GLOBAL}, \c{STATIC} does not allow object formats to accept
+private extensions mentioned in \k{global}.
+
+\H{mangling} \i\c{(G|L)PREFIX}, \i\c{(G|L)POSTFIX}: Mangling Symbols
+
+\c{PREFIX}, \c{GPREFIX}, \c{LPREFIX}, \c{POSTFIX}, \c{GPOSTFIX}, and
+\c{LPOSTFIX} directives can prepend or append the given argument to
+a certain type of symbols. The directive should be as a preprocess
+statement. Each usage is:
+
+\b\c{PREFIX}|\c{GPREFIX}: Prepend the argument to all \c{EXTERN}
+\c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols
+
+\b\c{LPREFIX}: Prepend the argument to all other symbols
+such as Local Labels, and backend defined symbols
+
+\b\c{POSTFIX}|\c{GPOSTFIX}: Append the argument to all \c{EXTERN}
+\c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols
+
+\b\c{LPOSTFIX}: Append the argument to all other symbols
+such as Local Labels, and backend defined symbols
+
+This is a macro implemented as a \c{%pragma}:
+
+\c      %pragma macho lprefix L_
+
+Commandline option is also possible. See also \k{opt-pfix}.
+
+
+\H{gen-namespace} \i\c{OUTPUT}, \i\c{DEBUG}: Generic Namespaces
+
+\c{OUTPUT} and \c{DEBUG} are generic \c{%pragma} namespaces that are
+supposed to redirect to the current output and debug formats.
+For example, when mangling local symbols via the generic namespace:
+
+\c      %pragma output gprefix _
+
+This is useful when the directive is needed to be output format
+agnostic.
+
+The example is also euquivalent to this, when the output format is \c{elf}:
+
+\c      %pragma elf gprefix _
 
 
 \H{CPU} \i\c{CPU}: Defining CPU Dependencies
@@ -5658,7 +5778,7 @@ comma.  The following flags can also be specified:
 
 \b \c{data} - this section contains initialized data items
 
-\b \c{text} - this section contains code exclusively
+\b \c{code} - this section contains code exclusively
 
 \b \c{mixed} - this section contains both code and data
 
@@ -5731,6 +5851,19 @@ non-Mach-O builds of the same source code:
 
 \c      %pragma macho no_dead_strip symbol...
 
+\S{macho-pext} \c{macho} specific extensions to the \c{GLOBAL}
+Directive: \i\c{private_extern}
+
+The directive extension to \c{GLOBAL} marks the symbol with limited
+global scope. For example, you can specify the global symbol with
+this extension:
+
+\c global foo:private_extern
+\c foo:
+\c          ; codes
+
+Using with static linker will clear the private extern attribute.
+But linker option like \c{-keep_private_externs} can avoid it.
 
 \H{elffmt} \i\c{elf32}, \i\c{elf64}, \i\c{elfx32}: \I{ELF}\I{linux, elf}\i{Executable and Linkable
 Format} Object Files
