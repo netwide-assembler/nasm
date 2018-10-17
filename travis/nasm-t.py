@@ -349,14 +349,9 @@ def test_update(desc):
     if 'update' in desc and desc['update'] == 'false':
         return test_skip(desc['_test-name'], "No output provided")
 
-    pnasm = exec_nasm(desc)
+    pnasm, stdout, stderr = exec_nasm(desc)
     if pnasm == None:
         return False
-
-    stdout = pnasm.stdout.read()
-    stderr = pnasm.stderr.read()
-    pnasm.stdout.close()
-    pnasm.stderr.close()
 
     for t in desc['target']:
         if 'output' in t:
