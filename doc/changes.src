@@ -9,6 +9,8 @@ since 2007.
 
 \S{cl-2.14} Version 2.14
 
+\b Fixed \c{-I} option handling when ending slash is not present.
+
 \b Fixed null dereference in corrupted invalid single line macros.
 
 \b Fixed division by zero which may happen if source code is malformed.
