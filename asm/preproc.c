@@ -1515,19 +1515,18 @@ static FILE *inc_fopen_search(const char *file, StrList **slpath,
     FILE *fp;
     char *prefix = "";
     const IncPath *ip = ipath;
-    int len = strlen(file);
-    size_t prefix_len = 0;
+    int len;
     StrList *sl;
-    size_t path_len;
+    char *sp;
     bool found;
 
     while (1) {
-        path_len = prefix_len + len + 1;
-
-        sl = nasm_malloc(path_len + sizeof sl->next);
-        memcpy(sl->str, prefix, prefix_len);
-        memcpy(sl->str+prefix_len, file, len+1);
+        sp = nasm_catfile(prefix, file);
+        len = strlen(sp) + 1;
+        sl = nasm_malloc(len + sizeof sl->next);
+        memcpy(sl->str, sp, len);
         sl->next = NULL;
+        nasm_free(sp);
 
         if (omode == INC_PROBE) {
             fp = NULL;
@@ -1547,7 +1546,6 @@ static FILE *inc_fopen_search(const char *file, StrList **slpath,
             return NULL;
 
         prefix = ip->path;
-        prefix_len = strlen(prefix);
         ip = ip->next;
     }
 }

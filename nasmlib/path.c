@@ -164,7 +164,7 @@ char *nasm_catfile(const char *dir, const char *file)
 #else
     size_t dl = strlen(dir);
     size_t fl = strlen(file);
-    char *p;
+    char *p, *pp;
     bool dosep = true;
 
     if (!dl || ismatch(separators, dir[dl-1])) {
@@ -172,14 +172,14 @@ char *nasm_catfile(const char *dir, const char *file)
         dosep = false;
     }
 
-    p = nasm_malloc(dl + fl + dosep + 1);
+    p = pp = nasm_malloc(dl + fl + dosep + 1);
 
-    memcpy(p, dir, dl);
-    p += dl;
+    memcpy(pp, dir, dl);
+    pp += dl;
     if (dosep)
-        *p++ = catsep;
+        *pp++ = catsep;
 
-    memcpy(p, file, fl+1);
+    memcpy(pp, file, fl+1);
 
     return p;
 #endif
