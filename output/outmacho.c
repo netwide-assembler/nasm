@@ -738,12 +738,12 @@ static void macho_output(int32_t secto, const void *data,
 #define NO_TYPE S_NASM_TYPE_MASK
 
 /* Translation table from traditional Unix section names to Mach-O */
-static const struct sectmap {
+static const struct macho_known_section {
     const char      *nasmsect;
     const char      *segname;
     const char      *sectname;
     const uint32_t  flags;
-} sectmap[] = {
+} known_sections[] = {
     { ".text",          "__TEXT",   "__text",           S_CODE          },
     { ".data",          "__DATA",   "__data",           S_REGULAR       },
     { ".rodata",        "__DATA",   "__const",          S_REGULAR       },
@@ -752,7 +752,6 @@ static const struct sectmap {
     { ".debug_info",    "__DWARF",  "__debug_info",     S_ATTR_DEBUG    },
     { ".debug_line",    "__DWARF",  "__debug_line",     S_ATTR_DEBUG    },
     { ".debug_str",     "__DWARF",  "__debug_str",      S_ATTR_DEBUG    },
-    { NULL, NULL, NULL, 0 }
 };
 
 /* Section type or attribute directives */
@@ -772,10 +771,28 @@ static const struct sect_attribs {
     { NULL, 0 }
 };
 
+static const struct macho_known_section *
+lookup_known_section(const char *name, bool by_sectname)
+{
+    size_t i;
+
+    if (name && name[0]) {
+            for (i = 0; i < ARRAY_SIZE(known_sections); i++) {
+                const char *p = by_sectname ?
+                    known_sections[i].sectname :
+                    known_sections[i].nasmsect;
+                if (!strcmp(name, p))
+                    return &known_sections[i];
+            }
+    }
+
+    return NULL;
+}
+
 static int32_t macho_section(char *name, int pass, int *bits)
 {
+    const struct macho_known_section *known_section;
     char *sectionAttributes;
-    const struct sectmap *sm;
     struct section *s;
     const char *section, *segment;
     uint32_t flags;
@@ -822,29 +839,23 @@ static int32_t macho_section(char *name, int pass, int *bits)
 	    nasm_error(ERR_NONFATAL, "section name %s too long\n", section);
 	}
 
-	if (!strcmp(section, "__text")) {
-	    flags = S_REGULAR | S_ATTR_SOME_INSTRUCTIONS |
-		S_ATTR_PURE_INSTRUCTIONS;
-	} else if (!strcmp(section, "__bss")) {
-	    flags = S_ZEROFILL;
-	} else {
-	    flags = S_REGULAR;
-	}
+        known_section = lookup_known_section(section, true);
+        if (known_section)
+            flags = known_section->flags;
+        else
+            flags = S_REGULAR;
     } else {
-	for (sm = sectmap; sm->nasmsect != NULL; ++sm) {
-	    /* make lookup into section name translation table */
-	    if (!strcmp(name, sm->nasmsect)) {
-		segment = sm->segname;
-		section = sm->sectname;
-		flags = sm->flags;
-		goto found;
-	    }
-	}
-	nasm_error(ERR_NONFATAL, "unknown section name\n");
-	return NO_SEG;
+        known_section = lookup_known_section(name, false);
+        if (!known_section) {
+            nasm_error(ERR_NONFATAL, "unknown section name %s\n", name);
+            return NO_SEG;
+        }
+
+        segment = known_section->segname;
+        section = known_section->sectname;
+        flags = known_section->flags;
     }
 
- found:
     /* try to find section with that name, or create it */
     s = find_or_add_section(segment, section);
     new_seg = is_new_section(s);
