@@ -628,16 +628,12 @@ library}, for example, by typing
 (As usual, a space between \c{-i} and the path name is allowed, and
 optional).
 
-NASM, in the interests of complete source-code portability, does not
-understand the file naming conventions of the OS it is running on;
-the string you provide as an argument to the \c{-i} option will be
-prepended exactly as written to the name of the include file.
-Therefore the trailing backslash in the above example is necessary.
-Under Unix, a trailing forward slash is similarly necessary.
-
-(You can use this to your advantage, if you're really \i{perverse},
-by noting that the option \c{-ifoo} will cause \c{%include "bar.i"}
-to search for the file \c{foobar.i}...)
+Prior NASM 2.14 a path provided in the option has been considered as
+a verbatim copy and providing a path separator been up to a caller.
+One could implicitly concatenate a search path together with a filename.
+Still this was rather a trick than something useful. Now the trailing
+path separator is made to always present, thus \c{-ifoo} will be
+considered as the \c{-ifoo/} directory.
 
 If you want to define a \e{standard} \i{include search path},
 similar to \c{/usr/include} on Unix systems, you should place one or
