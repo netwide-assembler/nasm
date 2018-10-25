@@ -91,7 +91,6 @@ typedef struct Blocks Blocks;
 typedef struct Line Line;
 typedef struct Include Include;
 typedef struct Cond Cond;
-typedef struct IncPath IncPath;
 
 /*
  * Note on the storage of both SMacro and MMacros: the hash table
@@ -277,16 +276,6 @@ struct Include {
 };
 
 /*
- * Include search path. This is simply a list of strings which get
- * prepended, in turn, to the name of an include file, in an
- * attempt to find the file if it's not in the current directory.
- */
-struct IncPath {
-    IncPath *next;
-    char *path;
-};
-
-/*
  * File real name hash, so we don't have to re-search the include
  * path for every pass (and potentially more than that if a file
  * is used more than once.)
@@ -397,10 +386,10 @@ static int LocalOffset = 0;
 
 static Context *cstk;
 static Include *istk;
-static IncPath *ipath = NULL;
+static StrList *ipath;
 
 static int pass;            /* HACK: pass 0 = generate dependencies only */
-static StrList **dephead;
+static StrList *deplist;
 
 static uint64_t unique;     /* unique identifier numbers */
 
@@ -1509,43 +1498,37 @@ enum incopen_mode {
 };
 
 /* This is conducts a full pathname search */
-static FILE *inc_fopen_search(const char *file, StrList **slpath,
+static FILE *inc_fopen_search(const char *file, char **slpath,
                               enum incopen_mode omode, enum file_flags fmode)
 {
     FILE *fp;
-    char *prefix = "";
-    const IncPath *ip = ipath;
-    int len;
-    StrList *sl;
+    const char *prefix = "";
+    const struct strlist_entry *ip = ipath->head;
     char *sp;
     bool found;
 
     while (1) {
         sp = nasm_catfile(prefix, file);
-        len = strlen(sp) + 1;
-        sl = nasm_malloc(len + sizeof sl->next);
-        memcpy(sl->str, sp, len);
-        sl->next = NULL;
-        nasm_free(sp);
-
         if (omode == INC_PROBE) {
             fp = NULL;
-            found = nasm_file_exists(sl->str);
+            found = nasm_file_exists(sp);
         } else {
-            fp = nasm_open_read(sl->str, fmode);
+            fp = nasm_open_read(sp, fmode);
             found = (fp != NULL);
         }
         if (found) {
-            *slpath = sl;
+            *slpath = sp;
             return fp;
         }
 
-        nasm_free(sl);
+        nasm_free(sp);
 
-        if (!ip)
+        if (!ip) {
+            *slpath = NULL;
             return NULL;
+        }
 
-        prefix = ip->path;
+        prefix = ip->str;
         ip = ip->next;
     }
 }
@@ -1555,12 +1538,11 @@ static FILE *inc_fopen_search(const char *file, StrList **slpath,
  * considering the include path.
  */
 static FILE *inc_fopen(const char *file,
-                       StrList **dhead,
+                       StrList *dhead,
                        const char **found_path,
                        enum incopen_mode omode,
                        enum file_flags fmode)
 {
-    StrList *sl;
     struct hash_insert hi;
     void **hp;
     char *path;
@@ -1570,51 +1552,29 @@ static FILE *inc_fopen(const char *file,
     if (hp) {
         path = *hp;
         if (path || omode != INC_NEEDED) {
-            nasm_add_string_to_strlist(dhead, path ? path : file);
+            strlist_add_string(dhead, path ? path : file);
         }
     } else {
         /* Need to do the actual path search */
-        size_t file_len;
+        fp = inc_fopen_search(file, &path, omode, fmode);
 
-        sl = NULL;
-        fp = inc_fopen_search(file, &sl, omode, fmode);
-
-        file_len = strlen(file);
-
-        if (!sl) {
-            /* Store negative result for this file */
-            sl = nasm_malloc(file_len + 1 + sizeof sl->next);
-            memcpy(sl->str, file, file_len+1);
-            sl->next = NULL;
-            file = sl->str;
-            path = NULL;
-        } else  {
-            path = sl->str;
-            file = strchr(path, '\0') - file_len;
-        }
-
-        hash_add(&hi, file, path); /* Positive or negative result */
+        /* Positive or negative result */
+        hash_add(&hi, nasm_strdup(file), path);
 
         /*
-         * Add file to dependency path. The in_list() is needed
-         * in case the file was already added with %depend.
+         * Add file to dependency path.
          */
         if (path || omode != INC_NEEDED)
-            nasm_add_to_strlist(dhead, sl);
+            strlist_add_string(dhead, file);
     }
 
     if (!path) {
         if (omode == INC_NEEDED)
             nasm_fatal("unable to open include file `%s'", file);
-
-        if (found_path)
-            *found_path = NULL;
-
-        return NULL;
+    } else {
+        if (!fp && omode != INC_PROBE)
+            fp = nasm_open_read(path, fmode);
     }
-
-    if (!fp && omode != INC_PROBE)
-        fp = nasm_open_read(path, fmode);
 
     if (found_path)
         *found_path = path;
@@ -2598,7 +2558,7 @@ static int do_directive(Token *tline, char **output)
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote_cstr(p, i);
-        nasm_add_string_to_strlist(dephead, p);
+        strlist_add_string(deplist, p);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -2622,7 +2582,7 @@ static int do_directive(Token *tline, char **output)
         inc->next = istk;
         inc->conds = NULL;
         found_path = NULL;
-        inc->fp = inc_fopen(p, dephead, &found_path,
+        inc->fp = inc_fopen(p, deplist, &found_path,
                             pass == 0 ? INC_OPTIONAL : INC_NEEDED, NF_TEXT);
         if (!inc->fp) {
             /* -MG given but file not found */
@@ -4972,7 +4932,7 @@ static void pp_verror(int severity, const char *fmt, va_list arg)
 }
 
 static void
-pp_reset(const char *file, int apass, StrList **deplist)
+pp_reset(const char *file, int apass, StrList *dep_list)
 {
     Token *t;
 
@@ -4993,6 +4953,7 @@ pp_reset(const char *file, int apass, StrList **deplist)
     nested_rep_count = 0;
     init_macros();
     unique = 0;
+    deplist = dep_list;
 
     if (tasm_compatible_mode)
         pp_add_stdmac(nasm_stdmac_tasm);
@@ -5015,9 +4976,8 @@ pp_reset(const char *file, int apass, StrList **deplist)
      */
     pass = apass > 2 ? 2 : apass;
 
-    dephead = deplist;
-    nasm_add_string_to_strlist(dephead, file);
-    
+    strlist_add_string(deplist, file);
+
     /*
      * Define the __PASS__ macro.  This is defined here unlike
      * all the other builtins, because it is special -- it varies between
@@ -5033,6 +4993,7 @@ pp_reset(const char *file, int apass, StrList **deplist)
 static void pp_init(void)
 {
     hash_init(&FileHash, HASH_MEDIUM);
+    ipath = strlist_allocate();
 }
 
 static char *pp_getline(void)
@@ -5296,36 +5257,20 @@ static void pp_cleanup(int pass)
         ctx_pop();
     src_set_fname(NULL);
     if (pass == 0) {
-        IncPath *i;
         free_llist(predef);
         predef = NULL;
         delete_Blocks();
         freeTokens = NULL;
-        while ((i = ipath)) {
-            ipath = i->next;
-            if (i->path)
-                nasm_free(i->path);
-            nasm_free(i);
-        }
+        strlist_free(ipath);
     }
 }
 
-static void pp_include_path(char *path)
+static void pp_include_path(const char *path)
 {
-    IncPath *i;
+    if (!path)
+        path = "";
 
-    i = nasm_malloc(sizeof(IncPath));
-    i->path = path ? nasm_strdup(path) : NULL;
-    i->next = NULL;
-
-    if (ipath) {
-        IncPath *j = ipath;
-        while (j->next)
-            j = j->next;
-        j->next = i;
-    } else {
-        ipath = i;
-    }
+    strlist_add_string(ipath, path);
 }
 
 static void pp_pre_include(char *fname)

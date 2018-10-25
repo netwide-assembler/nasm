@@ -1965,7 +1965,7 @@ static void obj_write_file(void)
     struct ExpDef *export;
     int lname_idx;
     ObjRecord *orp;
-    const StrList *depfile;
+    const struct strlist_entry *depfile;
     const bool debuginfo = (dfmt == &borland_debug_form);
 
     /*
@@ -1988,7 +1988,7 @@ static void obj_write_file(void)
      * Output file dependency information
      */
     if (!obj_nodepend) {
-        list_for_each(depfile, depend_list) {
+        list_for_each(depfile, depend_list->head) {
             uint32_t ts;
 
             ts = obj_file_timestamp(depfile->str);

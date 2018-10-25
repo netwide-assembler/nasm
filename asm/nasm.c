@@ -75,7 +75,7 @@ struct forwrefinfo {            /* info held on forward refs. */
 };
 
 static void parse_cmdline(int, char **, int);
-static void assemble_file(const char *, StrList **);
+static void assemble_file(const char *, StrList *);
 static bool is_suppressed_warning(int severity);
 static bool skip_this_pass(int severity);
 static void nasm_verror_gnu(int severity, const char *fmt, va_list args);
@@ -309,9 +309,12 @@ static void emit_dependencies(StrList *list)
 {
     FILE *deps;
     int linepos, len;
-    StrList *l, *nl;
     bool wmake = (quote_for_make == quote_for_wmake);
     const char *wrapstr, *nulltarget;
+    struct strlist_entry *l;
+
+    if (!list)
+        return;
 
     wrapstr = wmake ? " &\n " : " \\\n ";
     nulltarget = wmake ? "\t%null\n" : "";
@@ -328,7 +331,7 @@ static void emit_dependencies(StrList *list)
     }
 
     linepos = fprintf(deps, "%s :", depend_target);
-    list_for_each(l, list) {
+    list_for_each(l, list->head) {
         char *file = quote_for_make(l->str);
         len = strlen(file);
         if (linepos + len > 62 && linepos > 1) {
@@ -341,14 +344,15 @@ static void emit_dependencies(StrList *list)
     }
     fprintf(deps, "\n\n");
 
-    list_for_each_safe(l, nl, list) {
+    list_for_each(l, list->head) {
         if (depend_emit_phony) {
             char *file = quote_for_make(l->str);
             fprintf(deps, "%s :\n%s\n", file, nulltarget);
             nasm_free(file);
         }
-        nasm_free(l);
     }
+
+    strlist_free(list);
 
     if (deps != stdout)
         fclose(deps);
@@ -409,8 +413,6 @@ static void timestamp(void)
 
 int main(int argc, char **argv)
 {
-    StrList **depend_ptr;
-
     timestamp();
 
     iflag_set_default_cpu(&cpu);
@@ -494,7 +496,8 @@ int main(int argc, char **argv)
     /* define some macros dependent of command-line */
     define_macros_late();
 
-    depend_ptr = (depend_file || (operating_mode & OP_DEPEND)) ? &depend_list : NULL;
+    if (depend_file || (operating_mode & OP_DEPEND))
+        depend_list = strlist_allocate();
 
     if (!depend_target)
         depend_target = quote_for_make(outname);
@@ -505,7 +508,7 @@ int main(int argc, char **argv)
             if (depend_missing_ok)
                 preproc->include_path(NULL);    /* "assume generated" */
 
-            preproc->reset(inname, 0, depend_ptr);
+            preproc->reset(inname, 0, depend_list);
             ofile = NULL;
             while ((line = preproc->getline()))
                 nasm_free(line);
@@ -528,7 +531,7 @@ int main(int argc, char **argv)
             location.known = false;
 
             /* pass = 1; */
-            preproc->reset(inname, 3, depend_ptr);
+            preproc->reset(inname, 3, depend_list);
 
 	    /* Revert all warnings to the default state */
 	    memcpy(warning_state, warning_state_init, sizeof warning_state);
@@ -570,7 +573,7 @@ int main(int argc, char **argv)
         ofmt->init();
         dfmt->init();
 
-        assemble_file(inname, depend_ptr);
+        assemble_file(inname, depend_list);
 
         if (!terminate_after_phase) {
             ofmt->cleanup();
@@ -1379,7 +1382,7 @@ static void parse_cmdline(int argc, char **argv, int pass)
     }
 }
 
-static void assemble_file(const char *fname, StrList **depend_ptr)
+static void assemble_file(const char *fname, StrList *depend_list)
 {
     char *line;
     insn output_ins;
@@ -1431,7 +1434,7 @@ static void assemble_file(const char *fname, StrList **depend_ptr)
             location.known = true;
         ofmt->reset();
         switch_segment(ofmt->section(NULL, pass2, &globalbits));
-        preproc->reset(fname, pass1, pass1 == 2 ? depend_ptr : NULL);
+        preproc->reset(fname, pass1, pass1 == 2 ? depend_list : NULL);
 
 	/* Revert all warnings to the default state */
 	memcpy(warning_state, warning_state_init, sizeof warning_state);

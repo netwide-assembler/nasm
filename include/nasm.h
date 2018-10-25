@@ -336,7 +336,7 @@ struct preproc_ops {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset)(const char *file, int pass, StrList **deplist);
+    void (*reset)(const char *file, int pass, StrList *deplist);
 
     /*
      * Called to fetch a line of preprocessed source. The line
@@ -362,7 +362,7 @@ struct preproc_ops {
     void (*pre_command)(const char *what, char *str);
 
     /* Include path from command line */
-    void (*include_path)(char *path);
+    void (*include_path)(const char *path);
 
     /* Unwind the macro stack when printing an error message */
     void (*error_list_macros)(int severity);
