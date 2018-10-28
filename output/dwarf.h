@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -606,7 +606,7 @@ enum dwarf_call_frame {
 	DW_CFA_def_cfa_register		= 0x0d,
 	DW_CFA_def_cfa_offset		= 0x0e,
 	/* DWARF 3 */
-	DW_CFA_def_cfa_expression 	= 0x0f,
+	DW_CFA_def_cfa_expression	= 0x0f,
 	DW_CFA_expression		= 0x10,
 	DW_CFA_offset_extended_sf	= 0x11,
 	DW_CFA_def_cfa_sf		= 0x12,
