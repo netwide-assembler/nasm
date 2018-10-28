@@ -102,3 +102,4 @@ TAGS
 /x86/regs.c
 /x86/regs.h
 /x86/regvals.c
+/patches/
