@@ -4002,7 +4002,7 @@ static Token *expand_mmac_params(Token * tline)
     thead = NULL;
 
     while (tline) {
-        if (tline->type == TOK_PREPROC_ID &&
+        if (tline->type == TOK_PREPROC_ID && tline->text && tline->text[0] &&
             (((tline->text[1] == '+' || tline->text[1] == '-') && tline->text[2])   ||
               (tline->text[1] >= '0' && tline->text[1] <= '9')                      ||
                tline->text[1] == '%')) {
