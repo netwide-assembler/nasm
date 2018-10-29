@@ -4707,6 +4707,18 @@ This is a macro implemented as a \c{%pragma}:
 
 Commandline option is also possible. See also \k{opt-pfix}.
 
+Some tool chain is aware of a particular prefix for its own optimization
+options, such as code elimination. For instance, Mach-O backend has a
+linker that uses a simplistic naming scheme to chunk up sections into a
+meta section. When the \c{subsections_via_symbols} directive
+(\k{macho-ssvs}) is declared, each symbol is the start of a
+separate block. The meta section is, then, defined to include sections
+before the one that starts with a 'L'. \c{LPREFIX} is useful here to mark
+all local symbols with the 'L' prefix to be excluded to the meta section.
+It converts local symbols compatible with the particular tool chain.
+Note that local symbols declared with \c{STATIC} (\k{static})
+are excluded from the symbol mangling and also not marked as global.
+
 
 \H{gen-namespace} \i\c{OUTPUT}, \i\c{DEBUG}: Generic Namespaces
 
@@ -5823,9 +5835,9 @@ right-hand side of the \c{WRT} operator:
 \S{macho-ssvs} \c{macho} specfic directive \i\c{subsections_via_symbols}
 
 The directive \c{subsections_via_symbols} sets the
-\c{MH_SUBSECTIONS_VIA_SYMBOLS} flag in the Mach-O header, which tells
-the linker that the symbols in the file matches the conventions
-required to allow for link-time dead code elimination.
+\c{MH_SUBSECTIONS_VIA_SYMBOLS} flag in the Mach-O header, that effectively
+separates a block (or a subsection) based on a symbol. It is often used
+for eliminating dead codes by a linker.
 
 This directive takes no arguments.
 
