@@ -2271,8 +2271,9 @@ static int do_directive(Token *tline, char **output)
 
     skip_white_(tline);
     if (!tline || !tok_type_(tline, TOK_PREPROC_ID) ||
-        (tline->text[1] == '%' || tline->text[1] == '$'
-         || tline->text[1] == '!'))
+        (tline->text[0] && (tline->text[1] == '%' ||
+			    tline->text[1] == '$' ||
+			    tline->text[1] == '!')))
         return NO_DIRECTIVE_FOUND;
 
     i = pp_token_hash(tline->text);
