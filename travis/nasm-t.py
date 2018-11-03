@@ -156,6 +156,7 @@ def collect_test_desc_from_dir(basedir):
                 if desc == None:
                     continue
                 desc_array += desc
+        desc_array.sort(key=lambda x: x['_test-name'])
     return desc_array
 
 if args.cmd == 'list':
