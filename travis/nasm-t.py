@@ -363,13 +363,13 @@ def test_update(desc):
             match = desc['_base-dir'] + os.sep + t['stdout']
             print("\tMoving %s to %s" % ('stdout', match))
             with open(match, "wb") as f:
-                f.write(stdout)
+                f.write(stdout.encode("utf-8"))
                 f.close()
         if 'stderr' in t:
             match = desc['_base-dir'] + os.sep + t['stderr']
             print("\tMoving %s to %s" % ('stderr', match))
             with open(match, "wb") as f:
-                f.write(stderr)
+                f.write(stderr.encode("utf-8"))
                 f.close()
 
     return test_updated(desc['_test-name'])
