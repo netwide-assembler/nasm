@@ -283,12 +283,14 @@ def exec_nasm(desc):
     if pnasm == None:
         test_fail(desc['_test-name'], "Unable to execute test")
         return None
-    wait_rc = pnasm.wait();
 
-    stdout = pnasm.stdout.read().decode("utf-8").strip("\n")
-    stderr = pnasm.stderr.read().decode("utf-8").strip("\n")
+    stderr = pnasm.stderr.read(1048576).decode("utf-8").strip("\n")
+    stdout = pnasm.stdout.read(1048576).decode("utf-8").strip("\n")
+
     pnasm.stdout.close()
     pnasm.stderr.close()
+
+    wait_rc = pnasm.wait();
 
     if desc['_wait'] != wait_rc:
         if stdout != "":
