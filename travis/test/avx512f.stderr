@@ -1,0 +1,572 @@
+./travis/test/avx512f.asm:4398: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4399: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4400: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4401: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4402: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4403: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4404: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4405: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4406: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4407: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4408: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4409: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4410: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4411: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4412: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4413: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4414: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4415: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4416: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4417: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4418: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4419: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4420: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4421: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4422: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4423: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4424: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4425: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4426: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4427: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4428: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4429: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4430: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4431: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4432: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4433: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4434: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4435: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4436: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4437: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4438: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4439: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4440: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4441: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4442: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4443: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4444: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4445: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4446: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4447: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4448: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4449: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4450: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4451: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4452: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4453: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4454: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4455: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4456: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4457: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4458: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4459: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4460: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4461: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4462: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4529: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4530: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4531: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4532: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4533: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4534: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4535: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4536: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4537: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4538: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4539: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4540: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4541: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4542: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4543: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4544: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4545: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4546: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4547: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4548: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4549: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4550: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4551: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4552: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4553: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4554: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4555: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4556: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4557: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4558: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4559: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4560: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4561: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4562: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4563: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4564: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4565: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4566: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4567: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4568: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4569: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4570: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4571: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4572: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4573: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4574: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4575: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4576: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4577: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4578: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4579: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4580: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4581: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4582: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4583: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4584: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4585: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4586: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4587: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4588: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4589: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4590: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4591: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4592: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4593: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4608: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4609: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4610: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4611: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4612: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4613: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4614: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4615: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4616: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4617: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4618: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4619: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4620: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4621: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4622: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4623: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4624: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4625: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4626: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4627: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4628: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4629: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4630: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4631: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4632: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4633: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4634: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4635: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4636: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4637: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4638: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4639: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4640: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4641: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4642: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4643: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4644: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4645: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4646: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4647: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4648: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4649: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4650: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4651: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4652: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4653: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4654: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4655: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4656: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4657: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4658: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4659: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4660: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4661: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4662: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4663: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4664: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4665: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4666: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4667: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4668: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4669: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4670: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4671: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4672: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4673: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4674: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4675: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4676: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4677: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4678: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4679: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4680: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4681: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4682: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4683: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4684: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4685: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4700: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4701: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4702: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4703: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4704: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4705: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4706: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4707: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4708: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4709: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4710: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4711: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4712: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4713: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4714: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4715: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4716: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4717: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4718: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4719: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4720: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4721: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4722: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4723: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4724: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4725: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4726: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4727: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4728: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4729: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4730: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4731: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4732: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4733: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4734: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4735: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4736: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4737: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4738: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4739: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4740: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4741: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4742: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4743: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4744: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4745: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4746: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4747: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4748: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4749: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4750: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4751: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4752: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4753: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4754: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4755: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4756: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4757: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4758: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4759: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4760: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4761: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4762: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4763: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4764: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4765: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4766: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4767: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4768: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4769: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4770: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4771: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4772: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4773: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4774: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4775: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4776: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
+./travis/test/avx512f.asm:4777: error: parser: instruction expected
+./travis/test/avx512f.asm:16: ... from macro `testcase' defined here
