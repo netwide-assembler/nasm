@@ -62,7 +62,9 @@ def is_valid_desc(desc):
     if desc == None:
         return False
     if 'description' not in desc:
-        return false
+        return False
+    if desc['description'] == "":
+        return False
     return True
 
 #
