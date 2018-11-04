@@ -4,6 +4,7 @@
 *.dbg
 *.dep
 *.exe
+*.com
 *.lib
 *.i
 *.ith
