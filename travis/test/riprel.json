@@ -13,6 +13,7 @@
 	{
 		"description": "Test ip relative addressing (-O0)",
 		"ref": "riprel",
-		"option": "-O0"
+		"option": "-O0",
+		"update": false
 	}
 ]

@@ -12,6 +12,7 @@
 	{
 		"description": "Test of floating-point (-O0)",
 		"ref": "floatize",
-		"option": "-O0"
+		"option": "-O0",
+		"update": false
 	}
 ]

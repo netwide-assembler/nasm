@@ -12,6 +12,7 @@
 	{
 		"description": "Test for 0x67 prefixes (-O0)",
 		"ref": "test67",
-		"option": "-O0"
+		"option": "-O0",
+		"update": false
 	}
 ]

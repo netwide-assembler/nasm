@@ -13,6 +13,7 @@
 	{
 		"description": "Test obj format (-O0)",
 		"ref": "obj",
-		"option": "-O0"
+		"option": "-O0",
+		"update": false
 	}
 ]

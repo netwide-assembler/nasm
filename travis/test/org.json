@@ -13,6 +13,7 @@
 	{
 		"description": "Test org directive error (win64)",
 		"ref": "org",
-		"format": "win64"
+		"format": "win64",
+		"update": false
 	}
 ]
