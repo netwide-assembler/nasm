@@ -4707,7 +4707,7 @@ This is a macro implemented as a \c{%pragma}:
 
 Commandline option is also possible. See also \k{opt-pfix}.
 
-Some tool chain is aware of a particular prefix for its own optimization
+Some toolchains is aware of a particular prefix for its own optimization
 options, such as code elimination. For instance, Mach-O backend has a
 linker that uses a simplistic naming scheme to chunk up sections into a
 meta section. When the \c{subsections_via_symbols} directive
@@ -4715,7 +4715,7 @@ meta section. When the \c{subsections_via_symbols} directive
 separate block. The meta section is, then, defined to include sections
 before the one that starts with a 'L'. \c{LPREFIX} is useful here to mark
 all local symbols with the 'L' prefix to be excluded to the meta section.
-It converts local symbols compatible with the particular tool chain.
+It converts local symbols compatible with the particular toolchain.
 Note that local symbols declared with \c{STATIC} (\k{static})
 are excluded from the symbol mangling and also not marked as global.
 
