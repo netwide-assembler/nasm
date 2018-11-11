@@ -1987,7 +1987,7 @@ static void obj_write_file(void)
     /*
      * Output file dependency information
      */
-    if (!obj_nodepend) {
+    if (!obj_nodepend && depend_list) {
         list_for_each(depfile, depend_list->head) {
             uint32_t ts;
 
