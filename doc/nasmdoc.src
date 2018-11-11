@@ -3898,9 +3898,9 @@ mode-dependent macros.
 
 \S{ofmtm} \i\c{__OUTPUT_FORMAT__}: Current Output Format
 
-The \c{__OUTPUT_FORMAT__} standard macro holds the current Output Format,
-as given by the \c{-f} option or NASM's default. Type \c{nasm -hf} for a
-list.
+The \c{__OUTPUT_FORMAT__} standard macro holds the current output
+format name, as given by the \c{-f} option or NASM's default. Type
+\c{nasm -hf} for a list.
 
 \c %ifidn __OUTPUT_FORMAT__, win32
 \c  %define NEWLINE 13, 10
@@ -3908,6 +3908,15 @@ list.
 \c  %define NEWLINE 10
 \c %endif
 
+\S{dfmtm} \i\c{__DEBUG_FORMAT__}: Current Debug Format
+
+If debugging information generation is enabled, The
+\c{__DEBUG_FORMAT__} standard macro holds the current debug format
+name as specified by the \c{-F} or \c{-g} option or the output format
+default. Type \c{nasm -f} \e{output} \c{y} for a list.
+
+\c{__DEBUG_FORMAT__} is not defined if debugging is not enabled, or if
+the debug format specified is \c{null}.
 
 \S{datetime} Assembly Date and Time Macros
 

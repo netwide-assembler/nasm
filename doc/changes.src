@@ -7,9 +7,19 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.14.01} Version 2.14.01
+
+\b Create all system-defined macros defore processing command-line
+given preprocessing directives (\c{-p}, \c{-d}, \c{-u}, \c{--pragma},
+\c{--before}).
+
+\b If debugging is enabled, define a \c{__DEBUG_FORMAT__} predefined
+macro.  See \k{dfmtm}.
+
 \S{cl-2.14} Version 2.14
 
-\b Changed \c{-I} option semantics by adding a trailing path separator unconditionally.
+\b Changed \c{-I} option semantics by adding a trailing path separator
+   unconditionally.
 
 \b Fixed null dereference in corrupted invalid single line macros.
 
