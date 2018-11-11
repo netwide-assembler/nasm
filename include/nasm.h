@@ -336,7 +336,7 @@ struct preproc_ops {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset)(const char *file, int pass, StrList *deplist);
+    void (*reset)(const char *file, int pass, struct strlist *deplist);
 
     /*
      * Called to fetch a line of preprocessed source. The line
@@ -372,7 +372,7 @@ extern const struct preproc_ops nasmpp;
 extern const struct preproc_ops preproc_nop;
 
 /* List of dependency files */
-extern StrList *depend_list;
+extern struct strlist *depend_list;
 
 /*
  * Some lexical properties of the NASM source language, included

@@ -386,10 +386,10 @@ static int LocalOffset = 0;
 
 static Context *cstk;
 static Include *istk;
-static StrList *ipath;
+static struct strlist *ipath;
 
 static int pass;            /* HACK: pass 0 = generate dependencies only */
-static StrList *deplist;
+static struct strlist *deplist;
 
 static uint64_t unique;     /* unique identifier numbers */
 
@@ -1538,7 +1538,7 @@ static FILE *inc_fopen_search(const char *file, char **slpath,
  * considering the include path.
  */
 static FILE *inc_fopen(const char *file,
-                       StrList *dhead,
+                       struct strlist *dhead,
                        const char **found_path,
                        enum incopen_mode omode,
                        enum file_flags fmode)
@@ -1552,7 +1552,7 @@ static FILE *inc_fopen(const char *file,
     if (hp) {
         path = *hp;
         if (path || omode != INC_NEEDED) {
-            strlist_add_string(dhead, path ? path : file);
+            strlist_add(dhead, path ? path : file);
         }
     } else {
         /* Need to do the actual path search */
@@ -1565,7 +1565,7 @@ static FILE *inc_fopen(const char *file,
          * Add file to dependency path.
          */
         if (path || omode != INC_NEEDED)
-            strlist_add_string(dhead, file);
+            strlist_add(dhead, file);
     }
 
     if (!path) {
@@ -2558,7 +2558,7 @@ static int do_directive(Token *tline, char **output)
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote_cstr(p, i);
-        strlist_add_string(deplist, p);
+        strlist_add(deplist, p);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -4932,7 +4932,7 @@ static void pp_verror(int severity, const char *fmt, va_list arg)
 }
 
 static void
-pp_reset(const char *file, int apass, StrList *dep_list)
+pp_reset(const char *file, int apass, struct strlist *dep_list)
 {
     Token *t;
 
@@ -4976,7 +4976,7 @@ pp_reset(const char *file, int apass, StrList *dep_list)
      */
     pass = apass > 2 ? 2 : apass;
 
-    strlist_add_string(deplist, file);
+    strlist_add(deplist, file);
 
     /*
      * Define the __PASS__ macro.  This is defined here unlike
@@ -4993,7 +4993,7 @@ pp_reset(const char *file, int apass, StrList *dep_list)
 static void pp_init(void)
 {
     hash_init(&FileHash, HASH_MEDIUM);
-    ipath = strlist_allocate();
+    ipath = strlist_alloc();
 }
 
 static char *pp_getline(void)
@@ -5270,7 +5270,7 @@ static void pp_include_path(const char *path)
     if (!path)
         path = "";
 
-    strlist_add_string(ipath, path);
+    strlist_add(ipath, path);
 }
 
 static void pp_pre_include(char *fname)

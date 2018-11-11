@@ -43,18 +43,19 @@
 #include "hashtbl.h"
 
 struct strlist_entry {
-    struct strlist_entry *next;
-    size_t len;
-    char str[1];
+	struct strlist_entry	*next;
+	size_t			len;
+	char			str[1];
 };
 
-typedef struct string_list {
-    struct hash_table hash;
-    struct strlist_entry *head, **tailp;
-} StrList;
+struct strlist {
+	struct hash_table	hash;
+	struct strlist_entry	*head;
+	struct strlist_entry	**tailp;
+};
 
-StrList safe_alloc *strlist_allocate(void);
-bool strlist_add_string(StrList *list, const char *str);
-void strlist_free(StrList *list);
+struct strlist safe_alloc *strlist_alloc(void);
+void strlist_free(struct strlist *list);
+bool strlist_add(struct strlist *list, const char *str);
 
 #endif /* NASM_STRLIST_H */

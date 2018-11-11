@@ -40,54 +40,51 @@
 /*
  * Create a string list
  */
-StrList *strlist_allocate(void)
+struct strlist *strlist_alloc(void)
 {
-    StrList *list;
-
-    nasm_new(list);
-    hash_init(&list->hash, HASH_MEDIUM);
-    list->tailp = &list->head;
-
-    return list;
+	struct strlist *list = nasm_zalloc(sizeof(*list));
+	hash_init(&list->hash, HASH_MEDIUM);
+	list->tailp = &list->head;
+	return list;
 }
 
 /*
  * Append a string to a string list if and only if it isn't
  * already there.  Return true if it was added.
  */
-bool strlist_add_string(StrList *list, const char *str)
+bool strlist_add(struct strlist *list, const char *str)
 {
-    struct hash_insert hi;
-    struct strlist_entry *sl;
-    size_t l;
+	struct strlist_entry *e;
+	struct hash_insert hi;
+	size_t len;
 
-    if (!list)
-        return false;
+	if (!list)
+		return false;
 
-    if (hash_find(&list->hash, str, &hi))
-        return false;           /* Already present */
+	if (hash_find(&list->hash, str, &hi))
+		return false;
 
-    l = strlen(str);
+	len = strlen(str);
 
-    sl = nasm_malloc(sizeof(struct strlist_entry) + l);
-    sl->len = l;
-    memcpy(sl->str, str, l+1);
-    sl->next = NULL;
-    *list->tailp = sl;
-    list->tailp = &sl->next;
+	/* Structure already has char[1] as EOS */
+	e = nasm_zalloc(sizeof(*e) + len);
+	e->len = len;
+	memcpy(e->str, str, len + 1);
 
-    hash_add(&hi, sl->str, (void *)sl);
-    return true;
+	*list->tailp = e;
+	list->tailp = &e->next;
+
+	hash_add(&hi, e->str, (void *)e);
+	return true;
 }
 
 /*
  * Free a string list
  */
-void strlist_free(StrList *list)
+void strlist_free(struct strlist *list)
 {
-    if (!list)
-        return;
-
-    hash_free_all(&list->hash, false);
-    nasm_free(list);
+	if (list) {
+		hash_free_all(&list->hash, false);
+		nasm_free(list);
+	}
 }

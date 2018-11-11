@@ -75,7 +75,7 @@ struct forwrefinfo {            /* info held on forward refs. */
 };
 
 static void parse_cmdline(int, char **, int);
-static void assemble_file(const char *, StrList *);
+static void assemble_file(const char *, struct strlist *);
 static bool is_suppressed_warning(int severity);
 static bool skip_this_pass(int severity);
 static void nasm_verror_gnu(int severity, const char *fmt, va_list args);
@@ -134,7 +134,7 @@ static struct SAA *forwrefs;    /* keep track of forward references */
 static const struct forwrefinfo *forwref;
 
 static const struct preproc_ops *preproc;
-static StrList *include_path;
+static struct strlist *include_path;
 
 #define OP_NORMAL           (1u << 0)
 #define OP_PREPROCESS       (1u << 1)
@@ -147,7 +147,7 @@ static bool depend_emit_phony = false;
 static bool depend_missing_ok = false;
 static const char *depend_target = NULL;
 static const char *depend_file = NULL;
-StrList *depend_list;
+struct strlist *depend_list;
 
 static bool want_usage;
 static bool terminate_after_phase;
@@ -328,7 +328,7 @@ static void define_macros(void)
  * Command-line specified preprocessor directives (-p, -d, -u,
  * --pragma, --before) are processed after this function.
  */
-static void preproc_init(StrList **ipath)
+static void preproc_init(struct strlist **ipath)
 {
     struct strlist_entry *l;
 
@@ -339,10 +339,10 @@ static void preproc_init(StrList **ipath)
         preproc->include_path(l->str);
 
     strlist_free(*ipath);
-    *ipath = strlist_allocate();
+    *ipath = strlist_alloc();
 }
 
-static void emit_dependencies(StrList *list)
+static void emit_dependencies(struct strlist *list)
 {
     FILE *deps;
     int linepos, len;
@@ -455,7 +455,7 @@ int main(int argc, char **argv)
     iflag_set_default_cpu(&cpu);
     iflag_set_default_cpu(&cmd_cpu);
 
-    include_path = strlist_allocate();
+    include_path = strlist_alloc();
 
     pass0 = 0;
     want_usage = terminate_after_phase = false;
@@ -531,7 +531,7 @@ int main(int argc, char **argv)
     }
 
     if (depend_file || (operating_mode & OP_DEPEND))
-        depend_list = strlist_allocate();
+        depend_list = strlist_alloc();
 
     if (!depend_target)
         depend_target = quote_for_make(outname);
@@ -972,7 +972,7 @@ static bool process_arg(char *p, char *q, int pass)
         case 'i':       /* include search path */
         case 'I':
             if (pass == 1)
-                strlist_add_string(include_path, param);
+                strlist_add(include_path, param);
             break;
 
         case 'l':       /* listing file */
@@ -1417,7 +1417,7 @@ static void parse_cmdline(int argc, char **argv, int pass)
     }
 }
 
-static void assemble_file(const char *fname, StrList *depend_list)
+static void assemble_file(const char *fname, struct strlist *depend_list)
 {
     char *line;
     insn output_ins;
