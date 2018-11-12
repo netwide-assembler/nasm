@@ -328,15 +328,18 @@ static void define_macros(void)
  * Command-line specified preprocessor directives (-p, -d, -u,
  * --pragma, --before) are processed after this function.
  */
-static void preproc_init(StrList *list)
+static void preproc_init(StrList **ipath)
 {
     struct strlist_entry *l;
 
     preproc->init();
     define_macros();
 
-    list_for_each(l, list->head)
+    list_for_each(l, (*ipath)->head)
         preproc->include_path(l->str);
+
+    strlist_free(*ipath);
+    *ipath = strlist_allocate();
 }
 
 static void emit_dependencies(StrList *list)
@@ -500,9 +503,7 @@ int main(int argc, char **argv)
         }
     }
 
-    preproc_init(include_path);
-    strlist_free(include_path);
-    include_path = NULL;
+    preproc_init(&include_path);
 
     parse_cmdline(argc, argv, 2);
     if (terminate_after_phase) {
@@ -633,6 +634,7 @@ int main(int argc, char **argv)
     eval_cleanup();
     stdscan_cleanup();
     src_free();
+    strlist_free(include_path);
 
     return terminate_after_phase;
 }
