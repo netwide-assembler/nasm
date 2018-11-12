@@ -134,6 +134,7 @@ static struct SAA *forwrefs;    /* keep track of forward references */
 static const struct forwrefinfo *forwref;
 
 static const struct preproc_ops *preproc;
+static StrList *include_path;
 
 #define OP_NORMAL           (1u << 0)
 #define OP_PREPROCESS       (1u << 1)
@@ -258,7 +259,11 @@ static void nasm_fputs(const char *line, FILE * outfile)
         puts(line);
 }
 
-static void define_macros_early(void)
+/*
+ * Define system-defined macros that are not part of
+ * macros/standard.mac.
+ */
+static void define_macros(void)
 {
     const struct compile_time * const oct = &official_compile_time;
     char temp[128];
@@ -289,11 +294,6 @@ static void define_macros_early(void)
         snprintf(temp, sizeof temp, "__POSIX_TIME__=%"PRId64, oct->posix);
         preproc->pre_define(temp);
     }
-}
-
-static void define_macros_late(void)
-{
-    char temp[128];
 
     /*
      * In case if output format is defined by alias
@@ -303,6 +303,40 @@ static void define_macros_late(void)
     snprintf(temp, sizeof(temp), "__OUTPUT_FORMAT__=%s",
              ofmt_alias ? ofmt_alias->shortname : ofmt->shortname);
     preproc->pre_define(temp);
+
+    /*
+     * Output-format specific macros.
+     */
+    if (ofmt->stdmac)
+        preproc->extra_stdmac(ofmt->stdmac);
+
+    /*
+     * Debug format, if any
+     */
+    if (dfmt != &null_debug_form) {
+        snprintf(temp, sizeof(temp), "__DEBUG_FORMAT__=%s", dfmt->shortname);
+        preproc->pre_define(temp);
+    }
+}
+
+/*
+ * Initialize the preprocessor, set up the include path, and define
+ * the system-included macros.  This is called between passes 1 and 2
+ * of parsing the command options; ofmt and dfmt are defined at this
+ * point.
+ *
+ * Command-line specified preprocessor directives (-p, -d, -u,
+ * --pragma, --before) are processed after this function.
+ */
+static void preproc_init(StrList *list)
+{
+    struct strlist_entry *l;
+
+    preproc->init();
+    define_macros();
+
+    list_for_each(l, list->head)
+        preproc->include_path(l->str);
 }
 
 static void emit_dependencies(StrList *list)
@@ -418,6 +452,8 @@ int main(int argc, char **argv)
     iflag_set_default_cpu(&cpu);
     iflag_set_default_cpu(&cmd_cpu);
 
+    include_path = strlist_allocate();
+
     pass0 = 0;
     want_usage = terminate_after_phase = false;
     nasm_set_verror(nasm_verror_gnu);
@@ -447,23 +483,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    /*
-     * Define some macros dependent on the runtime, but not
-     * on the command line (as those are scanned in cmdline pass 2.)
-     */
-    preproc->init();
-    define_macros_early();
-
-    parse_cmdline(argc, argv, 2);
-    if (terminate_after_phase) {
-        if (want_usage)
-            usage();
-        return 1;
-    }
-
-    /* Save away the default state of warnings */
-    memcpy(warning_state_init, warning_state, sizeof warning_state);
-
+    /* At this point we have ofmt and the name of the desired debug format */
     if (!using_debug_info) {
         /* No debug info, redirect to the null backend (empty stubs) */
         dfmt = &null_debug_form;
@@ -480,8 +500,19 @@ int main(int argc, char **argv)
         }
     }
 
-    if (ofmt->stdmac)
-        preproc->extra_stdmac(ofmt->stdmac);
+    preproc_init(include_path);
+    strlist_free(include_path);
+    include_path = NULL;
+
+    parse_cmdline(argc, argv, 2);
+    if (terminate_after_phase) {
+        if (want_usage)
+            usage();
+        return 1;
+    }
+
+    /* Save away the default state of warnings */
+    memcpy(warning_state_init, warning_state, sizeof warning_state);
 
     /*
      * If no output file name provided and this
@@ -492,9 +523,6 @@ int main(int argc, char **argv)
         if (!(operating_mode & OP_PREPROCESS))
             outname = filename_set_extension(inname, ofmt->extension);
     }
-
-    /* define some macros dependent of command-line */
-    define_macros_late();
 
     if (depend_file || (operating_mode & OP_DEPEND))
         depend_list = strlist_allocate();
@@ -872,7 +900,7 @@ static bool process_arg(char *p, char *q, int pass)
             break;
 
         case 'O':       /* Optimization level */
-            if (pass == 2) {
+            if (pass == 1) {
                 int opt;
 
                 if (!*param) {
@@ -936,8 +964,8 @@ static bool process_arg(char *p, char *q, int pass)
 
         case 'i':       /* include search path */
         case 'I':
-            if (pass == 2)
-                preproc->include_path(param);
+            if (pass == 1)
+                strlist_add_string(include_path, param);
             break;
 
         case 'l':       /* listing file */
@@ -951,7 +979,7 @@ static bool process_arg(char *p, char *q, int pass)
             break;
 
         case 'F':       /* specify debug format */
-            if (pass == 2) {
+            if (pass == 1) {
                 using_debug_info = true;
                 debug_format = param;
             }
@@ -971,7 +999,7 @@ static bool process_arg(char *p, char *q, int pass)
             break;
 
         case 'g':
-            if (pass == 2) {
+            if (pass == 1) {
                 using_debug_info = true;
                 if (p[2])
                     debug_format = nasm_skip_spaces(p + 2);
@@ -1165,7 +1193,7 @@ static bool process_arg(char *p, char *q, int pass)
                         preproc->pre_command(NULL, param);
                     break;
                 case OPT_LIMIT:
-                    if (pass == 2)
+                    if (pass == 1)
                         nasm_set_limit(p+olen, param);
                     break;
                 case OPT_KEEP_ALL:
