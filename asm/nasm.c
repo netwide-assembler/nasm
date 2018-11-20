@@ -514,9 +514,14 @@ int main(int argc, char **argv)
      * is a preprocess mode, we're perfectly
      * fine to output into stdout.
      */
-    if (!outname) {
-        if (!(operating_mode & OP_PREPROCESS))
-            outname = filename_set_extension(inname, ofmt->extension);
+    if (!outname && !(operating_mode & OP_PREPROCESS)) {
+        outname = filename_set_extension(inname, ofmt->extension);
+        if (!strcmp(outname, inname)) {
+            outname = "nasm.out";
+            nasm_error(ERR_WARNING,
+                       "default output file same as input, using `%s' for output\n",
+                       inname, outname);
+        }
     }
 
     depend_ptr = (depend_file || (operating_mode & OP_DEPEND))
