@@ -556,7 +556,7 @@ static bool ieee_flconvert_bin(const char *string, int bits,
                         mp = &mult[MANT_LIMBS]; /* Guard slot */
                     ms += LIMB_BITS;
                 }
-                *mp |= v << ms;
+                *mp |= v << (ms % (sizeof(fp_limb) * CHAR_BIT));
                 ms -= bits;
 
                 if (!seendot)
