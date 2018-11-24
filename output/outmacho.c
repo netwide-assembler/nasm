@@ -1950,7 +1950,7 @@ static void macho_dbg_generate(void)
         nasm_assert(p_section != NULL);
 
         producer_str_offset = 0;
-        module_str_offset = dir_str_offset = saa_wcstring(p_str, nasm_signature);
+        module_str_offset = dir_str_offset = saa_wcstring(p_str, nasm_signature());
         dir_str_offset += saa_wcstring(p_str, cur_file);
         saa_wcstring(p_str, cur_dir);
 

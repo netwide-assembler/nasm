@@ -1981,7 +1981,7 @@ static void obj_write_file(void)
      */
     orp->type = COMENT;
     obj_rword(orp, dTRANSL);
-    obj_name(orp, nasm_comment);
+    obj_name(orp, nasm_comment());
     obj_emit2(orp);
 
     /*
