@@ -362,7 +362,7 @@ struct preproc_ops {
     void (*pre_command)(const char *what, char *str);
 
     /* Include path from command line */
-    void (*include_path)(const char *path);
+    void (*include_path)(struct strlist *ipath);
 
     /* Unwind the macro stack when printing an error message */
     void (*error_list_macros)(int severity);

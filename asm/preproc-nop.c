@@ -170,9 +170,9 @@ static void nop_pre_command(const char *what, char *string)
     (void)string;
 }
 
-static void nop_include_path(const char *path)
+static void nop_include_path(struct strlist *list)
 {
-    (void)path;
+    (void)list;
 }
 
 static void nop_error_list_macros(int severity)

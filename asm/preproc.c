@@ -386,7 +386,7 @@ static int LocalOffset = 0;
 
 static Context *cstk;
 static Include *istk;
-static struct strlist *ipath;
+static const struct strlist *ipath_list;
 
 static int pass;            /* HACK: pass 0 = generate dependencies only */
 static struct strlist *deplist;
@@ -1501,11 +1501,14 @@ enum incopen_mode {
 static FILE *inc_fopen_search(const char *file, char **slpath,
                               enum incopen_mode omode, enum file_flags fmode)
 {
+    const struct strlist_entry *ip = NULL;
     FILE *fp;
     const char *prefix = "";
-    const struct strlist_entry *ip = ipath->head;
     char *sp;
     bool found;
+
+    if (ipath_list)
+        ip = ipath_list->head;
 
     while (1) {
         sp = nasm_catfile(prefix, file);
@@ -4993,7 +4996,6 @@ pp_reset(const char *file, int apass, struct strlist *dep_list)
 static void pp_init(void)
 {
     hash_init(&FileHash, HASH_MEDIUM);
-    ipath = strlist_alloc();
 }
 
 static char *pp_getline(void)
@@ -5261,16 +5263,13 @@ static void pp_cleanup(int pass)
         predef = NULL;
         delete_Blocks();
         freeTokens = NULL;
-        strlist_free(ipath);
+        ipath_list = NULL;
     }
 }
 
-static void pp_include_path(const char *path)
+static void pp_include_path(struct strlist *list)
 {
-    if (!path)
-        path = "";
-
-    strlist_add(ipath, path);
+    ipath_list = list;
 }
 
 static void pp_pre_include(char *fname)
