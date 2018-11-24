@@ -1743,7 +1743,9 @@ static void nasm_verror_gnu(int severity, const char *fmt, va_list ap)
     if (!(severity & ERR_NOFILE)) {
 	src_get(&lineno, &currentfile);
         if (!currentfile || (severity & ERR_TOPFILE)) {
-            currentfile = inname[0] ? inname : outname[0] ? outname : NULL;
+            currentfile = inname && inname[0] ?
+		    inname : outname && outname[0] ?
+		    outname : NULL;
             lineno = 0;
         }
     }
