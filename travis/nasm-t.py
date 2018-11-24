@@ -277,17 +277,17 @@ def exec_nasm(desc):
     print("\tProcessing %s" % (desc['_test-name']))
     opts = [args.nasm] + prepare_run_opts(desc)
 
+    nasm_env = os.environ.copy()
+    nasm_env['NASM_TEST_RUN'] = 'y'
+
     desc_env = desc.get('environ')
     if desc_env:
-        nasm_env = os.environ.copy()
         for i in desc_env:
             v = i.split('=')
             if len(v) == 2:
                 nasm_env[v[0]] = v[1]
             else:
                 nasm_env[v[0]] = None
-    else:
-        nasm_env = None
 
     print("\tExecuting %s" % (" ".join(opts)))
     pnasm = subprocess.Popen(opts,
