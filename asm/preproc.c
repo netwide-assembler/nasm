@@ -4950,7 +4950,7 @@ pp_reset(const char *file, int apass, struct strlist *dep_list)
     src_set(0, file);
     istk->lineinc = 1;
     if (!istk->fp)
-	nasm_fatal_fl(ERR_NOFILE, "unable to open input file `%s'", file);
+	nasm_fatalf(ERR_NOFILE, "unable to open input file `%s'", file);
     defining = NULL;
     nested_mac_count = 0;
     nested_rep_count = 0;

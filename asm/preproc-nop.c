@@ -70,7 +70,7 @@ static void nop_reset(const char *file, int pass, struct strlist *deplist)
     nop_fp = nasm_open_read(file, NF_TEXT);
 
     if (!nop_fp)
-	nasm_fatal_fl(ERR_NOFILE, "unable to open input file `%s'", file);
+	nasm_fatalf(ERR_NOFILE, "unable to open input file `%s'", file);
     (void)pass;                 /* placate compilers */
 
     strlist_add(deplist, file);

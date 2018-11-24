@@ -91,39 +91,65 @@ void nasm_error(int severity, const char *fmt, ...)
 	va_end(ap);
 }
 
+#define nasm_error_generatorf(__sev, __flags, __fmt)	\
+	va_list __ap;					\
+	va_start(__ap, __fmt);				\
+	nasm_verror(__sev | __flags, __fmt, __ap)
+
+#define nasm_error_generator(__sev, __fmt)		\
+	nasm_error_generatorf(__sev, 0, __fmt)
+
+void nasm_debug(const char *fmt, ...)
+{
+	nasm_error_generator(ERR_DEBUG, fmt);
+}
+
+void nasm_debugf(int flags, const char *fmt, ...)
+{
+	nasm_error_generatorf(ERR_DEBUG, flags, fmt);
+}
+
+void nasm_warn(const char *fmt, ...)
+{
+	nasm_error_generator(ERR_WARNING, fmt);
+}
+
+void nasm_warnf(int flags, const char *fmt, ...)
+{
+	nasm_error_generatorf(ERR_WARNING, flags, fmt);
+}
+
+void nasm_nonfatal(const char *fmt, ...)
+{
+	nasm_error_generator(ERR_NONFATAL, fmt);
+}
+
+void nasm_nonfatalf(int flags, const char *fmt, ...)
+{
+	nasm_error_generatorf(ERR_NONFATAL, flags, fmt);
+}
+
 fatal_func nasm_fatal(const char *fmt, ...)
 {
-	va_list ap;
-
-	va_start(ap, fmt);
-	nasm_verror(ERR_FATAL, fmt, ap);
+	nasm_error_generator(ERR_FATAL, fmt);
 	abort();
 }
 
-fatal_func nasm_fatal_fl(int flags, const char *fmt, ...)
+fatal_func nasm_fatalf(int flags, const char *fmt, ...)
 {
-	va_list ap;
-
-	va_start(ap, fmt);
-	nasm_verror(flags | ERR_FATAL, fmt, ap);
+	nasm_error_generatorf(ERR_FATAL, flags, fmt);
 	abort();
 }
 
 fatal_func nasm_panic(const char *fmt, ...)
 {
-	va_list ap;
-
-	va_start(ap, fmt);
-	nasm_verror(ERR_PANIC, fmt, ap);
+	nasm_error_generator(ERR_PANIC, fmt);
 	abort();
 }
 
-fatal_func nasm_panic_fl(int flags, const char *fmt, ...)
+fatal_func nasm_panicf(int flags, const char *fmt, ...)
 {
-	va_list ap;
-
-	va_start(ap, fmt);
-	nasm_verror(flags | ERR_PANIC, fmt, ap);
+	nasm_error_generatorf(ERR_PANIC, flags, fmt);
 	abort();
 }
 
@@ -136,6 +162,9 @@ fatal_func nasm_assert_failed(const char *file, int line, const char *msg)
 {
 	nasm_panic("assertion %s failed at %s:%d", msg, file, line);
 }
+
+#undef nasm_error_generator
+#undef nasm_error_generatorf
 
 /*
  * This is called when processing a -w or -W option, or a warning directive.

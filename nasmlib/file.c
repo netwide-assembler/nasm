@@ -119,8 +119,8 @@ FILE *nasm_open_read(const char *filename, enum file_flags flags)
         f = fopen(filename, (flags & NF_TEXT) ? "rt" : "rb");
 
     if (!f && (flags & NF_FATAL))
-        nasm_fatal_fl(ERR_NOFILE, "unable to open input file: `%s': %s",
-                   filename, strerror(errno));
+        nasm_fatalf(ERR_NOFILE, "unable to open input file: `%s': %s",
+                    filename, strerror(errno));
 
     return f;
 }
@@ -132,8 +132,8 @@ FILE *nasm_open_write(const char *filename, enum file_flags flags)
     f = fopen(filename, (flags & NF_TEXT) ? "wt" : "wb");
 
     if (!f && (flags & NF_FATAL))
-        nasm_fatal_fl(ERR_NOFILE, "unable to open output file: `%s': %s",
-                   filename, strerror(errno));
+        nasm_fatalf(ERR_NOFILE, "unable to open output file: `%s': %s",
+                    filename, strerror(errno));
 
     return f;
 }
