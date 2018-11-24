@@ -525,7 +525,7 @@ int main(int argc, char **argv)
         if (!strcmp(outname, inname)) {
             outname = "nasm.out";
             nasm_error(ERR_WARNING,
-                       "default output file same as input, using `%s' for output\n",
+                       "default output file same as input `%s', using `%s' for output\n",
                        inname, outname);
         }
     }
