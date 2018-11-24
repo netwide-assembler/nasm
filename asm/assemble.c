@@ -264,8 +264,7 @@ static int has_prefix(insn * ins, enum prefix_pos pos, int prefix)
 static void assert_no_prefix(insn * ins, enum prefix_pos pos)
 {
     if (ins->prefixes[pos])
-        nasm_error(ERR_NONFATAL, "invalid %s prefix",
-		   prefix_name(ins->prefixes[pos]));
+        nasm_nonfatal("invalid %s prefix", prefix_name(ins->prefixes[pos]));
 }
 
 static const char *size_name(int size)
@@ -294,8 +293,8 @@ static const char *size_name(int size)
 
 static void warn_overflow(int size)
 {
-    nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
-            "%s data exceeds bounds", size_name(size));
+    nasm_warnf(ERR_PASS2 | ERR_WARN_NOV, "%s data exceeds bounds",
+               size_name(size));
 }
 
 static void warn_overflow_const(int64_t data, int size)
@@ -403,11 +402,10 @@ static void out(struct out_data *data)
 
     if (asize > amax) {
         if (data->type == OUT_RELADDR || data->sign == OUT_SIGNED) {
-            nasm_error(ERR_NONFATAL,
-                    "%u-bit signed relocation unsupported by output format %s",
-                       (unsigned int)(asize << 3), ofmt->shortname);
+            nasm_nonfatal("%u-bit signed relocation unsupported by output format %s",
+                          (unsigned int)(asize << 3), ofmt->shortname);
         } else {
-            nasm_error(ERR_WARNING | ERR_WARN_ZEXTRELOC,
+            nasm_warnf(ERR_WARN_ZEXTRELOC,
                        "%u-bit %s relocation zero-extended from %u bits",
                        (unsigned int)(asize << 3),
                        data->type == OUT_SEGMENT ? "segment" : "unsigned",
@@ -422,10 +420,8 @@ static void out(struct out_data *data)
         ofmt->output(data);
     } else {
         /* Outputting to ABSOLUTE section - only reserve is permitted */
-        if (data->type != OUT_RESERVE) {
-            nasm_error(ERR_NONFATAL, "attempt to assemble code in [ABSOLUTE]"
-                       " space");
-        }
+        if (data->type != OUT_RESERVE)
+            nasm_nonfatal("attempt to assemble code in [ABSOLUTE] space");
         /* No need to push to the backend */
     }
 
@@ -470,7 +466,7 @@ static inline void out_reserve(struct out_data *data, uint64_t size)
 static void out_segment(struct out_data *data, const struct operand *opx)
 {
     if (opx->opflags & OPFLAG_RELATIVE)
-        nasm_error(ERR_NONFATAL, "segment references cannot be relative");
+        nasm_nonfatal("segment references cannot be relative");
 
     data->type = OUT_SEGMENT;
     data->sign = OUT_UNSIGNED;
@@ -490,7 +486,7 @@ static void out_imm(struct out_data *data, const struct operand *opx,
          * already called ofmt->segbase() for us.  Sigh.
          */
         if (size < 2)
-            nasm_error(ERR_NONFATAL, "segment reference must be 16 bits");
+            nasm_nonfatal("segment reference must be 16 bits");
 
         data->type = OUT_SEGMENT;
     } else {
@@ -517,7 +513,7 @@ static void out_reladdr(struct out_data *data, const struct operand *opx,
                         int size)
 {
     if (opx->opflags & OPFLAG_RELATIVE)
-        nasm_error(ERR_NONFATAL, "invalid use of self-relative expression");
+        nasm_nonfatal("invalid use of self-relative expression");
 
     data->type = OUT_RELADDR;
     data->sign = OUT_SIGNED;
@@ -559,8 +555,8 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     if (is_byte && c == 0371 && ins->prefixes[PPS_REP] == P_BND) {
         /* jmp short (opcode eb) cannot be used with bnd prefix. */
         ins->prefixes[PPS_REP] = P_none;
-        nasm_error(ERR_WARNING | ERR_WARN_BND | ERR_PASS2 ,
-                "jmp short does not init bnd regs - bnd prefix dropped.");
+        nasm_warnf(ERR_WARN_BND | ERR_PASS2 ,
+                   "jmp short does not init bnd regs - bnd prefix dropped.");
     }
 
     return is_byte;
@@ -592,9 +588,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
         list_for_each(e, instruction->eops) {
             if (e->type == EOT_DB_NUMBER) {
                 if (wsize > 8) {
-                    nasm_error(ERR_NONFATAL,
-                               "integer supplied to a DT, DO, DY or DZ"
-                               " instruction");
+                    nasm_nonfatal("integer supplied to a DT,DO,DY or DZ");
                 } else {
                     data.insoffs = 0;
                     data.inslen = data.size = wsize;
@@ -641,16 +635,16 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
 
         fp = nasm_open_read(fname, NF_BINARY|NF_FORMAP);
         if (!fp) {
-            nasm_error(ERR_NONFATAL, "`incbin': unable to open file `%s'",
-                  fname);
+            nasm_nonfatal("`incbin': unable to open file `%s'",
+                          fname);
             goto done;
         }
 
         len = nasm_file_size(fp);
 
         if (len == (off_t)-1) {
-            nasm_error(ERR_NONFATAL, "`incbin': unable to get length of file `%s'",
-                       fname);
+            nasm_nonfatal("`incbin': unable to get length of file `%s'",
+                          fname);
             goto close_done;
         }
 
@@ -699,9 +693,8 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                 off_t l = len;
 
                 if (fseeko(fp, base, SEEK_SET) < 0 || ferror(fp)) {
-                    nasm_error(ERR_NONFATAL,
-                               "`incbin': unable to seek on file `%s'",
-                               fname);
+                    nasm_nonfatal("`incbin': unable to seek on file `%s'",
+                                  fname);
                     goto end_incbin;
                 }
                 while (l > 0) {
@@ -712,9 +705,8 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                          * actually changes while we are reading
                          * it.
                          */
-                        nasm_error(ERR_NONFATAL,
-                                   "`incbin': unexpected EOF while"
-                                   " reading file `%s'", fname);
+                        nasm_nonfatal("`incbin': unexpected EOF while"
+                                      " reading file `%s'", fname);
                         goto end_incbin;
                     }
                     out_rawdata(&data, buf, m);
@@ -729,9 +721,8 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
             lfmt->downlevel(LIST_TIMES);
         }
         if (ferror(fp)) {
-            nasm_error(ERR_NONFATAL,
-                       "`incbin': error while"
-                       " reading file `%s'", fname);
+            nasm_nonfatal("`incbin': error while"
+                          " reading file `%s'", fname);
         }
     close_done:
         if (buf)
@@ -767,53 +758,48 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
             /* No match */
             switch (m) {
             case MERR_OPSIZEMISSING:
-                nasm_error(ERR_NONFATAL, "operation size not specified");
+                nasm_nonfatal("operation size not specified");
                 break;
             case MERR_OPSIZEMISMATCH:
-                nasm_error(ERR_NONFATAL, "mismatch in operand sizes");
+                nasm_nonfatal("mismatch in operand sizes");
                 break;
             case MERR_BRNOTHERE:
-                nasm_error(ERR_NONFATAL,
-                           "broadcast not permitted on this operand");
+                nasm_nonfatal("broadcast not permitted on this operand");
                 break;
             case MERR_BRNUMMISMATCH:
-                nasm_error(ERR_NONFATAL,
-                           "mismatch in the number of broadcasting elements");
+                nasm_nonfatal("mismatch in the number of broadcasting elements");
                 break;
             case MERR_MASKNOTHERE:
-                nasm_error(ERR_NONFATAL,
-                           "mask not permitted on this operand");
+                nasm_nonfatal("mask not permitted on this operand");
                 break;
             case MERR_DECONOTHERE:
-                nasm_error(ERR_NONFATAL, "unsupported mode decorator for instruction");
+                nasm_nonfatal("unsupported mode decorator for instruction");
                 break;
             case MERR_BADCPU:
-                nasm_error(ERR_NONFATAL, "no instruction for this cpu level");
+                nasm_nonfatal("no instruction for this cpu level");
                 break;
             case MERR_BADMODE:
-                nasm_error(ERR_NONFATAL, "instruction not supported in %d-bit mode",
-                           bits);
+                nasm_nonfatal("instruction not supported in %d-bit mode", bits);
                 break;
             case MERR_ENCMISMATCH:
-                nasm_error(ERR_NONFATAL, "specific encoding scheme not available");
+                nasm_nonfatal("specific encoding scheme not available");
                 break;
             case MERR_BADBND:
-                nasm_error(ERR_NONFATAL, "bnd prefix is not allowed");
+                nasm_nonfatal("bnd prefix is not allowed");
                 break;
             case MERR_BADREPNE:
-                nasm_error(ERR_NONFATAL, "%s prefix is not allowed",
-                           (has_prefix(instruction, PPS_REP, P_REPNE) ?
-                            "repne" : "repnz"));
+                nasm_nonfatal("%s prefix is not allowed",
+                              (has_prefix(instruction, PPS_REP, P_REPNE) ?
+                               "repne" : "repnz"));
                 break;
             case MERR_REGSETSIZE:
-                nasm_error(ERR_NONFATAL, "invalid register set size");
+                nasm_nonfatal("invalid register set size");
                 break;
             case MERR_REGSET:
-                nasm_error(ERR_NONFATAL, "register set not valid for operand");
+                nasm_nonfatal("register set not valid for operand");
                 break;
             default:
-                nasm_error(ERR_NONFATAL,
-                           "invalid combination of opcode and operands");
+                nasm_nonfatal("invalid combination of opcode and operands");
                 break;
             }
 
@@ -864,8 +850,8 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
 
         len = nasm_file_size_by_path(fname);
         if (len == (off_t)-1) {
-            nasm_error(ERR_NONFATAL, "`incbin': unable to get length of file `%s'",
-                       fname);
+            nasm_nonfatal("`incbin': unable to get length of file `%s'",
+                          fname);
             return 0;
         }
 
@@ -924,16 +910,16 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
 
     case w_lock:
         if (ins->prefixes[PPS_LOCK] != P_LOCK) {
-            nasm_error(ERR_WARNING | ERR_WARN_HLE | ERR_PASS2,
-                    "%s with this instruction requires lock",
-                    prefix_name(rep_pfx));
+            nasm_warnf(ERR_WARN_HLE | ERR_PASS2,
+                       "%s with this instruction requires lock",
+                       prefix_name(rep_pfx));
         }
         break;
 
     case w_inval:
-        nasm_error(ERR_WARNING | ERR_WARN_HLE | ERR_PASS2,
-                "%s invalid with this instruction",
-                prefix_name(rep_pfx));
+        nasm_warnf(ERR_WARN_HLE | ERR_PASS2,
+                   "%s invalid with this instruction",
+                   prefix_name(rep_pfx));
         break;
     }
 }
@@ -1130,7 +1116,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             if (pfx == P_O16)
                 break;
             if (pfx != P_none)
-                nasm_error(ERR_WARNING | ERR_PASS2, "invalid operand size prefix");
+                nasm_warnf(ERR_PASS2, "invalid operand size prefix");
             else
                 ins->prefixes[PPS_OSIZE] = P_O16;
             break;
@@ -1142,7 +1128,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             if (pfx == P_O32)
                 break;
             if (pfx != P_none)
-                nasm_error(ERR_WARNING | ERR_PASS2, "invalid operand size prefix");
+                nasm_warnf(ERR_PASS2, "invalid operand size prefix");
             else
                 ins->prefixes[PPS_OSIZE] = P_O32;
             break;
@@ -1197,11 +1183,11 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
         case 0340:
             if (!absolute_op(&ins->oprs[0]))
-                nasm_error(ERR_NONFATAL, "attempt to reserve non-constant"
-                        " quantity of BSS space");
+                nasm_nonfatal("attempt to reserve non-constant"
+                              " quantity of BSS space");
             else if (ins->oprs[0].opflags & OPFLAG_FORWARD)
-                nasm_error(ERR_WARNING | ERR_PASS1,
-                           "forward reference in RESx can have unpredictable results");
+                nasm_warnf(ERR_PASS1, "forward reference in RESx "
+                           "can have unpredictable results");
             else
                 length += ins->oprs[0].offset;
             break;
@@ -1315,7 +1301,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
                 if (process_ea(opy, &ea_data, bits,
                                rfield, rflags, ins, &errmsg) != eat) {
-                    nasm_error(ERR_NONFATAL, "%s", errmsg);
+                    nasm_nonfatal("%s", errmsg);
                     return -1;
                 } else {
                     ins->rex |= ea_data.rex;
@@ -1335,7 +1321,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
     if (ins->rex & REX_NH) {
         if (ins->rex & REX_H) {
-            nasm_error(ERR_NONFATAL, "instruction cannot use high registers");
+            nasm_nonfatal("instruction cannot use high registers");
             return -1;
         }
         ins->rex &= ~REX_P;        /* Don't force REX prefix due to high reg */
@@ -1359,7 +1345,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         int bad32 = REX_R|REX_W|REX_X|REX_B;
 
         if (ins->rex & REX_H) {
-            nasm_error(ERR_NONFATAL, "cannot use high register in AVX instruction");
+            nasm_nonfatal("cannot use high register in AVX instruction");
             return -1;
         }
         switch (ins->vex_wlp & 060) {
@@ -1377,11 +1363,11 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         }
 
         if (bits != 64 && ((ins->rex & bad32) || ins->vexreg > 7)) {
-            nasm_error(ERR_NONFATAL, "invalid operands in non-64-bit mode");
+            nasm_nonfatal("invalid operands in non-64-bit mode");
             return -1;
         } else if (!(ins->rex & REX_EV) &&
                    ((ins->vexreg > 15) || (ins->evex_p[0] & 0xf0))) {
-            nasm_error(ERR_NONFATAL, "invalid high-16 register in non-AVX-512");
+            nasm_nonfatal("invalid high-16 register in non-AVX-512");
             return -1;
         }
         if (ins->rex & REX_EV)
@@ -1393,7 +1379,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length += 2;
     } else if (ins->rex & REX_MASK) {
         if (ins->rex & REX_H) {
-            nasm_error(ERR_NONFATAL, "cannot use high register in rex instruction");
+            nasm_nonfatal("cannot use high register in rex instruction");
             return -1;
         } else if (bits == 64) {
             length++;
@@ -1405,15 +1391,14 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             lockcheck = false;  /* Already errored, no need for warning */
             length++;
         } else {
-            nasm_error(ERR_NONFATAL, "invalid operands in non-64-bit mode");
+            nasm_nonfatal("invalid operands in non-64-bit mode");
             return -1;
         }
     }
 
     if (has_prefix(ins, PPS_LOCK, P_LOCK) && lockcheck &&
         (!itemp_has(temp,IF_LOCK) || !is_class(MEMORY, ins->oprs[0].type))) {
-        nasm_error(ERR_WARNING | ERR_WARN_LOCK | ERR_PASS2 ,
-                "instruction is not lockable");
+        nasm_warnf(ERR_WARN_LOCK | ERR_PASS2 , "instruction is not lockable");
     }
 
     bad_hle_warn(ins, hleok);
@@ -1475,24 +1460,21 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
             c = 0xF3;
             break;
         case R_CS:
-            if (bits == 64) {
-                nasm_error(ERR_WARNING | ERR_PASS2,
-                           "cs segment base generated, but will be ignored in 64-bit mode");
-            }
+            if (bits == 64)
+                nasm_warnf(ERR_PASS2, "cs segment base generated, "
+                           "but will be ignored in 64-bit mode");
             c = 0x2E;
             break;
         case R_DS:
-            if (bits == 64) {
-                nasm_error(ERR_WARNING | ERR_PASS2,
-                           "ds segment base generated, but will be ignored in 64-bit mode");
-            }
+            if (bits == 64)
+                nasm_warnf(ERR_PASS2, "ds segment base generated, "
+                           "but will be ignored in 64-bit mode");
             c = 0x3E;
             break;
         case R_ES:
-            if (bits == 64) {
-                nasm_error(ERR_WARNING | ERR_PASS2,
-                           "es segment base generated, but will be ignored in 64-bit mode");
-            }
+            if (bits == 64)
+                nasm_warnf(ERR_PASS2, "es segment base generated, "
+                           "but will be ignored in 64-bit mode");
             c = 0x26;
             break;
         case R_FS:
@@ -1503,21 +1485,19 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
             break;
         case R_SS:
             if (bits == 64) {
-                nasm_error(ERR_WARNING | ERR_PASS2,
-                           "ss segment base generated, but will be ignored in 64-bit mode");
+                nasm_warnf(ERR_PASS2, "ss segment base generated, "
+                           "but will be ignored in 64-bit mode");
             }
             c = 0x36;
             break;
         case R_SEGR6:
         case R_SEGR7:
-            nasm_error(ERR_NONFATAL,
-                       "segr6 and segr7 cannot be used as prefixes");
+            nasm_nonfatal("segr6 and segr7 cannot be used as prefixes");
             break;
         case P_A16:
             if (bits == 64) {
-                nasm_error(ERR_NONFATAL,
-                           "16-bit addressing is not supported "
-                           "in 64-bit mode");
+                nasm_nonfatal("16-bit addressing is not supported "
+                              "in 64-bit mode");
             } else if (bits != 16)
                 c = 0x67;
             break;
@@ -1527,9 +1507,8 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
             break;
         case P_A64:
             if (bits != 64) {
-                nasm_error(ERR_NONFATAL,
-                           "64-bit addressing is only supported "
-                           "in 64-bit mode");
+                nasm_nonfatal("64-bit addressing is only supported "
+			      "in 64-bit mode");
             }
             break;
         case P_ASP:
@@ -1651,7 +1630,7 @@ static void gencode(struct out_data *data, insn *ins)
                 int64_t delta = opx->offset - data->offset
                     - (data->inslen - data->insoffs);
                 if (delta > 127 || delta < -128)
-                    nasm_error(ERR_NONFATAL, "short jump is out of range");
+                    nasm_nonfatal("short jump is out of range");
             }
             out_reladdr(data, opx, 1);
             break;
@@ -1679,8 +1658,7 @@ static void gencode(struct out_data *data, insn *ins)
 
         case4(074):
             if (opx->segment == NO_SEG)
-                nasm_error(ERR_NONFATAL, "value referenced by FAR is not"
-                        " relocatable");
+                nasm_nonfatal("value referenced by FAR is not relocatable");
             out_segment(data, opx);
             break;
 
@@ -1692,14 +1670,12 @@ static void gencode(struct out_data *data, insn *ins)
             c = *codes++;
             opx = &ins->oprs[c >> 3];
             opy = &ins->oprs[c & 7];
-            if (!absolute_op(opy)) {
-                nasm_error(ERR_NONFATAL,
-                        "non-absolute expression not permitted as argument %d",
-                        c & 7);
-            } else if (opy->offset & ~mask) {
-                nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+            if (!absolute_op(opy))
+                nasm_nonfatal("non-absolute expression not permitted "
+                              "as argument %d", c & 7);
+            else if (opy->offset & ~mask)
+                nasm_warnf(ERR_PASS2 | ERR_WARN_NOV,
                            "is4 argument exceeds bounds");
-            }
             c = opy->offset & mask;
             goto emit_is4;
          }
@@ -1720,8 +1696,8 @@ static void gencode(struct out_data *data, insn *ins)
         case4(0254):
             if (absolute_op(opx) &&
                 (int32_t)opx->offset != (int64_t)opx->offset) {
-                nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
-                        "signed dword immediate exceeds bounds");
+                nasm_warnf(ERR_PASS2 | ERR_WARN_NOV,
+                           "signed dword immediate exceeds bounds");
             }
             out_imm(data, opx, 4, OUT_SIGNED);
             break;
@@ -1790,7 +1766,7 @@ static void gencode(struct out_data *data, insn *ins)
                     /* If this wasn't explicitly byte-sized, warn as though we
                      * had fallen through to the imm16/32/64 case.
                      */
-                    nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+                    nasm_warnf(ERR_PASS2 | ERR_WARN_NOV,
                                "%s value exceeds bounds",
                                (opx->type & BITS8) ? "signed byte" :
                                s == 16 ? "word" :
@@ -1948,7 +1924,7 @@ static void gencode(struct out_data *data, insn *ins)
 
                 if (process_ea(opy, &ea_data, bits,
                                rfield, rflags, ins, &errmsg) != eat)
-                    nasm_error(ERR_NONFATAL, "%s", errmsg);
+                    nasm_nonfatal("%s", errmsg);
 
                 p = bytes;
                 *p++ = ea_data.modrm;
@@ -2164,8 +2140,7 @@ static uint8_t get_broadcast_num(opflags_t opflags, opflags_t brsize)
     uint8_t brcast_num;
 
     if (brsize > BITS64)
-        nasm_error(ERR_FATAL,
-            "size of broadcasting element is greater than 64 bits");
+        nasm_fatal("size of broadcasting element is greater than 64 bits");
 
     /*
      * The shift term is to take care of the extra BITS80 inserted
@@ -2515,8 +2490,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
             if (bits == 64 && ((input->type & IP_REL) == IP_REL)) {
                 if (input->segment == NO_SEG ||
                     (input->opflags & OPFLAG_RELATIVE)) {
-                    nasm_error(ERR_WARNING | ERR_PASS2,
-                               "absolute address can not be RIP-relative");
+                    nasm_warnf(ERR_PASS2, "absolute address can not be RIP-relative");
                     input->type &= ~IP_REL;
                     input->type |= MEMORY;
                 }
@@ -2530,10 +2504,8 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
 
             if (eaflags & EAF_BYTEOFFS ||
                 (eaflags & EAF_WORDOFFS &&
-                 input->disp_size != (addrbits != 16 ? 32 : 16))) {
-                nasm_error(ERR_WARNING | ERR_PASS1,
-                           "displacement size ignored on absolute address");
-            }
+                 input->disp_size != (addrbits != 16 ? 32 : 16)))
+                nasm_warnf(ERR_PASS1, "displacement size ignored on absolute address");
 
             if (bits == 64 && (~input->type & IP_REL)) {
                 output->sib_present = true;
@@ -2989,7 +2961,7 @@ static void add_asp(insn *ins, int addrbits)
         ins->addr_size = (addrbits == 32) ? 16 : 32;
     } else {
         /* Impossible... */
-        nasm_error(ERR_NONFATAL, "impossible combination of address sizes");
+        nasm_nonfatal("impossible combination of address sizes");
         ins->addr_size = addrbits; /* Error recovery */
     }
 
