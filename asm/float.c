@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -549,14 +549,15 @@ static bool ieee_flconvert_bin(const char *string, int bits,
             }
 
             if (seendigit) {
-                if (ms <= 0) {
-                    *mp |= v >> -ms;
+                if (ms < 0) {
+                    /* Cast to fp_2limb as ms == -LIMB_BITS is possible. */
+                    *mp |= (fp_2limb)v >> -ms;
                     mp++;
                     if (mp > &mult[MANT_LIMBS])
                         mp = &mult[MANT_LIMBS]; /* Guard slot */
                     ms += LIMB_BITS;
                 }
-                *mp |= v << (ms % (sizeof(fp_limb) * CHAR_BIT));
+                *mp |= v << ms;
                 ms -= bits;
 
                 if (!seendot)
