@@ -16,6 +16,15 @@ given preprocessing directives (\c{-p}, \c{-d}, \c{-u}, \c{--pragma},
 \b If debugging is enabled, define a \c{__DEBUG_FORMAT__} predefined
 macro.  See \k{dfmtm}.
 
+\b Fix an assert for the case in the \c{obj} format when a \c{SEG}
+operator refers to an \c{EXTERN} symbol declared further down in the
+code.
+
+\b Fix a corner case in the floating-point code where a
+binary/octal/hexadecimal floating-point constant starting with the
+digit 1 and having at least 33 mantissa bits would sometimes produce
+incorrect results.
+
 \S{cl-2.14} Version 2.14
 
 \b Changed \c{-I} option semantics by adding a trailing path separator
