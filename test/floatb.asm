@@ -5,10 +5,10 @@
 	;; encoding...
 
 	bits 64
-	
+
 	dd 1.1e10
 	dd 0x5023e9ac	; Should be...
-	
+
 	dd 50.40e9
 	dd 0x513bc130	; Should be...
 
@@ -21,10 +21,16 @@
 	dt 1.2e28
 	dq 0x9b18ab5df7180b6c
 	dw 0x405c
-	
+
 	dt 50.46e25
 	dq 0xd0b29a67e95dcb60
 	dw 0x4057
+
+	do 0xf.ffffff8
+	dt 0xf.ffffff8
+	dq 0xf.ffffff8
+	dd 0xf.ffffff8
+	dw 0xf.ffffff8
 
 	;; Way too big numbers, should overflow to +Inf
 	dd 1.0E646456955
