@@ -68,6 +68,7 @@ static int tempexpr_size;
 static struct tokenval *tokval; /* The current token */
 static int i;                   /* The t_type of tokval */
 
+static int critical;
 static void *scpriv;
 static int *opflags;
 
@@ -280,28 +281,28 @@ static expr *segment_part(expr * e)
  *       | number
  */
 
-static expr *rexp0(int), *rexp1(int), *rexp2(int), *rexp3(int);
+static expr *rexp0(void), *rexp1(void), *rexp2(void), *rexp3(void);
 
-static expr *expr0(int), *expr1(int), *expr2(int), *expr3(int);
-static expr *expr4(int), *expr5(int), *expr6(int);
+static expr *expr0(void), *expr1(void), *expr2(void), *expr3(void);
+static expr *expr4(void), *expr5(void), *expr6(void);
 
 /* This inline is a placeholder for the root of the basic expression */
-static inline expr *bexpr(int critical)
+static inline expr *bexpr(void)
 {
-    return rexp0(critical);
+    return rexp0();
 }
 
-static expr *rexp0(int critical)
+static expr *rexp0(void)
 {
     expr *e, *f;
 
-    e = rexp1(critical);
+    e = rexp1();
     if (!e)
         return NULL;
 
     while (i == TOKEN_DBL_OR) {
         i = scan(scpriv, tokval);
-        f = rexp1(critical);
+        f = rexp1();
         if (!f)
             return NULL;
         if (!(is_simple(e) || is_just_unknown(e)) ||
@@ -318,17 +319,17 @@ static expr *rexp0(int critical)
     return e;
 }
 
-static expr *rexp1(int critical)
+static expr *rexp1(void)
 {
     expr *e, *f;
 
-    e = rexp2(critical);
+    e = rexp2();
     if (!e)
         return NULL;
 
     while (i == TOKEN_DBL_XOR) {
         i = scan(scpriv, tokval);
-        f = rexp2(critical);
+        f = rexp2();
         if (!f)
             return NULL;
         if (!(is_simple(e) || is_just_unknown(e)) ||
@@ -345,16 +346,16 @@ static expr *rexp1(int critical)
     return e;
 }
 
-static expr *rexp2(int critical)
+static expr *rexp2(void)
 {
     expr *e, *f;
 
-    e = rexp3(critical);
+    e = rexp3();
     if (!e)
         return NULL;
     while (i == TOKEN_DBL_AND) {
         i = scan(scpriv, tokval);
-        f = rexp3(critical);
+        f = rexp3();
         if (!f)
             return NULL;
         if (!(is_simple(e) || is_just_unknown(e)) ||
@@ -370,12 +371,12 @@ static expr *rexp2(int critical)
     return e;
 }
 
-static expr *rexp3(int critical)
+static expr *rexp3(void)
 {
     expr *e, *f;
     int64_t v;
 
-    e = expr0(critical);
+    e = expr0();
     if (!e)
         return NULL;
 
@@ -384,7 +385,7 @@ static expr *rexp3(int critical)
            i == TOKEN_LEG) {
         int j = i;
         i = scan(scpriv, tokval);
-        f = expr0(critical);
+        f = expr0();
         if (!f)
             return NULL;
 
@@ -435,17 +436,17 @@ static expr *rexp3(int critical)
     return e;
 }
 
-static expr *expr0(int critical)
+static expr *expr0(void)
 {
     expr *e, *f;
 
-    e = expr1(critical);
+    e = expr1();
     if (!e)
         return NULL;
 
     while (i == '|') {
         i = scan(scpriv, tokval);
-        f = expr1(critical);
+        f = expr1();
         if (!f)
             return NULL;
         if (!(is_simple(e) || is_just_unknown(e)) ||
@@ -461,17 +462,17 @@ static expr *expr0(int critical)
     return e;
 }
 
-static expr *expr1(int critical)
+static expr *expr1(void)
 {
     expr *e, *f;
 
-    e = expr2(critical);
+    e = expr2();
     if (!e)
         return NULL;
 
     while (i == '^') {
         i = scan(scpriv, tokval);
-        f = expr2(critical);
+        f = expr2();
         if (!f)
             return NULL;
         if (!(is_simple(e) || is_just_unknown(e)) ||
@@ -487,17 +488,17 @@ static expr *expr1(int critical)
     return e;
 }
 
-static expr *expr2(int critical)
+static expr *expr2(void)
 {
     expr *e, *f;
 
-    e = expr3(critical);
+    e = expr3();
     if (!e)
         return NULL;
 
     while (i == '&') {
         i = scan(scpriv, tokval);
-        f = expr3(critical);
+        f = expr3();
         if (!f)
             return NULL;
         if (!(is_simple(e) || is_just_unknown(e)) ||
@@ -513,18 +514,18 @@ static expr *expr2(int critical)
     return e;
 }
 
-static expr *expr3(int critical)
+static expr *expr3(void)
 {
     expr *e, *f;
 
-    e = expr4(critical);
+    e = expr4();
     if (!e)
         return NULL;
 
     while (i == TOKEN_SHL || i == TOKEN_SHR || i == TOKEN_SAR) {
         int j = i;
         i = scan(scpriv, tokval);
-        f = expr4(critical);
+        f = expr4();
         if (!f)
             return NULL;
         if (!(is_simple(e) || is_just_unknown(e)) ||
@@ -552,17 +553,17 @@ static expr *expr3(int critical)
     return e;
 }
 
-static expr *expr4(int critical)
+static expr *expr4(void)
 {
     expr *e, *f;
 
-    e = expr5(critical);
+    e = expr5();
     if (!e)
         return NULL;
     while (i == '+' || i == '-') {
         int j = i;
         i = scan(scpriv, tokval);
-        f = expr5(critical);
+        f = expr5();
         if (!f)
             return NULL;
         switch (j) {
@@ -577,18 +578,18 @@ static expr *expr4(int critical)
     return e;
 }
 
-static expr *expr5(int critical)
+static expr *expr5(void)
 {
     expr *e, *f;
 
-    e = expr6(critical);
+    e = expr6();
     if (!e)
         return NULL;
     while (i == '*' || i == '/' || i == '%' ||
            i == TOKEN_SDIV || i == TOKEN_SMOD) {
         int j = i;
         i = scan(scpriv, tokval);
-        f = expr6(critical);
+        f = expr6();
         if (!f)
             return NULL;
         if (j != '*' && (!(is_simple(e) || is_just_unknown(e)) ||
@@ -777,7 +778,7 @@ static int64_t eval_ifunc(int64_t val, enum ifunc func)
     return rv;
 }
 
-static expr *expr6(int critical)
+static expr *expr6(void)
 {
     int32_t type;
     expr *e;
@@ -795,18 +796,18 @@ static expr *expr6(int critical)
     switch (i) {
     case '-':
         i = scan(scpriv, tokval);
-        e = expr6(critical);
+        e = expr6();
         if (!e)
             return NULL;
         return scalar_mult(e, -1L, false);
 
     case '+':
         i = scan(scpriv, tokval);
-        return expr6(critical);
+        return expr6();
 
     case '~':
         i = scan(scpriv, tokval);
-        e = expr6(critical);
+        e = expr6();
         if (!e)
             return NULL;
         if (is_just_unknown(e))
@@ -820,7 +821,7 @@ static expr *expr6(int critical)
 
     case '!':
         i = scan(scpriv, tokval);
-        e = expr6(critical);
+        e = expr6();
         if (!e)
             return NULL;
         if (is_just_unknown(e))
@@ -836,7 +837,7 @@ static expr *expr6(int critical)
     {
         enum ifunc func = tokval->t_integer;
         i = scan(scpriv, tokval);
-        e = expr6(critical);
+        e = expr6();
         if (!e)
             return NULL;
         if (is_just_unknown(e))
@@ -851,7 +852,7 @@ static expr *expr6(int critical)
 
     case TOKEN_SEG:
         i = scan(scpriv, tokval);
-        e = expr6(critical);
+        e = expr6();
         if (!e)
             return NULL;
         e = segment_part(e);
@@ -871,7 +872,7 @@ static expr *expr6(int critical)
 
     case '(':
         i = scan(scpriv, tokval);
-        e = bexpr(critical);
+        e = bexpr();
         if (!e)
             return NULL;
         if (i != ')') {
@@ -972,7 +973,7 @@ static expr *expr6(int critical)
 }
 
 expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
-               int *fwref, int critical, struct eval_hints *hints)
+               int *fwref, int crit, struct eval_hints *hints)
 {
     expr *e;
     expr *f = NULL;
@@ -983,8 +984,7 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
     if (hint)
         hint->type = EAH_NOHINT;
 
-    critical &= ~CRITICAL;
-
+    critical = crit & ~CRITICAL;
     scan = sc;
     scpriv = scprivate;
     tokval = tv;
@@ -998,13 +998,13 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
     while (ntempexprs)          /* initialize temporary storage */
         nasm_free(tempexprs[--ntempexprs]);
 
-    e = bexpr(critical);
+    e = bexpr();
     if (!e)
         return NULL;
 
     if (i == TOKEN_WRT) {
         i = scan(scpriv, tokval);       /* eat the WRT */
-        f = expr6(critical);
+        f = expr6();
         if (!f)
             return NULL;
     }
