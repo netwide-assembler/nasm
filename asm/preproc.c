@@ -958,7 +958,7 @@ static Token *tokenize(char *line)
                         p++;
                     }
                     while (nasm_isidchar(*p));
-                } else if (*p == '\'' || *p == '\"' || *p == '`') {
+                } else if (nasm_isquote(*p)) {
                     p = nasm_skip_string(p);
                     if (*p)
                         p++;
@@ -986,7 +986,7 @@ static Token *tokenize(char *line)
             p++;
             while (*p && nasm_isidchar(*p))
                 p++;
-        } else if (*p == '\'' || *p == '"' || *p == '`') {
+        } else if (nasm_isquote(*p)) {
             /*
              * A string token.
              */
@@ -1239,7 +1239,7 @@ static char *detoken(Token * tlist, bool expand_locals)
             char *q = t->text;
 
             v = t->text + 2;
-            if (*v == '\'' || *v == '\"' || *v == '`') {
+            if (nasm_isquote(*v)) {
                 size_t len = nasm_unquote(v, NULL);
                 size_t clen = strlen(v);
 
@@ -1787,7 +1787,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             p = tline->text;
             if (tline->type == TOK_PREPROC_ID)
                 p += 2;         /* Skip leading %! */
-            if (*p == '\'' || *p == '\"' || *p == '`')
+            if (nasm_isquote(*p))
                 nasm_unquote_cstr(p, ct);
             if (getenv(p))
                 j = true;

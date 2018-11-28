@@ -51,18 +51,19 @@ static inline char nasm_tolower(char x)
  * NASM ctype table
  */
 enum nasm_ctype {
-    NCT_CTRL       = 0x001,
-    NCT_SPACE      = 0x002,
-    NCT_ASCII      = 0x004,
-    NCT_LOWER      = 0x008,     /* isalpha(x) && tolower(x) == x */
-    NCT_UPPER      = 0x010,     /* isalpha(x) && tolower(x) != x */
-    NCT_DIGIT      = 0x020,
-    NCT_HEX        = 0x040,
-    NCT_ID         = 0x080,
-    NCT_IDSTART    = 0x100,
-    NCT_MINUS      = 0x200,     /* - */
-    NCT_DOLLAR     = 0x400,     /* $ */
-    NCT_UNDER      = 0x800      /* _ */
+    NCT_CTRL       = 0x0001,
+    NCT_SPACE      = 0x0002,
+    NCT_ASCII      = 0x0004,
+    NCT_LOWER      = 0x0008,    /* isalpha(x) && tolower(x) == x */
+    NCT_UPPER      = 0x0010,    /* isalpha(x) && tolower(x) != x */
+    NCT_DIGIT      = 0x0020,
+    NCT_HEX        = 0x0040,
+    NCT_ID         = 0x0080,
+    NCT_IDSTART    = 0x0100,
+    NCT_MINUS      = 0x0200,    /* - */
+    NCT_DOLLAR     = 0x0400,    /* $ */
+    NCT_UNDER      = 0x0800,    /* _ */
+    NCT_QUOTE      = 0x1000     /* " ' ` */
 };
 
 extern uint16_t nasm_ctype_tab[256];
@@ -112,6 +113,10 @@ static inline bool nasm_isnumstart(char x)
 static inline bool nasm_isnumchar(char x)
 {
     return nasm_ctype(x, NCT_DIGIT|NCT_LOWER|NCT_UPPER|NCT_UNDER);
+}
+static inline bool nasm_isquote(char x)
+{
+    return nasm_ctype(x, NCT_QUOTE);
 }
 
 /* TASM-compatible mode requires ? to be an identifier character */

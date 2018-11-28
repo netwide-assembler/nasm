@@ -96,13 +96,16 @@ static void ctype_tab_init(void)
         nasm_ctype_tab[i] = ct;
     }
 
-    nasm_ctype_tab['-'] |= NCT_MINUS;
-    nasm_ctype_tab['$'] |= NCT_DOLLAR|NCT_ID;
-    nasm_ctype_tab['_'] |= NCT_UNDER|NCT_ID|NCT_IDSTART;
-    nasm_ctype_tab['.'] |= NCT_ID|NCT_IDSTART;
-    nasm_ctype_tab['@'] |= NCT_ID|NCT_IDSTART;
-    nasm_ctype_tab['#'] |= NCT_ID;
-    nasm_ctype_tab['~'] |= NCT_ID;
+    nasm_ctype_tab['-']  |= NCT_MINUS;
+    nasm_ctype_tab['$']  |= NCT_DOLLAR|NCT_ID;
+    nasm_ctype_tab['_']  |= NCT_UNDER|NCT_ID|NCT_IDSTART;
+    nasm_ctype_tab['.']  |= NCT_ID|NCT_IDSTART;
+    nasm_ctype_tab['@']  |= NCT_ID|NCT_IDSTART;
+    nasm_ctype_tab['#']  |= NCT_ID;
+    nasm_ctype_tab['~']  |= NCT_ID;
+    nasm_ctype_tab['\''] |= NCT_QUOTE;
+    nasm_ctype_tab['\"'] |= NCT_QUOTE;
+    nasm_ctype_tab['`']  |= NCT_QUOTE;
 }
 
 void nasm_ctype_init(void)
