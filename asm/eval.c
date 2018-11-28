@@ -255,21 +255,22 @@ static expr *segment_part(expr * e)
  * evaluate() should report its own errors: on return it is assumed
  * that if NULL has been returned, the error has already been
  * reported.
+ *
  */
 
 /*
  * Grammar parsed is:
  *
  * expr  : bexpr [ WRT expr6 ]
- * bexpr : rexp0 or expr0 depending on relative-mode setting
+ * bexpr : rexp0
  * rexp0 : rexp1 [ {||} rexp1...]
  * rexp1 : rexp2 [ {^^} rexp2...]
  * rexp2 : rexp3 [ {&&} rexp3...]
- * rexp3 : expr0 [ {=,==,<>,!=,<,>,<=,>=} expr0 ]
+ * rexp3 : expr0 [ {=,==,<>,!=,<,>,<=,>=,<=>} expr0 ]
  * expr0 : expr1 [ {|} expr1...]
  * expr1 : expr2 [ {^} expr2...]
  * expr2 : expr3 [ {&} expr3...]
- * expr3 : expr4 [ {<<,>>} expr4...]
+ * expr3 : expr4 [ {<<,>>,<<<,>>>} expr4...]
  * expr4 : expr5 [ {+,-} expr5...]
  * expr5 : expr6 [ {*,/,%,//,%%} expr6...]
  * expr6 : { ~,+,-,IFUNC,SEG } expr6
@@ -284,7 +285,11 @@ static expr *rexp0(int), *rexp1(int), *rexp2(int), *rexp3(int);
 static expr *expr0(int), *expr1(int), *expr2(int), *expr3(int);
 static expr *expr4(int), *expr5(int), *expr6(int);
 
-static expr *(*bexpr) (int);
+/* This inline is a placeholder for the root of the basic expression */
+static inline expr *bexpr(int critical)
+{
+    return rexp0(critical);
+}
 
 static expr *rexp0(int critical)
 {
@@ -978,11 +983,7 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
     if (hint)
         hint->type = EAH_NOHINT;
 
-    if (critical & CRITICAL) {
-        critical &= ~CRITICAL;
-        bexpr = rexp0;
-    } else
-        bexpr = expr0;
+    critical &= ~CRITICAL;
 
     scan = sc;
     scpriv = scprivate;
