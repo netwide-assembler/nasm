@@ -136,9 +136,9 @@ static const struct forwrefinfo *forwref;
 static const struct preproc_ops *preproc;
 static struct strlist *include_path;
 
-#define OP_NORMAL           (1u << 0)
-#define OP_PREPROCESS       (1u << 1)
-#define OP_DEPEND           (1u << 2)
+#define OP_NORMAL           (1U << 0)
+#define OP_PREPROCESS       (1U << 1)
+#define OP_DEPEND           (1U << 2)
 
 static unsigned int operating_mode;
 
@@ -508,9 +508,17 @@ int main(int argc, char **argv)
     /* Save away the default state of warnings */
     memcpy(warning_state_init, warning_state, sizeof warning_state);
 
+    /* Dependency filename if we are also doing other things */
+    if (!depend_file && (operating_mode & ~OP_DEPEND)) {
+        if (outname)
+            depend_file = nasm_strcat(outname, ".d");
+        else
+            depend_file = filename_set_extension(inname, ".d");
+    }
+
     /*
      * If no output file name provided and this
-     * is a preprocess mode, we're perfectly
+     * is preprocess mode, we're perfectly
      * fine to output into stdout.
      */
     if (!outname && !(operating_mode & OP_PREPROCESS)) {
@@ -518,18 +526,17 @@ int main(int argc, char **argv)
         if (!strcmp(outname, inname)) {
             outname = "nasm.out";
             nasm_error(ERR_WARNING,
-                       "default output file same as input `%s', using `%s' for output\n",
-                       inname, outname);
+                       "default output file same as input, using `%s' for output\n",
+                       outname);
         }
     }
 
-    if (depend_file || (operating_mode & OP_DEPEND))
-        depend_list = strlist_alloc();
+    depend_list = (operating_mode & OP_DEPEND) ? strlist_alloc() : NULL;
 
     if (!depend_target)
         depend_target = quote_for_make(outname);
 
-    if (operating_mode & OP_DEPEND) {
+    if (!(operating_mode & (OP_PREPROCESS|OP_NORMAL))) {
             char *line;
 
             if (depend_missing_ok)
@@ -1076,9 +1083,11 @@ static bool process_arg(char *p, char *q, int pass)
                     depend_emit_phony = true;
                     break;
                 case 'D':
-                    operating_mode = OP_NORMAL;
-                    depend_file = q;
-                    advance = true;
+                    operating_mode |= OP_DEPEND;
+                    if (q && (q[0] != '-' || q[1] == '\0')) {
+                        depend_file = q;
+                        advance = true;
+                    }
                     break;
                 case 'F':
                     depend_file = q;

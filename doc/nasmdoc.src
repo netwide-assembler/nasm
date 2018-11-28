@@ -496,6 +496,15 @@ updated dependencies with every assembly session.  For example:
 
 \c nasm -f elf -o myfile.o -MD myfile.dep myfile.asm
 
+If the argument after \c{-MD} is an option rather than a filename,
+then the output filename is the first applicable one of:
+
+\b the filename set in the \c{-MF} option;
+
+\b the output filename from the \c{-o} option with \c{.d} appended;
+
+\b the input filename with the extension set to \c{.d}.
+
 
 \S{opt-MT} The \i\c{-MT} Option: Dependency Target Name
 

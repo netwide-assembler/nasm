@@ -1900,8 +1900,8 @@ static int32_t obj_segbase(int32_t segment)
         if (eb) {
             e = eb->exts[i];
 	    if (!e) {
-		nasm_assert(pass0 == 0);
-		/* Not available - can happen during optimization */
+                /* Not available yet, probably a forward reference */
+		nasm_assert(pass0 < 2); /* Convergence failure */
 		return NO_SEG;
 	    }
 
