@@ -67,7 +67,7 @@ static int ntempexpr;
 static int tempexpr_size;
 
 static struct tokenval *tokval; /* The current token */
-static int i;                   /* The t_type of tokval */
+static int tt;                   /* The t_type of tokval */
 
 static int critical;
 static int *opflags;
@@ -250,7 +250,7 @@ static expr *segment_part(expr * e)
 /*
  * Recursive-descent parser. Called with a single boolean operand,
  * which is true if the evaluation is critical (i.e. unresolved
- * symbols are an error condition). Must update the global `i' to
+ * symbols are an error condition). Must update the global `tt' to
  * reflect the token after the parsed string. May return NULL.
  *
  * evaluate() should report its own errors: on return it is assumed
@@ -264,7 +264,7 @@ static expr *segment_part(expr * e)
  */
 static int scan(void)
 {
-    return i = scanfunc(scpriv, tokval);
+    return tt = scanfunc(scpriv, tokval);
 }
 
 /*
@@ -308,7 +308,7 @@ static expr *rexp0(void)
     if (!e)
         return NULL;
 
-    while (i == TOKEN_DBL_OR) {
+    while (tt == TOKEN_DBL_OR) {
         scan();
         f = rexp1();
         if (!f)
@@ -335,7 +335,7 @@ static expr *rexp1(void)
     if (!e)
         return NULL;
 
-    while (i == TOKEN_DBL_XOR) {
+    while (tt == TOKEN_DBL_XOR) {
         scan();
         f = rexp2();
         if (!f)
@@ -361,7 +361,7 @@ static expr *rexp2(void)
     e = rexp3();
     if (!e)
         return NULL;
-    while (i == TOKEN_DBL_AND) {
+    while (tt == TOKEN_DBL_AND) {
         scan();
         f = rexp3();
         if (!f)
@@ -388,10 +388,10 @@ static expr *rexp3(void)
     if (!e)
         return NULL;
 
-    while (i == TOKEN_EQ || i == TOKEN_LT || i == TOKEN_GT ||
-           i == TOKEN_NE || i == TOKEN_LE || i == TOKEN_GE ||
-           i == TOKEN_LEG) {
-        int j = i;
+    while (tt == TOKEN_EQ || tt == TOKEN_LT || tt == TOKEN_GT ||
+           tt == TOKEN_NE || tt == TOKEN_LE || tt == TOKEN_GE ||
+           tt == TOKEN_LEG) {
+        int tto = tt;
         scan();
         f = expr0();
         if (!f)
@@ -399,15 +399,15 @@ static expr *rexp3(void)
 
         e = add_vectors(e, scalar_mult(f, -1L, false));
 
-        switch (j) {
+        switch (tto) {
         case TOKEN_EQ:
         case TOKEN_NE:
             if (is_unknown(e))
                 v = -1;         /* means unknown */
             else if (!is_really_simple(e) || reloc_value(e) != 0)
-                v = (j == TOKEN_NE);    /* unequal, so return true if NE */
+                v = (tto == TOKEN_NE);    /* unequal, so return true if NE */
             else
-                v = (j == TOKEN_EQ);    /* equal, so return true if EQ */
+                v = (tto == TOKEN_EQ);    /* equal, so return true if EQ */
             break;
         default:
             if (is_unknown(e))
@@ -415,23 +415,23 @@ static expr *rexp3(void)
             else if (!is_really_simple(e)) {
                 nasm_error(ERR_NONFATAL,
                       "`%s': operands differ by a non-scalar",
-                      (j == TOKEN_LE ? "<=" :
-                       j == TOKEN_LT ? "<" :
-                       j == TOKEN_GE ? ">=" :
-                       j == TOKEN_GT ? ">" :
-                       j == TOKEN_LEG ? "<=>" :
+                      (tto == TOKEN_LE ? "<=" :
+                       tto == TOKEN_LT ? "<" :
+                       tto == TOKEN_GE ? ">=" :
+                       tto == TOKEN_GT ? ">" :
+                       tto == TOKEN_LEG ? "<=>" :
                        "<internal error>"));
                 v = 0;          /* must set it to _something_ */
             } else {
                 int64_t vv = reloc_value(e);
-                if (j == TOKEN_LEG)
+                if (tto == TOKEN_LEG)
                     v = (vv < 0) ? -1 : (vv > 0) ? 1 : 0;
                 else if (vv == 0)
-                    v = (j == TOKEN_LE || j == TOKEN_GE);
+                    v = (tto == TOKEN_LE || tto == TOKEN_GE);
                 else if (vv > 0)
-                    v = (j == TOKEN_GE || j == TOKEN_GT);
+                    v = (tto == TOKEN_GE || tto == TOKEN_GT);
                 else            /* vv < 0 */
-                    v = (j == TOKEN_LE || j == TOKEN_LT);
+                    v = (tto == TOKEN_LE || tto == TOKEN_LT);
             }
             break;
         }
@@ -452,7 +452,7 @@ static expr *expr0(void)
     if (!e)
         return NULL;
 
-    while (i == '|') {
+    while (tt == '|') {
         scan();
         f = expr1();
         if (!f)
@@ -478,7 +478,7 @@ static expr *expr1(void)
     if (!e)
         return NULL;
 
-    while (i == '^') {
+    while (tt == '^') {
         scan();
         f = expr2();
         if (!f)
@@ -504,7 +504,7 @@ static expr *expr2(void)
     if (!e)
         return NULL;
 
-    while (i == '&') {
+    while (tt == '&') {
         scan();
         f = expr3();
         if (!f)
@@ -530,8 +530,8 @@ static expr *expr3(void)
     if (!e)
         return NULL;
 
-    while (i == TOKEN_SHL || i == TOKEN_SHR || i == TOKEN_SAR) {
-        int j = i;
+    while (tt == TOKEN_SHL || tt == TOKEN_SHR || tt == TOKEN_SAR) {
+        int tto = tt;
         scan();
         f = expr4();
         if (!f)
@@ -543,7 +543,7 @@ static expr *expr3(void)
         } else if (is_just_unknown(e) || is_just_unknown(f)) {
             e = unknown_expr();
         } else {
-            switch (j) {
+            switch (tto) {
             case TOKEN_SHL:
                 e = scalarvect(reloc_value(e) << reloc_value(f));
                 break;
@@ -568,13 +568,13 @@ static expr *expr4(void)
     e = expr5();
     if (!e)
         return NULL;
-    while (i == '+' || i == '-') {
-        int j = i;
+    while (tt == '+' || tt == '-') {
+        int tto = tt;
         scan();
         f = expr5();
         if (!f)
             return NULL;
-        switch (j) {
+        switch (tto) {
         case '+':
             e = add_vectors(e, f);
             break;
@@ -593,24 +593,24 @@ static expr *expr5(void)
     e = expr6();
     if (!e)
         return NULL;
-    while (i == '*' || i == '/' || i == '%' ||
-           i == TOKEN_SDIV || i == TOKEN_SMOD) {
-        int j = i;
+    while (tt == '*' || tt == '/' || tt == '%' ||
+           tt == TOKEN_SDIV || tt == TOKEN_SMOD) {
+        int tto = tt;
         scan();
         f = expr6();
         if (!f)
             return NULL;
-        if (j != '*' && (!(is_simple(e) || is_just_unknown(e)) ||
+        if (tto != '*' && (!(is_simple(e) || is_just_unknown(e)) ||
                          !(is_simple(f) || is_just_unknown(f)))) {
             nasm_error(ERR_NONFATAL, "division operator may only be applied to"
                   " scalar values");
             return NULL;
         }
-        if (j != '*' && !is_just_unknown(f) && reloc_value(f) == 0) {
+        if (tto != '*' && !is_just_unknown(f) && reloc_value(f) == 0) {
             nasm_error(ERR_NONFATAL, "division by zero");
             return NULL;
         }
-        switch (j) {
+        switch (tto) {
         case '*':
             if (is_simple(e))
                 e = scalar_mult(f, reloc_value(e), true);
@@ -674,33 +674,33 @@ static expr *eval_floatize(enum floatize type)
     };
     int sign = 1;
     int64_t val;
-    int j;
+    int i;
 
     scan();
-    if (i != '(') {
+    if (tt != '(') {
         nasm_error(ERR_NONFATAL, "expecting `('");
         return NULL;
     }
     scan();
-    if (i == '-' || i == '+') {
-        sign = (i == '-') ? -1 : 1;
+    if (tt == '-' || tt == '+') {
+        sign = (tt == '-') ? -1 : 1;
         scan();
     }
-    if (i != TOKEN_FLOAT) {
+    if (tt != TOKEN_FLOAT) {
         nasm_error(ERR_NONFATAL, "expecting floating-point number");
         return NULL;
     }
     if (!float_const(tokval->t_charptr, sign, result, formats[type].bytes))
         return NULL;
     scan();
-    if (i != ')') {
+    if (tt != ')') {
         nasm_error(ERR_NONFATAL, "expecting `)'");
         return NULL;
     }
 
     p = result+formats[type].start+formats[type].len;
     val = 0;
-    for (j = formats[type].len; j; j--) {
+    for (i = formats[type].len; i; i--) {
         p--;
         val = (val << 8) + *p;
     }
@@ -721,11 +721,11 @@ static expr *eval_strfunc(enum strfunc type)
 
     parens = false;
     scan();
-    if (i == '(') {
+    if (tt == '(') {
         parens = true;
         scan();
     }
-    if (i != TOKEN_STR) {
+    if (tt != TOKEN_STR) {
         nasm_error(ERR_NONFATAL, "expecting string");
         return NULL;
     }
@@ -739,7 +739,7 @@ static expr *eval_strfunc(enum strfunc type)
     val = readstrnum(string, string_len, &rn_warn);
     if (parens) {
         scan();
-        if (i != ')') {
+        if (tt != ')') {
             nasm_error(ERR_NONFATAL, "expecting `)'");
             return NULL;
         }
@@ -801,7 +801,7 @@ static expr *expr6(void)
         return NULL;
     }
 
-    switch (i) {
+    switch (tt) {
     case '-':
         scan();
         e = expr6();
@@ -883,7 +883,7 @@ static expr *expr6(void)
         e = bexpr();
         if (!e)
             return NULL;
-        if (i != ')') {
+        if (tt != ')') {
             nasm_error(ERR_NONFATAL, "expecting `)'");
             return NULL;
         }
@@ -899,7 +899,7 @@ static expr *expr6(void)
     case TOKEN_BASE:
     case TOKEN_DECORATOR:
         begintemp();
-        switch (i) {
+        switch (tt) {
         case TOKEN_NUM:
             addtotemp(EXPR_SIMPLE, tokval->t_integer);
             break;
@@ -926,18 +926,18 @@ static expr *expr6(void)
             if (!location.known) {
                 nasm_error(ERR_NONFATAL,
                       "%s not supported in preprocess-only mode",
-                      (i == TOKEN_HERE ? "`$'" :
-                       i == TOKEN_BASE ? "`$$'" :
+                      (tt == TOKEN_HERE ? "`$'" :
+                       tt == TOKEN_BASE ? "`$$'" :
                        "symbol references"));
                 addtotemp(EXPR_UNKNOWN, 1L);
                 break;
             }
 
             type = EXPR_SIMPLE; /* might get overridden by UNKNOWN */
-            if (i == TOKEN_BASE) {
+            if (tt == TOKEN_BASE) {
                 label_seg = in_absolute ? absolute.segment : location.segment;
                 label_ofs = 0;
-            } else if (i == TOKEN_HERE) {
+            } else if (tt == TOKEN_HERE) {
                 label_seg = in_absolute ? absolute.segment : location.segment;
                 label_ofs = in_absolute ? absolute.offset : location.offset;
             } else {
@@ -1001,7 +1001,7 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
     if (tokval->t_type == TOKEN_INVALID)
         scan();
     else
-        i = tokval->t_type;
+        tt = tokval->t_type;
 
     while (ntempexprs)          /* initialize temporary storage */
         nasm_free(tempexprs[--ntempexprs]);
@@ -1010,7 +1010,7 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
     if (!e)
         return NULL;
 
-    if (i == TOKEN_WRT) {
+    if (tt == TOKEN_WRT) {
         scan();                 /* eat the WRT */
         f = expr6();
         if (!f)
