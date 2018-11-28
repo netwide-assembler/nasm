@@ -58,7 +58,7 @@ LIBOBJ = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) &
 	&
 	nasmlib\ver.$(O) &
 	nasmlib\crc64.$(O) nasmlib\malloc.$(O) &
-	nasmlib\md5c.$(O) nasmlib\string.$(O) &
+	nasmlib\md5c.$(O) nasmlib\string.$(O) nasmlib\nctype.$(O) &
 	nasmlib\file.$(O) nasmlib\mmap.$(O) nasmlib\ilog2.$(O) &
 	nasmlib\realpath.$(O) nasmlib\path.$(O) &
 	nasmlib\filename.$(O) nasmlib\srcfile.$(O) &
