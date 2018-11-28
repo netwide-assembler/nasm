@@ -44,6 +44,7 @@
 #include <time.h>
 
 #include "nasmlib.h"
+#include "nctype.h"
 #include "strlist.h"
 #include "preproc.h"
 #include "insnsi.h"     /* For enum opcode */
@@ -379,46 +380,6 @@ extern struct strlist *depend_list;
 extern bool tasm_compatible_mode;
 
 /*
- * Some lexical properties of the NASM source language, included
- * here because they are shared between the parser and preprocessor.
- */
-
-/*
- * isidstart matches any character that may start an identifier, and isidchar
- * matches any character that may appear at places other than the start of an
- * identifier. E.g. a period may only appear at the start of an identifier
- * (for local labels), whereas a number may appear anywhere *but* at the
- * start.
- * isbrcchar matches any character that may placed inside curly braces as a
- * decorator. E.g. {rn-sae}, {1to8}, {k1}{z}
- */
-
-static inline bool isidstart(char c)
-{
-    return nasm_isalpha(c) || c == '_' || c == '.' || c == '@' ||
-        (tasm_compatible_mode && c == '?');
-}
-static inline bool isidchar(char c)
-{
-    return isidstart(c) || nasm_isdigit(c) || c == '$' || c == '#' || c == '~';
-}
-
-static inline bool isbrcchar(char c)
-{
-    return isidchar(c) || c == '-';
-}
-
-static inline bool isnumstart(char c)
-{
-    return nasm_isdigit(c) || c == '$';
-}
-
-static inline bool isnumchar(char c)
-{
-    return nasm_isalnum(c) || c == '_';
-}
-
-/*
  * inline function to skip past an identifier; returns the first character past
  * the identifier if valid, otherwise NULL.
  */
@@ -426,10 +387,10 @@ static inline char *nasm_skip_identifier(const char *str)
 {
     const char *p = str;
 
-    if (!isidstart(*p++)) {
+    if (!nasm_isidstart(*p++)) {
         p = NULL;
     } else {
-        while (isidchar(*p++))
+        while (nasm_isidchar(*p++))
             ;
     }
     return (char *)p;

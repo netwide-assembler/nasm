@@ -321,12 +321,12 @@ bool process_directives(char *directive)
             value++;        /* skip initial $ if present */
 
         q = value;
-        if (!isidstart(*q)) {
+        if (!nasm_isidstart(*q)) {
             validid = false;
         } else {
             q++;
             while (*q && *q != ':' && !nasm_isspace(*q)) {
-                if (!isidchar(*q))
+                if (!nasm_isidchar(*q))
                     validid = false;
                 q++;
             }
@@ -411,7 +411,7 @@ bool process_directives(char *directive)
         p = value;
         q = debugid;
         badid = overlong = false;
-        if (!isidstart(*p)) {
+        if (!nasm_isidstart(*p)) {
             badid = true;
         } else {
             while (*p && !nasm_isspace(*p)) {
@@ -419,7 +419,7 @@ bool process_directives(char *directive)
                     overlong = true;
                     break;
                 }
-                if (!isidchar(*p))
+                if (!nasm_isidchar(*p))
                     badid = true;
                 *q++ = *p++;
             }

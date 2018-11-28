@@ -953,11 +953,11 @@ static Token *tokenize(char *line)
             } else if (*p == '!') {
                 type = TOK_PREPROC_ID;
                 p++;
-                if (isidchar(*p)) {
+                if (nasm_isidchar(*p)) {
                     do {
                         p++;
                     }
-                    while (isidchar(*p));
+                    while (nasm_isidchar(*p));
                 } else if (*p == '\'' || *p == '\"' || *p == '`') {
                     p = nasm_skip_string(p);
                     if (*p)
@@ -968,23 +968,23 @@ static Token *tokenize(char *line)
                     /* %! without string or identifier */
                     type = TOK_OTHER; /* Legacy behavior... */
                 }
-            } else if (isidchar(*p) ||
+            } else if (nasm_isidchar(*p) ||
                        ((*p == '!' || *p == '%' || *p == '$') &&
-                        isidchar(p[1]))) {
+                        nasm_isidchar(p[1]))) {
                 do {
                     p++;
                 }
-                while (isidchar(*p));
+                while (nasm_isidchar(*p));
                 type = TOK_PREPROC_ID;
             } else {
                 type = TOK_OTHER;
                 if (*p == '%')
                     p++;
             }
-        } else if (isidstart(*p) || (*p == '$' && isidstart(p[1]))) {
+        } else if (nasm_isidstart(*p) || (*p == '$' && nasm_isidstart(p[1]))) {
             type = TOK_ID;
             p++;
-            while (*p && isidchar(*p))
+            while (*p && nasm_isidchar(*p))
                 p++;
         } else if (*p == '\'' || *p == '"' || *p == '`') {
             /*
@@ -1003,7 +1003,7 @@ static Token *tokenize(char *line)
         } else if (p[0] == '$' && p[1] == '$') {
             type = TOK_OTHER;   /* TOKEN_BASE */
             p += 2;
-        } else if (isnumstart(*p)) {
+        } else if (nasm_isnumstart(*p)) {
             bool is_hex = false;
             bool is_float = false;
             bool has_e = false;
@@ -1037,7 +1037,7 @@ static Token *tokenize(char *line)
                     is_float = true;
                     if (*p == '+' || *p == '-')
                         p++;
-                } else if (isnumchar(c))
+                } else if (nasm_isnumchar(c))
                     ; /* just advance */
                 else if (c == '.') {
                     /*

@@ -41,29 +41,11 @@
 #include "compiler.h"
 #include "bytesex.h"
 
-#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
 #endif
-
-/*
- * tolower table -- avoids a function call on some platforms.
- * NOTE: unlike the tolower() function in ctype, EOF is *NOT*
- * a permitted value, for obvious reasons.
- */
-void tolower_init(void);
-extern unsigned char nasm_tolower_tab[256];
-#define nasm_tolower(x) nasm_tolower_tab[(unsigned char)(x)]
-
-/* Wrappers around <ctype.h> functions */
-/* These are only valid for values that cannot include EOF */
-#define nasm_isspace(x)  isspace((unsigned char)(x))
-#define nasm_isalpha(x)  isalpha((unsigned char)(x))
-#define nasm_isdigit(x)  isdigit((unsigned char)(x))
-#define nasm_isalnum(x)  isalnum((unsigned char)(x))
-#define nasm_isxdigit(x) isxdigit((unsigned char)(x))
 
 /*
  * Wrappers around malloc, realloc and free. nasm_malloc will

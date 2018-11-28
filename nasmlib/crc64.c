@@ -32,7 +32,7 @@
  * ----------------------------------------------------------------------- */
 
 #include "compiler.h"
-#include "nasmlib.h"
+#include "nctype.h"
 #include "hashtbl.h"
 
 static const uint64_t crc64_tab[256] = {

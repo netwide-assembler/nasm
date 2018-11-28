@@ -36,26 +36,8 @@
  */
 
 #include "compiler.h"
-
-#include <stdlib.h>
-#include <ctype.h>
-
 #include "nasmlib.h"
-
-/*
- * Prepare a table of tolower() results.  This avoids function calls
- * on some platforms.
- */
-
-unsigned char nasm_tolower_tab[256];
-
-void tolower_init(void)
-{
-    int i;
-
-    for (i = 0; i < 256; i++)
-	nasm_tolower_tab[i] = tolower(i);
-}
+#include "nctype.h"
 
 #ifndef nasm_stricmp
 int nasm_stricmp(const char *s1, const char *s2)

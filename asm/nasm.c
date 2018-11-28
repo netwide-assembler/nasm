@@ -41,11 +41,11 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <limits.h>
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "nctype.h"
 #include "error.h"
 #include "saa.h"
 #include "raa.h"
@@ -456,7 +456,7 @@ int main(int argc, char **argv)
 
     error_file = stderr;
 
-    tolower_init();
+    nasm_ctype_init();
     src_init();
 
     /*
@@ -1026,8 +1026,10 @@ static bool process_arg(char *p, char *q, int pass)
             break;
 
         case 't':
-            if (pass == 2)
+            if (pass == 2) {
                 tasm_compatible_mode = true;
+                nasm_ctype_tasm_mode();
+            }
             break;
 
         case 'v':

@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     int64_t offset;
     FILE *fp;
 
-    tolower_init();
+    nasm_ctype_init();
     nasm_set_verror(ndisasm_verror);
     iflag_clear_all(&prefer);
 

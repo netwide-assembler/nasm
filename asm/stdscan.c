@@ -137,8 +137,8 @@ int stdscan(void *private_data, struct tokenval *tv)
         return tv->t_type = TOKEN_EOS;
 
     /* we have a token; either an id, a number or a char */
-    if (isidstart(*stdscan_bufptr) ||
-        (*stdscan_bufptr == '$' && isidstart(stdscan_bufptr[1]))) {
+    if (nasm_isidstart(*stdscan_bufptr) ||
+        (*stdscan_bufptr == '$' && nasm_isidstart(stdscan_bufptr[1]))) {
         /* now we've got an identifier */
         bool is_sym = false;
         int token_type;
@@ -150,7 +150,7 @@ int stdscan(void *private_data, struct tokenval *tv)
 
         r = stdscan_bufptr++;
         /* read the entire buffer to advance the buffer pointer but... */
-        while (isidchar(*stdscan_bufptr))
+        while (nasm_isidchar(*stdscan_bufptr))
             stdscan_bufptr++;
 
         /* ... copy only up to IDLEN_MAX-1 characters */
@@ -178,7 +178,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         } else {
             return tv->t_type = TOKEN_ID;
         }
-    } else if (*stdscan_bufptr == '$' && !isnumchar(stdscan_bufptr[1])) {
+    } else if (*stdscan_bufptr == '$' && !nasm_isnumchar(stdscan_bufptr[1])) {
         /*
          * It's a $ sign with no following hex number; this must
          * mean it's a Here token ($), evaluating to the current
@@ -191,7 +191,7 @@ int stdscan(void *private_data, struct tokenval *tv)
             return tv->t_type = TOKEN_BASE;
         }
         return tv->t_type = TOKEN_HERE;
-    } else if (isnumstart(*stdscan_bufptr)) {   /* now we've got a number */
+    } else if (nasm_isnumstart(*stdscan_bufptr)) {   /* now we've got a number */
         bool rn_error;
         bool is_hex = false;
         bool is_float = false;
@@ -224,7 +224,7 @@ int stdscan(void *private_data, struct tokenval *tv)
                 is_float = true;
                 if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-')
                     stdscan_bufptr++;
-            } else if (isnumchar(c))
+            } else if (nasm_isnumchar(c))
                 ; /* just advance */
             else if (c == '.')
                 is_float = true;
@@ -273,7 +273,7 @@ int stdscan(void *private_data, struct tokenval *tv)
          * read the entire buffer to advance the buffer pointer
          * {rn-sae}, {rd-sae}, {ru-sae}, {rz-sae} contain '-' in tokens.
          */
-        while (isbrcchar(*stdscan_bufptr))
+        while (nasm_isbrcchar(*stdscan_bufptr))
             stdscan_bufptr++;
 
         token_len = stdscan_bufptr - r;
