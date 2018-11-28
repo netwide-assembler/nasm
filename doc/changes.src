@@ -25,6 +25,12 @@ or hexadecimal floating-point having at least 32, 11, or 8 mantissa
 digits could produce slightly incorrect results under very specific
 conditions.
 
+\b Support \c{-MD} without a filename, for \c{gcc}
+compatibility. \c{-MF} can be used to set the dependencies output
+filename. See \k{opt-MD}.
+
+\b Fix \c{-E} in combination with \c{-MD}. See \k{opt-E}.
+
 \S{cl-2.14} Version 2.14
 
 \b Changed \c{-I} option semantics by adding a trailing path separator
