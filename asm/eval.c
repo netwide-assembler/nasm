@@ -55,7 +55,8 @@
 #define TEMPEXPRS_DELTA 128
 #define TEMPEXPR_DELTA 8
 
-static scanner scan;            /* Address of scanner routine */
+static scanner scanfunc;        /* Address of scanner routine */
+static void *scpriv;            /* Scanner private pointer */
 
 static expr **tempexprs = NULL;
 static int ntempexprs;
@@ -69,7 +70,6 @@ static struct tokenval *tokval; /* The current token */
 static int i;                   /* The t_type of tokval */
 
 static int critical;
-static void *scpriv;
 static int *opflags;
 
 static struct eval_hints *hint;
@@ -260,6 +260,14 @@ static expr *segment_part(expr * e)
  */
 
 /*
+ * Wrapper function around the scanner
+ */
+static int scan(void)
+{
+    return i = scanfunc(scpriv, tokval);
+}
+
+/*
  * Grammar parsed is:
  *
  * expr  : bexpr [ WRT expr6 ]
@@ -301,7 +309,7 @@ static expr *rexp0(void)
         return NULL;
 
     while (i == TOKEN_DBL_OR) {
-        i = scan(scpriv, tokval);
+        scan();
         f = rexp1();
         if (!f)
             return NULL;
@@ -328,7 +336,7 @@ static expr *rexp1(void)
         return NULL;
 
     while (i == TOKEN_DBL_XOR) {
-        i = scan(scpriv, tokval);
+        scan();
         f = rexp2();
         if (!f)
             return NULL;
@@ -354,7 +362,7 @@ static expr *rexp2(void)
     if (!e)
         return NULL;
     while (i == TOKEN_DBL_AND) {
-        i = scan(scpriv, tokval);
+        scan();
         f = rexp3();
         if (!f)
             return NULL;
@@ -384,7 +392,7 @@ static expr *rexp3(void)
            i == TOKEN_NE || i == TOKEN_LE || i == TOKEN_GE ||
            i == TOKEN_LEG) {
         int j = i;
-        i = scan(scpriv, tokval);
+        scan();
         f = expr0();
         if (!f)
             return NULL;
@@ -445,7 +453,7 @@ static expr *expr0(void)
         return NULL;
 
     while (i == '|') {
-        i = scan(scpriv, tokval);
+        scan();
         f = expr1();
         if (!f)
             return NULL;
@@ -471,7 +479,7 @@ static expr *expr1(void)
         return NULL;
 
     while (i == '^') {
-        i = scan(scpriv, tokval);
+        scan();
         f = expr2();
         if (!f)
             return NULL;
@@ -497,7 +505,7 @@ static expr *expr2(void)
         return NULL;
 
     while (i == '&') {
-        i = scan(scpriv, tokval);
+        scan();
         f = expr3();
         if (!f)
             return NULL;
@@ -524,7 +532,7 @@ static expr *expr3(void)
 
     while (i == TOKEN_SHL || i == TOKEN_SHR || i == TOKEN_SAR) {
         int j = i;
-        i = scan(scpriv, tokval);
+        scan();
         f = expr4();
         if (!f)
             return NULL;
@@ -562,7 +570,7 @@ static expr *expr4(void)
         return NULL;
     while (i == '+' || i == '-') {
         int j = i;
-        i = scan(scpriv, tokval);
+        scan();
         f = expr5();
         if (!f)
             return NULL;
@@ -588,7 +596,7 @@ static expr *expr5(void)
     while (i == '*' || i == '/' || i == '%' ||
            i == TOKEN_SDIV || i == TOKEN_SMOD) {
         int j = i;
-        i = scan(scpriv, tokval);
+        scan();
         f = expr6();
         if (!f)
             return NULL;
@@ -668,15 +676,15 @@ static expr *eval_floatize(enum floatize type)
     int64_t val;
     int j;
 
-    i = scan(scpriv, tokval);
+    scan();
     if (i != '(') {
         nasm_error(ERR_NONFATAL, "expecting `('");
         return NULL;
     }
-    i = scan(scpriv, tokval);
+    scan();
     if (i == '-' || i == '+') {
         sign = (i == '-') ? -1 : 1;
-        i = scan(scpriv, tokval);
+        scan();
     }
     if (i != TOKEN_FLOAT) {
         nasm_error(ERR_NONFATAL, "expecting floating-point number");
@@ -684,7 +692,7 @@ static expr *eval_floatize(enum floatize type)
     }
     if (!float_const(tokval->t_charptr, sign, result, formats[type].bytes))
         return NULL;
-    i = scan(scpriv, tokval);
+    scan();
     if (i != ')') {
         nasm_error(ERR_NONFATAL, "expecting `)'");
         return NULL;
@@ -700,7 +708,7 @@ static expr *eval_floatize(enum floatize type)
     begintemp();
     addtotemp(EXPR_SIMPLE, val);
 
-    i = scan(scpriv, tokval);
+    scan();
     return finishtemp();
 }
 
@@ -712,10 +720,10 @@ static expr *eval_strfunc(enum strfunc type)
     bool parens, rn_warn;
 
     parens = false;
-    i = scan(scpriv, tokval);
+    scan();
     if (i == '(') {
         parens = true;
-        i = scan(scpriv, tokval);
+        scan();
     }
     if (i != TOKEN_STR) {
         nasm_error(ERR_NONFATAL, "expecting string");
@@ -730,7 +738,7 @@ static expr *eval_strfunc(enum strfunc type)
 
     val = readstrnum(string, string_len, &rn_warn);
     if (parens) {
-        i = scan(scpriv, tokval);
+        scan();
         if (i != ')') {
             nasm_error(ERR_NONFATAL, "expecting `)'");
             return NULL;
@@ -743,7 +751,7 @@ static expr *eval_strfunc(enum strfunc type)
     begintemp();
     addtotemp(EXPR_SIMPLE, val);
 
-    i = scan(scpriv, tokval);
+    scan();
     return finishtemp();
 }
 
@@ -795,18 +803,18 @@ static expr *expr6(void)
 
     switch (i) {
     case '-':
-        i = scan(scpriv, tokval);
+        scan();
         e = expr6();
         if (!e)
             return NULL;
         return scalar_mult(e, -1L, false);
 
     case '+':
-        i = scan(scpriv, tokval);
+        scan();
         return expr6();
 
     case '~':
-        i = scan(scpriv, tokval);
+        scan();
         e = expr6();
         if (!e)
             return NULL;
@@ -820,7 +828,7 @@ static expr *expr6(void)
         return scalarvect(~reloc_value(e));
 
     case '!':
-        i = scan(scpriv, tokval);
+        scan();
         e = expr6();
         if (!e)
             return NULL;
@@ -836,7 +844,7 @@ static expr *expr6(void)
     case TOKEN_IFUNC:
     {
         enum ifunc func = tokval->t_integer;
-        i = scan(scpriv, tokval);
+        scan();
         e = expr6();
         if (!e)
             return NULL;
@@ -851,7 +859,7 @@ static expr *expr6(void)
     }
 
     case TOKEN_SEG:
-        i = scan(scpriv, tokval);
+        scan();
         e = expr6();
         if (!e)
             return NULL;
@@ -871,7 +879,7 @@ static expr *expr6(void)
         return eval_strfunc(tokval->t_integer);
 
     case '(':
-        i = scan(scpriv, tokval);
+        scan();
         e = bexpr();
         if (!e)
             return NULL;
@@ -879,7 +887,7 @@ static expr *expr6(void)
             nasm_error(ERR_NONFATAL, "expecting `)'");
             return NULL;
         }
-        i = scan(scpriv, tokval);
+        scan();
         return e;
 
     case TOKEN_NUM:
@@ -963,7 +971,7 @@ static expr *expr6(void)
             addtotemp(EXPR_RDSAE, tokval->t_integer);
             break;
         }
-        i = scan(scpriv, tokval);
+        scan();
         return finishtemp();
 
     default:
@@ -985,13 +993,13 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
         hint->type = EAH_NOHINT;
 
     critical = crit & ~CRITICAL;
-    scan = sc;
+    scanfunc = sc;
     scpriv = scprivate;
     tokval = tv;
     opflags = fwref;
 
     if (tokval->t_type == TOKEN_INVALID)
-        i = scan(scpriv, tokval);
+        scan();
     else
         i = tokval->t_type;
 
@@ -1003,7 +1011,7 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
         return NULL;
 
     if (i == TOKEN_WRT) {
-        i = scan(scpriv, tokval);       /* eat the WRT */
+        scan();                 /* eat the WRT */
         f = expr6();
         if (!f)
             return NULL;
