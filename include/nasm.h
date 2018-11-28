@@ -375,6 +375,9 @@ extern const struct preproc_ops preproc_nop;
 /* List of dependency files */
 extern struct strlist *depend_list;
 
+/* TASM mode changes some properties */
+extern bool tasm_compatible_mode;
+
 /*
  * Some lexical properties of the NASM source language, included
  * here because they are shared between the parser and preprocessor.
@@ -390,25 +393,30 @@ extern struct strlist *depend_list;
  * decorator. E.g. {rn-sae}, {1to8}, {k1}{z}
  */
 
-#define isidstart(c) (nasm_isalpha(c)   ||  \
-                      (c) == '_'        ||  \
-                      (c) == '.'        ||  \
-                      (c) == '?'        ||  \
-                      (c) == '@')
+static inline bool isidstart(char c)
+{
+    return nasm_isalpha(c) || c == '_' || c == '.' || c == '@' ||
+        (tasm_compatible_mode && c == '?');
+}
+static inline bool isidchar(char c)
+{
+    return isidstart(c) || c == '$' || c == '#' || c == '~';
+}
 
-#define isidchar(c) (isidstart(c)       ||  \
-                     nasm_isdigit(c)    ||  \
-                     (c) == '$'         ||  \
-                     (c) == '#'         ||  \
-                     (c) == '~')
+static inline bool isbrcchar(char c)
+{
+    return isidchar(c) || c == '-';
+}
 
-#define isbrcchar(c) (isidchar(c)       ||  \
-                      (c) == '-')
+static inline bool isnumstart(char c)
+{
+    return nasm_isdigit(c) || c == '$';
+}
 
-/* Ditto for numeric constants. */
-
-#define isnumstart(c)  (nasm_isdigit(c) || (c) == '$')
-#define isnumchar(c)   (nasm_isalnum(c) || (c) == '_')
+static inline bool isnumchar(char c)
+{
+    return nasm_isalnum(c) || c == '_';
+}
 
 /*
  * inline function to skip past an identifier; returns the first character past
@@ -1267,7 +1275,6 @@ struct optimization {
 extern int pass0;
 extern int64_t passn;           /* Actual pass number */
 
-extern bool tasm_compatible_mode;
 extern struct optimization optimizing;
 extern int globalbits;          /* 16, 32 or 64-bit mode */
 extern int globalrel;           /* default to relative addressing? */
