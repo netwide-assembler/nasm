@@ -271,11 +271,12 @@ static int scan(void)
  * Grammar parsed is:
  *
  * expr  : bexpr [ WRT expr6 ]
- * bexpr : rexp0
+ * bexpr : cexpr
+ * cexpr : rexp0 [ {?} bexpr {:} cexpr ]
  * rexp0 : rexp1 [ {||} rexp1...]
  * rexp1 : rexp2 [ {^^} rexp2...]
  * rexp2 : rexp3 [ {&&} rexp3...]
- * rexp3 : expr0 [ {=,==,<>,!=,<,>,<=,>=,<=>} expr0 ]
+ * rexp3 : expr0 [ {=,==,<>,!=,<,>,<=,>=,<=>} expr0... ]
  * expr0 : expr1 [ {|} expr1...]
  * expr1 : expr2 [ {^} expr2...]
  * expr2 : expr3 [ {&} expr3...]
@@ -289,6 +290,7 @@ static int scan(void)
  *       | number
  */
 
+static expr *cexpr(void);
 static expr *rexp0(void), *rexp1(void), *rexp2(void), *rexp3(void);
 
 static expr *expr0(void), *expr1(void), *expr2(void), *expr3(void);
@@ -297,7 +299,44 @@ static expr *expr4(void), *expr5(void), *expr6(void);
 /* This inline is a placeholder for the root of the basic expression */
 static inline expr *bexpr(void)
 {
-    return rexp0();
+    return cexpr();
+}
+
+static expr *cexpr(void)
+{
+    expr *e, *f, *g;
+
+    e = rexp0();
+    if (!e)
+        return NULL;
+
+    if (tt == '?') {
+        scan();
+        f = bexpr();
+        if (!f)
+            return NULL;
+
+        if (tt != ':') {
+            nasm_error(ERR_NONFATAL, "`?' without matching `:'");
+            return NULL;
+        }
+
+        scan();
+        g = cexpr();
+        if (!g)
+            return NULL;
+
+        if (is_simple(e)) {
+            e = reloc_value(e) ? f : g;
+        } else if (is_just_unknown(e)) {
+            e = unknown_expr();
+        } else {
+            nasm_error(ERR_NONFATAL, "the left-hand side of `?' must be "
+                       "a scalar value");
+        }
+    }
+
+    return e;
 }
 
 static expr *rexp0(void)
@@ -987,7 +1026,7 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
     expr *f = NULL;
 
     deadman = 0;
-    
+
     hint = hints;
     if (hint)
         hint->type = EAH_NOHINT;
@@ -998,13 +1037,12 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
     tokval = tv;
     opflags = fwref;
 
-    if (tokval->t_type == TOKEN_INVALID)
-        scan();
-    else
-        tt = tokval->t_type;
-
     while (ntempexprs)          /* initialize temporary storage */
         nasm_free(tempexprs[--ntempexprs]);
+
+    tt = tokval->t_type;
+    if (tt == TOKEN_INVALID)
+        scan();
 
     e = bexpr();
     if (!e)
