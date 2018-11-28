@@ -2135,7 +2135,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 
     if (def->defaults && def->ndefs > def->nparam_max - def->nparam_min &&
         !def->plus)
-        nasm_warnf(ERR_PASS1|ERR_WARN_MDP, "too many default macro parameters");
+        nasm_warnf(ERR_PASS1|ERR_WARN_MDP, "too many default macro parameters in macro `%s'", def->name);
 
     return true;
 }
