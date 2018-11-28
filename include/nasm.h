@@ -400,7 +400,7 @@ static inline bool isidstart(char c)
 }
 static inline bool isidchar(char c)
 {
-    return isidstart(c) || c == '$' || c == '#' || c == '~';
+    return isidstart(c) || nasm_isdigit(c) || c == '$' || c == '#' || c == '~';
 }
 
 static inline bool isbrcchar(char c)
