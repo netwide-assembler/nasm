@@ -2996,7 +2996,7 @@ static void dwarf_generate(void)
         saa_write32(pinforel, 0);
         saa_write32(pinfo,0);       /* DW_AT_stmt_list */
         saa_wbytes(pinfo, elf_module, strlen(elf_module)+1);
-        saa_wbytes(pinfo, nasm_signature, strlen(nasm_signature)+1);
+        saa_wbytes(pinfo, nasm_signature(), nasm_signature_len()+1);
         saa_write16(pinfo,DW_LANG_Mips_Assembler);
         saa_write8(pinfo,2);        /* abbrviation number LEB128u */
         saa_write32(pinforel, pinfo->datalen + 4);
@@ -3035,7 +3035,7 @@ static void dwarf_generate(void)
         saa_write32(pinforel, 0);
         saa_write32(pinfo,0);			/* DW_AT_stmt_list */
         saa_wbytes(pinfo, elf_module, strlen(elf_module)+1);
-        saa_wbytes(pinfo, nasm_signature, strlen(nasm_signature)+1);
+        saa_wbytes(pinfo, nasm_signature(), nasm_signature_len()+1);
         saa_write16(pinfo,DW_LANG_Mips_Assembler);
         saa_write8(pinfo,2);			/* abbrviation number LEB128u */
         saa_write32(pinforel, pinfo->datalen + 4);
@@ -3075,7 +3075,7 @@ static void dwarf_generate(void)
         saa_write64(pinforel, 0);
         saa_write32(pinfo,0);			/* DW_AT_stmt_list */
         saa_wbytes(pinfo, elf_module, strlen(elf_module)+1);
-        saa_wbytes(pinfo, nasm_signature, strlen(nasm_signature)+1);
+        saa_wbytes(pinfo, nasm_signature(), nasm_signature_len()+1);
         saa_write16(pinfo,DW_LANG_Mips_Assembler);
         saa_write8(pinfo,2);			/* abbrviation number LEB128u */
         saa_write64(pinforel, pinfo->datalen + 4);

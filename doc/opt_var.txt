@@ -6,7 +6,8 @@
 
 
 GLOBAL variables:
-        optimizing      -1 flags nasm 0.98 compatible operation;
+        optimizing     optimization meta data (with level and flag info)
+        .level         -1 flags nasm 0.98 compatible operation;
                             offsets usually are explicit (short/near)
                             no optimization passes
                         0 flags non-optimized assembly; forward
@@ -17,7 +18,8 @@ GLOBAL variables:
                             the actual recommended minimum setting
                             optimization passes (2 or more, plus
                             passes 1 and 2 will be required)
-
+        .flag           0 allow all optimizations
+                        1 disallow jump match optimization
 
         pass0           0 flags an optimizer pass (multiple passes)
                         1 flags pass1 (define labels)

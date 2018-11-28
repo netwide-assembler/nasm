@@ -4,9 +4,9 @@
 ; Test of Mach-O subsection_by_symbol
 ;
 
-%pragma output subsections_via_symbols
-%pragma asm gprefix _
-%pragma asm lprefix L_
+%pragma macho subsections_via_symbols
+%pragma macho gprefix _
+%pragma macho lprefix L.
 
 	bits 32
 

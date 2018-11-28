@@ -1380,9 +1380,10 @@ static int32_t obj_segment(char *name, int pass, int *bits)
             attrs++;
         }
 
-        obj_idx = 1;
-        for (seg = seghead; seg; seg = seg->next) {
-            obj_idx++;
+        for (seg = seghead, obj_idx = 1; ; seg = seg->next, obj_idx++) {
+            if (!seg)
+                break;
+
             if (!strcmp(seg->name, name)) {
                 if (attrs > 0 && pass == 1)
                     nasm_error(ERR_WARNING, "segment attributes specified on"
@@ -1403,7 +1404,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
         seg->obj_index = obj_idx;
         seg->grp = NULL;
         any_segs = true;
-        seg->name = NULL;
+        seg->name = nasm_strdup(name);
         seg->currentpos = 0;
         seg->align = 1;         /* default */
         seg->use32 = false;     /* default */
@@ -1964,7 +1965,7 @@ static void obj_write_file(void)
     struct ExpDef *export;
     int lname_idx;
     ObjRecord *orp;
-    const StrList *depfile;
+    const struct strlist_entry *depfile;
     const bool debuginfo = (dfmt == &borland_debug_form);
 
     /*
@@ -1980,14 +1981,14 @@ static void obj_write_file(void)
      */
     orp->type = COMENT;
     obj_rword(orp, dTRANSL);
-    obj_name(orp, nasm_comment);
+    obj_name(orp, nasm_comment());
     obj_emit2(orp);
 
     /*
      * Output file dependency information
      */
-    if (!obj_nodepend) {
-        list_for_each(depfile, depend_list) {
+    if (!obj_nodepend && depend_list) {
+        list_for_each(depfile, depend_list->head) {
             uint32_t ts;
 
             ts = obj_file_timestamp(depfile->str);

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -32,69 +32,59 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * strlist.c - simple linked list of strings
+ * strlist.c - list of unique, ordered strings
  */
-
-#include "compiler.h"
-
-#include <string.h>
 
 #include "strlist.h"
 
-static inline StrList *nasm_str_to_strlist(const char *str)
-{
-    size_t l = strlen(str) + 1;
-    StrList *sl = nasm_malloc(l + sizeof sl->next);
-
-    memcpy(sl->str, str, l);
-    sl->next = NULL;
-
-    return sl;
-}
-
 /*
- * Append a string list entry to a string list if and only if it isn't
- * already there.  Return true if it was added.
+ * Create a string list
  */
-bool nasm_add_to_strlist(StrList **head, StrList *entry)
+struct strlist *strlist_alloc(void)
 {
-    StrList *list;
-
-    if (!head)
-        return false;
-
-    list = *head;
-    while (list) {
-        if (!strcmp(list->str, entry->str))
-            return false;
-        head = &list->next;
-        list = list->next;
-    }
-
-    *head = entry;
-    entry->next = NULL;
-    return true;
+	struct strlist *list = nasm_zalloc(sizeof(*list));
+	hash_init(&list->hash, HASH_MEDIUM);
+	list->tailp = &list->head;
+	return list;
 }
 
 /*
  * Append a string to a string list if and only if it isn't
  * already there.  Return true if it was added.
  */
-bool nasm_add_string_to_strlist(StrList **head, const char *str)
+bool strlist_add(struct strlist *list, const char *str)
 {
-    StrList *list;
+	struct strlist_entry *e;
+	struct hash_insert hi;
+	size_t len;
 
-    if (!head)
-        return false;
+	if (!list)
+		return false;
 
-    list = *head;
-    while (list) {
-        if (!strcmp(list->str, str))
-            return false;
-        head = &list->next;
-        list = list->next;
-    }
+	if (hash_find(&list->hash, str, &hi))
+		return false;
 
-    *head = nasm_str_to_strlist(str);
-    return true;
+	len = strlen(str);
+
+	/* Structure already has char[1] as EOS */
+	e = nasm_zalloc(sizeof(*e) + len);
+	e->len = len;
+	memcpy(e->str, str, len + 1);
+
+	*list->tailp = e;
+	list->tailp = &e->next;
+
+	hash_add(&hi, e->str, (void *)e);
+	return true;
+}
+
+/*
+ * Free a string list
+ */
+void strlist_free(struct strlist *list)
+{
+	if (list) {
+		hash_free_all(&list->hash, false);
+		nasm_free(list);
+	}
 }

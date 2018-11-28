@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2018 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -142,7 +142,15 @@ my %insns_flag_bit = (
     "AVX512VBMI"        => [$f++, "AVX-512 VBMI instructions"],
     "AES"               => [$f++, "AES instructions"],
     "VAES"              => [$f++, "AES AVX instructions"],
-    "VPCLMULQDQ"        => [$f++, "Carry-Less Multiplication extention"],
+    "VPCLMULQDQ"        => [$f++, "AVX Carryless Multiplication"],
+    "GFNI"		=> [$f++, "Galois Field instructions"],
+    "AVX512VBMI2"       => [$f++, "AVX-512 VBMI2 instructions"],
+    "AVX512VNNI"        => [$f++, "AVX-512 VNNI instructions"],
+    "AVX512BITALG"	=> [$f++, "AVX-512 Bit Algorithm instructions"],
+    "AVX512VPOPCNTDQ"	=> [$f++, "AVX-512 VPOPCNTD/VPOPCNTQ"],
+    "AVX5124FMAPS"	=> [$f++, "AVX-512 4-iteration multiply-add"],
+    "AVX5124VNNIW"	=> [$f++, "AVX-512 4-iteration dot product"],
+    "SGX"		=> [$f++, "Intel Software Guard Extensions (SGX)"],
 
     # Put these last
     "OBSOLETE"          => [$f++, "Instruction removed from architecture"],

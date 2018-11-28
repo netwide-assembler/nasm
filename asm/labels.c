@@ -72,6 +72,21 @@ static bool ismagic(const char *l)
     return l[0] == '.' && l[1] == '.' && l[2] != '@';
 }
 
+/*
+ * Return true if we should update the local label base
+ * as a result of this symbol.  We must exclude local labels
+ * as well as any kind of special labels, including ..@ ones.
+ */
+static bool set_prevlabel(const char *l)
+{
+    if (tasm_compatible_mode) {
+        if (l[0] == '@' && l[1] == '@')
+            return false;
+    }
+
+    return l[0] != '.';
+}
+
 #define LABEL_BLOCK     128     /* no. of labels/block */
 #define LBLK_SIZE       (LABEL_BLOCK * sizeof(union label))
 
@@ -146,7 +161,7 @@ static void out_symdef(union label *lptr)
         case LBL_EXTERN:
         case LBL_COMMON:
             if (lptr->defn.special)
-                ofmt->symdef(lptr->defn.label, 0, 0, 3, lptr->defn.special);
+                ofmt->symdef(lptr->defn.mangled, 0, 0, 3, lptr->defn.special);
             break;
         default:
             break;
@@ -160,6 +175,7 @@ static void out_symdef(union label *lptr)
     /* Clean up this hack... */
     switch(lptr->defn.type) {
     case LBL_GLOBAL:
+    case LBL_EXTERN:
         backend_type = 1;
         backend_offset = lptr->defn.offset;
         break;
@@ -202,6 +218,8 @@ static union label *find_label(const char *label, bool create, bool *created)
     union label *lptr, **lpp;
     char *label_str = NULL;
     struct hash_insert ip;
+
+    nasm_assert(label != NULL);
 
     if (islocal(label))
         label = label_str = nasm_strcat(prevlabel, label);
@@ -336,15 +354,23 @@ handle_herelabel(union label *lptr, int32_t *segment, int64_t *offset)
     if (oldseg == location.segment && *offset == location.offset) {
         /* This label is defined at this location */
         int32_t newseg;
+        bool copyoffset = false;
 
         nasm_assert(lptr->defn.mangled);
         newseg = ofmt->herelabel(lptr->defn.mangled, lptr->defn.type,
-                                 oldseg, &lptr->defn.subsection);
+                                 oldseg, &lptr->defn.subsection, &copyoffset);
         if (likely(newseg == oldseg))
             return;
 
         *segment = newseg;
-        *offset  = switch_segment(newseg);
+        if (copyoffset) {
+            /* Maintain the offset from the old to the new segment */
+            switch_segment(newseg);
+            location.offset = *offset;
+        } else {
+            /* Keep a separate offset for the new segment */
+            *offset  = switch_segment(newseg);
+        }
     }
 }
 
@@ -383,7 +409,7 @@ static bool declare_label_lptr(union label *lptr,
         type == LBL_EXTERN) {
         if (!lptr->defn.special)
             lptr->defn.special = perm_copy(special);
-        return true;
+        return false;           /* Don't call define_label() after this! */
     }
 
     nasm_error(ERR_NONFATAL, "symbol `%s' declared both as %s and %s",
@@ -394,10 +420,7 @@ static bool declare_label_lptr(union label *lptr,
 
 bool declare_label(const char *label, enum label_type type, const char *special)
 {
-    union label *lptr;
-    bool created;
-
-    lptr = find_label(label, true, &created);
+    union label *lptr = find_label(label, true, NULL);
     return declare_label_lptr(lptr, type, special);
 }
 
@@ -419,13 +442,14 @@ void define_label(const char *label, int32_t segment,
      */
     lptr = find_label(label, true, &created);
 
-    if (pass0 > 1) {
-        if (created)
-	    nasm_error(ERR_WARNING, "label `%s' defined on pass two", label);
-    }
-
-    if (!segment)
+    if (segment) {
+        /* We are actually defining this label */
+        if (lptr->defn.type == LBL_EXTERN) /* auto-promote EXTERN to GLOBAL */
+            lptr->defn.type = LBL_GLOBAL;
+    } else {
+        /* It's a pseudo-segment (extern, common) */
         segment = lptr->defn.segment ? lptr->defn.segment : seg_alloc();
+    }
 
     if (lptr->defn.defined || lptr->defn.type == LBL_BACKEND) {
         /* We have seen this on at least one previous pass */
@@ -436,9 +460,8 @@ void define_label(const char *label, int32_t segment,
     if (ismagic(label) && lptr->defn.type == LBL_LOCAL)
         lptr->defn.type = LBL_SPECIAL;
 
-    if (!islocal(label) && normal) {
+    if (set_prevlabel(label) && normal)
         prevlabel = lptr->defn.label;
-    }
 
     if (lptr->defn.type == LBL_COMMON) {
         size = offset;
@@ -447,7 +470,8 @@ void define_label(const char *label, int32_t segment,
         size = 0;               /* This is a hack... */
     }
 
-    changed = !lptr->defn.defined || lptr->defn.segment != segment ||
+    changed = created || !lptr->defn.defined ||
+        lptr->defn.segment != segment ||
         lptr->defn.offset != offset || lptr->defn.size != size;
     global_offset_changed += changed;
 
@@ -456,9 +480,11 @@ void define_label(const char *label, int32_t segment,
      * special case, LBL_SPECIAL symbols are allowed to be changed
      * even during the last pass.
      */
-    if (changed && pass0 == 2 && lptr->defn.type != LBL_SPECIAL)
-        nasm_error(ERR_WARNING, "label `%s' changed during code generation",
-                   lptr->defn.label);
+    if (changed && pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
+        nasm_error(ERR_WARNING, "label `%s' %s during code generation",
+                   lptr->defn.label,
+                   created ? "defined" : "changed");
+    }
 
     lptr->defn.segment = segment;
     lptr->defn.offset  = offset;

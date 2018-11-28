@@ -893,7 +893,7 @@ static void ieee_write_file(void)
     /*
      * Write the NASM boast comment.
      */
-    ieee_putascii("CO0,%02X%s.\n", strlen(nasm_comment), nasm_comment);
+    ieee_putascii("CO0,%02X%s.\n", nasm_comment_len(), nasm_comment());
 
     /*
      * write processor-specific information

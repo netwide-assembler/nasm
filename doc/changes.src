@@ -7,7 +7,82 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
-\S{cl-2.13.04} Version 2.13.04
+\S{cl-2.14.01} Version 2.14.01
+
+\b Create all system-defined macros defore processing command-line
+given preprocessing directives (\c{-p}, \c{-d}, \c{-u}, \c{--pragma},
+\c{--before}).
+
+\b If debugging is enabled, define a \c{__DEBUG_FORMAT__} predefined
+macro.  See \k{dfmtm}.
+
+\S{cl-2.14} Version 2.14
+
+\b Changed \c{-I} option semantics by adding a trailing path separator
+   unconditionally.
+
+\b Fixed null dereference in corrupted invalid single line macros.
+
+\b Fixed division by zero which may happen if source code is malformed.
+
+\b Fixed out of bound access in processing of malformed segment override.
+
+\b Fixed out of bound access in certain \c{EQU} parsing.
+
+\b Fixed buffer underflow in float parsing.
+
+\b Added \c{SGX} (Intel Software Guard Extensions) instructions.
+
+\b Added \c{+n} syntax for multiple contiguous registers.
+
+\b Fixed \c{subsections_via_symbols} for \c{macho} object format.
+
+\b Added the \c{--gprefix}, \c{--gpostfix}, \c{--lprefix}, and
+\c{--lpostfix} command line options, to allow command line base symbol
+renaming. See \k{opt-pfix}.
+
+\b Allow label renaming to be specified by \c{%pragma} in addition to
+from the command line.  See \k{mangling}.
+
+\b Supported generic \c{%pragma} namespaces, \c{output} and \c{debug}. See
+\k{gen-namespace}.
+
+\b Added the \c{--pragma} command line option to inject a \c{%pragma}
+directive.  See \k{opt-pragma}.
+
+\b Added the \c{--before} command line option to accept preprocess
+statement before input. See \k{opt-before}.
+
+\b Added \c{AVX512} \c{VBMI2} (Additional Bit Manipulation), \c{VNNI} (Vector
+Neural Network), \c{BITALG} (Bit Algorithm), and \c{GFNI} (Galois Field New
+Instruction) instructions.
+
+\b Added the \c{STATIC} directive for local symbols that should be
+renamed using global-symbol rules. See \k{static}.
+
+\b Allow a symbol to be defined as \c{EXTERN} and then later
+overridden as \c{GLOBAL} or \c{COMMON}. Furthermore, a symbol declared
+\c{EXTERN} and then defined will be treated as \c{GLOBAL}. See \k{extern}.
+
+\b The \c{GLOBAL} directive no longer is required to precede the
+definition of the symbol.
+
+\b Support \c{private_extern} as \c{macho} specific extension to the
+\c{GLOBAL} directive. See \k{macho-pext}.
+
+\b Updated \c{UD0} encoding to match with the specification
+
+\b Added the \c{--limit-X} command line option to set execution
+limits. See \k{opt-limit}.
+
+\b Updated the \c{Codeview} version number to be aligned with \c{MASM}.
+
+\b Added the \c{--keep-all} command line option to preserve output
+files. See \k{opt-keep-all}.
+
+\b Added the \c{--include} command line option, an alias to \c{-P} (\k{opt-p}).
+
+\b Added the \c{--help} command line option as an alias to \c{-h} (\k{syntax}).
 
 \b Added \c{-W}, \c{-D}, and \c{-Q} suffix aliases for \c{RET}
    instructions so the operand sizes of these instructions can be

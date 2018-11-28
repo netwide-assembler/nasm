@@ -592,7 +592,7 @@ static expr *expr5(int critical)
                   " scalar values");
             return NULL;
         }
-        if (j != '*' && !is_unknown(f) && reloc_value(f) == 0) {
+        if (j != '*' && !is_just_unknown(f) && reloc_value(f) == 0) {
             nasm_error(ERR_NONFATAL, "division by zero");
             return NULL;
         }

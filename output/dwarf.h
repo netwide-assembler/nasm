@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -90,6 +90,7 @@ enum dwarf_tag {
 	DW_TAG_variant_part		= 0x33,
 	DW_TAG_variable			= 0x34,
 	DW_TAG_volatile_type		= 0x35,
+	/* DWARF 3 */
 	DW_TAG_dwarf_procedure		= 0x36,
 	DW_TAG_restrict_type		= 0x37,
 	DW_TAG_interface_type		= 0x38,
@@ -100,6 +101,12 @@ enum dwarf_tag {
 	DW_TAG_imported_unit		= 0x3d,
 	DW_TAG_condition		= 0x3f,
 	DW_TAG_shared_type		= 0x40,
+	/* DWARF 4 */
+	DW_TAG_type_unit		= 0x41,
+	DW_TAG_rvalue_reference_type	= 0x42,
+	DW_TAG_template_alias		= 0x43,
+	/* DWARF 5 */
+	DW_TAG_atomic_type		= 0x47,
 
 	DW_TAG_lo_user			= 0x4080,
 	DW_TAG_hi_user			= 0xffff
@@ -131,7 +138,12 @@ enum dwarf_form {
 	DW_FORM_ref4		= 0x13,
 	DW_FORM_ref8		= 0x14,
 	DW_FORM_ref_udata	= 0x15,
-	DW_FORM_indirect	= 0x16
+	DW_FORM_indirect	= 0x16,
+	/* DWARF 4 */
+	DW_FORM_sec_offset	= 0x17,
+	DW_FORM_exprloc		= 0x18,
+	DW_FORM_flag_present	= 0x19,
+	DW_FORM_ref_sig8	= 0x20
 };
 
 enum dwarf_attribute {
@@ -194,6 +206,7 @@ enum dwarf_attribute {
 	DW_AT_variable_parameter = 0x4b,
 	DW_AT_virtuality	= 0x4c,
 	DW_AT_vtable_elem_location = 0x4d,
+	/* DWARF 3 */
 	DW_AT_allocated		= 0x4e,
 	DW_AT_associated	= 0x4f,
 	DW_AT_data_location	= 0x50,
@@ -221,6 +234,15 @@ enum dwarf_attribute {
 	DW_AT_elemental		= 0x66,
 	DW_AT_pure		= 0x67,
 	DW_AT_recursive		= 0x68,
+	/* DWARF 4 */
+	DW_AT_signature		= 0x69,
+	DW_AT_main_subprogram	= 0x6a,
+	DW_AT_data_bit_offset	= 0x6b,
+	DW_AT_const_expr	= 0x6c,
+	DW_AT_enum_class	= 0x6d,
+	DW_AT_linkage_name	= 0x6e,
+	/* DWARF 5 */
+	DW_AT_noreturn		= 0x87,
 
 	DW_AT_lo_user		= 0x2000,
 	DW_AT_hi_user		= 0x3fff
@@ -372,6 +394,7 @@ enum dwarf_op {
 	DW_OP_deref_size	= 0x94,
 	DW_OP_xderef_size	= 0x95,
 	DW_OP_nop		= 0x96,
+	/* DWARF 3 */
 	DW_OP_push_object_address = 0x97,
 	DW_OP_call2		= 0x98,
 	DW_OP_call4		= 0x99,
@@ -379,6 +402,9 @@ enum dwarf_op {
 	DW_OP_form_tls_address	= 0x9b,
 	DW_OP_call_frame_cfa	= 0x9c,
 	DW_OP_bit_piece		= 0x9d,
+	/* DWARF 4 */
+	DW_OP_implicit_value	= 0x9e,
+	DW_OP_stack_value	= 0x9f,
 
 	DW_OP_lo_user		= 0xe0,
 	DW_OP_hi_user		= 0xff
@@ -393,6 +419,7 @@ enum dwarf_base_type {
 	DW_ATE_signed_char	= 0x06,
 	DW_ATE_unsigned		= 0x07,
 	DW_ATE_unsigned_char	= 0x08,
+	/* DWARF 3 */
 	DW_ATE_imaginary_float	= 0x09,
 	DW_ATE_packed_decimal	= 0x0a,
 	DW_ATE_numeric_string	= 0x0b,
@@ -400,6 +427,8 @@ enum dwarf_base_type {
 	DW_ATE_signed_fixed	= 0x0d,
 	DW_ATE_unsigned_fixed	= 0x0e,
 	DW_ATE_decimal_float	= 0x0f,
+	/* DWARF 4 */
+	DW_ATE_UTF		= 0x10,
 
 	DW_ATE_lo_user		= 0x80,
 	DW_ATE_hi_user		= 0xff
@@ -576,7 +605,8 @@ enum dwarf_call_frame {
 	DW_CFA_def_cfa			= 0x0c,
 	DW_CFA_def_cfa_register		= 0x0d,
 	DW_CFA_def_cfa_offset		= 0x0e,
-	DW_CFA_def_cfa_expression 	= 0x0f,
+	/* DWARF 3 */
+	DW_CFA_def_cfa_expression	= 0x0f,
 	DW_CFA_expression		= 0x10,
 	DW_CFA_offset_extended_sf	= 0x11,
 	DW_CFA_def_cfa_sf		= 0x12,

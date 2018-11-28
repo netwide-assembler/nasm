@@ -31,6 +31,9 @@
  *
  * ----------------------------------------------------------------------- */
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "ver.h"
 #include "version.h"
 
@@ -44,8 +47,45 @@ const char nasm_compile_options[] = ""
     ;
 
 /* These are used by some backends. */
-const char nasm_comment[] =
+static const char __nasm_comment[] =
     "The Netwide Assembler " NASM_VER;
 
-const char nasm_signature[] =
+static const char __nasm_signature[] =
     "NASM " NASM_VER;
+
+/* These are constant so we could pass regression tests  */
+static const char __nasm_comment_const[] ="The Netwide Assembler CONST";
+static const char __nasm_signature_const[] = "NASM CONST";
+
+int nasm_test_run(void)
+{
+	return getenv("NASM_TEST_RUN") ? 1 : 0;
+}
+
+const char *nasm_comment(void)
+{
+	if (!nasm_test_run())
+		return __nasm_comment;
+	return __nasm_comment_const;
+}
+
+size_t nasm_comment_len(void)
+{
+	if (!nasm_test_run())
+		return strlen(__nasm_comment);
+	return strlen(__nasm_comment_const);
+}
+
+const char *nasm_signature(void)
+{
+	if (!nasm_test_run())
+		return __nasm_signature;
+	return __nasm_signature_const;
+}
+
+size_t nasm_signature_len(void)
+{
+	if (!nasm_test_run())
+		return strlen(__nasm_signature);
+	return strlen(__nasm_signature_const);
+}

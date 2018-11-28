@@ -23,6 +23,9 @@ while ($ARGV[0] =~ /^-(.*)$/) {
     }
 }
 
+# Ghostscript executable name.  "gs" on Unix-based systems.
+my $gs = 'gs';
+
 my ($in, $out) = @ARGV;
 
 if (!defined($out)) {
@@ -70,6 +73,17 @@ sub win32_gs_help() {
     $ENV{'PATH'} .= ';' . $gs[0]->{'/GS_LIB'};
     $ENV{'GS_FONTPATH'} .= (defined($ENV{'GS_FONTPATH'}) ? ';' : '')
         . $ENV{'windir'}.'\\fonts';
+
+    my $gsp = undef;
+    foreach my $p (split(/\;/, $gs[0]->{'/GS_LIB'})) {
+	foreach my $exe ('gswin64c.exe', 'gswin32c.exe', 'gs.exe') {
+	    last if (defined($gsp));
+	    my $e = File::Spec->catpath($p, $exe);
+	    $gsp = $e if (-f $e && -x _);
+	}
+    }
+
+    $gs = $gsp if (defined($gsp));
 }
 
 # Remove output file
@@ -80,13 +94,19 @@ my $r = system('acrodist', '-n', '-q', '--nosecurity', '-o', $out, $in);
 exit 0 if ( !$r && -f $out );
 
 # 2. ps2pdf (from Ghostscript)
-# The -I clause helps Ghostscript pick up the Fontdir file written by findfont.ph
-# GhostScript uses # rather than - to separate options and values on Windows, it seems...
+#
+# GhostScript uses # rather than = to separate options and values on Windows,
+# it seems.  Call gs directly rather than ps2pdf, because -dSAFER
+# breaks font discovery on some systems, apparently.
 win32_gs_help();
-my $o = $win32_ok ? '#' : '-';
-my $r = system('ps2pdf', "-dOptimize${o}true", "-dEmbedAllFonts${o}true",
+my $o = $win32_ok ? '#' : '=';
+my $r = system($gs, "-dCompatibilityLevel${o}1.4", "-q",
+	       "-P-", "-dNOPAUSE", "-dBATCH", "-sDEVICE${o}pdfwrite",
+	       "-sstdout${o}%stderr", "-sOutputFile${o}${out}",
+	       "-dOptimize${o}true", "-dEmbedAllFonts${o}true",
                "-dCompressPages${o}" . ($compress ? 'true' : 'false'),
-               "-dUseFlateCompression${o}true", $in, $out);
+               "-dUseFlateCompression${o}true",
+	       "-c", ".setpdfwrite", "-f", $in);
 exit 0 if ( !$r && -f $out );
 
 # 3. pstopdf (BSD/MacOS X utility)

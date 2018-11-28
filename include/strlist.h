@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -39,17 +39,23 @@
 #define NASM_STRLIST_H
 
 #include "compiler.h"
-
-#include <string.h>
-
 #include "nasmlib.h"
+#include "hashtbl.h"
 
-typedef struct string_list {
-    struct string_list  *next;
-    char                str[1];
-} StrList;
+struct strlist_entry {
+	struct strlist_entry	*next;
+	size_t			len;
+	char			str[1];
+};
 
-bool nasm_add_to_strlist(StrList **head, StrList *entry);
-bool nasm_add_string_to_strlist(StrList **head, const char *str);
+struct strlist {
+	struct hash_table	hash;
+	struct strlist_entry	*head;
+	struct strlist_entry	**tailp;
+};
+
+struct strlist safe_alloc *strlist_alloc(void);
+void strlist_free(struct strlist *list);
+bool strlist_add(struct strlist *list, const char *str);
 
 #endif /* NASM_STRLIST_H */

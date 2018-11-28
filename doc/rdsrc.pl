@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2018 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -325,7 +325,7 @@ sub got_para {
     $snum = 0;
     $xref = "section-$cnum.$hnum";
     $pflags = "head $cnum.$hnum :$xref";
-    die "badly formatted heading: $_\n" if !/^\\[HP]{([^\}]*)}\s*(.*)$/;
+    die "badly formatted heading: $_\n" if !/^\\[HP]\{([^\}]*)\}\s*(.*)$/;
     $refs{$1} = "section $cnum.$hnum";
     $node = "Section $cnum.$hnum";
     &add_item($node, 2);

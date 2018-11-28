@@ -55,12 +55,14 @@ int64_t readstrnum(char *str, int length, bool *warn)
         for (i = 0; i < length; i++) {
             if (charconst & UINT64_C(0xFF00000000000000))
                 *warn = true;
+            charconst &= ~UINT64_C(0xFF00000000000000);
             charconst = (charconst << 8) + (uint8_t)*--str;
         }
     } else {
         for (i = 0; i < length; i++) {
-            if (charconst & 0xFF000000UL)
+            if (charconst & UINT32_C(0xFF000000))
                 *warn = true;
+            charconst &= ~UINT32_C(0xFF000000);
             charconst = (charconst << 8) + (uint8_t)*--str;
         }
     }

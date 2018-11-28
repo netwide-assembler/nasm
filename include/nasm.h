@@ -337,7 +337,7 @@ struct preproc_ops {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset)(const char *file, int pass, StrList **deplist);
+    void (*reset)(const char *file, int pass, struct strlist *deplist);
 
     /*
      * Called to fetch a line of preprocessed source. The line
@@ -363,7 +363,7 @@ struct preproc_ops {
     void (*pre_command)(const char *what, char *str);
 
     /* Include path from command line */
-    void (*include_path)(char *path);
+    void (*include_path)(struct strlist *ipath);
 
     /* Unwind the macro stack when printing an error message */
     void (*error_list_macros)(int severity);
@@ -373,7 +373,7 @@ extern const struct preproc_ops nasmpp;
 extern const struct preproc_ops preproc_nop;
 
 /* List of dependency files */
-extern StrList *depend_list;
+extern struct strlist *depend_list;
 
 /*
  * Some lexical properties of the NASM source language, included
@@ -729,10 +729,11 @@ enum directive_result {
  * as part of the struct pragma.
  */
 struct pragma;
+typedef enum directive_result (*pragma_handler)(const struct pragma *);
 
 struct pragma_facility {
     const char *name;
-    enum directive_result (*handler)(const struct pragma *);
+    pragma_handler handler;
 };
 
 /*
@@ -912,9 +913,14 @@ struct ofmt {
      * The offset isn't passed; and may not be stable at this point.
      * The subsection number is a field available for use by the
      * backend. It is initialized to NO_SEG.
+     *
+     * If "copyoffset" is set by the backend then the offset is
+     * copied from the previous segment, otherwise the new segment
+     * is treated as a new segment the normal way.
      */
     int32_t (*herelabel)(const char *name, enum label_type type,
-                         int32_t seg, int32_t *subsection);
+                         int32_t seg, int32_t *subsection,
+                         bool *copyoffset);
 
     /*
      * This procedure is called to modify section alignment,
@@ -1244,11 +1250,25 @@ enum decorator_tokens {
  *       2 = pass 2
  */
 
+/* 
+ * flag to disable optimizations selectively 
+ * this is useful to turn-off certain optimizations
+ */
+enum optimization_disable_flag {
+    OPTIM_ALL_ENABLED       = 0,
+    OPTIM_DISABLE_JMP_MATCH = 1
+};
+
+struct optimization {
+    int level;
+    int flag;
+};
+
 extern int pass0;
 extern int64_t passn;           /* Actual pass number */
 
 extern bool tasm_compatible_mode;
-extern int optimizing;
+extern struct optimization optimizing;
 extern int globalbits;          /* 16, 32 or 64-bit mode */
 extern int globalrel;           /* default to relative addressing? */
 extern int globalbnd;           /* default to using bnd prefix? */

@@ -47,92 +47,124 @@
  * the [warning] directive.
  */
 const struct warning warnings[ERR_WARN_ALL+1] = {
-    {"other", "any warning not specifially mentioned below", true},
-    {"macro-params", "macro calls with wrong parameter count", true},
-    {"macro-selfref", "cyclic macro references", false},
-    {"macro-defaults", "macros with more default than optional parameters", true},
-    {"orphan-labels", "labels alone on lines without trailing `:'", true},
-    {"number-overflow", "numeric constant does not fit", true},
-    {"gnu-elf-extensions", "using 8- or 16-bit relocation in ELF32, a GNU extension", false},
-    {"float-overflow", "floating point overflow", true},
-    {"float-denorm", "floating point denormal", false},
-    {"float-underflow", "floating point underflow", false},
-    {"float-toolong", "too many digits in floating-point number", true},
-    {"user", "%warning directives", true},
-    {"lock", "lock prefix on unlockable instructions", true},
-    {"hle", "invalid hle prefixes", true},
-    {"bnd", "invalid bnd prefixes", true},
-    {"zext-reloc", "relocation zero-extended to match output format", true},
-    {"ptr", "non-NASM keyword used in other assemblers", true},
-    {"bad-pragma", "empty or malformed %pragma", false},
-    {"unknown-pragma", "unknown %pragma facility or directive", false},
-    {"not-my-pragma", "%pragma not applicable to this compilation", false},
-    {"unknown-warning", "unknown warning in -W/-w or warning directive", false},
-    {"negative-rep", "regative %rep count", true},
+	{ "other",		"any warning not specifially mentioned below", true },
+	{ "macro-params",	"macro calls with wrong parameter count", true },
+	{ "macro-selfref",	"cyclic macro references", false },
+	{ "macro-defaults",	"macros with more default than optional parameters", true },
+	{ "orphan-labels",	"labels alone on lines without trailing `:'", true },
+	{ "number-overflow",	"numeric constant does not fit", true },
+	{ "gnu-elf-extensions",	"using 8- or 16-bit relocation in ELF32, a GNU extension", false },
+	{ "float-overflow",	"floating point overflow", true },
+	{ "float-denorm",	"floating point denormal", false },
+	{ "float-underflow",	"floating point underflow", false },
+	{ "float-toolong",	"too many digits in floating-point number", true },
+	{ "user",		"%warning directives", true },
+	{ "lock",		"lock prefix on unlockable instructions", true },
+	{ "hle",		"invalid hle prefixes", true },
+	{ "bnd",		"invalid bnd prefixes", true },
+	{ "zext-reloc",		"relocation zero-extended to match output format", true },
+	{ "ptr",		"non-NASM keyword used in other assemblers", true },
+	{ "bad-pragma",		"empty or malformed %pragma", false },
+	{ "unknown-pragma",	"unknown %pragma facility or directive", false },
+	{ "not-my-pragma",	"%pragma not applicable to this compilation", false },
+	{ "unknown-warning",	"unknown warning in -W/-w or warning directive", false },
+	{ "negative-rep",	"regative %rep count", true },
+	{ "phase",		"phase error during stabilization", false },
 
-    /* THIS ENTRY MUST COME LAST */
-    {"all", "all possible warnings", false}
+	/* THIS ENTRY MUST COME LAST */
+	{ "all",		"all possible warnings", false }
 };
 
-uint8_t warning_state[ERR_WARN_ALL];/* Current state */
-uint8_t warning_state_init[ERR_WARN_ALL]; /* Command-line state, for reset */
+/* Current state and command-line state, for reset */
+uint8_t warning_state[ERR_WARN_ALL];
+uint8_t warning_state_init[ERR_WARN_ALL];
 
-vefunc nasm_verror;    /* Global error handling function */
+/* Global error handling function */
+vefunc nasm_verror;
 
 void nasm_error(int severity, const char *fmt, ...)
 {
-    va_list ap;
+	va_list ap;
 
-    va_start(ap, fmt);
-    nasm_verror(severity, fmt, ap);
-    va_end(ap);
+	va_start(ap, fmt);
+	nasm_verror(severity, fmt, ap);
+	va_end(ap);
+}
+
+#define nasm_error_generatorf(__sev, __flags, __fmt)	\
+	va_list __ap;					\
+	va_start(__ap, __fmt);				\
+	nasm_verror(__sev | __flags, __fmt, __ap)
+
+#define nasm_error_generator(__sev, __fmt)		\
+	nasm_error_generatorf(__sev, 0, __fmt)
+
+void nasm_debug(const char *fmt, ...)
+{
+	nasm_error_generator(ERR_DEBUG, fmt);
+}
+
+void nasm_debugf(int flags, const char *fmt, ...)
+{
+	nasm_error_generatorf(ERR_DEBUG, flags, fmt);
+}
+
+void nasm_warn(const char *fmt, ...)
+{
+	nasm_error_generator(ERR_WARNING, fmt);
+}
+
+void nasm_warnf(int flags, const char *fmt, ...)
+{
+	nasm_error_generatorf(ERR_WARNING, flags, fmt);
+}
+
+void nasm_nonfatal(const char *fmt, ...)
+{
+	nasm_error_generator(ERR_NONFATAL, fmt);
+}
+
+void nasm_nonfatalf(int flags, const char *fmt, ...)
+{
+	nasm_error_generatorf(ERR_NONFATAL, flags, fmt);
 }
 
 fatal_func nasm_fatal(const char *fmt, ...)
 {
-    va_list ap;
-
-    va_start(ap, fmt);
-    nasm_verror(ERR_FATAL, fmt, ap);
-    abort();			/* We should never get here */
+	nasm_error_generator(ERR_FATAL, fmt);
+	abort();
 }
 
-fatal_func nasm_fatal_fl(int flags, const char *fmt, ...)
+fatal_func nasm_fatalf(int flags, const char *fmt, ...)
 {
-    va_list ap;
-
-    va_start(ap, fmt);
-    nasm_verror(flags | ERR_FATAL, fmt, ap);
-    abort();			/* We should never get here */
+	nasm_error_generatorf(ERR_FATAL, flags, fmt);
+	abort();
 }
 
 fatal_func nasm_panic(const char *fmt, ...)
 {
-    va_list ap;
-
-    va_start(ap, fmt);
-    nasm_verror(ERR_PANIC, fmt, ap);
-    abort();			/* We should never get here */
+	nasm_error_generator(ERR_PANIC, fmt);
+	abort();
 }
 
-fatal_func nasm_panic_fl(int flags, const char *fmt, ...)
+fatal_func nasm_panicf(int flags, const char *fmt, ...)
 {
-    va_list ap;
-
-    va_start(ap, fmt);
-    nasm_verror(flags | ERR_PANIC, fmt, ap);
-    abort();			/* We should never get here */
+	nasm_error_generatorf(ERR_PANIC, flags, fmt);
+	abort();
 }
 
 fatal_func nasm_panic_from_macro(const char *file, int line)
 {
-    nasm_panic("internal error at %s:%d\n", file, line);
+	nasm_panic("internal error at %s:%d\n", file, line);
 }
 
 fatal_func nasm_assert_failed(const char *file, int line, const char *msg)
 {
-    nasm_panic("assertion %s failed at %s:%d", msg, file, line);
+	nasm_panic("assertion %s failed at %s:%d", msg, file, line);
 }
+
+#undef nasm_error_generator
+#undef nasm_error_generatorf
 
 /*
  * This is called when processing a -w or -W option, or a warning directive.
@@ -140,82 +172,82 @@ fatal_func nasm_assert_failed(const char *file, int line, const char *msg)
  */
 bool set_warning_status(const char *value)
 {
-    enum warn_action { WID_OFF, WID_ON, WID_RESET };
-    enum warn_action action;
-    uint8_t mask;
-    int i;
-    bool ok = false;
+	enum warn_action { WID_OFF, WID_ON, WID_RESET };
+	enum warn_action action;
+	bool ok = false;
+	uint8_t mask;
+	int i;
 
-    value = nasm_skip_spaces(value);
-    switch (*value) {
-    case '-':
-        action = WID_OFF;
-        value++;
-        break;
-    case '+':
-        action = WID_ON;
-        value++;
-        break;
-    case '*':
-        action = WID_RESET;
-        value++;
-        break;
-    case 'N':
-    case 'n':
-        if (!nasm_strnicmp(value, "no-", 3)) {
-            action = WID_OFF;
-            value += 3;
-            break;
-        } else if (!nasm_stricmp(value, "none")) {
-            action = WID_OFF;
-            value = NULL;
-            break;
-        }
-        /* else fall through */
-    default:
-        action = WID_ON;
-        break;
-    }
+	value = nasm_skip_spaces(value);
+	switch (*value) {
+	case '-':
+		action = WID_OFF;
+		value++;
+		break;
+	case '+':
+		action = WID_ON;
+		value++;
+		break;
+	case '*':
+		action = WID_RESET;
+		value++;
+		break;
+	case 'N':
+	case 'n':
+		if (!nasm_strnicmp(value, "no-", 3)) {
+			action = WID_OFF;
+			value += 3;
+			break;
+		} else if (!nasm_stricmp(value, "none")) {
+			action = WID_OFF;
+			value = NULL;
+			break;
+		}
+		/* else fall through */
+	default:
+		action = WID_ON;
+		break;
+	}
 
-    mask = WARN_ST_ENABLED;
+	mask = WARN_ST_ENABLED;
 
-    if (value && !nasm_strnicmp(value, "error", 5)) {
-        switch (value[5]) {
-        case '=':
-            mask = WARN_ST_ERROR;
-            value += 6;
-            break;
-        case '\0':
-            mask = WARN_ST_ERROR;
-            value = NULL;
-            break;
-        default:
-            /* Just an accidental prefix? */
-            break;
-        }
-    }
+	if (value && !nasm_strnicmp(value, "error", 5)) {
+		switch (value[5]) {
+		case '=':
+			mask = WARN_ST_ERROR;
+			value += 6;
+			break;
+		case '\0':
+			mask = WARN_ST_ERROR;
+			value = NULL;
+			break;
+		default:
+			/* Just an accidental prefix? */
+			break;
+		}
+	}
 
-    if (value && !nasm_stricmp(value, "all"))
-        value = NULL;
+	if (value && !nasm_stricmp(value, "all"))
+		value = NULL;
 
-    /* This is inefficient, but it shouldn't matter... */
-    for (i = 0; i < ERR_WARN_ALL; i++) {
-        if (!value || !nasm_stricmp(value, warnings[i].name)) {
-            ok = true;          /* At least one action taken */
-            switch (action) {
-            case WID_OFF:
-                warning_state[i] &= ~mask;
-                break;
-            case WID_ON:
-                warning_state[i] |= mask;
-                break;
-            case WID_RESET:
-                warning_state[i] &= ~mask;
-                warning_state[i] |= warning_state_init[i] & mask;
-                break;
-            }
-        }
-    }
+	/* This is inefficient, but it shouldn't matter... */
+	for (i = 0; i < ERR_WARN_ALL; i++) {
+		if (!value || !nasm_stricmp(value, warnings[i].name)) {
+			ok = true; /* At least one action taken */
+			switch (action) {
+			case WID_OFF:
+				warning_state[i] &= ~mask;
+				break;
+			case WID_ON:
+				warning_state[i] |= mask;
+				break;
+			case WID_RESET:
+				warning_state[i] &= ~mask;
+				warning_state[i] |= warning_state_init[i] & mask;
+				break;
+			}
+		}
+	}
 
-    return ok;
+	return ok;
 }

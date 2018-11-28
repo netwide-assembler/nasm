@@ -63,17 +63,17 @@ static void nop_init(void)
     /* Nothing to do */
 }
 
-static void nop_reset(const char *file, int pass, StrList **deplist)
+static void nop_reset(const char *file, int pass, struct strlist *deplist)
 {
     src_set(0, file);
     nop_lineinc = 1;
     nop_fp = nasm_open_read(file, NF_TEXT);
 
     if (!nop_fp)
-	nasm_fatal_fl(ERR_NOFILE, "unable to open input file `%s'", file);
+	nasm_fatalf(ERR_NOFILE, "unable to open input file `%s'", file);
     (void)pass;                 /* placate compilers */
 
-    nasm_add_string_to_strlist(deplist, file);
+    strlist_add(deplist, file);
 }
 
 static char *nop_getline(void)
@@ -170,9 +170,9 @@ static void nop_pre_command(const char *what, char *string)
     (void)string;
 }
 
-static void nop_include_path(char *path)
+static void nop_include_path(struct strlist *list)
 {
-    (void)path;
+    (void)list;
 }
 
 static void nop_error_list_macros(int severity)

@@ -4,6 +4,7 @@
 *.dbg
 *.dep
 *.exe
+*.com
 *.lib
 *.i
 *.ith
@@ -40,6 +41,7 @@ TAGS
 /*.1
 /Makefile
 /asm/directbl.c
+/asm/directbl.h
 /asm/directiv.h
 /asm/pptok.c
 /asm/pptok.h
@@ -101,3 +103,4 @@ TAGS
 /x86/regs.c
 /x86/regs.h
 /x86/regvals.c
+/patches/
