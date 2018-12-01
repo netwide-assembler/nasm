@@ -139,8 +139,7 @@ static void process_size_override(insn *result, operand *op)
             op->type |= BITS128;
             break;
         default:
-            nasm_error(ERR_NONFATAL,
-                       "invalid operand size specification");
+            nasm_nonfatal("invalid operand size specification");
             break;
         }
     } else {
@@ -164,8 +163,7 @@ static void process_size_override(insn *result, operand *op)
         case P_A64:
             if (result->prefixes[PPS_ASIZE] &&
                 result->prefixes[PPS_ASIZE] != tokval.t_integer)
-                nasm_error(ERR_NONFATAL,
-                           "conflicting address size specifications");
+                nasm_nonfatal("conflicting address size specifications");
             else
                 result->prefixes[PPS_ASIZE] = tokval.t_integer;
             break;
@@ -183,8 +181,8 @@ static void process_size_override(insn *result, operand *op)
             op->eaflags |= EAF_WORDOFFS;
             break;
         default:
-            nasm_error(ERR_NONFATAL, "invalid size specification in"
-                       " effective address");
+            nasm_nonfatal("invalid size specification in"
+                          " effective address");
             break;
         }
     }
@@ -205,9 +203,8 @@ static bool parse_braces(decoflags_t *decoflags)
         switch (i) {
         case TOKEN_OPMASK:
             if (*decoflags & OPMASK_MASK) {
-                nasm_error(ERR_NONFATAL,
-                           "opmask k%"PRIu64" is already set",
-                           *decoflags & OPMASK_MASK);
+                nasm_nonfatal("opmask k%"PRIu64" is already set",
+                              *decoflags & OPMASK_MASK);
                 *decoflags &= ~OPMASK_MASK;
             }
             *decoflags |= VAL_OPMASK(nasm_regvals[tokval.t_integer]);
@@ -225,9 +222,8 @@ static bool parse_braces(decoflags_t *decoflags)
                 *decoflags |= BRDCAST_MASK | VAL_BRNUM(j - BRC_1TO2);
                 break;
             default:
-                nasm_error(ERR_NONFATAL,
-                           "{%s} is not an expected decorator",
-                           tokval.t_charptr);
+                nasm_nonfatal("{%s} is not an expected decorator",
+                              tokval.t_charptr);
                 break;
             }
             break;
@@ -235,8 +231,7 @@ static bool parse_braces(decoflags_t *decoflags)
         case TOKEN_EOS:
             return false;
         default:
-            nasm_error(ERR_NONFATAL,
-                       "only a series of valid decorators expected");
+            nasm_nonfatal("only a series of valid decorators expected");
             return true;
         }
         i = stdscan(NULL, &tokval);
@@ -269,8 +264,7 @@ static int parse_mref(operand *op, const expr *e)
 
         else if (!is_gpr || e->value != 1) {
             /* If both want to be index */
-            nasm_error(ERR_NONFATAL,
-                       "invalid effective address: two index registers");
+            nasm_nonfatal("invalid effective address: two index registers");
             return -1;
         } else
             b = e->type;
@@ -279,8 +273,7 @@ static int parse_mref(operand *op, const expr *e)
 
     if (e->type) {                     /* is there an offset? */
         if (e->type <= EXPR_REG_END) {  /* in fact, is there an error? */
-            nasm_error(ERR_NONFATAL,
-                       "invalid effective address: impossible register");
+            nasm_nonfatal("invalid effective address: impossible register");
             return -1;
         } else {
             if (e->type == EXPR_UNKNOWN) {
@@ -305,17 +298,14 @@ static int parse_mref(operand *op, const expr *e)
                         continue;
 
                     if (e->type <= EXPR_REG_END) {
-                        nasm_error(ERR_NONFATAL,
-                                   "invalid effective address: too many registers");
+                        nasm_nonfatal("invalid effective address: too many registers");
                         return -1;
                     } else if (e->type < EXPR_SEGBASE) {
-                        nasm_error(ERR_NONFATAL,
-                                   "invalid effective address: bad subexpression type");
+                        nasm_nonfatal("invalid effective address: bad subexpression type");
                         return -1;
                     } else if (e->value == 1) {
                         if (op->segment != NO_SEG) {
-                            nasm_error(ERR_NONFATAL,
-                                       "invalid effective address: multiple base segments");
+                            nasm_nonfatal("invalid effective address: multiple base segments");
                             return -1;
                         }
                         op->segment = e->type - EXPR_SEGBASE;
@@ -324,8 +314,7 @@ static int parse_mref(operand *op, const expr *e)
                                !(op->opflags & OPFLAG_RELATIVE)) {
                         op->opflags |= OPFLAG_RELATIVE;
                     } else {
-                        nasm_error(ERR_NONFATAL,
-                                   "invalid effective address: impossible segment base multiplier");
+                        nasm_nonfatal("invalid effective address: impossible segment base multiplier");
                         return -1;
                     }
                 }
@@ -462,8 +451,7 @@ restart_parse:
         i != TOKEN_INSN     &&
         i != TOKEN_PREFIX   &&
         (i != TOKEN_REG || !IS_SREG(tokval.t_integer))) {
-        nasm_error(ERR_NONFATAL,
-                   "label or instruction expected at start of line");
+        nasm_nonfatal("label or instruction expected at start of line");
         goto fail;
     }
 
@@ -475,8 +463,8 @@ restart_parse:
         if (i == ':') {         /* skip over the optional colon */
             i = stdscan(NULL, &tokval);
         } else if (i == 0) {
-            nasm_error(ERR_WARNING | ERR_WARN_OL | ERR_PASS1,
-                  "label alone on a line without a colon might be in error");
+            nasm_warnf(ERR_WARN_OL | ERR_PASS1,
+                       "label alone on a line without a colon might be in error");
         }
         if (i != TOKEN_INSN || tokval.t_integer != I_EQU) {
             /*
@@ -512,13 +500,12 @@ restart_parse:
             if (!value)                  /* Error in evaluator */
                 goto fail;
             if (!is_simple(value)) {
-                nasm_error(ERR_NONFATAL,
-                      "non-constant argument supplied to TIMES");
+                nasm_nonfatal("non-constant argument supplied to TIMES");
                 result->times = 1L;
             } else {
                 result->times = value->value;
                 if (value->value < 0) {
-                    nasm_error(ERR_NONFATAL|ERR_PASS2, "TIMES value %"PRId64" is negative", value->value);
+                    nasm_nonfatalf(ERR_PASS2, "TIMES value %"PRId64" is negative", value->value);
                     result->times = 0;
                 }
             }
@@ -526,11 +513,9 @@ restart_parse:
             int slot = prefix_slot(tokval.t_integer);
             if (result->prefixes[slot]) {
                if (result->prefixes[slot] == tokval.t_integer)
-                    nasm_error(ERR_WARNING | ERR_PASS1,
-                               "instruction has redundant prefixes");
+                    nasm_warnf(ERR_PASS1, "instruction has redundant prefixes");
                else
-                    nasm_error(ERR_NONFATAL,
-                               "instruction has conflicting prefixes");
+                    nasm_nonfatal("instruction has conflicting prefixes");
             }
             result->prefixes[slot] = tokval.t_integer;
             i = stdscan(NULL, &tokval);
@@ -560,7 +545,7 @@ restart_parse:
             result->oprs[0].segment = result->oprs[0].wrt = NO_SEG;
             return result;
         } else {
-            nasm_error(ERR_NONFATAL, "parser: instruction expected");
+            nasm_nonfatal("parser: instruction expected");
             goto fail;
         }
     }
@@ -627,9 +612,8 @@ restart_parse:
                     i = stdscan(NULL, &tokval);
                 }
                 if (i != TOKEN_STR) {
-                    nasm_error(ERR_NONFATAL,
-                               "%s must be followed by a string constant",
-                               funcname);
+                    nasm_nonfatal("%s must be followed by a string constant",
+                                  funcname);
                         eop->type = EOT_NOTHING;
                 } else {
                     eop->type = EOT_DB_STRING_FREE;
@@ -637,16 +621,14 @@ restart_parse:
                         string_transform(tokval.t_charptr, tokval.t_inttwo,
                                          &eop->stringval, func);
                     if (eop->stringlen == (size_t)-1) {
-                        nasm_error(ERR_NONFATAL, "invalid string for transform");
+                        nasm_nonfatal("invalid string for transform");
                         eop->type = EOT_NOTHING;
                     }
                 }
                 if (parens && i && i != ')') {
                     i = stdscan(NULL, &tokval);
-                    if (i != ')') {
-                        nasm_error(ERR_NONFATAL, "unterminated %s function",
-                                   funcname);
-                    }
+                    if (i != ')')
+                        nasm_nonfatal("unterminated %s function", funcname);
                 }
                 if (i && i != ',')
                     i = stdscan(NULL, &tokval);
@@ -669,12 +651,12 @@ is_float:
 
                 eop->stringlen = db_bytes(result->opcode);
                 if (eop->stringlen > 16) {
-                    nasm_error(ERR_NONFATAL, "floating-point constant"
-                               " encountered in DY or DZ instruction");
+                    nasm_nonfatal("floating-point constant"
+                                  " encountered in DY or DZ instruction");
                     eop->stringlen = 0;
                 } else if (eop->stringlen < 1) {
-                    nasm_error(ERR_NONFATAL, "floating-point constant"
-                               " encountered in unknown instruction");
+                    nasm_nonfatal("floating-point constant"
+                                  " encountered in unknown instruction");
                     /*
                      * fix suggested by Pedro Gimeno... original line was:
                      * eop->type = EOT_NOTHING;
@@ -702,9 +684,8 @@ is_expression:
                 if (!value)                  /* Error in evaluator */
                     goto fail;
                 if (value_to_extop(value, eop, location.segment)) {
-                    nasm_error(ERR_NONFATAL,
-                               "operand %d: expression is not simple or relocatable",
-                               oper_num);
+                    nasm_nonfatal("operand %d: expression is not simple or relocatable",
+                                  oper_num);
                 }
             }
 
@@ -717,8 +698,7 @@ is_expression:
             if (i == TOKEN_EOS) /* also could be EOL */
                 break;
             if (i != ',') {
-                nasm_error(ERR_NONFATAL, "comma expected after operand %d",
-                           oper_num);
+                nasm_nonfatal("comma expected after operand %d", oper_num);
                 goto fail;
             }
         }
@@ -730,19 +710,18 @@ is_expression:
              * operands.
              */
             if (!result->eops || result->eops->type != EOT_DB_STRING)
-                nasm_error(ERR_NONFATAL, "`incbin' expects a file name");
+                nasm_nonfatal("`incbin' expects a file name");
             else if (result->eops->next &&
                      result->eops->next->type != EOT_DB_NUMBER)
-                nasm_error(ERR_NONFATAL, "`incbin': second parameter is"
-                           " non-numeric");
+                nasm_nonfatal("`incbin': second parameter is"
+                              " non-numeric");
             else if (result->eops->next && result->eops->next->next &&
                      result->eops->next->next->type != EOT_DB_NUMBER)
-                nasm_error(ERR_NONFATAL, "`incbin': third parameter is"
-                           " non-numeric");
+                nasm_nonfatal("`incbin': third parameter is"
+                              " non-numeric");
             else if (result->eops->next && result->eops->next->next &&
                      result->eops->next->next->next)
-                nasm_error(ERR_NONFATAL,
-                           "`incbin': more than three parameters");
+                nasm_nonfatal("`incbin': more than three parameters");
             else
                 return result;
             /*
@@ -751,8 +730,7 @@ is_expression:
              */
             goto fail;
         } else /* DB ... */ if (oper_num == 0)
-            nasm_error(ERR_WARNING | ERR_PASS1,
-                  "no operand for data declaration");
+            nasm_warnf(ERR_PASS1, "no operand for data declaration");
         else
             result->operands = oper_num;
 
@@ -846,7 +824,7 @@ is_expression:
                 op->type |= SHORT;
                 break;
             default:
-                nasm_error(ERR_NONFATAL, "invalid operand size specification");
+                nasm_nonfatal("invalid operand size specification");
             }
             i = stdscan(NULL, &tokval);
         }
@@ -872,9 +850,8 @@ is_expression:
         }
 
         if ((op->type & FAR) && !mref &&
-            result->opcode != I_JMP && result->opcode != I_CALL) {
-            nasm_error(ERR_NONFATAL, "invalid use of FAR operand specifier");
-        }
+            result->opcode != I_JMP && result->opcode != I_CALL)
+            nasm_nonfatal("invalid use of FAR operand specifier");
 
         value = evaluate(stdscan, NULL, &tokval,
                          &op->opflags, critical, &hints);
@@ -891,10 +868,9 @@ is_expression:
             if (value[1].type   != 0    ||
                 value->value    != 1    ||
                 !IS_SREG(value->type))
-                nasm_error(ERR_NONFATAL, "invalid segment override");
+                nasm_nonfatal("invalid segment override");
             else if (result->prefixes[PPS_SEG])
-                nasm_error(ERR_NONFATAL,
-                      "instruction has conflicting segment overrides");
+                nasm_nonfatal("instruction has conflicting segment overrides");
             else {
                 result->prefixes[PPS_SEG] = value->type;
                 if (IS_FSGS(value->type))
@@ -944,7 +920,7 @@ is_expression:
 
             if (o1.indexreg != -1 || o2.basereg != -1 || o2.offset != 0 ||
                 o2.segment != NO_SEG || o2.wrt != NO_SEG) {
-                nasm_error(ERR_NONFATAL, "invalid mib expression");
+                nasm_nonfatal("invalid mib expression");
                 goto fail;
             }
 
@@ -972,7 +948,7 @@ is_expression:
         recover = false;
         if (mref && bracket) {  /* find ] at the end */
             if (i != ']') {
-                nasm_error(ERR_NONFATAL, "parser: expecting ]");
+                nasm_nonfatal("parser: expecting ]");
                 recover = true;
             } else {            /* we got the required ] */
                 i = stdscan(NULL, &tokval);
@@ -982,15 +958,15 @@ is_expression:
                     i = tokval.t_type;
                 }
                 if (i != 0 && i != ',') {
-                    nasm_error(ERR_NONFATAL, "comma or end of line expected");
+                    nasm_nonfatal("comma or end of line expected");
                     recover = true;
                 }
             }
         } else {                /* immediate operand */
             if (i != 0 && i != ',' && i != ':' &&
                 i != TOKEN_DECORATOR && i != TOKEN_OPMASK) {
-                nasm_error(ERR_NONFATAL, "comma, colon, decorator or end of "
-                                         "line expected after operand");
+                nasm_nonfatal("comma, colon, decorator or end of "
+                              "line expected after operand");
                 recover = true;
             } else if (i == ':') {
                 op->type |= COLON;
@@ -1073,7 +1049,7 @@ is_expression:
                     result->evex_rm = value->value;
                     break;
                 default:
-                    nasm_error(ERR_NONFATAL, "invalid decorator");
+                    nasm_nonfatal("invalid decorator");
                     break;
                 }
             } else {            /* it's a register */
@@ -1081,7 +1057,7 @@ is_expression:
                 uint64_t regset_size = 0;
 
                 if (value->type >= EXPR_SIMPLE || value->value != 1) {
-                    nasm_error(ERR_NONFATAL, "invalid operand type");
+                    nasm_nonfatal("invalid operand type");
                     goto fail;
                 }
 
@@ -1101,15 +1077,14 @@ is_expression:
                         }
                         /* fallthrough */
                     default:
-                        nasm_error(ERR_NONFATAL, "invalid operand type");
+                        nasm_nonfatal("invalid operand type");
                         goto fail;
                     }
                 }
 
                 if ((regset_size & (regset_size - 1)) ||
                     regset_size >= (UINT64_C(1) << REGSET_BITS)) {
-                    nasm_error(ERR_NONFATAL | ERR_PASS2,
-                               "invalid register set size");
+                    nasm_nonfatalf(ERR_PASS2, "invalid register set size");
                     regset_size = 0;
                 }
 
@@ -1137,7 +1112,7 @@ is_expression:
                  */
                 if (value->type < EXPR_REG_START ||
                     value->type > EXPR_REG_END) {
-                        nasm_error(ERR_NONFATAL, "invalid operand type");
+                        nasm_nonfatal("invalid operand type");
                         goto fail;
                 }
 
@@ -1149,8 +1124,7 @@ is_expression:
                 op->basereg   = value->type;
 
                 if (rs && (op->type & SIZE_MASK) != rs)
-                    nasm_error(ERR_WARNING | ERR_PASS1,
-                          "register size specification ignored");
+                    nasm_warnf(ERR_PASS1, "register size specification ignored");
             }
         }
 
