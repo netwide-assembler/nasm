@@ -387,9 +387,8 @@ static bool declare_label_lptr(union label *lptr,
             if (!lptr->defn.special)
                 lptr->defn.special = perm_copy(special);
             else if (nasm_stricmp(lptr->defn.special, special))
-                nasm_error(ERR_NONFATAL,
-                           "symbol `%s' has inconsistent attributes `%s' and `%s'",
-                           lptr->defn.label, lptr->defn.special, special);
+                nasm_nonfatal("symbol `%s' has inconsistent attributes `%s' and `%s'",
+                              lptr->defn.label, lptr->defn.special, special);
         }
         return true;
     }
@@ -412,8 +411,8 @@ static bool declare_label_lptr(union label *lptr,
         return false;           /* Don't call define_label() after this! */
     }
 
-    nasm_error(ERR_NONFATAL, "symbol `%s' declared both as %s and %s",
-               lptr->defn.label, types[lptr->defn.type], types[type]);
+    nasm_nonfatal("symbol `%s' declared both as %s and %s",
+                  lptr->defn.label, types[lptr->defn.type], types[type]);
 
     return false;
 }
@@ -481,9 +480,8 @@ void define_label(const char *label, int32_t segment,
      * even during the last pass.
      */
     if (changed && pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
-        nasm_error(ERR_WARNING, "label `%s' %s during code generation",
-                   lptr->defn.label,
-                   created ? "defined" : "changed");
+        nasm_warn("label `%s' %s during code generation",
+                  lptr->defn.label, created ? "defined" : "changed");
     }
 
     lptr->defn.segment = segment;
