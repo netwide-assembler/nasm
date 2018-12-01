@@ -200,13 +200,13 @@ static void as86_deflabel(char *name, int32_t segment, int64_t offset,
     struct Symbol *sym;
 
     if (special)
-        nasm_error(ERR_NONFATAL, "as86 format does not support any"
-              " special symbol types");
+        nasm_nonfatal("as86 format does not support any"
+                      " special symbol types");
 
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
 	if (strcmp(name, "..start")) {
-	    nasm_error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+	    nasm_nonfatal("unrecognised special symbol `%s'", name);
 	    return;
 	} else {
 	    is_start = true;
@@ -294,7 +294,7 @@ static void as86_out(int32_t segto, const void *data,
 
     if (wrt != NO_SEG) {
         wrt = NO_SEG;           /* continue to do _something_ */
-        nasm_error(ERR_NONFATAL, "WRT not supported by as86 output format");
+        nasm_nonfatal("WRT not supported by as86 output format");
     }
 
     if (segto == stext.index)
@@ -304,14 +304,14 @@ static void as86_out(int32_t segto, const void *data,
     else if (segto == bssindex)
         s = NULL;
     else {
-        nasm_error(ERR_WARNING, "attempt to assemble code in"
-              " segment %d: defaulting to `.text'", segto);
+        nasm_warn("attempt to assemble code in"
+                  " segment %d: defaulting to `.text'", segto);
         s = &stext;
     }
 
     if (!s && type != OUT_RESERVE) {
-        nasm_error(ERR_WARNING, "attempt to initialize memory in the"
-              " BSS section: ignored");
+        nasm_warn("attempt to initialize memory in the"
+                  " BSS section: ignored");
 	bsslen += realsize(type, size);
         return;
     }
@@ -320,9 +320,9 @@ static void as86_out(int32_t segto, const void *data,
 
     if (type == OUT_RESERVE) {
         if (s) {
-            nasm_error(ERR_WARNING, "uninitialized space declared in"
-                  " %s section: zeroing",
-                  (segto == stext.index ? "code" : "data"));
+            nasm_warn("uninitialized space declared in"
+                      " %s section: zeroing",
+                      (segto == stext.index ? "code" : "data"));
             as86_sect_write(s, NULL, size);
             as86_add_piece(s, 0, 0L, 0L, size, 0);
         } else
@@ -334,8 +334,8 @@ static void as86_out(int32_t segto, const void *data,
         int asize = abs((int)size);
         if (segment != NO_SEG) {
             if (segment % 2) {
-                nasm_error(ERR_NONFATAL, "as86 format does not support"
-                      " segment base references");
+                nasm_nonfatal("as86 format does not support"
+                              " segment base references");
             } else {
                 offset = *(int64_t *)data;
                 as86_add_piece(s, 1, offset, segment, asize, 0);
@@ -349,8 +349,8 @@ static void as86_out(int32_t segto, const void *data,
     } else if (type == OUT_REL2ADR) {
         if (segment != NO_SEG) {
             if (segment % 2) {
-                nasm_error(ERR_NONFATAL, "as86 format does not support"
-                      " segment base references");
+                nasm_nonfatal("as86 format does not support"
+                              " segment base references");
             } else {
                 offset = *(int64_t *)data;
                 as86_add_piece(s, 1, offset - size + 2, segment, 2L,
@@ -360,8 +360,8 @@ static void as86_out(int32_t segto, const void *data,
     } else if (type == OUT_REL4ADR) {
         if (segment != NO_SEG) {
             if (segment % 2) {
-                nasm_error(ERR_NONFATAL, "as86 format does not support"
-                      " segment base references");
+                nasm_nonfatal("as86 format does not support"
+                              " segment base references");
             } else {
                 offset = *(int64_t *)data;
                 as86_add_piece(s, 1, offset - size + 4, segment, 4L,
