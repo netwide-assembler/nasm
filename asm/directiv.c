@@ -124,15 +124,13 @@ static int get_bits(const char *value)
         break;                  /* Always safe */
     case 32:
         if (!iflag_cpu_level_ok(&cpu, IF_386)) {
-            nasm_error(ERR_NONFATAL,
-                       "cannot specify 32-bit segment on processor below a 386");
+            nasm_nonfatal("cannot specify 32-bit segment on processor below a 386");
             i = 16;
         }
         break;
     case 64:
         if (!iflag_cpu_level_ok(&cpu, IF_X86_64)) {
-            nasm_error(ERR_NONFATAL,
-                       "cannot specify 64-bit segment on processor below an x86-64");
+            nasm_nonfatal("cannot specify 64-bit segment on processor below an x86-64");
             i = 16;
         }
         break;
@@ -218,7 +216,7 @@ bool process_directives(char *directive)
         return D_none;      /* Not a directive */
 
     case D_corrupt:
-	nasm_error(ERR_NONFATAL, "invalid directive line");
+	nasm_nonfatal("invalid directive line");
 	break;
 
     default:			/* It's a backend-specific directive */
@@ -271,18 +269,16 @@ bool process_directives(char *directive)
                 uint64_t align = e->value;
 
 		if (!is_power2(e->value)) {
-                    nasm_error(ERR_NONFATAL,
-                               "segment alignment `%s' is not power of two",
-                               value);
+                    nasm_nonfatal("segment alignment `%s' is not power of two",
+				  value);
 		} else if (align > UINT64_C(0x7fffffff)) {
                     /*
                      * FIXME: Please make some sane message here
                      * ofmt should have some 'check' method which
                      * would report segment alignment bounds.
                      */
-		    nasm_error(ERR_NONFATAL,
-			       "absurdly large segment alignment `%s' (2^%d)",
-			       value, ilog2_64(align));
+		    nasm_nonfatal("absurdly large segment alignment `%s' (2^%d)",
+				  value, ilog2_64(align));
                 }
 
                 /* callee should be able to handle all details */
@@ -332,9 +328,8 @@ bool process_directives(char *directive)
             }
         }
         if (!validid) {
-            nasm_error(ERR_NONFATAL,
-                       "identifier expected after %s, got `%s'",
-                       directive, value);
+            nasm_nonfatal("identifier expected after %s, got `%s'",
+			  directive, value);
             break;
         }
 
@@ -357,12 +352,10 @@ bool process_directives(char *directive)
             if (sizestr)
                 size = readnum(sizestr, &rn_error);
             if (!sizestr || rn_error)
-                nasm_error(ERR_NONFATAL,
-                           "%s size specified in common declaration",
-                           sizestr ? "invalid" : "no");
+                nasm_nonfatal("%s size specified in common declaration",
+			      sizestr ? "invalid" : "no");
         } else if (sizestr) {
-            nasm_error(ERR_NONFATAL, "invalid syntax in %s declaration",
-                       directive);
+            nasm_nonfatal("invalid syntax in %s declaration", directive);
         }
 
         if (!declare_label(value, type, special))
@@ -443,8 +436,7 @@ bool process_directives(char *directive)
 
     case D_WARNING:         /* [WARNING {+|-|*}warn-name] */
         if (!set_warning_status(value)) {
-            nasm_error(ERR_WARNING|ERR_WARN_UNK_WARNING,
-                       "unknown warning option: %s", value);
+            nasm_warnf(ERR_WARN_UNK_WARNING, "unknown warning option: %s", value);
         }
         break;
 
@@ -507,8 +499,7 @@ bool process_directives(char *directive)
 
     /* A common error message */
     if (bad_param) {
-        nasm_error(ERR_NONFATAL, "invalid parameter to [%s] directive",
-                   directive);
+        nasm_nonfatal("invalid parameter to [%s] directive", directive);
     }
 
     return d != D_none;
