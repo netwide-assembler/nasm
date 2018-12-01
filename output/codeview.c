@@ -369,9 +369,9 @@ done_0:
     fclose(f);
 done:
     if (!success) {
-        nasm_error(ERR_NONFATAL, "unable to hash file %s. "
-                 "Debug information may be unavailable.\n",
-                 filename);
+        nasm_nonfatal("unable to hash file %s. "
+                      "Debug information may be unavailable.",
+                      filename);
     }
     return;
 }
