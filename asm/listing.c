@@ -135,8 +135,7 @@ static void list_init(const char *fname)
 
     listfp = nasm_open_write(fname, NF_TEXT);
     if (!listfp) {
-	nasm_error(ERR_NONFATAL, "unable to open listing file `%s'",
-		   fname);
+        nasm_nonfatal("unable to open listing file `%s'", fname);
         return;
     }
 
