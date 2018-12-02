@@ -222,16 +222,14 @@ static void elf_section_attrib(char *name, char *attr, int pass,
     while ((opt = nasm_opt_val(opt, &val, &next))) {
         if (!nasm_stricmp(opt, "align")) {
             if (!val) {
-                nasm_error(ERR_NONFATAL,
-                           "section align without value specified");
+                nasm_nonfatal("section align without value specified");
             } else {
                 *align = atoi(val);
                 if (*align == 0) {
                     *align = SHA_ANY;
                 } else if (!is_power2(*align)) {
-                    nasm_error(ERR_NONFATAL,
-                               "section alignment %"PRId64" is not a power of two",
-                               *align);
+                    nasm_nonfatal("section alignment %"PRId64" is not a power of two",
+                                  *align);
                     *align = SHA_ANY;
                 }
             }
@@ -261,9 +259,8 @@ static void elf_section_attrib(char *name, char *attr, int pass,
         } else if (!nasm_stricmp(opt, "nobits")) {
             *type = SHT_NOBITS;
         } else if (pass == 1) {
-            nasm_error(ERR_WARNING,
-                       "Unknown section attribute '%s' ignored on"
-                       " declaration of section `%s'", opt, name);
+            nasm_warn("Unknown section attribute '%s' ignored on"
+                      " declaration of section `%s'", opt, name);
         }
         opt = next;
     }
@@ -283,12 +280,12 @@ elf_directive(enum directive directive, char *value, int pass)
 
         n = readnum(value, &err);
         if (err) {
-            nasm_error(ERR_NONFATAL, "`osabi' directive requires a parameter");
+            nasm_nonfatal("`osabi' directive requires a parameter");
             return DIRR_ERROR;
         }
 
         if (n < 0 || n > 255) {
-            nasm_error(ERR_NONFATAL, "valid osabi numbers are 0 to 255");
+            nasm_nonfatal("valid osabi numbers are 0 to 255");
             return DIRR_ERROR;
         }
 
@@ -301,7 +298,7 @@ elf_directive(enum directive directive, char *value, int pass)
 
         n = readnum(p + 1, &err);
         if (err || n < 0 || n > 255) {
-            nasm_error(ERR_NONFATAL, "invalid ABI version number (valid: 0 to 255)");
+            nasm_nonfatal("invalid ABI version number (valid: 0 to 255)");
             return DIRR_ERROR;
         }
 
@@ -439,8 +436,8 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     if (!strcmp(name, ".shstrtab") ||
         !strcmp(name, ".symtab") ||
         !strcmp(name, ".strtab")) {
-        nasm_error(ERR_NONFATAL, "attempt to redefine reserved section"
-              "name `%s'", name);
+        nasm_nonfatal("attempt to redefine reserved section"
+                      "name `%s'", name);
         return NO_SEG;
     }
 
@@ -465,8 +462,8 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
           if ((type && sects[i]->type != type)
               || (align && sects[i]->align != align)
               || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
-            nasm_error(ERR_WARNING, "incompatible section attributes ignored on"
-                  " redeclaration of section `%s'", name);
+            nasm_warn("incompatible section attributes ignored on"
+                      " redeclaration of section `%s'", name);
     }
 
     return sects[i]->index;
@@ -480,9 +477,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
     bool special_used = false;
 
 #if defined(DEBUG) && DEBUG>2
-    nasm_error(ERR_DEBUG,
-            " elf_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
-            name, segment, offset, is_global, special);
+    nasm_debug(" elf_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
+               name, segment, offset, is_global, special);
 #endif
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
         /*
@@ -496,7 +492,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             strcmp(name, "..got") && strcmp(name, "..plt") &&
             strcmp(name, "..sym") && strcmp(name, "..gottpoff") &&
             strcmp(name, "..tlsie"))
-            nasm_error(ERR_NONFATAL, "unrecognised special symbol `%s'", name);
+            nasm_nonfatal("unrecognised special symbol `%s'", name);
         return;
     }
 
@@ -518,8 +514,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                 e = evaluate(stdscan, NULL, &tokval, NULL, 1, NULL);
                 if (e) {
                     if (!is_simple(e))
-                        nasm_error(ERR_NONFATAL, "cannot use relocatable"
-                              " expression as symbol size");
+                        nasm_nonfatal("cannot use relocatable"
+                                      " expression as symbol size");
                     else
                         (*s)->size = reloc_value(e);
                 }
@@ -577,11 +573,11 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             bool err;
             sym->symv.key = readnum(special, &err);
             if (err)
-                nasm_error(ERR_NONFATAL, "alignment constraint `%s' is not a"
-                      " valid number", special);
+                nasm_nonfatal("alignment constraint `%s' is not a"
+                              " valid number", special);
             else if ((sym->symv.key | (sym->symv.key - 1)) != 2 * sym->symv.key - 1)
-                nasm_error(ERR_NONFATAL, "alignment constraint `%s' is not a"
-                      " power of two", special);
+                nasm_nonfatal("alignment constraint `%s' is not a"
+                              " power of two", special);
         }
         special_used = true;
     } else
@@ -622,8 +618,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                 else if (!nasm_strnicmp(special, "notype", n))
                     sym->type |= STT_NOTYPE;
                 else
-                    nasm_error(ERR_NONFATAL, "unrecognised symbol type `%.*s'",
-                          n, special);
+                    nasm_nonfatal("unrecognised symbol type `%.*s'",
+                                  n, special);
                 special += n;
 
                 special = nasm_skip_spaces(special);
@@ -664,8 +660,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                         sym->name = nasm_strdup(name);
                     } else if (e) {
                         if (!is_simple(e))
-                            nasm_error(ERR_NONFATAL, "cannot use relocatable"
-                                  " expression as symbol size");
+                            nasm_nonfatal("cannot use relocatable"
+                                          " expression as symbol size");
                         else
                             sym->size = reloc_value(e);
                     }
@@ -687,7 +683,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
         nlocals++;
 
     if (special && !special_used)
-        nasm_error(ERR_NONFATAL, "no special symbol features supported here");
+        nasm_nonfatal("no special symbol features supported here");
 }
 
 static void elf_add_reloc(struct elf_section *sect, int32_t segment,
@@ -762,7 +758,7 @@ static int64_t elf_add_gsym_reloc(struct elf_section *sect,
 
     if (!s) {
         if (exact && offset)
-            nasm_error(ERR_NONFATAL, "invalid access to an external symbol");
+            nasm_nonfatal("invalid access to an external symbol");
         else
             elf_add_reloc(sect, segment, offset - pcrel, type);
         return 0;
@@ -770,8 +766,8 @@ static int64_t elf_add_gsym_reloc(struct elf_section *sect,
 
     srb = rb_search(s->gsyms, offset);
     if (!srb || (exact && srb->key != offset)) {
-        nasm_error(ERR_NONFATAL, "unable to find a suitable global symbol"
-                    " for this reference");
+        nasm_nonfatal("unable to find a suitable global symbol"
+                      " for this reference");
         return 0;
     }
     sym = container_of(srb, struct elf_symbol, symv);
@@ -824,8 +820,8 @@ static void elf32_out(int32_t segto, const void *data,
     /* end of debugging stuff */
 
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
-        nasm_error(ERR_WARNING, "attempt to initialize memory in"
-              " BSS section `%s': ignored", s->name);
+        nasm_warn("attempt to initialize memory in"
+                  " BSS section `%s': ignored", s->name);
         s->len += realsize(type, size);
         return;
     }
@@ -833,8 +829,8 @@ static void elf32_out(int32_t segto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {
-            nasm_error(ERR_WARNING, "uninitialized space declared in"
-                  " non-BSS section `%s': zeroing", s->name);
+            nasm_warn("uninitialized space declared in"
+                      " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
         } else
             s->len += size;
@@ -852,8 +848,8 @@ static void elf32_out(int32_t segto, const void *data,
         addr = *(int64_t *)data;
         if (segment != NO_SEG) {
             if (segment % 2) {
-                nasm_error(ERR_NONFATAL, "ELF format does not support"
-                      " segment base references");
+                nasm_nonfatal("ELF format does not support"
+                              " segment base references");
             } else {
                 if (wrt == NO_SEG) {
                     /* 
@@ -912,21 +908,21 @@ static void elf32_out(int32_t segto, const void *data,
                         break;
                     }
                 } else if (wrt == elf_plt_sect + 1) {
-                    nasm_error(ERR_NONFATAL, "ELF format cannot produce non-PC-"
-                          "relative PLT references");
+                    nasm_nonfatal("ELF format cannot produce non-PC-"
+                                  "relative PLT references");
                 } else {
-                    nasm_error(ERR_NONFATAL, "ELF format does not support this"
-                          " use of WRT");
+                    nasm_nonfatal("ELF format does not support this"
+                                  " use of WRT");
                     wrt = NO_SEG; /* we can at least _try_ to continue */
                 }
             }
         }
 
         if (gnu16) {
-            nasm_error(ERR_WARNING | ERR_WARN_GNUELF,
-                  "8- or 16-bit relocations in ELF32 is a GNU extension");
+            nasm_warnf(ERR_WARN_GNUELF, "8- or 16-bit relocations "
+                       "in ELF32 is a GNU extension");
         } else if (asize != 4 && segment != NO_SEG) {
-            nasm_error(ERR_NONFATAL, "Unsupported non-32-bit ELF relocation");
+            nasm_nonfatal("Unsupported non-32-bit ELF relocation");
         }
         elf_sect_writeaddr(s, addr, asize);
         break;
@@ -945,16 +941,15 @@ rel12adr:
         addr = *(int64_t *)data - size;
         nasm_assert(segment != segto);
         if (segment != NO_SEG && segment % 2) {
-            nasm_error(ERR_NONFATAL, "ELF format does not support"
-                  " segment base references");
+            nasm_nonfatal("ELF format does not support"
+                          " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                nasm_error(ERR_WARNING | ERR_WARN_GNUELF,
-                      "8- or 16-bit relocations in ELF is a GNU extension");
+                nasm_warnf(ERR_WARN_GNUELF, "8- or 16-bit relocations "
+                           "in ELF is a GNU extension");
                 elf_add_reloc(s, segment, 0, reltype);
             } else {
-                nasm_error(ERR_NONFATAL,
-                      "Unsupported non-32-bit ELF relocation");
+                nasm_nonfatal("Unsupported non-32-bit ELF relocation");
             }
         }
         elf_sect_writeaddr(s, addr, bytes);
@@ -965,8 +960,8 @@ rel12adr:
         if (segment == segto)
             nasm_panic("intra-segment OUT_REL4ADR");
         if (segment != NO_SEG && segment % 2) {
-            nasm_error(ERR_NONFATAL, "ELF format does not support"
-                  " segment base references");
+            nasm_nonfatal("ELF format does not support"
+                          " segment base references");
         } else {
             if (wrt == NO_SEG) {
                 elf_add_reloc(s, segment, 0, R_386_PC32);
@@ -975,11 +970,11 @@ rel12adr:
             } else if (wrt == elf_gotpc_sect + 1 ||
                        wrt == elf_gotoff_sect + 1 ||
                        wrt == elf_got_sect + 1) {
-                nasm_error(ERR_NONFATAL, "ELF format cannot produce PC-"
-                      "relative GOT references");
+                nasm_nonfatal("ELF format cannot produce PC-"
+                              "relative GOT references");
             } else {
-                nasm_error(ERR_NONFATAL, "ELF format does not support this"
-                      " use of WRT");
+                nasm_nonfatal("ELF format does not support this"
+                              " use of WRT");
                 wrt = NO_SEG;   /* we can at least _try_ to continue */
             }
         }
@@ -987,7 +982,7 @@ rel12adr:
         break;
 
     case OUT_REL8ADR:
-        nasm_error(ERR_NONFATAL, "32-bit ELF format does not support 64-bit relocations");
+        nasm_nonfatal("32-bit ELF format does not support 64-bit relocations");
         addr = 0;
         elf_sect_writeaddr(s, addr, 8);
         break;
@@ -1031,8 +1026,8 @@ static void elf64_out(int32_t segto, const void *data,
     /* end of debugging stuff */
 
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
-        nasm_error(ERR_WARNING, "attempt to initialize memory in"
-              " BSS section `%s': ignored", s->name);
+        nasm_warn("attempt to initialize memory in"
+                  " BSS section `%s': ignored", s->name);
         s->len += realsize(type, size);
         return;
     }
@@ -1040,8 +1035,8 @@ static void elf64_out(int32_t segto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {
-            nasm_error(ERR_WARNING, "uninitialized space declared in"
-                  " non-BSS section `%s': zeroing", s->name);
+            nasm_warn("uninitialized space declared in"
+                      " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
         } else
             s->len += size;
@@ -1062,8 +1057,8 @@ static void elf64_out(int32_t segto, const void *data,
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {
-            nasm_error(ERR_NONFATAL, "ELF format does not support"
-                  " segment base references");
+            nasm_nonfatal("ELF format does not support"
+                          " segment base references");
         } else {
             if (wrt == NO_SEG) {
                 switch (isize) {
@@ -1101,8 +1096,8 @@ static void elf64_out(int32_t segto, const void *data,
                 addr = 0;
             } else if (wrt == elf_gotoff_sect + 1) {
                 if (asize != 8) {
-                    nasm_error(ERR_NONFATAL, "ELF64 requires ..gotoff "
-                          "references to be qword");
+                    nasm_nonfatal("ELF64 requires ..gotoff "
+                                  "references to be qword");
                 } else {
                     elf_add_reloc(s, segment, addr, R_X86_64_GOTOFF64);
                     addr = 0;
@@ -1120,7 +1115,7 @@ static void elf64_out(int32_t segto, const void *data,
                     addr = 0;
                     break;
                 default:
-                    nasm_error(ERR_NONFATAL, "invalid ..got reference");
+                    nasm_nonfatal("invalid ..got reference");
                     break;
                 }
             } else if (wrt == elf_sym_sect + 1) {
@@ -1158,11 +1153,11 @@ static void elf64_out(int32_t segto, const void *data,
                     break;
                 }
             } else if (wrt == elf_plt_sect + 1) {
-                nasm_error(ERR_NONFATAL, "ELF format cannot produce non-PC-"
-                      "relative PLT references");
+                nasm_nonfatal("ELF format cannot produce non-PC-"
+                              "relative PLT references");
             } else {
-                nasm_error(ERR_NONFATAL, "ELF format does not support this"
-                      " use of WRT");
+                nasm_nonfatal("ELF format does not support this"
+                              " use of WRT");
             }
         }
         elf_sect_writeaddr(s, addr, asize);
@@ -1186,16 +1181,14 @@ rel12adr:
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {
-            nasm_error(ERR_NONFATAL, "ELF format does not support"
-                  " segment base references");
+            nasm_nonfatal("ELF format does not support"
+                          " segment base references");
         } else {
             if (wrt == NO_SEG) {
                 elf_add_reloc(s, segment, addr, reltype);
                 addr = 0;
-            } else {
-                nasm_error(ERR_NONFATAL,
-                      "Unsupported non-32-bit ELF relocation");
-            }
+            } else
+                nasm_nonfatal("Unsupported non-32-bit ELF relocation");
         }
         elf_sect_writeaddr(s, addr, bytes);
         break;
@@ -1207,8 +1200,8 @@ rel12adr:
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {
-            nasm_error(ERR_NONFATAL, "ELF64 format does not support"
-                  " segment base references");
+            nasm_nonfatal("ELF64 format does not support"
+                          " segment base references");
         } else {
             if (wrt == NO_SEG) {
                 elf_add_reloc(s, segment, addr, R_X86_64_PC32);
@@ -1224,15 +1217,15 @@ rel12adr:
                 addr = 0;
             } else if (wrt == elf_gotoff_sect + 1 ||
                        wrt == elf_got_sect + 1) {
-                nasm_error(ERR_NONFATAL, "ELF64 requires ..gotoff references to be "
-                      "qword absolute");
+                nasm_nonfatal("ELF64 requires ..gotoff references to be "
+                              "qword absolute");
             } else if (wrt == elf_gottpoff_sect + 1) {
                 elf_add_gsym_reloc(s, segment, addr+size, size,
                                    R_X86_64_GOTTPOFF, true);
                 addr = 0;
             } else {
-                nasm_error(ERR_NONFATAL, "ELF64 format does not support this"
-                      " use of WRT");
+                nasm_nonfatal("ELF64 format does not support this"
+                              " use of WRT");
             }
         }
         elf_sect_writeaddr(s, addr, 4);
@@ -1245,8 +1238,8 @@ rel12adr:
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {
-            nasm_error(ERR_NONFATAL, "ELF64 format does not support"
-                  " segment base references");
+            nasm_nonfatal("ELF64 format does not support"
+                          " segment base references");
         } else {
             if (wrt == NO_SEG) {
                 elf_add_reloc(s, segment, addr, R_X86_64_PC64);
@@ -1258,14 +1251,14 @@ rel12adr:
                 addr = 0;
             } else if (wrt == elf_gotoff_sect + 1 ||
                        wrt == elf_got_sect + 1) {
-                nasm_error(ERR_NONFATAL, "ELF64 requires ..gotoff references to be "
-                      "absolute");
+                nasm_nonfatal("ELF64 requires ..gotoff references to be "
+                              "absolute");
             } else if (wrt == elf_gottpoff_sect + 1) {
-                nasm_error(ERR_NONFATAL, "ELF64 requires ..gottpoff references to be "
-                      "dword");
+                nasm_nonfatal("ELF64 requires ..gottpoff references to be "
+                              "dword");
             } else {
-                nasm_error(ERR_NONFATAL, "ELF64 format does not support this"
-                      " use of WRT");
+                nasm_nonfatal("ELF64 format does not support this"
+                              " use of WRT");
             }
         }
         elf_sect_writeaddr(s, addr, 8);
@@ -1311,8 +1304,8 @@ static void elfx32_out(int32_t segto, const void *data,
     /* end of debugging stuff */
 
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
-        nasm_error(ERR_WARNING, "attempt to initialize memory in"
-              " BSS section `%s': ignored", s->name);
+        nasm_warn("attempt to initialize memory in"
+                  " BSS section `%s': ignored", s->name);
         s->len += realsize(type, size);
         return;
     }
@@ -1320,8 +1313,8 @@ static void elfx32_out(int32_t segto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {
-            nasm_error(ERR_WARNING, "uninitialized space declared in"
-                  " non-BSS section `%s': zeroing", s->name);
+            nasm_warn("uninitialized space declared in"
+                      " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
         } else
             s->len += size;
@@ -1342,8 +1335,8 @@ static void elfx32_out(int32_t segto, const void *data,
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {
-            nasm_error(ERR_NONFATAL, "ELF format does not support"
-                  " segment base references");
+            nasm_nonfatal("ELF format does not support"
+                          " segment base references");
         } else {
             if (wrt == NO_SEG) {
                 switch (isize) {
@@ -1380,8 +1373,8 @@ static void elfx32_out(int32_t segto, const void *data,
                 elf_add_reloc(s, segment, addr, R_X86_64_GOTPC32);
                 addr = 0;
             } else if (wrt == elf_gotoff_sect + 1) {
-                nasm_error(ERR_NONFATAL, "ELFX32 doesn't support "
-                      "R_X86_64_GOTOFF64");
+                nasm_nonfatal("ELFX32 doesn't support "
+                              "R_X86_64_GOTOFF64");
             } else if (wrt == elf_got_sect + 1) {
                 switch (asize) {
                 case 4:
@@ -1390,7 +1383,7 @@ static void elfx32_out(int32_t segto, const void *data,
                     addr = 0;
                     break;
                 default:
-                    nasm_error(ERR_NONFATAL, "invalid ..got reference");
+                    nasm_nonfatal("invalid ..got reference");
                     break;
                 }
             } else if (wrt == elf_sym_sect + 1) {
@@ -1428,11 +1421,11 @@ static void elfx32_out(int32_t segto, const void *data,
                     break;
                 }
             } else if (wrt == elf_plt_sect + 1) {
-                nasm_error(ERR_NONFATAL, "ELF format cannot produce non-PC-"
-                      "relative PLT references");
+                nasm_nonfatal("ELF format cannot produce non-PC-"
+                              "relative PLT references");
             } else {
-                nasm_error(ERR_NONFATAL, "ELF format does not support this"
-                      " use of WRT");
+                nasm_nonfatal("ELF format does not support this"
+                              " use of WRT");
             }
         }
         elf_sect_writeaddr(s, addr, asize);
@@ -1456,16 +1449,14 @@ rel12adr:
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {
-            nasm_error(ERR_NONFATAL, "ELF format does not support"
-                  " segment base references");
+            nasm_nonfatal("ELF format does not support"
+                          " segment base references");
         } else {
             if (wrt == NO_SEG) {
                 elf_add_reloc(s, segment, addr, reltype);
                 addr = 0;
-            } else {
-                nasm_error(ERR_NONFATAL,
-                      "Unsupported non-32-bit ELF relocation");
-            }
+            } else
+                nasm_nonfatal("Unsupported non-32-bit ELF relocation");
         }
         elf_sect_writeaddr(s, addr, bytes);
         break;
@@ -1477,8 +1468,8 @@ rel12adr:
         if (segment == NO_SEG) {
             /* Do nothing */
         } else if (segment % 2) {
-            nasm_error(ERR_NONFATAL, "ELFX32 format does not support"
-                  " segment base references");
+            nasm_nonfatal("ELFX32 format does not support"
+                          " segment base references");
         } else {
             if (wrt == NO_SEG) {
                 elf_add_reloc(s, segment, addr, R_X86_64_PC32);
@@ -1494,21 +1485,20 @@ rel12adr:
                 addr = 0;
             } else if (wrt == elf_gotoff_sect + 1 ||
                        wrt == elf_got_sect + 1) {
-                nasm_error(ERR_NONFATAL, "invalid ..gotoff reference");
+                nasm_nonfatal("invalid ..gotoff reference");
             } else if (wrt == elf_gottpoff_sect + 1) {
                 elf_add_gsym_reloc(s, segment, addr+size, size,
                                    R_X86_64_GOTTPOFF, true);
                 addr = 0;
             } else {
-                nasm_error(ERR_NONFATAL, "ELFX32 format does not support this"
-                      " use of WRT");
+                nasm_nonfatal("ELFX32 format does not support this use of WRT");
             }
         }
         elf_sect_writeaddr(s, addr, 4);
         break;
 
     case OUT_REL8ADR:
-        nasm_error(ERR_NONFATAL, "32-bit ELF format does not support 64-bit relocations");
+        nasm_nonfatal("32-bit ELF format does not support 64-bit relocations");
         addr = 0;
         elf_sect_writeaddr(s, addr, 8);
         break;
