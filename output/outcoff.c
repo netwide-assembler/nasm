@@ -316,8 +316,7 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
         *p++ = '\0';
     if (strlen(name) > 8) {
         if (!win32 && !win64) {
-            nasm_error(ERR_WARNING,
-                       "COFF section names limited to 8 characters:  truncating");
+            nasm_warn("COFF section names limited to 8 characters:  truncating");
             name[8] = '\0';
         }
     }
@@ -343,8 +342,8 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
                 flags = RDATA_FLAGS;
             else {
                 flags = DATA_FLAGS;     /* gotta do something */
-                nasm_error(ERR_NONFATAL, "standard COFF does not support"
-                      " read-only data sections");
+                nasm_nonfatal("standard COFF does not support"
+                              " read-only data sections");
             }
         } else if (!nasm_stricmp(q, "bss")) {
             flags = BSS_FLAGS;
@@ -353,25 +352,24 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
                 flags = INFO_FLAGS;
             else {
                 flags = DATA_FLAGS;     /* gotta do something */
-                nasm_error(ERR_NONFATAL, "standard COFF does not support"
-                      " informational sections");
+                nasm_nonfatal("standard COFF does not support"
+                              " informational sections");
             }
         } else if (!nasm_strnicmp(q, "align=", 6)) {
             if (!(win32 | win64))
-                nasm_error(ERR_NONFATAL, "standard COFF does not support"
-                      " section alignment specification");
+                nasm_nonfatal("standard COFF does not support"
+                              " section alignment specification");
             else {
                 if (q[6 + strspn(q + 6, "0123456789")])
-                    nasm_error(ERR_NONFATAL,
-                          "argument to `align' is not numeric");
+                    nasm_nonfatal("argument to `align' is not numeric");
                 else {
                     unsigned int align = atoi(q + 6);
                     if (!align || ((align - 1) & align))
-                        nasm_error(ERR_NONFATAL, "argument to `align' is not a"
-                              " power of two");
+                        nasm_nonfatal("argument to `align' is not a"
+                                      " power of two");
                     else if (align > 64)
-                        nasm_error(ERR_NONFATAL, "Win32 cannot align sections"
-                              " to better than 64-byte boundaries");
+                        nasm_nonfatal("Win32 cannot align sections"
+                                      " to better than 64-byte boundaries");
                     else {
                         align_and = ~0x00F00000L;
                         align_or  = coff_sectalign_flags(align);
@@ -411,8 +409,8 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
 
             /* Warn if non-alignment flags differ */
             if ((flags ^ coff_sects[i]->flags) & ~IMAGE_SCN_ALIGN_MASK) {
-                nasm_error(ERR_WARNING, "section attributes ignored on"
-                    " redeclaration of section `%s'", name);
+                nasm_warn("section attributes ignored on"
+                          " redeclaration of section `%s'", name);
             }
             /* Check if alignment might be needed */
             if (align_flags > IMAGE_SCN_ALIGN_1BYTES) {
@@ -453,12 +451,12 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
     struct coff_Symbol *sym;
 
     if (special)
-        nasm_error(ERR_NONFATAL, "COFF format does not support any"
-              " special symbol types");
+        nasm_nonfatal("COFF format does not support any"
+                      " special symbol types");
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
         if (strcmp(name,WRT_IMAGEBASE))
-            nasm_error(ERR_NONFATAL, "unrecognized special symbol `%s'", name);
+            nasm_nonfatal("unrecognized special symbol `%s'", name);
         return;
     }
 
@@ -556,7 +554,7 @@ static void coff_out(int32_t segto, const void *data,
 
     if (wrt != NO_SEG && !win64) {
         wrt = NO_SEG;           /* continue to do _something_ */
-        nasm_error(ERR_NONFATAL, "WRT not supported by COFF output formats");
+        nasm_nonfatal("WRT not supported by COFF output formats");
     }
 
     s = NULL;
@@ -581,8 +579,8 @@ static void coff_out(int32_t segto, const void *data,
     }
 
     if (!s->data && type != OUT_RESERVE) {
-        nasm_error(ERR_WARNING, "attempt to initialize memory in"
-              " BSS section `%s': ignored", s->name);
+        nasm_warn("attempt to initialize memory in"
+                  " BSS section `%s': ignored", s->name);
         s->len += realsize(type, size);
         return;
     }
@@ -605,8 +603,8 @@ static void coff_out(int32_t segto, const void *data,
 
     if (type == OUT_RESERVE) {
         if (s->data) {
-            nasm_error(ERR_WARNING, "uninitialised space declared in"
-                  " non-BSS section `%s': zeroing", s->name);
+            nasm_warn("uninitialised space declared in"
+                      " non-BSS section `%s': zeroing", s->name);
             coff_sect_write(s, NULL, size);
         } else
             s->len += size;
@@ -616,17 +614,16 @@ static void coff_out(int32_t segto, const void *data,
         int asize = abs((int)size);
         if (!win64) {
             if (asize != 4 && (segment != NO_SEG || wrt != NO_SEG)) {
-                nasm_error(ERR_NONFATAL, "COFF format does not support non-32-bit"
-                      " relocations");
+                nasm_nonfatal("COFF format does not support non-32-bit"
+                              " relocations");
             } else {
                 int32_t fix = 0;
                 if (segment != NO_SEG || wrt != NO_SEG) {
                     if (wrt != NO_SEG) {
-                        nasm_error(ERR_NONFATAL, "COFF format does not support"
-                              " WRT types");
+                        nasm_nonfatal("COFF format does not support WRT types");
                     } else if (segment % 2) {
-                        nasm_error(ERR_NONFATAL, "COFF format does not support"
-                              " segment base references");
+                        nasm_nonfatal("COFF format does not support"
+                                      " segment base references");
                     } else
                         fix = coff_add_reloc(s, segment, IMAGE_REL_I386_DIR32);
                 }
@@ -639,8 +636,8 @@ static void coff_out(int32_t segto, const void *data,
             p = mydata;
             if (asize == 8) {
                 if (wrt == imagebase_sect) {
-                    nasm_error(ERR_NONFATAL, "operand size mismatch: 'wrt "
-                               WRT_IMAGEBASE "' is a 32-bit operand");
+                    nasm_nonfatal("operand size mismatch: 'wrt "
+                                  WRT_IMAGEBASE "' is a 32-bit operand");
                 }
                 fix = coff_add_reloc(s, segment, IMAGE_REL_AMD64_ADDR64);
                 WRITEDLONG(p, *(int64_t *)data + fix);
@@ -654,19 +651,18 @@ static void coff_out(int32_t segto, const void *data,
             }
         }
     } else if (type == OUT_REL2ADR) {
-        nasm_error(ERR_NONFATAL, "COFF format does not support 16-bit"
-              " relocations");
+        nasm_nonfatal("COFF format does not support 16-bit relocations");
     } else if (type == OUT_REL4ADR) {
         if (segment == segto && !(win64))  /* Acceptable for RIP-relative */
             nasm_panic("intra-segment OUT_REL4ADR");
         else if (segment == NO_SEG && win32)
-            nasm_error(ERR_NONFATAL, "Win32 COFF does not correctly support"
-                  " relative references to absolute addresses");
+            nasm_nonfatal("Win32 COFF does not correctly support"
+                          " relative references to absolute addresses");
         else {
             int32_t fix = 0;
             if (segment != NO_SEG && segment % 2) {
-                nasm_error(ERR_NONFATAL, "COFF format does not support"
-                      " segment base references");
+                nasm_nonfatal("COFF format does not support"
+                              " segment base references");
             } else
                 fix = coff_add_reloc(s, segment,
                         win64 ? IMAGE_REL_AMD64_REL32 : IMAGE_REL_I386_REL32);
@@ -774,11 +770,11 @@ coff_directives(enum directive directive, char *value, int pass)
         }
 
         if (!*name) {
-            nasm_error(ERR_NONFATAL, "`export' directive requires export name");
+            nasm_nonfatal("`export' directive requires export name");
             return DIRR_ERROR;
         }
         if (*q) {
-            nasm_error(ERR_NONFATAL, "unrecognized export qualifier `%s'", q);
+            nasm_nonfatal("unrecognized export qualifier `%s'", q);
             return DIRR_ERROR;
         }
         AddExport(name);
@@ -840,8 +836,7 @@ coff_directives(enum directive directive, char *value, int pass)
                 }
             }
             if (n == coff_nsyms) {
-                nasm_error(ERR_NONFATAL,
-                           "`safeseh' directive requires valid symbol");
+                nasm_nonfatal("`safeseh' directive requires valid symbol");
                 return DIRR_ERROR;
             }
         }
