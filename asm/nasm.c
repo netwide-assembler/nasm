@@ -1754,7 +1754,7 @@ static void nasm_verror_gnu(int severity, const char *fmt, va_list ap)
 
     if (!skip_this_pass(severity)) {
         if (!lineno)
-            fprintf(error_file, "%s:", currentfile ? currentfile : "nasm");
+            fprintf(error_file, "%s: ", currentfile ? currentfile : "nasm");
         else
             fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
     }
@@ -1789,10 +1789,10 @@ static void nasm_verror_vc(int severity, const char *fmt, va_list ap)
         src_get(&lineno, &currentfile);
 
     if (!skip_this_pass(severity)) {
-        if (currentfile) {
+        if (lineno) {
 	    fprintf(error_file, "%s(%"PRId32") : ", currentfile, lineno);
 	} else {
-	    fputs("nasm: ", error_file);
+            fprintf(error_file , "%s : ", currentfile ? currentfile : "nasm");
 	}
     }
 
@@ -1869,11 +1869,16 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
 {
     char msg[1024];
     const char *pfx;
+    bool warn_is_err = warning_is_error(severity);
+    bool warn_is_other = WARN_IDX(severity) == ERR_WARN_OTHER;
 
     switch (severity & (ERR_MASK|ERR_NO_SEVERITY)) {
     case ERR_WARNING:
-        pfx = "warning: ";
-        break;
+        if (!warn_is_err) {
+            pfx = "warning: ";
+            break;
+        }
+        /* fall through */
     case ERR_NONFATAL:
         pfx = "error: ";
         break;
@@ -1892,9 +1897,11 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
     }
 
     vsnprintf(msg, sizeof msg - 64, fmt, args);
-    if (is_valid_warning(severity) && WARN_IDX(severity) != ERR_WARN_OTHER) {
+    if (is_valid_warning(severity) && (warn_is_err || !warn_is_other)) {
         char *p = strchr(msg, '\0');
-	snprintf(p, 64, " [-w+%s]", warnings[WARN_IDX(severity)].name);
+	snprintf(p, 64, " [-w+%s%s]",
+                 warn_is_err ? "error=" : "",
+                 warnings[WARN_IDX(severity)].name);
     }
 
     if (!skip_this_pass(severity))
