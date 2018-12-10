@@ -64,8 +64,9 @@ static inline vefunc nasm_set_verror(vefunc ve)
  */
 
 #define ERR_DEBUG       0x00000000      /* put out debugging message */
-#define ERR_WARNING     0x00000001      /* warn only: no further action */
-#define ERR_NONFATAL    0x00000002      /* terminate assembly after phase */
+#define ERR_NOTE	0x00000001      /* additional error information */
+#define ERR_WARNING     0x00000002      /* warn only: no further action */
+#define ERR_NONFATAL    0x00000003      /* terminate assembly after phase */
 #define ERR_FATAL       0x00000006      /* instantly fatal: exit with error */
 #define ERR_PANIC       0x00000007      /* internal error: panic instantly
                                          * and dump core for reference */
@@ -73,8 +74,8 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define ERR_NOFILE      0x00000010      /* don't give source file name/line */
 #define ERR_TOPFILE	0x00000020      /* give the top input file name only */
 #define ERR_USAGE       0x00000040      /* print a usage message */
-#define ERR_PASS1       0x00000080      /* only print this error on pass one */
-#define ERR_PASS2       0x00000100      /* only print this error on pass one */
+#define ERR_PASS1       0x00000080      /* only print this error on pass 1 */
+#define ERR_PASS2       0x00000100      /* only print this error on pass 2 */
 
 #define ERR_NO_SEVERITY 0x00000200      /* suppress printing severity */
 #define ERR_PP_PRECOND	0x00000400	/* for preprocessor use */

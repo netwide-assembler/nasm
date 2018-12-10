@@ -1873,6 +1873,9 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
     bool warn_is_other = WARN_IDX(severity) == ERR_WARN_OTHER;
 
     switch (severity & (ERR_MASK|ERR_NO_SEVERITY)) {
+    case ERR_NOTE:
+        pfx = "note: ";
+        break;
     case ERR_WARNING:
         if (!warn_is_err) {
             pfx = "warning: ";
