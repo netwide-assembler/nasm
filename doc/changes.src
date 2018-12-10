@@ -31,6 +31,12 @@ filename. See \k{opt-MD}.
 
 \b Fix \c{-E} in combination with \c{-MD}. See \k{opt-E}.
 
+\b Fix missing errors on redefined labels; would cause convergence
+failure instead which is very slow and not easy to debug.
+
+\b Duplicate definitions of the same label \e{with the same value} is now
+explicitly permitted (2.14 would allow it in some circumstances.)
+
 \S{cl-2.14} Version 2.14
 
 \b Changed \c{-I} option semantics by adding a trailing path separator
