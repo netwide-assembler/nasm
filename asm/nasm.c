@@ -1767,6 +1767,8 @@ static bool skip_this_pass(int severity)
 static void nasm_verror_asm(int severity, const char *fmt, va_list args)
 {
     char msg[1024];
+    char warnsuf[64];
+    char linestr[64];
     const char *pfx;
     bool warn_is_err = warning_is_error(severity);
     bool warn_is_other = WARN_IDX(severity) == ERR_WARN_OTHER;
@@ -1786,8 +1788,6 @@ static void nasm_verror_asm(int severity, const char *fmt, va_list args)
             lineno = 0;
         }
     }
-    if (!currentfile)
-        currentfile = "nasm";
 
     switch (severity & (ERR_MASK|ERR_NO_SEVERITY)) {
     case ERR_NOTE:
@@ -1816,23 +1816,35 @@ static void nasm_verror_asm(int severity, const char *fmt, va_list args)
         break;
     }
 
-    vsnprintf(msg, sizeof msg - 64, fmt, args);
+    /*
+     * For a debug/warning/note event, if ERR_HERE is set don't
+     * output anything if there is no current filename available
+     */
+    if (!currentfile && (severity & ERR_HERE) &&
+        ((severity & ERR_MASK) < ERR_WARNING ||
+         (is_valid_warning(severity) && !warn_is_err)))
+        return;
+
+
+    vsnprintf(msg, sizeof msg, fmt, args);
+    *warnsuf = 0;
     if (is_valid_warning(severity) && (warn_is_err || !warn_is_other)) {
-        char *p = strchr(msg, '\0');
-	snprintf(p, 64, " [-w+%s%s]",
+	snprintf(warnsuf, sizeof warnsuf, " [-w+%s%s]",
                  warn_is_err ? "error=" : "",
                  warnings[WARN_IDX(severity)].name);
     }
 
+    *linestr = 0;
+    if (lineno) {
+        snprintf(linestr, sizeof linestr, "%s%"PRId32"%s",
+                 errfmt->beforeline, lineno, errfmt->afterline);
+    }
+
     if (!skip_this_pass(severity)) {
-        if (!lineno) {
-            fprintf(error_file, "%s%s%s%s\n",
-                    currentfile, errfmt->beforemsg, pfx, msg);
-        } else {
-            fprintf(error_file, "%s%s%"PRId32"%s%s%s%s\n",
-                    currentfile, errfmt->beforeline, lineno,
-                    errfmt->afterline, errfmt->beforemsg, pfx, msg);
-        }
+        fprintf(error_file, "%s%s%s%s%s%s%s\n",
+                currentfile ? currentfile : "nasm",
+                linestr, errfmt->beforemsg, pfx, msg,
+                (severity & ERR_HERE) ? " here" : "", warnsuf);
     }
 
     /* Are we recursing from error_list_macros? */
@@ -1843,7 +1855,19 @@ static void nasm_verror_asm(int severity, const char *fmt, va_list args)
      * Don't suppress this with skip_this_pass(), or we don't get
      * pass1 or preprocessor warnings in the list file
      */
-    lfmt->error(severity, pfx, msg);
+    if (severity & ERR_HERE) {
+        if (lineno)
+            lfmt->error(severity, "%s%s at %s:%"PRId32"%s",
+                        pfx, msg, currentfile, lineno, warnsuf);
+        else if (currentfile)
+            lfmt->error(severity, "%s%s in file %s%s",
+                        pfx, msg, currentfile, warnsuf);
+        else
+            lfmt->error(severity, "%s%s in unknown location%s",
+                        pfx, msg, warnsuf);
+    } else {
+        lfmt->error(severity, "%s%s%s", pfx, msg, warnsuf);
+    }
 
     if (skip_this_pass(severity))
         return;

@@ -324,12 +324,16 @@ static void list_downlevel(int type)
     }
 }
 
-static void list_error(int severity, const char *pfx, const char *msg)
+static void list_error(int severity, const char *fmt, ...)
 {
+    va_list ap;
+
     if (!listfp)
 	return;
 
-    snprintf(listerror, sizeof listerror, "%s%s", pfx, msg);
+    va_start(ap, fmt);
+    vsnprintf(listerror, sizeof listerror, fmt, ap);
+    va_end(ap);
 
     if ((severity & ERR_MASK) >= ERR_FATAL)
 	list_emit();

@@ -5329,22 +5329,21 @@ static void pp_list_one_macro(MMacro *m, int severity)
 
     if (m->name && !m->nolist) {
 	src_set(m->xline + m->lineno, m->fname);
-	nasm_error(severity, "... from macro `%s' defined here", m->name);
+	nasm_error(severity, "... from macro `%s' defined", m->name);
     }
 }
 
 static void pp_error_list_macros(int severity)
 {
-    int32_t saved_line;
-    const char *saved_fname = NULL;
+    struct src_location saved;
 
-    severity |= ERR_PP_LISTMACRO | ERR_NO_SEVERITY;
-    src_get(&saved_line, &saved_fname);
+    severity |= ERR_PP_LISTMACRO | ERR_NO_SEVERITY | ERR_HERE;
+    saved = src_where();
 
     if (istk)
         pp_list_one_macro(istk->mstk, severity);
 
-    src_set(saved_line, saved_fname);
+    src_update(saved);
 }
 
 const struct preproc_ops nasmpp = {

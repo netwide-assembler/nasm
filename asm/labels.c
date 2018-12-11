@@ -506,8 +506,7 @@ void define_label(const char *label, int32_t segment,
 
             src_get(&saved_line, &saved_fname);
             src_set(lptr->defn.def_line, lptr->defn.def_file);
-            nasm_note("label `%s' originally defined here",
-                      lptr->defn.label);
+            nasm_notef(ERR_HERE, "label `%s' originally defined", lptr->defn.label);
             src_set(saved_line, saved_fname);
         } else if (pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
             /*
