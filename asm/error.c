@@ -82,76 +82,38 @@ uint8_t warning_state_init[ERR_WARN_ALL];
 /* Global error handling function */
 vefunc nasm_verror;
 
+/* Common function body */
+#define nasm_do_error(s)			\
+	va_list ap;				\
+        va_start(ap, fmt);                      \
+	nasm_verror((s), fmt, ap);		\
+	va_end(ap);
+
 void nasm_error(int severity, const char *fmt, ...)
 {
-	va_list ap;
-
-	va_start(ap, fmt);
-	nasm_verror(severity, fmt, ap);
-	va_end(ap);
+	nasm_do_error(severity);
 }
 
-#define nasm_error_generatorf(__sev, __flags, __fmt)	\
-	va_list __ap;					\
-	va_start(__ap, __fmt);				\
-	nasm_verror(__sev | __flags, __fmt, __ap)
-
-#define nasm_error_generator(__sev, __fmt)		\
-	nasm_error_generatorf(__sev, 0, __fmt)
-
-void nasm_debug(const char *fmt, ...)
-{
-	nasm_error_generator(ERR_DEBUG, fmt);
+#define nasm_err_helpers(_type, _name, _sev)				\
+_type nasm_ ## _name ## f (int flags, const char *fmt, ...)		\
+{									\
+	nasm_do_error((_sev)|flags);					\
+	if (_sev >= ERR_FATAL)						\
+		abort();						\
+}									\
+_type nasm_ ## _name (const char *fmt, ...)				\
+{									\
+	nasm_do_error(_sev);						\
+	if (_sev >= ERR_FATAL)						\
+		abort();						\
 }
 
-void nasm_debugf(int flags, const char *fmt, ...)
-{
-	nasm_error_generatorf(ERR_DEBUG, flags, fmt);
-}
-
-void nasm_warn(const char *fmt, ...)
-{
-	nasm_error_generator(ERR_WARNING, fmt);
-}
-
-void nasm_warnf(int flags, const char *fmt, ...)
-{
-	nasm_error_generatorf(ERR_WARNING, flags, fmt);
-}
-
-void nasm_nonfatal(const char *fmt, ...)
-{
-	nasm_error_generator(ERR_NONFATAL, fmt);
-}
-
-void nasm_nonfatalf(int flags, const char *fmt, ...)
-{
-	nasm_error_generatorf(ERR_NONFATAL, flags, fmt);
-}
-
-fatal_func nasm_fatal(const char *fmt, ...)
-{
-	nasm_error_generator(ERR_FATAL, fmt);
-	abort();
-}
-
-fatal_func nasm_fatalf(int flags, const char *fmt, ...)
-{
-	nasm_error_generatorf(ERR_FATAL, flags, fmt);
-	abort();
-}
-
-fatal_func nasm_panic(const char *fmt, ...)
-{
-	nasm_error_generator(ERR_PANIC, fmt);
-	abort();
-}
-
-fatal_func nasm_panicf(int flags, const char *fmt, ...)
-{
-	nasm_error_generatorf(ERR_PANIC, flags, fmt);
-	abort();
-}
+nasm_err_helpers(void,       debug,    ERR_DEBUG)
+nasm_err_helpers(void,       note,     ERR_NOTE)
+nasm_err_helpers(void,       warn,     ERR_WARNING)
+nasm_err_helpers(void,       nonfatal, ERR_NONFATAL)
+nasm_err_helpers(fatal_func, fatal,    ERR_FATAL)
+nasm_err_helpers(fatal_func, panic,    ERR_PANIC)
 
 fatal_func nasm_panic_from_macro(const char *file, int line)
 {
@@ -162,9 +124,6 @@ fatal_func nasm_assert_failed(const char *file, int line, const char *msg)
 {
 	nasm_panic("assertion %s failed at %s:%d", msg, file, line);
 }
-
-#undef nasm_error_generator
-#undef nasm_error_generatorf
 
 /*
  * This is called when processing a -w or -W option, or a warning directive.

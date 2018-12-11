@@ -46,6 +46,8 @@
 void printf_func(2, 3) nasm_error(int severity, const char *fmt, ...);
 void printf_func(1, 2) nasm_debug(const char *fmt, ...);
 void printf_func(2, 3) nasm_debugf(int flags, const char *fmt, ...);
+void printf_func(1, 2) nasm_note(const char *fmt, ...);
+void printf_func(2, 3) nasm_notef(int flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_warn(const char *fmt, ...);
 void printf_func(2, 3) nasm_warnf(int flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_nonfatal(const char *fmt, ...);
