@@ -1929,6 +1929,7 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
     preproc->error_list_macros(severity);
 
     switch (severity & ERR_MASK) {
+    case ERR_NOTE:
     case ERR_DEBUG:
         /* no further action, by definition */
         break;
@@ -1965,6 +1966,8 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
         }
         exit(3);
         break;
+    default:
+        break;                  /* ??? */
     }
 }
 
