@@ -72,6 +72,7 @@ static inline vefunc nasm_set_verror(vefunc ve)
                                          * and dump core for reference */
 #define ERR_MASK        0x00000007      /* mask off the above codes */
 #define ERR_NOFILE      0x00000010      /* don't give source file name/line */
+#define ERR_HERE	0x00000020      /* point to a specific source location */
 #define ERR_USAGE       0x00000040      /* print a usage message */
 #define ERR_PASS1       0x00000080      /* only print this error on pass 1 */
 #define ERR_PASS2       0x00000100      /* only print this error on pass 2 */

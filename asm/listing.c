@@ -331,27 +331,27 @@ static void list_downlevel(int type)
     }
 }
 
-static void list_error(int severity, const char *pfx, const char *msg)
+static void list_error(int severity, const char *fmt, ...)
 {
-    size_t l1, l2;
     struct list_error *le;
-    char *p;
+    va_list ap;
+    int len;
 
     if (!listfp)
 	return;
 
-    l1 = strlen(pfx);
-    l2 = strlen(msg);
+    va_start(ap, fmt);
+    len = vsnprintf(NULL, 0, fmt, ap);
+    va_end(ap);
 
     /* sizeof(*le) already accounts for the final NULL */
-    le = nasm_malloc(sizeof(*le) + l1 + l2);
+    le = nasm_malloc(sizeof(*le) + len);
+
+    va_start(ap, fmt);
+    vsnprintf(le->str, len+1, fmt, ap);
+    va_end(ap);
 
     le->next = NULL;
-    p = le->str;
-    p = mempcpy(p, pfx, l1);
-    p = mempcpy(p, msg, l2);
-    *p = '\0';
-
     *listerr_tail = le;
     listerr_tail = &le->next;
 

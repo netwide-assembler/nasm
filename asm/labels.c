@@ -506,17 +506,18 @@ void define_label(const char *label, int32_t segment,
             nasm_error(ERR_NONFATAL,
                        "label `%s' inconsistently redefined",
                        lptr->defn.label);
-            noteflags = ERR_NOTE;
+            noteflags = ERR_NOTE|ERR_HERE;
         } else {
             nasm_error(ERR_WARNING|WARN_LABEL_REDEF|ERR_PASS2,
                        "label `%s' redefined to an identical value",
                        lptr->defn.label);
-            noteflags = ERR_NOTE|WARN_LABEL_REDEF|ERR_PASS2;
+            noteflags = ERR_NOTE|ERR_HERE|WARN_LABEL_REDEF|ERR_PASS2;
         }
 
         src_get(&saved_line, &saved_fname);
         src_set(lptr->defn.def_line, lptr->defn.def_file);
-        nasm_error(noteflags, "label `%s' originally defined here", lptr->defn.label);
+        nasm_error(noteflags, "label `%s' originally defined",
+                   lptr->defn.label);
         src_set(saved_line, saved_fname);
     } else if (changed && pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
         /*
