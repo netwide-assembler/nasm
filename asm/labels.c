@@ -109,9 +109,11 @@ union label {                   /* actual label structures */
         int32_t subsection;     /* Available for ofmt->herelabel() */
         int64_t offset;
         int64_t size;
+        int64_t defined;        /* 0 if undefined, passn+1 for when defn seen */
         char *label, *mangled, *special;
+        const char *def_file;   /* Where defined */
+        int32_t def_line;
         enum label_type type, mangled_type;
-        bool defined;
     } defn;
     struct {
         int32_t movingon;
@@ -369,7 +371,7 @@ handle_herelabel(union label *lptr, int32_t *segment, int64_t *offset)
             location.offset = *offset;
         } else {
             /* Keep a separate offset for the new segment */
-            *offset  = switch_segment(newseg);
+            *offset = switch_segment(newseg);
         }
     }
 }
@@ -433,6 +435,13 @@ void define_label(const char *label, int32_t segment,
     union label *lptr;
     bool created, changed;
     int64_t size;
+    int64_t lastdef;
+
+    /*
+     * The backend may invoke this before pass 1, so treat that as
+     * a special "pass".
+     */
+    const int64_t lpass = pass0 + 1;
 
     /*
      * Phase errors here can be one of two types: a new label appears,
@@ -441,17 +450,26 @@ void define_label(const char *label, int32_t segment,
      */
     lptr = find_label(label, true, &created);
 
+    lastdef = lptr->defn.defined;
+
     if (segment) {
         /* We are actually defining this label */
-        if (lptr->defn.type == LBL_EXTERN) /* auto-promote EXTERN to GLOBAL */
+        if (lptr->defn.type == LBL_EXTERN) {
+            /* auto-promote EXTERN to GLOBAL */
             lptr->defn.type = LBL_GLOBAL;
+            lastdef = 0; /* We are "re-creating" this label */
+        }
     } else {
         /* It's a pseudo-segment (extern, common) */
         segment = lptr->defn.segment ? lptr->defn.segment : seg_alloc();
     }
 
-    if (lptr->defn.defined || lptr->defn.type == LBL_BACKEND) {
-        /* We have seen this on at least one previous pass */
+    if (lastdef || lptr->defn.type == LBL_BACKEND) {
+        /*
+         * We have seen this on at least one previous pass, or
+         * potentially earlier in this same pass (in which case we
+         * will probably error out further down.)
+         */
         mangle_label_name(lptr);
         handle_herelabel(lptr, &segment, &offset);
     }
@@ -469,27 +487,51 @@ void define_label(const char *label, int32_t segment,
         size = 0;               /* This is a hack... */
     }
 
-    changed = created || !lptr->defn.defined ||
+    changed = created || !lastdef ||
         lptr->defn.segment != segment ||
-        lptr->defn.offset != offset || lptr->defn.size != size;
+        lptr->defn.offset != offset ||
+        lptr->defn.size != size;
     global_offset_changed += changed;
 
-    /*
-     * This probably should be ERR_NONFATAL, but not quite yet.  As a
-     * special case, LBL_SPECIAL symbols are allowed to be changed
-     * even during the last pass.
-     */
-    if (changed && pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
-        nasm_warn("label `%s' %s during code generation",
-                  lptr->defn.label, created ? "defined" : "changed");
+    if (changed) {
+        if (lastdef == lpass) {
+            int32_t saved_line = 0;
+            const char *saved_fname = NULL;
+
+            /*
+             * Defined elsewhere in the program, seen in this pass.
+             */
+            nasm_error(ERR_NONFATAL,
+                       "label `%s' inconsistently redefined",
+                       lptr->defn.label);
+
+            src_get(&saved_line, &saved_fname);
+            src_set(lptr->defn.def_line, lptr->defn.def_file);
+            nasm_error(ERR_NOTE, "label `%s' originally defined here",
+                       lptr->defn.label);
+            src_set(saved_line, saved_fname);
+        } else if (pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
+            /*
+             * This probably should be ERR_NONFATAL, but not quite yet.  As a
+             * special case, LBL_SPECIAL symbols are allowed to be changed
+             * even during the last pass.
+             */
+            nasm_warn("label `%s' %s during code generation",
+                      lptr->defn.label,
+                      created ? "defined" : "changed");
+        }
     }
 
     lptr->defn.segment = segment;
     lptr->defn.offset  = offset;
     lptr->defn.size    = size;
-    lptr->defn.defined = true;
+    lptr->defn.defined = lpass;
 
-    out_symdef(lptr);
+    if (changed || lastdef != lpass)
+        src_get(&lptr->defn.def_line, &lptr->defn.def_file);
+
+    if (lastdef != lpass)
+        out_symdef(lptr);
 }
 
 /*

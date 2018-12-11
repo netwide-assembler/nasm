@@ -73,8 +73,9 @@ static inline vefunc nasm_set_verror(vefunc ve)
  */
 
 #define ERR_DEBUG		0x00000000	/* put out debugging message */
-#define ERR_WARNING		0x00000001	/* warn only: no further action */
-#define ERR_NONFATAL		0x00000002	/* terminate assembly after phase */
+#define ERR_NOTE		0x00000001	/* additional error information */
+#define ERR_WARNING		0x00000002	/* warn only: no further action */
+#define ERR_NONFATAL		0x00000003	/* terminate assembly after phase */
 #define ERR_FATAL		0x00000006	/* instantly fatal: exit with error */
 #define ERR_PANIC		0x00000007	/* internal error: panic instantly
 						 * and dump core for reference */
