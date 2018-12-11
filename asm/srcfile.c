@@ -44,8 +44,7 @@
 #include "hashtbl.h"
 #include "srcfile.h"
 
-static const char *file_name = NULL;
-static int32_t line_number = 0;
+struct src_location _src_here;
 
 static struct hash_table filename_hash;
 
@@ -79,16 +78,9 @@ const char *src_set_fname(const char *newname)
         }
     }
 
-    oldname = file_name;
-    file_name = newname;
+    oldname = _src_here.filename;
+    _src_here.filename = newname;
     return oldname;
-}
-
-int32_t src_set_linnum(int32_t newline)
-{
-    int32_t oldline = line_number;
-    line_number = newline;
-    return oldline;
 }
 
 void src_set(int32_t line, const char *fname)
@@ -97,27 +89,12 @@ void src_set(int32_t line, const char *fname)
     src_set_linnum(line);
 }
 
-const char *src_get_fname(void)
+struct src_location src_update(struct src_location whence)
 {
-    return file_name;
-}
+    struct src_location oldhere = _src_here;
 
-int32_t src_get_linnum(void)
-{
-    return line_number;
-}
+    src_set_fname(whence.filename);
+    src_set_linnum(whence.lineno);
 
-int32_t src_get(int32_t *xline, const char **xname)
-{
-    const char *xn = *xname;
-    int32_t xl = *xline;
-
-    *xline = line_number;
-    *xname = file_name;
-
-    /* XXX: Is the strcmp() really needed here? */
-    if (!file_name || !xn || (xn != file_name && strcmp(xn, file_name)))
-        return -2;
-    else
-        return line_number - xl;
+    return oldhere;
 }
