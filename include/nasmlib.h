@@ -248,24 +248,8 @@ int bsi(const char *string, const char **array, int size);
 int bsii(const char *string, const char **array, int size);
 
 /*
- * These functions are used to keep track of the source code file and name.
+ * Convenient string processing helper routines
  */
-void src_init(void);
-void src_free(void);
-const char *src_set_fname(const char *newname);
-const char *src_get_fname(void);
-int32_t src_set_linnum(int32_t newline);
-int32_t src_get_linnum(void);
-/* Can be used when there is no need for the old information */
-void src_set(int32_t line, const char *filename);
-/*
- * src_get gets both the source file name and line.
- * It is also used if you maintain private status about the source location
- * It return 0 if the information was the same as the last time you
- * checked, -2 if the name changed and (new-old) if just the line changed.
- */
-int32_t src_get(int32_t *xline, const char **xname);
-
 char *nasm_skip_spaces(const char *p);
 char *nasm_skip_word(const char *p);
 char *nasm_zap_spaces_fwd(char *p);

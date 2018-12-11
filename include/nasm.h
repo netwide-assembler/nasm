@@ -52,6 +52,7 @@
 #include "labels.h"     /* For enum mangle_index, enum label_type */
 #include "opflags.h"
 #include "regs.h"
+#include "srcfile.h"
 
 /* Time stamp for the official start of compilation */
 struct compile_time {

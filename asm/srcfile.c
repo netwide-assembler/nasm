@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -42,6 +42,7 @@
 
 #include "nasmlib.h"
 #include "hashtbl.h"
+#include "srcfile.h"
 
 static const char *file_name = NULL;
 static int32_t line_number = 0;
