@@ -545,8 +545,6 @@ void backend_label(const char *label, int32_t segment, int64_t offset)
 
 int init_labels(void)
 {
-    hash_init(&ltab, HASH_LARGE);
-
     ldata = lfree = nasm_malloc(LBLK_SIZE);
     init_block(lfree);
 

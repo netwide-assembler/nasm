@@ -623,12 +623,13 @@ static void free_mmacro(MMacro * m)
  */
 static void free_smacro_table(struct hash_table *smt)
 {
-    SMacro *s, *tmp;
-    const char *key;
-    struct hash_tbl_node *it = NULL;
+    struct hash_iterator it;
+    const struct hash_node *np;
 
-    while ((s = hash_iterate(smt, &it, &key)) != NULL) {
-        nasm_free((void *)key);
+    hash_for_each(smt, it, np) {
+        SMacro *tmp;
+        SMacro *s = np->data;
+        nasm_free((void *)np->key);
         list_for_each_safe(s, tmp, s) {
             nasm_free(s->name);
             free_tlist(s->expansion);
@@ -640,14 +641,14 @@ static void free_smacro_table(struct hash_table *smt)
 
 static void free_mmacro_table(struct hash_table *mmt)
 {
-    MMacro *m, *tmp;
-    const char *key;
-    struct hash_tbl_node *it = NULL;
+    struct hash_iterator it;
+    const struct hash_node *np;
 
-    it = NULL;
-    while ((m = hash_iterate(mmt, &it, &key)) != NULL) {
-        nasm_free((void *)key);
-        list_for_each_safe(m ,tmp, m)
+    hash_for_each(mmt, it, np) {
+        MMacro *tmp;
+        MMacro *m = np->data;
+        nasm_free((void *)np->key);
+        list_for_each_safe(m, tmp, m)
             free_mmacro(m);
     }
     hash_free(mmt);
@@ -664,8 +665,6 @@ static void free_macros(void)
  */
 static void init_macros(void)
 {
-    hash_init(&smacros, HASH_LARGE);
-    hash_init(&mmacros, HASH_LARGE);
 }
 
 /*
@@ -691,12 +690,14 @@ hash_findi_add(struct hash_table *hash, const char *str)
     struct hash_insert hi;
     void **r;
     char *strx;
+    size_t l = strlen(str) + 1;
 
-    r = hash_findi(hash, str, &hi);
+    r = hash_findib(hash, str, l, &hi);
     if (r)
         return r;
 
-    strx = nasm_strdup(str);    /* Use a more efficient allocator here? */
+    strx = nasm_malloc(l);  /* Use a more efficient allocator here? */
+    memcpy(strx, str, l);
     return hash_add(&hi, strx, NULL);
 }
 
@@ -2624,9 +2625,8 @@ static int do_directive(Token *tline, char **output)
         }
 
         if (i == PP_PUSH) {
-            ctx = nasm_malloc(sizeof(Context));
+            nasm_new(ctx);
             ctx->next = cstk;
-            hash_init(&ctx->localmac, HASH_SMALL);
             ctx->name = p;
             ctx->number = unique++;
             cstk = ctx;
@@ -4932,7 +4932,6 @@ pp_reset(const char *file, int apass, struct strlist *dep_list)
 
 static void pp_init(void)
 {
-    hash_init(&FileHash, HASH_MEDIUM);
 }
 
 static char *pp_getline(void)

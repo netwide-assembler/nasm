@@ -187,3 +187,25 @@ uint64_t crc64i(uint64_t crc, const char *str)
 
     return crc;
 }
+
+uint64_t crc64b(uint64_t crc, const void *data, size_t len)
+{
+    const uint8_t *str = data;
+
+    while (len--) {
+	crc = crc64_tab[(uint8_t)crc ^ *str++] ^ (crc >> 8);
+    }
+
+    return crc;
+}
+
+uint64_t crc64ib(uint64_t crc, const void *data, size_t len)
+{
+    const uint8_t *str = data;
+
+    while (len--) {
+	crc = crc64_tab[(uint8_t)crc ^ nasm_tolower(*str++)] ^ (crc >> 8);
+    }
+
+    return crc;
+}

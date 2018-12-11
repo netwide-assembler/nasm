@@ -363,7 +363,6 @@ static void macho_init(void)
     strs = saa_init(1L);
 
     section_by_index = raa_init();
-    hash_init(&section_by_name, HASH_MEDIUM);
 
     /* string table starts with a zero byte so index 0 is an empty string */
     saa_wbytes(strs, zero_buffer, 1);

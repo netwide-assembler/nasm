@@ -44,7 +44,7 @@
 
 struct strlist_entry {
 	struct strlist_entry	*next;
-	size_t			len;
+	size_t			size;
 	char			str[1];
 };
 

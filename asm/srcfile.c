@@ -50,7 +50,6 @@ static struct hash_table filename_hash;
 
 void src_init(void)
 {
-    hash_init(&filename_hash, HASH_MEDIUM);
 }
 
 void src_free(void)

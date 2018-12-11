@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -43,43 +43,58 @@
 #include <stddef.h>
 #include "nasmlib.h"
 
-struct hash_tbl_node {
+struct hash_node {
     uint64_t hash;
-    const char *key;
+    const void *key;
+    size_t keylen;
     void *data;
 };
 
 struct hash_table {
-    struct hash_tbl_node *table;
+    struct hash_node *table;
     size_t load;
     size_t size;
     size_t max_load;
 };
 
 struct hash_insert {
-    uint64_t hash;
     struct hash_table *head;
-    struct hash_tbl_node *where;
+    struct hash_node *where;
+    struct hash_node node;
+};
+
+struct hash_iterator {
+    const struct hash_table *head;
+    const struct hash_node *next;
 };
 
 uint64_t crc64(uint64_t crc, const char *string);
 uint64_t crc64i(uint64_t crc, const char *string);
+uint64_t crc64b(uint64_t crc, const void *data, size_t len);
+uint64_t crc64ib(uint64_t crc, const void *data, size_t len);
 #define CRC64_INIT UINT64_C(0xffffffffffffffff)
 
-/* Some reasonable initial sizes... */
-#define HASH_SMALL	4
-#define HASH_MEDIUM	16
-#define HASH_LARGE	256
-
-void hash_init(struct hash_table *head, size_t size);
 void **hash_find(struct hash_table *head, const char *string,
+		struct hash_insert *insert);
+void **hash_findb(struct hash_table *head, const void *key, size_t keylen,
 		struct hash_insert *insert);
 void **hash_findi(struct hash_table *head, const char *string,
 		struct hash_insert *insert);
-void **hash_add(struct hash_insert *insert, const char *string, void *data);
-void *hash_iterate(const struct hash_table *head,
-		   struct hash_tbl_node **iterator,
-		   const char **key);
+void **hash_findib(struct hash_table *head, const void *key, size_t keylen,
+                   struct hash_insert *insert);
+void **hash_add(struct hash_insert *insert, const void *key, void *data);
+static inline void hash_iterator_init(const struct hash_table *head,
+                                      struct hash_iterator *iterator)
+{
+    iterator->head = head;
+    iterator->next = head->table;
+}
+const struct hash_node *hash_iterate(struct hash_iterator *iterator);
+
+#define hash_for_each(_head,_it,_np) \
+    for (hash_iterator_init((_head), &(_it)), (_np) = hash_iterate(&(_it)) ; \
+         (_np) ; (_np) = hash_iterate(&(_it)))
+
 void hash_free(struct hash_table *head);
 void hash_free_all(struct hash_table *head, bool free_keys);
 

@@ -177,7 +177,6 @@ static void cv8_init(void)
 
     cv8_state.source_files = NULL;
     cv8_state.source_files_tail = &cv8_state.source_files;
-    hash_init(&cv8_state.file_hash, HASH_MEDIUM);
 
     cv8_state.num_files = 0;
     cv8_state.total_filename_len = 0;

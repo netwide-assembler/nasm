@@ -56,7 +56,6 @@ struct strtbl_entry {
 void strtbl_init(struct nasm_strtbl *tbl)
 {
     tbl->size = 0;
-    hash_init(&tbl->hash, HASH_LARGE);
     strtbl_add(tbl, "");       /* Index 0 is always an empty string */
 }
 
@@ -70,14 +69,13 @@ size_t strtbl_add(struct nasm_strtbl *tbl, const char *str)
     void **sep;
     struct strtbl_entry *se;
     struct hash_insert hi;
+    size_t bytes = strlen(str) + 1;
 
-    sep = hash_find(&tbl->hash, str, &hi);
+    sep = hash_findb(&tbl->hash, str, bytes, &hi);
     if (sep) {
         se = *sep;
     } else {
-        size_t bytes = strlen(str) + 1;
-
-        se = nasm_malloc(sizeof(struct strtbl_entry)-1+bytes);
+        nasm_new(se);
         se->index = tbl->size;
         tbl->size += bytes;
         se->bytes = bytes;
@@ -107,11 +105,13 @@ size_t strtbl_find(struct nasm_strtbl *tbl, const char *str)
 void *strtbl_generate(const struct nasm_strtbl *tbl)
 {
     char *buf = nasm_malloc(strtbl_size(tbl));
-    struct hash_tbl_node *iter = NULL;
-    struct strtbl_entry *se;
+    struct hash_iterator it;
+    const struct hash_node *np;
 
-    while ((se = hash_iterate(&tbl->hash, &iter, NULL)))
+    hash_for_each(&tbl->hash, it, np) {
+        struct strtbl_entry *se = np->data;
         memcpy(buf + se->index, se->str, se->bytes);
+    }
 
     return buf;
 }

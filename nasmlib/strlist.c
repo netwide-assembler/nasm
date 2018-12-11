@@ -43,7 +43,6 @@
 struct strlist *strlist_alloc(void)
 {
 	struct strlist *list = nasm_zalloc(sizeof(*list));
-	hash_init(&list->hash, HASH_MEDIUM);
 	list->tailp = &list->head;
 	return list;
 }
@@ -56,20 +55,19 @@ bool strlist_add(struct strlist *list, const char *str)
 {
 	struct strlist_entry *e;
 	struct hash_insert hi;
-	size_t len;
+	size_t size;
 
 	if (!list)
 		return false;
 
-	if (hash_find(&list->hash, str, &hi))
+	size = strlen(str) + 1;
+	if (hash_findb(&list->hash, str, size, &hi))
 		return false;
 
-	len = strlen(str);
-
 	/* Structure already has char[1] as EOS */
-	e = nasm_zalloc(sizeof(*e) + len);
-	e->len = len;
-	memcpy(e->str, str, len + 1);
+	e = nasm_zalloc(sizeof(*e) - 1 + size);
+	e->size = size;
+	memcpy(e->str, str, size);
 
 	*list->tailp = e;
 	list->tailp = &e->next;
