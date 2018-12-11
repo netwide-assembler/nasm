@@ -501,14 +501,13 @@ void define_label(const char *label, int32_t segment,
             /*
              * Defined elsewhere in the program, seen in this pass.
              */
-            nasm_error(ERR_NONFATAL,
-                       "label `%s' inconsistently redefined",
-                       lptr->defn.label);
+            nasm_nonfatal("label `%s' inconsistently redefined",
+                          lptr->defn.label);
 
             src_get(&saved_line, &saved_fname);
             src_set(lptr->defn.def_line, lptr->defn.def_file);
-            nasm_error(ERR_NOTE, "label `%s' originally defined here",
-                       lptr->defn.label);
+            nasm_note("label `%s' originally defined here",
+                      lptr->defn.label);
             src_set(saved_line, saved_fname);
         } else if (pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
             /*
