@@ -78,11 +78,19 @@ static void parse_cmdline(int, char **, int);
 static void assemble_file(const char *, struct strlist *);
 static bool is_suppressed_warning(int severity);
 static bool skip_this_pass(int severity);
-static void nasm_verror_gnu(int severity, const char *fmt, va_list args);
-static void nasm_verror_vc(int severity, const char *fmt, va_list args);
-static void nasm_verror_common(int severity, const char *fmt, va_list args);
+static void nasm_verror_asm(int severity, const char *fmt, va_list args);
 static void usage(void);
 static void help(char xopt);
+
+struct error_format {
+    const char *beforeline;     /* Before line number, if present */
+    const char *afterline;      /* After line number, if present */
+    const char *beforemsg;      /* Before actual message */
+};
+
+static const struct error_format errfmt_gnu  = { ":", "",  ": "  };
+static const struct error_format errfmt_msvc = { "(", ")", " : " };
+static const struct error_format *errfmt = &errfmt_gnu;
 
 static bool using_debug_info, opt_verbose_info;
 static const char *debug_format;
@@ -451,7 +459,7 @@ int main(int argc, char **argv)
 
     pass0 = 0;
     want_usage = terminate_after_phase = false;
-    nasm_set_verror(nasm_verror_gnu);
+    nasm_set_verror(nasm_verror_asm);
 
     error_file = stderr;
 
@@ -488,9 +496,7 @@ int main(int argc, char **argv)
     } else {
         dfmt = dfmt_find(ofmt, debug_format);
         if (!dfmt) {
-            nasm_fatalf(ERR_NOFILE | ERR_USAGE,
-                       "unrecognized debug format `%s' for"
-                       " output format `%s'",
+            nasm_fatalf(ERR_USAGE, "unrecognized debug format `%s' for output format `%s'",
                        debug_format, ofmt->shortname);
         }
     }
@@ -553,9 +559,7 @@ int main(int argc, char **argv)
             if (outname) {
                 ofile = nasm_open_write(outname, NF_TEXT);
                 if (!ofile)
-                    nasm_fatalf(ERR_NOFILE,
-                                "unable to open output file `%s'",
-                                outname);
+                    nasm_fatal("unable to open output file `%s'", outname);
             } else
                 ofile = NULL;
 
@@ -891,9 +895,7 @@ static bool process_arg(char *p, char *q, int pass)
             if (pass == 1) {
                 ofmt = ofmt_find(param, &ofmt_alias);
                 if (!ofmt) {
-                    nasm_fatalf(ERR_NOFILE | ERR_USAGE,
-                               "unrecognised output format `%s' - "
-                               "use -hf for a list", param);
+                    nasm_fatalf(ERR_USAGE, "unrecognised output format `%s' - use -hf for a list", param);
                 }
             }
             break;
@@ -986,14 +988,12 @@ static bool process_arg(char *p, char *q, int pass)
 
         case 'X':       /* specify error reporting format */
             if (pass == 1) {
-                if (nasm_stricmp("vc", param) == 0)
-                    nasm_set_verror(nasm_verror_vc);
-                else if (nasm_stricmp("gnu", param) == 0)
-                    nasm_set_verror(nasm_verror_gnu);
+                if (!nasm_stricmp("vc", param) || !nasm_stricmp("msvc", param) || !nasm_stricmp("ms", param))
+                    errfmt = &errfmt_msvc;
+                else if (!nasm_stricmp("gnu", param) || !nasm_stricmp("gcc", param))
+                    errfmt = &errfmt_gnu;
                 else
-                    nasm_fatalf(ERR_NOFILE | ERR_USAGE,
-                                "unrecognized error reporting format `%s'",
-                                param);
+                    nasm_fatalf(ERR_USAGE, "unrecognized error reporting format `%s'", param);
             }
             break;
 
@@ -1384,7 +1384,7 @@ static void parse_cmdline(int argc, char **argv, int pass)
         return;
 
     if (!inname)
-        nasm_fatalf(ERR_NOFILE | ERR_USAGE, "no input file specified");
+        nasm_fatalf(ERR_USAGE, "no input file specified");
 
     else if ((errname && !strcmp(inname, errname)) ||
              (outname && !strcmp(inname, outname)) ||
@@ -1396,9 +1396,7 @@ static void parse_cmdline(int argc, char **argv, int pass)
         error_file = nasm_open_write(errname, NF_TEXT);
         if (!error_file) {
             error_file = stderr;        /* Revert to default! */
-            nasm_fatalf(ERR_NOFILE | ERR_USAGE,
-                       "cannot open file `%s' for error messages",
-                       errname);
+            nasm_fatalf(ERR_USAGE, "cannot open file `%s' for error messages", errname);
         }
     }
 }
@@ -1700,85 +1698,6 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
     }
 }
 
-/**
- * gnu style error reporting
- * This function prints an error message to error_file in the
- * style used by GNU. An example would be:
- * file.asm:50: error: blah blah blah
- * where file.asm is the name of the file, 50 is the line number on
- * which the error occurs (or is detected) and "error:" is one of
- * the possible optional diagnostics -- it can be "error" or "warning"
- * or something else.  Finally the line terminates with the actual
- * error message.
- *
- * @param severity the severity of the warning or error
- * @param fmt the printf style format string
- */
-static void nasm_verror_gnu(int severity, const char *fmt, va_list ap)
-{
-    const char *currentfile = NULL;
-    int32_t lineno = 0;
-
-    if (is_suppressed_warning(severity))
-        return;
-
-    if (!(severity & ERR_NOFILE)) {
-	src_get(&lineno, &currentfile);
-        if (!currentfile) {
-            currentfile = inname && inname[0] ?
-		    inname : outname && outname[0] ?
-		    outname : NULL;
-            lineno = 0;
-        }
-    }
-
-    if (!skip_this_pass(severity)) {
-        if (!lineno)
-            fprintf(error_file, "%s: ", currentfile ? currentfile : "nasm");
-        else
-            fprintf(error_file, "%s:%"PRId32": ", currentfile, lineno);
-    }
-
-    nasm_verror_common(severity, fmt, ap);
-}
-
-/**
- * MS style error reporting
- * This function prints an error message to error_file in the
- * style used by Visual C and some other Microsoft tools. An example
- * would be:
- * file.asm(50) : error: blah blah blah
- * where file.asm is the name of the file, 50 is the line number on
- * which the error occurs (or is detected) and "error:" is one of
- * the possible optional diagnostics -- it can be "error" or "warning"
- * or something else.  Finally the line terminates with the actual
- * error message.
- *
- * @param severity the severity of the warning or error
- * @param fmt the printf style format string
- */
-static void nasm_verror_vc(int severity, const char *fmt, va_list ap)
-{
-    const char *currentfile = NULL;
-    int32_t lineno = 0;
-
-    if (is_suppressed_warning(severity))
-        return;
-
-    if (!(severity & ERR_NOFILE))
-        src_get(&lineno, &currentfile);
-
-    if (!skip_this_pass(severity)) {
-        if (lineno) {
-	    fprintf(error_file, "%s(%"PRId32") : ", currentfile, lineno);
-	} else {
-            fprintf(error_file , "%s : ", currentfile ? currentfile : "nasm");
-	}
-    }
-
-    nasm_verror_common(severity, fmt, ap);
-}
-
 /*
  * check to see if this is a suppressable warning
  */
@@ -1845,12 +1764,30 @@ static bool skip_this_pass(int severity)
  * @param severity the severity of the warning or error
  * @param fmt the printf style format string
  */
-static void nasm_verror_common(int severity, const char *fmt, va_list args)
+static void nasm_verror_asm(int severity, const char *fmt, va_list args)
 {
     char msg[1024];
     const char *pfx;
     bool warn_is_err = warning_is_error(severity);
     bool warn_is_other = WARN_IDX(severity) == ERR_WARN_OTHER;
+    const char *currentfile = NULL;
+    int32_t lineno = 0;
+
+    if (is_suppressed_warning(severity))
+        return;
+
+    if (!(severity & ERR_NOFILE)) {
+	src_get(&lineno, &currentfile);
+        if (!currentfile) {
+            currentfile = currentfile ? currentfile :
+                inname && inname[0] ? inname :
+                outname && outname[0] ? outname :
+                NULL;
+            lineno = 0;
+        }
+    }
+    if (!currentfile)
+        currentfile = "nasm";
 
     switch (severity & (ERR_MASK|ERR_NO_SEVERITY)) {
     case ERR_NOTE:
@@ -1887,8 +1824,16 @@ static void nasm_verror_common(int severity, const char *fmt, va_list args)
                  warnings[WARN_IDX(severity)].name);
     }
 
-    if (!skip_this_pass(severity))
-	fprintf(error_file, "%s%s\n", pfx, msg);
+    if (!skip_this_pass(severity)) {
+        if (!lineno) {
+            fprintf(error_file, "%s%s%s%s\n",
+                    currentfile, errfmt->beforemsg, pfx, msg);
+        } else {
+            fprintf(error_file, "%s%s%"PRId32"%s%s%s%s\n",
+                    currentfile, errfmt->beforeline, lineno,
+                    errfmt->afterline, errfmt->beforemsg, pfx, msg);
+        }
+    }
 
     /* Are we recursing from error_list_macros? */
     if (severity & ERR_PP_LISTMACRO)
