@@ -193,7 +193,7 @@ nasm_set_limit(const char *limit, const char *valstr)
     }
     if (i > LIMIT_MAX) {
         if (passn == 0)
-            errlevel = ERR_WARNING|ERR_NOFILE|ERR_USAGE;
+            errlevel = ERR_WARNING|ERR_USAGE;
         else
             errlevel = ERR_WARNING|ERR_PASS1|ERR_WARN_UNKNOWN_PRAGMA;
         nasm_error(errlevel, "unknown limit: `%s'", limit);
@@ -206,7 +206,7 @@ nasm_set_limit(const char *limit, const char *valstr)
         val = readnum(valstr, &rn_error);
         if (rn_error || val < 0) {
             if (passn == 0)
-                errlevel = ERR_WARNING|ERR_NOFILE|ERR_USAGE;
+                errlevel = ERR_WARNING|ERR_USAGE;
             else
                 errlevel = ERR_WARNING|ERR_PASS1|ERR_WARN_BAD_PRAGMA;
             nasm_error(errlevel, "invalid limit value: `%s'", limit);
@@ -352,8 +352,7 @@ static void emit_dependencies(struct strlist *list)
     if (depend_file && strcmp(depend_file, "-")) {
         deps = nasm_open_write(depend_file, NF_TEXT);
         if (!deps) {
-            nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
-                       "unable to write dependency file `%s'", depend_file);
+            nasm_nonfatal("unable to write dependency file `%s'", depend_file);
             return;
         }
     } else {
@@ -525,9 +524,7 @@ int main(int argc, char **argv)
         outname = filename_set_extension(inname, ofmt->extension);
         if (!strcmp(outname, inname)) {
             outname = "nasm.out";
-            nasm_error(ERR_WARNING,
-                       "default output file same as input, using `%s' for output\n",
-                       outname);
+            nasm_warn("default output file same as input, using `%s' for output\n", outname);
         }
     }
 
@@ -601,8 +598,7 @@ int main(int argc, char **argv)
     if (operating_mode & OP_NORMAL) {
         ofile = nasm_open_write(outname, (ofmt->flags & OFMT_TEXT) ? NF_TEXT : NF_BINARY);
         if (!ofile)
-            nasm_fatalf(ERR_NOFILE,
-                       "unable to open output file `%s'", outname);
+            nasm_fatal("unable to open output file `%s'", outname);
 
         ofmt->init();
         dfmt->init();
@@ -613,11 +609,8 @@ int main(int argc, char **argv)
             ofmt->cleanup();
             cleanup_labels();
             fflush(ofile);
-            if (ferror(ofile)) {
-                nasm_error(ERR_NONFATAL|ERR_NOFILE,
-                           "write error on output file `%s'", outname);
-                terminate_after_phase = true;
-            }
+            if (ferror(ofile))
+                nasm_nonfatal("write error on output file `%s'", outname);
         }
 
         if (ofile) {
@@ -657,8 +650,7 @@ static char *get_param(char *p, char *q, bool *advance)
         *advance = true;
         return q;
     }
-    nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                 "option `-%c' requires an argument", p[1]);
+    nasm_nonfatalf(ERR_USAGE, "option `-%c' requires an argument", p[1]);
     return NULL;
 }
 
@@ -1051,8 +1043,7 @@ static bool process_arg(char *p, char *q, int pass)
         case 'W':
             if (pass == 2) {
                 if (!set_warning_status(param)) {
-                    nasm_error(ERR_WARNING|ERR_NOFILE|ERR_WARN_UNK_WARNING,
-			       "unknown warning option: %s", param);
+                    nasm_warnf(ERR_WARN_UNK_WARNING, "unknown warning option: %s", param);
                 }
             }
         break;
@@ -1107,14 +1098,12 @@ static bool process_arg(char *p, char *q, int pass)
                     /* handled in pass 1 */
                     break;
                 default:
-                    nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
-                               "unknown dependency option `-M%c'", p[2]);
+                    nasm_nonfatalf(ERR_USAGE, "unknown dependency option `-M%c'", p[2]);
                     break;
                 }
             }
             if (advance && (!q || !q[0])) {
-                nasm_error(ERR_NONFATAL|ERR_NOFILE|ERR_USAGE,
-                           "option `-M%c' requires a parameter", p[2]);
+                nasm_nonfatalf(ERR_USAGE, "option `-M%c' requires a parameter", p[2]);
                 break;
             }
             break;
@@ -1150,8 +1139,7 @@ static bool process_arg(char *p, char *q, int pass)
                 }
 
                 if (!tx->label) {
-                    nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                               "unrecognized option `--%s'", p);
+                    nasm_nonfatalf(ERR_USAGE, "unrecognized option `--%s'", p);
                 }
 
                 eqsave = param = strchr(p+olen, '=');
@@ -1166,17 +1154,12 @@ static bool process_arg(char *p, char *q, int pass)
 
                     /* Note: a null string is a valid parameter */
                     if (!param) {
-                        nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                                   "option `--%s' requires an argument",
-                                   p);
+                        nasm_nonfatalf(ERR_USAGE, "option `--%s' requires an argument", p);
                         break;
                     }
                 } else {
                     if (param) {
-                        nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                                   "option `--%s' does not take an argument",
-                                   p);
-
+                        nasm_nonfatalf(ERR_USAGE, "option `--%s' does not take an argument", p);
                     }
                 }
 
@@ -1224,8 +1207,7 @@ static bool process_arg(char *p, char *q, int pass)
             }
 
         default:
-            nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                       "unrecognised option `-%c'", p[1]);
+            nasm_nonfatalf(ERR_USAGE, "unrecognised option `-%c'", p[1]);
             break;
         }
     } else if (pass == 2) {
@@ -1385,9 +1367,9 @@ static void parse_cmdline(int argc, char **argv, int pass)
                 if (rfile) {
                     process_respfile(rfile, pass);
                     fclose(rfile);
-                } else
-                    nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
-                                 "unable to open response file `%s'", p);
+                } else {
+                    nasm_nonfatalf(ERR_USAGE, "unable to open response file `%s'", p);
+                }
             }
         } else
             advance = process_arg(argv[0], argc > 1 ? argv[1] : NULL, pass);
@@ -1522,7 +1504,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
             /*  forw_ref */
             if (output_ins.opcode == I_EQU) {
                 if (!output_ins.label) {
-                    nasm_error(ERR_NONFATAL, "EQU not preceded by label");
+                    nasm_nonfatal("EQU not preceded by label");
                 } else if (output_ins.operands == 1 &&
                            (output_ins.oprs[0].type & IMMEDIATE) &&
                            output_ins.oprs[0].wrt == NO_SEG) {
@@ -1541,7 +1523,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                                  output_ins.oprs[0].offset | SEG_ABS,
                                  output_ins.oprs[1].offset, false);
                 } else {
-                    nasm_error(ERR_NONFATAL, "bad syntax for EQU");
+                    nasm_nonfatal("bad syntax for EQU");
                 }
             } else {        /* instruction isn't an EQU */
                 int32_t n;
@@ -1661,13 +1643,11 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         if (global_offset_changed && !terminate_after_phase) {
             switch (pass0) {
             case 1:
-                nasm_error(ERR_WARNING|ERR_WARN_PHASE,
-                           "phase error during stabilization pass, hoping for the best");
+                nasm_warnf(ERR_WARN_PHASE, "phase error during stabilization pass, hoping for the best");
                 break;
 
             case 2:
-                nasm_error(ERR_NONFATAL,
-                           "phase error during code generation pass");
+                nasm_nonfatal("phase error during code generation pass");
                 break;
 
             default:
@@ -1704,11 +1684,9 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
             /* We get here if the labels don't converge
              * Example: FOO equ FOO + 1
              */
-             nasm_error(ERR_NONFATAL,
-                          "Can't find valid values for all labels "
+            nasm_nonfatal("Can't find valid values for all labels "
                           "after %"PRId64" passes, giving up.", passn);
-             nasm_error(ERR_NONFATAL,
-                        "Possible causes: recursive EQUs, macro abuse.");
+            nasm_note("Possible causes: recursive EQUs, macro abuse.");
              break;
         }
     }
