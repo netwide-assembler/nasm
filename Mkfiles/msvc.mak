@@ -101,7 +101,6 @@ LIBOBJ = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) \
 	macros\macros.$(O) \
 	\
 	output\outform.$(O) output\outlib.$(O) output\legacy.$(O) \
-	output\strtbl.$(O) \
 	output\nulldbg.$(O) output\nullout.$(O) \
 	output\outbin.$(O) output\outaout.$(O) output\outcoff.$(O) \
 	output\outelf.$(O) \

@@ -49,31 +49,35 @@ struct strlist *strlist_alloc(void)
 
 /*
  * Append a string to a string list if and only if it isn't
- * already there.  Return true if it was added.
+ * already there. If it was added, return the entry pointer.
  */
-bool strlist_add(struct strlist *list, const char *str)
+const struct strlist_entry *strlist_add(struct strlist *list, const char *str)
 {
 	struct strlist_entry *e;
 	struct hash_insert hi;
 	size_t size;
 
 	if (!list)
-		return false;
+		return NULL;
 
 	size = strlen(str) + 1;
 	if (hash_findb(&list->hash, str, size, &hi))
-		return false;
+		return NULL;
 
 	/* Structure already has char[1] as EOS */
-	e = nasm_zalloc(sizeof(*e) - 1 + size);
+	e = nasm_malloc(sizeof(*e) - 1 + size);
 	e->size = size;
+        e->offset = list->size;
+        e->next = NULL;
 	memcpy(e->str, str, size);
 
 	*list->tailp = e;
 	list->tailp = &e->next;
+	list->nstr++;
+	list->size += size;
 
 	hash_add(&hi, e->str, (void *)e);
-	return true;
+	return e;
 }
 
 /*
@@ -85,4 +89,36 @@ void strlist_free(struct strlist *list)
 		hash_free_all(&list->hash, false);
 		nasm_free(list);
 	}
+}
+
+/*
+ * Search the string list for an entry. If found, return the entry pointer.
+ * (This is basically the opposite of strlist_add_string()!)
+ */
+const struct strlist_entry *
+strlist_find(const struct strlist *list, const char *str)
+{
+	void **hf;
+	hf = hash_find((struct hash_table *)&list->hash, str, NULL);
+	return hf ? *hf : NULL;
+}
+
+/*
+ * Produce a linearized buffer containing the whole list, in order;
+ * The character "sep" is the separator between strings; this is
+ * typically either 0 or '\n'. strlist_size() will give the size of
+ * the returned buffer.
+ */
+void *strlist_linearize(const struct strlist *list, char sep)
+{
+	const struct strlist_entry *sl;
+	char *buf = nasm_malloc(list->size);
+	char *p = buf;
+	
+	strlist_for_each(sl, list) {
+		p = mempcpy(p, sl->str, sl->size);
+		p[-1] = sep;
+	}
+	
+	return buf;
 }

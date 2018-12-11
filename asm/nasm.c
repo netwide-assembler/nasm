@@ -349,7 +349,7 @@ static void emit_dependencies(struct strlist *list)
     int linepos, len;
     bool wmake = (quote_for_make == quote_for_wmake);
     const char *wrapstr, *nulltarget;
-    struct strlist_entry *l;
+    const struct strlist_entry *l;
 
     if (!list)
         return;
@@ -368,7 +368,7 @@ static void emit_dependencies(struct strlist *list)
     }
 
     linepos = fprintf(deps, "%s :", depend_target);
-    list_for_each(l, list->head) {
+    strlist_for_each(l, list) {
         char *file = quote_for_make(l->str);
         len = strlen(file);
         if (linepos + len > 62 && linepos > 1) {
@@ -381,7 +381,7 @@ static void emit_dependencies(struct strlist *list)
     }
     fprintf(deps, "\n\n");
 
-    list_for_each(l, list->head) {
+    strlist_for_each(l, list) {
         if (depend_emit_phony) {
             char *file = quote_for_make(l->str);
             fprintf(deps, "%s :\n%s\n", file, nulltarget);

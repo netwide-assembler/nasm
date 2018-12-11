@@ -1496,14 +1496,11 @@ enum incopen_mode {
 static FILE *inc_fopen_search(const char *file, char **slpath,
                               enum incopen_mode omode, enum file_flags fmode)
 {
-    const struct strlist_entry *ip = NULL;
+    const struct strlist_entry *ip = strlist_head(ipath_list);
     FILE *fp;
     const char *prefix = "";
     char *sp;
     bool found;
-
-    if (ipath_list)
-        ip = ipath_list->head;
 
     while (1) {
         sp = nasm_catfile(prefix, file);

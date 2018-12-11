@@ -1974,7 +1974,7 @@ static void obj_write_file(void)
      * Output file dependency information
      */
     if (!obj_nodepend && depend_list) {
-        list_for_each(depfile, depend_list->head) {
+        strlist_for_each(depfile, depend_list) {
             uint32_t ts;
 
             ts = obj_file_timestamp(depfile->str);

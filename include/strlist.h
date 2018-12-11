@@ -32,7 +32,7 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * strlist.h - simple linked list of strings
+ * strlist.h - list of unique, ordered strings
  */
 
 #ifndef NASM_STRLIST_H
@@ -44,18 +44,38 @@
 
 struct strlist_entry {
 	struct strlist_entry	*next;
+	size_t			offset;
 	size_t			size;
 	char			str[1];
 };
 
 struct strlist {
 	struct hash_table	hash;
-	struct strlist_entry	*head;
-	struct strlist_entry	**tailp;
+	struct strlist_entry	*head, **tailp;
+	size_t			nstr, size;
 };
+
+static inline const struct strlist_entry *
+strlist_head(const struct strlist *list)
+{
+	return list ? list->head : NULL;
+}
+static inline size_t strlist_count(const struct strlist *list)
+{
+	return list ? list->nstr : 0;
+}
+static inline size_t strlist_size(const struct strlist *list)
+{
+	return list ? list->size : 0;
+}
 
 struct strlist safe_alloc *strlist_alloc(void);
 void strlist_free(struct strlist *list);
-bool strlist_add(struct strlist *list, const char *str);
-
+const struct strlist_entry *strlist_add(struct strlist *list, const char *str);
+const struct strlist_entry *
+strlist_find(const struct strlist *list, const char *str);
+void * safe_alloc strlist_linearize(const struct strlist *list, char sep);
+void strlist_free(struct strlist *list);
+#define strlist_for_each(p,h) list_for_each((p), strlist_head(h))
+ 
 #endif /* NASM_STRLIST_H */
