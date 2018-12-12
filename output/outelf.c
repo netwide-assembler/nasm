@@ -935,7 +935,7 @@ static void elf32_out(int32_t segto, const void *data,
         }
 
         if (gnu16) {
-            nasm_error(ERR_WARNING | ERR_WARN_GNUELF,
+            nasm_error(ERR_WARNING | WARN_GNUELF,
                   "8- or 16-bit relocations in ELF32 is a GNU extension");
         } else if (asize != 4 && segment != NO_SEG) {
             nasm_error(ERR_NONFATAL, "Unsupported non-32-bit ELF relocation");
@@ -961,7 +961,7 @@ rel12adr:
                   " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                nasm_error(ERR_WARNING | ERR_WARN_GNUELF,
+                nasm_error(ERR_WARNING | WARN_GNUELF,
                       "8- or 16-bit relocations in ELF is a GNU extension");
                 elf_add_reloc(s, segment, 0, reltype);
             } else {

@@ -2193,7 +2193,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 
     if (def->defaults && def->ndefs > def->nparam_max - def->nparam_min &&
         !def->plus)
-        nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_MDP,
+        nasm_error(ERR_WARNING|ERR_PASS1|WARN_MDP,
               "too many default macro parameters");
 
     return true;
@@ -2731,7 +2731,7 @@ static int do_directive(Token *tline, char **output)
         severity = ERR_NONFATAL;
         goto issue_error;
     case PP_WARNING:
-        severity = ERR_WARNING|ERR_WARN_USER;
+        severity = ERR_WARNING|WARN_USER;
         goto issue_error;
 
 issue_error:
@@ -3046,7 +3046,7 @@ issue_error:
                            count, nasm_limit[LIMIT_REP]);
                 count = 0;
             } else if (count < 0) {
-                nasm_error(ERR_WARNING|ERR_PASS2|ERR_WARN_NEG_REP,
+                nasm_error(ERR_WARNING|ERR_PASS2|WARN_NEG_REP,
                            "negative `%%rep' count: %"PRId64, count);
                 count = 0;
             } else {
@@ -4387,7 +4387,7 @@ again:
                                              m->casesense)))
                             m = m->next;
                         if (!m)
-                            nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_MNP,
+                            nasm_error(ERR_WARNING|ERR_PASS1|WARN_MNP,
                                   "macro `%s' exists, "
                                   "but not taking %d parameters",
                                   mstart->text, nparam);
@@ -4689,7 +4689,7 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
      * After all that, we didn't find one with the right number of
      * parameters. Issue a warning, and fail to expand the macro.
      */
-    nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_MNP,
+    nasm_error(ERR_WARNING|ERR_PASS1|WARN_MNP,
           "macro `%s' exists, but not taking %d parameters",
           tline->text, nparam);
     nasm_free(params);

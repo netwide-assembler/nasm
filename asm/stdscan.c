@@ -168,7 +168,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         token_type = nasm_token_hash(ourcopy, tv);
 
 	if (unlikely(tv->t_flag & TFLAG_WARN)) {
-	    nasm_error(ERR_WARNING|ERR_PASS1|ERR_WARN_PTR,
+	    nasm_error(ERR_WARNING|ERR_PASS1|WARN_PTR,
 		       "`%s' is not a NASM keyword", tv->t_charptr);
 	}
 

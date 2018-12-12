@@ -294,7 +294,7 @@ static const char *size_name(int size)
 
 static void warn_overflow(int size)
 {
-    nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+    nasm_error(ERR_WARNING | ERR_PASS2 | WARN_NOV,
             "%s data exceeds bounds", size_name(size));
 }
 
@@ -407,7 +407,7 @@ static void out(struct out_data *data)
                     "%u-bit signed relocation unsupported by output format %s",
                        (unsigned int)(asize << 3), ofmt->shortname);
         } else {
-            nasm_error(ERR_WARNING | ERR_WARN_ZEXTRELOC,
+            nasm_error(ERR_WARNING | WARN_ZEXTRELOC,
                        "%u-bit %s relocation zero-extended from %u bits",
                        (unsigned int)(asize << 3),
                        data->type == OUT_SEGMENT ? "segment" : "unsigned",
@@ -548,7 +548,7 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     if (is_byte && c == 0371 && ins->prefixes[PPS_REP] == P_BND) {
         /* jmp short (opcode eb) cannot be used with bnd prefix. */
         ins->prefixes[PPS_REP] = P_none;
-        nasm_error(ERR_WARNING | ERR_WARN_BND | ERR_PASS2 ,
+        nasm_error(ERR_WARNING | WARN_BND | ERR_PASS2 ,
                 "jmp short does not init bnd regs - bnd prefix dropped.");
     }
 
@@ -913,14 +913,14 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
 
     case w_lock:
         if (ins->prefixes[PPS_LOCK] != P_LOCK) {
-            nasm_error(ERR_WARNING | ERR_WARN_HLE | ERR_PASS2,
+            nasm_error(ERR_WARNING | WARN_HLE | ERR_PASS2,
                     "%s with this instruction requires lock",
                     prefix_name(rep_pfx));
         }
         break;
 
     case w_inval:
-        nasm_error(ERR_WARNING | ERR_WARN_HLE | ERR_PASS2,
+        nasm_error(ERR_WARNING | WARN_HLE | ERR_PASS2,
                 "%s invalid with this instruction",
                 prefix_name(rep_pfx));
         break;
@@ -1401,7 +1401,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
     if (has_prefix(ins, PPS_LOCK, P_LOCK) && lockcheck &&
         (!itemp_has(temp,IF_LOCK) || !is_class(MEMORY, ins->oprs[0].type))) {
-        nasm_error(ERR_WARNING | ERR_WARN_LOCK | ERR_PASS2 ,
+        nasm_error(ERR_WARNING | WARN_LOCK | ERR_PASS2 ,
                 "instruction is not lockable");
     }
 
@@ -1686,7 +1686,7 @@ static void gencode(struct out_data *data, insn *ins)
                         "non-absolute expression not permitted as argument %d",
                         c & 7);
             } else if (opy->offset & ~mask) {
-                nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+                nasm_error(ERR_WARNING | ERR_PASS2 | WARN_NOV,
                            "is4 argument exceeds bounds");
             }
             c = opy->offset & mask;
@@ -1709,7 +1709,7 @@ static void gencode(struct out_data *data, insn *ins)
         case4(0254):
             if (absolute_op(opx) &&
                 (int32_t)opx->offset != (int64_t)opx->offset) {
-                nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+                nasm_error(ERR_WARNING | ERR_PASS2 | WARN_NOV,
                         "signed dword immediate exceeds bounds");
             }
             out_imm(data, opx, 4, OUT_SIGNED);
@@ -1779,7 +1779,7 @@ static void gencode(struct out_data *data, insn *ins)
                     /* If this wasn't explicitly byte-sized, warn as though we
                      * had fallen through to the imm16/32/64 case.
                      */
-                    nasm_error(ERR_WARNING | ERR_PASS2 | ERR_WARN_NOV,
+                    nasm_error(ERR_WARNING | ERR_PASS2 | WARN_NOV,
                                "%s value exceeds bounds",
                                (opx->type & BITS8) ? "signed byte" :
                                s == 16 ? "word" :

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -85,53 +85,53 @@ static inline vefunc nasm_set_verror(vefunc ve)
  * These codes define specific types of suppressible warning.
  */
 
-#define ERR_WARN_MASK   0xFFFFF000      /* the mask for this feature */
-#define ERR_WARN_SHR    12              /* how far to shift right */
+#define WARN_MASK   0xFFFFF000      /* the mask for this feature */
+#define WARN_SHR    12              /* how far to shift right */
 
-#define WARN(x)         ((x) << ERR_WARN_SHR)
-#define WARN_IDX(x)     (((x) & ERR_WARN_MASK) >> ERR_WARN_SHR)
+#define WARN(x)         ((x) << WARN_SHR)
+#define WARN_IDX(x)     (((x) & WARN_MASK) >> WARN_SHR)
 
-#define ERR_WARN_OTHER          WARN( 0) /* any noncategorized warning */
-#define ERR_WARN_MNP            WARN( 1) /* macro-num-parameters warning */
-#define ERR_WARN_MSR            WARN( 2) /* macro self-reference */
-#define ERR_WARN_MDP            WARN( 3) /* macro default parameters check */
-#define ERR_WARN_OL             WARN( 4) /* orphan label (no colon, and
+#define WARN_OTHER          WARN( 0) /* any noncategorized warning */
+#define WARN_MNP            WARN( 1) /* macro-num-parameters warning */
+#define WARN_MSR            WARN( 2) /* macro self-reference */
+#define WARN_MDP            WARN( 3) /* macro default parameters check */
+#define WARN_OL             WARN( 4) /* orphan label (no colon, and
                                           * alone on line) */
-#define ERR_WARN_NOV            WARN( 5) /* numeric overflow */
-#define ERR_WARN_GNUELF         WARN( 6) /* using GNU ELF extensions */
-#define ERR_WARN_FL_OVERFLOW    WARN( 7) /* FP overflow */
-#define ERR_WARN_FL_DENORM      WARN( 8) /* FP denormal */
-#define ERR_WARN_FL_UNDERFLOW   WARN( 9) /* FP underflow */
-#define ERR_WARN_FL_TOOLONG     WARN(10) /* FP too many digits */
-#define ERR_WARN_USER           WARN(11) /* %warning directives */
-#define ERR_WARN_LOCK		WARN(12) /* bad LOCK prefixes */
-#define ERR_WARN_HLE		WARN(13) /* bad HLE prefixes */
-#define ERR_WARN_BND		WARN(14) /* bad BND prefixes */
-#define ERR_WARN_ZEXTRELOC	WARN(15) /* relocation zero-extended */
-#define ERR_WARN_PTR		WARN(16) /* not a NASM keyword */
-#define ERR_WARN_BAD_PRAGMA	WARN(17) /* malformed pragma */
-#define ERR_WARN_UNKNOWN_PRAGMA	WARN(18) /* unknown pragma */
-#define ERR_WARN_NOTMY_PRAGMA	WARN(19) /* pragma inapplicable */
-#define ERR_WARN_UNK_WARNING	WARN(20) /* unknown warning */
-#define ERR_WARN_NEG_REP	WARN(21) /* negative repeat count */
-#define ERR_WARN_PHASE		WARN(22) /* phase error in pass 1 */
+#define WARN_NOV            WARN( 5) /* numeric overflow */
+#define WARN_GNUELF         WARN( 6) /* using GNU ELF extensions */
+#define WARN_FL_OVERFLOW    WARN( 7) /* FP overflow */
+#define WARN_FL_DENORM      WARN( 8) /* FP denormal */
+#define WARN_FL_UNDERFLOW   WARN( 9) /* FP underflow */
+#define WARN_FL_TOOLONG     WARN(10) /* FP too many digits */
+#define WARN_USER           WARN(11) /* %warning directives */
+#define WARN_LOCK		WARN(12) /* bad LOCK prefixes */
+#define WARN_HLE		WARN(13) /* bad HLE prefixes */
+#define WARN_BND		WARN(14) /* bad BND prefixes */
+#define WARN_ZEXTRELOC	WARN(15) /* relocation zero-extended */
+#define WARN_PTR		WARN(16) /* not a NASM keyword */
+#define WARN_BAD_PRAGMA	WARN(17) /* malformed pragma */
+#define WARN_UNKNOWN_PRAGMA	WARN(18) /* unknown pragma */
+#define WARN_NOTMY_PRAGMA	WARN(19) /* pragma inapplicable */
+#define WARN_UNK_WARNING	WARN(20) /* unknown warning */
+#define WARN_NEG_REP	WARN(21) /* negative repeat count */
+#define WARN_PHASE		WARN(22) /* phase error in pass 1 */
 
 /* The "all" warning acts as a global switch, it must come last */
-#define ERR_WARN_ALL            23 /* Do not use WARN() here */
+#define WARN_ALL            23 /* Do not use WARN() here */
 
 struct warning {
     const char *name;
     const char *help;
     bool enabled;
 };
-extern const struct warning warnings[ERR_WARN_ALL+1];
+extern const struct warning warnings[WARN_ALL+1];
 
 /* This is a bitmask */
 #define WARN_ST_ENABLED      1   /* Warning is currently enabled */
 #define WARN_ST_ERROR        2   /* Treat this warning as an error */
 
-extern uint8_t warning_state[ERR_WARN_ALL];
-extern uint8_t warning_state_init[ERR_WARN_ALL];
+extern uint8_t warning_state[WARN_ALL];
+extern uint8_t warning_state_init[WARN_ALL];
 
 /* Process a warning option or directive */
 bool set_warning_status(const char *);
