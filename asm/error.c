@@ -47,7 +47,7 @@
  * the [warning] directive.
  */
 const struct warning warnings[WARN_ALL+1] = {
-    {"other", "any warning not specifially mentioned below", true},
+    {NULL, NULL, true},	/* must be true - used for unconditional enable */
     {"macro-params", "macro calls with wrong parameter count", true},
     {"macro-selfref", "cyclic macro references", false},
     {"macro-defaults", "macros with more default than optional parameters", true},
@@ -71,7 +71,8 @@ const struct warning warnings[WARN_ALL+1] = {
     {"negative-rep", "regative %rep count", true},
     {"phase", "phase error during stabilization", false},
 
-    /* THIS ENTRY MUST COME LAST */
+    /* THESE ENTRIES SHOULD COME LAST */
+    {"other", "any warning not specifially mentioned below", true},
     {"all", "all possible warnings", false}
 };
 
@@ -182,7 +183,7 @@ bool set_warning_status(const char *value)
         value = NULL;
 
     /* This is inefficient, but it shouldn't matter... */
-    for (i = 0; i < WARN_ALL; i++) {
+    for (i = 1; i < WARN_ALL; i++) {
         if (!value || !nasm_stricmp(value, warnings[i].name)) {
             ok = true;          /* At least one action taken */
             switch (action) {
