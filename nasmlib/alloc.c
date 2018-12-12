@@ -36,22 +36,13 @@
  */
 
 #include "compiler.h"
-
-#include <stdlib.h>
-
 #include "nasmlib.h"
 #include "error.h"
+#include "alloc.h"
 
-static no_return nasm_alloc_failed(void)
+no_return nasm_alloc_failed(void)
 {
     nasm_fatal("out of memory");
-}
-
-static inline void *validate_ptr(void *p)
-{
-    if (unlikely(!p))
-        nasm_alloc_failed();
-    return p;
 }
 
 void *nasm_malloc(size_t size)

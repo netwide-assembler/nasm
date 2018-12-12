@@ -118,6 +118,8 @@ AC_CHECK_FUNCS(strrchrnul)
 AC_CHECK_FUNCS(iscntrl)
 AC_CHECK_FUNCS(isascii)
 
+AC_CHECK_FUNCS(vasprintf)
+
 AC_CHECK_FUNCS(getuid)
 AC_CHECK_FUNCS(getgid)
 

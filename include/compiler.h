@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 2007-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 2007-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -81,6 +81,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
 
 #ifdef HAVE_SYS_TYPES_H
@@ -348,6 +349,24 @@ size_t strnlen(const char *s, size_t maxlen);
 # define is_constant(x) __builtin_constant_p(x)
 #else
 # define is_constant(x) false
+#endif
+
+/*
+ * The autoconf documentation states:
+ *
+ * `va_copy'
+ *    The C99 standard provides `va_copy' for copying `va_list'
+ *    variables.  It may be available in older environments too, though
+ *    possibly as `__va_copy' (e.g., `gcc' in strict pre-C99 mode).
+ *    These can be tested with `#ifdef'.  A fallback to `memcpy (&dst,
+ *    &src, sizeof (va_list))' gives maximum portability.
+ */
+#ifndef va_copy
+# ifdef __va_copy
+#  define va_copy(dst,src) __va_copy(dst,src)
+# else
+#  define va_copy(dst,src) memcpy(&(dst),&(src),sizeof(va_list))
+# endif
 #endif
 
 /* Watcom doesn't handle switch statements with 64-bit types, hack around it */

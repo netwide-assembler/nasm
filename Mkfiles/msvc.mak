@@ -68,11 +68,11 @@ LIBOBJ = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) \
 	stdlib\strnlen.$(O) stdlib\strrchrnul.$(O) \
 	\
 	nasmlib\ver.$(O) \
-	nasmlib\crc64.$(O) nasmlib\malloc.$(O) \
+	nasmlib\crc64.$(O) nasmlib\alloc.$(O) nasmlib\asprintf.$(O) \
 	nasmlib\md5c.$(O) nasmlib\string.$(O) nasmlib\nctype.$(O) \
 	nasmlib\file.$(O) nasmlib\mmap.$(O) nasmlib\ilog2.$(O) \
 	nasmlib\realpath.$(O) nasmlib\path.$(O) \
-	nasmlib\filename.$(O) nasmlib\srcfile.$(O) \
+	nasmlib\filename.$(O) \
 	nasmlib\zerobuf.$(O) nasmlib\readnum.$(O) nasmlib\bsi.$(O) \
 	nasmlib\rbtree.$(O) nasmlib\hashtbl.$(O) \
 	nasmlib\raa.$(O) nasmlib\saa.$(O) \
@@ -97,7 +97,7 @@ LIBOBJ = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) \
 	asm\segalloc.$(O) \
 	asm\preproc-nop.$(O) \
 	asm\rdstrnum.$(O) \
-	\
+	asm\srcfile.$(O) \
 	macros\macros.$(O) \
 	\
 	output\outform.$(O) output\outlib.$(O) output\legacy.$(O) \

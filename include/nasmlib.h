@@ -48,11 +48,11 @@
 #endif
 
 /*
- * Wrappers around malloc, realloc and free. nasm_malloc will
- * fatal-error and die rather than return NULL; nasm_realloc will
- * do likewise, and will also guarantee to work right on being
- * passed a NULL pointer; nasm_free will do nothing if it is passed
- * a NULL pointer.
+ * Wrappers around malloc, realloc, free and a few more. nasm_malloc
+ * will fatal-error and die rather than return NULL; nasm_realloc will
+ * do likewise, and will also guarantee to work right on being passed
+ * a NULL pointer; nasm_free will do nothing if it is passed a NULL
+ * pointer.
  */
 void * safe_malloc(1) nasm_malloc(size_t);
 void * safe_malloc(1) nasm_zalloc(size_t);
@@ -63,6 +63,14 @@ char * safe_alloc nasm_strdup(const char *);
 char * safe_alloc nasm_strndup(const char *, size_t);
 char * safe_alloc nasm_strcat(const char *one, const char *two);
 char * safe_alloc end_with_null nasm_strcatn(const char *one, ...);
+
+/*
+ * Variants on asprintf(). Note that unlike the standard version, we
+ * return the pointer rather than the length; if you want the length
+ * use %n.
+ */
+char * safe_alloc nasm_asprintf(const char *fmt, ...);
+char * safe_alloc nasm_vasprintf(const char *fmt, va_list ap);
 
 /* Assert the argument is a pointer without evaluating it */
 #define nasm_assert_pointer(p) ((void)sizeof(*(p)))
