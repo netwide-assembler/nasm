@@ -281,6 +281,11 @@ PA_ADD_CFLAGS([-Wlong-long],[-Wno-long-long])
 dnl This is needed because we intentionally expect strncpy() to fill
 dnl in a zero-padded (not zero-terminated) buffer in several backends
 PA_ADD_CFLAGS([-Wstringop-truncation],[-Wno-stringop-truncation])
+dnl This is needed because we assume 2's-completement signed arithmetic;
+dnl on compilers with gcc-like command line syntax we pass the -fwrapv
+dnl option for exactly that reason.
+PA_ADD_CFLAGS([-Wshift-negative-value],[-Wno-shift-negative-value])
+
 dnl PA_ADD_CFLAGS([-Wwrite-strings])
 PA_ARG_ENABLED([werror],
  [compile with -Werror to error out on any warning],
