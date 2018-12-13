@@ -44,7 +44,23 @@
 
 static no_return nasm_alloc_failed(void)
 {
-    nasm_fatal(0, "out of memory");
+    /* If nasm_fatal() gets us back here, then croak hard */
+    static bool already_here = false;
+    FILE *errfile;
+
+    if (likely(!already_here)) {
+        already_here = true;
+        nasm_fatal(0, "out of memory!");
+    }
+
+    errfile = error_file;
+    if (!errfile)
+        error_file = stderr;
+
+    fprintf(error_file, "nasm: out of memory!\n");
+    fflush(error_file);
+    fflush(NULL);
+    abort();
 }
 
 static inline void *validate_ptr(void *p)

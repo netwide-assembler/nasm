@@ -41,6 +41,11 @@
 #include "compiler.h"
 
 /*
+ * File pointer for error messages
+ */
+extern FILE *error_file;        /* Error file descriptor */
+
+/*
  * An error reporting function should look like this.
  */
 void printf_func(2, 3) nasm_error(int severity, const char *fmt, ...);
