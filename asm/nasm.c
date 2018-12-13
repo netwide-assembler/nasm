@@ -76,7 +76,6 @@ struct forwrefinfo {            /* info held on forward refs. */
 
 static void parse_cmdline(int, char **, int);
 static void assemble_file(const char *, struct strlist *);
-static bool is_suppressed_warning(int severity);
 static bool skip_this_pass(int severity);
 static void nasm_verror_asm(int severity, const char *fmt, va_list args);
 static void usage(void);
@@ -1326,11 +1325,12 @@ static void parse_cmdline(int argc, char **argv, int pass)
     char *envreal, *envcopy = NULL, *p;
     int i;
 
-    /* Initialize all the warnings to their default state */
-    for (i = 0; i < WARN_ALL; i++) {
-        warning_state_init[i] = warning_state[i] =
-	    warnings[i].enabled ? WARN_ST_ENABLED : 0;
-    }
+    /*
+     * Initialize all the warnings to their default state, including
+     * warning index 0 used for "always on".
+     */
+    for (i = 0; i < WARN_ALL; i++)
+        warning_state_init[i] = warning_state[i] = warnings[i].state;
 
     /*
      * First, process the NASMENV environment variable.
@@ -1385,7 +1385,6 @@ static void parse_cmdline(int argc, char **argv, int pass)
 
     if (!inname)
         nasm_fatalf(ERR_USAGE, "no input file specified");
-
     else if ((errname && !strcmp(inname, errname)) ||
              (outname && !strcmp(inname, outname)) ||
              (listname &&  !strcmp(inname, listname))  ||
@@ -1698,51 +1697,34 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
     }
 }
 
-/*
- * check to see if this is a suppressable warning
- */
-static inline bool is_valid_warning(int severity)
-{
-    /* Not a warning at all */
-    if ((severity & ERR_MASK) != ERR_WARNING)
-        return false;
-
-    return WARN_IDX(severity) < WARN_ALL;
-}
-
 /**
- * check for suppressed warning
- * checks for suppressed warning or pass one only warning and we're
- * not in pass 1
- *
- * @param severity the severity of the warning or error
- * @return true if we should abort error/warning printing
+ * get warning index; 0 if this is non-suppressible.
  */
-static bool is_suppressed_warning(int severity)
+static size_t warn_index(int severity)
 {
-    /* Might be a warning but suppresed explicitly */
-    if (is_valid_warning(severity) && !(severity & ERR_USAGE))
-        return !(warning_state[WARN_IDX(severity)] & WARN_ST_ENABLED);
-    else
-        return false;
-}
+    size_t index;
 
-static bool warning_is_error(int severity)
-{
-    if (is_valid_warning(severity))
-        return !!(warning_state[WARN_IDX(severity)] & WARN_ST_ERROR);
-    else
-        return false;
+    if ((severity & ERR_MASK) >= ERR_FATAL)
+        return 0;               /* Fatal errors are never suppressible */
+
+    /* If this is a warning and no index is provided, it is WARN_OTHER */
+    if ((severity & (ERR_MASK|WARN_MASK)) == ERR_WARNING)
+        severity |= WARN_OTHER;
+
+    index = WARN_IDX(severity);
+    nasm_assert(index < WARN_ALL);
+
+    return index;
 }
 
 static bool skip_this_pass(int severity)
 {
     /*
      * See if it's a pass-specific error or warning which should be skipped.
-     * We cannot skip errors stronger than ERR_NONFATAL as by definition
-     * they cannot be resumed from.
+     * We can never skip fatal errors as by definition they cannot be
+     * resumed from.
      */
-    if ((severity & ERR_MASK) > ERR_NONFATAL)
+    if ((severity & ERR_MASK) >= ERR_FATAL)
 	return false;
 
     /*
@@ -1752,6 +1734,45 @@ static bool skip_this_pass(int severity)
      */
     return (((severity & ERR_PASS1) && passn != 1) ||
 	    ((severity & ERR_PASS2) && pass0 != 2));
+}
+
+/**
+ * check for suppressed message (usually warnings or notes)
+ *
+ * @param severity the severity of the warning or error
+ * @return true if we should abort error/warning printing
+ */
+static bool is_suppressed(int severity)
+{
+    if ((severity & ERR_MASK) >= ERR_FATAL)
+        return false;           /* Fatal errors can never be suppressed */
+
+    return !(warning_state[warn_index(severity)] & WARN_ST_ENABLED);
+}
+
+/**
+ * Return the true error type (the ERR_MASK part) of the given
+ * severity, accounting for warnings that may need to be promoted to
+ * error.
+ *
+ * @param severity the severity of the warning or error
+ * @return true if we should error out
+ */
+static int true_error_type(int severity)
+{
+    const uint8_t warn_is_err = WARN_ST_ENABLED|WARN_ST_ERROR;
+    int type;
+
+    type = severity & ERR_MASK;
+
+    /* Promote warning to error? */
+    if (type == ERR_WARNING) {
+        uint8_t state = warning_state[warn_index(severity)];
+        if ((state & warn_is_err) == warn_is_err)
+            type = ERR_NONFATAL;
+    }
+
+    return type;
 }
 
 /**
@@ -1770,12 +1791,16 @@ static void nasm_verror_asm(int severity, const char *fmt, va_list args)
     char warnsuf[64];
     char linestr[64];
     const char *pfx;
-    bool warn_is_err = warning_is_error(severity);
-    bool warn_is_other = WARN_IDX(severity) == WARN_OTHER;
+    int spec_type = severity & ERR_MASK; /* type originally specified */
+    int true_type = true_error_type(severity);
     const char *currentfile = NULL;
     int32_t lineno = 0;
+    static const char * const pfx_table[ERR_MASK+1] = {
+        "debug: ", "note: ", "warning: ", "error: ",
+        "", "", "fatal: ", "panic: "
+    };
 
-    if (is_suppressed_warning(severity))
+    if (is_suppressed(severity))
         return;
 
     if (!(severity & ERR_NOFILE)) {
@@ -1789,49 +1814,24 @@ static void nasm_verror_asm(int severity, const char *fmt, va_list args)
         }
     }
 
-    switch (severity & (ERR_MASK|ERR_NO_SEVERITY)) {
-    case ERR_NOTE:
-        pfx = "note: ";
-        break;
-    case ERR_WARNING:
-        if (!warn_is_err) {
-            pfx = "warning: ";
-            break;
-        }
-        /* fall through */
-    case ERR_NONFATAL:
-        pfx = "error: ";
-        break;
-    case ERR_FATAL:
-        pfx = "fatal: ";
-        break;
-    case ERR_PANIC:
-        pfx = "panic: ";
-        break;
-    case ERR_DEBUG:
-        pfx = "debug: ";
-        break;
-    default:
-        pfx = "";
-        break;
-    }
-
     /*
      * For a debug/warning/note event, if ERR_HERE is set don't
      * output anything if there is no current filename available
      */
-    if (!currentfile && (severity & ERR_HERE) &&
-        ((severity & ERR_MASK) < ERR_WARNING ||
-         (is_valid_warning(severity) && !warn_is_err)))
+    if (!currentfile && (severity & ERR_HERE) && true_type <= ERR_WARNING)
         return;
 
+    if (severity & ERR_NO_SEVERITY)
+        pfx = "";
+    else
+        pfx = pfx_table[true_type];
 
     vsnprintf(msg, sizeof msg, fmt, args);
     *warnsuf = 0;
-    if (is_valid_warning(severity) && (warn_is_err || !warn_is_other)) {
+    if (spec_type == ERR_WARNING) {
 	snprintf(warnsuf, sizeof warnsuf, " [-w+%s%s]",
-                 warn_is_err ? "error=" : "",
-                 warnings[WARN_IDX(severity)].name);
+                 true_type ? "error=" : "",
+                 warnings[warn_index(severity)].name);
     }
 
     *linestr = 0;
@@ -1877,15 +1877,11 @@ static void nasm_verror_asm(int severity, const char *fmt, va_list args)
 
     preproc->error_list_macros(severity);
 
-    switch (severity & ERR_MASK) {
+    switch (true_type) {
     case ERR_NOTE:
     case ERR_DEBUG:
-        /* no further action, by definition */
-        break;
     case ERR_WARNING:
-        /* Treat warnings as errors */
-        if (warning_is_error(severity))
-            terminate_after_phase = true;
+        /* no further action, by definition */
         break;
     case ERR_NONFATAL:
         terminate_after_phase = true;
@@ -1993,14 +1989,14 @@ static void help(const char xopt)
         }
     }
 
-    printf("\nWarnings for the -W/-w options:\n");
+    printf("\nWarnings for the -W/-w options: (default in brackets)\n");
 
-    for (i = 0; i <= WARN_ALL; i++)
+    for (i = 1; i <= WARN_ALL; i++)
         printf("    %-23s %s%s\n",
                warnings[i].name, warnings[i].help,
                i == WARN_ALL ? "\n" :
-               warnings[i].enabled ? " (default on)" :
-               " (default off)");
+               (warnings[i].state & WARN_ST_ERROR) ? " [error]" :
+               (warnings[i].state & WARN_ST_ENABLED) ? " [on]" : " [off]");
 
     if (xopt == 'f') {
         printf("valid output formats for -f are"

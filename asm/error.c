@@ -46,38 +46,44 @@
  * Description of the suppressible warnings for the command line and
  * the [warning] directive.
  */
-const struct warning warnings[WARN_ALL+1] = {
-	{ "other",		"any warning not specifially mentioned below", true },
-	{ "macro-params",	"macro calls with wrong parameter count", true },
-	{ "macro-selfref",	"cyclic macro references", false },
-	{ "macro-defaults",	"macros with more default than optional parameters", true },
-	{ "orphan-labels",	"labels alone on lines without trailing `:'", true },
-	{ "number-overflow",	"numeric constant does not fit", true },
-	{ "gnu-elf-extensions",	"using 8- or 16-bit relocation in ELF32, a GNU extension", false },
-	{ "float-overflow",	"floating point overflow", true },
-	{ "float-denorm",	"floating point denormal", false },
-	{ "float-underflow",	"floating point underflow", false },
-	{ "float-toolong",	"too many digits in floating-point number", true },
-	{ "user",		"%warning directives", true },
-	{ "lock",		"lock prefix on unlockable instructions", true },
-	{ "hle",		"invalid hle prefixes", true },
-	{ "bnd",		"invalid bnd prefixes", true },
-	{ "zext-reloc",		"relocation zero-extended to match output format", true },
-	{ "ptr",		"non-NASM keyword used in other assemblers", true },
-	{ "bad-pragma",		"empty or malformed %pragma", false },
-	{ "unknown-pragma",	"unknown %pragma facility or directive", false },
-	{ "not-my-pragma",	"%pragma not applicable to this compilation", false },
-	{ "unknown-warning",	"unknown warning in -W/-w or warning directive", false },
-	{ "negative-rep",	"regative %rep count", true },
-	{ "phase",		"phase error during stabilization", false },
+#define on	(WARN_ST_ENABLED)
+#define off	0
+#define err	(WARN_ST_ENABLED|WARN_ST_ERROR)
 
-	/* THIS ENTRY MUST COME LAST */
-	{ "all",		"all possible warnings", false }
+const struct warning warnings[WARN_ALL+1] = {
+    {NULL, NULL, on},	/* must be on - used for unconditional enable */
+    {"macro-params", "macro calls with wrong parameter count", on},
+    {"macro-selfref", "cyclic macro references", off},
+    {"macro-defaults", "macros with more default than optional parameters", on},
+    {"orphan-labels", "labels alone on lines without trailing `:'", on},
+    {"number-overflow", "numeric constant does not fit", on},
+    {"gnu-elf-extensions", "using 8- or 16-bit relocation in ELF32, a GNU extension", off},
+    {"float-overflow", "floating point overflow", on},
+    {"float-denorm", "floating point denormal", off},
+    {"float-underflow", "floating point underflow", off},
+    {"float-toolong", "too many digits in floating-point number", on},
+    {"user", "%warning directives", on},
+    {"lock", "lock prefix on unlockable instructions", on},
+    {"hle", "invalid hle prefixes", on},
+    {"bnd", "invalid bnd prefixes", on},
+    {"zext-reloc", "relocation zero-extended to match output format", on},
+    {"ptr", "non-NASM keyword used in other assemblers", on},
+    {"bad-pragma", "empty or malformed %pragma", off},
+    {"unknown-pragma", "unknown %pragma facility or directive", off},
+    {"not-my-pragma", "%pragma not applicable to this compilation", off},
+    {"unknown-warning", "unknown warning in -W/-w or warning directive", off},
+    {"negative-rep", "regative %rep count", on},
+    {"phase", "phase error during stabilization", off},
+    {"label-redef", "label redefined to an identical value", off},
+    {"label-redef-late", "label (re)defined during code generation", err},
+
+    /* THESE ENTRIES SHOULD COME LAST */
+    {"other", "any warning not specifially mentioned above", on},
+    {"all", "all possible warnings", off}
 };
 
-/* Current state and command-line state, for reset */
-uint8_t warning_state[WARN_ALL];
-uint8_t warning_state_init[WARN_ALL];
+uint8_t warning_state[WARN_ALL];/* Current state */
+uint8_t warning_state_init[WARN_ALL]; /* Command-line state, for reset */
 
 /* Global error handling function */
 vefunc nasm_verror;
@@ -127,7 +133,7 @@ fatal_func nasm_assert_failed(const char *file, int line, const char *msg)
 
 /*
  * This is called when processing a -w or -W option, or a warning directive.
- * Returns true if if the action was successful.
+ * Returns on if if the action was successful.
  */
 bool set_warning_status(const char *value)
 {

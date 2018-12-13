@@ -493,33 +493,41 @@ void define_label(const char *label, int32_t segment,
         lptr->defn.size != size;
     global_offset_changed += changed;
 
-    if (changed) {
-        if (lastdef == lpass) {
-            int32_t saved_line = 0;
-            const char *saved_fname = NULL;
+    if (lastdef == lpass) {
+        int32_t saved_line = 0;
+        const char *saved_fname = NULL;
+        int noteflags;
 
-            /*
-             * Defined elsewhere in the program, seen in this pass.
-             */
-            nasm_nonfatal("label `%s' inconsistently redefined",
-                          lptr->defn.label);
-
-            src_get(&saved_line, &saved_fname);
-            src_set(lptr->defn.def_line, lptr->defn.def_file);
-            nasm_notef(ERR_HERE, "label `%s' originally defined", lptr->defn.label);
-            src_set(saved_line, saved_fname);
-        } else if (pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
-            /*
-             * This probably should be ERR_NONFATAL, but not quite yet.  As a
-             * special case, LBL_SPECIAL symbols are allowed to be changed
-             * even during the last pass.
-             */
-            nasm_warn("label `%s' %s during code generation",
-                      lptr->defn.label,
-                      created ? "defined" : "changed");
+        /*
+         * Defined elsewhere in the program, seen in this pass.
+         */
+        if (changed) {
+            nasm_nonfatal("label `%s' inconsistently redefined", lptr->defn.label);
+            noteflags = ERR_NOTE|ERR_HERE;
+        } else {
+            nasm_warnf(WARN_LABEL_REDEF|ERR_PASS2,
+                       "label `%s' redefined to an identical value", lptr->defn.label);
+            noteflags = ERR_NOTE|ERR_HERE|WARN_LABEL_REDEF|ERR_PASS2;
         }
-    }
 
+        src_get(&saved_line, &saved_fname);
+        src_set(lptr->defn.def_line, lptr->defn.def_file);
+        nasm_error(noteflags, "label `%s' originally defined",
+                   lptr->defn.label);
+        src_set(saved_line, saved_fname);
+    } else if (changed && pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
+        /*
+         * WARN_LABEL_LATE defaults to an error, as this should never actually happen.
+         * Just in case this is a backwards compatibility problem, still make it a
+         * warning so that the user can suppress or demote it.
+         *
+         * As a special case, LBL_SPECIAL symbols are allowed to be changed
+         * even during the last pass.
+         */
+        nasm_warnf(WARN_LABEL_LATE,
+                   "label `%s' %s during code generation",
+                   lptr->defn.label, created ? "defined" : "changed");
+    }
     lptr->defn.segment = segment;
     lptr->defn.offset  = offset;
     lptr->defn.size    = size;
