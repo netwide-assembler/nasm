@@ -146,11 +146,11 @@ found_it:
     case DIRR_UNKNOWN:
         switch (pragma->opcode) {
         case D_none:
-            nasm_error(ERR_WARNING|ERR_PASS2|ERR_WARN_BAD_PRAGMA,
+            nasm_error(ERR_WARNING|ERR_PASS2|WARN_BAD_PRAGMA,
                        "empty %%pragma %s", pragma->facility_name);
             break;
         default:
-            nasm_error(ERR_WARNING|ERR_PASS2|ERR_WARN_UNKNOWN_PRAGMA,
+            nasm_error(ERR_WARNING|ERR_PASS2|WARN_UNKNOWN_PRAGMA,
                        "unknown %%pragma %s %s",
                        pragma->facility_name, pragma->opname);
             break;
@@ -185,7 +185,7 @@ void process_pragma(char *str)
 
     pragma.facility_name = nasm_get_word(str, &p);
     if (!pragma.facility_name) {
-	nasm_error(ERR_WARNING|ERR_PASS2|ERR_WARN_BAD_PRAGMA,
+	nasm_error(ERR_WARNING|ERR_PASS2|WARN_BAD_PRAGMA,
 		   "empty pragma directive");
         return;                 /* Empty pragma */
     }

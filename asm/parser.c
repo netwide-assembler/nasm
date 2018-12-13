@@ -463,7 +463,7 @@ restart_parse:
         if (i == ':') {         /* skip over the optional colon */
             i = stdscan(NULL, &tokval);
         } else if (i == 0) {
-            nasm_warnf(ERR_WARN_OL | ERR_PASS1,
+            nasm_warnf(WARN_OL | ERR_PASS1,
                        "label alone on a line without a colon might be in error");
         }
         if (i != TOKEN_INSN || tokval.t_integer != I_EQU) {

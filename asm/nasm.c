@@ -203,7 +203,7 @@ nasm_set_limit(const char *limit, const char *valstr)
         if (passn == 0)
             errlevel = ERR_WARNING|ERR_USAGE;
         else
-            errlevel = ERR_WARNING|ERR_PASS1|ERR_WARN_UNKNOWN_PRAGMA;
+            errlevel = ERR_WARNING|ERR_PASS1|WARN_UNKNOWN_PRAGMA;
         nasm_error(errlevel, "unknown limit: `%s'", limit);
         return DIRR_ERROR;
     }
@@ -216,7 +216,7 @@ nasm_set_limit(const char *limit, const char *valstr)
             if (passn == 0)
                 errlevel = ERR_WARNING|ERR_USAGE;
             else
-                errlevel = ERR_WARNING|ERR_PASS1|ERR_WARN_BAD_PRAGMA;
+                errlevel = ERR_WARNING|ERR_PASS1|WARN_BAD_PRAGMA;
             nasm_error(errlevel, "invalid limit value: `%s'", limit);
             return DIRR_ERROR;
         }
@@ -1043,7 +1043,7 @@ static bool process_arg(char *p, char *q, int pass)
         case 'W':
             if (pass == 2) {
                 if (!set_warning_status(param)) {
-                    nasm_warnf(ERR_WARN_UNK_WARNING, "unknown warning option: %s", param);
+                    nasm_warnf(WARN_UNK_WARNING, "unknown warning option: %s", param);
                 }
             }
         break;
@@ -1327,7 +1327,7 @@ static void parse_cmdline(int argc, char **argv, int pass)
     int i;
 
     /* Initialize all the warnings to their default state */
-    for (i = 0; i < ERR_WARN_ALL; i++) {
+    for (i = 0; i < WARN_ALL; i++) {
         warning_state_init[i] = warning_state[i] =
 	    warnings[i].enabled ? WARN_ST_ENABLED : 0;
     }
@@ -1641,7 +1641,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         if (global_offset_changed && !terminate_after_phase) {
             switch (pass0) {
             case 1:
-                nasm_warnf(ERR_WARN_PHASE, "phase error during stabilization pass, hoping for the best");
+                nasm_warnf(WARN_PHASE, "phase error during stabilization pass, hoping for the best");
                 break;
 
             case 2:
@@ -1707,7 +1707,7 @@ static inline bool is_valid_warning(int severity)
     if ((severity & ERR_MASK) != ERR_WARNING)
         return false;
 
-    return WARN_IDX(severity) < ERR_WARN_ALL;
+    return WARN_IDX(severity) < WARN_ALL;
 }
 
 /**
@@ -1771,7 +1771,7 @@ static void nasm_verror_asm(int severity, const char *fmt, va_list args)
     char linestr[64];
     const char *pfx;
     bool warn_is_err = warning_is_error(severity);
-    bool warn_is_other = WARN_IDX(severity) == ERR_WARN_OTHER;
+    bool warn_is_other = WARN_IDX(severity) == WARN_OTHER;
     const char *currentfile = NULL;
     int32_t lineno = 0;
 
@@ -1995,10 +1995,10 @@ static void help(const char xopt)
 
     printf("\nWarnings for the -W/-w options:\n");
 
-    for (i = 0; i <= ERR_WARN_ALL; i++)
+    for (i = 0; i <= WARN_ALL; i++)
         printf("    %-23s %s%s\n",
                warnings[i].name, warnings[i].help,
-               i == ERR_WARN_ALL ? "\n" :
+               i == WARN_ALL ? "\n" :
                warnings[i].enabled ? " (default on)" :
                " (default off)");
 

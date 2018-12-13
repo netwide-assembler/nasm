@@ -436,7 +436,7 @@ bool process_directives(char *directive)
 
     case D_WARNING:         /* [WARNING {+|-|*}warn-name] */
         if (!set_warning_status(value)) {
-            nasm_warnf(ERR_WARN_UNK_WARNING, "unknown warning option: %s", value);
+            nasm_warnf(WARN_UNK_WARNING, "unknown warning option: %s", value);
         }
         break;
 

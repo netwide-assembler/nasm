@@ -46,7 +46,7 @@
  * Description of the suppressible warnings for the command line and
  * the [warning] directive.
  */
-const struct warning warnings[ERR_WARN_ALL+1] = {
+const struct warning warnings[WARN_ALL+1] = {
 	{ "other",		"any warning not specifially mentioned below", true },
 	{ "macro-params",	"macro calls with wrong parameter count", true },
 	{ "macro-selfref",	"cyclic macro references", false },
@@ -76,8 +76,8 @@ const struct warning warnings[ERR_WARN_ALL+1] = {
 };
 
 /* Current state and command-line state, for reset */
-uint8_t warning_state[ERR_WARN_ALL];
-uint8_t warning_state_init[ERR_WARN_ALL];
+uint8_t warning_state[WARN_ALL];
+uint8_t warning_state_init[WARN_ALL];
 
 /* Global error handling function */
 vefunc nasm_verror;
@@ -190,7 +190,7 @@ bool set_warning_status(const char *value)
 		value = NULL;
 
 	/* This is inefficient, but it shouldn't matter... */
-	for (i = 0; i < ERR_WARN_ALL; i++) {
+	for (i = 0; i < WARN_ALL; i++) {
 		if (!value || !nasm_stricmp(value, warnings[i].name)) {
 			ok = true; /* At least one action taken */
 			switch (action) {

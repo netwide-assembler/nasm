@@ -164,7 +164,7 @@ int64_t readnum(const char *str, bool *error)
     }
 
     if (warn)
-        nasm_error(ERR_WARNING | ERR_PASS1 | ERR_WARN_NOV,
+        nasm_error(ERR_WARNING | ERR_PASS1 | WARN_NOV,
 		   "numeric constant %s does not fit in 64 bits",
 		   str);
 
