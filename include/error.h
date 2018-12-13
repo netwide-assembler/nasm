@@ -120,17 +120,16 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define WARN_ALL		(22+2) /* Do not use WARN() here */
 #define WARN_OTHER		WARN(WARN_ALL-1) /* any noncategorized warning */
 
-struct warning {
-    const char *name;
-    const char *help;
-    bool enabled;
-};
-extern const struct warning warnings[WARN_ALL+1];
-
 /* This is a bitmask */
 #define WARN_ST_ENABLED      1   /* Warning is currently enabled */
 #define WARN_ST_ERROR        2   /* Treat this warning as an error */
 
+struct warning {
+    const char *name;
+    const char *help;
+    uint8_t state;              /* Default state for this warning */
+};
+extern const struct warning warnings[WARN_ALL+1];
 extern uint8_t warning_state[WARN_ALL];
 extern uint8_t warning_state_init[WARN_ALL];
 

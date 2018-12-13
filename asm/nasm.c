@@ -1346,10 +1346,8 @@ static void parse_cmdline(int argc, char **argv, int pass)
      * Initialize all the warnings to their default state, including
      * warning index 0 used for "always on".
      */
-    for (i = 0; i < WARN_ALL; i++) {
-        warning_state_init[i] = warning_state[i] =
-	    warnings[i].enabled ? WARN_ST_ENABLED : 0;
-    }
+    for (i = 0; i < WARN_ALL; i++)
+        warning_state_init[i] = warning_state[i] = warnings[i].state;
 
     /*
      * First, process the NASMENV environment variable.
@@ -2059,7 +2057,8 @@ static void help(const char xopt)
         printf("    %-23s %s%s\n",
                warnings[i].name, warnings[i].help,
                i == WARN_ALL ? "\n" :
-               warnings[i].enabled ? " [on]" : " [off]");
+               (warnings[i].state & WARN_ST_ERROR) ? " [error]" :
+               (warnings[i].state & WARN_ST_ENABLED) ? " [on]" : " [off]");
 
     if (xopt == 'f') {
         printf("valid output formats for -f are"
