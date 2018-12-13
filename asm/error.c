@@ -74,6 +74,8 @@ const struct warning warnings[WARN_ALL+1] = {
     {"unknown-warning", "unknown warning in -W/-w or warning directive", off},
     {"negative-rep", "regative %rep count", on},
     {"phase", "phase error during stabilization", off},
+    {"label-redef", "label redefined to an identical value", off},
+    {"label-redef-late", "label (re)defined during code generation", err},
 
     /* THESE ENTRIES SHOULD COME LAST */
     {"other", "any warning not specifially mentioned above", on},

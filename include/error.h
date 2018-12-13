@@ -95,8 +95,7 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define WARN_MNP            	WARN( 1) /* macro-num-parameters warning */
 #define WARN_MSR            	WARN( 2) /* macro self-reference */
 #define WARN_MDP            	WARN( 3) /* macro default parameters check */
-#define WARN_OL             	WARN( 4) /* orphan label (no colon, and
-                                          * alone on line) */
+#define WARN_OL             	WARN( 4) /* orphan label (no colon, and alone on line) */
 #define WARN_NOV            	WARN( 5) /* numeric overflow */
 #define WARN_GNUELF         	WARN( 6) /* using GNU ELF extensions */
 #define WARN_FL_OVERFLOW    	WARN( 7) /* FP overflow */
@@ -115,9 +114,11 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define WARN_UNK_WARNING	WARN(20) /* unknown warning */
 #define WARN_NEG_REP		WARN(21) /* negative repeat count */
 #define WARN_PHASE		WARN(22) /* phase error in pass 1 */
+#define WARN_LABEL_REDEF	WARN(23) /* label redefined, but consistent */
+#define WARN_LABEL_LATE		WARN(24) /* label (re)defined during code generation */
 
 /* These two should come last */
-#define WARN_ALL		(22+2) /* Do not use WARN() here */
+#define WARN_ALL		(24+2) /* Do not use WARN() here */
 #define WARN_OTHER		WARN(WARN_ALL-1) /* any noncategorized warning */
 
 /* This is a bitmask */
