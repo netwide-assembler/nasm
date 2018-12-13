@@ -517,14 +517,14 @@ void define_label(const char *label, int32_t segment,
         src_set(saved_line, saved_fname);
     } else if (changed && pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
         /*
-         * WARN_LABEL_LATE defaults to an error, as this should never actually happen.
+         * WARN_LABEL_REDEF_LATE defaults to an error, as this should never actually happen.
          * Just in case this is a backwards compatibility problem, still make it a
          * warning so that the user can suppress or demote it.
          *
          * As a special case, LBL_SPECIAL symbols are allowed to be changed
          * even during the last pass.
          */
-        nasm_warnf(WARN_LABEL_LATE,
+        nasm_warnf(WARN_LABEL_REDEF_LATE,
                    "label `%s' %s during code generation",
                    lptr->defn.label, created ? "defined" : "changed");
     }

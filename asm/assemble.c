@@ -293,7 +293,7 @@ static const char *size_name(int size)
 
 static void warn_overflow(int size)
 {
-    nasm_warnf(ERR_PASS2 | WARN_NOV, "%s data exceeds bounds",
+    nasm_warnf(ERR_PASS2 | WARN_NUMBER_OVERFLOW, "%s data exceeds bounds",
                size_name(size));
 }
 
@@ -1674,7 +1674,7 @@ static void gencode(struct out_data *data, insn *ins)
                 nasm_nonfatal("non-absolute expression not permitted "
                               "as argument %d", c & 7);
             else if (opy->offset & ~mask)
-                nasm_warnf(ERR_PASS2 | WARN_NOV,
+                nasm_warnf(ERR_PASS2 | WARN_NUMBER_OVERFLOW,
                            "is4 argument exceeds bounds");
             c = opy->offset & mask;
             goto emit_is4;
@@ -1696,7 +1696,7 @@ static void gencode(struct out_data *data, insn *ins)
         case4(0254):
             if (absolute_op(opx) &&
                 (int32_t)opx->offset != (int64_t)opx->offset) {
-                nasm_warnf(ERR_PASS2 | WARN_NOV,
+                nasm_warnf(ERR_PASS2 | WARN_NUMBER_OVERFLOW,
                            "signed dword immediate exceeds bounds");
             }
             out_imm(data, opx, 4, OUT_SIGNED);
@@ -1766,7 +1766,7 @@ static void gencode(struct out_data *data, insn *ins)
                     /* If this wasn't explicitly byte-sized, warn as though we
                      * had fallen through to the imm16/32/64 case.
                      */
-                    nasm_warnf(ERR_PASS2 | WARN_NOV,
+                    nasm_warnf(ERR_PASS2 | WARN_NUMBER_OVERFLOW,
                                "%s value exceeds bounds",
                                (opx->type & BITS8) ? "signed byte" :
                                s == 16 ? "word" :

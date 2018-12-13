@@ -2133,7 +2133,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 
     if (def->defaults && def->ndefs > def->nparam_max - def->nparam_min &&
         !def->plus)
-        nasm_warnf(ERR_PASS1|WARN_MDP, "too many default macro parameters in macro `%s'", def->name);
+        nasm_warnf(ERR_PASS1|WARN_MACRO_DEFAULTS, "too many default macro parameters in macro `%s'", def->name);
 
     return true;
 }
@@ -2966,7 +2966,7 @@ issue_error:
                               count, nasm_limit[LIMIT_REP]);
                 count = 0;
             } else if (count < 0) {
-                nasm_warnf(ERR_PASS2|WARN_NEG_REP,
+                nasm_warnf(ERR_PASS2|WARN_NEGATIVE_REP,
                            "negative `%%rep' count: %"PRId64, count);
                 count = 0;
             } else {

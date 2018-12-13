@@ -104,15 +104,15 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define WARN_IDX(x)     	((x) >> WARN_SHR)
 
 #define WARN_MNP            	WARN( 1) /* macro-num-parameters warning */
-#define WARN_MSR            	WARN( 2) /* macro self-reference */
-#define WARN_MDP            	WARN( 3) /* macro default parameters check */
-#define WARN_OL             	WARN( 4) /* orphan label (no colon, and alone on line) */
-#define WARN_NOV            	WARN( 5) /* numeric overflow */
-#define WARN_GNUELF         	WARN( 6) /* using GNU ELF extensions */
-#define WARN_FL_OVERFLOW    	WARN( 7) /* FP overflow */
-#define WARN_FL_DENORM      	WARN( 8) /* FP denormal */
-#define WARN_FL_UNDERFLOW   	WARN( 9) /* FP underflow */
-#define WARN_FL_TOOLONG     	WARN(10) /* FP too many digits */
+#define WARN_MACRO_SELFREF            	WARN( 2) /* macro self-reference */
+#define WARN_MACRO_DEFAULTS            	WARN( 3) /* macro default parameters check */
+#define WARN_ORPHAN_LABELS             	WARN( 4) /* orphan label (no colon, and alone on line) */
+#define WARN_NUMBER_OVERFLOW            	WARN( 5) /* numeric overflow */
+#define WARN_GNU_ELF_EXTENSIONS         	WARN( 6) /* using GNU ELF extensions */
+#define WARN_FLOAT_OVERFLOW    	WARN( 7) /* FP overflow */
+#define WARN_FLOAT_DENORM      	WARN( 8) /* FP denormal */
+#define WARN_FLOAT_UNDERFLOW   	WARN( 9) /* FP underflow */
+#define WARN_FLOAT_TOOLONG     	WARN(10) /* FP too many digits */
 #define WARN_USER           	WARN(11) /* %warning directives */
 #define WARN_LOCK		WARN(12) /* bad LOCK prefixes */
 #define WARN_HLE		WARN(13) /* bad HLE prefixes */
@@ -121,12 +121,12 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define WARN_PTR		WARN(16) /* not a NASM keyword */
 #define WARN_BAD_PRAGMA		WARN(17) /* malformed pragma */
 #define WARN_UNKNOWN_PRAGMA	WARN(18) /* unknown pragma */
-#define WARN_NOTMY_PRAGMA	WARN(19) /* pragma inapplicable */
+#define WARN_NOT_MY_PRAGMA	WARN(19) /* pragma inapplicable */
 #define WARN_UNK_WARNING	WARN(20) /* unknown warning */
-#define WARN_NEG_REP		WARN(21) /* negative repeat count */
+#define WARN_NEGATIVE_REP		WARN(21) /* negative repeat count */
 #define WARN_PHASE		WARN(22) /* phase error in pass 1 */
 #define WARN_LABEL_REDEF	WARN(23) /* label redefined, but consistent */
-#define WARN_LABEL_LATE		WARN(24) /* label (re)defined during code generation */
+#define WARN_LABEL_REDEF_LATE		WARN(24) /* label (re)defined during code generation */
 
 /* These two should come last */
 #define WARN_ALL		(24+2) /* Do not use WARN() here */
