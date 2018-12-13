@@ -76,7 +76,7 @@ const struct warning warnings[WARN_ALL+1] = {
     {"phase", "phase error during stabilization", off},
 
     /* THESE ENTRIES SHOULD COME LAST */
-    {"other", "any warning not specifially mentioned below", on},
+    {"other", "any warning not specifially mentioned above", on},
     {"all", "all possible warnings", off}
 };
 
