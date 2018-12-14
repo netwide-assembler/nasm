@@ -909,7 +909,7 @@ static Token *tokenize(char *line)
                     p++;
                 }
                 if (*p != '}')
-                    nasm_warn(ERR_PASS1, "unterminated %%{ construct");
+                    nasm_warn(WARN_OTHER|ERR_PASS1, "unterminated %%{ construct");
                 p[-1] = '\0';
                 if (*p)
                     p++;
@@ -997,7 +997,7 @@ static Token *tokenize(char *line)
             if (*p) {
                 p++;
             } else {
-                nasm_warn(ERR_PASS1, "unterminated string");
+                nasm_warn(WARN_OTHER|ERR_PASS1, "unterminated string");
                 /* Handling unterminated strings by UNV */
                 /* type = -1; */
             }
@@ -1911,7 +1911,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             mmac = mmac->next;
         }
         if (tline && tline->next)
-            nasm_warn(ERR_PASS1, "trailing garbage after %%ifmacro ignored");
+            nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after %%ifmacro ignored");
         nasm_free(searching.name);
         j = found;
         break;
@@ -1971,7 +1971,7 @@ iftype:
         if (!evalresult)
             return -1;
         if (tokval.t_type)
-            nasm_warn(ERR_PASS1, "trailing garbage after expression ignored");
+            nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after expression ignored");
         if (!is_simple(evalresult)) {
             nasm_nonfatal("non-constant value given to `%s'",
                           pp_directives[ct]);
@@ -2005,7 +2005,7 @@ static bool define_smacro(Context *ctx, const char *mname, bool casesense,
 
     if (smacro_defined(ctx, mname, nparam, &smac, casesense)) {
         if (!smac) {
-            nasm_warn(ERR_PASS1, "single-line macro `%s' defined both with and"
+            nasm_warn(WARN_OTHER|ERR_PASS1, "single-line macro `%s' defined both with and"
                        " without parameters", mname);
             /*
              * Some instances of the old code considered this a failure,
@@ -2515,7 +2515,7 @@ static int do_directive(Token *tline, char **output)
 
     case PP_CLEAR:
         if (tline->next)
-            nasm_warn(ERR_PASS1, "trailing garbage after `%%clear' ignored");
+            nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after `%%clear' ignored");
         free_macros();
         init_macros();
         free_tlist(origline);
@@ -2531,7 +2531,7 @@ static int do_directive(Token *tline, char **output)
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            nasm_warn(ERR_PASS1, "trailing garbage after `%%depend' ignored");
+            nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after `%%depend' ignored");
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote_cstr(p, i);
@@ -2550,7 +2550,7 @@ static int do_directive(Token *tline, char **output)
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            nasm_warn(ERR_PASS1, "trailing garbage after `%%include' ignored");
+            nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after `%%include' ignored");
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote_cstr(p, i);
@@ -2592,7 +2592,7 @@ static int do_directive(Token *tline, char **output)
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (tline->next)
-            nasm_warn(ERR_PASS1, "trailing garbage after `%%use' ignored");
+            nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after `%%use' ignored");
         if (tline->type == TOK_STRING)
             nasm_unquote_cstr(tline->text, i);
         use_pkg = nasm_stdmac_find_package(tline->text);
@@ -2621,7 +2621,7 @@ static int do_directive(Token *tline, char **output)
                 return DIRECTIVE_FOUND;     /* but we did _something_ */
             }
             if (tline->next)
-                nasm_warn(ERR_PASS1, "trailing garbage after `%s' ignored",
+                nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after `%s' ignored",
                            pp_directives[i]);
             p = nasm_strdup(tline->text);
         } else {
@@ -2726,7 +2726,7 @@ issue_error:
 
         case COND_ELSE_TRUE:
         case COND_ELSE_FALSE:
-            nasm_warn(ERR_PASS1|ERR_PP_PRECOND,
+            nasm_warn(WARN_OTHER|ERR_PASS1|ERR_PP_PRECOND,
                        "`%%elif' after `%%else' ignored");
             istk->conds->state = COND_NEVER;
             break;
@@ -2751,7 +2751,7 @@ issue_error:
 
     case PP_ELSE:
         if (tline->next)
-            nasm_warn(ERR_PASS1|ERR_PP_PRECOND,
+            nasm_warn(WARN_OTHER|ERR_PASS1|ERR_PP_PRECOND,
                        "trailing garbage after `%%else' ignored");
         if (!istk->conds)
 	    nasm_fatal("`%%else: no matching `%%if'");
@@ -2770,7 +2770,7 @@ issue_error:
 
         case COND_ELSE_TRUE:
         case COND_ELSE_FALSE:
-            nasm_warn(ERR_PASS1|ERR_PP_PRECOND,
+            nasm_warn(WARN_OTHER|ERR_PASS1|ERR_PP_PRECOND,
                        "`%%else' after `%%else' ignored.");
             istk->conds->state = COND_NEVER;
             break;
@@ -2780,7 +2780,7 @@ issue_error:
 
     case PP_ENDIF:
         if (tline->next)
-            nasm_warn(ERR_PASS1|ERR_PP_PRECOND,
+            nasm_warn(WARN_OTHER|ERR_PASS1|ERR_PP_PRECOND,
                        "trailing garbage after `%%endif' ignored");
         if (!istk->conds)
             nasm_fatal("`%%endif': no matching `%%if'");
@@ -2820,7 +2820,7 @@ issue_error:
                  || defining->plus)
                 && (defining->nparam_min <= mmac->nparam_max
                     || mmac->plus)) {
-                nasm_warn(ERR_PASS1, "redefining multi-line macro `%s'",
+                nasm_warn(WARN_OTHER|ERR_PASS1, "redefining multi-line macro `%s'",
                            defining->name);
                 return DIRECTIVE_FOUND;
             }
@@ -2918,7 +2918,7 @@ issue_error:
         if (!evalresult)
             return DIRECTIVE_FOUND;
         if (tokval.t_type)
-            nasm_warn(ERR_PASS1, "trailing garbage after expression ignored");
+            nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after expression ignored");
         if (!is_simple(evalresult)) {
             nasm_nonfatal("non-constant value given to `%%rotate'");
             return DIRECTIVE_FOUND;
@@ -2966,7 +2966,7 @@ issue_error:
                 return DIRECTIVE_FOUND;
             }
             if (tokval.t_type)
-                nasm_warn(ERR_PASS1, "trailing garbage after expression ignored");
+                nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after expression ignored");
             if (!is_simple(evalresult)) {
                 nasm_nonfatal("non-constant value given to `%%rep'");
                 return DIRECTIVE_FOUND;
@@ -3163,7 +3163,7 @@ issue_error:
             return DIRECTIVE_FOUND;
         }
         if (tline->next)
-            nasm_warn(ERR_PASS1, "trailing garbage after macro name ignored");
+            nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after macro name ignored");
 
         /* Find the context that symbol belongs to */
         ctx = get_ctx(tline->text, &mname);
@@ -3295,7 +3295,7 @@ issue_error:
             return DIRECTIVE_FOUND;     /* but we did _something_ */
         }
         if (t->next)
-            nasm_warn(ERR_PASS1, "trailing garbage after `%%pathsearch' ignored");
+            nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after `%%pathsearch' ignored");
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote(p, NULL);
@@ -3554,7 +3554,7 @@ issue_error:
         }
 
         if (tokval.t_type)
-            nasm_warn(ERR_PASS1, "trailing garbage after expression ignored");
+            nasm_warn(WARN_OTHER|ERR_PASS1, "trailing garbage after expression ignored");
 
         if (!is_simple(evalresult)) {
             nasm_nonfatal("non-constant value given to `%%%sassign'",

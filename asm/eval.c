@@ -784,7 +784,7 @@ static expr *eval_strfunc(enum strfunc type)
     }
 
     if (rn_warn)
-        nasm_warn(ERR_PASS1, "character constant too long");
+        nasm_warn(WARN_OTHER|ERR_PASS1, "character constant too long");
 
     begintemp();
     addtotemp(EXPR_SIMPLE, val);
@@ -802,7 +802,7 @@ static int64_t eval_ifunc(int64_t val, enum ifunc func)
     case IFUNC_ILOG2E:
     case IFUNC_ILOG2W:
         if (!is_power2(uval))
-            nasm_error((func == IFUNC_ILOG2E) ? ERR_NONFATAL : ERR_WARNING,
+            nasm_error((func == IFUNC_ILOG2E) ? ERR_NONFATAL : ERR_WARNING|WARN_OTHER,
                        "ilog2 argument is not a power of two");
         /* fall through */
     case IFUNC_ILOG2F:
@@ -942,7 +942,7 @@ static expr *expr6(void)
         case TOKEN_STR:
             tmpval = readstrnum(tokval->t_charptr, tokval->t_inttwo, &rn_warn);
             if (rn_warn)
-                nasm_warn(ERR_PASS1, "character constant too long");
+                nasm_warn(WARN_OTHER|ERR_PASS1, "character constant too long");
             addtotemp(EXPR_SIMPLE, tmpval);
             break;
         case TOKEN_REG:

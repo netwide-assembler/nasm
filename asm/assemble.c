@@ -1135,7 +1135,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             if (pfx == P_O16)
                 break;
             if (pfx != P_none)
-                nasm_warn(ERR_PASS2, "invalid operand size prefix");
+                nasm_warn(WARN_OTHER|ERR_PASS2, "invalid operand size prefix");
             else
                 ins->prefixes[PPS_OSIZE] = P_O16;
             break;
@@ -1147,7 +1147,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             if (pfx == P_O32)
                 break;
             if (pfx != P_none)
-                nasm_warn(ERR_PASS2, "invalid operand size prefix");
+                nasm_warn(WARN_OTHER|ERR_PASS2, "invalid operand size prefix");
             else
                 ins->prefixes[PPS_OSIZE] = P_O32;
             break;
@@ -1205,7 +1205,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 nasm_nonfatal("attempt to reserve non-constant"
                               " quantity of BSS space");
             else if (ins->oprs[0].opflags & OPFLAG_FORWARD)
-                nasm_warn(ERR_PASS1, "forward reference in RESx "
+                nasm_warn(WARN_OTHER|ERR_PASS1, "forward reference in RESx "
                            "can have unpredictable results");
             else
                 length += ins->oprs[0].offset;
@@ -1484,19 +1484,19 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
             break;
         case R_CS:
             if (bits == 64)
-                nasm_warn(ERR_PASS2, "cs segment base generated, "
+                nasm_warn(WARN_OTHER|ERR_PASS2, "cs segment base generated, "
                            "but will be ignored in 64-bit mode");
             c = 0x2E;
             break;
         case R_DS:
             if (bits == 64)
-                nasm_warn(ERR_PASS2, "ds segment base generated, "
+                nasm_warn(WARN_OTHER|ERR_PASS2, "ds segment base generated, "
                            "but will be ignored in 64-bit mode");
             c = 0x3E;
             break;
         case R_ES:
             if (bits == 64)
-                nasm_warn(ERR_PASS2, "es segment base generated, "
+                nasm_warn(WARN_OTHER|ERR_PASS2, "es segment base generated, "
                            "but will be ignored in 64-bit mode");
             c = 0x26;
             break;
@@ -1508,7 +1508,7 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
             break;
         case R_SS:
             if (bits == 64) {
-                nasm_warn(ERR_PASS2, "ss segment base generated, "
+                nasm_warn(WARN_OTHER|ERR_PASS2, "ss segment base generated, "
                            "but will be ignored in 64-bit mode");
             }
             c = 0x36;
@@ -2513,7 +2513,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
             if (bits == 64 && ((input->type & IP_REL) == IP_REL)) {
                 if (input->segment == NO_SEG ||
                     (input->opflags & OPFLAG_RELATIVE)) {
-                    nasm_warn(ERR_PASS2, "absolute address can not be RIP-relative");
+                    nasm_warn(WARN_OTHER|ERR_PASS2, "absolute address can not be RIP-relative");
                     input->type &= ~IP_REL;
                     input->type |= MEMORY;
                 }
@@ -2528,7 +2528,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
             if (eaflags & EAF_BYTEOFFS ||
                 (eaflags & EAF_WORDOFFS &&
                  input->disp_size != (addrbits != 16 ? 32 : 16)))
-                nasm_warn(ERR_PASS1, "displacement size ignored on absolute address");
+                nasm_warn(WARN_OTHER|ERR_PASS1, "displacement size ignored on absolute address");
 
             if (bits == 64 && (~input->type & IP_REL)) {
                 output->sib_present = true;

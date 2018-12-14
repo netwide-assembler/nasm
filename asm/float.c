@@ -685,7 +685,7 @@ static int to_packed_bcd(const char *str, const char *p,
         if (c >= '0' && c <= '9') {
             if (tv < 0) {
                 if (n == 9)
-                    nasm_warn(ERR_PASS2, "packed BCD truncated to 18 digits");
+                    nasm_warn(WARN_OTHER|ERR_PASS2, "packed BCD truncated to 18 digits");
                 tv = c-'0';
             } else {
                 if (n < 9)

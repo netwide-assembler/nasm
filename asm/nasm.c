@@ -202,7 +202,7 @@ nasm_set_limit(const char *limit, const char *valstr)
     }
     if (i > LIMIT_MAX) {
         if (passn == 0)
-            errlevel = ERR_WARNING|ERR_USAGE;
+            errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
         else
             errlevel = ERR_WARNING|ERR_PASS1|WARN_UNKNOWN_PRAGMA;
         nasm_error(errlevel, "unknown limit: `%s'", limit);
@@ -215,7 +215,7 @@ nasm_set_limit(const char *limit, const char *valstr)
         val = readnum(valstr, &rn_error);
         if (rn_error || val < 0) {
             if (passn == 0)
-                errlevel = ERR_WARNING|ERR_USAGE;
+                errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
             else
                 errlevel = ERR_WARNING|ERR_PASS1|WARN_BAD_PRAGMA;
             nasm_error(errlevel, "invalid limit value: `%s'", limit);
@@ -1732,9 +1732,8 @@ static size_t warn_index(errflags severity)
     if ((severity & ERR_MASK) >= ERR_FATAL)
         return 0;               /* Fatal errors are never suppressible */
 
-    /* If this is a warning and no index is provided, it is WARN_OTHER */
-    if ((severity & (ERR_MASK|WARN_MASK)) == ERR_WARNING)
-        severity |= WARN_OTHER;
+    /* Warnings MUST HAVE a warning category specifier! */
+    nasm_assert((severity & (ERR_MASK|WARN_MASK)) != ERR_WARNING);
 
     index = WARN_IDX(severity);
     nasm_assert(index < WARN_IDX_ALL);

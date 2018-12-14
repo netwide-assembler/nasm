@@ -472,7 +472,7 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 	break;
 
     case RL_SUB: /* obsolete */
-	nasm_error(ERR_WARNING, "relcation with subtraction"
+	nasm_error(ERR_WARNING|WARN_OTHER, "relcation with subtraction"
 		   "becomes to be obsolete");
 	r->ext = 0;
 	r->type = X86_64_RELOC_SUBTRACTOR;
@@ -559,7 +559,7 @@ static void macho_output(int32_t secto, const void *data,
 
     s = get_section_by_index(secto);
     if (!s) {
-        nasm_error(ERR_WARNING, "attempt to assemble code in"
+        nasm_error(ERR_WARNING|WARN_OTHER, "attempt to assemble code in"
               " section %d: defaulting to `.text'", secto);
         s = get_section_by_name("__TEXT", "__text");
 
@@ -581,10 +581,10 @@ static void macho_output(int32_t secto, const void *data,
     is_bss = (s->flags & SECTION_TYPE) == S_ZEROFILL;
 
     if (is_bss && type != OUT_RESERVE) {
-        nasm_error(ERR_WARNING, "attempt to initialize memory in "
+        nasm_error(ERR_WARNING|WARN_OTHER, "attempt to initialize memory in "
               "BSS section: ignored");
         /* FIXME */
-        nasm_error(ERR_WARNING, "section size may be negative"
+        nasm_error(ERR_WARNING|WARN_OTHER, "section size may be negative"
             "with address symbols");
         s->size += realsize(type, size);
         return;
@@ -595,7 +595,7 @@ static void macho_output(int32_t secto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (!is_bss) {
-            nasm_error(ERR_WARNING, "uninitialized space declared in"
+            nasm_error(ERR_WARNING|WARN_OTHER, "uninitialized space declared in"
 		       " %s,%s section: zeroing", s->segname, s->sectname);
 
             sect_write(s, NULL, size);
@@ -1655,7 +1655,7 @@ static void macho_write (void)
     if (seg_nsects > 0)
 	offset = macho_write_segment (offset);
     else
-        nasm_error(ERR_WARNING, "no sections?");
+        nasm_error(ERR_WARNING|WARN_OTHER, "no sections?");
 
     if (nsyms > 0) {
         /* write out symbol command */
