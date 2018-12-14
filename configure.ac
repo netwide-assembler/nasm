@@ -231,12 +231,13 @@ PA_FUNC_ATTRIBUTE_ERROR
 dnl
 dnl support function sections (if available)
 dnl
-PA_ARG_ENABLED([sections],
- [compile with function/data section support],
+PA_ARG_DISABLED([sections],
+ [don't try to compile with function/data section support],
+ [],
  [PA_ADD_CLDFLAGS([-ffunction-sections])
   PA_ADD_CLDFLAGS([-fdata-sections])
   PA_ADD_CLDFLAGS([-Wl,--gc-sections])],
- [])
+ )
 
 dnl
 dnl support LTO
