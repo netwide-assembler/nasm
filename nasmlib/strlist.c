@@ -141,7 +141,14 @@ strlist_printf(struct strlist *list, const char *fmt, ...)
 void strlist_free(struct strlist *list)
 {
 	if (list) {
-		hash_free_all(&list->hash, false);
+		struct strlist_entry *e, *tmp;
+
+                if (list->uniq)
+                    hash_free(&list->hash);
+
+		list_for_each_safe(e, tmp, list->head)
+			nasm_free(e);
+
 		nasm_free(list);
 	}
 }
