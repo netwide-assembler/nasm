@@ -73,11 +73,20 @@ _type nasm_ ## _name (const char *fmt, ...)				\
 
 nasm_err_helpers(void,       debug,    ERR_DEBUG)
 nasm_err_helpers(void,       note,     ERR_NOTE)
-nasm_err_helpers(void,       warn,     ERR_WARNING)
 nasm_err_helpers(void,       nonfatal, ERR_NONFATAL)
 nasm_err_helpers(fatal_func, fatal,    ERR_FATAL)
 nasm_err_helpers(fatal_func, panic,    ERR_PANIC)
 
+/*
+ * Strongly discourage warnings without level by require flags on warnings.
+ * This means nasm_warn() is the equivalent of the -f variants of the
+ * other ones.
+ */
+void nasm_warn(errflags severity, const char *fmt, ...)
+{
+	nasm_do_error(ERR_WARNING|severity);
+}
+    
 fatal_func nasm_panic_from_macro(const char *file, int line)
 {
 	nasm_panic("internal error at %s:%d\n", file, line);
@@ -189,7 +198,7 @@ bool set_warning_status(const char *value)
 		 *!  warns about a \c{-w} or \c{-W} option or a \c{[WARNING]} directive
 		 *!  that contains an unknown warning name or is otherwise not possible to process.
 		 */
-		nasm_warnf(WARN_UNKNOWN_WARNING, "unknown warning name: %s", name);
+		nasm_warn(WARN_UNKNOWN_WARNING, "unknown warning name: %s", name);
 	}
 		
 	return ok;

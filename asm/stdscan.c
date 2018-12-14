@@ -173,7 +173,7 @@ int stdscan(void *private_data, struct tokenval *tv)
              *!  indicate a mistake in the source code.  Currently only the MASM
              *!  \c{PTR} keyword is recognized.
              */
-            nasm_warnf(ERR_PASS1|WARN_PTR, "`%s' is not a NASM keyword",
+            nasm_warn(ERR_PASS1|WARN_PTR, "`%s' is not a NASM keyword",
                        tv->t_charptr);
         }
 

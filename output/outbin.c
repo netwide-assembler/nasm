@@ -746,7 +746,7 @@ static void bin_out(int32_t segto, const void *data,
     }
 
     if ((s->flags & TYPE_NOBITS) && (type != OUT_RESERVE))
-        nasm_warn("attempt to initialize memory in a"
+        nasm_warn(WARN_OTHER, "attempt to initialize memory in a"
                   " nobits section: ignored");
 
     switch (type) {
@@ -786,7 +786,7 @@ static void bin_out(int32_t segto, const void *data,
 
     case OUT_RESERVE:
         if (s->flags & TYPE_PROGBITS) {
-            nasm_warn("uninitialized space declared in"
+            nasm_warn(WARN_OTHER, "uninitialized space declared in"
                       " %s section: zeroing", s->name);
             saa_wbytes(s->contents, NULL, size);
         }
@@ -967,7 +967,7 @@ static int bin_read_attribute(char **line, int *attribute,
 
     /* Check for no value given. */
     if (!*exp) {
-        nasm_warn("No value given to attribute in"
+        nasm_warn(WARN_OTHER, "No value given to attribute in"
                   " `section' directive");
         return -1;
     }
@@ -1029,7 +1029,7 @@ static void bin_assign_attributes(struct Section *sec, char *astring)
                     *astring = '\0';
                     astring++;
                 }
-                nasm_warn("ignoring unknown section attribute: \"%s\"", p);
+                nasm_warn(WARN_OTHER, "ignoring unknown section attribute: \"%s\"", p);
             }
             continue;
         }
@@ -1327,13 +1327,13 @@ bin_directive(enum directive directive, char *args, int pass)
                 else {          /* Must be a filename. */
                     rf = nasm_open_write(p, NF_TEXT);
                     if (!rf) {
-                        nasm_warn("unable to open map file `%s'", p);
+                        nasm_warn(WARN_OTHER, "unable to open map file `%s'", p);
                         map_control = 0;
                         return DIRR_OK;
                     }
                 }
             } else
-                nasm_warn("map file already specified");
+                nasm_warn(WARN_OTHER, "map file already specified");
         }
         if (map_control == 0)
             map_control |= MAP_ORIGIN | MAP_SUMMARY;

@@ -784,7 +784,7 @@ static expr *eval_strfunc(enum strfunc type)
     }
 
     if (rn_warn)
-        nasm_warnf(ERR_PASS1, "character constant too long");
+        nasm_warn(ERR_PASS1, "character constant too long");
 
     begintemp();
     addtotemp(EXPR_SIMPLE, val);
@@ -942,7 +942,7 @@ static expr *expr6(void)
         case TOKEN_STR:
             tmpval = readstrnum(tokval->t_charptr, tokval->t_inttwo, &rn_warn);
             if (rn_warn)
-                nasm_warnf(ERR_PASS1, "character constant too long");
+                nasm_warn(ERR_PASS1, "character constant too long");
             addtotemp(EXPR_SIMPLE, tmpval);
             break;
         case TOKEN_REG:

@@ -304,13 +304,13 @@ static void as86_out(int32_t segto, const void *data,
     else if (segto == bssindex)
         s = NULL;
     else {
-        nasm_warn("attempt to assemble code in"
+        nasm_warn(WARN_OTHER, "attempt to assemble code in"
                   " segment %d: defaulting to `.text'", segto);
         s = &stext;
     }
 
     if (!s && type != OUT_RESERVE) {
-        nasm_warn("attempt to initialize memory in the"
+        nasm_warn(WARN_OTHER, "attempt to initialize memory in the"
                   " BSS section: ignored");
 	bsslen += realsize(type, size);
         return;
@@ -320,7 +320,7 @@ static void as86_out(int32_t segto, const void *data,
 
     if (type == OUT_RESERVE) {
         if (s) {
-            nasm_warn("uninitialized space declared in"
+            nasm_warn(WARN_OTHER, "uninitialized space declared in"
                       " %s section: zeroing",
                       (segto == stext.index ? "code" : "data"));
             as86_sect_write(s, NULL, size);

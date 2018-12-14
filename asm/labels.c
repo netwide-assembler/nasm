@@ -511,7 +511,7 @@ void define_label(const char *label, int32_t segment,
              *!  value is identical. It is an unconditional error to
              *!  define the same label more than once to \e{different} values.
              */
-            nasm_warnf(WARN_LABEL_REDEF,
+            nasm_warn(WARN_LABEL_REDEF,
                        "label `%s' redefined to an identical value", lptr->defn.label);
             noteflags = ERR_NOTE|ERR_HERE|WARN_LABEL_REDEF;
         }
@@ -538,7 +538,7 @@ void define_label(const char *label, int32_t segment,
          * Note: As a special case, LBL_SPECIAL symbols are allowed
          * to be changed even during the last pass.
          */
-        nasm_warnf(WARN_LABEL_REDEF_LATE,
+        nasm_warn(WARN_LABEL_REDEF_LATE,
                    "label `%s' %s during code generation",
                    lptr->defn.label, created ? "defined" : "changed");
     }

@@ -1380,7 +1380,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
 
             if (!strcmp(seg->name, name)) {
                 if (attrs > 0 && pass == 1)
-                    nasm_warn("segment attributes specified on"
+                    nasm_warn(WARN_OTHER, "segment attributes specified on"
                               " redeclaration of segment: ignoring");
                 if (seg->use32)
                     *bits = 32;
@@ -1482,21 +1482,21 @@ static int32_t obj_segment(char *name, int pass, int *bits)
                 case 4096:     /* PharLap extension */
                     break;
                 case 8:
-                    nasm_warn("OBJ format does not support alignment"
+                    nasm_warn(WARN_OTHER, "OBJ format does not support alignment"
                               " of 8: rounding up to 16");
                     seg->align = 16;
                     break;
                 case 32:
                 case 64:
                 case 128:
-                    nasm_warn("OBJ format does not support alignment"
+                    nasm_warn(WARN_OTHER, "OBJ format does not support alignment"
                               " of %d: rounding up to 256", seg->align);
                     seg->align = 256;
                     break;
                 case 512:
                 case 1024:
                 case 2048:
-                    nasm_warn("OBJ format does not support alignment"
+                    nasm_warn(WARN_OTHER, "OBJ format does not support alignment"
                               " of %d: rounding up to 4096", seg->align);
                     seg->align = 4096;
                     break;
@@ -1534,7 +1534,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
                     grp->segs[i] = grp->segs[grp->nindices];
                     grp->segs[grp->nindices++].index = seg->obj_index;
                     if (seg->grp)
-                        nasm_warn("segment `%s' is already part of"
+                        nasm_warn(WARN_OTHER, "segment `%s' is already part of"
                                   " a group: first one takes precedence",
                                   seg->name);
                     else
@@ -1649,7 +1649,7 @@ obj_directive(enum directive directive, char *value, int pass)
                     grp->segs[grp->nentries++] = grp->segs[grp->nindices];
                     grp->segs[grp->nindices++].index = seg->obj_index;
                     if (seg->grp)
-                        nasm_warn("segment `%s' is already part of"
+                        nasm_warn(WARN_OTHER, "segment `%s' is already part of"
                                   " a group: first one takes precedence",
                                   seg->name);
                     else

@@ -706,7 +706,7 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
             ieee_idx++;
             if (!strcmp(seg->name, name)) {
                 if (attrs > 0 && pass == 1)
-                    nasm_warn("segment attributes specified on"
+                    nasm_warn(WARN_OTHER, "segment attributes specified on"
                               " redeclaration of segment: ignoring");
                 if (seg->use32)
                     *bits = 32;

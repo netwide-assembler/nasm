@@ -259,7 +259,7 @@ static void elf_section_attrib(char *name, char *attr, int pass,
         } else if (!nasm_stricmp(opt, "nobits")) {
             *type = SHT_NOBITS;
         } else if (pass == 1) {
-            nasm_warn("Unknown section attribute '%s' ignored on"
+            nasm_warn(WARN_OTHER, "Unknown section attribute '%s' ignored on"
                       " declaration of section `%s'", opt, name);
         }
         opt = next;
@@ -462,7 +462,7 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
           if ((type && sects[i]->type != type)
               || (align && sects[i]->align != align)
               || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
-            nasm_warn("incompatible section attributes ignored on"
+            nasm_warn(WARN_OTHER, "incompatible section attributes ignored on"
                       " redeclaration of section `%s'", name);
     }
 
@@ -820,7 +820,7 @@ static void elf32_out(int32_t segto, const void *data,
     /* end of debugging stuff */
 
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
-        nasm_warn("attempt to initialize memory in"
+        nasm_warn(WARN_OTHER, "attempt to initialize memory in"
                   " BSS section `%s': ignored", s->name);
         s->len += realsize(type, size);
         return;
@@ -829,7 +829,7 @@ static void elf32_out(int32_t segto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {
-            nasm_warn("uninitialized space declared in"
+            nasm_warn(WARN_OTHER, "uninitialized space declared in"
                       " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
         } else
@@ -924,7 +924,7 @@ static void elf32_out(int32_t segto, const void *data,
              *!  warns if 8-bit or 16-bit relocations are used in the \c{elf32} output format.
              *!  The GNU extensions allow this.
              */
-            nasm_warnf(WARN_GNU_ELF_EXTENSIONS, "8- or 16-bit relocations "
+            nasm_warn(WARN_GNU_ELF_EXTENSIONS, "8- or 16-bit relocations "
                        "in ELF32 is a GNU extension");
         } else if (asize != 4 && segment != NO_SEG) {
             nasm_nonfatal("Unsupported non-32-bit ELF relocation");
@@ -950,7 +950,7 @@ rel12adr:
                           " segment base references");
         } else {
             if (wrt == NO_SEG) {
-                nasm_warnf(WARN_GNU_ELF_EXTENSIONS, "8- or 16-bit relocations "
+                nasm_warn(WARN_GNU_ELF_EXTENSIONS, "8- or 16-bit relocations "
                            "in ELF is a GNU extension");
                 elf_add_reloc(s, segment, 0, reltype);
             } else {
@@ -1031,7 +1031,7 @@ static void elf64_out(int32_t segto, const void *data,
     /* end of debugging stuff */
 
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
-        nasm_warn("attempt to initialize memory in"
+        nasm_warn(WARN_OTHER, "attempt to initialize memory in"
                   " BSS section `%s': ignored", s->name);
         s->len += realsize(type, size);
         return;
@@ -1040,7 +1040,7 @@ static void elf64_out(int32_t segto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {
-            nasm_warn("uninitialized space declared in"
+            nasm_warn(WARN_OTHER, "uninitialized space declared in"
                       " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
         } else
@@ -1309,7 +1309,7 @@ static void elfx32_out(int32_t segto, const void *data,
     /* end of debugging stuff */
 
     if (s->type == SHT_NOBITS && type != OUT_RESERVE) {
-        nasm_warn("attempt to initialize memory in"
+        nasm_warn(WARN_OTHER, "attempt to initialize memory in"
                   " BSS section `%s': ignored", s->name);
         s->len += realsize(type, size);
         return;
@@ -1318,7 +1318,7 @@ static void elfx32_out(int32_t segto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {
-            nasm_warn("uninitialized space declared in"
+            nasm_warn(WARN_OTHER, "uninitialized space declared in"
                       " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
         } else

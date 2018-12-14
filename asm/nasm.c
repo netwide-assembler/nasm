@@ -531,7 +531,7 @@ int main(int argc, char **argv)
         outname = filename_set_extension(inname, ofmt->extension);
         if (!strcmp(outname, inname)) {
             outname = "nasm.out";
-            nasm_warn("default output file same as input, using `%s' for output\n", outname);
+            nasm_warn(WARN_OTHER, "default output file same as input, using `%s' for output\n", outname);
         }
     }
 
@@ -1662,7 +1662,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                  *!  the second-to-last assembly pass. This is not
                  *!  inherently fatal, but may be a source of bugs.
                  */
-                nasm_warnf(WARN_PHASE, "phase error during stabilization "
+                nasm_warn(WARN_PHASE, "phase error during stabilization "
                            "pass, hoping for the best");
                 break;
 

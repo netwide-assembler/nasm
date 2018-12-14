@@ -316,7 +316,7 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
         *p++ = '\0';
     if (strlen(name) > 8) {
         if (!win32 && !win64) {
-            nasm_warn("COFF section names limited to 8 characters:  truncating");
+            nasm_warn(WARN_OTHER, "COFF section names limited to 8 characters:  truncating");
             name[8] = '\0';
         }
     }
@@ -409,7 +409,7 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
 
             /* Warn if non-alignment flags differ */
             if ((flags ^ coff_sects[i]->flags) & ~IMAGE_SCN_ALIGN_MASK) {
-                nasm_warn("section attributes ignored on"
+                nasm_warn(WARN_OTHER, "section attributes ignored on"
                           " redeclaration of section `%s'", name);
             }
             /* Check if alignment might be needed */
@@ -579,7 +579,7 @@ static void coff_out(int32_t segto, const void *data,
     }
 
     if (!s->data && type != OUT_RESERVE) {
-        nasm_warn("attempt to initialize memory in"
+        nasm_warn(WARN_OTHER, "attempt to initialize memory in"
                   " BSS section `%s': ignored", s->name);
         s->len += realsize(type, size);
         return;
@@ -603,7 +603,7 @@ static void coff_out(int32_t segto, const void *data,
 
     if (type == OUT_RESERVE) {
         if (s->data) {
-            nasm_warn("uninitialised space declared in"
+            nasm_warn(WARN_OTHER, "uninitialised space declared in"
                       " non-BSS section `%s': zeroing", s->name);
             coff_sect_write(s, NULL, size);
         } else
