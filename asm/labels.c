@@ -442,7 +442,7 @@ void define_label(const char *label, int32_t segment,
      * The backend may invoke this before pass 1, so treat that as
      * a special "pass".
      */
-    const int64_t lpass = pass0 + 1;
+    const int64_t lpass = passn + 1;
 
     /*
      * Phase errors here can be one of two types: a new label appears,
@@ -521,9 +521,10 @@ void define_label(const char *label, int32_t segment,
         src_set(saved_line, saved_fname);
     } else if (changed && pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
         /*
-         * WARN_LABEL_LATE defaults to an error, as this should never actually happen.
-         * Just in case this is a backwards compatibility problem, still make it a
-         * warning so that the user can suppress or demote it.
+         * WARN_LABEL_LATE defaults to an error, as this should never
+         * actually happen.  Just in case this is a backwards
+         * compatibility problem, still make it a warning so that the
+         * user can suppress or demote it.
          *
          * As a special case, LBL_SPECIAL symbols are allowed to be changed
          * even during the last pass.
