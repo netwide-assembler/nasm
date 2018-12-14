@@ -175,7 +175,7 @@ static void nop_include_path(struct strlist *list)
     (void)list;
 }
 
-static void nop_error_list_macros(int severity)
+static void nop_error_list_macros(errflags severity)
 {
     (void)severity;
 }

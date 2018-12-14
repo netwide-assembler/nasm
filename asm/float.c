@@ -232,6 +232,10 @@ static bool ieee_flconvert(const char *string, fp_limb *mant,
                     *p++ = *string - '0';
                 } else {
                     if (!warned) {
+                        /*!
+                         *!float-toolong [on] too many digits in floating-point number
+                         *!  warns about too many digits in floating-point numbers.
+                         */
                         nasm_warnf(WARN_FLOAT_TOOLONG|ERR_PASS2,
                                    "floating-point constant significand contains "
                                    "more than %i digits", MANT_DIGITS);
@@ -798,9 +802,8 @@ static int to_float(const char *str, int s, uint8_t *result,
             if (exponent >= 2 - expmax && exponent <= expmax) {
                 type = FL_NORMAL;
             } else if (exponent > 0) {
-                if (pass0 == 1)
-                    nasm_warnf(WARN_FLOAT_OVERFLOW|ERR_PASS2,
-                               "overflow in floating-point constant");
+                nasm_warnf(WARN_FLOAT_OVERFLOW|ERR_PASS2,
+                           "overflow in floating-point constant");
                 type = FL_INFINITY;
             } else {
                 /* underflow or denormal; the denormal code handles
@@ -833,13 +836,22 @@ static int to_float(const char *str, int s, uint8_t *result,
             mant[0] |= exponent << (LIMB_BITS-1 - fmt->exponent);
         } else {
             if (daz || is_zero(mant)) {
-                /* Flush denormals to zero */
+                /*!
+                 *!float-underflow [off] floating point underflow
+                 *!  warns about floating point underflow (a nonzero
+                 *!  constant rounded to zero.)
+                 */
                 nasm_warnf(WARN_FLOAT_UNDERFLOW|ERR_PASS2,
                            "underflow in floating-point constant");
                 goto zero;
-            } else
+            } else {
+                /*!
+                 *!float-denorm [off] floating point denormal
+                 *!  warns about denormal floating point constants.
+                 */
                 nasm_warnf(WARN_FLOAT_DENORM|ERR_PASS2,
                            "denormal floating-point constant");
+            }
         }
         break;
     }
@@ -853,8 +865,12 @@ static int to_float(const char *str, int s, uint8_t *result,
             ieee_shr(mant, 1);
             exponent++;
             if (exponent >= (expmax << 1)-1) {
-                    nasm_warnf(WARN_FLOAT_OVERFLOW|ERR_PASS2,
-                               "overflow in floating-point constant");
+                /*!
+                 *!float-overflow [on] floating point overflow
+                 *!  warns about floating point underflow.
+                 */
+                nasm_warnf(WARN_FLOAT_OVERFLOW|ERR_PASS2,
+                           "overflow in floating-point constant");
                 type = FL_INFINITY;
                 goto overflow;
             }

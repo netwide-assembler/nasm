@@ -146,10 +146,20 @@ found_it:
     case DIRR_UNKNOWN:
         switch (pragma->opcode) {
         case D_none:
+            /*!
+             *!bad-pragma [off] empty or malformed %pragma
+             *!  warns about a malformed or otherwise unparsable
+             *!  \c{%pragma} directive.
+             */
             nasm_error(ERR_WARNING|ERR_PASS2|WARN_BAD_PRAGMA,
                        "empty %%pragma %s", pragma->facility_name);
             break;
         default:
+            /*!
+             *!unknown-pragma [off] unknown %pragma facility or directive
+             *!  warns about an unknown \c{%pragma} directive.
+             *!  This is not yet implemented for most cases.
+             */
             nasm_error(ERR_WARNING|ERR_PASS2|WARN_UNKNOWN_PRAGMA,
                        "unknown %%pragma %s %s",
                        pragma->facility_name, pragma->opname);
@@ -175,6 +185,13 @@ found_it:
     }
     return true;
 }
+
+/* This warning message is intended for future use */
+/*!
+ *!not-my-pragma [off] %pragma not applicable to this compilation
+ *!  warns about a \c{%pragma} directive which is not applicable to
+ *!  this particular assembly session.  This is not yet implemented.
+ */
 
 void process_pragma(char *str)
 {

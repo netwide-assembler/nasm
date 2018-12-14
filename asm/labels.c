@@ -505,6 +505,12 @@ void define_label(const char *label, int32_t segment,
             nasm_nonfatal("label `%s' inconsistently redefined", lptr->defn.label);
             noteflags = ERR_NOTE|ERR_HERE;
         } else {
+            /*!
+             *!label-redef [off] label redefined to an identical value
+             *!  warns if a label is defined more than once, but the
+             *!  value is identical. It is an unconditional error to
+             *!  define the same label more than once to \e{different} values.
+             */
             nasm_warnf(WARN_LABEL_REDEF|ERR_PASS2,
                        "label `%s' redefined to an identical value", lptr->defn.label);
             noteflags = ERR_NOTE|ERR_HERE|WARN_LABEL_REDEF|ERR_PASS2;
@@ -516,13 +522,16 @@ void define_label(const char *label, int32_t segment,
                    lptr->defn.label);
         src_set(saved_line, saved_fname);
     } else if (changed && pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
-        /*
-         * WARN_LABEL_REDEF_LATE defaults to an error, as this should never actually happen.
-         * Just in case this is a backwards compatibility problem, still make it a
-         * warning so that the user can suppress or demote it.
+        /*!
+         *!label-redef-late [err] label (re)defined during code generation
+         *!  the value of a label changed during the final, code-generation
+         *!  pass. This may be the result of strange use of the
+         *!  preprocessor. This is very likely to produce incorrect code and
+         *!  may end up being an unconditional error in a future
+         *!  version of NASM.
          *
-         * As a special case, LBL_SPECIAL symbols are allowed to be changed
-         * even during the last pass.
+         * Note: As a special case, LBL_SPECIAL symbols are allowed
+         * to be changed even during the last pass.
          */
         nasm_warnf(WARN_LABEL_REDEF_LATE,
                    "label `%s' %s during code generation",

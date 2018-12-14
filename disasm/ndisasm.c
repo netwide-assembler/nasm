@@ -69,7 +69,7 @@ static const char *help =
 static void output_ins(uint64_t, uint8_t *, int, char *);
 static void skip(uint32_t dist, FILE * fp);
 
-static void ndisasm_verror(int severity, const char *fmt, va_list va)
+static void ndisasm_verror(errflags severity, const char *fmt, va_list va)
 {
     vfprintf(stderr, fmt, va);
 

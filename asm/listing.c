@@ -330,7 +330,7 @@ static void list_downlevel(int type)
     }
 }
 
-static void list_error(int severity, const char *fmt, ...)
+static void list_error(errflags severity, const char *fmt, ...)
 {
     struct list_error *le;
     va_list ap;

@@ -229,7 +229,7 @@ int rdf_errno = 0;
 /* ========================================================================
  * Hook for nasm_error() to work
  * ======================================================================== */
-static void rdoff_verror(int severity, const char *fmt, va_list val)
+static void rdoff_verror(errflags severity, const char *fmt, va_list val)
 {
     vfprintf(stderr, fmt, val);
 

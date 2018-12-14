@@ -53,6 +53,7 @@
 #include "opflags.h"
 #include "regs.h"
 #include "srcfile.h"
+#include "error.h"
 
 /* Time stamp for the official start of compilation */
 struct compile_time {
@@ -368,7 +369,7 @@ struct preproc_ops {
     void (*include_path)(struct strlist *ipath);
 
     /* Unwind the macro stack when printing an error message */
-    void (*error_list_macros)(int severity);
+    void (*error_list_macros)(errflags severity);
 };
 
 extern const struct preproc_ops nasmpp;

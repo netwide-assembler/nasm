@@ -919,6 +919,11 @@ static void elf32_out(int32_t segto, const void *data,
         }
 
         if (gnu16) {
+            /*!
+             *!gnu-elf-extensions [off] using 8- or 16-bit relocation in ELF32, a GNU extension
+             *!  warns if 8-bit or 16-bit relocations are used in the \c{elf32} output format.
+             *!  The GNU extensions allow this.
+             */
             nasm_warnf(WARN_GNU_ELF_EXTENSIONS, "8- or 16-bit relocations "
                        "in ELF32 is a GNU extension");
         } else if (asize != 4 && segment != NO_SEG) {

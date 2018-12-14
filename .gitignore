@@ -48,6 +48,7 @@ TAGS
 /asm/pptok.ph
 /asm/tokens.h
 /asm/tokhash.c
+/asm/warnings.c
 /config/config.h
 /config/config.h.in
 /config.log
@@ -66,6 +67,8 @@ TAGS
 /doc/info
 /doc/inslist.src
 /doc/version.src
+/doc/warnings.src
+/include/warnings.h
 /macros/macros.c
 /misc/omfdump
 /nasm
