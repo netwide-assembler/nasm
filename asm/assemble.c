@@ -1418,7 +1418,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     if (has_prefix(ins, PPS_LOCK, P_LOCK) && lockcheck &&
         (!itemp_has(temp,IF_LOCK) || !is_class(MEMORY, ins->oprs[0].type))) {
         /*!
-         *!lock [on] lock prefix on unlockable instructions
+         *!lock [on] LOCK prefix on unlockable instructions
          *!  warns about \c{LOCK} prefixes on unlockable instructions.
          */
         nasm_warnf(WARN_LOCK | ERR_PASS2 , "instruction is not lockable");
