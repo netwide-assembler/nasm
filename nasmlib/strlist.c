@@ -32,26 +32,47 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * strlist.c - list of unique, ordered strings
+ * strlist.c - list of ordered strings, optionally made unique
  */
 
 #include "strlist.h"
 
 /*
- * Create a string list
+ * Create a string list. The list can be uniqizing or not.
  */
-struct strlist *strlist_alloc(void)
+struct strlist *strlist_alloc(bool uniq)
 {
 	struct strlist *list = nasm_zalloc(sizeof(*list));
 	list->tailp = &list->head;
+        list->uniq = uniq;
 	return list;
 }
 
 /*
- * Append a string to a string list if and only if it isn't
- * already there. If it was added, return the entry pointer.
+ * Append a string to a string list. Return the entry pointer, which
+ * may be a pre-existing entry for a uniqizing list.
  */
-const struct strlist_entry *strlist_add(struct strlist *list, const char *str)
+
+static const struct strlist_entry *
+strlist_add_common(struct strlist *list, struct strlist_entry *e,
+		   struct hash_insert *hi)
+{
+        e->offset = list->size;
+        e->next = NULL;
+
+	*list->tailp = e;
+	list->tailp = &e->next;
+	list->nstr++;
+	list->size += e->size;
+
+        if (list->uniq)
+		hash_add(hi, e->str, (void *)e);
+
+	return e;
+}
+
+const struct strlist_entry *
+strlist_add(struct strlist *list, const char *str)
 {
 	struct strlist_entry *e;
 	struct hash_insert hi;
@@ -61,22 +82,56 @@ const struct strlist_entry *strlist_add(struct strlist *list, const char *str)
 		return NULL;
 
 	size = strlen(str) + 1;
-	if (hash_findb(&list->hash, str, size, &hi))
-		return NULL;
+	if (list->uniq) {
+		void **dp = hash_findb(&list->hash, str, size, &hi);
+		if (dp)
+			return *dp;
+	}
 
 	/* Structure already has char[1] as EOS */
 	e = nasm_malloc(sizeof(*e) - 1 + size);
 	e->size = size;
-        e->offset = list->size;
-        e->next = NULL;
 	memcpy(e->str, str, size);
 
-	*list->tailp = e;
-	list->tailp = &e->next;
-	list->nstr++;
-	list->size += size;
+	return strlist_add_common(list, e, &hi);
+}
 
-	hash_add(&hi, e->str, (void *)e);
+/*
+ * printf() to a string list
+ */
+const struct strlist_entry *
+strlist_vprintf(struct strlist *list, const char *fmt, va_list ap)
+{
+	struct strlist_entry *e;
+	struct hash_insert hi;
+
+	if (!list)
+		return NULL;
+
+	e = nasm_vaxprintf(offsetof(struct strlist_entry, str), fmt, ap);
+	e->size = nasm_aprintf_size();
+
+	if (list->uniq) {
+		void **dp = hash_findb(&list->hash, e->str, e->size, &hi);
+		if (dp) {
+			nasm_free(e);
+			return *dp;
+		}
+	}
+
+	return strlist_add_common(list, e, &hi);
+}
+
+const struct strlist_entry *
+strlist_printf(struct strlist *list, const char *fmt, ...)
+{
+	va_list ap;
+	const struct strlist_entry *e;
+
+	va_start(ap, fmt);
+	e = strlist_vprintf(list, fmt, ap);
+	va_end(ap);
+
 	return e;
 }
 
@@ -93,12 +148,15 @@ void strlist_free(struct strlist *list)
 
 /*
  * Search the string list for an entry. If found, return the entry pointer.
- * (This is basically the opposite of strlist_add_string()!)
+ * Only possible on a uniqizing list.
  */
 const struct strlist_entry *
 strlist_find(const struct strlist *list, const char *str)
 {
 	void **hf;
+
+        nasm_assert(list->uniq);
+
 	hf = hash_find((struct hash_table *)&list->hash, str, NULL);
 	return hf ? *hf : NULL;
 }
@@ -114,11 +172,11 @@ void *strlist_linearize(const struct strlist *list, char sep)
 	const struct strlist_entry *sl;
 	char *buf = nasm_malloc(list->size);
 	char *p = buf;
-	
+
 	strlist_for_each(sl, list) {
 		p = mempcpy(p, sl->str, sl->size);
 		p[-1] = sep;
 	}
-	
+
 	return buf;
 }

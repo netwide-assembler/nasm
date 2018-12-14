@@ -456,7 +456,7 @@ int main(int argc, char **argv)
     iflag_set_default_cpu(&cpu);
     iflag_set_default_cpu(&cmd_cpu);
 
-    include_path = strlist_alloc();
+    include_path = strlist_alloc(true);
 
     pass0 = 0;
     want_usage = terminate_after_phase = false;
@@ -533,7 +533,7 @@ int main(int argc, char **argv)
         }
     }
 
-    depend_list = (operating_mode & OP_DEPEND) ? strlist_alloc() : NULL;
+    depend_list = (operating_mode & OP_DEPEND) ? strlist_alloc(true) : NULL;
 
     if (!depend_target)
         depend_target = quote_for_make(outname);

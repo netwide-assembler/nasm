@@ -53,6 +53,7 @@ struct strlist {
 	struct hash_table	hash;
 	struct strlist_entry	*head, **tailp;
 	size_t			nstr, size;
+	bool			uniq;
 };
 
 static inline const struct strlist_entry *
@@ -69,9 +70,13 @@ static inline size_t strlist_size(const struct strlist *list)
 	return list ? list->size : 0;
 }
 
-struct strlist safe_alloc *strlist_alloc(void);
+struct strlist safe_alloc *strlist_alloc(bool uniq);
 void strlist_free(struct strlist *list);
-const struct strlist_entry *strlist_add(struct strlist *list, const char *str);
+const struct strlist_entry * never_null strlist_add(struct strlist *list, const char *str);
+const struct strlist_entry * printf_func(2, 3) never_null
+	strlist_printf(struct strlist *list, const char *fmt, ...);
+const struct strlist_entry * never_null
+	strlist_vprintf(struct strlist *list, const char *fmt, va_list ap);
 const struct strlist_entry *
 strlist_find(const struct strlist *list, const char *str);
 void * safe_alloc strlist_linearize(const struct strlist *list, char sep);

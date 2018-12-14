@@ -67,7 +67,8 @@ char * safe_alloc end_with_null nasm_strcatn(const char *one, ...);
 /*
  * nasm_[v]asprintf() are variants of the semi-standard [v]asprintf()
  * functions, except that we return the pointer instead of a count.
- * Use %n if you need the count, too.
+ * The size of the string (including the final NUL!) is available
+ * by calling nasm_aprintf_size() afterwards.
  *
  * nasm_[v]axprintf() are similar, but allocates a user-defined amount
  * of storage before the string, and returns a pointer to the
@@ -77,6 +78,12 @@ char * safe_alloc printf_func(1, 2) nasm_asprintf(const char *fmt, ...);
 char * safe_alloc nasm_vasprintf(const char *fmt, va_list ap);
 void * safe_alloc printf_func(2, 3) nasm_axprintf(size_t extra, const char *fmt, ...);
 void * safe_alloc nasm_vaxprintf(size_t extra, const char *fmt, va_list ap);
+
+extern size_t _nasm_aprintf_size;
+static inline size_t nasm_aprintf_size(void)
+{
+    return _nasm_aprintf_size;
+}
 
 /* Assert the argument is a pointer without evaluating it */
 #define nasm_assert_pointer(p) ((void)sizeof(*(p)))
