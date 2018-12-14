@@ -435,9 +435,7 @@ bool process_directives(char *directive)
     }
 
     case D_WARNING:         /* [WARNING {+|-|*}warn-name] */
-        if (!set_warning_status(value)) {
-            nasm_warnf(WARN_UNK_WARNING, "unknown warning option: %s", value);
-        }
+        set_warning_status(value);
         break;
 
     case D_CPU:         /* [CPU] */

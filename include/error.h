@@ -83,7 +83,6 @@ static inline vefunc nasm_set_verror(vefunc ve)
  * These are the error severity codes which get passed as the first
  * argument to an efunc.
  */
-
 #define ERR_DEBUG		0x00000000	/* put out debugging message */
 #define ERR_NOTE		0x00000001	/* additional error information */
 #define ERR_WARNING		0x00000002	/* warn only: no further action */
@@ -107,55 +106,23 @@ static inline vefunc nasm_set_verror(vefunc ve)
  * They are assumed to occupy the most significant bits of the
  * severity code.
  */
-
 #define WARN_SHR		12              /* how far to shift right */
-#define WARN(x)         	(((errflags)(x)) << WARN_SHR)
-#define WARN_MASK		WARN(~0)
 #define WARN_IDX(x)     	(((errflags)(x)) >> WARN_SHR)
-
-#define WARN_MACRO_PARAMS            	WARN( 1) /* macro-num-parameters warning */
-#define WARN_MACRO_SELFREF            	WARN( 2) /* macro self-reference */
-#define WARN_MACRO_DEFAULTS            	WARN( 3) /* macro default parameters check */
-#define WARN_ORPHAN_LABELS             	WARN( 4) /* orphan label (no colon, and alone on line) */
-#define WARN_NUMBER_OVERFLOW            	WARN( 5) /* numeric overflow */
-#define WARN_GNU_ELF_EXTENSIONS         	WARN( 6) /* using GNU ELF extensions */
-#define WARN_FLOAT_OVERFLOW    	WARN( 7) /* FP overflow */
-#define WARN_FLOAT_DENORM      	WARN( 8) /* FP denormal */
-#define WARN_FLOAT_UNDERFLOW   	WARN( 9) /* FP underflow */
-#define WARN_FLOAT_TOOLONG     	WARN(10) /* FP too many digits */
-#define WARN_USER           	WARN(11) /* %warning directives */
-#define WARN_LOCK		WARN(12) /* bad LOCK prefixes */
-#define WARN_HLE		WARN(13) /* bad HLE prefixes */
-#define WARN_BND		WARN(14) /* bad BND prefixes */
-#define WARN_ZEXTRELOC		WARN(15) /* relocation zero-extended */
-#define WARN_PTR		WARN(16) /* not a NASM keyword */
-#define WARN_BAD_PRAGMA		WARN(17) /* malformed pragma */
-#define WARN_UNKNOWN_PRAGMA	WARN(18) /* unknown pragma */
-#define WARN_NOT_MY_PRAGMA	WARN(19) /* pragma inapplicable */
-#define WARN_UNK_WARNING	WARN(20) /* unknown warning */
-#define WARN_NEGATIVE_REP		WARN(21) /* negative repeat count */
-#define WARN_PHASE		WARN(22) /* phase error in pass 1 */
-#define WARN_LABEL_REDEF	WARN(23) /* label redefined, but consistent */
-#define WARN_LABEL_REDEF_LATE		WARN(24) /* label (re)defined during code generation */
-
-/* These two should come last */
-#define WARN_ALL		(24+2) /* Do not use WARN() here */
-#define WARN_OTHER		WARN(WARN_ALL-1) /* any noncategorized warning */
+#define WARN_MASK		((~(errflags)0) << WARN_SHR)
 
 /* This is a bitmask */
 #define WARN_ST_ENABLED		1 /* Warning is currently enabled */
 #define WARN_ST_ERROR		2 /* Treat this warning as an error */
 
-struct warning {
-	const char *name;
-	const char *help;
-	uint8_t state;		/* Default state for this warning */
-};
-extern const struct warning warnings[WARN_ALL+1];
-extern uint8_t warning_state[WARN_ALL];
-extern uint8_t warning_state_init[WARN_ALL];
+/* Possible initial state for warnings */
+#define WARN_INIT_OFF		0
+#define WARN_INIT_ON		WARN_ST_ENABLED
+#define WARN_INIT_ERR		(WARN_ST_ENABLED|WARN_ST_ERROR)
 
 /* Process a warning option or directive */
 bool set_warning_status(const char *value);
+
+/* Should be included from within error.h only */
+#include "warnings.h"
 
 #endif /* NASM_ERROR_H */

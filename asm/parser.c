@@ -463,6 +463,12 @@ restart_parse:
         if (i == ':') {         /* skip over the optional colon */
             i = stdscan(NULL, &tokval);
         } else if (i == 0) {
+            /*!
+             *!orphan-labels [on] labels alone on lines without trailing `:'
+             *!  warns about source lines which contain no instruction but define
+             *!  a label without a trailing colon. This is most likely indicative
+             *!  of a typo, but is technically correct NASM syntax (see \k{syntax}.)
+             */
             nasm_warnf(WARN_ORPHAN_LABELS | ERR_PASS1,
                        "label alone on a line without a colon might be in error");
         }

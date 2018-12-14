@@ -405,7 +405,12 @@ static void out(struct out_data *data)
             nasm_nonfatal("%u-bit signed relocation unsupported by output format %s",
                           (unsigned int)(asize << 3), ofmt->shortname);
         } else {
-            nasm_warnf(WARN_ZEXTRELOC,
+            /*!
+             *!zext-reloc [on] relocation zero-extended to match output format
+             *!  warns that a relocation has been zero-extended due
+             *!  to limitations in the output format.
+             */
+            nasm_warnf(WARN_ZEXT_RELOC,
                        "%u-bit %s relocation zero-extended from %u bits",
                        (unsigned int)(asize << 3),
                        data->type == OUT_SEGMENT ? "segment" : "unsigned",
@@ -555,6 +560,15 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     if (is_byte && c == 0371 && ins->prefixes[PPS_REP] == P_BND) {
         /* jmp short (opcode eb) cannot be used with bnd prefix. */
         ins->prefixes[PPS_REP] = P_none;
+        /*!
+         *!bnd [on] invalid BND prefixes
+         *!  warns about ineffective use of the \c{BND} prefix when the
+         *!  \c{JMP} instruction is converted to the \c{SHORT} form.
+         *!  This should be extremely rare since the short \c{JMP} only
+         *!  is applicable to jumps inside the same module, but if
+         *!  it is legitimate, it may be necessary to use
+         *!  \c{BND JMP DWORD}...
+         */
         nasm_warnf(WARN_BND | ERR_PASS2 ,
                    "jmp short does not init bnd regs - bnd prefix dropped.");
     }
@@ -904,6 +918,11 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
     if (!is_class(MEMORY, ins->oprs[0].type))
         ww = w_inval;           /* HLE requires operand 0 to be memory */
 
+    /*!
+     *!hle [on] invalid HLE prefixes
+     *!  warns about invalid use of the HLE \c{XACQUIRE} or \c{XRELEASE}
+     *!  prefixes.
+     */
     switch (ww) {
     case w_none:
         break;
@@ -1398,6 +1417,10 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
     if (has_prefix(ins, PPS_LOCK, P_LOCK) && lockcheck &&
         (!itemp_has(temp,IF_LOCK) || !is_class(MEMORY, ins->oprs[0].type))) {
+        /*!
+         *!lock [on] lock prefix on unlockable instructions
+         *!  warns about \c{LOCK} prefixes on unlockable instructions.
+         */
         nasm_warnf(WARN_LOCK | ERR_PASS2 , "instruction is not lockable");
     }
 

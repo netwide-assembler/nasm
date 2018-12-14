@@ -31,7 +31,7 @@ CP_UF		= cp -ufv
 # Auxiliary files referenced by the HTML files
 HTMLAUX		= nasmdoc.css local.css nasmlogw.png
 
-SRCS		= nasmdoc.src inslist.src changes.src version.src
+SRCS		= nasmdoc.src inslist.src changes.src warnings.src version.src
 OUT		= html nasmdoc.txt nasmdoc.pdf
 
 .SUFFIXES:

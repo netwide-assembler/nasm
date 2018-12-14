@@ -510,7 +510,7 @@ int main(int argc, char **argv)
     }
 
     /* Save away the default state of warnings */
-    memcpy(warning_state_init, warning_state, sizeof warning_state);
+    memcpy(warning_state_init, warning_state, sizeof warning_state_init);
 
     /* Dependency filename if we are also doing other things */
     if (!depend_file && (operating_mode & ~OP_DEPEND)) {
@@ -1040,11 +1040,8 @@ static bool process_arg(char *p, char *q, int pass)
 
         case 'w':
         case 'W':
-            if (pass == 2) {
-                if (!set_warning_status(param)) {
-                    nasm_warnf(WARN_UNK_WARNING, "unknown warning option: %s", param);
-                }
-            }
+            if (pass == 2)
+                set_warning_status(param);
         break;
 
         case 'M':
@@ -1323,14 +1320,13 @@ static void parse_cmdline(int argc, char **argv, int pass)
 {
     FILE *rfile;
     char *envreal, *envcopy = NULL, *p;
-    int i;
 
     /*
      * Initialize all the warnings to their default state, including
      * warning index 0 used for "always on".
      */
-    for (i = 0; i < WARN_ALL; i++)
-        warning_state_init[i] = warning_state[i] = warnings[i].state;
+    memcpy(warning_state,      warning_default, sizeof warning_state);
+    memcpy(warning_state_init, warning_default, sizeof warning_state_init);
 
     /*
      * First, process the NASMENV environment variable.
@@ -1640,7 +1636,14 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         if (global_offset_changed && !terminate_after_phase) {
             switch (pass0) {
             case 1:
-                nasm_warnf(WARN_PHASE, "phase error during stabilization pass, hoping for the best");
+                /*!
+                 *!phase [off] phase error during stabilization
+                 *!  warns about symbols having changed values during
+                 *!  the second-to-last assembly pass. This is not
+                 *!  inherently fatal, but may be a source of bugs.
+                 */
+                nasm_warnf(WARN_PHASE, "phase error during stabilization "
+                           "pass, hoping for the best");
                 break;
 
             case 2:
@@ -1712,7 +1715,7 @@ static size_t warn_index(errflags severity)
         severity |= WARN_OTHER;
 
     index = WARN_IDX(severity);
-    nasm_assert(index < WARN_ALL);
+    nasm_assert(index < WARN_IDX_ALL);
 
     return index;
 }
@@ -1830,8 +1833,8 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
     *warnsuf = 0;
     if (spec_type == ERR_WARNING) {
 	snprintf(warnsuf, sizeof warnsuf, " [-w+%s%s]",
-                 true_type ? "error=" : "",
-                 warnings[warn_index(severity)].name);
+                 (true_type >= ERR_NONFATAL) ? "error=" : "",
+                 warning_name[warn_index(severity)]);
     }
 
     *linestr = 0;
@@ -1989,14 +1992,15 @@ static void help(const char xopt)
         }
     }
 
-    printf("\nWarnings for the -W/-w options: (default in brackets)\n");
+    printf("\nWarnings for the -W/-w options: (defaults in brackets)\n");
 
-    for (i = 1; i <= WARN_ALL; i++)
+    for (i = 1; i <= WARN_IDX_ALL; i++) {
         printf("    %-23s %s%s\n",
-               warnings[i].name, warnings[i].help,
-               i == WARN_ALL ? "\n" :
-               (warnings[i].state & WARN_ST_ERROR) ? " [error]" :
-               (warnings[i].state & WARN_ST_ENABLED) ? " [on]" : " [off]");
+               warning_name[i], warning_help[i],
+               i == WARN_IDX_ALL ? "\n" :
+               (warning_default[i] & WARN_ST_ERROR) ? " [error]" :
+               (warning_default[i] & WARN_ST_ENABLED) ? " [on]" : " [off]");
+    }
 
     if (xopt == 'f') {
         printf("valid output formats for -f are"

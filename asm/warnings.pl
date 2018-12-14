@@ -18,7 +18,7 @@ sub quote_for_c($) {
 sub find_warnings {
     my $infile = $_;
 
-    return unless ($infile =~ /\.[ch]$/i);
+    return unless (basename($infile) =~ /^\w.*\.[ch]$/i);
     open(my $in, '<', $infile)
 	or die "$0: cannot open input file $infile: $!\n";
 
@@ -50,8 +50,10 @@ sub find_warnings {
 		my $ws = $1;
 		my $str = $2;
 
+		next if ($str eq '');
+		
 		if (!defined($this) || ($ws eq '' && $str ne '')) {
-		    if ($str =~ /^(\w+)\s+(\w+)\s(.+)$/) {
+		    if ($str =~ /^([\w-]+)\s+\[(\w+)\]\s(.+)$/) {
 			my $name = $1;
 			my $def = $2;
 			my $help = $3;
@@ -106,7 +108,7 @@ open(my $out, '>', $outfile)
 
 if ($what eq 'c') {
     print $out "#include \"error.h\"\n\n";
-    printf $out "const char * const warning_names[%d] = {\n",
+    printf $out "const char * const warning_name[%d] = {\n",
 	$#warnings + 2;
     print $out "\tNULL";
     foreach my $warn (@warnings) {
@@ -121,44 +123,58 @@ if ($what eq 'c') {
 	print $out ",\n\t\"", $help, "\"";
     }
     print $out "\n};\n\n";
-    printf $out "const uint8_t warning_defaults[%d] = {\n",
+    printf $out "const uint8_t warning_default[%d] = {\n",
 	$#warn_noall + 2;
     print $out "\tWARN_INIT_ON"; # for entry 0
     foreach my $warn (@warn_noall) {
 	print $out ",\n\tWARN_INIT_", uc($warn->{def});
     }
-    print $out "\n};\n";
+    print $out "\n};\n\n";
+    printf $out "uint8_t warning_state[%d];\t/* Current state */\n",
+	$#warn_noall + 2;
+    printf $out "uint8_t warning_state_init[%d];\t/* Command-line state, for reset */\n",
+	$#warn_noall + 2;
 } elsif ($what eq 'h') {
-    my $guard = basename($outfile);
+    my $filename = basename($outfile);
+    my $guard = $filename;
     $guard =~ s/[^A-Za-z0-9_]+/_/g;
     $guard = "NASM_\U$guard";
 
     print $out "#ifndef $guard\n";
     print $out "#define $guard\n";
     print $out "\n";
-    print $out "#include \"compiler.h\"\n\n";
+    print $out "#ifndef WARN_SHR\n";
+    print $out "# error \"$filename should only be included from within error.h\"\n";
+    print $out "#endif\n\n";
     print $out "enum warn_index {\n";
-    printf $out "\tWARN_IDX_%-15s = %2d", 'NONE', 0;
+    printf $out "\tWARN_IDX_%-23s = %3d, /* not suppressible */\n", 'NONE', 0;
     my $n = 1;
     foreach my $warn (@warnings) {
-	printf $out ",\n\tWARN_IDX_%-15s = %2d%s    /* %s */",
-	    $warn->{cname}, $n++, $warn->{help};
+	printf $out "\tWARN_IDX_%-23s = %3d%s /* %s */\n",
+	    $warn->{cname}, $n,
+	    ($n == $#warnings + 1) ? " " : ",",
+	    $warn->{help};
+	$n++;
     }
-    print $out "\n};\n\n";
+    print $out "};\n\n";
 
     print $out "enum warn_const {\n";
-    printf $out "\tWARN_%-19s = %2d << WARN_SHR", 'NONE', 0;
+    printf $out "\tWARN_%-27s = %3d << WARN_SHR", 'NONE', 0;
     my $n = 1;
     foreach my $warn (@warn_noall) {
-	printf $out ",\n\tWARN_%-19s = %2d << WARN_SHR", $warn->{cname}, $n++;
+	printf $out ",\n\tWARN_%-27s = %3d << WARN_SHR", $warn->{cname}, $n++;
     }
     print $out "\n};\n\n";
 
-    printf $out "extern const char * const warning_names[%d];\n",
+    printf $out "extern const char * const warning_name[%d];\n",
 	$#warnings + 2;
     printf $out "extern const char * const warning_help[%d];\n",
 	$#warnings + 2;
-    printf $out "extern const uint8_t warning_defaults[%d];\n",
+    printf $out "extern const uint8_t warning_default[%d];\n",
+	$#warn_noall + 2;
+    printf $out "extern uint8_t warning_state[%d];\n",
+	$#warn_noall + 2;
+    printf $out "extern uint8_t warning_state_init[%d];\n",
 	$#warn_noall + 2;
     print $out "\n#endif /* $guard */\n";
 } elsif ($what eq 'doc') {

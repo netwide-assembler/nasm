@@ -167,6 +167,12 @@ int stdscan(void *private_data, struct tokenval *tv)
         token_type = nasm_token_hash(ourcopy, tv);
 
         if (unlikely(tv->t_flag & TFLAG_WARN)) {
+            /*!
+             *!ptr [on] non-NASM keyword used in other assemblers
+             *!  warns about keywords used in other assemblers that might
+             *!  indicate a mistake in the source code.  Currently only the MASM
+             *!  \c{PTR} keyword is recognized.
+             */
             nasm_warnf(ERR_PASS1|WARN_PTR, "`%s' is not a NASM keyword",
                        tv->t_charptr);
         }

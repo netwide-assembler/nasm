@@ -2132,8 +2132,15 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
     def->expansion = NULL;
 
     if (def->defaults && def->ndefs > def->nparam_max - def->nparam_min &&
-        !def->plus)
-        nasm_warnf(ERR_PASS1|WARN_MACRO_DEFAULTS, "too many default macro parameters in macro `%s'", def->name);
+        !def->plus) {
+        /*
+         *!macro-defaults [on] macros with more default than optional parameters
+         *!  warns when a macro has more default parameters than optional parameters.
+         *!  See \k{mlmacdef} for why might want to disable this warning.
+         */
+        nasm_warnf(ERR_PASS1|WARN_MACRO_DEFAULTS,
+                   "too many default macro parameters in macro `%s'", def->name);
+    }
 
     return true;
 }
@@ -2655,6 +2662,10 @@ static int do_directive(Token *tline, char **output)
         severity = ERR_NONFATAL;
         goto issue_error;
     case PP_WARNING:
+        /*!
+         *!user [on] %warning directives
+         *!  controls output of \c{%warning} directives (see \k{pperror}).
+         */
         severity = ERR_WARNING|WARN_USER;
         goto issue_error;
 
@@ -2966,6 +2977,11 @@ issue_error:
                               count, nasm_limit[LIMIT_REP]);
                 count = 0;
             } else if (count < 0) {
+                /*!
+                 *!negative-rep [on] regative %rep count
+                 *!  warns about negative counts given to the \c{%rep}
+                 *!  preprocessor directive.
+                 */
                 nasm_warnf(ERR_PASS2|WARN_NEGATIVE_REP,
                            "negative `%%rep' count: %"PRId64, count);
                 count = 0;
@@ -4284,11 +4300,18 @@ again:
                                      mstrcmp(m->name, mname,
                                              m->casesense)))
                             m = m->next;
-                        if (!m)
+                        if (!m) {
+                            /*!
+                             *!macro-params [on] macro calls with wrong parameter count
+                             *!  covers warnings about \i{multi-line macros} being invoked
+                             *!  with the wrong number of parameters. See \k{mlmacover} for an
+                             *!  example of why you might want to disable this warning.
+                             */
                             nasm_warnf(ERR_PASS1|WARN_MACRO_PARAMS,
                                        "macro `%s' exists, "
                                        "but not taking %d parameters",
                                        mstart->text, nparam);
+                        }
                     }
                 }
                 if (m && m->in_progress)
