@@ -451,7 +451,7 @@ static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
 static Context *get_ctx(const char *name, const char **namep);
 static void make_tok_num(Token * tok, int64_t val);
-static void pp_verror(int severity, const char *fmt, va_list ap);
+static void pp_verror(errflags severity, const char *fmt, va_list ap);
 static vefunc real_verror;
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
@@ -2203,7 +2203,7 @@ static int do_directive(Token *tline, char **output)
     MMacro *tmp_defining;       /* Used when manipulating rep_nest */
     int64_t count;
     size_t len;
-    int severity;
+    errflags severity;
 
     *output = NULL;             /* No output generated */
     origline = tline;
@@ -4828,7 +4828,7 @@ static int expand_mmacro(Token * tline)
  * This function adds macro names to error messages, and suppresses
  * them if necessary.
  */
-static void pp_verror(int severity, const char *fmt, va_list arg)
+static void pp_verror(errflags severity, const char *fmt, va_list arg)
 {
     char buff[BUFSIZ];
     MMacro *mmac = NULL;
@@ -5315,7 +5315,7 @@ static void make_tok_num(Token * tok, int64_t val)
     tok->type = TOK_NUMBER;
 }
 
-static void pp_list_one_macro(MMacro *m, int severity)
+static void pp_list_one_macro(MMacro *m, errflags severity)
 {
     if (!m)
 	return;
@@ -5329,7 +5329,7 @@ static void pp_list_one_macro(MMacro *m, int severity)
     }
 }
 
-static void pp_error_list_macros(int severity)
+static void pp_error_list_macros(errflags severity)
 {
     struct src_location saved;
 

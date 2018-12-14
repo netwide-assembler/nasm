@@ -95,13 +95,13 @@ vefunc nasm_verror;
 	nasm_verror((s), fmt, ap);		\
 	va_end(ap);
 
-void nasm_error(int severity, const char *fmt, ...)
+void nasm_error(errflags severity, const char *fmt, ...)
 {
 	nasm_do_error(severity);
 }
 
 #define nasm_err_helpers(_type, _name, _sev)				\
-_type nasm_ ## _name ## f (int flags, const char *fmt, ...)		\
+_type nasm_ ## _name ## f (errflags flags, const char *fmt, ...)	\
 {									\
 	nasm_do_error((_sev)|flags);					\
 	if (_sev >= ERR_FATAL)						\

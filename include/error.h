@@ -46,25 +46,30 @@
 extern FILE *error_file;        /* Error file descriptor */
 
 /*
+ * Typedef for the severity field
+ */
+typedef uint32_t errflags;
+
+/*
  * An error reporting function should look like this.
  */
-void printf_func(2, 3) nasm_error(int severity, const char *fmt, ...);
+void printf_func(2, 3) nasm_error(errflags severity, const char *fmt, ...);
 void printf_func(1, 2) nasm_debug(const char *fmt, ...);
-void printf_func(2, 3) nasm_debugf(int flags, const char *fmt, ...);
+void printf_func(2, 3) nasm_debugf(errflags flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_note(const char *fmt, ...);
-void printf_func(2, 3) nasm_notef(int flags, const char *fmt, ...);
+void printf_func(2, 3) nasm_notef(errflags flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_warn(const char *fmt, ...);
-void printf_func(2, 3) nasm_warnf(int flags, const char *fmt, ...);
+void printf_func(2, 3) nasm_warnf(errflags flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_nonfatal(const char *fmt, ...);
-void printf_func(2, 3) nasm_nonfatalf(int flags, const char *fmt, ...);
+void printf_func(2, 3) nasm_nonfatalf(errflags flags, const char *fmt, ...);
 fatal_func printf_func(1, 2) nasm_fatal(const char *fmt, ...);
-fatal_func printf_func(2, 3) nasm_fatalf(int flags, const char *fmt, ...);
+fatal_func printf_func(2, 3) nasm_fatalf(errflags flags, const char *fmt, ...);
 fatal_func printf_func(1, 2) nasm_panic(const char *fmt, ...);
-fatal_func printf_func(2, 3) nasm_panicf(int flags, const char *fmt, ...);
+fatal_func printf_func(2, 3) nasm_panicf(errflags flags, const char *fmt, ...);
 fatal_func nasm_panic_from_macro(const char *file, int line);
 #define panic() nasm_panic_from_macro(__FILE__, __LINE__);
 
-typedef void (*vefunc) (int severity, const char *fmt, va_list ap);
+typedef void (*vefunc) (errflags severity, const char *fmt, va_list ap);
 extern vefunc nasm_verror;
 
 static inline vefunc nasm_set_verror(vefunc ve)
@@ -104,9 +109,9 @@ static inline vefunc nasm_set_verror(vefunc ve)
  */
 
 #define WARN_SHR		12              /* how far to shift right */
-#define WARN(x)         	((x) << WARN_SHR)
+#define WARN(x)         	(((errflags)(x)) << WARN_SHR)
 #define WARN_MASK		WARN(~0)
-#define WARN_IDX(x)     	((x) >> WARN_SHR)
+#define WARN_IDX(x)     	(((errflags)(x)) >> WARN_SHR)
 
 #define WARN_MACRO_PARAMS            	WARN( 1) /* macro-num-parameters warning */
 #define WARN_MACRO_SELFREF            	WARN( 2) /* macro self-reference */

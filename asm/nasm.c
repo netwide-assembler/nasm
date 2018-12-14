@@ -76,8 +76,8 @@ struct forwrefinfo {            /* info held on forward refs. */
 
 static void parse_cmdline(int, char **, int);
 static void assemble_file(const char *, struct strlist *);
-static bool skip_this_pass(int severity);
-static void nasm_verror_asm(int severity, const char *fmt, va_list args);
+static bool skip_this_pass(errflags severity);
+static void nasm_verror_asm(errflags severity, const char *fmt, va_list args);
 static void usage(void);
 static void help(char xopt);
 
@@ -1700,7 +1700,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 /**
  * get warning index; 0 if this is non-suppressible.
  */
-static size_t warn_index(int severity)
+static size_t warn_index(errflags severity)
 {
     size_t index;
 
@@ -1717,7 +1717,7 @@ static size_t warn_index(int severity)
     return index;
 }
 
-static bool skip_this_pass(int severity)
+static bool skip_this_pass(errflags severity)
 {
     /*
      * See if it's a pass-specific error or warning which should be skipped.
@@ -1742,7 +1742,7 @@ static bool skip_this_pass(int severity)
  * @param severity the severity of the warning or error
  * @return true if we should abort error/warning printing
  */
-static bool is_suppressed(int severity)
+static bool is_suppressed(errflags severity)
 {
     if ((severity & ERR_MASK) >= ERR_FATAL)
         return false;           /* Fatal errors can never be suppressed */
@@ -1758,7 +1758,7 @@ static bool is_suppressed(int severity)
  * @param severity the severity of the warning or error
  * @return true if we should error out
  */
-static int true_error_type(int severity)
+static errflags true_error_type(errflags severity)
 {
     const uint8_t warn_is_err = WARN_ST_ENABLED|WARN_ST_ERROR;
     int type;
@@ -1785,14 +1785,14 @@ static int true_error_type(int severity)
  * @param severity the severity of the warning or error
  * @param fmt the printf style format string
  */
-static void nasm_verror_asm(int severity, const char *fmt, va_list args)
+static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
 {
     char msg[1024];
     char warnsuf[64];
     char linestr[64];
     const char *pfx;
-    int spec_type = severity & ERR_MASK; /* type originally specified */
-    int true_type = true_error_type(severity);
+    errflags spec_type = severity & ERR_MASK; /* type originally specified */
+    errflags true_type = true_error_type(severity);
     const char *currentfile = NULL;
     int32_t lineno = 0;
     static const char * const pfx_table[ERR_MASK+1] = {
