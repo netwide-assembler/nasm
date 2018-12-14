@@ -226,10 +226,10 @@ void **hash_add(struct hash_insert *insert, const void *key, void *data)
 }
 
 /*
- * Iterate over all members of a hash set. For the first call,
- * iter->node should be initialized to NULL. Returns a pointer to
- * a struct hash_node representing the current object, or NULL
- * if we have reached the end of the hash table; this is the
+ * Iterate over all members of a hash set. For the first call, iter
+ * should be as initialized by hash_iterator_init(). Returns a struct
+ * hash_node representing the current object, or NULL if we have
+ * reached the end of the hash table.
  *
  * Calling hash_add() will invalidate the iterator.
  */
@@ -239,14 +239,13 @@ const struct hash_node *hash_iterate(struct hash_iterator *iter)
     const struct hash_node *cp = iter->next;
     const struct hash_node *ep = head->table + head->size;
 
-    /* For an empty table, np == ep == NULL */
+    /* For an empty table, cp == ep == NULL */
     while (cp < ep) {
-        const struct hash_node *np = cp+1;
-        if (np->key) {
-            iter->next = np;
+        if (cp->key) {
+            iter->next = cp+1;
             return cp;
         }
-        cp = np;
+        cp++;
     }
 
     iter->next = head->table;
@@ -262,10 +261,8 @@ const struct hash_node *hash_iterate(struct hash_iterator *iter)
 void hash_free(struct hash_table *head)
 {
     void *p = head->table;
-    if (likely(p)) {
-        head->table = NULL;
-        nasm_free(p);
-    }
+    memset(head, 0, sizeof *head);
+    nasm_free(p);
 }
 
 /*
