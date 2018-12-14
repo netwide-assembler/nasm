@@ -654,7 +654,7 @@ static uint16_t write_symbolinfo_properties(struct coff_Section *sect,
     else if (win32)
         section_write16(sect, 0x0006); /* machine */
     else
-        nasm_assert(!"neither win32 nor win64 are set!");
+        nasm_panic("neither win32 nor win64 are set!");
     section_write16(sect, 0); /* verFEMajor */
     section_write16(sect, 0); /* verFEMinor */
     section_write16(sect, 0); /* verFEBuild */
@@ -711,7 +711,7 @@ static uint16_t write_symbolinfo_symbols(struct coff_Section *sect)
             section_write8(sect, 0); /* FLAG */
             break;
         default:
-            nasm_assert(!"unknown symbol type");
+            nasm_panic("unknown symbol type");
         }
 
         section_wbytes(sect, sym->name, strlen(sym->name) + 1);

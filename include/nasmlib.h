@@ -114,32 +114,60 @@ void nasm_read(void *, size_t, FILE *);
 void nasm_write(const void *, size_t, FILE *);
 
 /*
- * NASM assert failure
- */
-fatal_func nasm_assert_failed(const char *, int, const char *);
-#define nasm_assert(x)                                          \
-    do {                                                        \
-        if (unlikely(!(x)))                                     \
-            nasm_assert_failed(__FILE__,__LINE__,#x);           \
-    } while (0)
-
-/*
  * NASM failure at build time if the argument is false
  */
 #ifdef static_assert
-# define nasm_static_assert(x) static_assert(x, #x)
+# define nasm_static_assert(x) static_assert((x), #x)
 #elif defined(HAVE_FUNC_ATTRIBUTE_ERROR) && defined(__OPTIMIZE__)
-# define nasm_static_assert(x)                                           \
-    if (!(x)) {                                                         \
-        extern void __attribute__((error("assertion " #x " failed")))   \
-            _nasm_static_fail(void);					\
-        _nasm_static_fail();                                            \
-    }
+# define nasm_static_assert(x)						\
+    do {								\
+        if (!(x)) {                                                     \
+            extern void __attribute__((error("assertion " #x " failed")))   \
+                _nasm_static_fail(void);				\
+            _nasm_static_fail();                                        \
+	}								\
+    } while (0)
 #else
 /* See http://www.drdobbs.com/compile-time-assertions/184401873 */
 # define nasm_static_assert(x) \
     do { enum { _static_assert_failed = 1/(!!(x)) }; } while (0)
 #endif
+
+/*
+ * conditional static assert, if we know it is possible to determine
+ * the assert value at compile time. Since if_constant triggers
+ * pedantic warnings on gcc, turn them off explicitly around this code.
+ */
+#ifdef static_assert
+# define nasm_try_static_assert(x)					\
+    do {								\
+        not_pedantic_start						\
+	static_assert(if_constant(x, true), #x);			\
+	not_pedantic_end						\
+    } while (0)
+#elif defined(HAVE_FUNC_ATTRIBUTE_ERROR) && defined(__OPTIMIZE__)
+# define nasm_try_static_assert(x)                                      \
+    do {								\
+        if (!if_constant(x, true)) {					\
+	    extern void __attribute__((error("assertion " #x " failed"))) \
+		_nasm_static_fail(void);				\
+	    _nasm_static_fail();					\
+	}								\
+    } while (0)
+#else
+# define nasm_try_static_assert(x) ((void)0)
+#endif
+
+/*
+ * NASM assert failure
+ */
+fatal_func nasm_assert_failed(const char *, int, const char *);
+#define nasm_assert(x)                                          \
+    do {                                                        \
+        nasm_try_static_assert(x);                              \
+        if (unlikely(!(x)))                                     \
+            nasm_assert_failed(__FILE__,__LINE__,#x);           \
+    } while (0)
 
 /* Utility function to generate a string for an invalid enum */
 const char *invalid_enum_str(int);

@@ -207,9 +207,10 @@ PA_HAVE_FUNC(_byteswap_ulong, (0))
 PA_HAVE_FUNC(_byteswap_uint64, (0))
 
 dnl
-dnl Check for __builtin_constant_p()
+dnl Some rather useful gcc extensions...
 dnl
 PA_HAVE_FUNC(__builtin_constant_p, (0))
+PA_HAVE_FUNC(__builtin_choose_expr, (0,1,2))
 
 dnl
 dnl Check for supported gcc attributes; some compilers (e.g. Sun CC)

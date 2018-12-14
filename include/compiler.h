@@ -359,6 +359,27 @@ size_t strnlen(const char *s, size_t maxlen);
 #endif
 
 /*
+ * If we can guarantee that a particular expression is constant, use it,
+ * otherwise use a different version.
+ */
+#if defined(__GNUC__) && (__GNUC__ >= 3)
+# define not_pedantic_start                             \
+    _Pragma("GCC diagnostic push")                      \
+    _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
+# define not_pedantic_end                       \
+    _Pragma("GCC diagnostic pop")
+#else
+# define not_pedantic_start
+# define not_pedantic_end
+#endif
+
+#ifdef HAVE___BUILTIN_CHOOSE_EXPR
+# define if_constant(x,y) __builtin_choose_expr(is_constant(x),(x),(y))
+#else
+# define if_constant(x,y) (y)
+#endif
+
+/*
  * The autoconf documentation states:
  *
  * `va_copy'

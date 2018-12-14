@@ -1507,7 +1507,7 @@ static void write_srecord(unsigned int len,  unsigned int alen,
     case 4:
 	break;
     default:
-	nasm_assert(0);
+	panic();
 	break;
     }
 
