@@ -511,9 +511,9 @@ void define_label(const char *label, int32_t segment,
              *!  value is identical. It is an unconditional error to
              *!  define the same label more than once to \e{different} values.
              */
-            nasm_warnf(WARN_LABEL_REDEF|ERR_PASS2,
+            nasm_warnf(WARN_LABEL_REDEF,
                        "label `%s' redefined to an identical value", lptr->defn.label);
-            noteflags = ERR_NOTE|ERR_HERE|WARN_LABEL_REDEF|ERR_PASS2;
+            noteflags = ERR_NOTE|ERR_HERE|WARN_LABEL_REDEF;
         }
 
         src_get(&saved_line, &saved_fname);

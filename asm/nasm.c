@@ -90,6 +90,7 @@ struct error_format {
 static const struct error_format errfmt_gnu  = { ":", "",  ": "  };
 static const struct error_format errfmt_msvc = { "(", ")", " : " };
 static const struct error_format *errfmt = &errfmt_gnu;
+static struct strlist *warn_list;
 
 static bool using_debug_info, opt_verbose_info;
 static const char *debug_format;
@@ -388,7 +389,7 @@ static void emit_dependencies(struct strlist *list)
         }
     }
 
-    strlist_free(list);
+    strlist_free(&list);
 
     if (deps != stdout)
         fclose(deps);
@@ -635,7 +636,7 @@ int main(int argc, char **argv)
     eval_cleanup();
     stdscan_cleanup();
     src_free();
-    strlist_free(include_path);
+    strlist_free(&include_path);
 
     return terminate_after_phase;
 }
@@ -1117,6 +1118,7 @@ static bool process_arg(char *p, char *q, int pass)
                     break;
                 }
 
+                olen = 0;       /* Placates gcc at lower optimization levels */
                 plen = strlen(p);
                 for (tx = textopts; tx->label; tx++) {
                     olen = strlen(tx->label);
@@ -1426,6 +1428,18 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         pass2 = passn > 1  ? 2 : 1;     /* 1, 2, 2, ..., 2, 2 */
         /* pass0                           0, 0, 0, ..., 1, 2 */
 
+	/*
+	 * Create a warning buffer list unless we are in pass 2 (everything will be
+	 * emitted immediately in pass 2.)
+	 */
+	if (warn_list) {
+            if (warn_list->nstr || pass0 == 2)
+                strlist_free(&warn_list);
+	}
+
+	if (pass0 < 2 && !warn_list)
+		warn_list = strlist_alloc(false);
+
         globalbits = cmd_sb;  /* set 'bits' to command line default */
         cpu = cmd_cpu;
         if (pass0 == 2) {
@@ -1691,8 +1705,10 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         }
     }
 
+    strlist_free(&warn_list);
     preproc->cleanup(0);
     lfmt->cleanup();
+
     if (!terminate_after_phase && opt_verbose_info) {
         /*  -On and -Ov switches */
         fprintf(stdout, "info: assembly required 1+%"PRId64"+1 passes\n",
@@ -1844,10 +1860,29 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
     }
 
     if (!skip_this_pass(severity)) {
-        fprintf(error_file, "%s%s%s%s%s%s%s\n",
-                currentfile ? currentfile : "nasm",
-                linestr, errfmt->beforemsg, pfx, msg,
-                (severity & ERR_HERE) ? " here" : "", warnsuf);
+	    const char *file = currentfile ? currentfile : "nasm";
+	    const char *here = (severity & ERR_HERE) ? " here" : "";
+
+	    if (warn_list && true_type < ERR_NONFATAL) {
+		    /*
+		     * Buffer up warnings until we either get an error
+		     * or we are on the code-generation pass.
+		     */
+		    strlist_printf(warn_list, "%s%s%s%s%s%s%s",
+				   file, linestr, errfmt->beforemsg,
+				   pfx, msg, here, warnsuf);
+	    } else {
+		    /* If we have buffered warnings, output them now. */
+		    if (warn_list) {
+			    strlist_write(warn_list, "\n", error_file);
+			    strlist_free(&warn_list);
+		    }
+
+		    fprintf(error_file, "%s%s%s%s%s%s%s\n",
+			    file, linestr, errfmt->beforemsg,
+			    pfx, msg, here, warnsuf);
+
+	    }
     }
 
     /* Are we recursing from error_list_macros? */

@@ -126,8 +126,7 @@ static void list_emit(void)
             fprintf(listfp, "  %s\n", e->str);
         }
 
-        strlist_free(list_errors);
-        list_errors = NULL;
+        strlist_free(&list_errors);
     }
 }
 

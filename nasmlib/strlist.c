@@ -136,21 +136,24 @@ strlist_printf(struct strlist *list, const char *fmt, ...)
 }
 
 /*
- * Free a string list
+ * Free a string list. Sets the pointed to pointer to NULL.
  */
-void strlist_free(struct strlist *list)
+void strlist_free(struct strlist **listp)
 {
-	if (list) {
-		struct strlist_entry *e, *tmp;
+	struct strlist *list = *listp;
+	struct strlist_entry *e, *tmp;
 
-                if (list->uniq)
-                    hash_free(&list->hash);
+	if (!list)
+		return;
 
-		list_for_each_safe(e, tmp, list->head)
-			nasm_free(e);
+	if (list->uniq)
+		hash_free(&list->hash);
 
-		nasm_free(list);
-	}
+	list_for_each_safe(e, tmp, list->head)
+		nasm_free(e);
+
+	nasm_free(list);
+	*listp = NULL;
 }
 
 /*
@@ -186,4 +189,18 @@ void *strlist_linearize(const struct strlist *list, char sep)
 	}
 
 	return buf;
+}
+
+/*
+ * Output a string list to a file. The separator can be any string.
+ */
+void strlist_write(const struct strlist *list, const char *sep, FILE *f)
+{
+	const struct strlist_entry *sl;
+	size_t seplen = strlen(sep);
+
+	strlist_for_each(sl, list) {
+		fwrite(sl->str, 1, sl->size - 1, f);
+		fwrite(sep, 1, seplen, f);
+	}
 }
