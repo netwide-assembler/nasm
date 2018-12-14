@@ -4285,7 +4285,7 @@ again:
                                              m->casesense)))
                             m = m->next;
                         if (!m)
-                            nasm_warnf(ERR_PASS1|WARN_MNP,
+                            nasm_warnf(ERR_PASS1|WARN_MACRO_PARAMS,
                                        "macro `%s' exists, "
                                        "but not taking %d parameters",
                                        mstart->text, nparam);
@@ -4585,7 +4585,7 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
      * After all that, we didn't find one with the right number of
      * parameters. Issue a warning, and fail to expand the macro.
      */
-    nasm_warnf(ERR_PASS1|WARN_MNP,
+    nasm_warnf(ERR_PASS1|WARN_MACRO_PARAMS,
                "macro `%s' exists, but not taking %d parameters",
                tline->text, nparam);
     nasm_free(params);

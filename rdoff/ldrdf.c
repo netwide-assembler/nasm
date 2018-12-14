@@ -126,9 +126,6 @@ char *generic_rec_file = NULL;
 /* module name to be added at the beginning of output file */
 char *modname_specified = NULL;
 
-/* error file */
-static FILE *error_file;
-
 /* the header of the output file, built up stage by stage */
 rdf_headerbuf *newheader = NULL;
 

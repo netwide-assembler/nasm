@@ -41,6 +41,11 @@
 #include "compiler.h"
 
 /*
+ * File pointer for error messages
+ */
+extern FILE *error_file;        /* Error file descriptor */
+
+/*
  * An error reporting function should look like this.
  */
 void printf_func(2, 3) nasm_error(int severity, const char *fmt, ...);
@@ -103,7 +108,7 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define WARN_MASK		WARN(~0)
 #define WARN_IDX(x)     	((x) >> WARN_SHR)
 
-#define WARN_MNP            	WARN( 1) /* macro-num-parameters warning */
+#define WARN_MACRO_PARAMS            	WARN( 1) /* macro-num-parameters warning */
 #define WARN_MACRO_SELFREF            	WARN( 2) /* macro self-reference */
 #define WARN_MACRO_DEFAULTS            	WARN( 3) /* macro default parameters check */
 #define WARN_ORPHAN_LABELS             	WARN( 4) /* orphan label (no colon, and alone on line) */
