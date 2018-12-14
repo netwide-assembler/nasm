@@ -1854,7 +1854,7 @@ static void nasm_verror_asm(int severity, const char *fmt, va_list args)
     *warnsuf = 0;
     if (spec_type == ERR_WARNING) {
 	snprintf(warnsuf, sizeof warnsuf, " [-w+%s%s]",
-                 true_type ? "error=" : "",
+                 (true_type >= ERR_NONFATAL) ? "error=" : "",
                  warnings[warn_index(severity)].name);
     }
 
