@@ -43,6 +43,7 @@
 
 extern const char * const pp_directives[];
 extern const uint8_t pp_directives_len[];
+extern bool pp_noline;
 
 /* Pointer to a macro chain */
 typedef const unsigned char macros_t;

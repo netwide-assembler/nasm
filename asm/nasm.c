@@ -143,6 +143,7 @@ static const struct forwrefinfo *forwref;
 
 static const struct preproc_ops *preproc;
 static struct strlist *include_path;
+bool pp_noline;                 /* Ignore %line directives */
 
 #define OP_NORMAL           (1U << 0)
 #define OP_PREPROCESS       (1U << 1)
@@ -830,7 +831,8 @@ enum text_options {
     OPT_PRAGMA,
     OPT_BEFORE,
     OPT_LIMIT,
-    OPT_KEEP_ALL
+    OPT_KEEP_ALL,
+    OPT_NO_LINE
 };
 struct textargs {
     const char *label;
@@ -854,6 +856,7 @@ static const struct textargs textopts[] = {
     {"before",   OPT_BEFORE,  true, 0},
     {"limit-",   OPT_LIMIT,   true, 0},
     {"keep-all", OPT_KEEP_ALL, false, 0},
+    {"no-line",  OPT_NO_LINE, false, 0},
     {NULL, OPT_BOGUS, false, 0}
 };
 
@@ -1118,7 +1121,7 @@ static bool process_arg(char *p, char *q, int pass)
                     break;
                 }
 
-                olen = 0;       /* Placates gcc at lower optimization levels */
+                olen = 0;       /* Placate gcc at lower optimization levels */
                 plen = strlen(p);
                 for (tx = textopts; tx->label; tx++) {
                     olen = strlen(tx->label);
@@ -1190,6 +1193,9 @@ static bool process_arg(char *p, char *q, int pass)
                     break;
                 case OPT_KEEP_ALL:
                     keep_all = true;
+                    break;
+                case OPT_NO_LINE:
+                    pp_noline = true;
                     break;
                 case OPT_HELP:
                     help(0);
@@ -1993,10 +1999,11 @@ static void help(const char xopt)
          "    -l listfile   write listing to a listfile\n\n"
          "    -Ipath        add a pathname to the include file path\n");
     printf
-        ("    -Olevel       optimize opcodes, immediates and branch offsets\n"
+        ("    -Oflags...    optimize opcodes, immediates and branch offsets\n"
          "       -O0        no optimization\n"
          "       -O1        minimal optimization\n"
          "       -Ox        multipass optimization (default)\n"
+         "       -Ov        display the number of passes executed at the end\n"
          "    -Pfile        pre-include a file (also --include)\n"
          "    -Dmacro[=str] pre-define a macro\n"
          "    -Umacro       undefine a macro\n"
@@ -2015,6 +2022,7 @@ static void help(const char xopt)
          "   --lprefix str  prepend the given string to all other symbols\n"
          "   --lpostfix str append the given string to all other symbols\n"
          "   --keep-all     output files will not be removed even if an error happens\n"
+         "   --no-line      ignore %%line directives in input\n"
          "   --limit-X val  set execution limit X\n");
 
     for (i = 0; i <= LIMIT_MAX; i++) {

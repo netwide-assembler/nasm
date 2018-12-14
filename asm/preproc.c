@@ -3581,6 +3581,10 @@ issue_error:
         /*
          * Syntax is `%line nnn[+mmm] [filename]'
          */
+        if (unlikely(pp_noline)) {
+            free_tlist(origline);
+            return DIRECTIVE_FOUND;
+        }
         tline = tline->next;
         skip_white_(tline);
         if (!tok_type_(tline, TOK_NUMBER)) {
