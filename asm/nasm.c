@@ -1135,6 +1135,7 @@ static bool process_arg(char *p, char *q, int pass)
                     break;
                 }
 
+                olen = 0;       /* Placate gcc at lower optimization levels */
                 plen = strlen(p);
                 for (tx = textopts; tx->label; tx++) {
                     olen = strlen(tx->label);
@@ -1985,10 +1986,11 @@ static void help(const char xopt)
          "    -l listfile   write listing to a listfile\n\n"
          "    -Ipath        add a pathname to the include file path\n");
     printf
-        ("    -Olevel       optimize opcodes, immediates and branch offsets\n"
+        ("    -Oflags...    optimize opcodes, immediates and branch offsets\n"
          "       -O0        no optimization\n"
          "       -O1        minimal optimization\n"
          "       -Ox        multipass optimization (default)\n"
+         "       -Ov        display the number of passes executed at the end\n"
          "    -Pfile        pre-include a file (also --include)\n"
          "    -Dmacro[=str] pre-define a macro\n"
          "    -Umacro       undefine a macro\n"
