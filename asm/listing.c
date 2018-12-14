@@ -46,6 +46,7 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "error.h"
+#include "strlist.h"
 #include "listing.h"
 
 #define LIST_MAX_LEN 256       /* something sensible */
@@ -67,11 +68,7 @@ static char xdigit[] = "0123456789ABCDEF";
 static char listline[LIST_MAX_LEN];
 static bool listlinep;
 
-struct list_error {
-    struct list_error *next;
-    char str[1];
-};
-struct list_error *listerr_head, **listerr_tail;
+struct strlist *list_errors;
 
 static char listdata[2 * LIST_INDENT];  /* we need less than that actually */
 static int32_t listoffset;
@@ -89,7 +86,7 @@ static FILE *listfp;
 static void list_emit(void)
 {
     int i;
-    struct list_error *le, *tmp;
+    const struct strlist_entry *e;
 
     if (listlinep || *listdata) {
         fprintf(listfp, "%6"PRId32" ", listlineno);
@@ -114,21 +111,24 @@ static void list_emit(void)
         listdata[0] = '\0';
     }
 
-    list_for_each_safe(le, tmp, listerr_head) {
-	fprintf(listfp, "%6"PRId32"          ", listlineno);
-	for (i = 0; i < LIST_HEXBIT; i++)
-	    putc('*', listfp);
+    if (list_errors) {
+        strlist_for_each(e, list_errors) {
+            fprintf(listfp, "%6"PRId32"          ", listlineno);
+            for (i = 0; i < LIST_HEXBIT; i++)
+                putc('*', listfp);
 
-	if (listlevel_e)
-	    fprintf(listfp, " %s<%d>", (listlevel < 10 ? " " : ""),
-		    listlevel_e);
-	else
-	    fprintf(listfp, "     ");
+            if (listlevel_e)
+                fprintf(listfp, " %s<%d>", (listlevel < 10 ? " " : ""),
+                        listlevel_e);
+            else
+                fprintf(listfp, "     ");
 
-	fprintf(listfp, "  %s\n", le->str);
-        nasm_free(le);
+            fprintf(listfp, "  %s\n", e->str);
+        }
+
+        strlist_free(list_errors);
+        list_errors = NULL;
     }
-    listerr_tail = &listerr_head;
 }
 
 static void list_init(const char *fname)
@@ -146,8 +146,7 @@ static void list_init(const char *fname)
 
     *listline = '\0';
     listlineno = 0;
-    listerr_head = NULL;
-    listerr_tail = &listerr_head;
+    list_errors = NULL;
     listp = true;
     listlevel = 0;
     suppress = 0;
@@ -332,27 +331,17 @@ static void list_downlevel(int type)
 
 static void list_error(errflags severity, const char *fmt, ...)
 {
-    struct list_error *le;
     va_list ap;
-    int len;
 
     if (!listfp)
 	return;
 
-    va_start(ap, fmt);
-    len = vsnprintf(NULL, 0, fmt, ap);
-    va_end(ap);
-
-    /* sizeof(*le) already accounts for the final NULL */
-    le = nasm_malloc(sizeof(*le) + len);
+    if (!list_errors)
+        list_errors = strlist_alloc(false);
 
     va_start(ap, fmt);
-    vsnprintf(le->str, len+1, fmt, ap);
+    strlist_vprintf(list_errors, fmt, ap);
     va_end(ap);
-
-    le->next = NULL;
-    *listerr_tail = le;
-    listerr_tail = &le->next;
 
     if ((severity & ERR_MASK) >= ERR_FATAL)
 	list_emit();
