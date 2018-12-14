@@ -35,26 +35,44 @@
 #include "nasmlib.h"
 #include "alloc.h"
 
-char *nasm_vasprintf(const char *fmt, va_list ap)
+/*
+ * nasm_[v]asprintf() are variants of the semi-standard [v]asprintf()
+ * functions, except that we return the pointer instead of a count.
+ * Use %n if you need the count, too.
+ *
+ * nasm_[v]axprintf() are similar, but allocates a user-defined amount
+ * of storage before the string, and returns a pointer to the
+ * allocated buffer.
+ */
+void *nasm_vaxprintf(size_t extra, const char *fmt, va_list ap)
 {
-#ifdef HAVE_VASPRINTF
-    char *strp;
-    int rv = vasprintf(&strp, fmt, ap);
-    if (rv < 0)
-        nasm_alloc_failed();
-    return strp;
-#else
     char *strp;
     va_list xap;
-    int len;
+    size_t bytes;
 
     va_copy(xap, ap);
-    len = vsnprintf(NULL, 0, fmt, xap);
+    bytes = vsnprintf(NULL, 0, fmt, xap) + 1;
     va_end(xap);
-    strp = nasm_malloc(len+1);
-    vsnprintf(strp, len, fmt, ap);
+    strp = nasm_malloc(extra+bytes);
+    vsnprintf(strp+extra, bytes, fmt, ap);
     return strp;
-#endif
+}
+
+char *nasm_vasprintf(const char *fmt, va_list ap)
+{
+    return nasm_vaxprintf(0, fmt, ap);
+}
+
+void *nasm_axprintf(size_t extra, const char *fmt, ...)
+{
+    va_list ap;
+    void *strp;
+
+    va_start(ap, fmt);
+    strp = nasm_vaxprintf(extra, fmt, ap);
+    va_end(ap);
+
+    return strp;
 }
 
 char *nasm_asprintf(const char *fmt, ...)
@@ -63,7 +81,7 @@ char *nasm_asprintf(const char *fmt, ...)
     char *strp;
 
     va_start(ap, fmt);
-    strp = nasm_vasprintf(fmt, ap);
+    strp = nasm_vaxprintf(0, fmt, ap);
     va_end(ap);
 
     return strp;
