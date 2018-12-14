@@ -108,7 +108,7 @@ strlist_vprintf(struct strlist *list, const char *fmt, va_list ap)
 	if (!list)
 		return NULL;
 
-	e = nasm_vaxprintf(offsetof(struct strlist_entry, str), fmt, ap);
+	e = nasm_vaxprintf(offsetin(*e, str), fmt, ap);
 	e->size = nasm_aprintf_size();
 
 	if (list->uniq) {

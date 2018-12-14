@@ -180,6 +180,13 @@ typedef enum bool { false, true } bool;
 # define offsetof(t,m) ((size_t)&(((t *)0)->m))
 #endif
 
+/* This is like offsetof(), but takes an object rather than a type.
+   Ironically enough this is actually guaranteed to be portable,
+   as far as I know... */
+#ifndef offsetin
+# define offsetin(p,m)	((const char *)&((p).m) - (const char *)&(p))
+#endif
+
 /* The container_of construct: if p is a pointer to member m of
    container class c, then return a pointer to the container of which
    *p is a member. */
