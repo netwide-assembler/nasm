@@ -35,6 +35,9 @@
 # Tokens other than instructions and registers
 #
 
+% TOKEN_QMARK, 0, 0, 0
+?
+
 % TOKEN_PREFIX, 0, 0, P_*
 a16
 a32

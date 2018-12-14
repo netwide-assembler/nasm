@@ -153,6 +153,7 @@ typedef void (*ldfunc)(char *label, int32_t segment, int64_t offset,
 enum token_type { /* token types, other than chars */
     TOKEN_INVALID = -1, /* a placeholder value */
     TOKEN_EOS = 0,      /* end of string */
+    TOKEN_QMARK = '?',
     TOKEN_EQ = '=',
     TOKEN_GT = '>',
     TOKEN_LT = '<',     /* aliases */

@@ -101,6 +101,7 @@ static void ctype_tab_init(void)
     nasm_ctype_tab['_']  |= NCT_UNDER|NCT_ID|NCT_IDSTART;
     nasm_ctype_tab['.']  |= NCT_ID|NCT_IDSTART;
     nasm_ctype_tab['@']  |= NCT_ID|NCT_IDSTART;
+    nasm_ctype_tab['?']  |= NCT_ID|NCT_IDSTART;
     nasm_ctype_tab['#']  |= NCT_ID;
     nasm_ctype_tab['~']  |= NCT_ID;
     nasm_ctype_tab['\''] |= NCT_QUOTE;

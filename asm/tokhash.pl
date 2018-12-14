@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##   
-##   Copyright 1996-2014 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2018 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -130,7 +130,7 @@ open(TD, '<', $tokens_dat) or die "$0: cannot open $tokens_dat: $!\n";
 while (defined($line = <TD>)) {
     if ($line =~ /^\%\s+(.*)$/) {
 	$pattern = $1;
-    } elsif ($line =~ /^([a-z0-9_-]+)/) {
+    } elsif ($line =~ /^([\?\@\.a-z0-9_-]+)/) {
 	$token = $1;
 
 	if (defined($tokens{$token})) {

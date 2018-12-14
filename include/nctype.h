@@ -119,10 +119,9 @@ static inline bool nasm_isquote(char x)
     return nasm_ctype(x, NCT_QUOTE);
 }
 
-/* TASM-compatible mode requires ? to be an identifier character */
 static inline void nasm_ctype_tasm_mode(void)
 {
-    nasm_ctype_tab['?'] |= NCT_ID|NCT_IDSTART;
+    /* No differences at the present moment */
 }
 
 #endif /* NASM_NCTYPE_H */

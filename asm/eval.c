@@ -310,7 +310,7 @@ static expr *cexpr(void)
     if (!e)
         return NULL;
 
-    if (tt == '?') {
+    if (tt == TOKEN_QMARK) {
         scan();
         f = bexpr();
         if (!f)
