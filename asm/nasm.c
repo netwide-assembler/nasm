@@ -121,7 +121,7 @@ const struct ofmt *ofmt = &OF_DEFAULT;
 const struct ofmt_alias *ofmt_alias = NULL;
 const struct dfmt *dfmt;
 
-static FILE *error_file;        /* Where to write error messages */
+FILE *error_file;               /* Where to write error messages */
 
 FILE *ofile = NULL;
 struct optimization optimizing =
@@ -451,6 +451,8 @@ int main(int argc, char **argv)
 {
     timestamp();
 
+    error_file = stderr;
+
     iflag_set_default_cpu(&cpu);
     iflag_set_default_cpu(&cmd_cpu);
 
@@ -459,8 +461,6 @@ int main(int argc, char **argv)
     pass0 = 0;
     want_usage = terminate_after_phase = false;
     nasm_set_verror(nasm_verror_asm);
-
-    error_file = stderr;
 
     nasm_ctype_init();
     src_init();
