@@ -86,7 +86,6 @@ static char *nop_getline(void)
     src_set_linnum(src_get_linnum() + nop_lineinc);
 
     while (1) {                 /* Loop to handle %line */
-
         p = buffer;
         while (1) {             /* Loop to handle long lines */
             q = fgets(p, bufsize - (p - buffer), nop_fp);
@@ -119,13 +118,15 @@ static char *nop_getline(void)
             int32_t ln;
             int li;
             char *nm = nasm_malloc(strlen(buffer));
-            if (sscanf(buffer + 5, "%"PRId32"+%d %s", &ln, &li, nm) == 3) {
-                src_set(ln, nm);
+            int conv = sscanf(buffer + 5, "%"PRId32"+%d %s", &ln, &li, nm);
+            if (conv >= 2) {
+                if (!pp_noline)
+                    src_set(ln, conv >= 3 ? nm : NULL);
                 nop_lineinc = li;
-                nasm_free(nm);
-                continue;
             }
             nasm_free(nm);
+            if (conv >= 2)
+                continue;
         }
         break;
     }

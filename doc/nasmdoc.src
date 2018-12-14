@@ -368,10 +368,10 @@ To get further usage instructions from NASM, try typing
 
 \c nasm -h
 
-\c{--help} option is also the same.
+The option \c{--help} is an alias for the \c{-h} option.
 
-As \c{-hf}, this will also list the available output file formats, and what they
-are.
+The option \c{-hf} will also list the available output file formats,
+and what they are.
 
 If you use Linux but aren't sure whether your system is \c{a.out}
 or \c{ELF}, type
@@ -992,7 +992,14 @@ In example, running this limits the maximum line count to be 1000.
 
 \S{opt-keep-all} The \i\c{--keep-all} Option
 
-This option doesn't delete any output files even if an error happens.
+This option prevents NASM from deleting any output files even if an
+error happens.
+
+\S{opt-no-line} The \i\c{--no-line} Option
+
+If this option is given, all \i\c{%line} directives in the source code
+are ignored. This can be useful for debugging already preprocessed
+code. See \k{line}.
 
 
 \S{nasmenv} The \i\c{NASMENV} \i{Environment} Variable
@@ -3747,15 +3754,6 @@ the user.  For example:
 
 \H{otherpreproc} \i{Other Preprocessor Directives}
 
-NASM also has preprocessor directives which allow access to
-information from external sources. Currently they include:
-
-\b\c{%line} enables NASM to correctly handle the output of another
-preprocessor (see \k{line}).
-
-\b\c{%!} enables NASM to read in the value of an environment variable,
-which can then be used in your program (see \k{getenv}).
-
 \S{line} \i\c{%line} Directive
 
 The \c{%line} directive is used to notify NASM that the input line
@@ -3766,9 +3764,9 @@ directive allows NASM to output messages which indicate the line
 number of the original source file, instead of the file that is being
 read by NASM.
 
-This preprocessor directive is not generally of use to programmers,
-by may be of interest to preprocessor authors.  The usage of the
-\c{%line} preprocessor directive is as follows:
+This preprocessor directive is not generally used directly by
+programmers, but may be of interest to preprocessor authors.  The
+usage of the \c{%line} preprocessor directive is as follows:
 
 \c %line nnn[+mmm] [filename]
 
@@ -3782,6 +3780,10 @@ specifies the file name of the original source file.
 After reading a \c{%line} preprocessor directive, NASM will report
 all file name and line numbers relative to the values specified
 therein.
+
+If the command line option \i\c{--no-line} is given, all \c{%line}
+directives are ignored. This may be useful for debugging preprocessed
+code. See \k{opt-no-line}.
 
 
 \S{getenv} \i\c{%!}\e{variable}: Read an Environment Variable.
