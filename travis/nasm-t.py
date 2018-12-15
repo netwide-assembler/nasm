@@ -296,8 +296,8 @@ def exec_nasm(desc):
         test_fail(desc['_test-name'], "Unable to execute test")
         return None
 
-    stderr = pnasm.stderr.read(1048576).decode("utf-8").strip("\n")
-    stdout = pnasm.stdout.read(1048576).decode("utf-8").strip("\n")
+    stderr = pnasm.stderr.read(4194304).decode("utf-8").strip("\n")
+    stdout = pnasm.stdout.read(4194304).decode("utf-8").strip("\n")
 
     pnasm.stdout.close()
     pnasm.stderr.close()
