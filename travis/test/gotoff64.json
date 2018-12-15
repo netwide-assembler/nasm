@@ -10,7 +10,7 @@
 	},
 	{
 		"description": "Test errors in .got offsets",
-		"ref": "gotodd64",
+		"ref": "gotoff64",
 		"option": "-DERROR",
 		"target": [
 			{ "stderr": "gotoff64.stderr" }
