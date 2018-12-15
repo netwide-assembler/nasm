@@ -353,7 +353,7 @@ size_t strnlen(const char *s, size_t maxlen);
 
 /* Determine probabilistically if something is a compile-time constant */
 #ifdef HAVE___BUILTIN_CONSTANT_P
-# define is_constant(x) __builtin_constant_p(x)
+# define is_constant(x) __builtin_constant_p((x))
 #else
 # define is_constant(x) false
 #endif
