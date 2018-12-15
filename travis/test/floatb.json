@@ -6,7 +6,8 @@
 		"source": "floatb.asm",
 		"option": "-Ox",
 		"target": [
-			{ "output": "floatb.bin" }
+			{ "output": "floatb.bin" },
+			{ "stderr": "floatb.stderr" }
 		]
 	}
 ]
