@@ -337,7 +337,7 @@ def test_run(desc):
             match_data = read_stdfile(match)
             if match_data == None:
                 return test_fail(test, "Can't read " + match)
-            if cmp_std('stdout', stdout, match, match_data) == False:
+            if cmp_std(match, match_data, 'stdout', stdout) == False:
                 return test_fail(desc['_test-name'], "Stdout mismatch")
             else:
                 stdout = ""
@@ -347,7 +347,7 @@ def test_run(desc):
             match_data = read_stdfile(match)
             if match_data == None:
                 return test_fail(test, "Can't read " + match)
-            if cmp_std('stderr', stderr, match, match_data) == False:
+            if cmp_std(match, match_data, 'stderr', stderr) == False:
                 return test_fail(desc['_test-name'], "Stderr mismatch")
             else:
                 stderr = ""
