@@ -1756,7 +1756,7 @@ static bool skip_this_pass(errflags severity)
      * pass0 is 2 on the code-generation (final) pass only.
      * These are the passes we care about in this case.
      */
-    return (((severity & ERR_PASS1) && passn != 1) ||
+    return (((severity & ERR_PASS1) && passn != 1) &&
             ((severity & ERR_PASS2) && pass0 != 2));
 }
 
