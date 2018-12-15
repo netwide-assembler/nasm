@@ -104,7 +104,7 @@ static bool keep_all;
 bool tasm_compatible_mode = false;
 int pass0;
 int64_t passn;
-static int pass1, pass2;	/* XXX: Get rid of these, they are redundant */
+static int pass1, pass2;    /* XXX: Get rid of these, they are redundant */
 int globalrel = 0;
 int globalbnd = 0;
 
@@ -493,7 +493,7 @@ int main(int argc, char **argv)
         dfmt = &null_debug_form;
     } else if (!debug_format) {
         /* Default debug format for this backend */
-	dfmt = ofmt->default_dfmt;
+        dfmt = ofmt->default_dfmt;
     } else {
         dfmt = dfmt_find(ofmt, debug_format);
         if (!dfmt) {
@@ -569,8 +569,8 @@ int main(int argc, char **argv)
             /* pass = 1; */
             preproc->reset(inname, 3, depend_list);
 
-	    /* Revert all warnings to the default state */
-	    memcpy(warning_state, warning_state_init, sizeof warning_state);
+            /* Revert all warnings to the default state */
+            memcpy(warning_state, warning_state_init, sizeof warning_state);
 
             while ((line = preproc->getline())) {
                 /*
@@ -1434,22 +1434,22 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         pass2 = passn > 1  ? 2 : 1;     /* 1, 2, 2, ..., 2, 2 */
         /* pass0                           0, 0, 0, ..., 1, 2 */
 
-	/*
-	 * Create a warning buffer list unless we are in pass 2 (everything will be
-	 * emitted immediately in pass 2.)
-	 */
-	if (warn_list) {
+        /*
+         * Create a warning buffer list unless we are in pass 2 (everything will be
+         * emitted immediately in pass 2.)
+         */
+        if (warn_list) {
             if (warn_list->nstr || pass0 == 2)
                 strlist_free(&warn_list);
-	}
+        }
 
-	if (pass0 < 2 && !warn_list)
-		warn_list = strlist_alloc(false);
+        if (pass0 < 2 && !warn_list)
+            warn_list = strlist_alloc(false);
 
         globalbits = cmd_sb;  /* set 'bits' to command line default */
         cpu = cmd_cpu;
         if (pass0 == 2) {
-	    lfmt->init(listname);
+            lfmt->init(listname);
         } else if (passn == 1 && listname && !keep_all) {
             /* Remove the list file in case we die before the output pass */
             remove(listname);
@@ -1470,15 +1470,15 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         switch_segment(ofmt->section(NULL, pass2, &globalbits));
         preproc->reset(fname, pass1, pass1 == 2 ? depend_list : NULL);
 
-	/* Revert all warnings to the default state */
-	memcpy(warning_state, warning_state_init, sizeof warning_state);
+        /* Revert all warnings to the default state */
+        memcpy(warning_state, warning_state_init, sizeof warning_state);
 
         globallineno = 0;
 
         while ((line = preproc->getline())) {
             if (++globallineno > nasm_limit[LIMIT_LINES])
                 nasm_fatal("overall line count exceeds the maximum %"PRId64"\n",
-			   nasm_limit[LIMIT_LINES]);
+                           nasm_limit[LIMIT_LINES]);
 
             /*
              * Here we parse our directives; this is not handled by the
@@ -1749,7 +1749,7 @@ static bool skip_this_pass(errflags severity)
      * resumed from.
      */
     if ((severity & ERR_MASK) >= ERR_FATAL)
-	return false;
+        return false;
 
     /*
      * passn is 1 on the very first pass only.
@@ -1757,7 +1757,7 @@ static bool skip_this_pass(errflags severity)
      * These are the passes we care about in this case.
      */
     return (((severity & ERR_PASS1) && passn != 1) ||
-	    ((severity & ERR_PASS2) && pass0 != 2));
+            ((severity & ERR_PASS2) && pass0 != 2));
 }
 
 /**
@@ -1828,7 +1828,7 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
         return;
 
     if (!(severity & ERR_NOFILE)) {
-	src_get(&lineno, &currentfile);
+        src_get(&lineno, &currentfile);
         if (!currentfile) {
             currentfile = currentfile ? currentfile :
                 inname && inname[0] ? inname :
@@ -1853,7 +1853,7 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
     vsnprintf(msg, sizeof msg, fmt, args);
     *warnsuf = 0;
     if (spec_type == ERR_WARNING) {
-	snprintf(warnsuf, sizeof warnsuf, " [-w+%s%s]",
+        snprintf(warnsuf, sizeof warnsuf, " [-w+%s%s]",
                  (true_type >= ERR_NONFATAL) ? "error=" : "",
                  warning_name[warn_index(severity)]);
     }
@@ -1865,34 +1865,34 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
     }
 
     if (!skip_this_pass(severity)) {
-	    const char *file = currentfile ? currentfile : "nasm";
-	    const char *here = (severity & ERR_HERE) ? " here" : "";
+        const char *file = currentfile ? currentfile : "nasm";
+        const char *here = (severity & ERR_HERE) ? " here" : "";
 
-	    if (warn_list && true_type < ERR_NONFATAL) {
-		    /*
-		     * Buffer up warnings until we either get an error
-		     * or we are on the code-generation pass.
-		     */
-		    strlist_printf(warn_list, "%s%s%s%s%s%s%s",
-				   file, linestr, errfmt->beforemsg,
-				   pfx, msg, here, warnsuf);
-	    } else {
-		    /* If we have buffered warnings, output them now. */
-		    if (warn_list) {
-			    strlist_write(warn_list, "\n", error_file);
-			    strlist_free(&warn_list);
-		    }
+        if (warn_list && true_type < ERR_NONFATAL) {
+            /*
+             * Buffer up warnings until we either get an error
+             * or we are on the code-generation pass.
+             */
+            strlist_printf(warn_list, "%s%s%s%s%s%s%s",
+                           file, linestr, errfmt->beforemsg,
+                           pfx, msg, here, warnsuf);
+        } else {
+            /* If we have buffered warnings, output them now. */
+            if (warn_list) {
+                strlist_write(warn_list, "\n", error_file);
+                strlist_free(&warn_list);
+            }
 
-		    fprintf(error_file, "%s%s%s%s%s%s%s\n",
-			    file, linestr, errfmt->beforemsg,
-			    pfx, msg, here, warnsuf);
+            fprintf(error_file, "%s%s%s%s%s%s%s\n",
+                    file, linestr, errfmt->beforemsg,
+                    pfx, msg, here, warnsuf);
 
-	    }
+        }
     }
 
     /* Are we recursing from error_list_macros? */
     if (severity & ERR_PP_LISTMACRO)
-	return;
+        return;
 
     /*
      * Don't suppress this with skip_this_pass(), or we don't get
@@ -1944,7 +1944,7 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
         fflush(NULL);
 
         if (abort_on_panic)
-            abort();		/* halt, catch fire, dump core/stop debugger */
+            abort();            /* halt, catch fire, dump core/stop debugger */
 
         if (ofile) {
             fclose(ofile);
