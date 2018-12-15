@@ -210,20 +210,17 @@ def show_std(stdname, data):
         print("\t%s" % i)
     print("\t---")
 
-def cmp_std(test, data_name, data, match):
-    match_data = read_stdfile(match)
-    if match_data == None:
-        return test_fail(test, "Can't read " + match)
-    if data != match_data:
-        print("\t--- %s" % (data_name))
-        for i in data.split("\n"):
+def cmp_std(from_name, from_data, match_name, match_data):
+    if from_data != match_data:
+        print("\t--- %s" % (from_name))
+        for i in from_data.split("\n"):
             print("\t%s" % i)
-        print("\t--- %s" % (match))
+        print("\t--- %s" % (match_name))
         for i in match_data.split("\n"):
             print("\t%s" % i)
 
-        diff = difflib.unified_diff(data.split("\n"), match_data.split("\n"),
-                                    fromfile = data_name, tofile = match)
+        diff = difflib.unified_diff(from_data.split("\n"), match_data.split("\n"),
+                                    fromfile = from_name, tofile = match_name)
         for i in diff:
             print("\t%s" % i.strip("\n"))
         print("\t---")
@@ -337,14 +334,20 @@ def test_run(desc):
         elif 'stdout' in t:
             print("\tComparing stdout")
             match = desc['_base-dir'] + os.sep + t['stdout']
-            if cmp_std(desc['_test-name'], 'stdout', stdout, match) == False:
+            match_data = read_stdfile(match)
+            if match_data == None:
+                return test_fail(test, "Can't read " + match)
+            if cmp_std('stdout', stdout, match, match_data) == False:
                 return test_fail(desc['_test-name'], "Stdout mismatch")
             else:
                 stdout = ""
         elif 'stderr' in t:
             print("\tComparing stderr")
             match = desc['_base-dir'] + os.sep + t['stderr']
-            if cmp_std(desc['_test-name'], 'stderr', stderr, match) == False:
+            match_data = read_stdfile(match)
+            if match_data == None:
+                return test_fail(test, "Can't read " + match)
+            if cmp_std('stderr', stderr, match, match_data) == False:
                 return test_fail(desc['_test-name'], "Stderr mismatch")
             else:
                 stderr = ""
