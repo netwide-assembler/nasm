@@ -96,12 +96,12 @@ static inline size_t nasm_aprintf_size(void)
  * loses any "const" part of the argument, although hopefully the
  * compiler will warn in that case.
  */
-#define nasm_delete(p)						\
-    do {							\
-	void **_pp = (void **)&(p);				\
-	nasm_assert_pointer(p);					\
-	nasm_free(*_pp);					\
-	*_pp = NULL;						\
+#define nasm_delete(p)                          \
+    do {                                        \
+        void **_pp = (void **)&(p);             \
+        nasm_assert_pointer(p);                 \
+        nasm_free(*_pp);                        \
+        *_pp = NULL;                            \
     } while (0)
 #define nasm_zero(x) (memset(&(x), 0, sizeof(x)))
 #define nasm_zeron(p,n) (memset((p), 0, (n)*sizeof(*(p))))
@@ -119,17 +119,17 @@ void nasm_write(const void *, size_t, FILE *);
 #ifdef static_assert
 # define nasm_static_assert(x) static_assert((x), #x)
 #elif defined(HAVE_FUNC_ATTRIBUTE_ERROR) && defined(__OPTIMIZE__)
-# define nasm_static_assert(x)						\
-    do {								\
-        if (!(x)) {                                                     \
+# define nasm_static_assert(x)                                              \
+    do {                                                                    \
+        if (!(x)) {                                                         \
             extern void __attribute__((error("assertion " #x " failed")))   \
-                _nasm_static_fail(void);				\
-            _nasm_static_fail();                                        \
-	}								\
+                _nasm_static_fail(void);                                    \
+            _nasm_static_fail();                                            \
+        }                                                                   \
     } while (0)
 #else
 /* See http://www.drdobbs.com/compile-time-assertions/184401873 */
-# define nasm_static_assert(x) \
+# define nasm_static_assert(x)                                              \
     do { enum { _static_assert_failed = 1/(!!(x)) }; } while (0)
 #endif
 
@@ -139,20 +139,20 @@ void nasm_write(const void *, size_t, FILE *);
  * pedantic warnings on gcc, turn them off explicitly around this code.
  */
 #ifdef static_assert
-# define nasm_try_static_assert(x)					\
-    do {								\
-        not_pedantic_start						\
-	static_assert(if_constant(x, true), #x);			\
-	not_pedantic_end						\
+# define nasm_try_static_assert(x)                                          \
+    do {                                                                    \
+        not_pedantic_start                                                  \
+        static_assert(if_constant(x, true), #x);                            \
+        not_pedantic_end                                                    \
     } while (0)
 #elif defined(HAVE_FUNC_ATTRIBUTE_ERROR) && defined(__OPTIMIZE__)
-# define nasm_try_static_assert(x)                                      \
-    do {								\
-        if (!if_constant(x, true)) {					\
-	    extern void __attribute__((error("assertion " #x " failed"))) \
-		_nasm_static_fail(void);				\
-	    _nasm_static_fail();					\
-	}								\
+# define nasm_try_static_assert(x)                                          \
+    do {                                                                    \
+        if (!if_constant(x, true)) {                                        \
+            extern void __attribute__((error("assertion " #x " failed")))   \
+            _nasm_static_fail(void);                                        \
+            _nasm_static_fail();                                            \
+        }                                                                   \
     } while (0)
 #else
 # define nasm_try_static_assert(x) ((void)0)
@@ -271,7 +271,7 @@ const char *filename_set_extension(const char *inname, const char *extension);
 /*
  * Power of 2 align helpers
  */
-#undef ALIGN_MASK		/* Some BSD flavors define these in system headers */
+#undef ALIGN_MASK               /* Some BSD flavors define these in system headers */
 #undef ALIGN
 #define ALIGN_MASK(v, mask)     (((v) + (mask)) & ~(mask))
 #define ALIGN(v, a)             ALIGN_MASK(v, (a) - 1)
@@ -327,8 +327,8 @@ const char * pure_func prefix_name(int);
  * Wrappers around fopen()... for future change to a dedicated structure
  */
 enum file_flags {
-    NF_BINARY	= 0x00000000,   /* Binary file (default) */
-    NF_TEXT	= 0x00000001,   /* Text file */
+    NF_BINARY   = 0x00000000,   /* Binary file (default) */
+    NF_TEXT     = 0x00000001,   /* Text file */
     NF_NONFATAL = 0x00000000,   /* Don't die on open failure (default) */
     NF_FATAL    = 0x00000002,   /* Die on open failure */
     NF_FORMAP   = 0x00000004    /* Intended to use nasm_map_file() */
