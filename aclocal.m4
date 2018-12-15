@@ -60,7 +60,7 @@ AC_DEFUN(PA_HAVE_FUNC,
 [AC_MSG_CHECKING([for $1])
  AC_LINK_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
-int main(void) {
+int main(int argc, char *argv[]) {
     (void)$1$2;
     return 0;
 }
