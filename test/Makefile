@@ -1,4 +1,4 @@
-.SUFFIXES: .bin .o .o64 .obj .obj64 .exe .asm .lst .pl
+.SUFFIXES: .bin .o .o64 .aout .obj .obj64 .exe .asm .lst .pl
 
 NASMDEP = ../nasm
 NASM	= ../nasm
@@ -25,6 +25,9 @@ $(NASM):
 
 %.o64: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f elf64 -o $@ -MD $@.dep -l $@.lst $<
+
+%.aout: %.asm $(NASMDEP)
+	$(NASM) $(NASMOPT) -f aout -o $@ -MD $@.dep -l $@.lst $<
 
 %.obj: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f obj -o $@ -MD $@.dep -l $@.lst $<
@@ -71,7 +74,7 @@ diff:	performtest.pl $(NASMDEP) $(TESTS)
 	$(PERL) performtest.pl --diff --nasm='$(NASM)' $(TESTS)
 
 clean:
-	$(RM_F) *.com *.o *.o64 *.obj *.win32 *.win64 *.exe *.lst *.bin
+	$(RM_F) *.com *.o *.o64 *.aout *.obj *.win32 *.win64 *.exe *.lst *.bin
 	$(RM_F) *.dbg *.coff *.ith *.srec *.mo32 *.mo64 *.i *.dep *.rdf
 	$(RM_RF) testresults
 	$(RM_F) elftest elftest64
