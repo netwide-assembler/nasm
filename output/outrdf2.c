@@ -151,15 +151,13 @@ static void rdf2_init(void)
     headerlength = 0;
 }
 
-static int32_t rdf2_section_names(char *name, int pass, int *bits)
+static int32_t rdf2_section_names(char *name, int *bits)
 {
     int i;
     bool err;
     char *p, *q;
     int code = -1;
     int reserved = 0;
-
-    (void)pass;
 
     /*
      * Default is 32 bits, in the text segment.
@@ -705,7 +703,7 @@ static void rdf2_cleanup(void)
  * Handle RDOFF2 specific directives
  */
 static enum directive_result
-rdf2_directive(enum directive directive, char *value, int pass)
+rdf2_directive(enum directive directive, char *value)
 {
     size_t n;
 
@@ -716,7 +714,7 @@ rdf2_directive(enum directive directive, char *value, int pass)
 	    nasm_error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
 	    return DIRR_ERROR;
 	}
-        if (pass == 1) {
+        if (pass_first()) {     /* XXX */
             struct DLLRec r;
             r.type = RDFREC_DLL;
             r.reclen = n + 1;
@@ -730,7 +728,7 @@ rdf2_directive(enum directive directive, char *value, int pass)
 	    nasm_error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);
 	    return DIRR_ERROR;
 	}
-        if (pass == 1) {
+        if (pass_first()) {     /* XXX */
             struct ModRec r;
             r.type = RDFREC_MODNAME;
             r.reclen = n + 1;

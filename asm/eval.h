@@ -42,7 +42,7 @@
  * The evaluator itself.
  */
 expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
-               int *fwref, int critical, struct eval_hints *hints);
+               int *fwref, bool critical, struct eval_hints *hints);
 
 void eval_cleanup(void);
 

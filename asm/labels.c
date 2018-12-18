@@ -156,7 +156,7 @@ static void out_symdef(union label *lptr)
     int64_t backend_offset;
 
     /* Backend-defined special segments are passed to symdef immediately */
-    if (pass0 == 2) {
+    if (pass_final()) {
         /* Emit special fixups for globals and commons */
         switch (lptr->defn.type) {
         case LBL_GLOBAL:
@@ -171,7 +171,7 @@ static void out_symdef(union label *lptr)
         return;
     }
 
-    if (pass0 != 1 && lptr->defn.type != LBL_BACKEND)
+    if (pass_type() != PASS_STAB && lptr->defn.type != LBL_BACKEND)
         return;
 
     /* Clean up this hack... */
@@ -383,7 +383,7 @@ static bool declare_label_lptr(union label *lptr,
         special = NULL;
 
     if (lptr->defn.type == type ||
-        (pass0 == 0 && lptr->defn.type == LBL_LOCAL)) {
+        (!pass_stable() && lptr->defn.type == LBL_LOCAL)) {
         lptr->defn.type = type;
         if (special) {
             if (!lptr->defn.special)
@@ -435,13 +435,14 @@ void define_label(const char *label, int32_t segment,
     union label *lptr;
     bool created, changed;
     int64_t size;
-    int64_t lastdef;
+    int64_t lpass, lastdef;
 
     /*
-     * The backend may invoke this before pass 1, so treat that as
-     * a special "pass".
+     * The backend may invoke this during initialization, at which
+     * pass_count() is zero, so add one so we never have a zero value
+     * for a defined variable.
      */
-    const int64_t lpass = passn + 1;
+    lpass = pass_count() + 1;
 
     /*
      * Phase errors here can be one of two types: a new label appears,
@@ -521,7 +522,7 @@ void define_label(const char *label, int32_t segment,
         nasm_error(noteflags, "label `%s' originally defined",
                    lptr->defn.label);
         src_set(saved_line, saved_fname);
-    } else if (changed && pass0 > 1 && lptr->defn.type != LBL_SPECIAL) {
+    } else if (changed && pass_final() && lptr->defn.type != LBL_SPECIAL) {
         /*!
          *!label-redef-late [err] label (re)defined during code generation
          *!  the value of a label changed during the final, code-generation

@@ -69,7 +69,7 @@ static int tempexpr_size;
 static struct tokenval *tokval; /* The current token */
 static int tt;                   /* The t_type of tokval */
 
-static int critical;
+static bool critical;
 static int *opflags;
 
 static struct eval_hints *hint;
@@ -978,21 +978,17 @@ static expr *expr6(void)
             } else {
                 if (!lookup_label(tokval->t_charptr, &label_seg, &label_ofs)) {
                     scope = local_scope(tokval->t_charptr);
-                    if (critical == 2) {
-                        nasm_nonfatal("symbol `%s%s' undefined",
-                              scope,tokval->t_charptr);
+                    if (critical) {
+                        nasm_nonfatal("symbol `%s%s' not defined%s",
+                                      scope,tokval->t_charptr,
+                                      pass_first() ? " before use" : "");
                         return NULL;
-                    } else if (critical == 1) {
-                        nasm_nonfatal("symbol `%s%s' not defined before use",
-                                      scope,tokval->t_charptr);
-                        return NULL;
-                    } else {
-                        if (opflags)
-                            *opflags |= OPFLAG_FORWARD;
-                        type = EXPR_UNKNOWN;
-                        label_seg = NO_SEG;
-                        label_ofs = 1;
                     }
+                    if (opflags)
+                        *opflags |= OPFLAG_FORWARD;
+                    type = EXPR_UNKNOWN;
+                    label_seg = NO_SEG;
+                    label_ofs = 1;
                 }
                 if (opflags && is_extern(tokval->t_charptr))
                     *opflags |= OPFLAG_EXTERN;
@@ -1015,7 +1011,7 @@ static expr *expr6(void)
 }
 
 expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
-               int *fwref, int crit, struct eval_hints *hints)
+               int *fwref, bool crit, struct eval_hints *hints)
 {
     expr *e;
     expr *f = NULL;
@@ -1026,7 +1022,7 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
     if (hint)
         hint->type = EAH_NOHINT;
 
-    critical = crit & ~CRITICAL;
+    critical = crit;
     scanfunc = sc;
     scpriv = scprivate;
     tokval = tv;

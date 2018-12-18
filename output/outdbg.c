@@ -75,8 +75,8 @@ static void dbg_init(void)
 
 static void dbg_reset(void)
 {
-    fprintf(ofile, "*** pass reset: pass0 = %d, passn = %"PRId64"\n",
-            pass0, passn);
+    fprintf(ofile, "*** pass reset: pass = %"PRId64" (%s)\n",
+            pass_count(), pass_type_name());
 }
 
 static void dbg_cleanup(void)
@@ -90,8 +90,7 @@ static void dbg_cleanup(void)
     }
 }
 
-static int32_t dbg_add_section(char *name, int pass, int *bits,
-                                     const char *whatwecallit)
+static int32_t dbg_add_section(char *name, int *bits, const char *whatwecallit)
 {
     int seg;
 
@@ -121,8 +120,8 @@ static int32_t dbg_add_section(char *name, int pass, int *bits,
             s->number = seg = seg_alloc();
             s->next = dbgsect;
             dbgsect = s;
-            fprintf(ofile, "%s %s (%s) pass %d: returning %d\n",
-                    whatwecallit, name, tail, pass, seg);
+            fprintf(ofile, "%s %s (%s) pass %"PRId64" (%s) : returning %d\n",
+                    whatwecallit, name, tail, pass_count(), pass_type_name(), seg);
 
             if (section_labels)
                 backend_label(s->name, s->number + 1, 0);
@@ -131,9 +130,9 @@ static int32_t dbg_add_section(char *name, int pass, int *bits,
     return seg;
 }
 
-static int32_t dbg_section_names(char *name, int pass, int *bits)
+static int32_t dbg_section_names(char *name, int *bits)
 {
-    return dbg_add_section(name, pass, bits, "section_names");
+    return dbg_add_section(name, bits, "section_names");
 }
 
 static int32_t dbg_herelabel(const char *name, enum label_type type,
@@ -323,7 +322,7 @@ static void dbg_sectalign(int32_t seg, unsigned int value)
 }
 
 static enum directive_result
-dbg_directive(enum directive directive, char *value, int pass)
+dbg_directive(enum directive directive, char *value)
 {
     switch (directive) {
         /*
@@ -334,7 +333,7 @@ dbg_directive(enum directive directive, char *value, int pass)
     case D_GROUP:
     {
         int dummy;
-        dbg_add_section(value, pass, &dummy, "directive:group");
+        dbg_add_section(value, &dummy, "directive:group");
         break;
     }
 
@@ -342,8 +341,8 @@ dbg_directive(enum directive directive, char *value, int pass)
         break;
     }
 
-    fprintf(ofile, "directive [%s] value [%s] (pass %d)\n",
-            directive_dname(directive), value, pass);
+    fprintf(ofile, "directive [%s] value [%s] pass %"PRId64" (%s)\n",
+            directive_dname(directive), value, pass_count(), pass_type_name());
     return DIRR_OK;
 }
 

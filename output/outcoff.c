@@ -291,7 +291,7 @@ static inline int32_t coff_sectalign_flags(unsigned int align)
     return (ilog2_32(align) + 1) << 20;
 }
 
-static int32_t coff_section_names(char *name, int pass, int *bits)
+static int32_t coff_section_names(char *name, int *bits)
 {
     char *p;
     uint32_t flags, align_and = ~0L, align_or = 0L;
@@ -402,7 +402,7 @@ static int32_t coff_section_names(char *name, int pass, int *bits)
             coff_sects[i]->flags = flags;
         coff_sects[i]->flags &= align_and;
         coff_sects[i]->flags |= align_or;
-    } else if (pass == 1) {
+    } else if (pass_first()) {
         /* Check if any flags are specified */
         if (flags) {
             unsigned int align_flags = flags & IMAGE_SCN_ALIGN_MASK;
@@ -566,7 +566,7 @@ static void coff_out(int32_t segto, const void *data,
     }
     if (!s) {
         int tempint;            /* ignored */
-        if (segto != coff_section_names(".text", 2, &tempint))
+        if (segto != coff_section_names(".text", &tempint))
             nasm_panic("strange segment conditions in COFF driver");
         else
             s = coff_sects[coff_nsects - 1];
@@ -751,14 +751,21 @@ static void BuildExportTable(STRING **rvp)
 }
 
 static enum directive_result
-coff_directives(enum directive directive, char *value, int pass)
+coff_directives(enum directive directive, char *value)
 {
     switch (directive) {
     case D_EXPORT:
     {
         char *q, *name;
 
-        if (pass == 2)
+        /*
+         * XXX: pass_first() is really wrong here, but AddExport()
+         * needs to be modified to handle duplicate calls for the
+         * same value in order to change that. The right thing to do
+         * is probably to mark a label as an export in the label
+         * structure, in case the label doesn't actually exist.
+         */
+        if (!pass_first())
             return DIRR_OK;           /* ignore in pass two */
         name = q = value;
         while (*q && !nasm_isspace(*q))
@@ -798,10 +805,10 @@ coff_directives(enum directive directive, char *value, int pass)
                 sxseg = i;
         }
         /*
-         * pass0 == 2 is the only time when the full set of symbols are
-         * guaranteed to be present; it is the final output pass.
+         * pass_final() is the only time when the full set of symbols are
+         * guaranteed to be present as it is the final output pass.
          */
-        if (pass0 == 2) {
+        if (pass_final()) {
             uint32_t n;
             saa_rewind(coff_syms);
             for (n = 0; n < coff_nsyms; n++) {

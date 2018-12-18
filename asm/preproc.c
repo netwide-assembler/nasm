@@ -388,13 +388,13 @@ static Context *cstk;
 static Include *istk;
 static const struct strlist *ipath_list;
 
-static int pass;            /* HACK: pass 0 = generate dependencies only */
 static struct strlist *deplist;
 
 static uint64_t unique;     /* unique identifier numbers */
 
 static Line *predef = NULL;
 static bool do_predef;
+static enum preproc_mode pp_mode;
 
 /*
  * The current set of multi-line macros we have defined.
@@ -1966,8 +1966,7 @@ iftype:
         t = tline = expand_smacro(tline);
         tptr = &t;
         tokval.t_type = TOKEN_INVALID;
-        evalresult = evaluate(ppscan, tptr, &tokval,
-                              NULL, pass | CRITICAL, NULL);
+        evalresult = evaluate(ppscan, tptr, &tokval, NULL, true, NULL);
         if (!evalresult)
             return -1;
         if (tokval.t_type)
@@ -2559,7 +2558,8 @@ static int do_directive(Token *tline, char **output)
         inc->conds = NULL;
         found_path = NULL;
         inc->fp = inc_fopen(p, deplist, &found_path,
-                            pass == 0 ? INC_OPTIONAL : INC_NEEDED, NF_TEXT);
+                            (pp_mode == PP_DEPS)
+                            ? INC_OPTIONAL : INC_NEEDED, NF_TEXT);
         if (!inc->fp) {
             /* -MG given but file not found */
             nasm_free(inc);
@@ -2672,7 +2672,7 @@ static int do_directive(Token *tline, char **output)
 issue_error:
     {
         /* Only error out if this is the final pass */
-        if (pass != 2 && i != PP_FATAL)
+        if (pass_final() && i != PP_FATAL)
             return DIRECTIVE_FOUND;
 
         tline->next = expand_smacro(tline->next);
@@ -2913,7 +2913,7 @@ issue_error:
         tptr = &t;
         tokval.t_type = TOKEN_INVALID;
         evalresult =
-            evaluate(ppscan, tptr, &tokval, NULL, pass, NULL);
+            evaluate(ppscan, tptr, &tokval, NULL, true, NULL);
         free_tlist(tline);
         if (!evalresult)
             return DIRECTIVE_FOUND;
@@ -2960,7 +2960,7 @@ issue_error:
             tptr = &t;
             tokval.t_type = TOKEN_INVALID;
             evalresult =
-                evaluate(ppscan, tptr, &tokval, NULL, pass, NULL);
+                evaluate(ppscan, tptr, &tokval, NULL, true, NULL);
             if (!evalresult) {
                 free_tlist(origline);
                 return DIRECTIVE_FOUND;
@@ -3461,7 +3461,7 @@ issue_error:
         tt = t->next;
         tptr = &tt;
         tokval.t_type = TOKEN_INVALID;
-        evalresult = evaluate(ppscan, tptr, &tokval, NULL, pass, NULL);
+        evalresult = evaluate(ppscan, tptr, &tokval, NULL, true, NULL);
         if (!evalresult) {
             free_tlist(tline);
             free_tlist(origline);
@@ -3480,7 +3480,7 @@ issue_error:
             count = 1;  /* Backwards compatibility: one character */
         } else {
             tokval.t_type = TOKEN_INVALID;
-            evalresult = evaluate(ppscan, tptr, &tokval, NULL, pass, NULL);
+            evalresult = evaluate(ppscan, tptr, &tokval, NULL, true, NULL);
             if (!evalresult) {
                 free_tlist(tline);
                 free_tlist(origline);
@@ -3546,7 +3546,7 @@ issue_error:
         t = tline;
         tptr = &t;
         tokval.t_type = TOKEN_INVALID;
-        evalresult = evaluate(ppscan, tptr, &tokval, NULL, pass, NULL);
+        evalresult = evaluate(ppscan, tptr, &tokval, NULL, true, NULL);
         free_tlist(tline);
         if (!evalresult) {
             free_tlist(origline);
@@ -4896,9 +4896,10 @@ static void pp_verror(errflags severity, const char *fmt, va_list arg)
 }
 
 static void
-pp_reset(const char *file, int apass, struct strlist *dep_list)
+pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
 {
     Token *t;
+    int apass;
 
     cstk = NULL;
     istk = nasm_malloc(sizeof(Include));
@@ -4918,6 +4919,7 @@ pp_reset(const char *file, int apass, struct strlist *dep_list)
     init_macros();
     unique = 0;
     deplist = dep_list;
+    pp_mode = mode;
 
     if (tasm_compatible_mode)
         pp_add_stdmac(nasm_stdmac_tasm);
@@ -4933,20 +4935,32 @@ pp_reset(const char *file, int apass, struct strlist *dep_list)
 
     do_predef = true;
 
-    /*
-     * 0 for dependencies, 1 for preparatory passes, 2 for final pass.
-     * The caller, however, will also pass in 3 for preprocess-only so
-     * we can set __PASS__ accordingly.
-     */
-    pass = apass > 2 ? 2 : apass;
-
     strlist_add(deplist, file);
 
     /*
      * Define the __PASS__ macro.  This is defined here unlike
      * all the other builtins, because it is special -- it varies between
      * passes.
+     *
+     * 0 = dependencies only
+     * 1 = preparatory passes
+     * 2 = final pass
+     * 3 = preproces only
      */
+    switch (mode) {
+    case PP_NORMAL:
+        apass = pass_final() ? 2 : 1;
+        break;
+    case PP_DEPS:
+        apass = 0;
+        break;
+    case PP_PREPROC:
+        apass = 3;
+        break;
+    default:
+        panic();
+    }
+
     t = nasm_malloc(sizeof(*t));
     t->next = NULL;
     make_tok_num(t, apass);
@@ -5187,7 +5201,7 @@ done:
     return line;
 }
 
-static void pp_cleanup(int pass)
+static void pp_cleanup_pass(void)
 {
     real_verror = nasm_set_verror(pp_verror);
 
@@ -5217,13 +5231,15 @@ static void pp_cleanup(int pass)
     while (cstk)
         ctx_pop();
     src_set_fname(NULL);
-    if (pass == 0) {
-        free_llist(predef);
-        predef = NULL;
-        delete_Blocks();
-        freeTokens = NULL;
-        ipath_list = NULL;
-    }
+}
+
+static void pp_cleanup_session(void)
+{
+    free_llist(predef);
+    predef = NULL;
+    delete_Blocks();
+    freeTokens = NULL;
+    ipath_list = NULL;
 }
 
 static void pp_include_path(struct strlist *list)
@@ -5373,7 +5389,8 @@ const struct preproc_ops nasmpp = {
     pp_init,
     pp_reset,
     pp_getline,
-    pp_cleanup,
+    pp_cleanup_pass,
+    pp_cleanup_session,
     pp_extra_stdmac,
     pp_pre_define,
     pp_pre_undefine,

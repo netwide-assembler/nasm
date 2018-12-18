@@ -415,12 +415,12 @@ static int value_to_extop(expr * vect, extop *eop, int32_t myseg)
     return 0;
 }
 
-insn *parse_line(int pass, char *buffer, insn *result)
+insn *parse_line(char *buffer, insn *result)
 {
     bool insn_is_label = false;
     struct eval_hints hints;
     int opnum;
-    int critical;
+    bool critical;
     bool first;
     bool recover;
     int i;
@@ -501,7 +501,7 @@ restart_parse:
             expr *value;
 
             i = stdscan(NULL, &tokval);
-            value = evaluate(stdscan, NULL, &tokval, NULL, pass0, NULL);
+            value = evaluate(stdscan, NULL, &tokval, NULL, pass_stable(), NULL);
             i = tokval.t_type;
             if (!value)                  /* Error in evaluator */
                 goto fail;
@@ -566,11 +566,7 @@ restart_parse:
      * `critical' flag on calling evaluate(), so that it will bomb
      * out on undefined symbols.
      */
-    if (result->opcode == I_INCBIN) {
-        critical = (pass0 < 2 ? 1 : 2);
-
-    } else
-        critical = (pass == 2 ? 2 : 0);
+    critical = pass_final() || (result->opcode == I_INCBIN);
 
     if (opcode_is_db(result->opcode) || result->opcode == I_INCBIN) {
         extop *eop, **tail = &result->eops, **fixptr;

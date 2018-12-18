@@ -1202,7 +1202,7 @@ static void bin_define_section_labels(void)
     labels_defined = 1;
 }
 
-static int32_t bin_secname(char *name, int pass, int *bits)
+static int32_t bin_secname(char *name, int *bits)
 {
     char *p;
     struct Section *sec;
@@ -1211,14 +1211,15 @@ static int32_t bin_secname(char *name, int pass, int *bits)
      * pass.  Use this opportunity to establish the default section
      * (default is BITS-16 ".text" segment).
      */
-    if (!name) {                /* Reset ORG and section attributes at the start of each pass. */
+    if (!name) {
+        /* Reset ORG and section attributes at the start of each pass. */
         origin_defined = 0;
         list_for_each(sec, sections)
             sec->flags &= ~(START_DEFINED | VSTART_DEFINED |
                             ALIGN_DEFINED | VALIGN_DEFINED);
 
         /* Define section start and vstart labels. */
-        if (pass != 1)
+        if (!pass_first())
             bin_define_section_labels();
 
         /* Establish the default (.text) section. */
@@ -1247,14 +1248,14 @@ static int32_t bin_secname(char *name, int pass, int *bits)
     }
 
     /* Handle attribute assignments. */
-    if (pass != 1)
+    if (!pass_first())
         bin_assign_attributes(sec, p);
 
 #ifndef ABIN_SMART_ADAPT
     /* The following line disables smart adaptation of
      * PROGBITS/NOBITS section types (it forces sections to
      * default to PROGBITS). */
-    if ((pass != 1) && !(sec->flags & TYPE_DEFINED))
+    if (!pass_first() && !(sec->flags & TYPE_DEFINED))
         sec->flags |= TYPE_DEFINED | TYPE_PROGBITS;
 #endif
 
@@ -1262,7 +1263,7 @@ static int32_t bin_secname(char *name, int pass, int *bits)
 }
 
 static enum directive_result
-bin_directive(enum directive directive, char *args, int pass)
+bin_directive(enum directive directive, char *args)
 {
     switch (directive) {
     case D_ORG:
@@ -1300,7 +1301,7 @@ bin_directive(enum directive directive, char *args, int pass)
      * and symbol information to stdout, stderr, or to a file. */
 	char *p;
 	
-        if (pass != 1)
+        if (!pass_first())
             return DIRR_OK;
         args += strspn(args, " \t");
         while (*args) {

@@ -209,7 +209,7 @@ const struct elf_known_section elf_known_sections[] = {
 };
 
 /* parse section attributes */
-static void elf_section_attrib(char *name, char *attr, int pass,
+static void elf_section_attrib(char *name, char *attr,
                                uint32_t *flags_and, uint32_t *flags_or,
                                uint64_t *align, int *type)
 {
@@ -258,7 +258,7 @@ static void elf_section_attrib(char *name, char *attr, int pass,
             *type = SHT_PROGBITS;
         } else if (!nasm_stricmp(opt, "nobits")) {
             *type = SHT_NOBITS;
-        } else if (pass == 1) {
+        } else if (pass_first()) {
             nasm_warn(WARN_OTHER, "Unknown section attribute '%s' ignored on"
                       " declaration of section `%s'", opt, name);
         }
@@ -267,7 +267,7 @@ static void elf_section_attrib(char *name, char *attr, int pass,
 }
 
 static enum directive_result
-elf_directive(enum directive directive, char *value, int pass)
+elf_directive(enum directive directive, char *value)
 {
     int64_t n;
     bool err;
@@ -275,8 +275,8 @@ elf_directive(enum directive directive, char *value, int pass)
 
     switch (directive) {
     case D_OSABI:
-        if (pass == 2)
-            return DIRR_OK; /* ignore in pass 2 */
+        if (!pass_first())      /* XXX: Why? */
+            return DIRR_OK;
 
         n = readnum(value, &err);
         if (err) {
@@ -413,7 +413,7 @@ static int elf_make_section(char *name, int type, int flags, int align)
     return nsects - 1;
 }
 
-static int32_t elf_section_names(char *name, int pass, int *bits)
+static int32_t elf_section_names(char *name, int *bits)
 {
     char *p;
     uint32_t flags, flags_and, flags_or;
@@ -430,7 +430,7 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         *p++ = '\0';
     flags_and = flags_or = type = align = 0;
 
-    elf_section_attrib(name, p, pass, &flags_and,
+    elf_section_attrib(name, p, &flags_and,
                        &flags_or, &align, &type);
 
     if (!strcmp(name, ".shstrtab") ||
@@ -458,7 +458,7 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         flags = (ks->flags & ~flags_and) | flags_or;
 
         i = elf_make_section(name, type, flags, align);
-    } else if (pass == 1) {
+    } else if (pass_first()) {
           if ((type && sects[i]->type != type)
               || (align && sects[i]->align != align)
               || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
@@ -549,7 +549,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
         if (segment == def_seg) {
             /* we have to be sure at least text section is there */
             int tempint;
-            if (segment != elf_section_names(".text", 2, &tempint))
+            if (segment != elf_section_names(".text", &tempint))
                 nasm_panic("strange segment conditions in ELF driver");
         }
         for (i = 0; i < nsects; i++) {
@@ -803,7 +803,7 @@ static void elf32_out(int32_t segto, const void *data,
         }
     if (!s) {
         int tempint;            /* ignored */
-        if (segto != elf_section_names(".text", 2, &tempint))
+        if (segto != elf_section_names(".text", &tempint))
             nasm_panic("strange segment conditions in ELF driver");
         else {
             s = sects[nsects - 1];
@@ -1014,7 +1014,7 @@ static void elf64_out(int32_t segto, const void *data,
         }
     if (!s) {
         int tempint;            /* ignored */
-        if (segto != elf_section_names(".text", 2, &tempint))
+        if (segto != elf_section_names(".text", &tempint))
             nasm_panic("strange segment conditions in ELF driver");
         else {
             s = sects[nsects - 1];
@@ -1292,7 +1292,7 @@ static void elfx32_out(int32_t segto, const void *data,
         }
     if (!s) {
         int tempint;            /* ignored */
-        if (segto != elf_section_names(".text", 2, &tempint))
+        if (segto != elf_section_names(".text", &tempint))
             nasm_panic("strange segment conditions in ELF driver");
         else {
             s = sects[nsects - 1];

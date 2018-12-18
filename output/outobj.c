@@ -634,9 +634,9 @@ static const struct dfmt borland_debug_form;
 /* The current segment */
 static struct Segment *current_seg;
 
-static int32_t obj_segment(char *, int, int *);
+static int32_t obj_segment(char *, int *);
 static void obj_write_file(void);
-static enum directive_result obj_directive(enum directive, char *, int);
+static enum directive_result obj_directive(enum directive, char *);
 
 static void obj_init(void)
 {
@@ -837,7 +837,7 @@ static void obj_deflabel(char *name, int32_t segment,
      */
     if (!any_segs && segment == first_seg) {
         int tempint;            /* ignored */
-        if (segment != obj_segment("__NASMDEFSEG", 2, &tempint))
+        if (segment != obj_segment("__NASMDEFSEG", &tempint))
             nasm_panic("strange segment conditions in OBJ driver");
     }
 
@@ -1029,7 +1029,7 @@ static void obj_out(int32_t segto, const void *data,
      */
     if (!any_segs) {
         int tempint;            /* ignored */
-        if (segto != obj_segment("__NASMDEFSEG", 2, &tempint))
+        if (segto != obj_segment("__NASMDEFSEG", &tempint))
             nasm_panic("strange segment conditions in OBJ driver");
     }
 
@@ -1323,7 +1323,7 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
     obj_commit(forp);
 }
 
-static int32_t obj_segment(char *name, int pass, int *bits)
+static int32_t obj_segment(char *name, int *bits)
 {
     /*
      * We call the label manager here to define a name for the new
@@ -1379,7 +1379,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
                 break;
 
             if (!strcmp(seg->name, name)) {
-                if (attrs > 0 && pass == 1)
+                if (attrs > 0 && pass_first())
                     nasm_warn(WARN_OTHER, "segment attributes specified on"
                               " redeclaration of segment: ignoring");
                 if (seg->use32)
@@ -1455,7 +1455,7 @@ static int32_t obj_segment(char *name, int pass, int *bits)
                     if (!strcmp(grp->name, "FLAT"))
                         break;
                 if (!grp) {
-                    obj_directive(D_GROUP, "FLAT", 1);
+                    obj_directive(D_GROUP, "FLAT");
                     for (grp = grphead; grp; grp = grp->next)
                         if (!strcmp(grp->name, "FLAT"))
                             break;
@@ -1570,13 +1570,13 @@ static int32_t obj_segment(char *name, int pass, int *bits)
 }
 
 static enum directive_result
-obj_directive(enum directive directive, char *value, int pass)
+obj_directive(enum directive directive, char *value)
 {
     switch (directive) {
     case D_GROUP:
     {
         char *p, *q, *v;
-        if (pass == 1) {
+        if (pass_first()) {     /* XXX */
             struct Group *grp;
             struct Segment *seg;
             struct External **extp;
@@ -1690,8 +1690,8 @@ obj_directive(enum directive directive, char *value, int pass)
     {
         char *q, *extname, *libname, *impname;
 
-        if (pass == 2)
-            return 1;           /* ignore in pass two */
+        if (!pass_first())      /* XXX */
+            return DIRR_OK;
         extname = q = value;
         while (*q && !nasm_isspace(*q))
             q++;
@@ -1740,7 +1740,7 @@ obj_directive(enum directive directive, char *value, int pass)
         int flags = 0;
         unsigned int ordinal = 0;
 
-        if (pass == 2)
+        if (!pass_first())
             return DIRR_OK;     /* ignore in pass two */
         intname = q = value;
         while (*q && !nasm_isspace(*q))
@@ -1887,7 +1887,7 @@ static int32_t obj_segbase(int32_t segment)
             e = eb->exts[i];
 	    if (!e) {
                 /* Not available yet, probably a forward reference */
-		nasm_assert(pass0 < 2); /* Convergence failure */
+		nasm_assert(!pass_final());
 		return NO_SEG;
 	    }
 
@@ -2502,7 +2502,7 @@ static void dbgbi_linnum(const char *lnfname, int32_t lineno, int32_t segto)
      */
     if (!any_segs) {
         int tempint;            /* ignored */
-        if (segto != obj_segment("__NASMDEFSEG", 2, &tempint))
+        if (segto != obj_segment("__NASMDEFSEG", &tempint))
             nasm_panic("strange segment conditions in OBJ driver");
     }
 

@@ -102,9 +102,12 @@ static bool abort_on_panic = ABORT_ON_PANIC;
 static bool keep_all;
 
 bool tasm_compatible_mode = false;
-int pass0;
-int64_t passn;
-static int pass1, pass2;    /* XXX: Get rid of these, they are redundant */
+enum pass_type _pass_type;
+const char * const _pass_types[] =
+{
+    "init", "first", "optimize", "stabilize", "final"
+};
+int64_t _passn;
 int globalrel = 0;
 int globalbnd = 0;
 
@@ -117,7 +120,6 @@ static const char *errname;
 
 static int64_t globallineno;    /* for forward-reference tracking */
 
-/* static int pass = 0; */
 const struct ofmt *ofmt = &OF_DEFAULT;
 const struct ofmt_alias *ofmt_alias = NULL;
 const struct dfmt *dfmt;
@@ -201,7 +203,7 @@ nasm_set_limit(const char *limit, const char *valstr)
             break;
     }
     if (i > LIMIT_MAX) {
-        if (passn == 0)
+        if (not_started())
             errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
         else
             errlevel = ERR_WARNING|ERR_PASS1|WARN_UNKNOWN_PRAGMA;
@@ -214,7 +216,7 @@ nasm_set_limit(const char *limit, const char *valstr)
     } else {
         val = readnum(valstr, &rn_error);
         if (rn_error || val < 0) {
-            if (passn == 0)
+            if (not_started())
                 errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
             else
                 errlevel = ERR_WARNING|ERR_PASS1|WARN_BAD_PRAGMA;
@@ -460,7 +462,9 @@ int main(int argc, char **argv)
 
     include_path = strlist_alloc(true);
 
-    pass0 = 0;
+    _pass_type = PASS_INIT;
+    _passn = 0;
+
     want_usage = terminate_after_phase = false;
     nasm_set_verror(nasm_verror_asm);
 
@@ -546,11 +550,11 @@ int main(int argc, char **argv)
             if (depend_missing_ok)
                 preproc->include_path(NULL);    /* "assume generated" */
 
-            preproc->reset(inname, 0, depend_list);
+            preproc->reset(inname, PP_DEPS, depend_list);
             ofile = NULL;
             while ((line = preproc->getline()))
                 nasm_free(line);
-            preproc->cleanup(0);
+            preproc->cleanup_pass();
     } else if (operating_mode & OP_PREPROCESS) {
             char *line;
             const char *file_name = NULL;
@@ -566,8 +570,8 @@ int main(int argc, char **argv)
 
             location.known = false;
 
-            /* pass = 1; */
-            preproc->reset(inname, 3, depend_list);
+            _pass_type = PASS_FIRST; /* We emulate this assembly pass */
+            preproc->reset(inname, PP_PREPROC, depend_list);
 
             /* Revert all warnings to the default state */
             memcpy(warning_state, warning_state_init, sizeof warning_state);
@@ -592,7 +596,7 @@ int main(int argc, char **argv)
                 nasm_fputs(line, ofile);
                 nasm_free(line);
             }
-            preproc->cleanup(0);
+            preproc->cleanup_pass();
             if (ofile)
                 fclose(ofile);
             if (ofile && terminate_after_phase && !keep_all)
@@ -625,6 +629,8 @@ int main(int argc, char **argv)
             ofile = NULL;
         }
     }
+
+    preproc->cleanup_session();
 
     if (depend_list && !terminate_after_phase)
         emit_dependencies(depend_list);
@@ -1428,35 +1434,38 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         break;
     }
 
-    prev_offset_changed = nasm_limit[LIMIT_PASSES];
-    for (passn = 1; pass0 <= 2; passn++) {
-        pass1 = pass0 == 2 ? 2 : 1;     /* 1, 1, 1, ..., 1, 2 */
-        pass2 = passn > 1  ? 2 : 1;     /* 1, 2, 2, ..., 2, 2 */
-        /* pass0                           0, 0, 0, ..., 1, 2 */
+    prev_offset_changed = INT64_MAX;
 
-        /*
-         * Create a warning buffer list unless we are in pass 2 (everything will be
-         * emitted immediately in pass 2.)
-         */
-        if (warn_list) {
-            if (warn_list->nstr || pass0 == 2)
+    if (listname && !keep_all) {
+        /* Remove the list file in case we die before the output pass */
+        remove(listname);
+    }
+
+    while (!terminate_after_phase && !pass_final()) {
+        _passn++;
+        if (pass_type() != PASS_OPT || !global_offset_changed)
+            _pass_type++;
+        global_offset_changed = 0;
+
+	/*
+	 * Create a warning buffer list unless we are in
+         * pass 2 (everything will be emitted immediately in pass 2.)
+	 */
+	if (warn_list) {
+            if (warn_list->nstr || pass_final())
                 strlist_free(&warn_list);
         }
 
-        if (pass0 < 2 && !warn_list)
+	if (!pass_final() && !warn_list)
             warn_list = strlist_alloc(false);
 
         globalbits = cmd_sb;  /* set 'bits' to command line default */
         cpu = cmd_cpu;
-        if (pass0 == 2) {
-            lfmt->init(listname);
-        } else if (passn == 1 && listname && !keep_all) {
-            /* Remove the list file in case we die before the output pass */
-            remove(listname);
-        }
+        if (pass_final())
+	    lfmt->init(listname);
+
         in_absolute = false;
-        global_offset_changed = 0;  /* set by redefine_label */
-        if (passn > 1) {
+        if (!pass_first()) {
             saa_rewind(forwrefs);
             forwref = saa_rstruct(forwrefs);
             raa_free(offsets);
@@ -1464,11 +1473,11 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         }
         location.segment = NO_SEG;
         location.offset  = 0;
-        if (passn == 1)
+        if (pass_first())
             location.known = true;
         ofmt->reset();
-        switch_segment(ofmt->section(NULL, pass2, &globalbits));
-        preproc->reset(fname, pass1, pass1 == 2 ? depend_list : NULL);
+        switch_segment(ofmt->section(NULL, &globalbits));
+        preproc->reset(fname, PP_NORMAL, pass_final() ? depend_list : NULL);
 
         /* Revert all warnings to the default state */
         memcpy(warning_state, warning_state_init, sizeof warning_state);
@@ -1488,7 +1497,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                 goto end_of_line; /* Just do final cleanup */
 
             /* Not a directive, or even something that starts with [ */
-            parse_line(pass1, line, &output_ins);
+            parse_line(line, &output_ins);
 
             if (optimizing.level > 0) {
                 if (forwref != NULL && globallineno == forwref->lineno) {
@@ -1502,7 +1511,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                     output_ins.forw_ref = false;
 
                 if (output_ins.forw_ref) {
-                    if (passn == 1) {
+                    if (pass_first()) {
                         for (i = 0; i < output_ins.operands; i++) {
                             if (output_ins.oprs[i].opflags & OPFLAG_FORWARD) {
                                 struct forwrefinfo *fwinf = (struct forwrefinfo *)saa_wstruct(forwrefs);
@@ -1544,7 +1553,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                 nasm_assert(output_ins.times >= 0);
 
                 for (n = 1; n <= output_ins.times; n++) {
-                    if (pass1 == 1) {
+                    if (!pass_final()) {
                         int64_t l = insn_size(location.segment,
                                               location.offset,
                                               globalbits, &output_ins);
@@ -1653,9 +1662,38 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
             nasm_free(line);
         }                       /* end while (line = preproc->getline... */
 
-        if (global_offset_changed && !terminate_after_phase) {
-            switch (pass0) {
-            case 1:
+        preproc->cleanup_pass();
+
+        /* Don't output further messages if we are dead anyway */
+        if (terminate_after_phase)
+            break;
+
+        if (global_offset_changed) {
+            switch (pass_type()) {
+            case PASS_OPT:
+                /*
+                 * This is the only pass type that can be executed more
+                 * than once, and therefore has the ability to stall.
+                 */
+                if (global_offset_changed < prev_offset_changed) {
+                    prev_offset_changed = global_offset_changed;
+                    stall_count = 0;
+                } else {
+                    stall_count++;
+                }
+
+                if (stall_count > nasm_limit[LIMIT_STALLED] ||
+                    pass_count() >= nasm_limit[LIMIT_PASSES]) {
+                    /* No convergence, almost certainly dead */
+                    nasm_nonfatal("unable to find valid values for all labels "
+                                  "after %"PRId64" passes; "
+                                  "stalled for %"PRId64", giving up.",
+                                  pass_count(), stall_count);
+                    nasm_note("Possible causes: recursive EQUs, macro abuse.");
+                }
+                break;
+
+            case PASS_STAB:
                 /*!
                  *!phase [off] phase error during stabilization
                  *!  warns about symbols having changed values during
@@ -1663,10 +1701,10 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                  *!  inherently fatal, but may be a source of bugs.
                  */
                 nasm_warn(WARN_PHASE, "phase error during stabilization "
-                           "pass, hoping for the best");
+                          "pass, hoping for the best");
                 break;
 
-            case 2:
+            case PASS_FINAL:
                 nasm_nonfatal("phase error during code generation pass");
                 break;
 
@@ -1675,51 +1713,16 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                 break;
             }
         }
+    }
 
-        if (pass1 == 1)
-            preproc->cleanup(1);
-
-        /*
-         * Always run at least two optimization passes (pass0 == 0);
-         * things like subsections will fail miserably without that.
-         * Once we commit to a stabilization pass (pass0 == 1), we can't
-         * go back, and if something goes bad, we can only hope
-         * that we don't end up with a phase error at the end.
-         */
-        if ((passn > 1 && !global_offset_changed) || pass0 > 0) {
-            pass0++;
-        } else if (global_offset_changed &&
-                   global_offset_changed < prev_offset_changed) {
-            prev_offset_changed = global_offset_changed;
-            stall_count = 0;
-        } else {
-            stall_count++;
-        }
-
-        if (terminate_after_phase)
-            break;
-
-        if ((stall_count > nasm_limit[LIMIT_STALLED]) ||
-            (passn >= nasm_limit[LIMIT_PASSES])) {
-            /* We get here if the labels don't converge
-             * Example: FOO equ FOO + 1
-             */
-            nasm_nonfatal("Can't find valid values for all labels "
-                          "after %"PRId64" passes, giving up.", passn);
-            nasm_note("Possible causes: recursive EQUs, macro abuse.");
-             break;
-        }
+    if (opt_verbose_info && pass_final()) {
+        /*  -On and -Ov switches */
+        nasm_note("info: assembly required 1+%"PRId64"+2 passes\n",
+                  pass_count()-3);
     }
 
     strlist_free(&warn_list);
-    preproc->cleanup(0);
     lfmt->cleanup();
-
-    if (!terminate_after_phase && opt_verbose_info) {
-        /*  -On and -Ov switches */
-        fprintf(stdout, "info: assembly required 1+%"PRId64"+1 passes\n",
-                passn-3);
-    }
 }
 
 /**
@@ -1752,12 +1755,10 @@ static bool skip_this_pass(errflags severity)
         return false;
 
     /*
-     * passn is 1 on the very first pass only.
-     * pass0 is 2 on the code-generation (final) pass only.
-     * These are the passes we care about in this case.
+     * Let's get rid of these flags when and if we can...
      */
-    return (((severity & ERR_PASS1) && passn != 1) &&
-            ((severity & ERR_PASS2) && pass0 != 2));
+    return ((severity & ERR_PASS1) && !pass_first()) ||
+           ((severity & ERR_PASS2) && !pass_final());
 }
 
 /**

@@ -63,15 +63,17 @@ static void nop_init(void)
     /* Nothing to do */
 }
 
-static void nop_reset(const char *file, int pass, struct strlist *deplist)
+static void nop_reset(const char *file, enum preproc_mode mode,
+                      struct strlist *deplist)
 {
+    (void)mode;                 /* placate compilers */
+
     src_set(0, file);
     nop_lineinc = 1;
     nop_fp = nasm_open_read(file, NF_TEXT);
 
     if (!nop_fp)
 	nasm_fatalf(ERR_NOFILE, "unable to open input file `%s'", file);
-    (void)pass;                 /* placate compilers */
 
     strlist_add(deplist, file);
 }
@@ -136,13 +138,17 @@ static char *nop_getline(void)
     return buffer;
 }
 
-static void nop_cleanup(int pass)
+static void nop_cleanup_pass(void)
 {
-    (void)pass;                     /* placate GCC */
     if (nop_fp) {
         fclose(nop_fp);
         nop_fp = NULL;
     }
+}
+
+static void nop_cleanup_session(void)
+{
+    /* Nothing we need to do */
 }
 
 static void nop_extra_stdmac(macros_t *macros)
@@ -185,7 +191,8 @@ const struct preproc_ops preproc_nop = {
     nop_init,
     nop_reset,
     nop_getline,
-    nop_cleanup,
+    nop_cleanup_pass,
+    nop_cleanup_session,
     nop_extra_stdmac,
     nop_pre_define,
     nop_pre_undefine,

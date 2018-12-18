@@ -106,10 +106,8 @@ static iflag_t get_cpu(const char *value)
             break;
     }
 
-    if (!cpu->name) {
-        nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_FATAL,
-                   "unknown 'cpu' type '%s'", value);
-    }
+    if (!cpu->name)
+        nasm_nonfatal("unknown 'cpu' type '%s'", value);
 
     iflag_set_cpu(&r, cpu->level);
     return r;
@@ -135,9 +133,8 @@ static int get_bits(const char *value)
         }
         break;
     default:
-        nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_FATAL,
-                   "`%s' is not a valid segment size; must be 16, 32 or 64",
-                   value);
+        nasm_nonfatal("`%s' is not a valid segment size; must be 16, 32 or 64",
+                      value);
         i = 16;
         break;
     }
@@ -206,7 +203,6 @@ bool process_directives(char *directive)
     char *value, *p, *q, *special;
     struct tokenval tokval;
     bool bad_param = false;
-    int pass2 = passn > 1 ? 2 : 1;
     enum label_type type;
 
     d = parse_directive_line(&directive, &value);
@@ -220,7 +216,7 @@ bool process_directives(char *directive)
 	break;
 
     default:			/* It's a backend-specific directive */
-        switch (ofmt->directive(d, value, pass2)) {
+        switch (ofmt->directive(d, value)) {
         case DIRR_UNKNOWN:
             goto unknown;
         case DIRR_OK:
@@ -236,19 +232,17 @@ bool process_directives(char *directive)
 
     case D_unknown:
     unknown:
-        nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_PANIC,
-                   "unrecognised directive [%s]", directive);
+        nasm_nonfatal("unrecognized directive [%s]", directive);
         break;
 
     case D_SEGMENT:         /* [SEGMENT n] */
     case D_SECTION:
     {
 	int sb = globalbits;
-        int32_t seg = ofmt->section(value, pass2, &sb);
+        int32_t seg = ofmt->section(value, &sb);
 
         if (seg == NO_SEG) {
-            nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_PANIC,
-                       "segment name `%s' not recognized", value);
+            nasm_nonfatal("segment name `%s' not recognized", value);
         } else {
             globalbits = sb;
             switch_segment(seg);
@@ -264,7 +258,7 @@ bool process_directives(char *directive)
             stdscan_reset();
             stdscan_set(value);
             tokval.t_type = TOKEN_INVALID;
-            e = evaluate(stdscan, NULL, &tokval, NULL, pass2, NULL);
+            e = evaluate(stdscan, NULL, &tokval, NULL, true, NULL);
             if (e) {
                 uint64_t align = e->value;
 
@@ -374,22 +368,20 @@ bool process_directives(char *directive)
         stdscan_reset();
         stdscan_set(value);
         tokval.t_type = TOKEN_INVALID;
-        e = evaluate(stdscan, NULL, &tokval, NULL, pass2, NULL);
+        e = evaluate(stdscan, NULL, &tokval, NULL, true, NULL);
         if (e) {
-            if (!is_reloc(e))
-                nasm_error(pass0 ==
-                           1 ? ERR_NONFATAL : ERR_PANIC,
-                           "cannot use non-relocatable expression as "
-                           "ABSOLUTE address");
-            else {
+            if (!is_reloc(e)) {
+                nasm_nonfatal("cannot use non-relocatable expression as "
+                              "ABSOLUTE address");
+            } else {
                 absolute.segment = reloc_seg(e);
                 absolute.offset = reloc_value(e);
             }
-        } else if (passn == 1)
+        } else if (pass_first()) {
             absolute.offset = 0x100;     /* don't go near zero in case of / */
-        else
-            nasm_panic("invalid ABSOLUTE address "
-                       "in pass two");
+        } else {
+            nasm_nonfatal("invalid ABSOLUTE address");
+        }
         in_absolute = true;
         location.segment = NO_SEG;
         location.offset = absolute.offset;
@@ -419,17 +411,15 @@ bool process_directives(char *directive)
             *q = 0;
         }
         if (badid) {
-            nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
-                       "identifier expected after DEBUG");
+            nasm_nonfatal("identifier expected after DEBUG");
             break;
         }
         if (overlong) {
-            nasm_error(passn == 1 ? ERR_NONFATAL : ERR_PANIC,
-                       "DEBUG identifier too long");
+            nasm_nonfatal("DEBUG identifier too long");
             break;
         }
         p = nasm_skip_spaces(p);
-        if (pass0 == 2)
+        if (pass_final())
             dfmt->debug_directive(debugid, p);
         break;
     }
@@ -484,8 +474,7 @@ bool process_directives(char *directive)
 
     case D_FLOAT:
         if (float_option(value)) {
-            nasm_error(pass0 < 2 ? ERR_NONFATAL : ERR_PANIC,
-                       "unknown 'float' directive: %s", value);
+            nasm_nonfatal("unknown 'float' directive: %s", value);
         }
         break;
 

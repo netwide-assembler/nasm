@@ -788,7 +788,7 @@ lookup_known_section(const char *name, bool by_sectname)
     return NULL;
 }
 
-static int32_t macho_section(char *name, int pass, int *bits)
+static int32_t macho_section(char *name, int *bits)
 {
     const struct macho_known_section *known_section;
     const struct macho_known_section_attr *sa;
@@ -800,8 +800,6 @@ static int32_t macho_section(char *name, int pass, int *bits)
     char *comma;
 
     bool new_seg;
-
-    (void)pass;
 
     /* Default to the appropriate number of bits. */
     if (!name) {
@@ -986,8 +984,9 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
 
 #if defined(DEBUG) && DEBUG>2
     nasm_error(ERR_DEBUG,
-            " macho_symdef: %s, pass0=%d, passn=%"PRId64", sec=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
-	       name, pass0, passn, section, offset, is_global, special);
+            " macho_symdef: %s, pass=%"PRId64" type %s, sec=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
+	       name, pass_count(), pass_types[pass_type()],
+	       section, offset, is_global, special);
 #endif
 
     if (is_global == 3) {
@@ -1767,7 +1766,6 @@ static enum directive_result macho_no_dead_strip(const char *labels)
     char *s, *p, *ep;
     char ec;
     enum directive_result rv = DIRR_ERROR;
-    bool real = passn > 1;
 
     p = s = nasm_strdup(labels);
     while (*p) {
@@ -1782,7 +1780,7 @@ static enum directive_result macho_no_dead_strip(const char *labels)
 	    goto err;
 	}
 	*ep = '\0';
-	if (real) {
+	if (!pass_first()) {
 	    if (!macho_set_section_attribute_by_symbol(p, S_ATTR_NO_DEAD_STRIP))
 		rv = DIRR_ERROR;
 	}
@@ -1805,14 +1803,12 @@ err:
 static enum directive_result
 macho_pragma(const struct pragma *pragma)
 {
-    bool real = passn > 1;
-
     switch (pragma->opcode) {
     case D_SUBSECTIONS_VIA_SYMBOLS:
 	if (*pragma->tail)
 	    return DIRR_BADPARAM;
 
-	if (real)
+	if (!pass_first())
 	    head_flags |= MH_SUBSECTIONS_VIA_SYMBOLS;
 
         /* Jmp-match optimization conflicts */
@@ -1844,10 +1840,10 @@ static void macho_dbg_generate(void)
     /* debug section defines */
     {
         int bits = 0;
-        macho_section(".debug_abbrev", 0, &bits);
-        macho_section(".debug_info", 0, &bits);
-        macho_section(".debug_line", 0, &bits);
-        macho_section(".debug_str", 0, &bits);
+        macho_section(".debug_abbrev", &bits);
+        macho_section(".debug_info", &bits);
+        macho_section(".debug_line", &bits);
+        macho_section(".debug_str", &bits);
     }
 
     /* dw section walk to find high_addr and total_len */

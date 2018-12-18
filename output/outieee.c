@@ -146,7 +146,7 @@ static struct ieeeSection {
     struct ieeeObjData *data, *datacurr;
     struct ieeeFixupp *fptr, *flptr;
     int32_t index;                 /* the NASM segment id */
-    int32_t ieee_index;            /* the OBJ-file segment index */
+    int32_t ieee_index;            /* the IEEE-file segment index */
     int32_t currentpos;
     int32_t align;                 /* can be SEG_ABS + absolute addr */
     int32_t startpos;
@@ -193,7 +193,7 @@ static void ieee_data_new(struct ieeeSection *);
 static void ieee_write_fixup(int32_t, int32_t, struct ieeeSection *,
                              int, uint64_t, int32_t);
 static void ieee_install_fixup(struct ieeeSection *, struct ieeeFixupp *);
-static int32_t ieee_segment(char *, int, int *);
+static int32_t ieee_segment(char *, int *);
 static void ieee_write_file(void);
 static void ieee_write_byte(struct ieeeSection *, int);
 static void ieee_write_word(struct ieeeSection *, int);
@@ -403,7 +403,7 @@ static void ieee_out(int32_t segto, const void *data,
      */
     if (!any_segs) {
         int tempint;            /* ignored */
-        if (segto != ieee_segment("__NASMDEFSEG", 2, &tempint))
+        if (segto != ieee_segment("__NASMDEFSEG", &tempint))
             nasm_panic("strange segment conditions in IEEE driver");
     }
 
@@ -655,7 +655,7 @@ static void ieee_install_fixup(struct ieeeSection *seg,
 /*
  * segment registry
  */
-static int32_t ieee_segment(char *name, int pass, int *bits)
+static int32_t ieee_segment(char *name, int *bits)
 {
     /*
      * We call the label manager here to define a name for the new
@@ -705,7 +705,7 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
         for (seg = seghead; seg; seg = seg->next) {
             ieee_idx++;
             if (!strcmp(seg->name, name)) {
-                if (attrs > 0 && pass == 1)
+                if (attrs > 0 && pass_first())
                     nasm_warn(WARN_OTHER, "segment attributes specified on"
                               " redeclaration of segment: ignoring");
                 if (seg->use32)
@@ -807,11 +807,9 @@ static int32_t ieee_segment(char *name, int pass, int *bits)
  * directives supported
  */
 static enum directive_result
-ieee_directive(enum directive directive, char *value, int pass)
+ieee_directive(enum directive directive, char *value)
 {
-
     (void)value;
-    (void)pass;
 
     switch (directive) {
     case D_UPPERCASE:
@@ -1275,7 +1273,7 @@ static void dbgls_init(void)
     arrindex = ARRAY_BOT;
     arrhead = NULL;
     arrtail = &arrhead;
-    ieee_segment("??LINE", 2, &tempint);
+    ieee_segment("??LINE", &tempint);
     any_segs = false;
 }
 static void dbgls_cleanup(void)
@@ -1323,8 +1321,8 @@ static void dbgls_linnum(const char *lnfname, int32_t lineno, int32_t segto)
      */
     if (!any_segs) {
         int tempint;            /* ignored */
-        if (segto != ieee_segment("__NASMDEFSEG", 2, &tempint))
-            nasm_panic("strange segment conditions in OBJ driver");
+        if (segto != ieee_segment("__NASMDEFSEG", &tempint))
+            nasm_panic("strange segment conditions in IEEE driver");
     }
 
     /*

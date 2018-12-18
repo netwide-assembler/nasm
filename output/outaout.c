@@ -236,11 +236,8 @@ static void aout_cleanup(void)
     saa_free(strs);
 }
 
-static int32_t aout_section_names(char *name, int pass, int *bits)
+static int32_t aout_section_names(char *name, int *bits)
 {
-
-    (void)pass;
-
     /*
      * Default to 32 bits.
      */

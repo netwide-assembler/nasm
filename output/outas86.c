@@ -159,11 +159,8 @@ static void as86_cleanup(void)
     saa_free(strs);
 }
 
-static int32_t as86_section_names(char *name, int pass, int *bits)
+static int32_t as86_section_names(char *name, int *bits)
 {
-
-    (void)pass;
-
     /*
      * Default is 16 bits.
      */

@@ -330,6 +330,13 @@ typedef expr *(*evalfunc)(scanner sc, void *scprivate,
 /*
  * preprocessors ought to look like this:
  */
+
+enum preproc_mode {
+    PP_NORMAL,                  /* Assembly */
+    PP_DEPS,                    /* Dependencies only */
+    PP_PREPROC                  /* Preprocessing only */
+};
+
 struct preproc_ops {
     /*
      * Called once at the very start of assembly.
@@ -341,7 +348,8 @@ struct preproc_ops {
      * of the pass, an error reporting function, an evaluator
      * function, and a listing generator to talk to.
      */
-    void (*reset)(const char *file, int pass, struct strlist *deplist);
+    void (*reset)(const char *file, enum preproc_mode mode,
+                  struct strlist *deplist);
 
     /*
      * Called to fetch a line of preprocessed source. The line
@@ -350,8 +358,15 @@ struct preproc_ops {
      */
     char *(*getline)(void);
 
-    /* Called at the end of a pass */
-    void (*cleanup)(int pass);
+    /* Called at the end of each pass. */
+    void (*cleanup_pass)(void);
+
+    /*
+     * Called at the end of the assembly session,
+     * after cleanup_pass() has been called for the
+     * last pass.
+     */
+    void (*cleanup_session)(void);
 
     /* Additional macros specific to output format */
     void (*extra_stdmac)(macros_t *macros);
@@ -874,7 +889,7 @@ struct ofmt {
      * the segment, by setting `*bits' to 16 or 32. Or, if it
      * doesn't wish to define a default, it can leave `bits' alone.
      */
-    int32_t (*section)(char *name, int pass, int *bits);
+    int32_t (*section)(char *name, int *bits);
 
     /*
      * This function is called when a label is defined
@@ -919,8 +934,7 @@ struct ofmt {
      * This procedure is called to allow the output driver to
      * process its own specific directives. When called, it has the
      * directive word in `directive' and the parameter string in
-     * `value'. It is called in both assembly passes, and `pass'
-     * will be either 1 or 2.
+     * `value'.
      *
      * The following values are (currently) possible for
      * directive_result:
@@ -932,7 +946,7 @@ struct ofmt {
      *				  "invalid parameter to [*] directive"
      */
     enum directive_result
-    (*directive)(enum directive directive, char *value, int pass);
+    (*directive)(enum directive directive, char *value);
 
     /*
      * This procedure is called after assembly finishes, to allow
@@ -1214,14 +1228,6 @@ enum decorator_tokens {
  * Global modes
  */
 
-/*
- * This declaration passes the "pass" number to all other modules
- * "pass0" assumes the values: 0, 0, ..., 0, 1, 2
- * where 0 = optimizing pass
- *       1 = pass 1
- *       2 = pass 2
- */
-
 /* 
  * flag to disable optimizations selectively 
  * this is useful to turn-off certain optimizations
@@ -1236,8 +1242,57 @@ struct optimization {
     int flag;
 };
 
-extern int pass0;
-extern int64_t passn;           /* Actual pass number */
+/*
+ * Various types of compiler passes we may execute.
+ */
+enum pass_type {
+    PASS_INIT,            /* Initialization, not doing anything yet */
+    PASS_FIRST,           /* The very first pass over the code */
+    PASS_OPT,             /* Optimization pass */
+    PASS_STAB,            /* Stabilization pass (original pass 1) */
+    PASS_FINAL            /* Code generation pass (original pass 2) */
+};
+extern const char * const _pass_types[];
+extern enum pass_type _pass_type;
+static inline enum pass_type pass_type(void)
+{
+    return _pass_type;
+}
+static inline const char *pass_type_name(void)
+{
+    return _pass_types[_pass_type];
+}
+/* True during initialization, no code read yet */
+static inline bool not_started(void)
+{
+    return pass_type() == PASS_INIT;
+}
+/* True for the initial pass and setup (old "pass2 < 2") */
+static inline bool pass_first(void)
+{
+    return pass_type() <= PASS_FIRST;
+}
+/* At this point we better have stable definitions */
+static inline bool pass_stable(void)
+{
+    return pass_type() >= PASS_STAB;
+}
+/* True for the code generation pass only, (old "pass1 >= 2") */
+static inline bool pass_final(void)
+{
+    return pass_type() >= PASS_FINAL;
+}
+
+/*
+ * The actual pass number. 0 is used during initialization, the very
+ * first pass is 1, and then it is simply increasing numbers until we are
+ * done.
+ */
+extern int64_t _passn;           /* Actual pass number */
+static inline int64_t pass_count(void)
+{
+    return _passn;
+}
 
 extern struct optimization optimizing;
 extern int globalbits;          /* 16, 32 or 64-bit mode */

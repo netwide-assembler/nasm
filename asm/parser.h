@@ -39,7 +39,7 @@
 #ifndef NASM_PARSER_H
 #define NASM_PARSER_H
 
-insn *parse_line(int pass, char *buffer, insn *result);
+insn *parse_line(char *buffer, insn *result);
 void cleanup_insn(insn *instruction);
 
 #endif
