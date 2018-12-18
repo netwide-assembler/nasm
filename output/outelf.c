@@ -258,8 +258,8 @@ static void elf_section_attrib(char *name, char *attr,
             *type = SHT_PROGBITS;
         } else if (!nasm_stricmp(opt, "nobits")) {
             *type = SHT_NOBITS;
-        } else if (pass_first()) {
-            nasm_warn(WARN_OTHER, "Unknown section attribute '%s' ignored on"
+        } else {
+            nasm_warn(WARN_OTHER, "unknown section attribute '%s' ignored on"
                       " declaration of section `%s'", opt, name);
         }
         opt = next;
@@ -458,14 +458,15 @@ static int32_t elf_section_names(char *name, int *bits)
         flags = (ks->flags & ~flags_and) | flags_or;
 
         i = elf_make_section(name, type, flags, align);
-    } else if (pass_first()) {
+    } else if (sects[i]->pass_last_seen == pass_count()) {
           if ((type && sects[i]->type != type)
               || (align && sects[i]->align != align)
               || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
-            nasm_warn(WARN_OTHER, "incompatible section attributes ignored on"
+            nasm_warn(WARN_OTHER|ERR_PASS1, "incompatible section attributes ignored on"
                       " redeclaration of section `%s'", name);
     }
 
+    sects[i]->pass_last_seen = pass_count();
     return sects[i]->index;
 }
 

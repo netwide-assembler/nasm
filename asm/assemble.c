@@ -1205,7 +1205,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 nasm_nonfatal("attempt to reserve non-constant"
                               " quantity of BSS space");
             else if (ins->oprs[0].opflags & OPFLAG_FORWARD)
-                nasm_warn(WARN_OTHER|ERR_PASS1, "forward reference in RESx "
+                nasm_warn(WARN_OTHER, "forward reference in RESx "
                            "can have unpredictable results");
             else
                 length += ins->oprs[0].offset;
@@ -2528,7 +2528,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
             if (eaflags & EAF_BYTEOFFS ||
                 (eaflags & EAF_WORDOFFS &&
                  input->disp_size != (addrbits != 16 ? 32 : 16)))
-                nasm_warn(WARN_OTHER|ERR_PASS1, "displacement size ignored on absolute address");
+                nasm_warn(WARN_OTHER, "displacement size ignored on absolute address");
 
             if (bits == 64 && (~input->type & IP_REL)) {
                 output->sib_present = true;

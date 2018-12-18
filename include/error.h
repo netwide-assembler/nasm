@@ -93,8 +93,8 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define ERR_NOFILE		0x00000010	/* don't give source file name/line */
 #define ERR_HERE		0x00000020      /* point to a specific source location */
 #define ERR_USAGE		0x00000040	/* print a usage message */
-#define ERR_PASS1		0x00000080	/* only print this error on pass one */
-#define ERR_PASS2		0x00000100	/* only print this error on pass one */
+#define ERR_PASS1		0x00000080	/* message on pass_first */
+#define ERR_PASS2		0x00000100	/* ignore unless on pass_final */
 
 #define ERR_NO_SEVERITY		0x00000200	/* suppress printing severity */
 #define ERR_PP_PRECOND		0x00000400	/* for preprocessor use */

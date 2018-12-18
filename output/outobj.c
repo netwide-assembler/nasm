@@ -580,6 +580,7 @@ static struct Segment {
     struct Group *grp;          /* the group it beint32_ts to */
     uint32_t currentpos;
     int32_t align;                 /* can be SEG_ABS + absolute addr */
+    int64_t pass_last_seen;
     struct Public *pubhead, **pubtail, *lochead, **loctail;
     char *segclass, *overlay;   /* `class' is a C++ keyword :-) */
     ObjRecord *orp;
@@ -1379,7 +1380,7 @@ static int32_t obj_segment(char *name, int *bits)
                 break;
 
             if (!strcmp(seg->name, name)) {
-                if (attrs > 0 && pass_first())
+                if (attrs > 0 && seg->pass_last_seen == pass_count())
                     nasm_warn(WARN_OTHER, "segment attributes specified on"
                               " redeclaration of segment: ignoring");
                 if (seg->use32)
@@ -1387,6 +1388,7 @@ static int32_t obj_segment(char *name, int *bits)
                 else
                     *bits = 16;
                 current_seg = seg;
+                seg->pass_last_seen = pass_count();
                 return seg->index;
             }
         }

@@ -484,6 +484,7 @@ struct coff_Section {
     char *name;
     int32_t namepos;            /* Offset of name into the strings table */
     int32_t pos, relpos;
+    int64_t pass_last_seen;
 };
 
 struct coff_Reloc {

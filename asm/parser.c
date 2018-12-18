@@ -469,7 +469,7 @@ restart_parse:
              *!  a label without a trailing colon. This is most likely indicative
              *!  of a typo, but is technically correct NASM syntax (see \k{syntax}.)
              */
-            nasm_warn(WARN_ORPHAN_LABELS | ERR_PASS1,
+            nasm_warn(WARN_ORPHAN_LABELS ,
                        "label alone on a line without a colon might be in error");
         }
         if (i != TOKEN_INSN || tokval.t_integer != I_EQU) {
@@ -519,7 +519,7 @@ restart_parse:
             int slot = prefix_slot(tokval.t_integer);
             if (result->prefixes[slot]) {
                if (result->prefixes[slot] == tokval.t_integer)
-                    nasm_warn(WARN_OTHER|ERR_PASS1, "instruction has redundant prefixes");
+                    nasm_warn(WARN_OTHER, "instruction has redundant prefixes");
                else
                     nasm_nonfatal("instruction has conflicting prefixes");
             }
@@ -732,7 +732,7 @@ is_expression:
              */
             goto fail;
         } else /* DB ... */ if (oper_num == 0)
-            nasm_warn(WARN_OTHER|ERR_PASS1, "no operand for data declaration");
+            nasm_warn(WARN_OTHER, "no operand for data declaration");
         else
             result->operands = oper_num;
 
@@ -1126,7 +1126,7 @@ is_expression:
                 op->basereg   = value->type;
 
                 if (rs && (op->type & SIZE_MASK) != rs)
-                    nasm_warn(WARN_OTHER|ERR_PASS1, "register size specification ignored");
+                    nasm_warn(WARN_OTHER, "register size specification ignored");
             }
         }
 

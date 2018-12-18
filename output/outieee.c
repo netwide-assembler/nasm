@@ -151,6 +151,7 @@ static struct ieeeSection {
     int32_t align;                 /* can be SEG_ABS + absolute addr */
     int32_t startpos;
     int32_t use32;                 /* is this segment 32-bit? */
+    int64_t pass_last_seen;
     struct ieeePublic *pubhead, **pubtail, *lochead, **loctail;
     enum {
         CMB_PRIVATE = 0,
@@ -705,13 +706,15 @@ static int32_t ieee_segment(char *name, int *bits)
         for (seg = seghead; seg; seg = seg->next) {
             ieee_idx++;
             if (!strcmp(seg->name, name)) {
-                if (attrs > 0 && pass_first())
+                if (attrs > 0 && seg->pass_last_seen == pass_count())
                     nasm_warn(WARN_OTHER, "segment attributes specified on"
                               " redeclaration of segment: ignoring");
                 if (seg->use32)
                     *bits = 32;
                 else
                     *bits = 16;
+
+                seg->pass_last_seen = pass_count();
                 return seg->index;
             }
         }

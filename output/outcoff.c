@@ -402,45 +402,51 @@ static int32_t coff_section_names(char *name, int *bits)
             coff_sects[i]->flags = flags;
         coff_sects[i]->flags &= align_and;
         coff_sects[i]->flags |= align_or;
-    } else if (pass_first()) {
-        /* Check if any flags are specified */
-        if (flags) {
-            unsigned int align_flags = flags & IMAGE_SCN_ALIGN_MASK;
+    } else if (flags) {
+        /* Check if any flags are respecified */
+        unsigned int align_flags = flags & IMAGE_SCN_ALIGN_MASK;
 
-            /* Warn if non-alignment flags differ */
-            if ((flags ^ coff_sects[i]->flags) & ~IMAGE_SCN_ALIGN_MASK) {
-                nasm_warn(WARN_OTHER, "section attributes ignored on"
-                          " redeclaration of section `%s'", name);
+        /* Warn if non-alignment flags differ */
+        if ((flags ^ coff_sects[i]->flags) & ~IMAGE_SCN_ALIGN_MASK &&
+            coff_sects[i]->pass_last_seen == pass_count()) {
+            nasm_warn(WARN_OTHER, "section attributes changed on"
+                      " redeclaration of section `%s'", name);
+        }
+        /* Check if alignment might be needed */
+        if (align_flags > IMAGE_SCN_ALIGN_1BYTES) {
+            unsigned int sect_align_flags = coff_sects[i]->flags & IMAGE_SCN_ALIGN_MASK;
+
+            /* Compute the actual alignment */
+            unsigned int align = 1u << ((align_flags - IMAGE_SCN_ALIGN_1BYTES) >> 20);
+
+            /* Update section header as needed */
+            if (align_flags > sect_align_flags) {
+                coff_sects[i]->flags = (coff_sects[i]->flags & ~IMAGE_SCN_ALIGN_MASK) | align_flags;
             }
-            /* Check if alignment might be needed */
-            if (align_flags > IMAGE_SCN_ALIGN_1BYTES) {
-                unsigned int sect_align_flags = coff_sects[i]->flags & IMAGE_SCN_ALIGN_MASK;
+            /* Check if not already aligned */
+            if (coff_sects[i]->len % align) {
+                unsigned int padding = (align - coff_sects[i]->len) % align;
+                /* We need to write at most 8095 bytes */
+                char         buffer[8095];
 
-                /* Compute the actual alignment */
-                unsigned int align = 1u << ((align_flags - IMAGE_SCN_ALIGN_1BYTES) >> 20);
+                nasm_assert(padding <= sizeof buffer);
 
-                /* Update section header as needed */
-                if (align_flags > sect_align_flags) {
-                    coff_sects[i]->flags = (coff_sects[i]->flags & ~IMAGE_SCN_ALIGN_MASK) | align_flags;
+                if (pass_final())
+                    nasm_nonfatal("section alignment changed during code generation");
+
+                if (coff_sects[i]->flags & IMAGE_SCN_CNT_CODE) {
+                    /* Fill with INT 3 instructions */
+                    memset(buffer, 0xCC, padding);
+                } else {
+                    memset(buffer, 0x00, padding);
                 }
-                /* Check if not already aligned */
-                if (coff_sects[i]->len % align) {
-                    unsigned int padding = (align - coff_sects[i]->len) % align;
-                    /* We need to write at most 8095 bytes */
-                    char buffer[8095];
-                    if (coff_sects[i]->flags & IMAGE_SCN_CNT_CODE) {
-                        /* Fill with INT 3 instructions */
-                        memset(buffer, 0xCC, padding);
-                    } else {
-                        memset(buffer, 0x00, padding);
-                    }
-                    saa_wbytes(coff_sects[i]->data, buffer, padding);
-                    coff_sects[i]->len += padding;
-                }
+                saa_wbytes(coff_sects[i]->data, buffer, padding);
+                coff_sects[i]->len += padding;
             }
         }
     }
 
+    coff_sects[i]->pass_last_seen = pass_count();
     return coff_sects[i]->index;
 }
 

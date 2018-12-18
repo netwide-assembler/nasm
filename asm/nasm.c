@@ -206,7 +206,7 @@ nasm_set_limit(const char *limit, const char *valstr)
         if (not_started())
             errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
         else
-            errlevel = ERR_WARNING|ERR_PASS1|WARN_UNKNOWN_PRAGMA;
+            errlevel = ERR_WARNING|WARN_UNKNOWN_PRAGMA;
         nasm_error(errlevel, "unknown limit: `%s'", limit);
         return DIRR_ERROR;
     }
@@ -219,7 +219,7 @@ nasm_set_limit(const char *limit, const char *valstr)
             if (not_started())
                 errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
             else
-                errlevel = ERR_WARNING|ERR_PASS1|WARN_BAD_PRAGMA;
+                errlevel = ERR_WARNING|WARN_BAD_PRAGMA;
             nasm_error(errlevel, "invalid limit value: `%s'", limit);
             return DIRR_ERROR;
         }
@@ -1754,11 +1754,8 @@ static bool skip_this_pass(errflags severity)
     if ((severity & ERR_MASK) >= ERR_FATAL)
         return false;
 
-    /*
-     * Let's get rid of these flags when and if we can...
-     */
-    return ((severity & ERR_PASS1) && !pass_first()) ||
-           ((severity & ERR_PASS2) && !pass_final());
+    /* This message not applicable unless pass_final */
+    return (severity & ERR_PASS2) && !pass_final();
 }
 
 /**
@@ -1869,7 +1866,9 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
         const char *file = currentfile ? currentfile : "nasm";
         const char *here = (severity & ERR_HERE) ? " here" : "";
 
-        if (warn_list && true_type < ERR_NONFATAL) {
+        if (warn_list && true_type < ERR_NONFATAL &&
+            !(pass_first() && (severity & ERR_PASS1)))
+        {
             /*
              * Buffer up warnings until we either get an error
              * or we are on the code-generation pass.
@@ -1878,8 +1877,11 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
                            file, linestr, errfmt->beforemsg,
                            pfx, msg, here, warnsuf);
         } else {
-            /* If we have buffered warnings, output them now. */
-            if (warn_list) {
+            /*
+             * If we have buffered warnings, and this is a non-warning,
+             * output them now.
+             */
+            if (true_type >= ERR_NONFATAL && warn_list) {
                 strlist_write(warn_list, "\n", error_file);
                 strlist_free(&warn_list);
             }
