@@ -40,6 +40,8 @@ PERL		= perl
 PERLFLAGS	= -I$(srcdir)/perllib -I$(srcdir)
 RUNPERL         = $(PERL) $(PERLFLAGS)
 
+PYTHON3		= python3
+
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
@@ -467,6 +469,9 @@ test: nasm$(X)
 
 golden: nasm$(X)
 	cd test && $(RUNPERL) performtest.pl --golden --nasm=../nasm *.asm
+
+travis: nasm$(X)
+	$(PYTHON3) travis/nasm-t.py run
 
 #
 # Rules to run autoreconf if necessary
