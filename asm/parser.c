@@ -1141,16 +1141,6 @@ is_expression:
     while (opnum < MAX_OPERANDS)
         result->oprs[opnum++].type = 0;
 
-    /*
-     * Transform RESW, RESD, RESQ, REST, RESO, RESY, RESZ into RESB.
-     */
-    if (opcode_is_resb(result->opcode)) {
-        result->oprs[0].offset *= resb_bytes(result->opcode);
-        result->oprs[0].offset *= result->times;
-        result->times = 1;
-        result->opcode = I_RESB;
-    }
-
     return result;
 
 fail:

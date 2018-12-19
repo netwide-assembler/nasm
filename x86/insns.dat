@@ -59,13 +59,13 @@ DO		ignore				ignore						ignore
 DY		ignore				ignore						ignore
 DZ		ignore				ignore						ignore
 RESB		imm				[	resb]					8086
-RESW		ignore				ignore						ignore
-RESD		ignore				ignore						ignore
-RESQ		ignore				ignore						ignore
-REST		ignore				ignore						ignore
-RESO		ignore				ignore						ignore
-RESY		ignore				ignore						ignore
-RESZ		ignore				ignore						ignore
+RESW		imm				[	resb]					8086
+RESD		imm				[	resb]					8086
+RESQ		imm				[	resb]					8086
+REST		imm				[	resb]					8086
+RESO		imm				[	resb]					8086
+RESY		imm				[	resb]					8086
+RESZ		imm				[	resb]					8086
 INCBIN		ignore				ignore						ignore
 
 ;# Conventional instructions

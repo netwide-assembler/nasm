@@ -1208,7 +1208,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 nasm_warn(WARN_OTHER, "forward reference in RESx "
                            "can have unpredictable results");
             else
-                length += ins->oprs[0].offset;
+                length += ins->oprs[0].offset * resb_bytes(ins->opcode);
             break;
 
         case 0341:
@@ -1875,7 +1875,7 @@ static void gencode(struct out_data *data, insn *ins)
             if (ins->oprs[0].segment != NO_SEG)
                 nasm_panic("non-constant BSS size in pass two");
 
-            out_reserve(data, ins->oprs[0].offset);
+            out_reserve(data, ins->oprs[0].offset * resb_bytes(ins->opcode));
             break;
 
         case 0341:
