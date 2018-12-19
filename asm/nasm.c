@@ -1410,11 +1410,83 @@ static void parse_cmdline(int argc, char **argv, int pass)
     }
 }
 
+static void forward_refs(insn *instruction)
+{
+    int i;
+    struct forwrefinfo *fwinf;
+
+    instruction->forw_ref = false;
+
+    if (!optimizing.level)
+        return;                 /* For -O0 don't bother */
+
+    if (!forwref)
+        return;
+
+    if (forwref->lineno != globallineno)
+        return;
+
+    instruction->forw_ref = true;
+    do {
+        instruction->oprs[forwref->operand].opflags |= OPFLAG_FORWARD;
+        forwref = saa_rstruct(forwrefs);
+    } while (forwref && forwref->lineno == globallineno);
+
+    if (!pass_first())
+        return;
+
+    for (i = 0; i < instruction->operands; i++) {
+        if (instruction->oprs[i].opflags & OPFLAG_FORWARD) {
+            fwinf = saa_wstruct(forwrefs);
+            fwinf->lineno = globallineno;
+            fwinf->operand = i;
+        }
+    }
+}
+
+static void process_insn(insn *instruction)
+{
+    int32_t n;
+    int64_t l;
+
+    if (!instruction->times)
+        return;                 /* Nothing to do... */
+
+    nasm_assert(instruction->times > 0);
+
+    /*
+     * NOTE: insn_size() can change instruction->times
+     * (usually to 1) when called.
+     */
+    if (!pass_final()) {
+        for (n = 1; n <= instruction->times; n++) {
+            l = insn_size(location.segment, location.offset,
+                          globalbits, instruction);
+            if (l != -1) /* l == -1 -> invalid instruction */
+                increment_offset(l);
+        }
+    } else {
+        l = assemble(location.segment, location.offset,
+                     globalbits, instruction);
+                /* We can't get an invalid instruction here */
+        increment_offset(l);
+
+        if (instruction->times > 1) {
+            lfmt->uplevel(LIST_TIMES);
+            for (n = 2; n <= instruction->times; n++) {
+                l = assemble(location.segment, location.offset,
+                             globalbits, instruction);
+                increment_offset(l);
+            }
+            lfmt->downlevel(LIST_TIMES);
+        }
+    }
+}
+
 static void assemble_file(const char *fname, struct strlist *depend_list)
 {
     char *line;
     insn output_ins;
-    int i;
     uint64_t prev_offset_changed;
     int64_t stall_count = 0; /* Make sure we make forward progress... */
 
@@ -1498,164 +1570,8 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
             /* Not a directive, or even something that starts with [ */
             parse_line(line, &output_ins);
-
-            if (optimizing.level > 0) {
-                if (forwref != NULL && globallineno == forwref->lineno) {
-                    output_ins.forw_ref = true;
-                    do {
-                        output_ins.oprs[forwref->operand].opflags |= OPFLAG_FORWARD;
-                        forwref = saa_rstruct(forwrefs);
-                    } while (forwref != NULL
-                             && forwref->lineno == globallineno);
-                } else
-                    output_ins.forw_ref = false;
-
-                if (output_ins.forw_ref) {
-                    if (pass_first()) {
-                        for (i = 0; i < output_ins.operands; i++) {
-                            if (output_ins.oprs[i].opflags & OPFLAG_FORWARD) {
-                                struct forwrefinfo *fwinf = (struct forwrefinfo *)saa_wstruct(forwrefs);
-                                fwinf->lineno = globallineno;
-                                fwinf->operand = i;
-                            }
-                        }
-                    }
-                }
-            }
-
-            /*  forw_ref */
-            if (output_ins.opcode == I_EQU) {
-                if (!output_ins.label) {
-                    nasm_nonfatal("EQU not preceded by label");
-                } else if (output_ins.operands == 1 &&
-                           (output_ins.oprs[0].type & IMMEDIATE) &&
-                           output_ins.oprs[0].wrt == NO_SEG) {
-                    define_label(output_ins.label,
-                                 output_ins.oprs[0].segment,
-                                 output_ins.oprs[0].offset, false);
-                } else if (output_ins.operands == 2
-                           && (output_ins.oprs[0].type & IMMEDIATE)
-                           && (output_ins.oprs[0].type & COLON)
-                           && output_ins.oprs[0].segment == NO_SEG
-                           && output_ins.oprs[0].wrt == NO_SEG
-                           && (output_ins.oprs[1].type & IMMEDIATE)
-                           && output_ins.oprs[1].segment == NO_SEG
-                           && output_ins.oprs[1].wrt == NO_SEG) {
-                    define_label(output_ins.label,
-                                 output_ins.oprs[0].offset | SEG_ABS,
-                                 output_ins.oprs[1].offset, false);
-                } else {
-                    nasm_nonfatal("bad syntax for EQU");
-                }
-            } else {        /* instruction isn't an EQU */
-                int32_t n;
-
-                nasm_assert(output_ins.times >= 0);
-
-                for (n = 1; n <= output_ins.times; n++) {
-                    if (!pass_final()) {
-                        int64_t l = insn_size(location.segment,
-                                              location.offset,
-                                              globalbits, &output_ins);
-
-                        /* if (using_debug_info)  && output_ins.opcode != -1) */
-                        if (using_debug_info)
-                        {       /* fbk 03/25/01 */
-                            /* this is done here so we can do debug type info */
-                            int32_t typeinfo =
-                                TYS_ELEMENTS(output_ins.operands);
-                            switch (output_ins.opcode) {
-                            case I_RESB:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_BYTE;
-                                break;
-                            case I_RESW:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_WORD;
-                                break;
-                            case I_RESD:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_DWORD;
-                                break;
-                            case I_RESQ:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_QWORD;
-                                break;
-                            case I_REST:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_TBYTE;
-                                break;
-                            case I_RESO:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_OWORD;
-                                break;
-                            case I_RESY:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_YWORD;
-                                break;
-                            case I_RESZ:
-                                typeinfo =
-                                    TYS_ELEMENTS(output_ins.oprs[0].offset) | TY_ZWORD;
-                                break;
-                            case I_DB:
-                                typeinfo |= TY_BYTE;
-                                break;
-                            case I_DW:
-                                typeinfo |= TY_WORD;
-                                break;
-                            case I_DD:
-                                if (output_ins.eops_float)
-                                    typeinfo |= TY_FLOAT;
-                                else
-                                    typeinfo |= TY_DWORD;
-                                break;
-                            case I_DQ:
-                                typeinfo |= TY_QWORD;
-                                break;
-                            case I_DT:
-                                typeinfo |= TY_TBYTE;
-                                break;
-                            case I_DO:
-                                typeinfo |= TY_OWORD;
-                                break;
-                            case I_DY:
-                                typeinfo |= TY_YWORD;
-                                break;
-                            case I_DZ:
-                                typeinfo |= TY_ZWORD;
-                                break;
-                            default:
-                                typeinfo = TY_LABEL;
-                                break;
-                            }
-
-                            dfmt->debug_typevalue(typeinfo);
-                        }
-
-                        /*
-                         * For INCBIN, let the code in assemble
-                         * handle TIMES, so we don't have to read the
-                         * input file over and over.
-                         */
-                        if (l != -1) {
-                            increment_offset(l);
-                        }
-                        /*
-                         * else l == -1 => invalid instruction, which will be
-                         * flagged as an error on pass 2
-                         */
-                    } else {
-                        if (n == 2)
-                            lfmt->uplevel(LIST_TIMES);
-                        increment_offset(assemble(location.segment,
-                                                  location.offset,
-                                                  globalbits, &output_ins));
-                    }
-                }               /* not an EQU */
-            }
-            if (output_ins.times > 1)
-                lfmt->downlevel(LIST_TIMES);
-
+            forward_refs(&output_ins);
+            process_insn(&output_ins);
             cleanup_insn(&output_ins);
 
         end_of_line:

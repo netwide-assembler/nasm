@@ -823,19 +823,133 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     return data.offset - start;
 }
 
+static void debug_set_db_type(insn *instruction)
+{
+    /* Is this really correct? .operands doesn't mean much for Dx */
+    int32_t typeinfo = TYS_ELEMENTS(instruction->operands);
+
+    switch (instruction->opcode) {
+    case I_DB:
+        typeinfo |= TY_BYTE;
+        break;
+    case I_DW:
+        typeinfo |= TY_WORD;
+        break;
+    case I_DD:
+        if (instruction->eops_float)
+            typeinfo |= TY_FLOAT;
+        else
+            typeinfo |= TY_DWORD;
+        break;
+    case I_DQ:
+        /* What about double? */
+        typeinfo |= TY_QWORD;
+        break;
+    case I_DT:
+        /* What about long double? */
+        typeinfo |= TY_TBYTE;
+        break;
+    case I_DO:
+        typeinfo |= TY_OWORD;
+        break;
+    case I_DY:
+        typeinfo |= TY_YWORD;
+        break;
+    case I_DZ:
+        typeinfo |= TY_ZWORD;
+        break;
+    default:
+        panic();
+    }
+
+    dfmt->debug_typevalue(typeinfo);
+}
+
+static void debug_set_type(insn *instruction)
+{
+    int32_t typeinfo;
+
+    if (opcode_is_resb(instruction->opcode)) {
+        typeinfo = TYS_ELEMENTS(instruction->oprs[0].offset);
+
+        switch (instruction->opcode) {
+        case I_RESB:
+            typeinfo |= TY_BYTE;
+            break;
+        case I_RESW:
+            typeinfo |= TY_WORD;
+            break;
+        case I_RESD:
+            typeinfo |= TY_DWORD;
+            break;
+        case I_RESQ:
+            typeinfo |= TY_QWORD;
+            break;
+        case I_REST:
+            typeinfo |= TY_TBYTE;
+            break;
+        case I_RESO:
+            typeinfo |= TY_OWORD;
+            break;
+        case I_RESY:
+            typeinfo |= TY_YWORD;
+            break;
+        case I_RESZ:
+            typeinfo |= TY_ZWORD;
+            break;
+        default:
+            panic();
+        }
+    } else {
+        typeinfo = TY_LABEL;
+    }
+
+    dfmt->debug_typevalue(typeinfo);
+}
+
+
+/* Proecess an EQU directive */
+static void define_equ(insn * instruction)
+{
+    if (!instruction->label) {
+        nasm_nonfatal("EQU not preceded by label");
+    } else if (instruction->operands == 1 &&
+               (instruction->oprs[0].type & IMMEDIATE) &&
+               instruction->oprs[0].wrt == NO_SEG) {
+        define_label(instruction->label,
+                     instruction->oprs[0].segment,
+                     instruction->oprs[0].offset, false);
+    } else if (instruction->operands == 2
+               && (instruction->oprs[0].type & IMMEDIATE)
+               && (instruction->oprs[0].type & COLON)
+               && instruction->oprs[0].segment == NO_SEG
+               && instruction->oprs[0].wrt == NO_SEG
+               && (instruction->oprs[1].type & IMMEDIATE)
+               && instruction->oprs[1].segment == NO_SEG
+               && instruction->oprs[1].wrt == NO_SEG) {
+        define_label(instruction->label,
+                     instruction->oprs[0].offset | SEG_ABS,
+                     instruction->oprs[1].offset, false);
+    } else {
+        nasm_nonfatal("bad syntax for EQU");
+    }
+}
+
 int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
 {
     const struct itemplate *temp;
     enum match_result m;
+    int64_t isize = 0;
 
-    if (instruction->opcode == I_none)
+    if (instruction->opcode == I_none) {
         return 0;
-
-    if (opcode_is_db(instruction->opcode)) {
+    } else if (instruction->opcode == I_EQU) {
+        define_equ(instruction);
+        return 0;
+    } else if (opcode_is_db(instruction->opcode)) {
         extop *e;
-        int32_t isize, osize, wsize;
+        int32_t osize, wsize;
 
-        isize = 0;
         wsize = db_bytes(instruction->opcode);
         nasm_assert(wsize > 0);
 
@@ -855,10 +969,10 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
                 align += wsize;
             isize += osize + align;
         }
-        return isize;
-    }
 
-    if (instruction->opcode == I_INCBIN) {
+        debug_set_db_type(instruction);
+        return isize;
+    } else if (instruction->opcode == I_INCBIN) {
         const char *fname = instruction->eops->stringval;
         off_t len;
 
@@ -885,17 +999,20 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
         instruction->times = 1; /* Tell the upper layer to not iterate */
 
         return len;
-    }
-
-    /* Check to see if we need an address-size prefix */
-    add_asp(instruction, bits);
-
-    m = find_match(&temp, instruction, segment, offset, bits);
-    if (m == MOK_GOOD) {
-        /* we've matched an instruction. */
-        return calcsize(segment, offset, bits, instruction, temp);
     } else {
-        return -1;                  /* didn't match any instruction */
+        /* Normal instruction, or RESx */
+
+        /* Check to see if we need an address-size prefix */
+        add_asp(instruction, bits);
+
+        m = find_match(&temp, instruction, segment, offset, bits);
+        if (m != MOK_GOOD)
+            return -1;              /* No match */
+
+        isize = calcsize(segment, offset, bits, instruction, temp);
+        debug_set_type(instruction);
+
+        return isize;
     }
 }
 
