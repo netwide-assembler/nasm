@@ -14,7 +14,7 @@
 		"ref": "clzero",
 		"option": "-Ox -DERROR",
 		"target": [
-			{ "stderr": "clzero.stderr.t" }
+			{ "stderr": "clzero.stderr" }
 		],
 		"error": "expected"
 	}
