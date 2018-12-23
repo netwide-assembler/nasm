@@ -5196,6 +5196,9 @@ PCOMMIT         void                            [       66 0f ae f8]            
 
 ; AMD Zen v1
 CLZERO		void				[	0f 01 fc]				FUTURE,AMD
+CLZERO		reg_ax				[-:	a16 0f 01 fc]				FUTURE,AMD,ND,NOLONG
+CLZERO		reg_eax				[-:	a32 0f 01 fc]				FUTURE,AMD,ND
+CLZERO		reg_rax				[-:	a64 0f 01 fc]				FUTURE,AMD,ND,X64
 
 ;# Processor trace write
 PTWRITE		rm32				[m:	np 0f ae /4]				FUTURE
