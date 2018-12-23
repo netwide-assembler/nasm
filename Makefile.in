@@ -475,10 +475,10 @@ travis: nasm$(X)
 	$(PYTHON3) travis/nasm-t.py run
 
 #
-# Rules to run autoreconf if necessary
+# Rules to run autogen if necessary
 #
 configure: configure.ac autoconf/aclocal.m4
-	autoreconf
+	sh autogen.sh --recheck
 
 config.status: configure
 	@if [ ! -f config.status ]; then \
