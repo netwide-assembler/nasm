@@ -233,7 +233,7 @@ dnl
 dnl support function sections (if available)
 dnl
 PA_ARG_DISABLED([sections],
- [don't try to compile with function/data section support],
+ [do not try to compile with function/data section support],
  [],
  [PA_ADD_CFLAGS([-ffunction-sections])
   PA_ADD_CFLAGS([-fdata-sections])
