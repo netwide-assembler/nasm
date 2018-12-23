@@ -30,6 +30,7 @@ INTERNAL_CFLAGS = -I$(srcdir) -I$(objdir) \
 		  -I$(srcdir)/output -I$(objdir)/output
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= @LDFLAGS@
+ALL_LDFLAGS     = $(ALL_CFLAGS) $(LDFLAGS)
 LIBS		= @LIBS@
 
 AR		= @AR@
@@ -476,7 +477,7 @@ travis: nasm$(X)
 #
 # Rules to run autoreconf if necessary
 #
-configure: configure.ac aclocal.m4
+configure: configure.ac autoconf/aclocal.m4
 	autoreconf
 
 config.status: configure

@@ -107,3 +107,7 @@ TAGS
 /x86/regs.h
 /x86/regvals.c
 /patches/
+/autoconf/aclocal.m4
+/autoconf/compile
+/autoconf/config.*
+/autoconf/install-sh

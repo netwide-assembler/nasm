@@ -1,8 +1,20 @@
 #!/bin/sh -xe
 #
-# Simple script to run the appropriate autotools from a repository.
+# Run this script to regenerate autoconf files
 #
-autoreconf
-rm -rf autom4te.cache config.log config.status
-rm -f Makefile rdoff/Makefile doc/Makefile
-rm -f config.h.in config.h config/config.h
+mkdir -p autoconf autoconf/aux config
+autolib="`automake --print-libdir`"
+for prg in install-sh compile config.guess config.sub; do
+    cp -f "$autolib"/"$prg" autoconf/aux
+done
+rm -f autoconf/aclocal.m4
+mkdir -p autoconf/m4.old autoconf/m4
+mv -f autoconf/m4/*.m4 autoconf/m4.old/ 2>/dev/null || true
+ACLOCAL_PATH="${ACLOCAL_PATH}${ACLOCAL_PATH:+:}`pwd`/autoconf/m4.old"
+export ACLOCAL_PATH
+aclocal --install --output=autoconf/aclocal.m4 -I autoconf/m4
+test -f autoconf/aclocal.m4
+rm -rf autoconf/m4.old
+autoheader -B autoconf
+autoconf -B autoconf
+rm -rf autom4te.cache config.log config.status config/config.h Makefile

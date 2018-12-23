@@ -235,9 +235,9 @@ dnl
 PA_ARG_DISABLED([sections],
  [don't try to compile with function/data section support],
  [],
- [PA_ADD_CLDFLAGS([-ffunction-sections])
-  PA_ADD_CLDFLAGS([-fdata-sections])
-  PA_ADD_CLDFLAGS([-Wl,--gc-sections])],
+ [PA_ADD_CFLAGS([-ffunction-sections])
+  PA_ADD_CFLAGS([-fdata-sections])
+  PA_ADD_LDFLAGS([-Wl,--gc-sections])]
  )
 
 dnl
@@ -245,7 +245,7 @@ dnl support LTO
 dnl
 PA_ARG_ENABLED([lto],
  [compile with gcc-style link time optimization],
- [PA_ADD_CLDFLAGS([-flto])
+ [PA_ADD_CFLAGS([-flto])
   dnl Note: we use _PROG rather than _TOOL since we are prepending the full
   dnl CC name which ought to already contain the host triplet if needed
   ccbase=`echo "$CC" | awk '{ print $1; }'`
@@ -260,14 +260,14 @@ dnl
 PA_ARG_ENABLED([sanitizer],
  [compile with sanitizers enabled],
  [PA_ADD_CFLAGS([-fno-omit-frame-pointer])
-  PA_ADD_CLDFLAGS([-fsanitize=address])
-  PA_ADD_CLDFLAGS([-fsanitize=undefined])])
+  PA_ADD_CFLAGS([-fsanitize=address])
+  PA_ADD_CFLAGS([-fsanitize=undefined])])
 
 dnl
 dnl Don't make symbols visible, there is no point and it just
 dnl makes the code slower.
 dnl
-PA_ADD_CLDFLAGS([-fvisibility=hidden])
+PA_ADD_CFLAGS([-fvisibility=hidden])
 
 dnl If we have gcc, add appropriate code cleanliness options
 PA_ADD_CFLAGS([-W])
