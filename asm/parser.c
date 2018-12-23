@@ -767,7 +767,8 @@ is_expression:
         }
         first = false;
         op->type = 0; /* so far, no override */
-        while (i == TOKEN_SPECIAL) {    /* size specifiers */
+        /* size specifiers */
+        while (i == TOKEN_SPECIAL || i == TOKEN_SIZE) {
             switch (tokval.t_integer) {
             case S_BYTE:
                 if (!setsize)   /* we want to use only the first */
@@ -835,7 +836,8 @@ is_expression:
             mref = true;
             bracket = (i == '[');
             i = stdscan(NULL, &tokval); /* then skip the colon */
-            while (i == TOKEN_SPECIAL || i == TOKEN_PREFIX) {
+            while (i == TOKEN_SPECIAL || i == TOKEN_SIZE ||
+                   i == TOKEN_PREFIX) {
                 process_size_override(result, op);
                 i = stdscan(NULL, &tokval);
             }
@@ -880,7 +882,8 @@ is_expression:
             }
 
             i = stdscan(NULL, &tokval); /* then skip the colon */
-            while (i == TOKEN_SPECIAL || i == TOKEN_PREFIX) {
+            while (i == TOKEN_SPECIAL || i == TOKEN_SIZE ||
+                   i == TOKEN_PREFIX) {
                 process_size_override(result, op);
                 i = stdscan(NULL, &tokval);
             }

@@ -60,24 +60,26 @@ xrelease
 bnd
 nobnd
 
+% TOKEN_SIZE, 0, SIZE_*, S_*
+byte
+word
+dword
+qword
+tword
+oword
+yword
+zword
+
 % TOKEN_SPECIAL, 0, 0, S_*
 abs
-byte
-dword
 far
 long
 near
 nosplit
-oword
-qword
 rel
 short
 strict
 to
-tword
-word
-yword
-zword
 
 % TOKEN_ID, 0, TFLAG_WARN, 0
 ptr

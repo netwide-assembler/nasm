@@ -167,7 +167,8 @@ enum token_type { /* token types, other than chars */
     TOKEN_INSN,         /* instruction name */
     TOKEN_HERE,         /* $ */
     TOKEN_BASE,         /* $$ */
-    TOKEN_SPECIAL,      /* BYTE, WORD, DWORD, QWORD, FAR, NEAR, etc */
+    TOKEN_SIZE,		/* BYTE, WORD, DWORD, QWORD, etc */
+    TOKEN_SPECIAL,      /* REL, FAR, NEAR, STRICT, NOSPLIT, etc */
     TOKEN_PREFIX,       /* A32, O16, LOCK, REPNZ, TIMES, etc */
     TOKEN_SHL,          /* << or <<< */
     TOKEN_SHR,          /* >> */
@@ -1081,25 +1082,40 @@ extern const struct dfmt *dfmt;
 
 #define TYS_ELEMENTS(x) ((x) << 8)
 
+/* Sizes corresponding to various tokens */
+enum byte_sizes {
+    SIZE_BYTE	=  1,
+    SIZE_WORD	=  2,
+    SIZE_DWORD	=  4,
+    SIZE_QWORD	=  8,
+    SIZE_TWORD  = 10,
+    SIZE_OWORD  = 16,
+    SIZE_YWORD  = 32,
+    SIZE_ZWORD  = 64
+};
+
 enum special_tokens {
-    SPECIAL_ENUM_START  = PREFIX_ENUM_LIMIT,
-    S_ABS               = SPECIAL_ENUM_START,
-    S_BYTE,
+    SIZE_ENUM_START     = PREFIX_ENUM_LIMIT,
+    S_BYTE              = SIZE_ENUM_START,
+    S_WORD,
     S_DWORD,
+    S_QWORD,
+    S_TWORD,
+    S_OWORD,
+    S_YWORD,
+    S_ZWORD,
+    SIZE_ENUM_LIMIT,
+
+    SPECIAL_ENUM_START  = SIZE_ENUM_LIMIT,
+    S_ABS		= SPECIAL_ENUM_START,
     S_FAR,
     S_LONG,
     S_NEAR,
     S_NOSPLIT,
-    S_OWORD,
-    S_QWORD,
     S_REL,
     S_SHORT,
     S_STRICT,
     S_TO,
-    S_TWORD,
-    S_WORD,
-    S_YWORD,
-    S_ZWORD,
     SPECIAL_ENUM_LIMIT
 };
 
