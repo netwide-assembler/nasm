@@ -347,7 +347,10 @@ enum reloc32_type {
 	R_386_16		= 20,	/* A 16-bit absolute relocation */
 	R_386_PC16		= 21,	/* A 16-bit PC-relative relocation */
 	R_386_8			= 22,	/* An 8-bit absolute relocation */
-	R_386_PC8		= 23	/* An 8-bit PC-relative relocation */
+	R_386_PC8		= 23,	/* An 8-bit PC-relative relocation */
+        R_386_SEG16		= 45,   /* A 16-bit real-mode segment */
+        R_386_SUB16		= 46,   /* Subtract 16-bit value */
+        R_386_SUB32		= 47    /* Subtract 32-bit value */
 };
 
 #define ELF64_R_SYM(x)		((x) >> 32)
