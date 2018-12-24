@@ -429,7 +429,7 @@ rdf_install install_rdf install_rdoff:
 	$(MKDIR) $(DESTDIR)$(mandir)/man1
 	$(INSTALL_DATA) $(srcdir)/rdoff/*.1 $(DESTDIR)$(mandir)/man1/
 
-doc:
+doc: doc/warnings.src
 	$(MAKE) -C doc all
 
 doc_install install_doc:
