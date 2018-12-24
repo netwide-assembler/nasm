@@ -795,6 +795,8 @@ static void elf32_out(int32_t segto, const void *data,
     int reltype, bytes;
     int i;
     static struct symlininfo sinfo;
+    const char *gnu16 = NULL;
+    int badsize = 0;
 
     s = NULL;
     for (i = 0; i < nsects; i++)
@@ -843,37 +845,19 @@ static void elf32_out(int32_t segto, const void *data,
 
     case OUT_ADDRESS:
     {
-        bool gnu16 = false;
         int asize = abs((int)size);
 
         addr = *(int64_t *)data;
         if (segment != NO_SEG) {
-            if (segment % 2) {
-                nasm_nonfatal("ELF format does not support"
-                              " segment base references");
+            if (segment & 1) {
+                if (asize < 2) {
+                    nasm_nonfatal("invalid segment base reference");
+                } else {
+                    elf_add_reloc(s, segment & ~1, 0, R_386_SEG16);
+                    gnu16 = "segment";
+                }
             } else {
-                if (wrt == NO_SEG) {
-                    /* 
-                     * The if() is a hack to deal with compilers which
-                     * don't handle switch() statements with 64-bit
-                     * expressions.
-                     */
-                    switch (asize) {
-                    case 1:
-                        gnu16 = true;
-                        elf_add_reloc(s, segment, 0, R_386_8);
-                        break;
-                    case 2:
-                        gnu16 = true;
-                        elf_add_reloc(s, segment, 0, R_386_16);
-                        break;
-                    case 4:
-                        elf_add_reloc(s, segment, 0, R_386_32);
-                        break;
-                    default: /* Error issued further down */
-                        break;
-                    }
-                } else if (wrt == elf_gotpc_sect + 1) {
+                if (wrt == elf_gotpc_sect + 1) {
                     /*
                      * The user will supply GOT relative to $$. ELF
                      * will let us have GOT relative to $. So we
@@ -892,12 +876,12 @@ static void elf32_out(int32_t segto, const void *data,
                 } else if (wrt == elf_sym_sect + 1) {
                     switch (asize) {
                     case 1:
-                        gnu16 = true;
+                        gnu16 = "8-bit";
                         addr = elf_add_gsym_reloc(s, segment, addr, 0,
                                                   R_386_8, false);
                         break;
                     case 2:
-                        gnu16 = true;
+                        gnu16 = "16-bit";
                         addr = elf_add_gsym_reloc(s, segment, addr, 0,
                                                   R_386_16, false);
                         break;
@@ -912,24 +896,44 @@ static void elf32_out(int32_t segto, const void *data,
                     nasm_nonfatal("ELF format cannot produce non-PC-"
                                   "relative PLT references");
                 } else {
-                    nasm_nonfatal("ELF format does not support this"
-                                  " use of WRT");
-                    wrt = NO_SEG; /* we can at least _try_ to continue */
+                    if ((wrt != NO_SEG) && (wrt & SEG_ABS)) {
+                        /* Versus a specific absolute segment base */
+                        addr -= (wrt & (SEG_ABS-1)) << 4;
+                        wrt = NO_SEG;
+                    }
+
+                    switch (asize) {
+                    case 1:
+                        gnu16 = "8-bit";
+                        elf_add_reloc(s, segment, 0, R_386_8);
+                        if (wrt != NO_SEG) {
+                            nasm_nonfatal("segment-relative 8-bit pointer "
+                                          "not supported");
+                        }
+                        break;
+                    case 2:
+                        gnu16 = "16-bit";
+                        elf_add_reloc(s, segment, 0, R_386_16);
+                        if (wrt != NO_SEG)
+                            elf_add_reloc(s, wrt & ~1, 0, R_386_SUB16);
+                        break;
+                    case 4:
+                        elf_add_reloc(s, segment, 0, R_386_32);
+                        if (wrt != NO_SEG) {
+                            gnu16 = "segment";
+                            elf_add_reloc(s, wrt & ~1, 0, R_386_SUB32);
+                        }
+                        break;
+                    default: /* Error issued further down */
+                        break;
+                    }
                 }
             }
         }
 
-        if (gnu16) {
-            /*!
-             *!gnu-elf-extensions [off] using 8- or 16-bit relocation in ELF32, a GNU extension
-             *!  warns if 8-bit or 16-bit relocations are used in the \c{elf32} output format.
-             *!  The GNU extensions allow this.
-             */
-            nasm_warn(WARN_GNU_ELF_EXTENSIONS, "8- or 16-bit relocations "
-                       "in ELF32 is a GNU extension");
-        } else if (asize != 4 && segment != NO_SEG) {
-            nasm_nonfatal("Unsupported non-32-bit ELF relocation");
-        }
+        if (!gnu16 && (asize != 4 && segment != NO_SEG))
+            badsize = asize;
+
         elf_sect_writeaddr(s, addr, asize);
         break;
     }
@@ -937,40 +941,30 @@ static void elf32_out(int32_t segto, const void *data,
     case OUT_REL1ADR:
         reltype = R_386_PC8;
         bytes = 1;
-        goto rel12adr;
+        gnu16 = "8-bit";
+        goto reladr;
     case OUT_REL2ADR:
         reltype = R_386_PC16;
         bytes = 2;
-        goto rel12adr;
+        gnu16 = "16-bit";
+        goto reladr;
+    case OUT_REL4ADR:
+        reltype = R_386_PC32;
+        bytes = 4;
+        goto reladr;
 
-rel12adr:
+reladr:
         addr = *(int64_t *)data - size;
         nasm_assert(segment != segto);
-        if (segment != NO_SEG && segment % 2) {
+        if (segment != NO_SEG && (segment & 1)) {
             nasm_nonfatal("ELF format does not support"
-                          " segment base references");
+                          " relative segment base references");
+            gnu16 = NULL;       /* No need to print another message */
         } else {
             if (wrt == NO_SEG) {
-                nasm_warn(WARN_GNU_ELF_EXTENSIONS, "8- or 16-bit relocations "
-                           "in ELF is a GNU extension");
                 elf_add_reloc(s, segment, 0, reltype);
-            } else {
-                nasm_nonfatal("Unsupported non-32-bit ELF relocation");
-            }
-        }
-        elf_sect_writeaddr(s, addr, bytes);
-        break;
-
-    case OUT_REL4ADR:
-        addr = *(int64_t *)data - size;
-        if (segment == segto)
-            nasm_panic("intra-segment OUT_REL4ADR");
-        if (segment != NO_SEG && segment % 2) {
-            nasm_nonfatal("ELF format does not support"
-                          " segment base references");
-        } else {
-            if (wrt == NO_SEG) {
-                elf_add_reloc(s, segment, 0, R_386_PC32);
+            } else if (bytes != 4) {
+                badsize = bytes;
             } else if (wrt == elf_plt_sect + 1) {
                 elf_add_reloc(s, segment, 0, R_386_PLT32);
             } else if (wrt == elf_gotpc_sect + 1 ||
@@ -981,22 +975,36 @@ rel12adr:
             } else {
                 nasm_nonfatal("ELF format does not support this"
                               " use of WRT");
-                wrt = NO_SEG;   /* we can at least _try_ to continue */
             }
         }
-        elf_sect_writeaddr(s, addr, 4);
+        elf_sect_writeaddr(s, addr, bytes);
         break;
 
     case OUT_REL8ADR:
-        nasm_nonfatal("32-bit ELF format does not support 64-bit relocations");
-        addr = 0;
+        badsize = 8;
+        addr = *(int64_t *)data - size;
         elf_sect_writeaddr(s, addr, 8);
         break;
 
     default:
         panic();
     }
+
+    if (badsize) {
+        nasm_nonfatal("unsupported %d-bit ELF32 relocation", badsize << 3);
+    } else if (gnu16) {
+        /*!
+         *!gnu-elf-extensions [off] using GNU extensions in ELF32
+         *!  warns if 8-bit, 16-bit or segment base relocations are
+         *!  used in the \c{elf32} output format. GNU extensions
+         *!  allow this; this warning checks for strict classic ELF32
+         *!  compliance.
+         */
+        nasm_warn(WARN_GNU_ELF_EXTENSIONS,
+                  "%s relocations in ELF32 is a GNU extension", gnu16);
+    }
 }
+
 static void elf64_out(int32_t segto, const void *data,
                       enum out_type type, uint64_t size,
                       int32_t segment, int32_t wrt)
