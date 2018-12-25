@@ -128,6 +128,7 @@ static void list_emit(void)
 	fprintf(listfp, "  %s\n", le->str);
         nasm_free(le);
     }
+    listerr_head = NULL;
     listerr_tail = &listerr_head;
 }
 
