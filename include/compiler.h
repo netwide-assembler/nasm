@@ -223,7 +223,7 @@ size_t strnlen(const char *s, size_t maxlen);
 #ifndef HAVE_MEMPCPY
 static inline void *mempcpy(void *dst, const void *src, size_t n)
 {
-    return memcpy(dst, src, n) + n;
+    return (char *)memcpy(dst, src, n) + n;
 }
 #endif
 
