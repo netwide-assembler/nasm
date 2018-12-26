@@ -75,14 +75,15 @@ LIBOBJ = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) &
 	x86\regs.$(O) x86\regvals.$(O) x86\regflags.$(O) x86\regdis.$(O) &
 	x86\disp8.$(O) x86\iflag.$(O) &
 	&
-	asm\error.$(O) &
+	asm\error.$(O) asm\warnings.$(O) &
 	asm\float.$(O) &
 	asm\directiv.$(O) asm\directbl.$(O) &
 	asm\pragma.$(O) &
 	asm\assemble.$(O) asm\labels.$(O) asm\parser.$(O) &
 	asm\preproc.$(O) asm\quote.$(O) asm\pptok.$(O) &
-	asm\listing.$(O) asm\eval.$(O) asm\exprlib.$(O) asm\exprdump.$(O) &
+	asm\listing.$(O) &
 	asm\stdscan.$(O) &
+	asm\eval.$(O) asm\exprlib.$(O) asm\evalstr.$(O) asm\exprdump.$(O) &
 	asm\strfunc.$(O) asm\tokhash.$(O) &
 	asm\segalloc.$(O) &
 	asm\preproc-nop.$(O) &
@@ -156,6 +157,7 @@ PERLREQ = x86\insnsb.c x86\insnsa.c x86\insnsd.c x86\insnsi.h x86\insnsn.c &
 	  x86\iflag.c x86\iflaggen.h &
 	  macros\macros.c &
 	  asm\pptok.ph asm\directbl.c asm\directiv.h &
+	  asm\warnings.c include\warnings.h &
 	  version.h version.mac version.mak nsis\version.nsh
 
 INSDEP = x86\insns.dat x86\insns.pl x86\insns-iflags.ph
@@ -223,6 +225,23 @@ x86\regvals.c: x86\regs.dat x86\regs.pl
 x86\regs.h: x86\regs.dat x86\regs.pl
 	$(RUNPERL) $(srcdir)\x86\regs.pl h &
 		$(srcdir)\x86\regs.dat > x86\regs.h
+
+# Extract warnings from source code. Since this depends on
+# ALL the source files, this is only done on demand.
+WARNFILES = asm\warnings.c include\warnings.h doc\warnings.src
+
+warnings:
+	rm -f $(WARNFILES)
+	$(MAKE) $(WARNFILES)
+
+asm\warnings.c: asm\warnings.pl
+	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings.c $(srcdir)
+
+include\warnings.h: asm\warnings.pl
+	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h $(srcdir)
+
+doc\warnings.src: asm\warnings.pl
+	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src $(srcdir)
 
 # Assembler token hash
 asm\tokhash.c: x86\insns.dat x86\regs.dat asm\tokens.dat asm\tokhash.pl &
