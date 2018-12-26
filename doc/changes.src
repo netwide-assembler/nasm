@@ -7,6 +7,11 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.14.02} Version 2.14.02
+
+\b Fix crash due to multiple errors or warnings during the code
+generation pass if a list file is specified.
+
 \S{cl-2.14.01} Version 2.14.01
 
 \b Create all system-defined macros defore processing command-line
