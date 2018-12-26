@@ -4,7 +4,6 @@
 #include "compiler.h"
 #include "ilog2.h"
 
-#include <string.h>
 
 #include "iflaggen.h"
 

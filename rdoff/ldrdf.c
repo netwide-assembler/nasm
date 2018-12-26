@@ -54,7 +54,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "rdfutils.h"
 #include "symtab.h"
