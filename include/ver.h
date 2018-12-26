@@ -38,6 +38,8 @@
 #ifndef NASM_VER_H
 #define NASM_VER_H
 
+#include "compiler.h"
+
 extern const char nasm_version[];
 extern const char nasm_date[];
 extern const char nasm_compile_options[];
