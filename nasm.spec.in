@@ -11,6 +11,7 @@ BuildRoot: /tmp/rpm-build-nasm
 Prefix: %{_prefix}
 @@PERLBUILDREQS@@
 BuildRequires: autoconf
+BuildRequires: autoheader
 BuildRequires: asciidoc
 BuildRequires: xmlto
 BuildRequires: xz
@@ -45,7 +46,7 @@ include linker, library manager, loader, and information dump.
 %setup -q -n nasm-%{nasm_version}
 
 %build
-autoreconf
+sh autogen.sh
 %configure --disable-pdf-compression --enable-sections
 make %{?_smp_mflags} everything
 xz -9ef doc/nasmdoc.pdf
