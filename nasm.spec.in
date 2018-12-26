@@ -58,7 +58,7 @@ mkdir -p "%{buildroot}"/%{_mandir}/man1
 make DESTDIR="%{buildroot}" install install_rdf
 
 %files
-%doc AUTHORS CHANGES README TODO
+%doc AUTHORS
 %{_bindir}/nasm
 %{_bindir}/ndisasm
 %{_mandir}/man1/nasm.1*
