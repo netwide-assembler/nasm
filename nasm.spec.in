@@ -11,7 +11,7 @@ BuildRoot: /tmp/rpm-build-nasm
 Prefix: %{_prefix}
 @@PERLBUILDREQS@@
 BuildRequires: autoconf
-BuildRequires: autoheader
+BuildRequires: automake
 BuildRequires: asciidoc
 BuildRequires: xmlto
 BuildRequires: xz
