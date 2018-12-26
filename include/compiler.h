@@ -219,6 +219,13 @@ char *strsep(char **, const char *);
 size_t strnlen(const char *s, size_t maxlen);
 #endif
 
+#ifndef HAVE_MEMPCPY
+static inline void *mempcpy(void *dst, const void *src, size_t n)
+{
+    return memcpy(dst, src, n) + n;
+}
+#endif
+
 /*
  * Hack to support external-linkage inline functions
  */
