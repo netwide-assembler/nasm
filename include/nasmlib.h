@@ -41,10 +41,6 @@
 #include "compiler.h"
 #include "bytesex.h"
 
-#ifdef HAVE_STRINGS_H
-# include <strings.h>
-#endif
-
 /*
  * Wrappers around malloc, realloc, free and a few more. nasm_malloc
  * will fatal-error and die rather than return NULL; nasm_realloc will

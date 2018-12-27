@@ -85,6 +85,9 @@
 #include <string.h>
 #include <limits.h>
 
+#ifdef HAVE_STRINGS_H
+# include <strings.h>
+#endif
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
