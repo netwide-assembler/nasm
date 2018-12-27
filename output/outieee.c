@@ -67,10 +67,7 @@
  */
 #include "compiler.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
-#include <stdarg.h>             /* Note: we need the ANSI version of stdarg.h */
 #include <ctype.h>              /* For toupper() */
 #include "nctype.h"
 

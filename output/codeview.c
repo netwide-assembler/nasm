@@ -38,9 +38,6 @@
 #include "version.h"
 #include "compiler.h"
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
 
 #include "nasm.h"
 #include "nasmlib.h"

@@ -177,8 +177,6 @@
 
 #include "compiler.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "nasm.h"
 #include "nasmlib.h"

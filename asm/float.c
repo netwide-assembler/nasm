@@ -38,8 +38,6 @@
 #include "compiler.h"
 
 #include "nctype.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "nasm.h"
 #include "float.h"

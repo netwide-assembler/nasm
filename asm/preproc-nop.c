@@ -39,11 +39,7 @@
 
 #include "compiler.h"
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
 #include "nctype.h"
-#include <limits.h>
 #include <time.h>
 
 #include "nasm.h"

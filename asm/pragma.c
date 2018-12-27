@@ -39,9 +39,7 @@
 
 #include "compiler.h"
 
-#include <stdlib.h>
 #include "nctype.h"
-#include <limits.h>
 
 #include "nasm.h"
 #include "nasmlib.h"

@@ -41,7 +41,6 @@
 #include "compiler.h"
 #include "bytesex.h"
 
-#include <stdio.h>
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
 #endif

@@ -62,12 +62,7 @@
 
 #include "compiler.h"
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stddef.h>
 #include "nctype.h"
-#include <limits.h>
 
 #include "nasm.h"
 #include "nasmlib.h"

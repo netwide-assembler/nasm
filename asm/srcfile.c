@@ -37,7 +37,6 @@
 
 #include "compiler.h"
 
-#include <inttypes.h>
 
 #include "nasmlib.h"
 #include "hashtbl.h"

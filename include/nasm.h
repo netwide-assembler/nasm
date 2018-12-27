@@ -40,7 +40,6 @@
 
 #include "compiler.h"
 
-#include <stdio.h>
 #include <time.h>
 
 #include "nasmlib.h"
