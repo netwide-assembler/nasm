@@ -66,7 +66,8 @@ char * safe_alloc end_with_null nasm_strcatn(const char *one, ...);
  *
  * nasm_[v]axprintf() are similar, but allocates a user-defined amount
  * of storage before the string, and returns a pointer to the
- * allocated buffer.
+ * allocated buffer. The value of nasm_aprintf_size() does *not* include
+ * this additional storage.
  */
 char * safe_alloc printf_func(1, 2) nasm_asprintf(const char *fmt, ...);
 char * safe_alloc nasm_vasprintf(const char *fmt, va_list ap);
