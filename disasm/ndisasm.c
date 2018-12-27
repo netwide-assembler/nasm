@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include "nctype.h"
 #include <errno.h>
 
 #include "insns.h"

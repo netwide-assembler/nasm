@@ -66,7 +66,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include <ctype.h>
+#include "nctype.h"
 #include <limits.h>
 
 #include "nasm.h"

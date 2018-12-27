@@ -38,7 +38,7 @@
 #include "compiler.h"
 
 #include <stdlib.h>
-#include <ctype.h>
+#include "nctype.h"
 #include <limits.h>
 
 #include "nasm.h"

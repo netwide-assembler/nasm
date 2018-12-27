@@ -37,7 +37,7 @@
 
 #include "compiler.h"
 
-#include <ctype.h>
+#include "nctype.h"
 
 #include "nasmlib.h"
 #include "error.h"

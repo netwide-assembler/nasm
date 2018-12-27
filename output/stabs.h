@@ -34,7 +34,7 @@
 #ifndef STABS_H_
 #define STABS_H_
 
-#include <ctype.h>
+#include "nctype.h"
 
 #include "compiler.h"
 #include "nasmlib.h"

@@ -179,7 +179,7 @@ if ($what eq 'c') {
     die if ($n & ($n-1));
 
     print OUT "#include \"compiler.h\"\n";
-    print OUT "#include <ctype.h>\n";
+    print OUT "#include \"nctype.h\"\n";
     print OUT "#include \"nasmlib.h\"\n";
     print OUT "#include \"hashtbl.h\"\n";
     print OUT "#include \"preproc.h\"\n";

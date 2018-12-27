@@ -77,7 +77,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include "nctype.h"
 
 #include "nasm.h"
 #include "nasmlib.h"
