@@ -1775,8 +1775,13 @@ static bool skip_this_pass(int severity)
  */
 static bool is_suppressed(int severity)
 {
+    /* Fatal errors must never be suppressed */
     if ((severity & ERR_MASK) >= ERR_FATAL)
-        return false;           /* Fatal errors can never be suppressed */
+        return false;
+
+    /* This error/warning is pointless if we are dead anyway */
+    if ((severity & ERR_UNDEAD) && terminate_after_phase)
+        return true;
 
     return !(warning_state[warn_index(severity)] & WARN_ST_ENABLED);
 }

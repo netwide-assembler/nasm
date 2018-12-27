@@ -529,7 +529,7 @@ void define_label(const char *label, int32_t segment,
          * As a special case, LBL_SPECIAL symbols are allowed to be changed
          * even during the last pass.
          */
-        nasm_error(ERR_WARNING|WARN_LABEL_LATE,
+        nasm_error(ERR_WARNING|WARN_LABEL_LATE|ERR_UNDEAD,
                    "label `%s' %s during code generation",
                    lptr->defn.label, created ? "defined" : "changed");
     }
