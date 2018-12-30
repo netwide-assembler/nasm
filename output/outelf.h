@@ -141,6 +141,7 @@ struct elf_section {
     int                 type;           /* SHT_PROGBITS or SHT_NOBITS */
     uint64_t            align;          /* alignment: power of two */
     uint64_t            flags;          /* section flags */
+    uint64_t		entsize;        /* entry size */
     char                *name;
     struct SAA          *rel;
     uint64_t             rellen;

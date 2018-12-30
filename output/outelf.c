@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -97,8 +97,10 @@ static int64_t elf_foffs;
 static void elf_write(void);
 static void elf_sect_write(struct elf_section *, const void *, size_t);
 static void elf_sect_writeaddr(struct elf_section *, int64_t, size_t);
-static void elf_section_header(int, int, uint64_t, void *, bool, uint64_t, int, int,
-                               int, int);
+static void elf_section_header(int name, int type, uint64_t flags,
+                               void *data, bool is_saa, uint64_t datalen,
+                               int link, int info,
+                               uint64_t align, uint64_t entsize);
 static void elf_write_sections(void);
 static struct SAA *elf_build_symtab(int32_t *, int32_t *);
 static struct SAA *elf_build_reltab(uint64_t *, struct elf_reloc *);
@@ -211,9 +213,11 @@ const struct elf_known_section elf_known_sections[] = {
 /* parse section attributes */
 static void elf_section_attrib(char *name, char *attr, int pass,
                                uint32_t *flags_and, uint32_t *flags_or,
-                               uint64_t *align, int *type)
+                               uint64_t *alignp, uint64_t *entsize, int *type)
 {
     char *opt, *val, *next;
+    uint64_t align = 0;
+    uint64_t xalign = 0;
 
     opt = nasm_skip_spaces(attr);
     if (!opt || !*opt)
@@ -225,14 +229,14 @@ static void elf_section_attrib(char *name, char *attr, int pass,
                 nasm_error(ERR_NONFATAL,
                            "section align without value specified");
             } else {
-                *align = atoi(val);
-                if (*align == 0) {
-                    *align = SHA_ANY;
-                } else if (!is_power2(*align)) {
+                bool err;
+                uint64_t a = readnum(val, &err);
+                if (a && !is_power2(a)) {
                     nasm_error(ERR_NONFATAL,
                                "section alignment %"PRId64" is not a power of two",
-                               *align);
-                    *align = SHA_ANY;
+                               a);
+                } else if (a > align) {
+                    align = a;
                 }
             }
         } else if (!nasm_stricmp(opt, "alloc")) {
@@ -250,16 +254,64 @@ static void elf_section_attrib(char *name, char *attr, int pass,
         } else if (!nasm_stricmp(opt, "write")) {
             *flags_and  |= SHF_WRITE;
             *flags_or   |= SHF_WRITE;
-        } else if (!nasm_stricmp(opt, "tls")) {
-            *flags_and  |= SHF_TLS;
-            *flags_or   |= SHF_TLS;
         } else if (!nasm_stricmp(opt, "nowrite")) {
             *flags_and  |= SHF_WRITE;
             *flags_or   &= ~SHF_WRITE;
+        } else if (!nasm_stricmp(opt, "tls")) {
+            *flags_and  |= SHF_TLS;
+            *flags_or   |= SHF_TLS;
+        } else if (!nasm_stricmp(opt, "notls")) {
+            *flags_and  |= SHF_TLS;
+            *flags_or   &= ~SHF_TLS;
+        } else if (!nasm_stricmp(opt, "merge")) {
+            *flags_and  |= SHF_MERGE;
+            *flags_or   |= SHF_MERGE;
+        } else if (!nasm_stricmp(opt, "nomerge")) {
+            *flags_and  |= SHF_MERGE;
+            *flags_or   &= ~SHF_MERGE;
+        } else if (!nasm_stricmp(opt, "strings")) {
+            *flags_and  |= SHF_STRINGS;
+            *flags_or   |= SHF_STRINGS;
+        } else if (!nasm_stricmp(opt, "nostrings")) {
+            *flags_and  |= SHF_STRINGS;
+            *flags_or   &= ~SHF_STRINGS;
         } else if (!nasm_stricmp(opt, "progbits")) {
             *type = SHT_PROGBITS;
         } else if (!nasm_stricmp(opt, "nobits")) {
             *type = SHT_NOBITS;
+        } else if (!nasm_stricmp(opt, "ent") || !nasm_stricmp(opt,"entsize")) {
+            bool err;
+            uint64_t es;
+            if (!val) {
+                nasm_error(ERR_NONFATAL,
+                           "section attribute %s without value specified", opt);
+            } else {
+                es = readnum(val, &err);
+                if (err) {
+                    nasm_error(ERR_NONFATAL,
+                               "invalid value %s for section attribute %s",
+                               val, opt);
+                } else {
+                    *entsize = es;
+                }
+            }
+        } else if (!nasm_stricmp(opt, "byte")) {
+            xalign = *entsize = 1;
+        } else if (!nasm_stricmp(opt, "word")) {
+            xalign = *entsize = 2;
+        } else if (!nasm_stricmp(opt, "dword")) {
+            xalign = *entsize = 4;
+        } else if (!nasm_stricmp(opt, "qword")) {
+            xalign = *entsize = 8;
+        } else if (!nasm_stricmp(opt, "tword")) {
+            *entsize = 10;
+            xalign = 2;
+        } else if (!nasm_stricmp(opt, "oword")) {
+            xalign = *entsize = 16;
+        } else if (!nasm_stricmp(opt, "yword")) {
+            xalign = *entsize = 32;
+        } else if (!nasm_stricmp(opt, "zword")) {
+            xalign = *entsize = 64;
         } else if (pass == 1) {
             nasm_error(ERR_WARNING,
                        "Unknown section attribute '%s' ignored on"
@@ -267,6 +319,14 @@ static void elf_section_attrib(char *name, char *attr, int pass,
         }
         opt = next;
     }
+
+    if (!align)
+        align = xalign;
+
+    if (!align)
+        align = SHA_ANY;
+
+    *alignp = align;
 }
 
 static enum directive_result
@@ -389,7 +449,7 @@ static void add_sectname(const char *firsthalf, const char *secondhalf)
     shstrtablen += len + 1;
 }
 
-static int elf_make_section(char *name, int type, int flags, int align)
+static int elf_make_section(char *name, int type, int flags, uint64_t align)
 {
     struct elf_section *s;
 
@@ -420,7 +480,8 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
 {
     char *p;
     uint32_t flags, flags_and, flags_or;
-    uint64_t align;
+    uint64_t align, entsize;
+    struct elf_section *s;
     int type, i;
 
     if (!name) {
@@ -431,10 +492,10 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     p = nasm_skip_word(name);
     if (*p)
         *p++ = '\0';
-    flags_and = flags_or = type = align = 0;
+    flags_and = flags_or = type = align = entsize = 0;
 
     elf_section_attrib(name, p, pass, &flags_and,
-                       &flags_or, &align, &type);
+                       &flags_or, &align, &entsize, &type);
 
     if (!strcmp(name, ".shstrtab") ||
         !strcmp(name, ".symtab") ||
@@ -461,15 +522,34 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         flags = (ks->flags & ~flags_and) | flags_or;
 
         i = elf_make_section(name, type, flags, align);
-    } else if (pass == 1) {
-          if ((type && sects[i]->type != type)
-              || (align && sects[i]->align != align)
-              || (flags_and && ((sects[i]->flags & flags_and) != flags_or)))
-            nasm_error(ERR_WARNING, "incompatible section attributes ignored on"
-                  " redeclaration of section `%s'", name);
     }
 
-    return sects[i]->index;
+    s = sects[i];
+
+    if (pass == 1) {
+        if ((type && s->type != type)
+            || ((s->flags & flags_and) != flags_or)
+            || (entsize && s->entsize && entsize != s->entsize)) {
+            nasm_error(ERR_WARNING,
+                       "incompatible section attributes ignored on"
+                       " redeclaration of section `%s'", name);
+        }
+    }
+
+    if (align > s->align)
+        s->align = align;
+
+    if (entsize && !s->entsize)
+        s->entsize = entsize;
+
+    if (pass == 2 && (flags_or & SHF_MERGE) && s->entsize == 0) {
+        if (!(s->flags & SHF_STRINGS))
+            nasm_error(ERR_NONFATAL,
+                       "section attribute merge specified without an entry size");
+        s->entsize = 1;
+    }
+
+    return s->index;
 }
 
 static void elf_deflabel(char *name, int32_t segment, int64_t offset,
@@ -868,7 +948,7 @@ static void elf32_out(int32_t segto, const void *data,
                       " segment base references");
             } else {
                 if (wrt == NO_SEG) {
-                    /* 
+                    /*
                      * The if() is a hack to deal with compilers which
                      * don't handle switch() statements with 64-bit
                      * expressions.
@@ -1693,9 +1773,9 @@ static void elf_write(void)
     /* The normal sections */
     for (i = 0; i < nsects; i++) {
         elf_section_header(p - shstrtab, sects[i]->type, sects[i]->flags,
-                           (sects[i]->type == SHT_PROGBITS ?
-                            sects[i]->data : NULL), true,
-                           sects[i]->len, 0, 0, sects[i]->align, 0);
+                           sects[i]->data, true,
+                           sects[i]->len, 0, 0,
+                           sects[i]->align, sects[i]->entsize);
         p += strlen(p) + 1;
     }
 
@@ -2129,7 +2209,8 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
 
 static void elf_section_header(int name, int type, uint64_t flags,
                                void *data, bool is_saa, uint64_t datalen,
-                               int link, int info, int align, int eltsize)
+                               int link, int info,
+                               uint64_t align, uint64_t entsize)
 {
     union {
         Elf32_Shdr  shdr32;
@@ -2153,7 +2234,7 @@ static void elf_section_header(int name, int type, uint64_t flags,
         shdr.shdr32.sh_link         = cpu_to_le32(link);
         shdr.shdr32.sh_info         = cpu_to_le32(info);
         shdr.shdr32.sh_addralign    = cpu_to_le32(align);
-        shdr.shdr32.sh_entsize      = cpu_to_le32(eltsize);
+        shdr.shdr32.sh_entsize      = cpu_to_le32(entsize);
     } else {
         nasm_assert(is_elf64());
 
@@ -2168,7 +2249,7 @@ static void elf_section_header(int name, int type, uint64_t flags,
         shdr.shdr64.sh_link        = cpu_to_le32(link);
         shdr.shdr64.sh_info        = cpu_to_le32(info);
         shdr.shdr64.sh_addralign   = cpu_to_le64(align);
-        shdr.shdr64.sh_entsize     = cpu_to_le64(eltsize);
+        shdr.shdr64.sh_entsize     = cpu_to_le64(entsize);
     }
 
     nasm_write(&shdr, is_elf64() ? sizeof(shdr.shdr64) : sizeof(shdr.shdr32), ofile);
