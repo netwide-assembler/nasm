@@ -31,6 +31,13 @@
 ##
 ## --------------------------------------------------------------------------
 
+# The token parameters are in the other:
+# TOKEN_TYPE, t_inttwo, t_flags, t_integer
+#
+# * is replaced with the token name converted to upper case.
+# {xxx*yyy} is replaced with the token name stripped from the prefix
+# xxx and suffix yyy before converting to upper case.
+
 #
 # Tokens other than instructions and registers
 #
@@ -60,7 +67,7 @@ xrelease
 bnd
 nobnd
 
-% TOKEN_SIZE, 0, SIZE_*, S_*
+% TOKEN_SIZE, SIZE_*, 0, S_*
 byte
 word
 dword
