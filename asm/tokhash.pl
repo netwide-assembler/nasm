@@ -65,14 +65,17 @@ while (defined($line = <ID>)) {
 	    # Single instruction token
 	    if (!defined($tokens{$token})) {
 		$tokens{$token} = scalar @tokendata;
-		push(@tokendata, "\"${token}\", TOKEN_INSN, C_none, 0, I_${insn}");
+		push(@tokendata, "\"${token}\", ".length($token).
+		     ", TOKEN_INSN, C_none, 0, I_${insn}");
 	    }
 	} else {
 	    # Conditional instruction
 	    foreach $cc (@conditions) {
-		if (!defined($tokens{$token.$cc})) {
-		    $tokens{$token.$cc} = scalar @tokendata;
-		    push(@tokendata, "\"${token}${cc}\", TOKEN_INSN, C_\U$cc\E, 0, I_${insn}");
+		my $etok = $token.$cc;
+		if (!defined($tokens{$etok})) {
+		    $tokens{$etok} = scalar @tokendata;
+		    push(@tokendata, "\"${etok}\", ".length($etok).
+			 ", TOKEN_INSN, C_\U$cc\E, 0, I_${insn}");
 		}
 	    }
 	}
@@ -105,11 +108,8 @@ while (defined($line = <RD>)) {
 		die "Duplicate definition: $reg\n";
 	    }
 	    $tokens{$reg} = scalar @tokendata;
-	    if ($reg_flag eq '') {
-	        push(@tokendata, "\"${reg}\", TOKEN_REG, 0, 0, R_\U${reg}\E");
-	    } else {
-	        push(@tokendata, "\"${reg}\", TOKEN_REG, 0, ${reg_flag}, R_\U${reg}\E");
-	    }
+	    $reg_flag = '0' if ($reg_flag eq '');
+	    push(@tokendata, "\"${reg}\", ".length($reg).", TOKEN_REG, 0, ${reg_flag}, R_\U${reg}\E");
 
 	    if (defined($reg_prefix)) {
 		$reg_nr++;
@@ -153,22 +153,22 @@ while (defined($line = <TD>)) {
 
 	$data =~ s/\*/\U$token/g;
 
-	push(@tokendata, "\"$token\", $data");
+	push(@tokendata, "\"$token\", ".length($token).", $data");
     }
 }
 close(TD);
+
+$max_len = 0;
+foreach $token (keys(%tokens)) {
+    if (length($token) > $max_len) {
+	$max_len = length($token);
+    }
+}
 
 if ($output eq 'h') {
     #
     # tokens.h
     #
-
-    $max_len = 0;
-    foreach $token (keys(%tokens)) {
-	if (length($token) > $max_len) {
-	    $max_len = length($token);
-	}
-    }
 
     print "/*\n";
     print " * This file is generated from insns.dat, regs.dat and token.dat\n";
@@ -218,9 +218,10 @@ if ($output eq 'h') {
     # 64-bit machines and 12 bytes on 32-bit machines.
     print "struct tokendata {\n";
     print "    const char *string;\n";
+    print "    uint16_t len;\n";
     print "    int16_t tokentype;\n";
-    print "    int8_t aux;\n";
-    print "    int8_t tokflag;\n";
+    print "    int16_t aux;\n";
+    print "    uint16_t tokflag;\n";
     print "    int32_t num;\n";
     print "};\n";
     print "\n";
@@ -247,7 +248,8 @@ if ($output eq 'h') {
     }
     print "    };\n";
 
-    printf "    static const struct tokendata tokendata[%d] = {\n", scalar(@tokendata);
+    printf "    static const struct tokendata tokendata[%d] = {\n",
+	scalar(@tokendata);
     foreach $d (@tokendata) {
 	print "        { ", $d, " },\n";
     }
@@ -255,29 +257,38 @@ if ($output eq 'h') {
 
     print  "    uint32_t k1, k2;\n";
     print  "    uint64_t crc;\n";
+    print  "    size_t len;\n";
     # For correct overflow behavior, "ix" should be unsigned of the same
     # width as the hash arrays.
     print  "    uint16_t ix;\n";
     print  "    const struct tokendata *data;\n";
     print  "\n";
-    printf "    tv->t_flag = 0;\n";
-    printf "    crc = crc64(UINT64_C(0x%08x%08x), token);\n",
+    print  "    len = strlen(token);\n";
+    print  "    if (unlikely(len > $max_len))\n";
+    print  "         goto notfound;\n";
+    print  "\n";
+    printf "    crc = crc64b(UINT64_C(0x%08x%08x), token, len);\n",
 	$$sv[0], $$sv[1];
     print  "    k1 = (uint32_t)crc;\n";
     print  "    k2 = (uint32_t)(crc >> 32);\n";
     print  "\n";
     printf "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
     printf "    if (ix >= %d)\n", scalar(@tokendata);
-    print  "        return tv->t_type = TOKEN_ID;\n";
+    print  "        goto notfound;\n";
     print  "\n";
     print  "    data = &tokendata[ix];\n";
-
-    print  "    if (strcmp(data->string, token))\n";
-    print  "        return tv->t_type = TOKEN_ID;\n";
+    print  "    if (data->len != len || memcmp(data->string, token, len))\n";
+    print  "        goto notfound;\n";
     print  "\n";
     print  "    tv->t_integer = data->num;\n";
     print  "    tv->t_inttwo  = data->aux;\n";
     print  "    tv->t_flag    = data->tokflag;\n";
     print  "    return tv->t_type = data->tokentype;\n";
+    print  "\n";
+    print  "notfound:\n";
+    print  "    tv->t_integer = 0;\n";
+    print  "    tv->t_inttwo  = 0;\n";
+    print  "    tv->t_flag    = 0;\n";
+    print  "    return tv->t_type = TOKEN_ID;\n";
     print  "}\n";
 }
