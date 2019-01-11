@@ -122,6 +122,12 @@ static inline vefunc nasm_set_verror(vefunc ve)
 /* Process a warning option or directive */
 bool set_warning_status(const char *value);
 
+/* Warning stack management */
+void push_warnings(void);
+void pop_warnings(void);
+void init_warnings(void);
+void reset_warnings(void);
+
 /* Should be included from within error.h only */
 #include "warnings.h"
 

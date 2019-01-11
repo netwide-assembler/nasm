@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -85,7 +85,7 @@ void nasm_warn(errflags severity, const char *fmt, ...)
 {
 	nasm_do_error(ERR_WARNING|severity);
 }
-    
+
 fatal_func nasm_panic_from_macro(const char *file, int line)
 {
 	nasm_panic("internal error at %s:%d\n", file, line);
@@ -94,6 +94,72 @@ fatal_func nasm_panic_from_macro(const char *file, int line)
 fatal_func nasm_assert_failed(const char *file, int line, const char *msg)
 {
 	nasm_panic("assertion %s failed at %s:%d", msg, file, line);
+}
+
+
+/*
+ * Warning stack management. Note that there is an implicit "push"
+ * after the command line has been parsed, but this particular push
+ * cannot be popped.
+ */
+struct warning_stack {
+	struct warning_stack *next;
+	uint8_t state[sizeof warning_state];
+};
+static struct warning_stack *warning_stack, *warning_state_init;
+
+/* Push the warning status onto the warning stack */
+void push_warnings(void)
+{
+	struct warning_stack *ws;
+
+	ws = nasm_malloc(sizeof *ws);
+	memcpy(ws->state, warning_state, sizeof warning_state);
+	ws->next = warning_stack;
+	warning_stack = ws;
+}
+
+/* Pop the warning status off the warning stack */
+void pop_warnings(void)
+{
+	struct warning_stack *ws = warning_stack;
+
+	memcpy(warning_state, ws->state, sizeof warning_state);
+	if (!ws->next) {
+		/*!
+		 *!warn-stack-empty [on] warning stack empty
+		 *!  a [WARNING POP] directive was executed when
+		 *!  the warning stack is empty. This is treated
+		 *!  as a [WARNING *all] directive.
+		 */
+		nasm_warn(WARN_WARN_STACK_EMPTY, "warning stack empty");
+	} else {
+		warning_stack = ws->next;
+		nasm_free(ws);
+	}
+}
+
+/* Call after the command line is parsed, but before the first pass */
+void init_warnings(void)
+{
+	push_warnings();
+	warning_state_init = warning_stack;
+}
+
+
+/* Call after each pass */
+void reset_warnings(void)
+{
+	struct warning_stack *ws = warning_stack;
+
+	/* Unwind the warning stack. We do NOT delete the last entry! */
+	while (ws->next) {
+		struct warning_stack *wst = ws;
+		ws = ws->next;
+		nasm_free(wst);
+	}
+	warning_stack = ws;
+	memcpy(warning_state, ws->state, sizeof warning_state);
 }
 
 /*
@@ -120,6 +186,7 @@ bool set_warning_status(const char *value)
 	int i;
 
 	value = nasm_skip_spaces(value);
+
 	switch (*value) {
 	case '-':
 		action = WID_OFF;
@@ -185,7 +252,8 @@ bool set_warning_status(const char *value)
 				break;
 			case WID_RESET:
 				warning_state[i] &= ~mask;
-				warning_state[i] |= warning_state_init[i] & mask;
+				warning_state[i] |=
+					warning_state_init->state[i] & mask;
 				break;
 			}
 		}
@@ -199,6 +267,6 @@ bool set_warning_status(const char *value)
 		 */
 		nasm_warn(WARN_UNKNOWN_WARNING, "unknown warning name: %s", name);
 	}
-		
+
 	return ok;
 }

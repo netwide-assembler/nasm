@@ -132,8 +132,6 @@ if ($what eq 'c') {
     print $out "\n};\n\n";
     printf $out "uint8_t warning_state[%d];\t/* Current state */\n",
 	$#warn_noall + 2;
-    printf $out "uint8_t warning_state_init[%d];\t/* Command-line state, for reset */\n",
-	$#warn_noall + 2;
 } elsif ($what eq 'h') {
     my $filename = basename($outfile);
     my $guard = $filename;
@@ -173,8 +171,6 @@ if ($what eq 'c') {
     printf $out "extern const uint8_t warning_default[%d];\n",
 	$#warn_noall + 2;
     printf $out "extern uint8_t warning_state[%d];\n",
-	$#warn_noall + 2;
-    printf $out "extern uint8_t warning_state_init[%d];\n",
 	$#warn_noall + 2;
     print $out "\n#endif /* $guard */\n";
 } elsif ($what eq 'doc') {

@@ -4776,6 +4776,10 @@ more details about warning classes.
    the original value, either the default value or as specified on the
    command line.
 
+\b \c{[warning push]} saves the current warning state on a stack.
+
+\b \c{[warning pop]} restores the current warning state from the stack.
+
 The \c{[WARNING]} directive also accepts the \c{all}, \c{error} and
 \c{error=}\e{warning-class} specifiers.
 

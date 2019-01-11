@@ -7,6 +7,12 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.15} Version 2.15
+
+\b The state of warnings can now be saved and restored via the
+\c{[WARNING PUSH]} and \c{[WARNING POP]} directives. See
+\k{asmdir-warning}.
+
 \S{cl-2.14.03} Version 2.14.03
 
 \b Suppress nuisance "\c{label changed during code generation}" messages

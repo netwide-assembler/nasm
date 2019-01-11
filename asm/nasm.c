@@ -511,7 +511,7 @@ int main(int argc, char **argv)
     }
 
     /* Save away the default state of warnings */
-    memcpy(warning_state_init, warning_state, sizeof warning_state_init);
+    init_warnings();
 
     /* Dependency filename if we are also doing other things */
     if (!depend_file && (operating_mode & ~OP_DEPEND)) {
@@ -550,6 +550,7 @@ int main(int argc, char **argv)
             while ((line = preproc->getline()))
                 nasm_free(line);
             preproc->cleanup_pass();
+            reset_warnings();
     } else if (operating_mode & OP_PREPROCESS) {
             char *line;
             const char *file_name = NULL;
@@ -567,9 +568,6 @@ int main(int argc, char **argv)
 
             _pass_type = PASS_FIRST; /* We emulate this assembly pass */
             preproc->reset(inname, PP_PREPROC, depend_list);
-
-            /* Revert all warnings to the default state */
-            memcpy(warning_state, warning_state_init, sizeof warning_state);
 
             while ((line = preproc->getline())) {
                 /*
@@ -592,6 +590,7 @@ int main(int argc, char **argv)
                 nasm_free(line);
             }
             preproc->cleanup_pass();
+            reset_warnings();
             if (ofile)
                 fclose(ofile);
             if (ofile && terminate_after_phase && !keep_all)
@@ -1334,8 +1333,7 @@ static void parse_cmdline(int argc, char **argv, int pass)
      * Initialize all the warnings to their default state, including
      * warning index 0 used for "always on".
      */
-    memcpy(warning_state,      warning_default, sizeof warning_state);
-    memcpy(warning_state_init, warning_default, sizeof warning_state_init);
+    memcpy(warning_state, warning_default, sizeof warning_state);
 
     /*
      * First, process the NASMENV environment variable.
@@ -1546,9 +1544,6 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         switch_segment(ofmt->section(NULL, &globalbits));
         preproc->reset(fname, PP_NORMAL, pass_final() ? depend_list : NULL);
 
-        /* Revert all warnings to the default state */
-        memcpy(warning_state, warning_state_init, sizeof warning_state);
-
         globallineno = 0;
 
         while ((line = preproc->getline())) {
@@ -1575,10 +1570,6 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
         preproc->cleanup_pass();
 
-        /* Don't output further messages if we are dead anyway */
-        if (terminate_after_phase)
-            break;
-
         if (global_offset_changed) {
             switch (pass_type()) {
             case PASS_OPT:
@@ -1596,11 +1587,13 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                 if (stall_count > nasm_limit[LIMIT_STALLED] ||
                     pass_count() >= nasm_limit[LIMIT_PASSES]) {
                     /* No convergence, almost certainly dead */
-                    nasm_nonfatal("unable to find valid values for all labels "
-                                  "after %"PRId64" passes; "
-                                  "stalled for %"PRId64", giving up.",
-                                  pass_count(), stall_count);
-                    nasm_note("Possible causes: recursive EQUs, macro abuse.");
+                    nasm_nonfatalf(ERR_UNDEAD,
+                                   "unable to find valid values for all labels "
+                                   "after %"PRId64" passes; "
+                                   "stalled for %"PRId64", giving up.",
+                                   pass_count(), stall_count);
+                    nasm_notef(ERR_UNDEAD,
+                               "Possible causes: recursive EQUs, macro abuse.");
                 }
                 break;
 
@@ -1611,12 +1604,14 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                  *!  the second-to-last assembly pass. This is not
                  *!  inherently fatal, but may be a source of bugs.
                  */
-                nasm_warn(WARN_PHASE, "phase error during stabilization "
+                nasm_warn(WARN_PHASE|ERR_UNDEAD,
+                          "phase error during stabilization "
                           "pass, hoping for the best");
                 break;
 
             case PASS_FINAL:
-                nasm_nonfatal("phase error during code generation pass");
+                nasm_nonfatalf(ERR_UNDEAD,
+                               "phase error during code generation pass");
                 break;
 
             default:
@@ -1624,6 +1619,8 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                 break;
             }
         }
+
+        reset_warnings();
     }
 
     if (opt_verbose_info && pass_final()) {

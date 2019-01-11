@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -421,7 +421,14 @@ bool process_directives(char *directive)
         break;
     }
 
-    case D_WARNING:         /* [WARNING {+|-|*}warn-name] */
+    case D_WARNING:         /* [WARNING {push|pop|{+|-|*}warn-name}] */
+        value = nasm_skip_spaces(value);
+        if ((*value | 0x20) == 'p') {
+            if (!nasm_stricmp(value, "push"))
+                push_warnings();
+            else if (!nasm_stricmp(value, "pop"))
+                pop_warnings();
+        }
         set_warning_status(value);
         break;
 
