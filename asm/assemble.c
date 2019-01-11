@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -328,6 +328,16 @@ static void warn_overflow_out(int64_t data, int size, enum out_sign sign)
  * in order to pass a copy of the data off to the listing file
  * generator at the same time, flatten unnecessary relocations,
  * and verify backend compatibility.
+ */
+/*
+ * This warning is currently issued by backends, but in the future
+ * this code should be centralized.
+ *
+ *!zeroing [on] RESx in initialized section becomes zero
+ *!  a \c{RESx} directive was used in a section which contains
+ *!  initialized data, and the output format does not support
+ *!  this. Instead, this will be replaced with explicit zero
+ *!  content, which may produce a large output file.
  */
 static void out(struct out_data *data)
 {

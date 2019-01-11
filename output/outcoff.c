@@ -606,7 +606,7 @@ static void coff_out(int32_t segto, const void *data,
 
     if (type == OUT_RESERVE) {
         if (s->data) {
-            nasm_warn(WARN_OTHER, "uninitialised space declared in"
+            nasm_warn(WARN_ZEROING, "uninitialised space declared in"
                       " non-BSS section `%s': zeroing", s->name);
             coff_sect_write(s, NULL, size);
         } else

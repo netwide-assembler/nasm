@@ -828,7 +828,7 @@ static void elf32_out(int32_t segto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {
-            nasm_warn(WARN_OTHER, "uninitialized space declared in"
+            nasm_warn(WARN_ZEROING, "uninitialized space declared in"
                       " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
         } else
@@ -1039,7 +1039,7 @@ static void elf64_out(int32_t segto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {
-            nasm_warn(WARN_OTHER, "uninitialized space declared in"
+            nasm_warn(WARN_ZEROING, "uninitialized space declared in"
                       " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
         } else
@@ -1317,7 +1317,7 @@ static void elfx32_out(int32_t segto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (s->type == SHT_PROGBITS) {
-            nasm_warn(WARN_OTHER, "uninitialized space declared in"
+            nasm_warn(WARN_ZEROING, "uninitialized space declared in"
                       " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
         } else

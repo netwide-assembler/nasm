@@ -603,7 +603,7 @@ static void aout_out(int32_t segto, const void *data,
 
     if (type == OUT_RESERVE) {
         if (s) {
-            nasm_warn(WARN_OTHER, "uninitialized space declared in"
+            nasm_warn(WARN_ZEROING, "uninitialized space declared in"
                       " %s section: zeroing",
                       (segto == stext.index ? "code" : "data"));
             aout_sect_write(s, NULL, size);

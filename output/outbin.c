@@ -783,7 +783,7 @@ static void bin_out(int32_t segto, const void *data,
 
     case OUT_RESERVE:
         if (s->flags & TYPE_PROGBITS) {
-            nasm_warn(WARN_OTHER, "uninitialized space declared in"
+            nasm_warn(WARN_ZEROING, "uninitialized space declared in"
                       " %s section: zeroing", s->name);
             saa_wbytes(s->contents, NULL, size);
         }
