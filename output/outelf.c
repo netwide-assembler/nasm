@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -50,6 +50,7 @@
 #include "outform.h"
 #include "outlib.h"
 #include "rbtree.h"
+#include "hashtbl.h"
 #include "ver.h"
 
 #include "dwarf.h"
@@ -76,6 +77,9 @@ static struct RAA *bsym;
 
 static struct SAA *strs;
 static uint32_t strslen;
+
+static struct RAAPTR *section_by_index;
+static struct hash_table section_by_name;
 
 static struct elf_symbol *fwds;
 
@@ -375,6 +379,11 @@ elf_directive(enum directive directive, char *value, int pass)
 
 static void elf_init(void)
 {
+    static const char * const reserved_sections[] = {
+        ".shstrtab", ".strtab", ".symtab", ".symtab_shndx", NULL
+    };
+    const char * const *p;
+
     strlcpy(elf_module, inname, sizeof(elf_module));
     sects = NULL;
     nsects = sectlen = 0;
@@ -391,11 +400,23 @@ static void elf_init(void)
 
     fwds = NULL;
 
+    hash_init(&section_by_name, HASH_MEDIUM);
+    section_by_index = raa_init_ptr();
+
+    /*
+     * Add reserved section names to the section hash, with NULL
+     * as the data pointer
+     */
+    for (p = reserved_sections; *p; p++) {
+        struct hash_insert hi;
+        hash_find(&section_by_name, *p, &hi);
+        hash_add(&hi, *p, NULL);
+    }
+
     /*
      * FIXME: tlsie is Elf32 only and
      * gottpoff is Elfx32|64 only.
      */
-
     elf_gotpc_sect = seg_alloc();
     backend_label("..gotpc", elf_gotpc_sect + 1, 0L);
     elf_gotoff_sect = seg_alloc();
@@ -431,6 +452,8 @@ static void elf_cleanup(void)
             nasm_free(r);
         }
     }
+    hash_free(&section_by_name);
+    raa_free_ptr(section_by_index);
     nasm_free(sects);
     saa_free(syms);
     raa_free(bsym);
@@ -449,7 +472,8 @@ static void add_sectname(const char *firsthalf, const char *secondhalf)
     shstrtablen += len + 1;
 }
 
-static int elf_make_section(char *name, int type, int flags, uint64_t align)
+static struct elf_section *
+elf_make_section(char *name, int type, int flags, uint64_t align)
 {
     struct elf_section *s;
 
@@ -468,12 +492,13 @@ static int elf_make_section(char *name, int type, int flags, uint64_t align)
     s->type     = type;
     s->flags    = flags;
     s->align    = align;
+    s->shndx    = nsects + 1;
 
     if (nsects >= sectlen)
         sects = nasm_realloc(sects, (sectlen += SECT_DELTA) * sizeof(*sects));
     sects[nsects++] = s;
 
-    return nsects - 1;
+    return s;
 }
 
 static int32_t elf_section_names(char *name, int pass, int *bits)
@@ -481,8 +506,10 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     char *p;
     uint32_t flags, flags_and, flags_or;
     uint64_t align, entsize;
+    void **hp;
     struct elf_section *s;
-    int type, i;
+    struct hash_insert hi;
+    int type;
 
     if (!name) {
         *bits = ofmt->maxbits;
@@ -497,18 +524,15 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     elf_section_attrib(name, p, pass, &flags_and,
                        &flags_or, &align, &entsize, &type);
 
-    if (!strcmp(name, ".shstrtab") ||
-        !strcmp(name, ".symtab") ||
-        !strcmp(name, ".strtab")) {
-        nasm_error(ERR_NONFATAL, "attempt to redefine reserved section"
-              "name `%s'", name);
-        return NO_SEG;
-    }
-
-    for (i = 0; i < nsects; i++)
-        if (!strcmp(name, sects[i]->name))
-            break;
-    if (i == nsects) {
+    hp = hash_find(&section_by_name, name, &hi);
+    if (hp) {
+        s = *hp;
+        if (!s) {
+            nasm_error(ERR_NONFATAL, "attempt to redefine reserved section"
+                       "name `%s'", name);
+            return NO_SEG;
+        }
+    } else {
         const struct elf_known_section *ks = elf_known_sections;
 
         while (ks->name) {
@@ -521,10 +545,10 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         align = align ? align : ks->align;
         flags = (ks->flags & ~flags_and) | flags_or;
 
-        i = elf_make_section(name, type, flags, align);
+        s = elf_make_section(name, type, flags, align);
+        hash_add(&hi, s->name, s);
+        section_by_index = raa_write_ptr(section_by_index, s->index >> 1, s);
     }
-
-    s = sects[i];
 
     if (pass == 1) {
         if ((type && s->type != type)
@@ -628,7 +652,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
     if (segment == NO_SEG)
         sym->section = SHN_ABS;
     else {
-        int i;
+        const struct elf_section *s;
         sym->section = SHN_UNDEF;
         if (segment == def_seg) {
             /* we have to be sure at least text section is there */
@@ -636,12 +660,9 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             if (segment != elf_section_names(".text", 2, &tempint))
                 nasm_panic(0, "strange segment conditions in ELF driver");
         }
-        for (i = 0; i < nsects; i++) {
-            if (segment == sects[i]->index) {
-                sym->section = i + 1;
-                break;
-            }
-        }
+        s = raa_read_ptr(section_by_index, segment >> 1);
+        if (s)
+            sym->section = s->shndx;
     }
 
     if (is_global == 2) {

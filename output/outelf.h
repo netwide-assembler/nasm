@@ -137,7 +137,8 @@ struct elf_section {
     uint64_t            len;
     uint64_t            size;
     uint64_t            nrelocs;
-    int32_t             index;
+    int32_t             index;		/* NASM index */
+    int			shndx;          /* ELF index */
     int                 type;           /* SHT_PROGBITS or SHT_NOBITS */
     uint64_t            align;          /* alignment: power of two */
     uint64_t            flags;          /* section flags */
