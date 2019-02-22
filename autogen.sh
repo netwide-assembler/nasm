@@ -8,10 +8,10 @@ if [ x"$1" = x--recheck ]; then
     config=$(sh config.status --config 2>/dev/null)
 fi
 
-mkdir -p autoconf autoconf/aux config
+mkdir -p autoconf autoconf/helpers config
 autolib="`automake --print-libdir`"
 for prg in install-sh compile config.guess config.sub; do
-    cp -f "$autolib"/"$prg" autoconf/aux
+    cp -f "$autolib"/"$prg" autoconf/helpers
 done
 rm -f autoconf/aclocal.m4
 mkdir -p autoconf/m4.old autoconf/m4

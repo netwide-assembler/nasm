@@ -3,8 +3,8 @@ dnl a configure script.
 AC_PREREQ(2.69)
 AC_INIT(config/config.h.in)
 AC_CONFIG_HEADERS(config/config.h)
-
 AC_PREFIX_PROGRAM(nasm)
+AC_CONFIG_AUX_DIR(autoconf/helpers)
 
 dnl Save initial CFLAGS, to see if -g -O2 came from configure or not
 pa_init_cflags="$CFLAGS"
