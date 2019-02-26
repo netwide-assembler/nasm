@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -262,9 +262,12 @@ void saa_fread(struct SAA *s, size_t posn, void *data, size_t len)
 void saa_fwrite(struct SAA *s, size_t posn, const void *data, size_t len)
 {
     size_t ix;
+    size_t padding = 0;
 
-    /* Seek beyond the end of the existing array not supported */
-    nasm_assert(posn <= s->datalen);
+    if (posn > s->datalen) {
+        padding = posn - s->datalen;
+        posn = s->datalen;
+    }
 
     if (likely(s->blk_len == SAA_BLKLEN)) {
         ix = posn >> SAA_BLKSHIFT;
@@ -280,6 +283,9 @@ void saa_fwrite(struct SAA *s, size_t posn, const void *data, size_t len)
         s->wpos = s->blk_len;
         s->wblk--;
     }
+
+    if (padding)
+        saa_wbytes(s, NULL, padding);
 
     saa_wbytes(s, data, len);
 }
