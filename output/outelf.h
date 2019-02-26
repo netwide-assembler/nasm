@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -63,21 +63,13 @@ struct elf_known_section {
 extern const struct elf_known_section elf_known_sections[];
 
 /*
- * Special ELF sections (after the real sections but before debugging ones)
- */
-#define sec_shstrtab            (nsects + 1)
-#define sec_symtab              (nsects + 2)
-#define sec_strtab              (nsects + 3)
-#define sec_numspecial          3
-
-/*
- * Debugging ELF sections (last in the file)
+ * Debugging ELF sections (section indicies starting with sec_debug)
  */
 
 /* stabs */
-#define sec_stab                (nsections-3)
-#define sec_stabstr             (nsections-2)
-#define sec_rel_stab            (nsections-1)
+#define sec_stab                (sec_debug + 0)
+#define sec_stabstr             (sec_debug + 1)
+#define sec_rel_stab            (sec_debug + 2)
 
 /* stabs symbol table format */
 struct stabentry {
@@ -89,16 +81,16 @@ struct stabentry {
 };
 
 /* dwarf */
-#define sec_debug_aranges       (nsections-10)
-#define sec_rela_debug_aranges  (nsections-9)
-#define sec_debug_pubnames      (nsections-8)
-#define sec_debug_info          (nsections-7)
-#define sec_rela_debug_info     (nsections-6)
-#define sec_debug_abbrev        (nsections-5)
-#define sec_debug_line          (nsections-4)
-#define sec_rela_debug_line     (nsections-3)
-#define sec_debug_frame         (nsections-2)
-#define sec_debug_loc           (nsections-1)
+#define sec_debug_aranges       (sec_debug + 0)
+#define sec_rela_debug_aranges  (sec_debug + 1)
+#define sec_debug_pubnames      (sec_debug + 2)
+#define sec_debug_info          (sec_debug + 3)
+#define sec_rela_debug_info     (sec_debug + 4)
+#define sec_debug_abbrev        (sec_debug + 5)
+#define sec_debug_line          (sec_debug + 6)
+#define sec_rela_debug_line     (sec_debug + 7)
+#define sec_debug_frame         (sec_debug + 8)
+#define sec_debug_loc           (sec_debug + 9)
 
 extern uint8_t elf_osabi;
 extern uint8_t elf_abiver;
@@ -137,15 +129,14 @@ struct elf_section {
     uint64_t            len;
     uint64_t            size;
     uint64_t            nrelocs;
-    int32_t             index;		/* NASM index */
+    int32_t             index;		/* NASM index or NO_SEG if internal */
     int			shndx;          /* ELF index */
-    int                 type;           /* SHT_PROGBITS or SHT_NOBITS */
+    int                 type;           /* SHT_* */
     uint64_t            align;          /* alignment: power of two */
     uint64_t            flags;          /* section flags */
     uint64_t		entsize;        /* entry size */
     char                *name;
     struct SAA          *rel;
-    uint64_t             rellen;
     struct elf_reloc    *head;
     struct elf_reloc    **tail;
     struct rbtree       *gsyms;         /* global symbols in section */
