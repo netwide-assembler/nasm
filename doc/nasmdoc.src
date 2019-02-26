@@ -6013,7 +6013,7 @@ qualifiers are:
 \c section .preinit_array preinit_array alloc   noexec  nowrite  pointer
 \c section .init_array    init_array    alloc   noexec  nowrite  pointer
 \c section .fini_array    fini_array    alloc   noexec  nowrite  pointer
-\c section .note          note          noalloc noexec  nowrite  align=1
+\c section .note          note          noalloc noexec  nowrite  align=4
 \c section other          progbits      alloc   noexec  nowrite  align=1
 
 (Any section name other than those in the above table

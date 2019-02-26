@@ -251,7 +251,7 @@ static const struct elf_known_section elf_known_sections[] = {
     { ".preinit_array", SHT_PREINIT_ARRAY, SHF_ALLOC,                   -1, -1 },
     { ".init_array",    SHT_INIT_ARRAY,    SHF_ALLOC,                   -1, -1 },
     { ".fini_array",    SHT_FINI_ARRAY,    SHF_ALLOC,                   -1, -1 },
-    { ".note",          SHT_NOTE,          0,                            1,  0 },
+    { ".note",          SHT_NOTE,          0,                            4,  0 },
     { NULL /*default*/, SHT_PROGBITS,      SHF_ALLOC,                    1,  0 }
 };
 
