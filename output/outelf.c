@@ -228,23 +228,61 @@ static int32_t elf_sym_sect, elf_gottpoff_sect, elf_tlsie_sect;
 uint8_t elf_osabi = 0;      /* Default OSABI = 0 (System V or Linux) */
 uint8_t elf_abiver = 0;     /* Current ABI version */
 
-const struct elf_known_section elf_known_sections[] = {
-    { ".text",    SHT_PROGBITS, SHF_ALLOC|SHF_EXECINSTR,     16 },
-    { ".rodata",  SHT_PROGBITS, SHF_ALLOC,                    4 },
-    { ".lrodata", SHT_PROGBITS, SHF_ALLOC,                    4 },
-    { ".data",    SHT_PROGBITS, SHF_ALLOC|SHF_WRITE,          4 },
-    { ".ldata",   SHT_PROGBITS, SHF_ALLOC|SHF_WRITE,          4 },
-    { ".bss",     SHT_NOBITS,   SHF_ALLOC|SHF_WRITE,          4 },
-    { ".lbss",    SHT_NOBITS,   SHF_ALLOC|SHF_WRITE,          4 },
-    { ".tdata",   SHT_PROGBITS, SHF_ALLOC|SHF_WRITE|SHF_TLS,  4 },
-    { ".tbss",    SHT_NOBITS,   SHF_ALLOC|SHF_WRITE|SHF_TLS,  4 },
-    { ".comment", SHT_PROGBITS, 0,                            1 },
-    { NULL,       SHT_PROGBITS, SHF_ALLOC,                    1 } /* default */
+/* Known sections with nonstandard defaults. -n means n*pointer size. */
+struct elf_known_section {
+    const char *name;   /* Name of section */
+    int type;           /* Section type (SHT_) */
+    uint32_t flags;     /* Section flags (SHF_) */
+    int align;          /* Section alignment */
+    int entsize;	/* Entry size, if applicable */
 };
 
+static const struct elf_known_section elf_known_sections[] = {
+    { ".text",          SHT_PROGBITS,      SHF_ALLOC|SHF_EXECINSTR,     16,  0 },
+    { ".rodata",        SHT_PROGBITS,      SHF_ALLOC,                    4,  0 },
+    { ".lrodata",       SHT_PROGBITS,      SHF_ALLOC,                    4,  0 },
+    { ".data",          SHT_PROGBITS,      SHF_ALLOC|SHF_WRITE,          4,  0 },
+    { ".ldata",         SHT_PROGBITS,      SHF_ALLOC|SHF_WRITE,          4,  0 },
+    { ".bss",           SHT_NOBITS,        SHF_ALLOC|SHF_WRITE,          4,  0 },
+    { ".lbss",          SHT_NOBITS,        SHF_ALLOC|SHF_WRITE,          4,  0 },
+    { ".tdata",         SHT_PROGBITS,      SHF_ALLOC|SHF_WRITE|SHF_TLS,  4,  0 },
+    { ".tbss",          SHT_NOBITS,        SHF_ALLOC|SHF_WRITE|SHF_TLS,  4,  0 },
+    { ".comment",       SHT_PROGBITS,      0,                            1,  0 },
+    { ".preinit_array", SHT_PREINIT_ARRAY, SHF_ALLOC,                   -1, -1 },
+    { ".init_array",    SHT_INIT_ARRAY,    SHF_ALLOC,                   -1, -1 },
+    { ".fini_array",    SHT_FINI_ARRAY,    SHF_ALLOC,                   -1, -1 },
+    { ".note",          SHT_NOTE,          0,                            1,  0 },
+    { NULL /*default*/, SHT_PROGBITS,      SHF_ALLOC,                    1,  0 }
+};
+
+struct size_unit {
+    char name[8];
+    int bytes;
+    int align;
+};
+static const struct size_unit size_units[] =
+{
+    { "byte",     1,  1 },
+    { "word",     2,  2 },
+    { "dword",    4,  4 },
+    { "qword",    8,  8 },
+    { "tword",   10,  2 },
+    { "tbyte",   10,  2 },
+    { "oword",   16, 16 },
+    { "xword",   16, 16 },
+    { "yword",   32, 32 },
+    { "zword",   64, 64 },
+    { "pointer", -1, -1 },
+    { "",         0,  0 }
+};
+
+static inline size_t to_bytes(int val)
+{
+    return (val >= 0) ? (size_t)val : -val * efmt->word;
+}
+
 /* parse section attributes */
-static void elf_section_attrib(char *name, char *attr, int pass,
-                               uint32_t *flags_and, uint32_t *flags_or,
+static void elf_section_attrib(char *name, char *attr, uint32_t *flags_and, uint32_t *flags_or,
                                uint64_t *alignp, uint64_t *entsize, int *type)
 {
     char *opt, *val, *next;
@@ -286,7 +324,8 @@ static void elf_section_attrib(char *name, char *attr, int pass,
         } else if (!nasm_stricmp(opt, "write")) {
             *flags_and  |= SHF_WRITE;
             *flags_or   |= SHF_WRITE;
-        } else if (!nasm_stricmp(opt, "nowrite")) {
+        } else if (!nasm_stricmp(opt, "nowrite") ||
+		   !nasm_stricmp(opt, "readonly")) {
             *flags_and  |= SHF_WRITE;
             *flags_or   &= ~SHF_WRITE;
         } else if (!nasm_stricmp(opt, "tls")) {
@@ -311,52 +350,64 @@ static void elf_section_attrib(char *name, char *attr, int pass,
             *type = SHT_PROGBITS;
         } else if (!nasm_stricmp(opt, "nobits")) {
             *type = SHT_NOBITS;
-        } else if (!nasm_stricmp(opt, "ent") || !nasm_stricmp(opt,"entsize")) {
-            bool err;
-            uint64_t es;
-            if (!val) {
-                nasm_error(ERR_NONFATAL,
-                           "section attribute %s without value specified", opt);
-            } else {
-                es = readnum(val, &err);
-                if (err) {
-                    nasm_error(ERR_NONFATAL,
-                               "invalid value %s for section attribute %s",
-                               val, opt);
-                } else {
-                    *entsize = es;
-                }
-            }
-        } else if (!nasm_stricmp(opt, "byte")) {
-            xalign = *entsize = 1;
-        } else if (!nasm_stricmp(opt, "word")) {
-            xalign = *entsize = 2;
-        } else if (!nasm_stricmp(opt, "dword")) {
-            xalign = *entsize = 4;
-        } else if (!nasm_stricmp(opt, "qword")) {
-            xalign = *entsize = 8;
-        } else if (!nasm_stricmp(opt, "tword")) {
-            *entsize = 10;
-            xalign = 2;
-        } else if (!nasm_stricmp(opt, "oword")) {
-            xalign = *entsize = 16;
-        } else if (!nasm_stricmp(opt, "yword")) {
-            xalign = *entsize = 32;
-        } else if (!nasm_stricmp(opt, "zword")) {
-            xalign = *entsize = 64;
-        } else if (pass == 1) {
-            nasm_error(ERR_WARNING,
-                       "Unknown section attribute '%s' ignored on"
-                       " declaration of section `%s'", opt, name);
+        } else if (!nasm_stricmp(opt, "note")) {
+            *type = SHT_NOTE;
+	} else if (!nasm_stricmp(opt, "preinit_array")) {
+	    *type = SHT_PREINIT_ARRAY;
+	} else if (!nasm_stricmp(opt, "init_array")) {
+	    *type = SHT_INIT_ARRAY;
+	} else if (!nasm_stricmp(opt, "fini_array")) {
+	    *type = SHT_FINI_ARRAY;
+        } else {
+	    uint64_t mult;
+	    size_t l;
+	    const char *a = strchr(opt, '*');
+	    bool err;
+	    const struct size_unit *su;
+
+	    if (a) {
+		l = a - opt - 1;
+		mult = readnum(a+1, &err);
+	    } else {
+		l = strlen(opt);
+		mult = 1;
+	    }
+
+	    for (su = size_units; su->bytes; su++) {
+		if (!nasm_strnicmp(opt, su->name, l))
+		    break;
+	    }
+
+	    if (su->bytes) {
+		*entsize = to_bytes(su->bytes) * mult;
+		xalign = to_bytes(su->align);
+	    } else {
+		/* Unknown attribute */
+		nasm_error(ERR_WARNING|ERR_PASS1,
+			   "unknown section attribute '%s' ignored on"
+			   " declaration of section `%s'", opt, name);
+	    }
         }
         opt = next;
     }
 
-    if (!align)
-        align = xalign;
+    switch (*type) {
+    case SHT_PREINIT_ARRAY:
+    case SHT_INIT_ARRAY:
+    case SHT_FINI_ARRAY:
+	if (!xalign)
+	    xalign = efmt->word;
+	if (!*entsize)
+	    *entsize = efmt->word;
+	break;
+    default:
+	break;
+    }
 
     if (!align)
-        align = SHA_ANY;
+        align = xalign;
+    if (!align)
+	align = SHA_ANY;
 
     *alignp = align;
 }
@@ -618,6 +669,8 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     struct hash_insert hi;
     int type;
 
+    (void)pass;
+
     if (!name) {
         *bits = ofmt->maxbits;
         return def_seg;
@@ -628,8 +681,7 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         *p++ = '\0';
     flags_and = flags_or = type = align = entsize = 0;
 
-    elf_section_attrib(name, p, pass, &flags_and,
-                       &flags_or, &align, &entsize, &type);
+    elf_section_attrib(name, p, &flags_and, &flags_or, &align, &entsize, &type);
 
     hp = hash_find(&section_by_name, name, &hi);
     if (hp) {
@@ -649,7 +701,10 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         }
 
         type = type ? type : ks->type;
-        align = align ? align : ks->align;
+	if (!align)
+	    align = to_bytes(ks->align);
+	if (!entsize)
+	    entsize = to_bytes(ks->entsize);
         flags = (ks->flags & ~flags_and) | flags_or;
 
         s = elf_make_section(name, type, flags, align);
@@ -1035,7 +1090,7 @@ static void elf32_out(int32_t segto, const void *data,
 
     switch (type) {
     case OUT_RESERVE:
-        if (s->type == SHT_PROGBITS) {
+        if (s->type != SHT_NOBITS) {
             nasm_error(ERR_WARNING, "uninitialized space declared in"
                   " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
@@ -1246,7 +1301,7 @@ static void elf64_out(int32_t segto, const void *data,
 
     switch (type) {
     case OUT_RESERVE:
-        if (s->type == SHT_PROGBITS) {
+        if (s->type != SHT_NOBITS) {
             nasm_error(ERR_WARNING, "uninitialized space declared in"
                   " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
@@ -1528,7 +1583,7 @@ static void elfx32_out(int32_t segto, const void *data,
 
     switch (type) {
     case OUT_RESERVE:
-        if (s->type == SHT_PROGBITS) {
+        if (s->type != SHT_NOBITS) {
             nasm_error(ERR_WARNING, "uninitialized space declared in"
                   " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);

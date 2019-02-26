@@ -122,15 +122,14 @@
 \IR{- opunary} \c{-} operator, unary
 \IR{! opunary} \c{!} operator, unary
 \IR{alignment, in bin sections} alignment, in \c{bin} sections
-\IR{alignment, in elf sections} alignment, in \c{elf} sections
+\IR{alignment, in elf sections} alignment, in ELF sections
 \IR{alignment, in win32 sections} alignment, in \c{win32} sections
-\IR{alignment, of elf common variables} alignment, of \c{elf} common
+\IR{alignment, of elf common variables} alignment, of ELF common
 variables
 \IR{alignment, in obj sections} alignment, in \c{obj} sections
 \IR{a.out, bsd version} \c{a.out}, BSD version
 \IR{a.out, linux version} \c{a.out}, Linux version
-\IR{autoconf} Autoconf
-\IR{bin} bin
+\IR{bin} \c{bin} output format
 \IR{bitwise and} bitwise AND
 \IR{bitwise or} bitwise OR
 \IR{bitwise xor} bitwise XOR
@@ -150,8 +149,8 @@ variables
 \IR{codeview} CodeView debugging format
 \IR{common object file format} Common Object File Format
 \IR{common variables, alignment in elf} common variables, alignment
-in \c{elf}
-\IR{common, elf extensions to} \c{COMMON}, \c{elf} extensions to
+in ELF
+\IR{common, elf extensions to} \c{COMMON}, ELF extensions to
 \IR{common, obj extensions to} \c{COMMON}, \c{obj} extensions to
 \IR{declaring structure} declaring structures
 \IR{default-wrt mechanism} default-\c{WRT} mechanism
@@ -165,7 +164,8 @@ in \c{elf}
 \IA{effective address}{effective addresses}
 \IA{effective-address}{effective addresses}
 \IR{elf} ELF
-\IR{elf, 16-bit code and} ELF, 16-bit code and
+\IR{elf, 16-bit code} ELF, 16-bit code
+\IR{elf, debug formats} ELF, debug formats
 \IR{elf shared libraries} ELF, shared libraries
 \IR{elf32} \c{elf32}
 \IR{elf64} \c{elf64}
@@ -181,7 +181,7 @@ in \c{elf}
 \IR{functions, pascal calling convention} functions, Pascal calling
 convention
 \IR{global, aoutb extensions to} \c{GLOBAL}, \c{aoutb} extensions to
-\IR{global, elf extensions to} \c{GLOBAL}, \c{elf} extensions to
+\IR{global, elf extensions to} \c{GLOBAL}, ELF extensions to
 \IR{global, rdf extensions to} \c{GLOBAL}, \c{rdf} extensions to
 \IR{got} GOT
 \IR{got relocations} \c{GOT} relocations
@@ -238,16 +238,16 @@ convention
 Object File Format
 \IR{relocations, pic-specific} relocations, PIC-specific
 \IA{repeating}{repeating code}
-\IR{section alignment, in elf} section alignment, in \c{elf}
+\IR{section alignment, in elf} section alignment, in ELF
 \IR{section alignment, in bin} section alignment, in \c{bin}
 \IR{section alignment, in obj} section alignment, in \c{obj}
 \IR{section alignment, in win32} section alignment, in \c{win32}
-\IR{section, elf extensions to} \c{SECTION}, \c{elf} extensions to
+\IR{section, elf extensions to} \c{SECTION}, ELF extensions to
 \IR{section, macho extensions to} \c{SECTION}, \c{macho} extensions to
 \IR{section, win32 extensions to} \c{SECTION}, \c{win32} extensions to
 \IR{segment alignment, in bin} segment alignment, in \c{bin}
 \IR{segment alignment, in obj} segment alignment, in \c{obj}
-\IR{segment, obj extensions to} \c{SEGMENT}, \c{elf} extensions to
+\IR{segment, obj extensions to} \c{SEGMENT}, ELF extensions to
 \IR{segment names, borland pascal} segment names, Borland Pascal
 \IR{shift command} \c{shift} command
 \IA{sib}{sib byte}
@@ -256,11 +256,10 @@ Object File Format
 \IA{sectalign}{sectalign}
 \IR{solaris x86} Solaris x86
 \IA{standard section names}{standardized section names}
-\IR{strings, elf attribute} \c{strings}
 \IR{symbols, exporting from dlls} symbols, exporting from DLLs
 \IR{symbols, importing from dlls} symbols, importing from DLLs
 \IR{test subdirectory} \c{test} subdirectory
-\IR{thread local storage in elf} thread local storage, in \c{elf}
+\IR{thread local storage in elf} thread local storage, in ELF
 \IR{thread local storage in mach-o} thread local storage, in \c{macho}
 \IR{tlink} \c{TLINK}
 \IR{underscore, in c symbols} underscore, in C symbols
@@ -298,16 +297,16 @@ Object File Format
 
 The Netwide Assembler, NASM, is an 80x86 and x86-64 assembler designed
 for portability and modularity. It supports a range of object file
-formats, including Linux and \c{*BSD} \c{a.out}, \c{ELF}, \c{COFF},
-\c{Mach-O}, 16-bit and 32-bit \c{OBJ} (OMF) format, \c{Win32} and
-\c{Win64}. It will also output plain binary files, Intel hex and
+formats, including Linux and *BSD \c{a.out}, ELF, Mach-O, 16-bit and
+32-bit \c{.obj} (OMF) format, COFF (including its Win32 and Win64
+variants.) It can also output plain binary files, Intel hex and
 Motorola S-Record formats. Its syntax is designed to be simple and
 easy to understand, similar to the syntax in the Intel Software
 Developer Manual with minimal complexity. It supports all currently
 known x86 architectural extensions, and has strong support for macros.
 
-NASM also comes with a set of utilities for handling the \c{RDOFF}
-custom object-file format.
+NASM also comes with a set of utilities for handling its own RDOFF2
+object-file format.
 
 \S{legal} \i{License} Conditions
 
@@ -355,7 +354,7 @@ For example,
 
 \c nasm -f elf myfile.asm
 
-will assemble \c{myfile.asm} into an \c{ELF} object file \c{myfile.o}. And
+will assemble \c{myfile.asm} into an ELF object file \c{myfile.o}. And
 
 \c nasm -f bin myfile.asm -o myfile.com
 
@@ -377,7 +376,7 @@ The option \c{-hf} will also list the available output file formats,
 and what they are.
 
 If you use Linux but aren't sure whether your system is \c{a.out}
-or \c{ELF}, type
+or ELF, type
 
 \c file nasm
 
@@ -4376,7 +4375,7 @@ operating in 16-bit mode, 32-bit mode or 64-bit mode. The syntax is
 \c{BITS XX}, where XX is 16, 32 or 64.
 
 In most cases, you should not need to use \c{BITS} explicitly. The
-\c{aout}, \c{coff}, \c{elf}, \c{macho}, \c{win32} and \c{win64}
+\c{aout}, \c{coff}, \c{elf*}, \c{macho}, \c{win32} and \c{win64}
 object formats, which are designed for use in 32-bit or 64-bit
 operating systems, all cause NASM to select 32-bit or 64-bit mode,
 respectively, by default. The \c{obj} object format allows you
@@ -4653,9 +4652,8 @@ refer to symbols which \e{are} defined in the same module as the
 \c         ; some code
 
 \c{GLOBAL}, like \c{EXTERN}, allows object formats to define private
-extensions by means of a colon. The \c{elf} object format, for
-example, lets you specify whether global data items are functions or
-data:
+extensions by means of a colon. The ELF object format, for example,
+lets you specify whether global data items are functions or data:
 
 \c global  hashlookup:function, hashtable:data
 
@@ -4686,8 +4684,8 @@ at the same piece of memory.
 
 Like \c{GLOBAL} and \c{EXTERN}, \c{COMMON} supports object-format
 specific extensions. For example, the \c{obj} format allows common
-variables to be NEAR or FAR, and the \c{elf} format allows you to
-specify the alignment requirements of a common variable:
+variables to be NEAR or FAR, and the ELF format allows you to specify
+the alignment requirements of a common variable:
 
 \c common  commvar  4:near  ; works in OBJ
 \c common  intarray 100:4   ; works in ELF: 4 byte aligned
@@ -4759,7 +4757,7 @@ For example, when mangling local symbols via the generic namespace:
 This is useful when the directive is needed to be output format
 agnostic.
 
-The example is also euquivalent to this, when the output format is \c{elf}:
+The example is also euquivalent to this, when the output format is ELF:
 
 \c      %pragma elf gprefix _
 
@@ -5907,8 +5905,8 @@ Format} Object Files
 The \c{elf32}, \c{elf64} and \c{elfx32} output formats generate
 \c{ELF32 and ELF64} (Executable and Linkable Format) object files, as
 used by Linux as well as \i{Unix System V}, including \i{Solaris x86},
-\i{UnixWare} and \i{SCO Unix}. \c{elf} provides a default output
-file-name extension of \c{.o}.  \c{elf} is a synonym for \c{elf32}.
+\i{UnixWare} and \i{SCO Unix}. ELF provides a default output
+file-name extension of \c{.o}. \c{elf} is a synonym for \c{elf32}.
 
 The \c{elfx32} format is used for the \i{x32} ABI, which is a 32-bit
 ABI with the CPU in 64-bit mode.
@@ -5921,8 +5919,8 @@ target operating system (OSABI).  This field can be set by using the
 system. If this directive is not used, the default value will be "UNIX
 System V ABI" (0) which will work on most systems which support ELF.
 
-\S{elfsect} \c{elf} extensions to the \c{SECTION} Directive
-\I{SECTION, elf extensions to}
+\S{elfsect} ELF extensions to the \c{SECTION} Directive
+\I{SECTION, ELF extensions to}
 
 Like the \c{obj} format, \c{elf} allows you to specify additional
 information on the \c{SECTION} directive line, to control the type
@@ -5947,23 +5945,42 @@ not.
 
 \b \i\c{progbits} defines the section to be one with explicit contents
 stored in the object file: an ordinary code or data section, for
-example, \i\c{nobits} defines the section to be one with no explicit
+example.
+
+\b \i\c{nobits} defines the section to be one with no explicit
 contents given, such as a BSS section.
 
-\b \c{align=}, used with a trailing number as in \c{obj}, gives the
+\b \i\c{note} indicates that this section contains ELF notes. The
+content of ELF notes are specified using normal assembly instructions;
+it is up to the programmer to ensure these are valid ELF notes.
+
+\b \i\c{preinit_array} indicates that this section contains function
+addresses to be called before any other initialization has happened.
+
+\b \i\c{init_array} indicates that this section contains function
+addresses to be called during initialization.
+
+\b \i\c{fini_array} indicates that this section contains function
+pointers to be called during termination.
+
+\b \I{align, ELF attribute}\c{align=}, used with a trailing number as in \c{obj}, gives the
 \I{section alignment, in elf}\I{alignment, in elf sections}alignment
 requirements of the section.
 
-\b \c{ent=} or \c{entsize=} specifies the fundamental data item size
-for a section which contains either fixed-sized data structures or
-strings; this is generally used with the \c{merge} attribute (see
-below.)
-
 \b \c{byte}, \c{word}, \c{dword}, \c{qword}, \c{tword}, \c{oword},
-\c{yword}, or \c{zword} are both shorthand for \c{entsize=}, but also
-sets the default alignment.
+\c{yword}, or \c{zword} with an optional \c{*}\i{multiplier} specify
+the fundamental data item size for a section which contains either
+fixed-sized data structures or strings; it also sets a default
+alignment. This is generally used with the \c{strings} and \c{merge}
+attributes (see below.) For example \c{byte*4} defines a unit size of
+4 bytes, with a default alignment of 1; \c{dword} also defines a unit
+size of 4 bytes, but with a default alignment of 4. The \c{align=}
+attribute, if specified, overrides this default alignment.
 
-\b \i{strings, ELF attribute}\c{strings} indicate that this section
+\b \I{pointer, ELF attribute}\c{pointer} is equivalent to \c{dword}
+for \c{elf32} or \c{elfx32}, and \c{qword} for \c{elf64}.
+
+\b \I{strings, ELF attribute}\c{strings} indicate that this section
 contains exclusively null-terminated strings. By default these are
 assumed to be byte strings, but a size specifier can be used to
 override that.
@@ -5983,24 +6000,28 @@ qualifiers are:
 \I\c{.text} \I\c{.rodata} \I\c{.lrodata} \I\c{.data} \I\c{.ldata}
 \I\c{.bss} \I\c{.lbss} \I\c{.tdata} \I\c{.tbss} \I\c\{.comment}
 
-\c section .text    progbits  alloc   exec    nowrite  align=16
-\c section .rodata  progbits  alloc   noexec  nowrite  align=4
-\c section .lrodata progbits  alloc   noexec  nowrite  align=4
-\c section .data    progbits  alloc   noexec  write    align=4
-\c section .ldata   progbits  alloc   noexec  write    align=4
-\c section .bss     nobits    alloc   noexec  write    align=4
-\c section .lbss    nobits    alloc   noexec  write    align=4
-\c section .tdata   progbits  alloc   noexec  write    align=4    tls
-\c section .tbss    nobits    alloc   noexec  write    align=4    tls
-\c section .comment progbits  noalloc noexec  nowrite  align=1
-\c section other    progbits  alloc   noexec  nowrite  align=1
+\c section .text          progbits      alloc   exec    nowrite  align=16
+\c section .rodata        progbits      alloc   noexec  nowrite  align=4
+\c section .lrodata       progbits      alloc   noexec  nowrite  align=4
+\c section .data          progbits      alloc   noexec  write    align=4
+\c section .ldata         progbits      alloc   noexec  write    align=4
+\c section .bss           nobits        alloc   noexec  write    align=4
+\c section .lbss          nobits        alloc   noexec  write    align=4
+\c section .tdata         progbits      alloc   noexec  write    align=4   tls
+\c section .tbss          nobits        alloc   noexec  write    align=4   tls
+\c section .comment       progbits      noalloc noexec  nowrite  align=1
+\c section .preinit_array preinit_array alloc   noexec  nowrite  pointer
+\c section .init_array    init_array    alloc   noexec  nowrite  pointer
+\c section .fini_array    fini_array    alloc   noexec  nowrite  pointer
+\c section .note          note          noalloc noexec  nowrite  align=1
+\c section other          progbits      alloc   noexec  nowrite  align=1
 
 (Any section name other than those in the above table
  is treated by default like \c{other} in the above table.
  Please note that section names are case sensitive.)
 
 
-\S{elfwrt} \i{Position-Independent Code}\I{PIC}: \c{macho} Special
+\S{elfwrt} \i{Position-Independent Code}\I{PIC}: ELF Special
 Symbols and \i\c{WRT}
 
 Since \c{ELF} does not support segment-base references, the \c{WRT}
@@ -6138,7 +6159,7 @@ requires that it be aligned on a 4-byte boundary.
 
 
 \S{elf16} 16-bit code and ELF
-\I{ELF, 16-bit code and}
+\I{ELF, 16-bit code}
 
 The \c{ELF32} specification doesn't provide relocations for 8- and
 16-bit values, but the GNU \c{ld} linker adds these as an extension.
@@ -6148,7 +6169,7 @@ be linked as ELF using GNU \c{ld}. If NASM is used with the
 these relocations is generated.
 
 \S{elfdbg} Debug formats and ELF
-\I{ELF, Debug formats and}
+\I{ELF, debug formats}
 
 ELF provides debug information in \c{STABS} and \c{DWARF} formats.
 Line number information is generated for all executable sections, but please

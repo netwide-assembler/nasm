@@ -53,15 +53,6 @@
 /* this stuff is needed for the dwarf/stabs debugging format */
 #define TY_DEBUGSYMLIN 0x40     /* internal call to debug_out */
 
-/* Known sections with nonstandard defaults */
-struct elf_known_section {
-    const char *name;   /* Name of section */
-    int type;           /* Section type (SHT_) */
-    uint32_t flags;     /* Section flags (SHF_) */
-    uint32_t align;     /* Section alignment */
-};
-extern const struct elf_known_section elf_known_sections[];
-
 /*
  * Debugging ELF sections (section indicies starting with sec_debug)
  */
