@@ -4198,7 +4198,8 @@ again:
                     do {
                         t = tline->next;
                         while (tok_type_(t, TOK_SMAC_END)) {
-                            t->a.mac->in_progress = false;
+                            if (t->a.mac)
+                                t->a.mac->in_progress = false;
                             t->text = NULL;
                             t = tline->next = delete_Token(t);
                         }
@@ -4228,7 +4229,8 @@ again:
                              */
                             t = tline->next;
                             while (tok_type_(t, TOK_SMAC_END)) {
-                                t->a.mac->in_progress = false;
+                                if (t->a.mac)
+                                    t->a.mac->in_progress = false;
                                 t->text = NULL;
                                 t = tline->next = delete_Token(t);
                             }
