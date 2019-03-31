@@ -1,0 +1,204 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{64bit}{Writing 64-bit Code (Unix, Win64)}
+
+This chapter attempts to cover some of the common issues involved when
+writing 64-bit code, to run under \textindex{Win64} or Unix. It covers
+how to write assembly code to interface with 64-bit C routines, and
+how to write position-independent code for shared libraries.
+
+All 64-bit code uses a flat memory model, since segmentation is not
+available in 64-bit mode. The one exception is the \code{FS} and
+\code{GS} registers, which still add their bases.
+
+Position independence in 64-bit mode is significantly simpler, since
+the processor supports \code{RIP}-relative addressing directly; see the
+\code{REL} keyword (\nref{effaddr}). On most 64-bit platforms,
+it is probably desirable to make that the default, using the directive
+\code{DEFAULT REL} (\nref{default}).
+
+64-bit programming is relatively similar to 32-bit programming, but
+of course pointers are 64 bits long; additionally, all existing
+platforms pass arguments in registers rather than on the stack.
+Furthermore, 64-bit platforms use SSE2 by default for floating point.
+Please see the ABI documentation for your platform.
+
+64-bit platforms differ in the sizes of the C/C++ fundamental
+datatypes, not just from 32-bit platforms but from each other. If a
+specific size data type is desired, it is probably best to use the
+types defined in the standard C header \code{<inttypes.h>}.
+
+All known 64-bit platforms except some embedded platforms require that
+the stack is 16-byte aligned at the entry to a function. In order to
+enforce that, the stack pointer (\code{RSP}) needs to be aligned on an
+\code{odd} multiple of 8 bytes before the \code{CALL} instruction.
+
+In 64-bit mode, the default instruction size is still 32 bits. When
+loading a value into a 32-bit register (but not an 8- or 16-bit
+register), the upper 32 bits of the corresponding 64-bit register are
+set to zero.
+
+\xsection{reg64}{Register Names in 64-bit Mode}
+
+NASM uses the following names for general-purpose registers in 64-bit
+mode, for 8-, 16-, 32- and 64-bit references, respectively:
+
+\begin{lstlisting}
+AL/AH, CL/CH, DL/DH, BL/BH, SPL, BPL, SIL, DIL, R8B-R15B
+AX, CX, DX, BX, SP, BP, SI, DI, R8W-R15W
+EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI, R8D-R15D
+RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8-R15
+\end{lstlisting}
+
+This is consistent with the AMD documentation and most other
+assemblers. The Intel documentation, however, uses the names
+\code{R8L-R15L} for 8-bit references to the higher registers. It is
+possible to use those names by definiting them as macros; similarly,
+if one wants to use numeric names for the low 8 registers, define them
+as macros. The standard macro package \code{altreg} (see
+\nref{pkgaltreg}) can be used for this purpose.
+
+\xsection{id64}{Immediates and Displacements in 64-bit Mode}
+
+In 64-bit mode, immediates and displacements are generally only 32
+bits wide. NASM will therefore truncate most displacements and
+immediates to 32 bits.
+
+The only instruction which takes a full \textindex{64-bit immediate} is:
+
+\begin{lstlisting}
+mov reg64,imm64
+\end{lstlisting}
+
+NASM will produce this instruction whenever the programmer uses
+\code{MOV} with an immediate into a 64-bit register. If this is not
+desirable, simply specify the equivalent 32-bit register, which will
+be automatically zero-extended by the processor, or specify the
+immediate as \code{DWORD}:
+
+\begin{lstlisting}
+mov rax,foo         ; 64-bit immediate
+mov rax,qword foo   ; (identical)
+mov eax,foo         ; 32-bit immediate, zero-extended
+mov rax,dword foo   ; 32-bit immediate, sign-extended
+\end{lstlisting}
+
+The length of these instructions are 10, 5 and 7 bytes, respectively.
+
+If optimization is enabled and NASM can determine at assembly time
+that a shorter instruction will suffice, the shorter instruction will
+be emitted unless of course \code{STRICT QWORD} or \code{STRICT DWORD}
+is specified (see \nref{strict}):
+
+\begin{lstlisting}
+mov rax,1               ; Assembles as "mov eax,1" (5 bytes)
+mov rax,strict qword 1  ; Full 10-byte instruction
+mov rax,strict dword 1  ; 7-byte instruction
+mov rax,symbol          ; 10 bytes, not known at assembly time
+lea rax,[rel symbol]    ; 7 bytes, usually preferred by the ABI
+\end{lstlisting}
+
+Note that \code{lea rax,[rel symbol]} is position-independent, whereas
+\code{mov rax,symbol} is not. Most ABIs prefer or even require
+position-independent code in 64-bit mode. However, the \code{MOV}
+instruction is able to reference a symbol anywhere in the 64-bit
+address space, whereas \code{LEA} is only able to access a symbol within
+within 2 GB of the instruction itself (see below.)
+
+The only instructions which take a full \textindex{64-bit displacement}
+is loading or storing, using \code{MOV}, \code{AL}, \code{AX}, \code{EAX}
+or \code{RAX} (but no other registers) to an absolute 64-bit address.
+Since this is a relatively rarely used instruction (64-bit code
+generally uses relative addressing), the programmer has to explicitly
+declare the displacement size as \code{ABS QWORD}:
+
+\begin{lstlisting}
+default abs
+
+mov eax,[foo]           ; 32-bit absolute disp, sign-extended
+mov eax,[a32 foo]       ; 32-bit absolute disp, zero-extended
+mov eax,[qword foo]     ; 64-bit absolute disp
+
+default rel
+
+mov eax,[foo]           ; 32-bit relative disp
+mov eax,[a32 foo]       ; d:o, address truncated to 32 bits(!)
+mov eax,[qword foo]     ; error
+mov eax,[abs qword foo] ; 64-bit absolute disp
+\end{lstlisting}
+
+A sign-extended absolute displacement can access from -2 GB to +2 GB;
+a zero-extended absolute displacement can access from 0 to 4 GB.
+
+\xsection{unix64}{Interfacing to 64-bit C Programs (Unix)}
+
+On Unix, the 64-bit ABI as well as the x32 ABI (32-bit ABI with the
+CPU in 64-bit mode) is defined by the documents at
+\href{http://www.nasm.us/abi/unix64}{http://www.nasm.us/abi/unix64}
+
+Although written for AT\&T-syntax assembly, the concepts apply equally
+well for NASM-style assembly. What follows is a simplified summary.
+
+The first six integer arguments (from the left) are passed in \code{RDI},
+\code{RSI}, \code{RDX}, \code{RCX}, \code{R8}, and \code{R9}, in that
+order. Additional integer arguments are passed on the stack. These
+registers, plus \code{RAX}, \code{R10} and \code{R11} are destroyed
+by function calls, and thus are available for use by the function
+without saving.
+
+Integer return values are passed in \code{RAX} and \code{RDX},
+in that order.
+
+Floating point is done using SSE registers, except for \code{long double},
+which is 80 bits (\code{TWORD}) on most platforms (Android is
+one exception; there \code{long double} is 64 bits and treated the same
+as \code{double}.) Floating-point arguments are passed in \code{XMM0} to
+\code{XMM7}; return is \code{XMM0} and \code{XMM1}. \code{long double}
+are passed on the stack, and returned in \code{ST0} and \code{ST1}.
+
+All SSE and x87 registers are destroyed by function calls.
+
+On 64-bit Unix, \code{long} is 64 bits.
+
+Integer and SSE register arguments are counted separately, so
+for the case of
+
+\begin{lstlisting}
+void foo(long a, double b, int c)
+\end{lstlisting}
+
+\code{a} is passed in \code{RDI}, \code{b} in \code{XMM0},
+and \code{c} in \code{ESI}.
+
+\xsection{win64}{Interfacing to 64-bit C Programs (Win64)}
+
+The Win64 ABI is described by the document at
+\href{http://www.nasm.us/abi/win64}{http://www.nasm.us/abi/win64}
+
+What follows is a simplified summary.
+
+The first four integer arguments are passed in \code{RCX}, \code{RDX},
+\code{R8} and \code{R9}, in that order. Additional integer arguments are
+passed on the stack. These registers, plus \code{RAX}, \code{R10} and
+\code{R11} are destroyed by function calls, and thus are available for
+use by the function without saving.
+
+Integer return values are passed in \code{RAX} only.
+
+Floating point is done using SSE registers, except for \code{long
+double}. Floating-point arguments are passed in \code{XMM0}
+to \code{XMM3}; return is \code{XMM0} only.
+
+On Win64, \code{long} is 32 bits; \code{long long} or \code{\_int64}
+is 64 bits.
+
+Integer and SSE register arguments are counted together, so
+for the case of
+
+\begin{lstlisting}
+void foo(long long a, double b, int c)
+\end{lstlisting}
+
+\code{a} is passed in \code{RCX}, \code{b} in \code{XMM1},
+and \code{c} in \code{R8D}.

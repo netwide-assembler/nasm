@@ -1,0 +1,902 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{run}{Running NASM}
+
+\xsection{cmdline}{NASM \textindexlc{Command-Line} Syntax}
+
+To assemble a file, you issue a command of the form
+
+\begin{lstlisting}
+nasm -f <format> <filename> [-o <output>]
+\end{lstlisting}
+
+For example,
+
+\begin{lstlisting}
+nasm -f elf myfile.asm
+\end{lstlisting}
+
+will assemble \code{myfile.asm} into an ``ELF'' object
+file \code{myfile.o}. And
+
+\begin{lstlisting}
+nasm -f bin myfile.asm -o myfile.com
+\end{lstlisting}
+
+will assemble ``myfile.asm'' into a raw binary file ``myfile.com''.
+
+To produce a listing file, with the hex codes output from NASM
+displayed on the left of the original sources, use the \code{-l}
+option to give a listing file name, for example:
+
+\begin{lstlisting}
+nasm -f coff myfile.asm -l myfile.lst
+\end{lstlisting}
+
+To get further usage instructions from NASM, try typing
+
+\begin{lstlisting}
+nasm -h
+\end{lstlisting}
+
+The option \code{--help} is an alias for the \c{-h} option.
+
+The option \code{-hf} will also list the available output
+file formats, and what they are.
+
+If you use Linux but aren't sure whether your system is
+``a.out'' or ``ELF'', type
+
+\begin{lstlisting}
+file nasm
+\end{lstlisting}
+
+(in the directory in which you put the NASM binary when you
+installed it). If it says something like
+
+\begin{lstlisting}
+nasm: ELF 32-bit LSB executable i386 (386 and up) Version 1
+\end{lstlisting}
+
+then your system is ``ELF'', and you should use the option \code{-f elf}
+when you want NASM to produce Linux object files. If it says
+
+\begin{lstlisting}
+nasm: Linux/i386 demand-paged executable (QMAGIC)
+\end{lstlisting}
+
+or something similar, your system is ``a.out'', and you should use
+\code{-f aout} instead (Linux ``a.out'' systems have long been
+obsolete, and are rare these days.)
+
+Like Unix compilers and assemblers, NASM is silent unless it
+goes wrong: you won't see any output at all, unless it gives error
+messages.
+
+\xsubsection{opt-o}{The \codeindex{-o} Option: Specifying the
+\textindexlc{Output File Name}}
+
+NASM will normally choose the name of your output file for you;
+precisely how it does this is dependent on the object file format.
+For Microsoft object file formats (\code{obj}, \code{win32}
+and \code{win64}), it will remove the ``.asm'' \textindex{extension}
+(or whatever extension you like to use~-- NASM doesn't care) from your
+source file name and substitute ``.obj''. For Unix object file formats
+(\code{aout}, \code{as86}, \code{coff}, \code{elf32}, \code{elf64},
+\code{elfx32}, \code{ieee}, \code{macho32} and \code{macho64})
+it will substitute ``.o''.
+
+For \code{dbg}, \code{rdf}, \code{ith} and \code{srec}, it will use
+``.dbg'', ``.rdf'', ``.ith'' and ``.srec'', respectively, and for
+the \code{bin} format it will simply remove the extension, so that
+``myfile.asm'' produces the output file ``myfile''.
+
+If the output file already exists, NASM will overwrite it, unless it
+has the same name as the input file, in which case it will give a
+warning and use ``\textindex{nasm.out}'' as the output
+file name instead.
+
+For situations in which this behaviour is unacceptable, NASM
+provides the \code{-o} command-line option, which allows you to
+specify your desired output file name. You invoke \code{-o} by
+following it with the name you wish for the output file, either
+with or without an intervening space. For example:
+
+\begin{lstlisting}
+nasm -f bin program.asm -o program.com
+nasm -f bin driver.asm -o driver.sys
+\end{lstlisting}
+
+Note that this is a small \code{-o}, and is different from a capital
+\code{-O}, which is used to specify the number of optimisation passes
+required. See \nref{opt-O}.
+
+\xsubsection{opt-f}{The \codeindex{-f} Option: Specifying the
+\textindexlc{Output File Format}}
+
+If you do not supply the \code{-f} option to NASM, it will choose an
+output file format for you itself. In the distribution versions of
+NASM, the default is always \codeindex{bin}; if you've compiled
+your own copy of NASM, you can redefine \codeindex{OF\_DEFAULT}
+at compile time and choose what you want the default to be.
+
+Like \code{-o}, the intervening space between \code{-f} and the output
+file format is optional; so \code{-f elf} and \code{-felf} are both valid.
+
+A complete list of the available output file formats can be given by
+issuing the command \codeindex{nasm -hf}.
+
+\xsubsection{opt-l}{The \codeindex{-l} Option: Generating a \textindexlc{Listing File}}
+
+If you supply the \code{-l} option to NASM, followed (with the usual
+optional space) by a file name, NASM will generate a \textindex{source-listing file}
+for you, in which addresses and generated code are listed on the left, and the
+actual source code, with expansions of multi-line macros (except those which
+specifically request no expansion in source listings: see \nref{nolist})
+on the right. For example:
+
+\begin{lstlisting}
+nasm -f elf myfile.asm -l myfile.lst
+\end{lstlisting}
+
+If a list file is selected, you may turn off listing for a section of your
+source with \code{[list -]}, and turn it back on with \code{[list +]},
+(the default, obviously). There is no ``user form'' (without the brackets).
+This can be used to list only sections of interest, avoiding excessively
+long listings.
+
+\xsubsection{opt-M}{The \codeindex{-M} Option: Generate
+\textindexlc{Makefile Dependencies}}
+
+This option can be used to generate makefile dependencies on stdout.
+This can be redirected to a file for further processing. For example:
+
+\begin{lstlisting}
+nasm -M myfile.asm > myfile.dep
+\end{lstlisting}
+
+\xsubsection{opt-MG}{The \codeindex{-MG} Option: Generate
+\textindexlc{Makefile Dependencies}}
+
+This option can be used to generate makefile dependencies on stdout.
+This differs from the \code{-M} option in that if a nonexisting file is
+encountered, it is assumed to be a generated file and is added to the
+dependency list without a prefix.
+
+\xsubsection{opt-MF}{The \codeindex{-MF} Option: Set Makefile Dependency File}
+
+This option can be used with the \code{-M} or \code{-MG} options
+to send the output to a file, rather than to stdout. For example:
+
+\begin{lstlisting}
+nasm -M -MF myfile.dep myfile.asm
+\end{lstlisting}
+
+\xsubsection{opt-MD}{The \codeindex{-MD} Option: Assemble
+and Generate Dependencies}
+
+The \code{-MD} option acts as the combination of the \code{-M}
+and \code{-MF} options (i.e. a filename has to be specified).
+However, unlike the \code{-M} or \code{-MG} options, \code{-MD}
+does \emph{not} inhibit the normal operation of the assembler.
+Use this to automatically generate updated dependencies with
+every assembly session. For example:
+
+\begin{lstlisting}
+nasm -f elf -o myfile.o -MD myfile.dep myfile.asm
+\end{lstlisting}
+
+If the argument after \code{-MD} is an option rather than
+a filename, then the output filename is the first applicable one of:
+
+\begin{itemize}
+    \item{the filename set in the \code{-MF} option;}
+    \item{the output filename from the \code{-o} option with \code{.d} appended;}
+    \item{the input filename with the extension set to \code{.d}.}
+\end{itemize}
+
+\xsubsection{opt-MT}{The \codeindex{-MT} Option:
+Dependency Target Name}
+
+The \code{-MT} option can be used to override the default name of the
+dependency target. This is normally the same as the output filename,
+specified by the \code{-o} option.
+
+\xsubsection{opt-MQ}{The \codeindex{-MQ} Option:
+Dependency Target Name (Quoted)}
+
+The \code{-MQ} option acts as the \code{-MT} option, except
+it tries to quote characters that have special meaning in Makefile
+syntax. This is not foolproof, as not all characters with special
+meaning are quotable in Make. The default output (if no \code{-MT} or
+\code{-MQ} option is specified) is automatically quoted.
+
+\xsubsection{opt-MP}{The \codeindex{-MP} Option:
+Emit phony targets}
+
+When used with any of the dependency generation options, the
+\code{-MP} option causes NASM to emit a phony target without
+dependencies for each header file. This prevents Make from
+complaining if a header file has been removed.
+
+\xsubsection{opt-MW}{The \codeindex{-MW} Option: Watcom Make quoting style}
+
+This option causes NASM to attempt to quote dependencies according to
+Watcom Make conventions rather than POSIX Make conventions (also used
+by most other Make variants). This quotes \code{\#} as \code{\$\#} rather
+than \code{\textbackslash\#}, uses \code{\&} rather than \code{\textbackslash}
+for continuation lines, and encloses filenames containing whitespace in
+double quotes.
+
+\xsubsection{opt-F}{The \codeindex{-F} Option:
+Selecting a \textindexlc{Debug Information Format}}
+
+This option is used to select the format of the debug information
+emitted into the output file, to be used by a debugger (or \emph{will}
+be). Prior to version 2.03.01, the use of this switch did \emph{not}
+enable output of the selected debug info format. Use \codeindex{-g},
+see \nref{opt-g}, to enable output. Versions 2.03.01 and later
+automatically enable \code{-g} if \code{-F} is specified.
+
+A complete list of the available debug file formats for an output
+format can be seen by issuing the command \code{nasm -f <format> -y}.
+Not all output formats currently support debugging output.
+See \nref{opt-y}.
+
+This should not be confused with the \code{-f dbg} output format option,
+see \nref{dbgfmt}.
+
+\xsubsection{opt-g}{The \codeindex{-g} Option:
+Enabling \textindexlc{Debug Information}}
+
+This option can be used to generate debugging information in the specified
+format. See \nref{opt-F}. Using \code{-g} without \code{-F}
+results in emitting debug info in the default format, if any, for the
+selected output format. If no debug information is currently implemented
+in the selected output format, \code{-g} is \emph{silently ignored}.
+
+\xsubsection{opt-X}{The \codeindex{-X} Option:
+Selecting an \textindexlc{Error Reporting Format}}
+
+This option can be used to select an error reporting format for any
+error messages that might be produced by NASM.
+
+Currently, two error reporting formats may be selected. They are
+the \code{-Xvc} option and the \code{-Xgnu} option.
+The GNU format is the default and looks like this:
+
+\begin{lstlisting}
+filename.asm:65: error: specific error message
+\end{lstlisting}
+
+where \code{filename.asm} is the name of the source file in
+which the error was detected, \code{65} is the source file
+line number on which the error was detected, \code{error}
+is the severity of the error (this could be \code{warning}),
+and \code{specific error message} is a more detailed text message
+which should help pinpoint the exact problem.
+
+The other format, specified by \code{-Xvc} is the style used by
+Microsoft Visual C++ and some other programs. It looks like this:
+
+\begin{lstlisting}
+filename.asm(65) : error: specific error message
+\end{lstlisting}
+
+where the only difference is that the line number is in parentheses
+instead of being delimited by colons.
+
+See also the \code{Visual C++} output format, \nref{win32fmt}.
+
+\xsubsection{opt-Z}{The \codeindex{-Z} Option:
+Send Errors to a File}
+
+Under ``MS-\textindex{DOS}'' it can be difficult (though there are
+ways) to redirect the standard-error output of a program to a file.
+Since NASM usually produces its warning and \textindex{error messages}
+on \codeindex{stderr}, this can make it hard to capture the
+errors if (for example) you want to load them into an editor.
+
+NASM therefore provides the \code{-Z} option, taking a filename argument
+which causes errors to be sent to the specified files rather than standard
+error. Therefore you can \index{redirecting errors}redirect the errors
+into a file by typing
+
+\begin{lstlisting}
+nasm -Z myfile.err -f obj myfile.asm
+\end{lstlisting}
+
+In earlier versions of NASM, this option was called \code{-E},
+but it was changed since \code{-E} is an option conventionally
+used for preprocessing only, with disastrous results.
+See \nref{opt-E}.
+
+\xsubsection{opt-s}{The \codeindex{-s} Option:
+Send Errors to \codeindex{stdout}}
+
+The \code{-s} option redirects \textindexlc{error messages} to
+\code{stdout} rather than \code{stderr}, so it can be redirected
+under ``MS-\textindex{DOS}''. To assemble the file \code{myfile.asm}
+and pipe its output to the \code{more} program, you can type:
+
+\begin{lstlisting}
+nasm -s -f obj myfile.asm | more
+\end{lstlisting}
+
+See also the \code{-Z} option, \nref{opt-Z}.
+
+\xsubsection{opt-i}{The \codeindex{-i}\indexcode{-I} Option:
+Include File Search Directories}
+
+When NASM sees the \codeindex{\%include} or \codeindex{\%pathsearch} directive
+in a source file (see \nref{include}, \nref{pathsearch} or
+\nref{incbin}), it will search for the given file not only in the
+current directory, but also in any directories specified on the command
+line by the use of the \code{-i} option. Therefore you can include files
+from a \textindex{macro library}, for example, by typing
+
+\begin{lstlisting}
+nasm -ic:\macrolib\ -f obj myfile.asm
+\end{lstlisting}
+
+(As usual, a space between \code{-i} and the path name is allowed, and
+optional).
+
+Prior NASM 2.14 a path provided in the option has been considered as
+a verbatim copy and providing a path separator been up to a caller.
+One could implicitly concatenate a search path together with a filename.
+Still this was rather a trick than something useful. Now the trailing
+path separator is made to always present, thus \code{-ifoo} will be
+considered as the \code{-ifoo/} directory.
+
+If you want to define a \emph{standard} \textindex{include search path},
+similar to \code{/usr/include} on Unix systems, you should place one or
+more \code{-i} directives in the \code{NASMENV} environment variable (see
+\nref{nasmenv}).
+
+For Makefile compatibility with many C compilers, this option can also
+be specified as \code{-I}.
+
+\xsubsection{opt-p}{The \codeindex{-p}\indexcode{-P} Option:
+Pre-Include a File}
+\index{pre-including files}
+
+\indexcode{\%include}NASM allows you to specify files to be \emph{pre-included} into
+your source file, by the use of the \code{-p} option. So running
+
+\begin{lstlisting}
+nasm myfile.asm -p myinc.inc
+\end{lstlisting}
+
+is equivalent to running \code{nasm myfile.asm} and placing the
+directive \code{\%include "myinc.inc"} at the start of the file.
+
+\code{--include} option is also accepted.
+
+For consistency with the \code{-I}, \code{-D} and \code{-U} options,
+this option can also be specified as \code{-P}.
+
+\xsubsection{opt-d}{The \codeindex{-d}\indexcode{-D} Option:
+Pre-Define a Macro}
+\index{pre-defining macros}
+
+\indexcode{\%define}Just as the \code{-p} option gives an alternative to placing
+\code{\%include} directives at the start of a source file, the \code{-d}
+option gives an alternative to placing a \code{\%define} directive. You
+could code
+
+\begin{lstlisting}
+nasm myfile.asm -dFOO=100
+\end{lstlisting}
+
+as an alternative to placing the directive
+
+\begin{lstlisting}
+%define FOO 100
+\end{lstlisting}
+
+at the start of the file. You can miss off the macro value, as well:
+the option \code{-dFOO} is equivalent to coding \code{\%define FOO}.
+This form of the directive may be useful for selecting \textindex{assembly-time
+options} which are then tested using \code{\%ifdef}, for example \code{-dDEBUG}.
+
+For Makefile compatibility with many C compilers, this option can also
+be specified as \code{-D}.
+
+\xsubsection{opt-u}{The \codeindex{-u}\indexcode{-U} Option:
+Undefine a Macro}
+\index{undefining macros}
+
+\indexcode{\%undef}The \code{-u} option undefines a macro that would otherwise
+have been pre-defined, either automatically or by a \code{-p} or \code{-d}
+option specified earlier on the command lines.
+
+For example, the following command line:
+
+\begin{lstlisting}
+nasm myfile.asm -dFOO=100 -uFOO
+\end{lstlisting}
+
+would result in \code{FOO} \emph{not} being a predefined macro in the
+program. This is useful to override options specified at a different
+point in a Makefile.
+
+For Makefile compatibility with many C compilers, this option can also
+be specified as \code{-U}.
+
+\xsubsection{opt-E}{The \codeindex{-E}\indexcode{-e} Option: Preprocess Only}
+
+NASM allows the \textindex{preprocessor} to be run on its own, up to a
+point. Using the \code{-E} option (which requires no arguments) will
+cause NASM to preprocess its input file, expand all the macro references,
+remove all the comments and preprocessor directives, and print the resulting
+file on standard output (or save it to a file, if the \code{-o} option
+is also used).
+
+This option cannot be applied to programs which require the
+preprocessor to evaluate \index{preprocessor expressions}
+\textindex{expressions} which depend on the values of symbols:
+so code such as
+
+\begin{lstlisting}
+%assign tablesize ($-tablestart)
+\end{lstlisting}
+
+will cause an error in \textindex{preprocess-only mode}.
+
+For compatiblity with older version of NASM, this option can also be
+written \code{-e}. \code{-E} in older versions of NASM was the equivalent
+of the current \code{-Z} option, \nref{opt-Z}.
+
+\xsubsection{opt-a}{The \codeindex{-a} Option: Don't Preprocess At All}
+
+If NASM is being used as the back end to a compiler, it might be
+desirable to \index{suppressing preprocessing}suppress preprocessing
+completely and assume the compiler has already done it, to save time
+and increase compilation speeds. The \code{-a} option, requiring no
+argument, instructs NASM to replace its powerful \textindex{preprocessor}
+with a \textindex{stub preprocessor} which does nothing.
+
+\xsubsection{opt-O}{The \codeindex{-O} Option: Specifying
+\textindexlc{Multipass Optimization}}
+
+Using the \code{-O} option, you can tell NASM to carry out different
+levels of optimization. Multiple flags can be specified after the
+\code{-O} options, some of which can be combined in a single option,
+e.g. \code{-Oxv}.
+
+\begin{itemize}
+    \item{\code{-O0}: No optimization. All operands take their
+        long forms, if a short form is not specified, except conditional
+        jumps. This is intended to match NASM 0.98 behavior.}
+
+    \item{\code{-O1}: Minimal optimization. As above, but immediate
+        operands which will fit in a signed byte are optimized,
+        unless the long form is specified. Conditional jumps default
+        to the long form unless otherwise specified.}
+
+    \item{\code{-Ox} (where \code{x} is the actual letter \code{x}):
+        Multipass optimization. Minimize branch offsets and signed immediate
+        bytes, overriding size specification unless the \code{strict} keyword
+        has been used (see \nref{strict}). For compatibility with earlier
+        releases, the letter \code{x} may also be any number greater than
+        one. This number has no effect on the actual number of passes.}
+
+    \item{\code{-Ov}: At the end of assembly, print the number of passes
+        actually executed.}
+\end{itemize}
+
+The \code{-Ox} mode is recommended for most uses, and is the default
+since NASM 2.09.
+
+Note that this is a capital \code{O}, and is different from a small \code{o},
+which is used to specify the output file name. See \nref{opt-o}.
+
+\xsubsection{opt-t}{The \codeindex{-t} Option: Enable TASM Compatibility Mode}
+
+NASM includes a limited form of compatibility with Borland's \textindex{TASM}.
+When NASM's \code{-t} option is used, the following changes are made:
+
+\begin{itemize}
+    \item{local labels may be prefixed with \code{@@} instead of \code{.};}
+
+    \item{size override is supported within brackets. In TASM compatible mode,
+        a size override inside square brackets changes the size of the operand,
+        and not the address type of the operand as it does in NASM syntax. E.g.
+        \code{mov eax,[DWORD val]} is valid syntax in TASM compatibility mode.
+        Note that you lose the ability to override the default address type for
+        the instruction;}
+
+    \item{unprefixed forms of some directives supported (\code{arg}, \code{elif},
+        \code{else}, \code{endif}, \code{if}, \code{ifdef}, \code{ifdifi},
+        \code{ifndef}, \code{include}, \code{local}).}
+\end{itemize}
+
+\xsubsection{opt-w}{The \codeindex{-w} and \codeindex{-W} Options:
+Enable or Disable Assembly \textindexlc{Warnings}}
+
+NASM can observe many conditions during the course of assembly which
+are worth mentioning to the user, but not a sufficiently severe
+error to justify NASM refusing to generate an output file. These
+conditions are reported like errors, but come up with the word
+``warning'' before the message. Warnings do not prevent NASM from
+generating an output file and returning a success status to the
+operating system.
+
+Some conditions are even less severe than that: they are only
+sometimes worth mentioning to the user. Therefore NASM supports the
+\code{-w} command-line option, which enables or disables certain
+classes of assembly warning. Such warning classes are described by a
+name, for example \code{orphan-labels}; you can enable warnings of
+this class by the command-line option \code{-w+orphan-labels} and
+disable it by \code{-w-orphan-labels}.
+
+The current \textindex{warning classes} are:
+\begin{itemize}
+
+	\item \codeindex{other} specifies any warning not otherwise
+	specified in any class. Enabled by default.
+
+	\item \codeindex{macro-params} covers warnings about
+	\textindex{multi-line macros} being invoked with the wrong number
+	of parameters. Enabled by default, see \nref{mlmacover}
+	for an example of why you might want to disable it.
+
+	\item \codeindex{macro-selfref} warns if a macro references itself.
+	Disabled by default.
+
+	\item \codeindex{macro-defaults} warns when a macro has more
+	default parameters than optional parameters. Enabled by default,
+	see \nref{mlmacdef} for why you might want to disable it.
+
+	\item \codeindex{orphan-labels} covers warnings about source lines
+	which contain no instruction but define a label without a trailing colon.
+	NASM warns about this somewhat obscure condition by default,
+	see \nref{syntax} for more information.
+
+	\item \codeindex{number-overflow} covers warnings about numeric
+	constants which don't fit in 64 bits. Enabled by default.
+
+	\item \codeindex{gnu-elf-extensions} warns if 8-bit or 16-bit
+	relocations are used in \code{-f elf} format. The GNU extensions
+	allow this. Disabled by default.
+
+	\item \codeindex{float-overflow} warns about floating point overflow.
+	Enabled by default.
+
+	\item \codeindex{float-denorm} warns about floating point denormals.
+	Disabled by default.
+
+	\item \codeindex{float-underflow} warns about floating point underflow.
+	Disabled by default.
+
+	\item \codeindex{float-toolong} warns about too many digits in
+	floating-point numbers. Enabled by default.
+
+	\item \codeindex{user} controls \code{\%warning} directives (see
+	\nref{pperror}). Enabled by default.
+
+	\item \codeindex{lock} warns about \code{LOCK} prefixes on unlockable
+	instructions. Enabled by default.
+
+	\item \codeindex{hle} warns about invalid use of the HLE \code{XACQUIRE}
+	or \code{XRELEASE} prefixes. Enabled by default.
+
+	\item \codeindex{bnd} warns about ineffective use of the \code{BND}
+	prefix when a relaxed form of jmp instruction becomes jmp short form.
+	Enabled by default.
+
+	\item \codeindex{zext-reloc} warns that a relocation has been
+	zero-extended due to limitations in the output format. Enabled by default.
+
+	\item \codeindex{ptr} warns about keywords used in other assemblers that might
+	indicate a mistake in the source code. Currently only the MASM
+	\code{PTR} keyword is recognized. Enabled by default.
+
+	\item \codeindex{bad-pragma} warns about a malformed or otherwise unparsable
+	\code{\%pragma} directive. Disabled by default.
+
+	\item \codeindex{unknown-pragma} warns about an unknown \code{\%pragma} directive.
+	This is not yet implemented. Disabled by default.
+
+	\item \codeindex{not-my-pragma} warns about a \code{\%pragma} directive which is
+	not applicable to this particular assembly session. This is not yet
+	implemented. Disabled by default.
+
+	\item \codeindex{unknown-warning} warns about a \code{-w} or \code{-W} option or a
+	\code{[WARNING]} directive that contains an unknown warning name or is
+	otherwise not possible to process. Disabled by default.
+
+	\item \codeindex{all} is an alias for \emph{all} suppressible warning classes.
+	Thus, \code{-w+all} enables all available warnings, and \code{-w-all}
+	disables warnings entirely (since NASM 2.13).
+\end{itemize}
+
+Since version 2.00, NASM has also supported the \code{gcc}-like syntax
+\code{-Wwarning-class} and \code{-Wno-warning-class} instead of
+\code{-w+warning-class} and \code{-w-warning-class}, respectively; both
+syntaxes work identically.
+
+The option \code{-w+error} or \codeindex{-Werror} can be used to treat warnings
+as errors. This can be controlled on a per warning class basis
+(\code{-w+error=}\emph{warning-class} or \code{-Werror=}\emph{warning-class});
+if no \emph{warning-class} is specified NASM treats it as
+\code{-w+error=all}; the same applies to \code{-w-error} or
+\codeindex{-Wno-error}, of course.
+
+In addition, you can control warnings in the source code itself, using
+the \codeindex{[WARNING]} directive. See \nref{asmdir-warning}.
+
+\xsubsection{opt-v}{The \codeindex{-v} Option: Display \textindexlc{Version} Info}
+
+Typing \code{NASM -v} will display the version of NASM which you are using,
+and the date on which it was compiled.
+
+You will need the version number if you report a bug.
+
+For command-line compatibility with Yasm, the form \codeindex{--v} is also
+accepted for this option starting in NASM version 2.11.05.
+
+\xsubsection{opt-y}{The \codeindex{-y} Option: Display Available Debug Info Formats}
+
+Typing \code{nasm -f <option> -y} will display a list of the available
+debug info formats for the given output format. The default format
+is indicated by an asterisk. For example:
+
+\begin{lstlisting}
+nasm -f elf -y
+
+valid debug formats for 'elf32' output format are
+('*' denotes default):
+* stabs     ELF32 (i386) stabs debug format for Linux
+  dwarf     elf32 (i386) dwarf debug format for Linux
+\end{lstlisting}
+
+\xsubsection{opt-pfix}{The \codeindex{--(g|l)prefix}, \codeindex{--(g|l)postfix} Options}
+
+The \code{--(g)prefix} options prepend the given argument
+to all \code{extern}, \code{common}, \code{static}, and
+\code{global} symbols, and the \code{--lprefix} option prepends
+to all other symbols. Similarly, \code{--(g)postfix} and \code{--lpostfix}
+options append the argument in the exactly same way as the \code{--xxprefix}
+options does.
+
+Running this:
+
+\begin{lstlisting}
+nasm -f macho --gprefix _
+\end{lstlisting}
+
+is equivalent to place the directive with \code{\%pragma macho gprefix \_}
+at the start of the file (\nref{mangling}). It will prepend the underscore
+to all global and external variables, as C requires it in some, but not all,
+system calling conventions.
+
+\xsubsection{opt-pragma}{The \codeindex{--pragma} Option}
+
+NASM accepts an argument as \code{\%pragma} option, which is like placing
+a \code{\%pragma} preprocess statement at the beginning of the source.
+Running this:
+
+\begin{lstlisting}
+nasm -f macho --pragma "macho gprefix _"
+\end{lstlisting}
+
+is equivalent to the example in \nref{opt-pfix}.
+
+\xsubsection{opt-before}{The \codeindex{--before} Option}
+
+A preprocess statement can be accepted with this option. The example
+shown in \nref{opt-pragma} is the same as running this:
+
+\begin{lstlisting}
+nasm -f macho --before "%pragma macho gprefix _"
+\end{lstlisting}
+
+\xsubsection{opt-limit}{The \codeindex{--limit-X} Option}
+
+This option allows user to setup various maximum values for these:
+
+\begin{itemize}
+    \item{\code{--limit-passes}: Number of maximum allowed passes. Default is
+        effectively unlimited.}
+
+    \item{\code{--limit-stalled-passes}: Maximum number of allowed unfinished
+        passes. Default is 1000.}
+
+    \item{\code{--limit-macro-levels}: Define maximum depth of macro expansion
+        (in preprocess). Default is 1000000.}
+
+    \item{\code{--limit-rep}: Maximum number of allowed preprocessor loop, defined
+        under \code{\%rep}. Default is 1000000.}
+
+    \item{\code{--limit-eval}: This number sets the boundary condition of allowed
+        expression length. Default is 1000000.}
+
+    \item{\code{--limit-lines}: Total number of source lines as allowed to be
+        processed. Default is 2000000000.}
+\end{itemize}
+
+In example, running this limits the maximum line count to be 1000.
+
+\begin{lstlisting}
+nasm --limit-lines 1000
+\end{lstlisting}
+
+\xsubsection{opt-keep-all}{The \codeindex{--keep-all} Option}
+
+This option prevents NASM from deleting any output files even if an
+error happens.
+
+\xsubsection{opt-no-line}{The \codeindex{--no-line} Option}
+
+If this option is given, all \codeindex{\%line} directives in the source code
+are ignored. This can be useful for debugging already preprocessed
+code. See \nref{line}.
+
+\xsubsection{nasmenv}{The \codeindex{NASMENV} \textindex{Environment} Variable}
+
+If you define an environment variable called \code{NASMENV}, the program
+will interpret it as a list of extra command-line options, which are
+processed before the real command line. You can use this to define
+standard search directories for include files, by putting \code{-i}
+options in the \code{NASMENV} variable.
+
+The value of the variable is split up at white space, so that the
+value \code{-s -ic:\textbackslash nasmlib\textbackslash} will be
+treated as two separate options. However, that means that the value
+\code{-dNAME="my name"} won't do what you might want, because it
+will be split at the space and the NASM command-line processing
+will get confused by the two nonsensical words \code{-dNAME="my}
+and \code{name"}.
+
+To get round this, NASM provides a feature whereby, if you begin the
+\code{NASMENV} environment variable with some character that isn't
+a minus sign, then NASM will treat this character as the
+\textindex{separator character} for options. So setting the \code{NASMENV}
+variable to the value \code{!-s!-ic:\textbackslash nasmlib\textbackslash}
+is equivalent to setting it to \code{-s -ic:\textbackslash nasmlib\textbackslash},
+but \code{!-dNAME="my name"} will work.
+
+This environment variable was previously called \code{NASM}. This was
+changed with version 0.98.31.
+
+\xsection{qstart}{\textindex{Quick Start} for \textindex{MASM} Users}
+
+If you're used to writing programs with MASM, or with \textindex{TASM} in
+MASM-compatible (non-Ideal) mode, or with \textindex{a86}, this section
+attempts to outline the major differences between MASM's syntax and
+NASM's. If you're not already used to MASM, it's probably worth
+skipping this section.
+
+\xsubsection{qscs}{NASM Is \index{case sensitivity}Case-Sensitive}
+
+One simple difference is that NASM is case-sensitive. It makes a
+difference whether you call your label \code{foo}, \code{Foo} or
+\code{FOO}. If you're assembling to DOS or OS/2 ``.OBJ'' files,
+you can invoke the \codeindex{UPPERCASE} directive (documented in
+\nref{objfmt}) to ensure that all symbols exported to other
+code modules are forced to be upper case; but even then, \emph{within}
+a single module, NASM will distinguish between labels differing only
+in case.
+
+\xsubsection{qsbrackets}{NASM Requires \textindexlc{Square Brackets}
+For \textindexlc{Memory References}}
+
+NASM was designed with simplicity of syntax in mind. One of the
+\textindex{design goals} of NASM is that it should be possible,
+as far as is practical, for the user to look at a single line of
+NASM code and tell what opcode is generated by it. You can't do
+this in MASM: if you declare, for example,
+
+\begin{lstlisting}
+foo     equ     1
+bar     dw      2
+\end{lstlisting}
+
+then the two lines of code
+
+\begin{lstlisting}
+mov     ax,foo
+mov     ax,bar
+\end{lstlisting}
+
+generate completely different opcodes, despite having
+identical-looking syntaxes.
+
+NASM avoids this undesirable situation by having a much simpler
+syntax for memory references. The rule is simply that any access to
+the \emph{contents} of a memory location requires square brackets
+around the address, and any access to the \emph{address} of a variable
+doesn't. So an instruction of the form \code{mov ax,foo} will
+\emph{always} refer to a compile-time constant, whether it's an \code{EQU}
+or the address of a variable; and to access the \emph{contents} of the
+variable \code{bar}, you must code \code{mov ax,[bar]}.
+
+This also means that NASM has no need for MASM's \codeindex{OFFSET}
+keyword, since the MASM code \code{mov ax,offset bar} means exactly the
+same thing as NASM's \code{mov ax,bar}. If you're trying to get
+large amounts of MASM code to assemble sensibly under NASM, you
+can always code \code{\%idefine offset} to make the preprocessor
+treat the \code{OFFSET} keyword as a no-op.
+
+This issue is even more confusing in \textindex{a86}, where declaring a
+label with a trailing colon defines it to be a `label' as opposed to
+a `variable' and causes a86 to adopt NASM-style semantics; so in
+a86, \code{mov ax,var} has different behaviour depending on whether
+\code{var} was declared as \code{var: dw 0} (a label) or
+\code{var dw 0} (a word-size variable). NASM is very simple by
+comparison: \emph{everything} is a label.
+
+NASM, in the interests of simplicity, also does not support the
+\textindex{hybrid syntaxes} supported by MASM and its clones, such as
+\code{mov ax,table[bx]}, where a memory reference is denoted by one
+portion outside square brackets and another portion inside. The
+correct syntax for the above is \code{mov ax,[table+bx]}. Likewise,
+\code{mov ax,es:[di]} is wrong and \code{mov ax,[es:di]} is right.
+
+\xsubsection{qstypes}{NASM Doesn't Store \textindexlc{Variable Types}}
+
+NASM, by design, chooses not to remember the types of variables you
+declare. Whereas MASM will remember, on seeing \code{var dw 0}, that
+you declared \code{var} as a word-size variable, and will then be able
+to fill in the \textindex{ambiguity} in the size of the instruction
+\code{mov var,2}, NASM will deliberately remember nothing about
+the symbol \code{var} except where it begins, and so you must
+explicitly code \code{mov word [var],2}.
+
+For this reason, NASM doesn't support the \code{LODS}, \code{MOVS},
+\code{STOS}, \code{SCAS}, \code{CMPS}, \code{INS}, or \code{OUTS}
+instructions, but only supports the forms such as \code{LODSB},
+\code{MOVSW}, and \code{SCASD}, which explicitly specify the size
+of the components of the strings being manipulated.
+
+\xsubsection{qsassume}{NASM Doesn't \codeindex{ASSUME}}
+
+As part of NASM's drive for simplicity, it also does not support the
+\code{ASSUME} directive. NASM will not keep track of what values you
+choose to put in your segment registers, and will never \emph{automatically}
+generate a \textindex{segment override} prefix.
+
+\xsubsection{qsmodel}{NASM Doesn't Support \textindexlc{Memory Models}}
+
+NASM also does not have any directives to support different 16-bit
+memory models. The programmer has to keep track of which functions
+are supposed to be called with a \textindex{far call} and which with a
+\textindex{near call}, and is responsible for putting the correct form of
+\code{RET} instruction (\code{RETN} or \code{RETF}; NASM accepts
+\code{RET} itself as an alternate form for \code{RETN}); in addition,
+the programmer is responsible for coding CALL FAR instructions where
+necessary when calling \emph{external} functions, and must also keep
+track of which external variable definitions are far and which are
+near.
+
+\xsubsection{qsfpu}{\textindexlc{Floating-Point} Differences}
+
+NASM uses different names to refer to floating-point registers from
+MASM: where MASM would call them \code{ST(0)}, \code{ST(1)} and
+so on, and \textindex{a86} would call them simply \code{0}, \code{1}
+and so on, NASM chooses to call them \code{st0}, \code{st1} etc.
+
+As of version 0.96, NASM now treats the instructions with
+`\textindex{nowait}' forms in the same way as MASM-compatible assemblers.
+The idiosyncratic treatment employed by 0.95 and earlier was based
+on a misunderstanding by the authors.
+
+\xsubsection{qsother}{Other Differences}
+
+For historical reasons, NASM uses the keyword \codeindex{TWORD} where
+MASM and compatible assemblers use \codeindex{TBYTE}.
+
+NASM does not declare \textindex{uninitialized storage} in the same way
+as MASM: where a MASM programmer might use \code{stack db 64 dup (?)},
+NASM requires \code{stack resb 64}, intended to be read as \emph{reserve 64
+bytes}. For a limited amount of compatibility, since NASM treats
+\code{?} as a valid character in symbol names, you can code \code{? equ 0}
+and then writing \code{dw ?} will at least do something vaguely useful.
+\index{RESB}\codeindex{DUP} is still not a supported syntax, however.
+
+In addition to all of this, macros and directives work completely
+differently to MASM. See \nref{preproc} and \nref{directive}
+for further details.

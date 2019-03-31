@@ -1,0 +1,1606 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{outfmt}{\textindexlc{Output Formats}}
+
+NASM is a portable assembler, designed to be able to compile on any
+ANSI C-supporting platform and produce output to run on a variety of
+Intel x86 operating systems. For this reason, it has a large number
+of available output formats, selected using the \codeindex{-f} option
+on the NASM \textindex{command line}. Each of these formats, along with
+its extensions to the base NASM syntax, is detailed in this chapter.
+
+\xsection{binfmt}{\codeindex{bin}: \textindexlc{Flat-Form Binary}\index{pure binary} Output}
+\index{file extension!bin}
+
+The \code{bin} format does not produce object files: it generates
+nothing in the output file except the code you wrote. Such ``pure
+binary'' files are used by \textindex{MS-DOS}: \codeindex{.COM}
+executables and \codeindex{.SYS} device drivers are pure binary
+files. Pure binary output is also useful for \textindex{operating system}
+and \textindex{boot loader} development.
+
+The \code{bin} format supports \textindex{multiple section names}.
+For details of how NASM handles sections in the \code{bin} format,
+see \nref{multisec}.
+
+Using the \code{bin} format puts NASM by default into 16-bit mode
+(see \nref{bits}). In order to use \code{bin} to write 32-bit
+or 64-bit code, such as an OS kernel, you need to explicitly issue
+the \indexcode{BITS}\code{BITS 32} or \indexcode{BITS}\code{BITS 64}
+directive.
+
+\code{bin} has no default output file name extension: instead, it
+leaves your file name as it is once the original extension has been
+removed. Thus, the default is for NASM to assemble \code{binprog.asm}
+into a binary file called \code{binprog}.
+
+\xsubsection{binorg}{\codeindex{ORG}: Binary File \textindexlc{Program Origin}}
+
+The \code{bin} format provides an additional directive to the list
+given in \nref{directive}: \code{ORG}. The function of the
+\code{ORG} directive is to specify the origin address which NASM
+will assume the program begins at when it is loaded into memory.
+
+For example, the following code will generate the longword
+\code{0x00000104}:
+
+\begin{lstlisting}
+org     0x100
+dd      label
+label:
+\end{lstlisting}
+
+Unlike the \code{ORG} directive provided by MASM-compatible assemblers,
+which allows you to jump around in the object file and overwrite
+code you have already generated, NASM's \code{ORG} does exactly what
+the directive says: \emph{origin}. Its sole function is to specify one
+offset which is added to all internal address references within the
+section; it does not permit any of the trickery that MASM's version
+does. See \nref{proborg} for further comments.
+
+\xsubsection{binseg}{\code{bin} Extensions to the \code{SECTION} Directive}
+\index{section!bin extensions to}
+
+The \code{bin} output format extends the \code{SECTION} (or \code{SEGMENT})
+directive to allow you to specify the alignment requirements of segments.
+This is done by appending the \codeindex{ALIGN} qualifier to the end of
+the section-definition line. For example,
+
+\begin{lstlisting}
+section .data   align=16
+\end{lstlisting}
+
+switches to the section \code{.data} and also specifies that it must be
+aligned on a 16-byte boundary.
+
+The parameter to \code{ALIGN} specifies how many low bits of the
+section start address must be forced to zero. The alignment value
+given may be any power of two.
+\index{section alignment!in bin}
+\index{segment alignment!in bin}
+\index{alignment!in bin sections}
+
+\xsubsection{multisec}{\textindexlc{Multisection} Support for the \code{bin} Format}
+\index{bin!multisection}
+
+The \code{bin} format allows the use of multiple sections, of arbitrary names,
+besides the ``known'' \code{.text}, \code{.data}, and \code{.bss} names.
+
+\begin{itemize}
+    \item{Sections may be designated \codeindex{progbits} or \codeindex{nobits}.
+        Default is \code{progbits} (except \code{.bss}, which defaults to
+        \code{nobits}, of course).}
+
+    \item{Sections can be aligned at a specified boundary following the previous
+        section with \code{align=}, or at an arbitrary byte-granular position with
+        \codeindex{start=}.}
+
+    \item{Sections can be given a virtual start address, which will be used
+        for the calculation of all memory references within that section
+        with \codeindex{vstart=}.}
+
+    \item{Sections can be ordered using \codeindex{follows=}\code{<section>} or
+        \codeindex{vfollows=}\code{<section>} as an alternative to specifying
+        an explicit start address.}
+
+    \item{Arguments to \code{org}, \code{start}, \code{vstart}, and \code{align=}
+        are critical expressions. See \nref{crit}. E.g.
+        \code{align=(1 << ALIGN\_SHIFT)} - \code{ALIGN\_SHIFT} must be defined
+        before it is used here.}
+
+    \item{Any code which comes before an explicit \code{SECTION} directive
+        is directed by default into the \code{.text} section.}
+
+    \item{If an \code{ORG} statement is not given, \code{ORG 0} is used by default.}
+
+    \item{The \code{.bss} section will be placed after the last \code{progbits}
+        section, unless \code{start=}, \code{vstart=}, \code{follows=}, or
+        \code{vfollows=} has been specified.}
+
+    \item{All sections are aligned on dword boundaries, unless a different
+        alignment has been specified.}
+
+    \item{Sections may not overlap.}
+
+    \item{NASM creates the \code{section.<secname>.start} for each section,
+        which may be used in your code.}
+\end{itemize}
+
+\xsubsection{map}{\textindexlc{Map Files}}
+\index{file extension!map}
+
+Map files can be generated in \code{-f bin} format by means of the \code{[map]}
+option. Map types of \code{all} (default), \code{brief}, \code{sections},
+\code{segments}, or \code{symbols} may be specified. Output may be directed
+to \code{stdout} (default), \code{stderr}, or a specified file. E.g.
+\code{[map symbols myfile.map]}. No ``user form'' exists, the square
+brackets must be used.
+
+\xsection{ithfmt}{\codeindex{ith}: \textindexlc{Intel Hex} Output}
+\index{file extension!ith}
+
+The \code{ith} file format produces Intel hex-format files. Just as the
+\code{bin} format, this is a flat memory image format with no support for
+relocation or linking. It is usually used with ROM programmers and
+similar utilities.
+
+All extensions supported by the \code{bin} file format is also supported by
+the \code{ith} file format.
+
+\code{ith} provides a default output file-name extension of \code{.ith}.
+
+\xsection{srecfmt}{\codeindex{srec}: \textindexlc{Motorola S-Records} Output}
+\index{file extension!srec}
+
+The \code{srec} file format produces Motorola S-records files. Just as the
+\code{bin} format, this is a flat memory image format with no support for
+relocation or linking. It is usually used with ROM programmers and similar
+utilities.
+
+All extensions supported by the \code{bin} file format is also supported by
+the \code{srec} file format.
+
+\code{srec} provides a default output file-name extension of \code{.srec}.
+
+\xsection{objfmt}{\codeindex{obj}: \textindexlc{Microsoft OMF}\index{OMF} Object Files}
+\index{file extension!obj}
+
+The \code{obj} file format (NASM calls it \code{obj} rather than
+\code{omf} for historical reasons) is the one produced by \textindex{MASM}
+and \textindex{TASM}, which is typically fed to 16-bit DOS linkers
+to produce \codeindex{.EXE} files. It is also the format used by
+\textindex{OS/2}.
+
+\code{obj} provides a default output file-name extension of \code{.obj}.
+
+\code{obj} is not exclusively a 16-bit format, though: NASM has full
+support for the 32-bit extensions to the format. In particular,
+32-bit \code{obj} format files are used by \textindex{Borland's Win32
+compilers}, instead of using Microsoft's newer \codeindex{win32} object
+file format.
+
+The \code{obj} format does not define any special segment names: you
+can call your segments anything you like. Typical names for segments
+in \code{obj} format files are \code{CODE}, \code{DATA} and \code{BSS}.
+
+If your source file contains code before specifying an explicit
+\code{SEGMENT} directive, then NASM will invent its own segment called
+\codeindex{\_\_NASMDEFSEG} for you.
+
+When you define a segment in an \code{obj} file, NASM defines the
+segment name as a symbol as well, so that you can access the segment
+address of the segment. So, for example:
+
+\begin{lstlisting}
+segment data
+
+dvar:   dw      1234
+
+segment code
+
+function:
+    mov     ax,data     ; get segment address of data
+    mov     ds,ax       ; and move it into DS
+    inc     word [dvar] ; now this reference will work
+    ret
+\end{lstlisting}
+
+The \code{obj} format also enables the use of the \codeindex{SEG}
+and \codeindex{WRT} operators, so that you can write code which
+does things like
+
+\begin{lstlisting}
+extern  foo
+
+    mov     ax,seg foo              ; get preferred segment of foo
+    mov     ds,ax
+    mov     ax,data                 ; a different segment
+    mov     es,ax
+    mov     ax,[ds:foo]             ; this accesses `foo'
+    mov     [es:foo wrt data],bx    ; so does this
+\end{lstlisting}
+
+\xsubsection{objseg}{\code{obj} Extensions to the \code{SEGMENT} Directive}
+\index{SEGMENT!obj extensions to}
+
+The \code{obj} output format extends the \code{SEGMENT} (or \code{SECTION})
+directive to allow you to specify various properties of the segment
+you are defining. This is done by appending extra qualifiers to the
+end of the segment-definition line. For example,
+
+\begin{lstlisting}
+segment code private align=16
+\end{lstlisting}
+
+defines the segment \code{code}, but also declares it to be a private
+segment, and requires that the portion of it described in this code
+module must be aligned on a 16-byte boundary.
+
+The available qualifiers are:
+
+%\begin{tabular}{ l l }
+%\codeindex{CLASS} &
+%\begin{minipage}[t]{0.8\columnwidth}
+%can be used to specify the segment class; this feature indicates to
+%the linker that segments of the same class should be placed near each
+%other in the output file.  The class name can be any word, e.g.
+%\code{CLASS=CODE}.
+%\end{minipage} \\
+%
+%\codeindex{OVERLAY} &
+%\begin{minipage}[t]{0.8\columnwidth}
+%like \code{CLASS}, is specified with an arbitrary word as an argument,
+%and provides overlay information to an overlay-capable linker.
+%\end{minipage}
+%\end{tabular}
+
+\begin{itemize}
+    \item{\codeindex{PRIVATE}, \codeindex{PUBLIC}, \codeindex{COMMON}
+        and \codeindex{STACK} specify the combination characteristics
+        of the segment. \code{PRIVATE} segments do not get combined
+        with any others by the linker; \code{PUBLIC} and \code{STACK}
+        segments get concatenated together at link time; and \code{COMMON}
+        segments all get overlaid on top of each other rather than stuck
+        end-to-end.}
+
+    \item{\codeindex{ALIGN} is used, as shown above, to specify how many
+        low bits of the segment start address must be forced to zero.
+        The alignment value given may be any power of two from 1 to 4096;
+        in reality, the only values supported are 1, 2, 4, 16, 256 and 4096,
+        so if 8 is specified it will be rounded up to 16, and 32, 64 and 128
+        will all be rounded up to 256, and so on. Note that alignment to
+        4096-byte boundaries is a \textindex{PharLap} extension to the
+        format and may not be supported by all linkers.
+        \index{section alignment!in OBJ}
+        \index{segment alignment!in OBJ}
+        \index{alignment!in OBJ sections}}
+
+    \item{\codeindex{CLASS} can be used to specify the segment class;
+        this feature indicates to the linker that segments of the same
+        class should be placed near each other in the output file.
+        The class name can be any word, e.g. \code{CLASS=CODE}.}
+
+    \item{\codeindex{OVERLAY}, like \code{CLASS}, is specified with
+        an arbitrary word as an argument, and provides overlay information
+        to an overlay-capable linker.}
+
+    \item{Segments can be declared as \codeindex{USE16} or \codeindex{USE32},
+        which has the effect of recording the choice in the object file
+        and also ensuring that NASM's default assembly mode when assembling
+        in that segment is 16-bit or 32-bit respectively.}
+
+    \item{When writing \textindex{OS/2} object files, you should declare
+        32-bit segments as \codeindex{FLAT}, which causes the default
+        segment base for anything in the segment to be the special group
+        \code{FLAT}, and also defines the group if it is not already defined.}
+
+    \item{The \code{obj} file format also allows segments to be declared as
+        having a pre-defined absolute segment address, although no linkers
+        are currently known to make sensible use of this feature;
+        nevertheless, NASM allows you to declare a segment such as
+        \code{SEGMENT SCREEN ABSOLUTE=0xB800} if you need to. The
+        \codeindex{ABSOLUTE} and \code{ALIGN} keywords are mutually
+        exclusive.}
+\end{itemize}
+
+NASM's default segment attributes are \code{PUBLIC}, \code{ALIGN=1}, no
+class, no overlay, and \code{USE16}.
+
+\xsubsection{group}{\codeindex{GROUP}: Defining Groups of Segments}
+\index{segments!groups of}
+
+The \code{obj} format also allows segments to be grouped, so that a
+single segment register can be used to refer to all the segments in
+a group. NASM therefore supplies the \code{GROUP} directive, whereby
+you can code
+
+\begin{lstlisting}
+segment data
+    ; some data
+segment bss
+    ; some uninitialized data
+group dgroup data bss
+\end{lstlisting}
+
+which will define a group called \code{dgroup} to contain the segments
+\code{data} and \code{bss}. Like \code{SEGMENT}, \code{GROUP} causes
+the group name to be defined as a symbol, so that you can refer to
+a variable \code{var} in the \code{data} segment as \code{var wrt data}
+or as \code{var wrt dgroup}, depending on which segment value is
+currently in your segment register.
+
+If you just refer to \code{var}, however, and \code{var} is declared
+in a segment which is part of a group, then NASM will default to giving
+you the offset of \code{var} from the beginning of the \emph{group},
+not the \emph{segment}. Therefore \code{SEG var}, also, will return
+the group base rather than the segment base.
+
+NASM will allow a segment to be part of more than one group, but
+will generate a warning if you do this. Variables declared in a
+segment which is part of more than one group will default to being
+relative to the first group that was defined to contain the segment.
+
+A group does not have to contain any segments; you can still make
+\code{WRT} references to a group which does not contain the variable
+you are referring to. OS/2, for example, defines the special group
+\code{FLAT} with no segments in it.
+
+\xsubsection{uppercase}{\codeindex{UPPERCASE}: Disabling Case Sensitivity in Output}
+
+Although NASM itself is \textindex{case sensitive}, some OMF linkers are
+not; therefore it can be useful for NASM to output single-case
+object files. The \code{UPPERCASE} format-specific directive causes all
+segment, group and symbol names that are written to the object file
+to be forced to upper case just before being written. Within a
+source file, NASM is still case-sensitive; but the object file can
+be written entirely in upper case if desired.
+
+\code{UPPERCASE} is used alone on a line; it requires no parameters.
+
+\xsubsection{import}{\codeindex{IMPORT}: Importing DLL Symbols}
+\index{DLL symbols!importing}
+\index{symbols!importing from DLLs}
+
+The \code{IMPORT} format-specific directive defines a symbol to be
+imported from a DLL, for use if you are writing a DLL's
+\textindex{import library} in NASM. You still need to declare the
+symbol as \code{EXTERN} as well as using the \code{IMPORT}
+directive.
+
+The \code{IMPORT} directive takes two required parameters, separated
+by white space, which are (respectively) the name of the symbol you
+wish to import and the name of the library you wish to import it
+from. For example:
+
+\begin{lstlisting}
+import  WSAStartup wsock32.dll
+\end{lstlisting}
+
+A third optional parameter gives the name by which the symbol is
+known in the library you are importing it from, in case this is not
+the same as the name you wish the symbol to be known by to your code
+once you have imported it. For example:
+
+\begin{lstlisting}
+import  asyncsel wsock32.dll WSAAsyncSelect
+\end{lstlisting}
+
+\xsubsection{export}{\codeindex{EXPORT}: Exporting DLL Symbols}
+\index{DLL symbols!exporting}
+\index{symbols!exporting from DLLs}
+
+The \code{EXPORT} format-specific directive defines a global
+symbol to be exported as a DLL symbol, for use if you are
+writing a DLL in NASM. You still need to declare the symbol
+as \code{GLOBAL} as well as using the \code{EXPORT} directive.
+
+\code{EXPORT} takes one required parameter, which is the name of the
+symbol you wish to export, as it was defined in your source file. An
+optional second parameter (separated by white space from the first)
+gives the \emph{external} name of the symbol: the name by which you
+wish the symbol to be known to programs using the DLL. If this name
+is the same as the internal name, you may leave the second parameter
+off.
+
+Further parameters can be given to define attributes of the exported
+symbol. These parameters, like the second, are separated by white
+space. If further parameters are given, the external name must also
+be specified, even if it is the same as the internal name. The
+available attributes are:
+
+\begin{itemize}
+    \item{\code{resident} indicates that the exported name is
+        to be kept resident by the system loader. This is
+        an optimisation for frequently used symbols imported
+        by name.}
+
+    \item{\code{nodata} indicates that the exported symbol
+        is a function which does not make use of any initialized
+        data.}
+
+    \item{\code{parm=NNN}, where \code{NNN} is an integer, sets
+        the number of parameter words for the case in which
+        the symbol is a call gate between 32-bit and 16-bit
+        segments.}
+
+    \item{An attribute which is just a number indicates that
+        the symbol should be exported with an identifying
+        number (ordinal), and gives the desired number.}
+\end{itemize}
+
+For example:
+
+\begin{lstlisting}
+export  myfunc
+export  myfunc TheRealMoreFormalLookingFunctionName
+export  myfunc myfunc 1234  ; export by ordinal
+export  myfunc myfunc resident parm=23 nodata
+\end{lstlisting}
+
+\xsubsection{dotdotstart}{\codeindex{..start}: Defining the \textindexlc{Program Entry Point}}
+
+\code{OMF} linkers require exactly one of the object files being linked to
+define the program entry point, where execution will begin when the
+program is run. If the object file that defines the entry point is
+assembled using NASM, you specify the entry point by declaring the
+special symbol \code{..start} at the point where you wish execution to
+begin.
+
+\xsubsection{objextern}{\code{obj} Extensions to the \code{EXTERN} Directive}
+\index{EXTERN!obj extensions to}
+
+If you declare an external symbol with the directive
+
+\begin{lstlisting}
+extern  foo
+\end{lstlisting}
+
+then references such as \code{mov ax,foo} will give you the offset of
+\code{foo} from its preferred segment base (as specified in whichever
+module \code{foo} is actually defined in). So to access the contents of
+\code{foo} you will usually need to do something like
+
+\begin{lstlisting}
+mov     ax,seg foo      ; get preferred segment base
+mov     es,ax           ; move it into ES
+mov     ax,[es:foo]     ; and use offset `foo' from it
+\end{lstlisting}
+
+This is a little unwieldy, particularly if you know that an external
+is going to be accessible from a given segment or group, say
+\code{dgroup}. So if \code{DS} already contained \code{dgroup},
+you could simply code
+
+\begin{lstlisting}
+mov     ax,[foo wrt dgroup]
+\end{lstlisting}
+
+However, having to type this every time you want to access \code{foo}
+can be a pain; so NASM allows you to declare \code{foo} in the
+alternative form
+
+\begin{lstlisting}
+extern  foo:wrt dgroup
+\end{lstlisting}
+
+This form causes NASM to pretend that the preferred segment base of
+\code{foo} is in fact \code{dgroup}; so the expression \code{seg foo}
+will now return \code{dgroup}, and the expression \code{foo} is
+equivalent to \code{foo wrt dgroup}.
+
+This \index{default-WRT mechanism}default-\code{WRT} mechanism can be used
+to make externals appear to be relative to any group or segment in
+your program. It can also be applied to common variables: see
+\nref{objcommon}.
+
+\xsubsection{objcommon}{\code{obj} Extensions to the \code{COMMON} Directive}
+\index{COMMON!obj extensions to}
+
+The \code{obj} format allows common variables to be either near
+\index{common variables!near} or far\index{common variables!far};
+NASM allows you to specify which your variables should be by the
+use of the syntax
+
+\begin{lstlisting}
+common  nearvar 2:near  ; nearvar is a near common
+common  farvar  10:far  ; and farvar is far
+\end{lstlisting}
+
+Far common variables may be greater in size than 64Kb, and so the
+OMF specification says that they are declared as a number of
+\emph{elements} of a given size. So a 10-byte far common variable could
+be declared as ten one-byte elements, five two-byte elements, two
+five-byte elements or one ten-byte element.
+
+Some \code{OMF} linkers require the \index{element size!in common
+variables}\index{common variables!element size}element size, as well as
+the variable size, to match when resolving common variables declared
+in more than one module. Therefore NASM must allow you to specify
+the element size on your far common variables. This is done by the
+following syntax:
+
+\begin{lstlisting}
+common  c_5by2  10:far  5   ; two five-byte elements
+common  c_2by5  10:far  2   ; five two-byte elements
+\end{lstlisting}
+
+If no element size is specified, the default is 1. Also, the \code{FAR}
+keyword is not required when an element size is specified, since
+only far commons may have element sizes at all. So the above
+declarations could equivalently be
+
+\begin{lstlisting}
+common  c_5by2  10:5        ; two five-byte elements
+common  c_2by5  10:2        ; five two-byte elements
+\end{lstlisting}
+
+In addition to these extensions, the \code{COMMON} directive
+in \code{obj} also supports default-\code{WRT} specification
+like \code{EXTERN} does (explained in \nref{objextern}).
+So you can also declare things like
+
+\begin{lstlisting}
+common  foo     10:wrt dgroup
+common  bar     16:far 2:wrt data
+common  baz     24:wrt data:6
+\end{lstlisting}
+
+\xsubsection{objdepend}{Embedded File Dependency Information}
+
+Since NASM 2.13.02, \code{obj} files contain embedded dependency file
+information. To suppress the generation of dependencies, use
+
+\begin{lstlisting}
+%pragma obj nodepend
+\end{lstlisting}
+
+\xsection{win32fmt}{\codeindex{win32}: Microsoft Win32 Object Files}
+
+The \code{win32} output format generates Microsoft Win32 object files,
+suitable for passing to Microsoft linkers such as \emph{Visual C++}.
+Note that Borland Win32 compilers do not use this format, but use
+\code{obj} instead (see \nref{objfmt}).
+
+\code{win32} provides a default output file-name extension of \code{.obj}.
+
+Note that although Microsoft say that Win32 object files follow the
+COFF (Common Object File Format) standard, the object files produced
+by Microsoft Win32 compilers are not compatible with COFF linkers such
+as DJGPP's, and vice versa. This is due to a difference of opinion over
+the precise semantics of PC-relative relocations. To produce COFF files
+suitable for DJGPP, use NASM's \code{coff} output format; conversely,
+the \code{coff} format does not produce object files that Win32 linkers
+can generate correct output from.
+
+\xsubsection{win32sect}{\code{win32} Extensions to the \code{SECTION} Directive}
+\index{SECTION!win32 extensions to}
+
+Like the \code{obj} format, \code{win32} allows you to specify additional
+information on the \code{SECTION} directive line, to control the type
+and properties of sections you declare. Section types and properties
+are generated automatically by NASM for the \textindex{standard section names}
+\code{.text}, \code{.data} and \code{.bss}, but may still be overridden by
+these qualifiers.
+
+The available qualifiers are:
+
+\begin{itemize}
+    \item{\code{code}, or equivalently \code{text}, defines the section
+        to be a code section. This marks the section as readable and
+        executable, but not writable, and also indicates to the linker
+        that the type of the section is code.}
+
+    \item{\code{data} and \code{bss} define the section to be a data
+        section, analogously to \code{code}. Data sections are marked
+        as readable and writable, but not executable. \code{data}
+        declares an initialized data section, whereas \code{bss} declares
+        an uninitialized data section.}
+
+    \item{\code{rdata} declares an initialized data section that is
+        readable but not writable. Microsoft compilers use this section
+        to place constants in it.}
+
+    \item{\code{info} defines the section to be an \textindex{informational section},
+        which is not included in the executable file by the linker, but may
+        (for example) pass information \emph{to} the linker. For example,
+        declaring an \code{info}-type section called \codeindex{.drectve} causes
+        the linker to interpret the contents of the section as command-line
+        options.}
+
+    \item{\code{align=}, used with a trailing number as in \code{obj}, gives the
+        \index{section alignment!in win32} \index{alignment!in win32 sections}
+        alignment requirements of the section. The maximum you may
+        specify is 64: the Win32 object file format contains no means to
+        request a greater section alignment than this. If alignment is not
+        explicitly specified, the defaults are 16-byte alignment for code
+        sections, 8-byte alignment for rdata sections and 4-byte alignment
+        for data (and BSS) sections.
+        Informational sections get a default alignment of 1 byte (no
+        alignment), though the value does not matter.}
+\end{itemize}
+
+The defaults assumed by NASM if you do not specify the above
+qualifiers are:
+
+\begin{lstlisting}
+section .text   code    align=16
+section .data   data    align=4
+section .rdata  rdata   align=8
+section .bss    bss     align=4
+\end{lstlisting}
+
+Any other section name is treated by default like \code{.text}.
+
+\xsubsection{win32safeseh}{\code{win32} Safe Structured Exception Handling}
+
+Among other improvements in Windows XP SP2 and Windows Server 2003
+Microsoft has introduced concept of "safe structured exception
+handling." General idea is to collect handlers' entry points in
+designated read-only table and have alleged entry point verified
+against this table prior exception control is passed to the handler. In
+order for an executable module to be equipped with such "safe exception
+handler table," all object modules on linker command line has to comply
+with certain criteria. If one single module among them does not, then
+the table in question is omitted and above mentioned run-time checks
+will not be performed for application in question. Table omission is by
+default silent and therefore can be easily overlooked. One can instruct
+linker to refuse to produce binary without such table by passing
+\code{/safeseh} command line option.
+
+Without regard to this run-time check merits it's natural to expect
+NASM to be capable of generating modules suitable for \code{/safeseh}
+linking. From developer's viewpoint the problem is two-fold:
+
+\begin{itemize}
+    \item{how to adapt modules not deploying exception handlers of their own;}
+    \item{how to adapt/develop modules utilizing custom exception handling.}
+\end{itemize}
+
+Former can be easily achieved with any NASM version by adding following
+line to source code:
+
+\begin{lstlisting}
+$@feat.00 equ 1
+\end{lstlisting}
+
+As of version 2.03 NASM adds this absolute symbol automatically. If
+it's not already present to be precise. I.e. if for whatever reason
+developer would choose to assign another value in source file, it would
+still be perfectly possible.
+
+Registering custom exception handler on the other hand requires certain
+"magic." As of version 2.03 additional directive is implemented,
+\code{safeseh}, which instructs the assembler to produce appropriately
+formatted input data for above mentioned "safe exception handler
+table." Its typical use would be:
+
+\begin{lstlisting}
+section .text
+extern  _MessageBoxA@16
+%if     __NASM_VERSION_ID__ >= 0x02030000
+safeseh handler                 ; register handler as "safe handler"
+%endif
+handler:
+        push    DWORD 1         ; MB_OKCANCEL
+        push    DWORD caption
+        push    DWORD text
+        push    DWORD 0
+        call    _MessageBoxA@16
+        sub     eax,1           ; incidentally suits as return value
+                                ; for exception handler
+        ret
+global  _main
+_main:
+        push    DWORD handler
+        push    DWORD [fs:0]
+        mov     DWORD [fs:0],esp ; engage exception handler
+        xor     eax,eax
+        mov     eax,DWORD[eax]   ; cause exception
+        pop     DWORD [fs:0]     ; disengage exception handler
+        add     esp,4
+        ret
+text:   db      'OK to rethrow, CANCEL to generate core dump',0
+caption:db      'SEGV',0
+
+section .drectve info
+        db      '/defaultlib:user32.lib /defaultlib:msvcrt.lib '
+\end{lstlisting}
+
+As you might imagine, it's perfectly possible to produce .exe binary
+with "safe exception handler table" and yet engage unregistered
+exception handler. Indeed, handler is engaged by simply manipulating
+\code{[fs:0]} location at run-time, something linker has no power over,
+run-time that is. It should be explicitly mentioned that such failure
+to register handler's entry point with \code{safeseh} directive has
+undesired side effect at run-time. If exception is raised and
+unregistered handler is to be executed, the application is abruptly
+terminated without any notification whatsoever. One can argue that
+system could  at least have logged some kind "non-safe exception
+handler in x.exe at address n" message in event log, but no, literally
+no notification is provided and user is left with no clue on what
+caused application failure.
+
+Finally, all mentions of linker in this paragraph refer to Microsoft
+linker version 7.x and later. Presence of \code{@feat.00} symbol and input
+data for "safe exception handler table" causes no backward
+incompatibilities and "safeseh" modules generated by NASM 2.03 and
+later can still be linked by earlier versions or non-Microsoft linkers.
+
+\xsubsection{codeview}{Debugging formats for Windows}
+\index{Windows debugging formats}
+
+The \code{win32} and \code{win64} formats support the Microsoft CodeView
+debugging format. Currently CodeView version 8 format is supported
+(\codeindex{cv8}), but newer versions of the CodeView debugger should be
+able to handle this format as well.
+
+\xsection{win64fmt}{\codeindex{win64}: Microsoft Win64 Object Files}
+
+The \code{win64} output format generates Microsoft Win64 object files,
+which is nearly 100\% identical to the \code{win32} object format
+(\nref{win32fmt}) with the exception that it is meant to target
+64-bit code and the x86-64 platform altogether. This object file is used
+exactly the same as the \code{win32} object format, in NASM, with regard to this exception.
+
+\xsubsection{win64pic}{\code{win64}: Writing Position-Independent Code}
+
+While \code{REL} takes good care of RIP-relative addressing, there is one
+aspect that is easy to overlook for a Win64 programmer: indirect
+references. Consider a switch dispatch table:
+
+\begin{lstlisting}
+        jmp     qword [dsptch+rax*8]
+        ...
+dsptch: dq      case0
+        dq      case1
+        ...
+\end{lstlisting}
+
+Even a novice Win64 assembler programmer will soon realize that the code
+is not 64-bit savvy. Most notably linker will refuse to link it with
+
+\begin{lstlisting}
+'ADDR32' relocation to '.text' invalid without /LARGEADDRESSAWARE:NO
+\end{lstlisting}
+
+So [s]he will have to split jmp instruction as following:
+
+\begin{lstlisting}
+        lea     rbx,[rel dsptch]
+        jmp     qword [rbx+rax*8]
+\end{lstlisting}
+
+What happens behind the scene is that effective address in \code{lea} is
+encoded relative to instruction pointer, or in perfectly position-independent
+manner. But this is only part of the problem! Trouble is that in .dll context
+\code{caseN} relocations will make their way to the final module and might
+have to be adjusted at .dll load time. To be specific when it can't be loaded
+at preferred address. And when this occurs, pages with such relocations will
+be rendered private to current process, which kind of undermines the idea
+of sharing .dll. But no worry, it's trivial to fix:
+
+\begin{lstlisting}
+        lea     rbx,[rel dsptch]
+        add     rbx,[rbx+rax*8]
+        jmp     rbx
+        ...
+dsptch: dq      case0-dsptch
+        dq      case1-dsptch
+        ...
+\end{lstlisting}
+
+NASM version 2.03 and later provides another alternative, \code{wrt
+..imagebase} operator, which returns offset from base address of the
+current image, be it .exe or .dll module, therefore the name. For those
+acquainted with PE-COFF format base address denotes start of
+\code{IMAGE\_DOS\_HEADER} structure. Here is how to implement switch with
+these image-relative references:
+
+\begin{lstlisting}
+        lea     rbx,[rel dsptch]
+        mov     eax,[rbx+rax*4]
+        sub     rbx,dsptch wrt ..imagebase
+        add     rbx,rax
+        jmp     rbx
+        ...
+dsptch: dd      case0 wrt ..imagebase
+        dd      case1 wrt ..imagebase
+\end{lstlisting}
+
+One can argue that the operator is redundant. Indeed, snippet before
+last works just fine with any NASM version and is not even Windows
+specific... The real reason for implementing \code{wrt ..imagebase} will
+become apparent in next paragraph.
+
+It should be noted that \code{wrt ..imagebase} is defined as 32-bit
+operand only:
+
+\begin{lstlisting}
+dd      label wrt ..imagebase           ; ok
+dq      label wrt ..imagebase           ; bad
+mov     eax,label wrt ..imagebase       ; ok
+mov     rax,label wrt ..imagebase       ; bad
+\end{lstlisting}
+
+\xsubsection{win64seh}{\code{win64}: Structured Exception Handling}
+
+Structured exception handing in Win64 is completely different matter
+from Win32. Upon exception program counter value is noted, and
+linker-generated table comprising start and end addresses of all the
+functions [in given executable module] is traversed and compared to the
+saved program counter. Thus so called \code{UNWIND\_INFO} structure is
+identified. If it's not found, then offending subroutine is assumed to
+be "leaf" and just mentioned lookup procedure is attempted for its
+caller. In Win64 leaf function is such function that does not call any
+other function \emph{nor} modifies any Win64 non-volatile registers,
+including stack pointer. The latter ensures that it's possible to
+identify leaf function's caller by simply pulling the value from the
+top of the stack.
+
+While majority of subroutines written in assembler are not calling any
+other function, requirement for non-volatile registers' immutability
+leaves developer with not more than 7 registers and no stack frame,
+which is not necessarily what [s]he counted with. Customarily one would
+meet the requirement by saving non-volatile registers on stack and
+restoring them upon return, so what can go wrong? If [and only if] an
+exception is raised at run-time and no \code{UNWIND\_INFO} structure is
+associated with such "leaf" function, the stack unwind procedure will
+expect to find caller's return address on the top of stack immediately
+followed by its frame. Given that developer pushed caller's
+non-volatile registers on stack, would the value on top point at some
+code segment or even addressable space? Well, developer can attempt
+copying caller's return address to the top of stack and this would
+actually work in some very specific circumstances. But unless developer
+can guarantee that these circumstances are always met, it's more
+appropriate to assume worst case scenario, i.e. stack unwind procedure
+going berserk. Relevant question is what happens then? Application is
+abruptly terminated without any notification whatsoever. Just like in
+Win32 case, one can argue that system could at least have logged
+"unwind procedure went berserk in x.exe at address n" in event log, but
+no, no trace of failure is left.
+
+Now, when we understand significance of the \code{UNWIND\_INFO} structure,
+let's discuss what's in it and/or how it's processed. First of all it
+is checked for presence of reference to custom language-specific
+exception handler. If there is one, then it's invoked. Depending on the
+return value, execution flow is resumed (exception is said to be
+"handled"), \emph{or} rest of \code{UNWIND\_INFO} structure is processed as
+following. Beside optional reference to custom handler, it carries
+information about current callee's stack frame and where non-volatile
+registers are saved. Information is detailed enough to be able to
+reconstruct contents of caller's non-volatile registers upon call to
+current callee. And so caller's context is reconstructed, and then
+unwind procedure is repeated, i.e. another \code{UNWIND\_INFO} structure is
+associated, this time, with caller's instruction pointer, which is then
+checked for presence of reference to language-specific handler, etc.
+The procedure is recursively repeated till exception is handled. As
+last resort system "handles" it by generating memory core dump and
+terminating the application.
+
+As for the moment of this writing NASM unfortunately does not
+facilitate generation of above mentioned detailed information about
+stack frame layout. But as of version 2.03 it implements building
+blocks for generating structures involved in stack unwinding. As
+simplest example, here is how to deploy custom exception handler for
+leaf function:
+
+\begin{lstlisting}
+default rel
+section .text
+extern  MessageBoxA
+handler:
+        sub     rsp,40
+        mov     rcx,0
+        lea     rdx,[text]
+        lea     r8,[caption]
+        mov     r9,1            ; MB_OKCANCEL
+        call    MessageBoxA
+        sub     eax,1           ; incidentally suits as return value
+                                ; for exception handler
+        add     rsp,40
+        ret
+global  main
+main:
+        xor     rax,rax
+        mov     rax,QWORD[rax]  ; cause exception
+        ret
+main_end:
+text:   db      'OK to rethrow, CANCEL to generate core dump',0
+caption:db      'SEGV',0
+
+section .pdata  rdata align=4
+        dd      main wrt ..imagebase
+        dd      main_end wrt ..imagebase
+        dd      xmain wrt ..imagebase
+section .xdata  rdata align=8
+xmain:  db      9,0,0,0
+        dd      handler wrt ..imagebase
+section .drectve info
+        db      '/defaultlib:user32.lib /defaultlib:msvcrt.lib '
+\end{lstlisting}
+
+What you see in \code{.pdata} section is element of the "table comprising
+start and end addresses of function" along with reference to associated
+\code{UNWIND\_INFO} structure. And what you see in \code{.xdata} section is
+\code{UNWIND\_INFO} structure describing function with no frame, but with
+designated exception handler. References are \emph{required} to be
+image-relative (which is the real reason for implementing \code{wrt
+..imagebase} operator). It should be noted that \code{rdata align=n}, as
+well as \code{wrt ..imagebase}, are optional in these two segments'
+contexts, i.e. can be omitted. Latter means that \emph{all} 32-bit
+references, not only above listed required ones, placed into these two
+segments turn out image-relative. Why is it important to understand?
+Developer is allowed to append handler-specific data to \code{UNWIND\_INFO}
+structure, and if [s]he adds a 32-bit reference, then [s]he will have
+to remember to adjust its value to obtain the real pointer.
+
+As already mentioned, in Win64 terms leaf function is one that does not
+call any other function \emph{nor} modifies any non-volatile register,
+including stack pointer. But it's not uncommon that assembler
+programmer plans to utilize every single register and sometimes even
+have variable stack frame. Is there anything one can do with bare
+building blocks? I.e. besides manually composing fully-fledged
+\code{UNWIND\_INFO} structure, which would surely be considered
+error-prone? Yes, there is. Recall that exception handler is called
+first, before stack layout is analyzed. As it turned out, it's
+perfectly possible to manipulate current callee's context in custom
+handler in manner that permits further stack unwinding. General idea is
+that handler would not actually "handle" the exception, but instead
+restore callee's context, as it was at its entry point and thus mimic
+leaf function. In other words, handler would simply undertake part of
+unwinding procedure. Consider following example:
+
+\begin{lstlisting}
+function:
+        mov     rax,rsp         ; copy rsp to volatile register
+        push    r15             ; save non-volatile registers
+        push    rbx
+        push    rbp
+        mov     r11,rsp         ; prepare variable stack frame
+        sub     r11,rcx
+        and     r11,-64
+        mov     QWORD[r11],rax  ; check for exceptions
+        mov     rsp,r11         ; allocate stack frame
+        mov     QWORD[rsp],rax  ; save original rsp value
+magic_point:
+        ...
+        mov     r11,QWORD[rsp]  ; pull original rsp value
+        mov     rbp,QWORD[r11-24]
+        mov     rbx,QWORD[r11-16]
+        mov     r15,QWORD[r11-8]
+        mov     rsp,r11         ; destroy frame
+        ret
+\end{lstlisting}
+
+The keyword is that up to \code{magic\_point} original \code{rsp} value
+remains in chosen volatile register and no non-volatile register,
+except for \code{rsp}, is modified. While past \code{magic\_point}
+\code{rsp} remains constant till the very end of the \code{function}.
+In this case custom language-specific exception handler would look like this:
+
+\begin{lstlisting}
+EXCEPTION_DISPOSITION
+handler(EXCEPTION_RECORD *rec, ULONG64 frame,
+        CONTEXT *context, DISPATCHER_CONTEXT *disp)
+{
+    ULONG64 *rsp;
+
+    if (context->Rip < (ULONG64)magic_point)
+        rsp = (ULONG64 *)context->Rax;
+    else {
+        rsp = ((ULONG64 **)context->Rsp)[0];
+        context->Rbp = rsp[-3];
+        context->Rbx = rsp[-2];
+        context->R15 = rsp[-1];
+    }
+    context->Rsp = (ULONG64)rsp;
+
+    memcpy(disp->ContextRecord, context, sizeof(CONTEXT));
+    RtlVirtualUnwind(UNW_FLAG_NHANDLER, disp->ImageBase,
+                     dips->ControlPc, disp->FunctionEntry,
+                     disp->ContextRecord,
+                     &disp->HandlerData,
+                     &disp->EstablisherFrame,
+                     NULL);
+
+    return ExceptionContinueSearch;
+}
+\end{lstlisting}
+
+As custom handler mimics leaf function, corresponding \code{UNWIND\_INFO}
+structure does not have to contain any information about stack frame
+and its layout.
+
+\xsection{cofffmt}{\codeindex{coff}: \textindexlc{Common Object File Format}}
+
+The \code{coff} output type produces \code{COFF} object files suitable for
+linking with the \textindex{DJGPP} linker.
+
+\code{coff} provides a default output file-name extension of \code{.o}.
+
+The \code{coff} format supports the same extensions to the \code{SECTION}
+directive as \code{win32} does, except that the \code{align} qualifier and
+the \code{info} section type are not supported.
+
+\xsection{machofmt}{\codeindex{macho32} and \codeindex{macho64}:
+\textindexlc{Mach Object File Format}}
+\index{Mach-O}
+
+The \code{macho32}, \code{macho64} output formts produces Mach-O
+object files suitable for linking with the \textindex{MacOS X} linker.
+\codeindex{macho} is a synonym for \code{macho32}.
+
+\code{macho} provides a default output file-name extension of \code{.o}.
+
+\xsubsection{machosect}{\code{macho} extensions to the \code{SECTION} Directive}
+\index{SECTION!macho extensions to}
+
+The \code{macho} output format specifies section names in the format
+"\emph{segment}\code{,}\emph{section}". No spaces are allowed around the
+comma. The following flags can also be specified:
+
+\begin{itemize}
+    \item{\code{data} - this section contains initialized data items}
+    \item{\code{code} - this section contains code exclusively}
+    \item{\code{mixed} - this section contains both code and data}
+    \item{\code{bss} - this section is uninitialized and filled with zero}
+    \item{\code{zerofill} - same as \code{bss}}
+    \item{\code{no\_dead\_strip} - inhibit dead code stripping for this section}
+    \item{\code{live\_support} - set the live support flag for this section}
+    \item{\code{strip\_static\_syms} - strip static symbols for this section}
+    \item{\code{debug} - this section contains debugging information}
+    \item{\code{align=}\emph{alignment} - specify section alignment}
+\end{itemize}
+
+The default is \code{data}, unless the section name is \code{\_\_text} or
+\code{\_\_bss} in which case the default is \code{text} or \code{bss},
+respectively.
+
+For compatibility with other Unix platforms, the following standard
+names are also supported:
+
+\begin{lstlisting}
+.text   = __TEXT,__text     text
+.rodata = __DATA,__const    data
+.data   = __DATA,__data     data
+.bss    = __DATA,__bss      bss
+\end{lstlisting}
+
+If the \code{.rodata} section contains no relocations, it is instead put
+into the \code{\_\_TEXT,\_\_const} section unless this section has already
+been specified explicitly. However, it is probably better to specify
+\code{\_\_TEXT,\_\_const} and \code{\_\_DATA,\_\_const} explicitly as appropriate.
+
+\xsubsection{machotls}{\textindexlc{Thread Local Storage in Mach-O}\index{TLS}:
+\code{macho} special symbols and \codeindex{WRT}}
+
+Mach-O defines the following special symbols that can be used on the
+right-hand side of the \code{WRT} operator:
+
+\begin{itemize}
+    \item{\code{..tlvp} is used to specify access to thread-local storage.}
+    \item{\code{..gotpcrel} is used to specify references to the Global Offset Table.
+        The GOT is supported in the \code{macho64} format only.}
+\end{itemize}
+
+\xsubsection{macho-ssvs}{\code{macho} specfic directive
+\codeindex{subsections\_via\_symbols}}
+
+The directive \code{subsections\_via\_symbols} sets the
+\code{MH\_SUBSECTIONS\_VIA\_SYMBOLS} flag in the Mach-O header,
+that effectively separates a block (or a subsection) based on a symbol.
+It is often used for eliminating dead codes by a linker.
+
+This directive takes no arguments.
+
+This is a macro implemented as a \code{\%pragma}. It can also be
+specified in its \code{\%pragma} form, in which case it will not affect
+non-Mach-O builds of the same source code:
+
+\begin{lstlisting}
+%pragma macho subsections_via_symbols
+\end{lstlisting}
+
+\xsubsection{macho-snds}{\code{macho} specfic directive \codeindex{no\_dead\_strip}}
+
+The directive \code{no\_dead\_strip} sets the Mach-O \code{SH\_NO\_DEAD\_STRIP}
+section flag on the section containing a a specific symbol. This directive takes
+a list of symbols as its arguments.
+
+This is a macro implemented as a \code{\%pragma}.  It can also be
+specified in its \code{\%pragma} form, in which case it will not affect
+non-Mach-O builds of the same source code:
+
+\begin{lstlisting}
+%pragma macho no_dead_strip symbol...
+\end{lstlisting}
+
+\xsubsection{macho-pext}{\code{macho} specific extensions to the
+\code{GLOBAL} Directive: \codeindex{private\_extern}}
+
+The directive extension to \code{GLOBAL} marks the symbol with limited
+global scope. For example, you can specify the global symbol with
+this extension:
+
+\begin{lstlisting}
+global foo:private_extern
+foo:
+    ; codes
+\end{lstlisting}
+
+Using with static linker will clear the private extern attribute.
+But linker option like \code{-keep\_private\_externs} can avoid it.
+
+\xsection{elffmt}{\codeindex{elf32}, \codeindex{elf64}, \codeindex{elfx32}:
+\textindexlc{Executable and Linkable Format} Object Files}
+\index{ELF}\index{linux!elf}
+
+The \code{elf32}, \code{elf64} and \code{elfx32} output formats generate
+\code{ELF32} and \code{ELF64} (Executable and Linkable Format) object files,
+as used by Linux as well as \textindex{Unix System V}, including
+\textindex{Solaris x86}, \textindex{UnixWare} and \textindex{SCO Unix}.
+\code{elf} provides a default output file-name extension of \code{.o}.
+\code{elf} is a synonym for \code{elf32}.
+
+The \code{elfx32} format is used for the \textindex{x32} ABI, which is
+a 32-bit ABI with the CPU in 64-bit mode.
+
+\xsubsection{abisect}{ELF specific directive \codeindex{osabi}}
+
+The ELF header specifies the application binary interface for the
+target operating system (OSABI). This field can be set by using the
+\code{osabi} directive with the numeric value (0-255) of the target
+system. If this directive is not used, the default value will be "UNIX
+System V ABI" (0) which will work on most systems which support ELF.
+
+\xsubsection{elfsect}{\code{elf} extensions to the \code{SECTION} Directive}
+\index{SECTION!elf extensions to}
+
+Like the \code{obj} format, \code{elf} allows you to specify additional
+information on the \code{SECTION} directive line, to control the type
+and properties of sections you declare. Section types and properties
+are generated automatically by NASM for the \textindexlc{standard section
+names}, but may still be overridden by these qualifiers.
+
+The available qualifiers are:
+
+\begin{itemize}
+    \item{\codeindex{alloc} defines the section to be one which is loaded into
+        memory when the program is run. \codeindex{noalloc} defines it to be one
+        which is not, such as an informational or comment section.}
+
+    \item{\codeindex{exec} defines the section to be one which should have execute
+        permission when the program is run. \codeindex{noexec} defines it as one
+        which should not.}
+
+    \item{\codeindex{write} defines the section to be one which should be writable
+        when the program is run. \codeindex{nowrite} defines it as one which should
+        not.}
+
+    \item{\codeindex{progbits} defines the section to be one with explicit contents
+        stored in the object file: an ordinary code or data section, for
+        example, \codeindex{nobits} defines the section to be one with no explicit
+        contents given, such as a BSS section.}
+
+    \item{\code{align=}, used with a trailing number as in \code{obj}, gives the
+        \index{section alignment!in elf}\index{alignment!in elf sections}alignment
+        requirements of the section.}
+
+    \item{\codeindex{tls} defines the section to be one which contains
+        thread local variables.}
+\end{itemize}
+
+The defaults assumed by NASM if you do not specify the above
+qualifiers are:
+\indexcode{.text} \indexcode{.rodata} \indexcode{.lrodata}
+\indexcode{.data} \indexcode{.ldata} \indexcode{.bss}
+\indexcode{.lbss} \indexcode{.tdata} \indexcode{.tbss}
+\indexcode{.comment}
+
+\begin{lstlisting}
+section .text    progbits  alloc   exec    nowrite  align=16
+section .rodata  progbits  alloc   noexec  nowrite  align=4
+section .lrodata progbits  alloc   noexec  nowrite  align=4
+section .data    progbits  alloc   noexec  write    align=4
+section .ldata   progbits  alloc   noexec  write    align=4
+section .bss     nobits    alloc   noexec  write    align=4
+section .lbss    nobits    alloc   noexec  write    align=4
+section .tdata   progbits  alloc   noexec  write    align=4    tls
+section .tbss    nobits    alloc   noexec  write    align=4    tls
+section .comment progbits  noalloc noexec  nowrite  align=1
+section other    progbits  alloc   noexec  nowrite  align=1
+\end{lstlisting}
+
+(Any section name other than those in the above table is treated by
+default like \code{other} in the above. Please note that section
+names are case sensitive.)
+
+\xsubsection{elfwrt}{\textindexlc{Position-Independent Code}: \code{elf}
+Special Symbols and \codeindex{WRT}}
+\index{PIC}
+
+Since \code{ELF} does not support segment-base references, the \code{WRT}
+operator is not used for its normal purpose; therefore NASM's \code{elf}
+output format makes use of \code{WRT} for a different purpose, namely the
+PIC-specific \index{relocations!PIC-specific}relocation types.
+
+\code{elf} defines five special symbols which you can use as the
+right-hand side of the \code{WRT} operator to obtain PIC relocation
+types. They are \codeindex{..gotpc}, \codeindex{..gotoff}, \codeindex{..got},
+\codeindex{..plt} and \codeindex{..sym}. Their functions are summarized here:
+
+\begin{itemize}
+    \item{Referring to the symbol marking the global offset table base
+        using \code{wrt ..gotpc} will end up giving the distance from the
+        beginning of the current section to the global offset table.
+        (\codeindex{\_GLOBAL\_OFFSET\_TABLE\_} is the standard symbol name
+        used to refer to the \textindex{GOT}.) So you would then need to add
+        \codeindex{\$\$} to the result to get the real address of the GOT.}
+
+    \item{Referring to a location in one of your own sections using
+        \code{wrt ..gotoff} will give the distance from the beginning of
+        the GOT to the specified location, so that adding on the address
+        of the GOT would give the real address of the location you wanted.}
+
+    \item{Referring to an external or global symbol using \code{wrt ..got}
+        causes the linker to build an entry \emph{in} the GOT containing the
+        address of the symbol, and the reference gives the distance from the
+        beginning of the GOT to the entry; so you can add on the address of
+        the GOT, load from the resulting address, and end up with the
+        address of the symbol.}
+
+    \item{Referring to a procedure name using \code{wrt ..plt} causes the
+        linker to build a \textindex{procedure linkage table} entry for the symbol,
+        and the reference gives the address of the \textindex{PLT} entry. You can
+        only use this in contexts which would generate a PC-relative
+        relocation normally (i.e. as the destination for \code{CALL} or
+        \code{JMP}), since ELF contains no relocation type to refer to PLT
+        entries absolutely.}
+
+    \item{Referring to a symbol name using \code{wrt ..sym} causes NASM to
+        write an ordinary relocation, but instead of making the relocation
+        relative to the start of the section and then adding on the offset
+        to the symbol, it will write a relocation record aimed directly at
+        the symbol in question. The distinction is a necessary one due to a
+        peculiarity of the dynamic linker.}
+\end{itemize}
+
+A fuller explanation of how to use these relocation types to write
+shared libraries entirely in NASM is given in \nref{picdll}.
+
+\xsubsection{elftls}{\textindexlc{Thread Local Storage in ELF}:
+\code{elf} Special Symbols and \codeindex{WRT}}
+\index{TLS}
+
+In ELF32 mode, referring to an external or global symbol using
+\code{wrt ..tlsie}\indexcode{..tlsie} causes the linker to build
+an entry \emph{in} the GOT containing the
+offset of the symbol within the TLS block, so you can access the value
+of the symbol with code such as:
+
+\begin{lstlisting}
+mov eax,[tid wrt ..tlsie]
+mov [gs:eax],ebx
+\end{lstlisting}
+
+In ELF64 or ELFx32 mode, referring to an external or global symbol using
+\code{wrt ..gottpoff}\indexcode{..gottpoff} causes the linker to build an
+entry \emph{in} the GOT containing the offset of the symbol within the TLS
+block, so you can access the value of the symbol with code such as:
+
+\begin{lstlisting}
+mov rax,[rel tid wrt ..gottpoff]
+mov rcx,[fs:rax]
+\end{lstlisting}
+
+\xsubsection{elfglob}{\code{elf} Extensions to the \code{GLOBAL} Directive}
+\index{GLOBAL!elf extensions to}
+
+\code{ELF} object files can contain more information about a global symbol
+than just its address: they can contain the \index{symbol sizes!specifying}
+\index{size!of symbols}size of the symbol and its \index{symbol types!specifying}
+\index{type!of symbols}type as well. These are not merely debugger conveniences,
+but are actually necessary when the program being written is a
+\textindexlc{shared library}. NASM therefore supports some extensions to the
+\code{GLOBAL} directive, allowing you to specify these features.
+
+You can specify whether a global variable is a function or a data
+object by suffixing the name with a colon and the word
+\codeindex{function} or \codeindex{data}. (\codeindex{object} is
+a synonym for \code{data}.) For example:
+
+\begin{lstlisting}
+global  hashlookup:function, hashtable:data
+\end{lstlisting}
+
+exports the global symbol \code{hashlookup} as a function and
+\code{hashtable} as a data object.
+
+Optionally, you can control the ELF visibility of the symbol. Just
+add one of the visibility keywords: \codeindex{default},
+\codeindex{internal}, \codeindex{hidden}, or \codeindex{protected}.
+The default is \code{default} of course. For example, to make
+\code{hashlookup} hidden:
+
+\begin{lstlisting}
+global  hashlookup:function hidden
+\end{lstlisting}
+
+You can also specify the size of the data associated with the
+symbol, as a numeric expression (which may involve labels, and even
+forward references) after the type specifier. Like this:
+
+\begin{lstlisting}
+global  hashtable:data (hashtable.end - hashtable)
+
+hashtable:
+        db this,that,theother   ; some data here
+.end:
+\end{lstlisting}
+
+This makes NASM automatically calculate the length of the table and
+place that information into the \code{ELF} symbol table.
+
+Declaring the type and size of global symbols is necessary when
+writing shared library code. For more information, see
+\nref{picglobal}.
+
+\xsubsection{elfcomm}{\code{elf} Extensions to the \code{COMMON} Directive}
+\index{COMMON!elf extensions to}
+
+\code{ELF} also allows you to specify alignment requirements
+\index{common variables!alignment in elf}
+\index{alignment!of elf common variables} on common variables.
+This is done by putting a number (which must be a power of two)
+after the name and size of the common variable, separated (as usual)
+by a colon. For example, an array of doublewords would benefit from
+4-byte alignment:
+
+\begin{lstlisting}
+common dwordarray 128:4
+\end{lstlisting}
+
+This declares the total size of the array to be 128 bytes, and
+requires that it be aligned on a 4-byte boundary.
+
+\xsubsection{elf16}{16-bit code and ELF}
+\index{ELF!16-bit code and}
+
+The \code{ELF32} specification doesn't provide relocations for 8- and
+16-bit values, but the GNU \code{ld} linker adds these as an extension.
+NASM can generate GNU-compatible relocations, to allow 16-bit code to
+be linked as ELF using GNU \code{ld}. If NASM is used with the
+\code{-w+gnu-elf-extensions} option, a warning is issued when one of
+these relocations is generated.
+
+\xsubsection{elfdbg}{Debug formats and ELF}
+\index{ELF!Debug formats}
+
+ELF provides debug information in \code{STABS} and \code{DWARF} formats.
+Line number information is generated for all executable sections, but please
+note that only the ".text" section is executable by default.
+
+\xsection{aoutfmt}{\codeindex{aout}: Linux \code{a.out} Object Files}
+\index{a.out!Linux version}
+\index{linux!a.out}
+
+The \code{aout} format generates \code{a.out} object files, in the
+form used by early Linux systems (current Linux systems use ELF, see
+\nref{elffmt}.) These differ from other \code{a.out} object
+files in that the magic number in the first four bytes of the file is
+different; also, some implementations of \code{a.out}, for example
+NetBSD's, support position-independent code, which Linux's
+implementation does not.
+
+\code{a.out} provides a default output file-name extension of \code{.o}.
+
+\code{a.out} is a very simple object format. It supports no special
+directives, no special symbols, no use of \code{SEG} or \code{WRT}, and no
+extensions to any standard directives. It supports only the three
+\textindexlc{standard section names} \codeindex{.text}, \codeindex{.data}
+and \codeindex{.bss}.
+
+\xsection{aoutbfmt}{\codeindex{aoutb}: \textindex{NetBSD}/\textindex{FreeBSD}/\textindex{OpenBSD}
+\code{a.out} Object Files}
+\index{a.out!BSD version}
+
+The \code{aoutb} format generates \code{a.out} object files, in the form
+used by the various free \code{BSD Unix} clones, \code{NetBSD}, \code{FreeBSD}
+and \code{OpenBSD}. For simple object files, this object format is exactly
+the same as \code{aout} except for the magic number in the first four bytes
+of the file. However, the \code{aoutb} format supports
+\index{PIC}\textindexlc{position-independent code} in the same way as the
+\code{elf} format, so you can use it to write \code{BSD}
+\textindexlc{shared libraries}.
+
+\code{aoutb} provides a default output file-name extension of \code{.o}.
+
+\code{aoutb} supports no special directives, no special symbols, and
+only the three \textindexlc{standard section names} \codeindex{.text},
+\codeindex{.data} and \codeindex{.bss}. However, it also supports the same
+use of \codeindex{WRT} as \code{elf} does, to provide position-independent
+code relocation types. See \nref{elfwrt} for full documentation
+of this feature.
+
+\code{aoutb} also supports the same extensions to the \code{GLOBAL}
+directive as \code{elf} does: see \nref{elfglob} for
+documentation of this.
+
+\xsection{as86fmt}{\code{as86}: \textindex{Minix}/Linux \codeindex{as86} Object Files}
+\index{linux!as86}
+
+The Minix/Linux 16-bit assembler \code{as86} has its own non-standard
+object file format. Although its companion linker \codeindex{ld86}
+produces something close to ordinary \code{a.out} binaries as output,
+the object file format used to communicate between \code{as86} and
+\code{ld86} is not itself \code{a.out}.
+
+NASM supports this format, just in case it is useful, as \code{as86}.
+\code{as86} provides a default output file-name extension of \code{.o}.
+
+\code{as86} is a very simple object format (from the NASM user's point
+of view). It supports no special directives, no use of \code{SEG} or
+\code{WRT}, and no extensions to any standard directives. It supports
+only the three \textindexlc{standard section names} \codeindex{.text},
+\codeindex{.data} and \codeindex{.bss}. The only special symbol supported
+is \code{..start}.
+
+\xsection{rdffmt}{\index{RDOFF}\codeindex{rdf}: \textindexlc{Relocatable Dynamic
+Object File Format}}
+
+The \code{rdf} output format produces \code{RDOFF} object files.
+\code{RDOFF} (Relocatable Dynamic Object File Format) is a home-grown
+object-file format, designed alongside NASM itself and reflecting in
+its file format the internal structure of the assembler.
+
+\code{RDOFF} is not used by any well-known operating systems. Those
+writing their own systems, however, may well wish to use \code{RDOFF}
+as their object format, on the grounds that it is designed primarily
+for simplicity and contains very little file-header bureaucracy.
+
+The Unix NASM archive, and the DOS archive which includes sources,
+both contain an \index{rdoff subdirectory}\code{rdoff} subdirectory
+holding a set of RDOFF utilities: an RDF linker, an \code{RDF}
+static-library manager, an RDF file dump utility, and a program
+which will load and execute an RDF executable under Linux.
+
+\code{rdf} supports only the \index{standard section names}
+\codeindex{.text}, \codeindex{.data} and \codeindex{.bss}.
+
+\xsubsection{rdflib}{Requiring a Library: The \codeindex{LIBRARY} Directive}
+
+\code{RDOFF} contains a mechanism for an object file to demand a given
+library to be linked to the module, either at load time or run time.
+This is done by the \code{LIBRARY} directive, which takes one argument
+which is the name of the module:
+
+\begin{lstlisting}
+library mylib.rdl
+\end{lstlisting}
+
+\xsubsection{rdfmod}{Specifying a Module Name: The \codeindex{MODULE} Directive}
+
+Special \code{RDOFF} header record is used to store the name of the module.
+It can be used, for example, by run-time loader to perform dynamic
+linking. \code{MODULE} directive takes one argument which is the name
+of current module:
+
+\begin{lstlisting}
+module  mymodname
+\end{lstlisting}
+
+Note that when you statically link modules and tell linker to strip
+the symbols from output file, all module names will be stripped too.
+To avoid it, you should start module names with \index{\$!prefix}\code{\$},
+like:
+
+\begin{lstlisting}
+module $kernel.core
+\end{lstlisting}
+
+\xsubsection{rdfglob}{\code{rdf} Extensions to the \code{GLOBAL} Directive}
+\index{GLOBAL!rdf extensions to}
+
+\code{RDOFF} global symbols can contain additional information needed by
+the static linker. You can mark a global symbol as exported, thus
+telling the linker do not strip it from target executable or library
+file. Like in \code{ELF}, you can also specify whether an exported symbol
+is a procedure (function) or data object.
+
+Suffixing the name with a colon and the word \codeindex{export} you make the
+symbol exported:
+
+\begin{lstlisting}
+global  sys_open:export
+\end{lstlisting}
+
+To specify that exported symbol is a procedure (function), you add the
+word \codeindex{proc} or \codeindex{function} after declaration:
+
+\begin{lstlisting}
+global  sys_open:export proc
+\end{lstlisting}
+
+Similarly, to specify exported data object, add the word \codeindex{data}
+or \codeindex{object} to the directive:
+
+\begin{lstlisting}
+global  kernel_ticks:export data
+\end{lstlisting}
+
+\xsubsection{rdfimpt}{\code{rdf} Extensions to the \code{EXTERN} Directive}
+\index{EXTERN!rdf extensions to}
+
+By default the \code{EXTERN} directive in \code{RDOFF} declares a "pure external"
+symbol (i.e. the static linker will complain if such a symbol is not resolved).
+To declare an "imported" symbol, which must be resolved later during a dynamic
+linking phase, \code{RDOFF} offers an additional \code{import} modifier. As in
+\code{GLOBAL}, you can also specify whether an imported symbol is a procedure
+(function) or data object. For example:
+
+\begin{lstlisting}
+library $libc
+extern  _open:import
+extern  _printf:import proc
+extern  _errno:import data
+\end{lstlisting}
+
+Here the directive \code{LIBRARY} is also included, which gives the dynamic linker
+a hint as to where to find requested symbols.
+
+\xsection{dbgfmt}{\codeindex{dbg}: Debugging Format}
+
+The \code{dbg} format does not output an object file as such; instead,
+it outputs a text file which contains a complete list of all the
+transactions between the main body of NASM and the output-format
+back end module. It is primarily intended to aid people who want to
+write their own output drivers, so that they can get a clearer idea
+of the various requests the main program makes of the output driver,
+and in what order they happen.
+
+For simple files, one can easily use the \code{dbg} format like this:
+
+\begin{lstlisting}
+nasm -f dbg filename.asm
+\end{lstlisting}
+
+which will generate a diagnostic file called \code{filename.dbg}.
+However, this will not work well on files which were designed for a
+different object format, because each object format defines its own
+macros (usually user-level forms of directives), and those macros
+will not be defined in the \code{dbg} format. Therefore it can be
+useful to run NASM twice, in order to do the preprocessing with the
+native object format selected:
+
+\begin{lstlisting}
+nasm -e -f rdf -o rdfprog.i rdfprog.asm
+nasm -a -f dbg rdfprog.i
+\end{lstlisting}
+
+This preprocesses \code{rdfprog.asm} into \code{rdfprog.i}, keeping the
+\code{rdf} object format selected in order to make sure RDF special
+directives are converted into primitive form correctly. Then the
+preprocessed source is fed through the \code{dbg} format to generate
+the final diagnostic output.
+
+This workaround will still typically not work for programs intended
+for \code{obj} format, because the \code{obj}- \code{SEGMENT} and \code{GROUP}
+directives have side effects of defining the segment and group names
+as symbols; \code{dbg} will not do this, so the program will not
+assemble. You will have to work around that by defining the symbols
+yourself (using \code{EXTERN}, for example) if you really need to get a
+\code{dbg} trace of an \code{obj}-specific source file.
+
+\code{dbg} accepts any section name and any directives at all, and logs
+them all to its output file.
+
+\code{dbg} accepts and logs any \code{\%pragma}, but the specific \code{\%pragma}:
+
+\begin{lstlisting}
+%pragma dbg maxdump <size>
+\end{lstlisting}
+
+where \code{<size>} is either a number or \code{unlimited}, can be
+used to control the maximum size for dumping the full contents of a
+\code{rawdata} output object.

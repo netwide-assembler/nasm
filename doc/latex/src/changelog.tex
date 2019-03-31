@@ -1,0 +1,2304 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{changelog}{\textindexlc{NASM Version History}}
+
+\xsection{cl-2.xx}{NASM 2 Series}
+
+The NASM 2 series supports x86-64, and is the production version of NASM
+since 2007.
+
+\xsubsection{cl-2.15}{Version 2.15}
+
+\begin{itemize}
+    \item{The state of warnings can now be saved and restored via
+        the \code{[WARNING PUSH]} and \code{[WARNING POP]} directives.
+        See \nref{asmdir-warning}}.
+\end{itemize}
+
+\xsubsection{cl-2.14.03}{Version 2.14.03}
+
+\begin{itemize}
+    \item{Suppress nuisance "\code{label changed during code
+        generation}" messages after a real error.}
+\end{itemize}
+
+\xsubsection{cl-2.14.02}{Version 2.14.02}
+
+\begin{itemize}
+    \item{Fix crash due to multiple errors or warnings during the code
+        generation pass if a list file is specified.}
+\end{itemize}
+
+\xsubsection{cl-2.14.01}{Version 2.14.01}
+
+\begin{itemize}
+    \item{Create all system-defined macros defore processing command-line
+        given preprocessing directives (\code{-p}, \code{-d}, \code{-u}, \code{--pragma},
+        \code{--before}).}
+
+    \item{If debugging is enabled, define a \code{\_\_DEBUG\_FORMAT\_\_} predefined
+        macro. See \nref{dfmtm}.}
+
+    \item{Fix an assert for the case in the \code{obj} format when a \code{SEG}
+        operator refers to an \code{EXTERN} symbol declared further down in the
+        code.}
+
+    \item{Fix a corner case in the floating-point code where a binary, octal
+        or hexadecimal floating-point having at least 32, 11, or 8 mantissa
+        digits could produce slightly incorrect results under very specific
+        conditions.}
+
+    \item{Support \code{-MD} without a filename, for \code{gcc} compatibility.
+        \code{-MF} can be used to set the dependencies output filename.
+        See \nref{opt-MD}.}
+
+    \item{Fix \code{-E} in combination with \code{-MD}. See \nref{opt-E}.}
+
+    \item{Fix missing errors on redefined labels; would cause convergence
+        failure instead which is very slow and not easy to debug.}
+
+    \item{Duplicate definitions of the same label \emph{with the same value} is now
+        explicitly permitted (2.14 would allow it in some circumstances.)}
+
+    \item{Add the option \code{--no-line} to ignore \code{\%line} directives in the
+        source. See \nref{opt-no-line} and \nref{line}.}
+\end{itemize}
+
+\xsubsection{cl-2.14}{Version 2.14}
+
+\begin{itemize}
+    \item{Changed \code{-I} option semantics by adding a trailing path
+        separator unconditionally.}
+
+    \item{Fixed null dereference in corrupted invalid single line macros.}
+
+    \item{Fixed division by zero which may happen if source code is malformed.}
+
+    \item{Fixed out of bound access in processing of malformed segment override.}
+
+    \item{Fixed out of bound access in certain \code{EQU} parsing.}
+
+    \item{Fixed buffer underflow in float parsing.}
+
+    \item{Added \code{SGX} (Intel Software Guard Extensions) instructions.}
+
+    \item{Added \code{+n} syntax for multiple contiguous registers.}
+
+    \item{Fixed \code{subsections\_via\_symbols} for \code{macho} object format.}
+
+    \item{Added the \code{--gprefix}, \code{--gpostfix}, \code{--lprefix}, and
+        \code{--lpostfix} command line options, to allow command line base symbol
+        renaming. See \nref{opt-pfix}.}
+
+    \item{Allow label renaming to be specified by \code{\%pragma} in addition to
+        from the command line. See \nref{mangling}.}
+
+    \item{Supported generic \code{\%pragma} namespaces, \code{output} and \code{debug}.
+        See \nref{gen-namespace}.}
+
+    \item{Added the \code{--pragma} command line option to inject a \code{\%pragma}
+        directive. See \nref{opt-pragma}.}
+
+    \item{Added the \code{--before} command line option to accept preprocess
+        statement before input. See \nref{opt-before}.}
+
+    \item{Added \code{AVX512} \code{VBMI2} (Additional Bit Manipulation), \code{VNNI}
+        (Vector Neural Network), \code{BITALG} (Bit Algorithm), and \code{GFNI} (Galois
+        Field New Instruction) instructions.}
+
+    \item{Added the \code{STATIC} directive for local symbols that should be
+        renamed using global-symbol rules. See \nref{static}.}
+
+    \item{Allow a symbol to be defined as \code{EXTERN} and then later
+        overridden as \code{GLOBAL} or \code{COMMON}. Furthermore, a symbol
+        declared \code{EXTERN} and then defined will be treated as \code{GLOBAL}.
+        See \nref{extern}.}
+
+    \item{The \code{GLOBAL} directive no longer is required to precede the
+        definition of the symbol.}
+
+    \item{Support \code{private\_extern} as \code{macho} specific extension to the
+        \code{GLOBAL} directive. See \nref{macho-pext}.}
+
+    \item{Updated \code{UD0} encoding to match with the specification}
+
+    \item{Added the \code{--limit-X} command line option to set execution
+        limits. See \nref{opt-limit}.}
+
+    \item{Updated the \code{Codeview} version number to be aligned with \code{MASM}.}
+
+    \item{Added the \code{--keep-all} command line option to preserve output
+        files. See \nref{opt-keep-all}.}
+
+    \item{Added the \code{--include} command line option, an alias to \code{-P}
+        (\nref{opt-p}).}
+
+    \item{Added the \code{--help} command line option as an alias to \code{-h}
+        (\nref{syntax}).}
+
+    \item{Added \code{-W}, \code{-D}, and \code{-Q} suffix aliases for \code{RET}
+        instructions so the operand sizes of these instructions can be
+        encoded without using \code{o16}, \code{o32} or \code{o64}.}
+\end{itemize}
+
+\xsubsection{cl-2.13.03}{Version 2.13.03}
+
+\begin{itemize}
+    \item{Added AVX and AVX512 \code{VAES*} and \code{VPCLMULQDQ} instructions.}
+    \item{Fixed missing dwarf record in x32 ELF output format.}
+\end{itemize}
+
+\xsubsection{cl-2.13.02}{Version 2.13.02}
+
+\begin{itemize}
+    \item{Fix false positive in testing of numeric overflows.}
+
+    \item{Fix generation of \code{PEXTRW} instruction.}
+
+    \item{Fix \code{smartalign} package which could trigger an error during
+        optimization if the alignment code expanded too much due to
+        optimization of the previous code.}
+
+    \item{Fix a case where negative value in \code{TIMES} directive causes
+        panic instead of an error.}
+
+    \item{Always finalize \code{.debug\_abbrev} section with a null in
+        \code{dwarf} output format.}
+
+    \item{Support \code{debug} flag in section attributes for \code{macho}
+        output format. See \nref{machosect}.}
+
+    \item{Support up to 16 characters in section names for \code{macho}
+        output format.}
+
+    \item{Fix missing update of global \code{BITS} setting if \code{SECTION}
+        directive specified a bit size using output format-specific
+        extensions (e.g. \code{USE32} for the \code{obj} output format.)}
+
+    \item{Fix the incorrect generation of VEX-encoded instruction when static
+        mode decorators are specified on scalar instructions, losing the
+        decorators as they require EVEX encoding.}
+
+    \item{Option \code{-MW} to quote dependency outputs according to Watcom
+        Make conventions instead of POSIX Make conventions. See \nref{opt-MW}.}
+
+    \item{The \code{obj} output format now contains embedded dependency file
+        information, unless disabled with \code{\%pragma obj nodepend}. See
+        \nref{objdepend}.}
+
+    \item{Fix generation of dependency lists.}
+
+    \item{Fix a number of null pointer reference and memory allocation errors.}
+
+    \item{Always generate symbol-relative relocations for the \code{macho64}
+        output format; at least some versions of the XCode/LLVM linker fails
+        for section-relative relocations.}
+\end{itemize}
+
+\xsubsection{cl-2.13.01}{Version 2.13.01}
+
+\begin{itemize}
+    \item{Fix incorrect output for some types of \code{FAR} or \code{SEG}
+        references in the \code{obj} output format, and possibly other 16-bit
+        output formats.}
+
+    \item{Fix the address in the list file for an instruction containing a
+        \code{TIMES} directive.}
+
+    \item{Fix error with \code{TIMES} used together with an instruction which
+        can vary in size, e.g. \code{JMP}.}
+
+    \item{Fix breakage on some uses of the \code{DZ} pseudo-op.}
+\end{itemize}
+
+\xsubsection{cl-2.13}{Version 2.13}
+
+\begin{itemize}
+    \item{Support the official forms of the \code{UD0} and \code{UD1} instructions.}
+
+    \item{Allow self-segment-relative expressions in immediates and
+        displacements, even when combined with an external or otherwise
+        out-of-segment special symbol, e.g.:
+\begin{lstlisting}
+extern foo
+mov eax,[foo - $ + ebx] ; Now legal
+\end{lstlisting}}
+
+    \item{Handle a 64-bit origin in NDISASM.}
+
+    \item{NASM can now generate sparse output files for relevant output
+        formats, if the underlying operating system supports them.}
+
+    \item{The \code{macho} object format now supports the
+        \code{subsections\_via\_symbols} and \code{no\_dead\_strip}
+        directives, see \nref{macho-ssvs}.}
+
+    \item{The \code{macho} object format now supports the \code{no\_dead\_strip},
+        \code{live\_support} and \code{strip\_static\_syms} section flags,
+        see \nref{machosect}.}
+
+    \item{The \code{macho} object format now supports the \code{dwarf} debugging
+        format, as required by newer toolchains.}
+
+    \item{All warnings can now be suppressed if desired; warnings not
+        otherwise part of any warning class are now considered its own
+        warning class called \code{other} (e.g. \code{-w-other}). Furthermore,
+        warning-as-error can now be controlled on a per warning class
+        basis, using the syntax \code{-w+error=}\emph{warning-class} and its
+        equivalent for all other warning control options. See \nref{opt-w}
+        for the command-line options and warning classes and
+        \nref{asmdir-warning} for the \code{[WARNING]} directive.}
+
+    \item{Fix a number of bugs related to AVX-512 decorators.}
+
+    \item{Significant improvements to building NASM with Microsoft Visual
+        Studio via \code{Mkfiles/msvc.mak}. It is now possible to build the
+        full Windows installer binary as long as the necessary
+        prerequisites are installed; see \code{Mkfiles/README}}
+
+    \item{To build NASM with custom modifications (table changes) or from the
+        git tree now requires Perl 5.8 at the very minimum, quite possibly
+        a higher version (Perl 5.24.1 tested.) There is no requirement to
+        have Perl on your system at all if all you want to do is build
+        unmodified NASM from source archives.}
+
+    \item{Fix the \code{\{z\}} decorator on AVX-512 \code{VMOVDQ*}
+        instructions.}
+
+    \item{Add new warnings for certain dangerous constructs which never ought
+        to have been allowed. In particular, the \code{RESB} family of
+        instructions should have been taking a critical expression all
+        along.}
+
+    \item{Fix the EVEX (AVX-512) versions of the \code{VPBROADCAST}, \code{VPEXTR},
+        and \code{VPINSR} instructions.}
+
+    \item{Support contracted forms of additional instructions. As a general
+        rule, if an instruction has a non-destructive source immediately
+        after a destination register that isn't used as an input, NASM
+        supports omitting that source register, using the destination
+        register as that value. This among other things makes it easier to
+        convert SSE code to the equivalent AVX code:
+\begin{lstlisting}
+addps xmm1,xmm0         ; SSE instruction
+vaddps ymm1,ymm1,ymm0   ; AVX official long form
+vaddps ymm1,ymm0        ; AVX contracted form
+\end{lstlisting}}
+
+    \item{Fix Codeview malformed compiler version record.}
+
+    \item{Add the \code{CLWB} and \code{PCOMMIT} instructions. Note that the
+        \code{PCOMMIT} instruction has been deprecated and will never be
+        included in a shipping product; it is included for completeness
+        only.}
+
+    \item{Add the \code{\%pragma} preprocessor directive for
+        soft-error directives.}
+
+    \item{Add the \code{RDPID} instruction.}
+\end{itemize}
+
+\xsubsection{cl-2.12.02}{Version 2.12.02}
+
+\begin{itemize}
+    \item{Fix preprocessor errors, especially \code{\%error} and
+        \code{\%warning}, inside \code{\%if} statements.}
+
+    \item{Fix relative relocations in 32-bit Mach-O.}
+
+    \item{More Codeview debug format fixes.}
+
+    \item{If the MASM \code{PTR} keyword is encountered, issue a warning. This is
+        much more likely to indicate a MASM-ism encountered in NASM than it
+        is a valid label. This warning can be suppressed with \code{-w-ptr},
+        the \code{[warning]} directive (see \nref{opt-w}) or by the macro
+        definition \code{\%idefine ptr \$\%} (see \nref{selfref}).}
+
+    \item{When an error or a warning comes from the expansion of a multi-line
+        macro, display the file and line numbers for the expanded macros.
+        Macros defined with \code{.nolist} do not get displayed.}
+
+    \item{Add macros \code{ilog2fw()} and \code{ilog2cw()} to the \code{ifunc} macro
+        package. See \nref{ilog2}.}
+\end{itemize}
+
+\xsubsection{cl-2.12.01}{Version 2.12.01}
+
+\begin{itemize}
+    \item{Portability fixes for some platforms.}
+    \item{Fix error when not specifying a list file.}
+    \item{Correct the handling of macro-local labels in the Codeview debugging format.}
+    \item{Add \code{CLZERO}, \code{MONITORX} and \code{MWAITX} instructions.}
+\end{itemize}
+
+\xsubsection{cl-2.12}{Version 2.12}
+
+\begin{itemize}
+    \item{Major fixes to the \code{macho} backend (\nref{machofmt}); earlier versions
+        would produce invalid symbols and relocations on a regular basis.}
+
+    \item{Support for thread-local storage in Mach-O.}
+
+    \item{Support for arbitrary sections in Mach-O.}
+
+    \item{Fix wrong negative size treated as a big positive value passed into
+        backend causing NASM to crash.}
+
+    \item{Fix handling of zero-extending unsigned relocations, we have been printing
+        wrong message and forgot to assign segment with predefined value before
+        passing it into output format.}
+
+    \item{Fix potential write of oversized (with size greater than allowed in
+        output format) relative relocations.}
+
+    \item{Portability fixes for building NASM with the LLVM compiler.}
+
+    \item{Add support of Codeview version 8 (\code{cv8}) debug format for
+        \code{win32} and \code{win64} formats in the \code{COFF} backend,
+        see \nref{codeview}.}
+
+    \item{Allow 64-bit outputs in 16/32-bit only backends. Unsigned 64-bit
+        relocations are zero-extended from 32-bits with a warning
+        (suppressible via \code{-w-zext-reloc}); signed 64-bit relocations are
+        an error.}
+
+    \item{Line numbers in list files now correspond to the lines in the source
+        files, instead of simply being sequential.}
+
+    \item{There is now an official 64-bit (x64 a.k.a. x86-64) build for Windows.}
+\end{itemize}
+
+\xsubsection{cl-2.11.09}{Version 2.11.09}
+
+\begin{itemize}
+    \item{Fix potential stack overwrite in \code{macho32} backend.}
+
+    \item{Fix relocation records in \code{macho64} backend.}
+
+    \item{Fix symbol lookup computation in \code{macho64} backend.}
+
+    \item{Adjust \code{.symtab} and \code{.rela.text} sections alignments to 8 bytes
+        in \code{elf64} backed.}
+
+    \item{Fix section length computation in \code{bin} backend which leaded in incorrect
+        relocation records.}
+\end{itemize}
+
+\xsubsection{cl-2.11.08}{Version 2.11.08}
+
+\begin{itemize}
+    \item{Fix section length computation in \code{bin} backend which leaded in incorrect
+        relocation records.}
+
+    \item{Add a warning for numeric preprocessor definitions passed via command
+        line which might have unexpected results otherwise.}
+
+    \item{Add ability to specify a module name record in \code{rdoff} linker with
+        \code{-mn} option.}
+
+    \item{Increase label length capacity up to 256 bytes in \code{rdoff} backend for
+        FreePascal sake, which tends to generate very long labels for procedures.}
+
+    \item{Fix segmentation failure when rip addressing is used in \code{macho64} backend.}
+
+    \item{Fix access on out of memory when handling strings with a single
+        grave. We have sixed similar problem in previous release but not
+        all cases were covered.}
+
+    \item{Fix NULL dereference in disassembled on \code{BND} instruction.}
+\end{itemize}
+
+\xsubsection{cl-2.11.07}{Version 2.11.07}
+
+\begin{itemize}
+    \item{Fix 256 bit \code{VMOVNTPS} instruction.}
+
+    \item{Fix \code{-MD} option handling, which was rather broken in previous
+        release changing command line api.}
+
+    \item{Fix access to unitialized space when handling strings with
+        a single grave.}
+
+    \item{Fix nil dereference in handling memory reference parsing.}
+\end{itemize}
+
+\xsubsection{cl-2.11.06}{Version 2.11.06}
+
+\begin{itemize}
+    \item{Update AVX512 instructions based on the Extension Reference (319433-021 Sept 2014).}
+    \item{Fix the behavior of \code{-MF} and \code{-MD} options (Bugzilla 3392280)}
+    \item{Updated Win32 Makefile to fix issue with build}
+\end{itemize}
+
+\xsubsection{cl-2.11.05}{Version 2.11.05}
+
+\begin{itemize}
+    \item{Add \code{--v} as an alias for \code{-v} (see \nref{opt-v}), for
+        command-line compatibility with Yasm.}
+    \item{Fix a bug introduced in 2.11.03 whereby certain instructions would
+        contain multiple REX prefixes, and thus be corrupt.}
+\end{itemize}
+
+\xsubsection{cl-2.11.04}{Version 2.11.04}
+
+\begin{itemize}
+    \item{Removed an invalid error checking code. Sometimes a memref only with
+        a displacement can also set an evex flag. For example:
+\begin{lstlisting}
+vmovdqu32 [0xabcd]{k1}, zmm0
+\end{lstlisting}}
+
+    \item{Fixed a bug in disassembler that EVEX.L'L vector length was not matched
+        when EVEX.b was set because it was simply considered as EVEC.RC.
+        Separated EVEX.L'L case from EVEX.RC which is ignored in matching.}
+\end{itemize}
+
+\xsubsection{cl-2.11.03}{Version 2.11.03}
+
+\begin{itemize}
+    \item{Fix a bug there REX prefixes were missing on instructions
+        inside a \code{TIMES} statement.}
+\end{itemize}
+
+\xsubsection{cl-2.11.02}{Version 2.11.02}
+
+\begin{itemize}
+    \item{Add the \code{XSAVEC}, \code{XSAVES} and \code{XRSTORS} family instructions.}
+    \item{Add the \code{CLFLUSHOPT} instruction.}
+\end{itemize}
+
+\xsubsection{cl-2.11.01}{Version 2.11.01}
+
+\begin{itemize}
+    \item{Allow instructions which implicitly uses \code{XMM0} (\code{VBLENDVPD},
+        \code{VBLENDVPS}, \code{PBLENDVB} and \code{SHA256RNDS2}) to be specified
+        without an explicit \code{xmm0} on the assembly line. In other words,
+        the following two lines produce the same output:
+\begin{lstlisting}
+vblendvpd xmm2,xmm1,xmm0    ; Last operand is fixed xmm0
+vblendvpd xmm2,xmm1         ; Implicit xmm0 omitted
+\end{lstlisting}}
+
+    \item{In the ELF backends, don't crash the assembler if \code{section align}
+        is specified without a value.}
+\end{itemize}
+
+\xsubsection{cl-2.11}{Version 2.11}
+
+\begin{itemize}
+    \item{Add support for the Intel AVX-512 instruction set:}
+
+    \item{16 new, 512-bit SIMD registers. Total 32 \code{(ZMM0 \textasciitilde ZMM31)}}
+
+    \item{8 new opmask registers \code{(K0 \textasciitilde K7)}.
+        One of 7 registers \code{(K1 \textasciitilde K7)} can
+        be used as an opmask for conditional execution.}
+
+    \item{A new EVEX encoding prefix. EVEX is based on VEX and provides more
+        capabilities: opmasks, broadcasting, embedded rounding and compressed
+        displacements.
+\begin{lstlisting}
+; opmask: conditional vector operation
+; using opmask k1 and {z} is for zero-masking
+    VDIVPD zmm0{k1}{z}, zmm1, zmm3
+
+; broadcasting: load single-precision float and
+; replicate it 16 times. 32 * 16 = 512
+    VDIVPS zmm4, zmm5, [rbx]{1to16}
+
+; embedded rounding: round toward zero. note that
+: it is used as if a separate operand. it comes after
+; the last SIMD operand
+    VCVTSI2SD xmm6, xmm7, {rz-sae}, rax
+\end{lstlisting}}
+
+    \item{Add support for \code{ZWORD} (512 bits), \code{DZ} and \code{RESZ}.}
+
+    \item{Add support for the MPX and SHA instruction sets.}
+
+    \item{Better handling of section redefinition.}
+
+    \item{Generate manpages when running \code{'make dist'}.}
+
+    \item{Handle all token chains in mmacro params range.}
+
+    \item{Support split [base,index] effective address:
+\begin{lstlisting}
+; eax=base, ecx=index, 4=scale, 8=disp
+mov eax,[eax+8,ecx*4]
+\end{lstlisting}
+        This is expected to be most useful for the MPX instructions.}
+
+    \item{Support \code{BND} prefix for branch instructions (for MPX).}
+
+    \item{The \code{DEFAULT} directive can now take \code{BND} and \code{NOBND}
+        options to indicate whether all relevant branches should be getting
+        \code{BND} prefixes. This is expected to be the normal for use in MPX
+        code.}
+
+    \item{Add \code{{evex}}, \code{{vex3}} and \code{{vex2}} instruction prefixes to
+        have NASM encode the corresponding instruction, if possible, with an EVEX,
+        3-byte VEX, or 2-byte VEX prefix, respectively.}
+
+    \item{Support for section names longer than 8 bytes in Win32/Win64 COFF.}
+
+    \item{The \code{NOSPLIT} directive by itself no longer forces a single
+        register to become an index register, unless it has an explicit
+        multiplier.
+\begin{lstlisting}
+mov eax,[nosplit eax]   ; eax as base register
+mov eax,[nosplit eax*1] ; eax as index register
+\end{lstlisting}}
+\end{itemize}
+
+\xsubsection{cl-2.10.09}{Version 2.10.09}
+
+\begin{itemize}
+    \item{Pregenerate man pages.}
+\end{itemize}
+
+\xsubsection{cl-2.10.08}{Version 2.10.08}
+
+\begin{itemize}
+    \item{Fix \code{VMOVNTDQA}, \code{MOVNTDQA} and \code{MOVLPD} instructions.}
+    \item{Fix collision for \code{VGATHERQPS}, \code{VPGATHERQD} instructions.}
+    \item{Fix \code{VPMOVSXBQ}, \code{VGATHERQPD}, \code{VSPLLW} instructions.}
+    \item{Add a bunch of AMD TBM instructions.}
+    \item{Fix potential stack overwrite in numbers conversion.}
+    \item{Allow byte size in \code{PREFETCHTx} instructions.}
+    \item{Make manual pages up to date.}
+    \item{Make \code{F3} and \code{F2} SSE prefixes to override \code{66}.}
+    \item{Support of AMD SVM instructions in 32 bit mode.}
+    \item{Fix near offsets code generation for \code{JMP}, \code{CALL} instrictions in long mode.}
+    \item{Fix preprocessor parse regression when id is expanding to a whitespace.}
+\end{itemize}
+
+\xsubsection{cl-2.10.07}{Version 2.10.07}
+
+\begin{itemize}
+    \item{Fix line continuation parsing being broken in previous version.}
+\end{itemize}
+
+\xsubsection{cl-2.10.06}{Version 2.10.06}
+
+\begin{itemize}
+    \item{Always quote the dependency source names when using the automatic
+        dependency generation options.}
+    \item{If no dependency target name is specified via the \code{-MT} or
+        \code{-MQ} options, quote the default output name.}
+    \item{Fix assembly of shift operations in \code{CPU 8086} mode.}
+    \item{Fix incorrect generation of explicit immediate byte for shift by 1
+        under certain circumstances.}
+    \item{Fix assembly of the \code{VPCMPGTQ} instruction.}
+    \item{Fix RIP-relative relocations in the \code{macho64} backend.}
+\end{itemize}
+
+\xsubsection{cl-2.10.05}{Version 2.10.05}
+
+\begin{itemize}
+    \item{Add the \code{CLAC} and \code{STAC} instructions.}
+\end{itemize}
+
+\xsubsection{cl-2.10.04}{Version 2.10.04}
+
+\begin{itemize}
+    \item{Add back the inadvertently deleted 256-bit version of the \code{VORPD} instruction.}
+    \item{Correct disassembly of instructions starting with byte \code{82} hex.}
+    \item{Fix corner cases in token pasting, for example:
+\begin{lstlisting}
+%define N 1e%++%+ 5
+dd N, 1e+5
+\end{lstlisting}}
+\end{itemize}
+
+\xsubsection{cl-2.10.03}{Version 2.10.03}
+
+\begin{itemize}
+    \item{Correct the assembly of the instruction:
+\begin{lstlisting}
+XRELEASE MOV [absolute],AL
+\end{lstlisting}
+    Previous versions would incorrectly generate \code{F3 A2} for this
+    instruction and issue a warning; correct behavior is to emit \code{F3 88 05}.}
+\end{itemize}
+
+\xsubsection{cl-2.10.02}{Version 2.10.02}
+
+\begin{itemize}
+    \item{Add the \code{ifunc} macro package with integer functions, currently
+        only integer logarithms. See \nref{pkgifunc}.}
+    \item{Add the \code{RDSEED}, \code{ADCX} and \code{ADOX} instructions.}
+\end{itemize}
+
+\xsubsection{cl-2.10.01}{Version 2.10.01}
+
+\begin{itemize}
+    \item{Add missing VPMOVMSKB instruction with reg32, ymmreg operands.}
+\end{itemize}
+
+\xsubsection{cl-2.10}{Version 2.10}
+
+\begin{itemize}
+    \item{When optimization is enabled, \code{mov r64,imm} now optimizes to the
+        shortest form possible between:
+\begin{lstlisting}
+mov r32,imm32   ;  5 bytes
+mov r64,imm32   ;  7 bytes
+mov r64,imm64   ; 10 bytes
+\end{lstlisting}
+        To force a specific form, use the \code{STRICT} keyword, see \nref{strict}.}
+    \item{Add support for the Intel AVX2 instruction set.}
+    \item{Add support for Bit Manipulation Instructions 1 and 2.}
+    \item{Add support for Intel Transactional Synchronization Extensions (TSX).}
+    \item{Add support for x32 ELF (32-bit ELF with the CPU in 64-bit mode.) See \nref{elffmt}.}
+    \item{Add support for bigendian UTF-16 and UTF-32. See \nref{unicode}.}
+\end{itemize}
+
+\xsubsection{cl-2.09.10}{Version 2.09.10}
+
+\begin{itemize}
+    \item{Fix up NSIS script to protect uninstaller against registry keys
+        absence or corruption. It brings in a few additional questions
+        to a user during deinstallation procedure but still it is better
+        than unpredictable file removal.}
+\end{itemize}
+
+\xsubsection{cl-2.09.09}{Version 2.09.09}
+
+\begin{itemize}
+    \item{Fix initialization of section attributes of \code{bin} output format.}
+    \item{Fix \code{mach64} output format bug that crashes NASM due to NULL symbols.}
+\end{itemize}
+
+\xsubsection{cl-2.09.08}{Version 2.09.08}
+
+\begin{itemize}
+    \item{Fix \code{\_\_OUTPUT\_FORMAT\_\_} assignment when output driver alias
+        is used. For example when \code{-f elf} is used \code{\_\_OUTPUT\_FORMAT\_\_}
+        must be set to \code{elf}, if \code{-f elf32} is used \code{\_\_OUTPUT\_FORMAT\_\_}
+        must be assigned accordingly, i.e. to \code{elf32}. The rule applies to
+        all output driver aliases. See \nref{ofmtm}.}
+\end{itemize}
+
+\xsubsection{cl-2.09.07}{Version 2.09.07}
+
+\begin{itemize}
+    \item{Fix attempts to close same file several times when \code{-a} option is used.}
+    \item{Fixes for VEXTRACTF128, VMASKMOVPS encoding.}
+\end{itemize}
+
+\xsubsection{cl-2.09.06}{Version 2.09.06}
+
+\begin{itemize}
+    \item{Fix missed section attribute initialization in \code{bin} output target.}
+\end{itemize}
+
+\xsubsection{cl-2.09.05}{Version 2.09.05}
+
+\begin{itemize}
+    \item{Fix arguments encoding for VPEXTRW instruction.}
+    \item{Remove invalid form of VPEXTRW instruction.}
+    \item{Add \code{VLDDQU} as alias for \code{VLDQQU} to match specification.}
+\end{itemize}
+
+\xsubsection{cl-2.09.04}{Version 2.09.04}
+
+\begin{itemize}
+    \item{Fix incorrect labels offset for VEX intructions.}
+    \item{Eliminate bogus warning on implicit operand size override.}
+    \item{\code{\%if} term could not handle 64 bit numbers.}
+    \item{The COFF backend was limiting relocations number to 16 bits even if
+        in real there were a way more relocations.}
+\end{itemize}
+
+\xsubsection{cl-2.09.03}{Version 2.09.03}
+
+\begin{itemize}
+    \item{Print \code{\%macro} name inside \code{\%rep} blocks on error.}
+    \item{Fix preprocessor expansion behaviour. It happened sometime
+        too early and sometime simply wrong. Move behaviour back to
+        the origins (down to NASM 2.05.01).}
+    \item{Fix unitialized data dereference on OMF output format.}
+    \item{Issue warning on unterminated \code{\%\{} construct.}
+    \item{Fix for documentation typo.}
+\end{itemize}
+
+\xsubsection{cl-2.09.02}{Version 2.09.02}
+
+\begin{itemize}
+    \item{Fix reversed tokens when \code{\%deftok} produces more than one output token.}
+    \item{Fix segmentation fault on disassembling some VEX instructions.}
+    \item{Missing \code{\%endif} did not always cause error.}
+    \item{Fix typo in documentation.}
+    \item{Compound context local preprocessor single line macro identifiers
+        were not expanded early enough and as result lead to unresolved symbols.}
+\end{itemize}
+
+\xsubsection{cl-2.09.01}{Version 2.09.01}
+
+\begin{itemize}
+    \item{Fix NULL dereference on missed \code{\%deftok} second parameter.}
+    \item{Fix NULL dereference on invalid \code{\%substr} parameters.}
+\end{itemize}
+
+\xsubsection{cl-2.09}{Version 2.09}
+
+\begin{itemize}
+    \item{Fixed assignment the magnitude of \code{\%rep} counter.
+        It is limited to 62 bits now.}
+    \item{Fixed NULL dereference if argument of \code{\%strlen} resolves
+        to whitespace. For example if nonexistent macro parameter is used.}
+    \item{\code{\%ifenv}, \code{\%elifenv}, \code{\%ifnenv}, and
+        \code{\%elifnenv} directives introduced. See \nref{ifenv}.}
+    \item{Fixed NULL dereference if environment variable is missed.}
+    \item{Updates of new AVX v7 Intel instructions.}
+    \item{\code{PUSH imm32} is now officially documented.}
+    \item{Fix for encoding the LFS, LGS and LSS in 64-bit mode.}
+    \item{Fixes for compatibility with OpenWatcom compiler and DOS 8.3 file format limitation.}
+    \item{Macros parameters range expansion introduced. See \nref{mlmacrange}.}
+    \item{Backward compatibility on expanging of local sigle macros restored.}
+    \item{8 bit relocations for \code{elf} and \code{bin} output formats are introduced.}
+    \item{Short intersegment jumps are permitted now.}
+    \item{An alignment more than 64 bytes are allowed for \code{win32},
+        \code{win64} output formats.}
+    \item{\code{SECTALIGN} directive introduced. See \nref{sectalign}.}
+    \item{\code{nojmp} option introduced in \code{smartalign} package. See
+        \nref{pkgsmartalign}.}
+    \item{Short aliases \code{win}, \code{elf} and \code{macho} for output formats are
+        introduced. Each stands for \code{win32}, \code{elf32} and \code{macho32}
+        accordingly.}
+    \item{Faster handling of missing directives implemented.}
+    \item{Various small improvements in documentation.}
+    \item{No hang anymore if unable to open malloc.log file.}
+    \item{The environments without vsnprintf function are able to build nasm again.}
+    \item{AMD LWP instructions updated.}
+    \item{Tighten EA checks. We warn a user if there overflow in EA addressing.}
+    \item{Make \code{-Ox} the default optimization level. For the legacy
+        behavior, specify \code{-O0} explicitly. See \nref{opt-O}.}
+    \item{Environment variables read with \code{\%!} or tested with \code{\%ifenv}
+        can now contain non-identifier characters if surrounded by quotes.
+        See \nref{getenv}.}
+    \item{Add a new standard macro package \code{\%use fp} for floating-point
+        convenience macros. See \nref{pkgfp}.}
+\end{itemize}
+
+\xsubsection{cl-2.08.02}{Version 2.08.02}
+
+\begin{itemize}
+    \item{Fix crash under certain circumstances when using
+        the \code{\%+} operator.}
+\end{itemize}
+
+\xsubsection{cl-2.08.01}{Version 2.08.01}
+
+\begin{itemize}
+    \item{Fix the \code{\%use} statement, which was broken in 2.08.}
+\end{itemize}
+
+\xsubsection{cl-2.08}{Version 2.08}
+
+\begin{itemize}
+    \item{A number of enhancements/fixes in macros area.}
+    \item{Support for converting strings to tokens. See \nref{deftok}.}
+    \item{Fuzzy operand size logic introduced.}
+    \item{Fix COFF stack overrun on too long export identifiers.}
+    \item{Fix Macho-O alignment bug.}
+    \item{Fix crashes with \code{-fwin32} on file with many exports.}
+    \item{Fix stack overrun for too long [DEBUG id].}
+    \item{Fix incorrect sbyte usage in IMUL (hit only if optimization flag passed).}
+    \item{Append ending token for \code{.stabs} records in the ELF output format.}
+    \item{New NSIS script which uses ModernUI and MultiUser approach.}
+    \item{Visual Studio 2008 NASM integration (rules file).}
+    \item{Warn a user if a constant is too long (and as result will be stripped).}
+    \item{The obsoleted pre-XOP AMD SSE5 instruction set which was never actualized was removed.}
+    \item{Fix stack overrun on too long error file name passed from the command line.}
+    \item{Bind symbols to the .text section by default (ie in case if
+        \code{SECTION} directive was omitted) in the ELF output format.}
+    \item{Fix sync points array index wrapping.}
+    \item{A few fixes for FMA4 and XOP instruction templates.}
+    \item{Add AMD Lightweight Profiling (LWP) instructions.}
+    \item{Fix the offset for \code{\%arg} in 64-bit mode.}
+    \item{An undefined local macro (\code{\%\$}) no longer matches a global macro
+            with the same name.}
+        \item{Fix NULL dereference on too long local labels.}
+\end{itemize}
+
+\xsubsection{cl-2.07}{Version 2.07}
+
+\begin{itemize}
+    \item{NASM is now under the 2-clause BSD license. See \nref{license}.}
+    \item{Fix the section type for the \code{.strtab} section in the \code{elf64}
+        output format.}
+    \item{Fix the handling of \code{COMMON} directives in the \code{obj} output format.}
+    \item{New \code{ith} and \code{srec} output formats; these are variants of the
+        \code{bin} output format which output Intel hex and Motorola S-records,
+        respectively. See \nref{ithfmt} and \nref{srecfmt}.}
+    \item{\code{rdf2ihx} replaced with an enhanced \code{rdf2bin}, which can output
+        binary, COM, Intel hex or Motorola S-records.}
+    \item{The Windows installer now puts the NASM directory first in the
+        \code{PATH} of the ``NASM Shell''.}
+    \item{Revert the early expansion behavior of \code{\%+} to
+        pre-2.06 behavior: \code{\%+} is only expanded late.}
+    \item{Yet another Mach-O alignment fix.}
+    \item{Don't delete the list file on errors. Also, include error and
+        warning information in the list file.}
+    \item{Support for 64-bit Mach-O output, see \nref{machofmt}.}
+    \item{Fix assert failure on certain operations that involve strings with
+        high-bit bytes.}
+\end{itemize}
+
+\xsubsection{cl-2.06}{Version 2.06}
+
+\begin{itemize}
+    \item{This release is dedicated to the memory of Charles A. Crayne, long
+        time NASM developer as well as moderator of \code{comp.lang.asm.x86} and
+        author of the book \emph{Serious Assembler}. We miss you, Chuck.}
+    \item{Support for indirect macro expansion (\code{\%[...]}). See \nref{indmacro}.}
+    \item{\code{\%pop} can now take an argument, see \nref{pushpop}.}
+    \item{The argument to \code{\%use} is no longer macro-expanded. Use
+        \code{\%[...]} if macro expansion is desired.}
+    \item{Support for thread-local storage in ELF32 and ELF64. See \nref{elftls}.}
+    \item{Fix crash on \code{\%ifmacro} without an argument.}
+    \item{Correct the arguments to the \code{POPCNT} instruction.}
+    \item{Fix section alignment in the Mach-O format.}
+    \item{Update AVX support to version 5 of the Intel specification.}
+    \item{Fix the handling of accesses to context-local macros from higher
+        levels in the context stack.}
+    \item{Treat \code{WAIT} as a prefix rather than as an instruction, thereby
+        allowing constructs like \code{O16 FSAVE} to work correctly.}
+    \item{Support for structures with a non-zero base offset. See \nref{struc}.}
+    \item{Correctly handle preprocessor token concatenation (see \nref{concat})
+        involving floating-point numbers.}
+    \item{The \code{PINSR} series of instructions have been corrected and rationalized.}
+    \item{Removed AMD SSE5, replaced with the new XOP/FMA4/CVT16 (rev 3.03) spec.}
+    \item{The ELF backends no longer automatically generate a \code{.comment} section.}
+    \item{Add additional "well-known" ELF sections with default attributes. See \nref{elfsect}.}
+\end{itemize}
+
+\xsubsection{cl-2.05.01}{Version 2.05.01}
+
+\begin{itemize}
+    \item{Fix the \code{-w}/\code{-W} option parsing, which was broken in NASM 2.05.}
+\end{itemize}
+
+\xsubsection{cl-2.05}{Version 2.05}
+
+\begin{itemize}
+    \item{Fix redundant REX.W prefix on \code{JMP reg64}.}
+    \item{Make the behaviour of \code{-O0} match NASM 0.98 legacy behavior.
+        See \nref{opt-O}.}
+    \item{\code{-w-user} can be used to suppress the output of \code{\%warning} directives.
+        See \nref{opt-w}.}
+    \item{Fix bug where \code{ALIGN} would issue a full alignment datum instead of
+        zero bytes.}
+    \item{Fix offsets in list files.}
+    \item{Fix \code{\%include} inside multi-line macros or loops.}
+    \item{Fix error where NASM would generate a spurious warning on valid
+        optimizations of immediate values.}
+    \item{Fix arguments to a number of the \code{CVT} SSE instructions.}
+    \item{Fix RIP-relative offsets when the instruction carries an immediate.}
+    \item{Massive overhaul of the ELF64 backend for spec compliance.}
+    \item{Fix the Geode \code{PFRCPV} and \code{PFRSQRTV} instruction.}
+    \item{Fix the SSE 4.2 \code{CRC32} instruction.}
+\end{itemize}
+
+
+\xsubsection{cl-2.04}{Version 2.04}
+
+\begin{itemize}
+    \item{Sanitize macro handing in the \code{\%error} directive.}
+    \item{New \code{\%warning} directive to issue user-controlled warnings.}
+    \item{\code{\%error} directives are now deferred to the final assembly phase.}
+    \item{New \code{\%fatal} directive to immediately terminate assembly.}
+    \item{New \code{\%strcat} directive to join quoted strings together.}
+    \item{New \code{\%use} macro directive to support standard macro directives. See \nref{use}.}
+    \item{Excess default parameters to \code{\%macro} now issues a warning by default.
+        See \nref{mlmacro}.}
+    \item{Fix \code{\%ifn} and \code{\%elifn}.}
+    \item{Fix nested \code{\%else} clauses.}
+    \item{Correct the handling of nested \code{\%rep}s.}
+    \item{New \code{\%unmacro} directive to undeclare a multi-line macro.
+        See \nref{unmacro}.}
+    \item{Builtin macro \code{\_\_PASS\_\_} which expands to the current assembly pass.
+        See \nref{passdef}.}
+    \item{\code{\_\_utf16\_\_} and \code{\_\_utf32\_\_} operators to generate
+        UTF-16 and UTF-32 strings. See \nref{unicode}.}
+    \item{Fix bug in case-insensitive matching when compiled on platforms that
+        don't use the \code{configure} script. Of the official release binaries,
+        that only affected the OS/2 binary.}
+    \item{Support for x87 packed BCD constants. See \nref{bcdconst}.}
+    \item{Correct the \code{LTR} and \code{SLDT} instructions in 64-bit mode.}
+    \item{Fix unnecessary REX.W prefix on indirect jumps in 64-bit mode.}
+    \item{Add AVX versions of the AES instructions (\code{VAES}...).}
+    \item{Fix the 256-bit FMA instructions.}
+    \item{Add 256-bit AVX stores per the latest AVX spec.}
+    \item{VIA XCRYPT instructions can now be written either with or without
+        \code{REP}, apparently different versions of the VIA spec wrote them
+        differently.}
+    \item{Add missing 64-bit \code{MOVNTI} instruction.}
+    \item{Fix the operand size of \code{VMREAD} and \code{VMWRITE}.}
+    \item{Numerous bug fixes, especially to the AES, AVX and VTX instructions.}
+    \item{The optimizer now always runs until it converges. It also runs even
+        when disabled, but doesn't optimize. This allows most forward references
+        to be resolved properly.}
+    \item{\code{\%push} no longer needs a context identifier; omitting the context
+        identifier results in an anonymous context.}
+\end{itemize}
+
+\xsubsection{cl-2.03.01}{Version 2.03.01}
+
+\begin{itemize}
+    \item{Fix buffer overflow in the listing module.}
+    \item{Fix the handling of hexadecimal escape codes in `...` strings.}
+    \item{The Postscript/PDF documentation has been reformatted.}
+    \item{The \code{-F} option now implies \code{-g}.}
+\end{itemize}
+
+\xsubsection{cl-2.03}{Version 2.03}
+
+\begin{itemize}
+    \item{Add support for Intel AVX, CLMUL and FMA instructions,
+        including YMM registers.}
+    \item{\code{dy}, \code{resy} and \code{yword} for 32-byte operands.}
+    \item{Fix some SSE5 instructions.}
+    \item{Intel \code{INVEPT}, \code{INVVPID} and \code{MOVBE} instructions.}
+    \item{Fix checking for critical expressions when the optimizer is enabled.}
+    \item{Support the DWARF debugging format for ELF targets.}
+    \item{Fix optimizations of signed bytes.}
+    \item{Fix operation on bigendian machines.}
+    \item{Fix buffer overflow in the preprocessor.}
+    \item{\code{SAFESEH} support for Win32, \code{IMAGEREL} for Win64 (SEH).}
+    \item{\code{\%?} and \code{\%??} to refer to the name of a macro itself.
+        In particular, \code{\%idefine keyword \$\%?} can be used to make
+        a keyword "disappear".}
+    \item{New options for dependency generation: \code{-MD}, \code{-MF},
+        \code{-MP}, \code{-MT}, \code{-MQ}.}
+    \item{New preprocessor directives \code{\%pathsearch} and \code{\%depend};
+        \code{INCBIN} reimplemented as a macro.}
+    \item{\code{\%include} now resolves macros in a sane manner.}
+    \item{\code{\%substr} can now be used to get other than one-character substrings.}
+    \item{New type of character/string constants, using backquotes (\code{`...`}),
+        which support C-style escape sequences.}
+    \item{\code{\%defstr} and \code{\%idefstr} to stringize macro definitions
+        before creation.}
+    \item{Fix forward references used in \code{EQU} statements.}
+\end{itemize}
+
+\xsubsection{cl-2.02}{Version 2.02}
+
+\begin{itemize}
+    \item{Additional fixes for MMX operands with explicit \code{qword}, as well as
+        (hopefully) SSE operands with \code{oword}.}
+    \item{Fix handling of truncated strings with \code{DO}.}
+    \item{Fix segfaults due to memory overwrites when floating-point constants were used.}
+    \item{Fix segfaults due to missing include files.}
+    \item{Fix OpenWatcom Makefiles for DOS and OS/2.}
+    \item{Add autogenerated instruction list back into the documentation.}
+    \item{ELF: Fix segfault when generating stabs, and no symbols have been defined.}
+    \item{ELF: Experimental support for DWARF debugging information.}
+    \item{New compile date and time standard macros.}
+    \item{\code{\%ifnum} now returns true for negative numbers.}
+    \item{New \code{\%iftoken} test for a single token.}
+    \item{New \code{\%ifempty} test for empty expansion.}
+    \item{Add support for the \code{XSAVE} instruction group.}
+    \item{Makefile for Netware/gcc.}
+    \item{Fix issue with some warnings getting emitted way too many times.}
+    \item{Autogenerated instruction list added to the documentation.}
+\end{itemize}
+
+\xsubsection{cl-2.01}{Version 2.01}
+
+\begin{itemize}
+    \item{Fix the handling of MMX registers with explicit \code{qword} tags on
+        memory (broken in 2.00 due to 64-bit changes.)}
+    \item{Fix the PREFETCH instructions.}
+    \item{Fix the documentation.}
+    \item{Fix debugging info when using \code{-f elf}
+        (backwards compatibility alias for \code{-f elf32}).}
+    \item{Man pages for rdoff tools (from the Debian project.)}
+    \item{ELF: handle large numbers of sections.}
+    \item{Fix corrupt output when the optimizer runs out of passes.}
+\end{itemize}
+
+\xsubsection{cl-2.00}{Version 2.00}
+
+\begin{itemize}
+    \item{Added c99 data-type compliance.}
+    \item{Added general x86-64 support.}
+    \item{Added win64 (x86-64 COFF) output format.}
+    \item{Added \code{\_\_BITS\_\_} standard macro.}
+    \item{Renamed the \code{elf} output format to \code{elf32} for clarity.}
+    \item{Added \code{elf64} and \code{macho} (MacOS X) output formats.}
+    \item{Added Numeric constants in \code{dq} directive.}
+    \item{Added \code{oword}, \code{do} and \code{reso} pseudo operands.}
+    \item{Allow underscores in numbers.}
+    \item{Added 8-, 16- and 128-bit floating-point formats.}
+    \item{Added binary, octal and hexadecimal floating-point.}
+    \item{Correct the generation of floating-point constants.}
+    \item{Added floating-point option control.}
+    \item{Added Infinity and NaN floating point support.}
+    \item{Added ELF Symbol Visibility support.}
+    \item{Added setting OSABI value in ELF header directive.}
+    \item{Added Generate Makefile Dependencies option.}
+    \item{Added Unlimited Optimization Passes option.}
+    \item{Added \code{\%ifn} and \code{\%elifn} support.}
+    \item{Added Logical Negation Operator.}
+    \item{Enhanced Stack Relative Preprocessor Directives.}
+    \item{Enhanced ELF Debug Formats.}
+    \item{Enhanced Send Errors to a File option.}
+    \item{Added SSSE3, SSE4.1, SSE4.2, SSE5 support.}
+    \item{Added a large number of additional instructions.}
+    \item{Significant performance improvements.}
+    \item{\code{-w+warning} and \code{-w-warning} can now be written
+        as -Wwarning and -Wno-warning, respectively. See \nref{opt-w}.}
+    \item{Add \code{-w+error} to treat warnings as errors. See \nref{opt-w}.}
+    \item{Add \code{-w+all} and \code{-w-all} to enable or disable all suppressible
+        warnings. See \nref{opt-w}.}
+\end{itemize}
+
+\xsection{cl-0.98.xx}{NASM 0.98 Series}
+
+The 0.98 series was the production versions of NASM from 1999 to 2007.
+
+\xsubsection{cl-0.98.39}{Version 0.98.39}
+
+\begin{itemize}
+    \item{fix buffer overflow}
+    \item{fix outas86's \code{.bss} handling}
+    \item{"make spotless" no longer deletes config.h.in.}
+    \item{\code{\%(el)if(n)idn} insensitivity to string quotes difference (\#809300).}
+    \item{(nasm.c)\code{\_\_OUTPUT\_FORMAT\_\_} changed to string value instead of symbol.}
+\end{itemize}
+
+\xsubsection{cl-0.98.38}{Version 0.98.38}
+
+\begin{itemize}
+    \item{Add Makefile for 16-bit DOS binaries under OpenWatcom, and modify
+        \code{mkdep.pl} to be able to generate completely pathless dependencies, as
+        required by OpenWatcom wmake (it supports path searches, but not
+        explicit paths.)}
+    \item{Fix the \code{STR} instruction.}
+    \item{Fix the ELF output format, which was broken under certain
+        circumstances due to the addition of stabs support.}
+    \item{Quick-fix Borland format debug-info for \code{-f obj}}
+    \item{Fix for \code{\%rep} with no arguments (\#560568)}
+    \item{Fix concatenation of preprocessor function call (\#794686)}
+    \item{Fix long label causes coredump (\#677841)}
+    \item{Use autoheader as well as autoconf to keep configure from generating
+        ridiculously long command lines.}
+    \item{Make sure that all of the formats which support debugging output
+        actually will suppress debugging output when \code{-g} not specified.}
+\end{itemize}
+
+\xsubsection{cl-0.98.37}{Version 0.98.37}
+
+\begin{itemize}
+    \item{Paths given in \code{-I} switch searched for \code{incbin}-ed as
+        well as \code{\%include}-ed files.}
+    \item{Added stabs debugging for the ELF output format, patch from
+        Martin Wawro.}
+    \item{Fix \code{output/outbin.c} to allow origin > 80000000h.}
+    \item{Make \code{-U} switch work.}
+    \item{Fix the use of relative offsets with explicit prefixes, e.g. 
+        \code{a32 loop foo}.}
+    \item{Remove \code{backslash()}.}
+    \item{Fix the \code{SMSW} and \code{SLDT} instructions.}
+    \item{\code{-O2} and \code{-O3} are no longer aliases for \code{-O10} and \code{-O15}.
+        If you mean the latter, please say so! :)}
+\end{itemize}
+
+\xsubsection{cl-0.98.36}{Version 0.98.36}
+
+\begin{itemize}
+    \item{Update rdoff - librarian/archiver - common rec - docs!}
+    \item{Fix signed/unsigned problems.}
+    \item{Fix \code{JMP FAR label} and \code{CALL FAR label}.}
+    \item{Add new multisection support - map files - fix align bug}
+    \item{Fix sysexit, movhps/movlps reg,reg bugs in insns.dat}
+    \item{\code{Q} or \code{O} suffixes indicate octal}
+    \item{Support Prescott new instructions (PNI).}
+    \item{Cyrix \code{XSTORE} instruction.}
+\end{itemize}
+
+
+\xsubsection{cl-0.98.35}{Version 0.98.35}
+
+\begin{itemize}
+    \item{Fix build failure on 16-bit DOS (Makefile.bc3 workaround for compiler bug.)}
+    \item{Fix dependencies and compiler warnings.}
+    \item{Add "const" in a number of places.}
+    \item{Add -X option to specify error reporting format (use -Xvc to
+        integrate with Microsoft Visual Studio.)}
+    \item{Minor changes for code legibility.}
+    \item{Drop use of tmpnam() in rdoff (security fix.)}
+\end{itemize}
+
+\xsubsection{cl-0.98.34}{Version 0.98.34}
+
+\begin{itemize}
+    \item{Correct additional address-size vs. operand-size confusions.}
+    \item{Generate dependencies for all Makefiles automatically.}
+    \item{Add support for unimplemented (but theoretically available)
+        registers such as tr0 and cr5. Segment registers 6 and 7 are called
+        segr6 and segr7 for the operations which they can be represented.}
+    \item{Correct some disassembler bugs related to redundant address-size prefixes.
+        Some work still remains in this area.}
+    \item{Correctly generate an error for things like "SEG eax".}
+    \item{Add the JMPE instruction, enabled by "CPU IA64".}
+    \item{Correct compilation on newer gcc/glibc platforms.}
+    \item{Issue an error on things like "jmp far eax".}
+\end{itemize}
+
+\xsubsection{cl-0.98.33}{Version 0.98.33}
+
+\begin{itemize}
+    \item{New \_\_NASM\_PATCHLEVEL\_\_ and \_\_NASM\_VERSION\_ID\_\_ standard macros
+        to round out the version-query macros. version.pl now understands
+        X.YYplWW or X.YY.ZZplWW as a version number, equivalent to
+        X.YY.ZZ.WW (or X.YY.0.WW, as appropriate).}
+    \item{New keyword "strict" to disable the optimization of specific operands.}
+    \item{Fix the handing of size overrides with JMP instructions
+        (instructions such as "jmp dword foo".)}
+    \item{Fix the handling of "ABSOLUTE label", where "label" points into a
+        relocatable segment.}
+    \item{Fix OBJ output format with lots of externs.}
+    \item{More documentation updates.}
+    \item{Add -Ov option to get verbose information about optimizations.}
+    \item{Undo a braindead change which broke \code{\%elif} directives.}
+    \item{Makefile updates.}
+\end{itemize}
+
+\xsubsection{cl-0.98.32}{Version 0.98.32}
+
+\begin{itemize}
+    \item{Fix NASM crashing when \code{\%macro} directives were left unterminated.}
+    \item{Lots of documentation updates.}
+    \item{Complete rewrite of the PostScript/PDF documentation generator.}
+    \item{The MS Visual C++ Makefile was updated and corrected.}
+    \item{Recognize .rodata as a standard section name in ELF.}
+    \item{Fix some obsolete Perl4-isms in Perl scripts.}
+    \item{Fix configure.in to work with autoconf 2.5x.}
+    \item{Fix a couple of "make cleaner" misses.}
+    \item{Make the normal "./configure \&\& make" work with Cygwin.}
+\end{itemize}
+
+\xsubsection{cl-0.98.31}{Version 0.98.31}
+
+\begin{itemize}
+    \item{Correctly build in a separate object directory again.}
+    \item{Derive all references to the version number from the version file.}
+    \item{New standard macros \code{\_\_NASM\_SUBMINOR\_\_} and
+        \code{\_\_NASM\_VER\_\_} macros.}
+    \item{Lots of Makefile updates and bug fixes.}
+    \item{New \code{\%ifmacro} directive to test for multiline macros.}
+    \item{Documentation updates.}
+    \item{Fixes for 16-bit OBJ format output.}
+    \item{Changed the NASM environment variable to NASMENV.}
+\end{itemize}
+
+\xsubsection{cl-0.98.30}{Version 0.98.30}
+
+\begin{itemize}
+    \item{Changed doc files a lot: completely removed old READMExx and
+        Wishlist files, incorporating all information in CHANGES and TODO.}
+    \item{I waited a long time to rename zoutieee.c to (original) outieee.c}
+    \item{moved all output modules to output/ subdirectory.}
+    \item{Added 'make strip' target to strip debug info from nasm \& ndisasm.}
+    \item{Added INSTALL file with installation instructions.}
+    \item{Added -v option description to nasm man.}
+    \item{Added dist makefile target to produce source distributions.}
+    \item{16-bit support for ELF output format (GNU extension, but useful.)}
+\end{itemize}
+
+
+\xsubsection{cl-0.98.28}{Version 0.98.28}
+
+\begin{itemize}
+    \item{Fastcooked this for Debian's Woody release:
+        Frank applied the \code{INCBIN} bug patch to 0.98.25alt
+        and called it 0.98.28 to not confuse poor little apt-get.}
+\end{itemize}
+
+\xsubsection{cl-0.98.26}{Version 0.98.26}
+
+\begin{itemize}
+    \item{Reorganised files even better from 0.98.25alt}
+\end{itemize}
+
+
+\xsubsection{cl-0.98.25alt}{Version 0.98.25alt}
+
+\begin{itemize}
+    \item{Prettified the source tree. Moved files to more reasonable places.}
+    \item{Added findleak.pl script to misc/ directory.}
+    \item{Attempted to fix doc.}
+\end{itemize}
+
+\xsubsection{cl-0.98.25}{Version 0.98.25}
+
+\begin{itemize}
+    \item{Line continuation character \code{\\}.}
+    \item{Docs inadvertantly reverted - "dos packaging".}
+\end{itemize}
+
+
+\xsubsection{cl-0.98.24p1}{Version 0.98.24p1}
+
+\begin{itemize}
+    \item{FIXME: Someone, document this please.}
+\end{itemize}
+
+\xsubsection{cl-0.98.24}{Version 0.98.24}
+
+\begin{itemize}
+    \item{Documentation - Ndisasm doc added to Nasm.doc.}
+\end{itemize}
+
+\xsubsection{cl-0.98.23}{Version 0.98.23}
+
+\begin{itemize}
+    \item{Attempted to remove rdoff version1}
+    \item{Lino Mastrodomenico's patches to preproc.c (\%\$\$ bug?).}
+\end{itemize}
+
+
+\xsubsection{cl-0.98.22}{Version 0.98.22}
+
+\begin{itemize}
+    \item{Update rdoff2 - attempt to remove v1.}
+\end{itemize}
+
+\xsubsection{cl-0.98.21}{Version 0.98.21}
+
+\begin{itemize}
+    \item{Optimization fixes.}
+\end{itemize}
+
+\xsubsection{cl-0.98.20}{Version 0.98.20}
+
+\begin{itemize}
+    \item{Optimization fixes.}
+\end{itemize}
+
+\xsubsection{cl-0.98.19}{Version 0.98.19}
+
+\begin{itemize}
+    \item{H. J. Lu's patch back out.}
+\end{itemize}
+
+\xsubsection{cl-0.98.18}{Version 0.98.18}
+
+\begin{itemize}
+    \item{Added ".rdata" to "-f win32".}
+\end{itemize}
+
+\xsubsection{cl-0.98.17}{Version 0.98.17}
+
+\begin{itemize}
+    \item{H. J. Lu's "bogus elf" patch. (Red Hat problem?)}
+\end{itemize}
+
+
+\xsubsection{cl-0.98.16}{Version 0.98.16}
+
+\begin{itemize}
+    \item{Fix whitespace before \code{[section \dots]} bug.}
+\end{itemize}
+
+\xsubsection{cl-0.98.15}{Version 0.98.15}
+
+\begin{itemize}
+    \item{Rdoff changes (?).}
+    \item{Fix fixes to memory leaks.}
+\end{itemize}
+
+\xsubsection{cl-0.98.14}{Version 0.98.14}
+
+\begin{itemize}
+    \item{Fix memory leaks.}
+\end{itemize}
+
+\xsubsection{cl-0.98.13}{Version 0.98.13}
+
+\begin{itemize}
+    \item{There was no 0.98.13}
+\end{itemize}
+
+
+\xsubsection{cl-0.98.12}{Version 0.98.12}
+
+\begin{itemize}
+    \item{Update optimization (new function of \code{-O1}).}
+    \item{Changes to test/bintest.asm (?).}
+\end{itemize}
+
+\xsubsection{cl-0.98.11}{Version 0.98.11}
+
+\begin{itemize}
+    \item{Optimization changes.}
+    \item{Ndisasm fixed.}
+\end{itemize}
+
+\xsubsection{cl-0.98.10}{Version 0.98.10}
+
+\begin{itemize}
+    \item{There was no 0.98.10}
+\end{itemize}
+
+\xsubsection{cl-0.98.09}{Version 0.98.09}
+
+\begin{itemize}
+    \item{Add multiple sections support to \code{-f bin}.}
+    \item{Changed \code{GLOBAL\_TEMP\_BASE} in outelf.c from 6 to 15.}
+    \item{Add \code{-v} as an alias to the \code{-r} switch.}
+    \item{Remove \code{\#ifdef} from Tasm compatibility options.}
+    \item{Remove redundant size-overrides on \code{mov ds, ex}, etc.}
+    \item{Fixes to SSE2, other insns.dat (?).}
+    \item{Enable uppercase "I" and "P" switches.}
+    \item{Case insinsitive \code{seg} and \code{wrt}.}
+    \item{Update install.sh (?).}
+    \item{Allocate tokens in blocks.}
+    \item{Improve "invalid effective address" messages.}
+\end{itemize}
+
+\xsubsection{cl-0.98.08}{Version 0.98.08}
+
+\begin{itemize}
+    \item{Add \code{\%strlen} and \code{\%substr} macro operators.}
+    \item{Fixed broken c16.mac.}
+    \item{Unterminated string error reported.}
+    \item{Fixed bugs as per 0.98bf}
+\end{itemize}
+
+\xsubsection{cl-0.98.09b}{Version 0.98.09b with John Coffman patches released 28-Oct-2001}
+
+Changes from 0.98.07 release to 98.09b as of 28-Oct-2001
+
+\begin{itemize}
+    \item{More closely compatible with 0.98 when \code{-O0} is implied
+        or specified. Not strictly identical, since backward
+        branches in range of short offsets are recognized, and signed
+        byte values with no explicit size specification will be
+        assembled as a single byte.}
+    \item{More forgiving with the PUSH instruction. 0.98 requires
+        a size to be specified always. 0.98.09b will imply the size
+        from the current BITS setting (16 or 32).}
+    \item{Changed definition of the optimization flag
+        \begin{itemize}
+            \item{\code{-O0}: strict two-pass assembly, JMP and Jcc are
+                handled more like 0.98, except that back ward JMPs are
+                short, if possible.}
+            \item{\code{-O1}: strict two-pass assembly, but forward
+                branches are assembled with code guaranteed
+                to reach; may produce larger code than
+                \code{-O0}, but will produce successful assembly
+                more often if branch offset sizes are not
+                specified.}
+            \item{\code{-O2}: multi-pass optimization, minimize branch
+                offsets; also will minimize signed immediate bytes,
+                overriding size specification.}
+            \item{\code{-O3}: like \code{-O2}, but more passes taken,
+                if needed}
+        \end{itemize}}
+\end{itemize}
+
+\xsubsection{cl-0.98.07}{Version 0.98.07 released 01/28/01}
+
+\begin{itemize}
+    \item{Added Stepane Denis' SSE2 instructions to a \emph{working}
+        version of the code - some earlier versions were based on
+        broken code - sorry 'bout that. version "0.98.07"}
+    \item{Cosmetic modifications to nasm.c, nasm.h, AUTHORS, MODIFIED}
+\end{itemize}
+
+\xsubsection{cl-0.98.06f}{Version 0.98.06f released 01/18/01}
+
+\begin{itemize}
+    \item{Add "metalbrain"s jecxz bug fix in insns.dat}
+    \item{Alter nasmdoc.src to match - version "0.98.06f"}
+\end{itemize}
+
+\xsubsection{cl-0.98.06e}{Version 0.98.06e released 01/09/01}
+
+\begin{itemize}
+    \item{Removed the "outforms.h" file - it appears to be
+        someone's old backup of "outform.h". version "0.98.06e"}
+    \item{fbk - finally added the fix for the "multiple \code{\%include} bug",
+        known since 7/27/99 - reported originally (?) and sent to
+        us by Austin Lunnen - he reports that John Fine had a fix
+        within the day. Here it is...}
+    \item{Nelson Rush resigns from the group. Big thanks to Nelson for
+        his leadership and enthusiasm in getting these changes
+        incorporated into Nasm!}
+    \item{fbk - \code{[list +]}, \code{[list -]} directives - ineptly implemented,
+        should be re-written or removed, perhaps.}
+    \item{Brian Raiter / fbk - "elfso bug" fix - applied to aoutb format
+        as well - testing might be desirable...}
+    \item{James Seter - -postfix, -prefix command line switches.}
+    \item{Yuri Zaporozhets - rdoff utility changes.}
+\end{itemize}
+
+\xsubsection{cl-0.98p1}{Version 0.98p1}
+
+\begin{itemize}
+    \item{GAS-like palign (Panos Minos)}
+    \item{FIXME: Someone, fill this in with details}
+\end{itemize}
+
+\xsubsection{cl-0.98bf}{Version 0.98bf (bug-fixed)}
+
+\begin{itemize}
+    \item{Fixed - elf and aoutb bug - shared libraries}
+    \item{multiple \code{\%include} bug in "-f obj"}
+    \item{jcxz, jecxz bug}
+    \item{unrecognized option bug in ndisasm}
+\end{itemize}
+
+\xsubsection{cl-0.98.03}{Version 0.98.03 with John Coffman's changes released 27-Jul-2000}
+
+\begin{itemize}
+    \item{Added signed byte optimizations for the 0x81/0x83 class
+        of instructions: ADC, ADD, AND, CMP, OR, SBB, SUB, XOR:
+        when used as 'ADD reg16,imm' or 'ADD reg32,imm.'  Also
+        optimization of signed byte form of 'PUSH imm' and 'IMUL
+        reg,imm'/'IMUL reg,reg,imm.'  No size specification is needed.}
+    \item{Added multi-pass JMP and Jcc offset optimization. Offsets
+        on forward references will preferentially use the short form,
+        without the need to code a specific size (short or near) for
+        the branch. Added instructions for 'Jcc label' to use the
+        form 'Jnotcc \$+3/JMP label', in cases where a short offset
+        is out of bounds. If compiling for a 386 or higher CPU, then
+        the 386 form of Jcc will be used instead.
+
+        This feature is controlled by a new command-line switch: "O",
+        (upper case letter O). "-O0" reverts the assembler to no
+        extra optimization passes, "-O1" allows up to 5 extra passes,
+        and "-O2"(default), allows up to 10 extra optimization passes.}
+    \item{Added a new directive:  'cpu XXX', where XXX is any of:
+        8086, 186, 286, 386, 486, 586, pentium, 686, PPro, P2, P3 or
+        Katmai. All are case insensitive. All instructions will
+        be selected only if they apply to the selected cpu or lower.
+        Corrected a couple of bugs in cpu-dependence in 'insns.dat'.}
+    \item{Added to 'standard.mac', the "use16" and "use32" forms of
+        the "bits 16/32" directive. This is nothing new, just conforms
+        to a lot of other assemblers. (minor)}
+    \item{Changed label allocation from 320/32 (10000 labels @ 200K+)
+        to 32/37 (1000 labels); makes running under DOS much easier.
+        Since additional label space is allocated dynamically, this
+        should have no effect on large programs with lots of labels.
+        The 37 is a prime, believed to be better for hashing. (minor)}
+\end{itemize}
+
+\xsubsection{cl-0.98.03}{Version 0.98.03}
+
+"Integrated patchfile 0.98-0.98.01. I call this version 0.98.03 for
+historical reasons: 0.98.02 was trashed." --John Coffman
+<johninsd@san.rr.com>, 27-Jul-2000
+
+\begin{itemize}
+    \item{Kendall Bennett's SciTech MGL changes}
+    \item{Note that you must define "TASM\_COMPAT" at compile-time
+        to get the Tasm Ideal Mode compatibility.}
+    \item{All changes can be compiled in and out using the TASM\_COMPAT macros,
+        and when compiled without TASM\_COMPAT defined we get the exact same
+        binary as the unmodified 0.98 sources.}
+    \item{standard.mac, macros.c: Added macros to ignore TASM directives before
+        first include}
+    \item{nasm.h: Added extern declaration for tasm\_compatible\_mode}
+    \item{nasm.c: Added global variable tasm\_compatible\_mode}
+    \item{Added command line switch for TASM compatible mode (-t)}
+    \item{Changed version command line to reflect when compiled with TASM additions}
+    \item{Added response file processing to allow all arguments on a single
+        line (response file is @resp rather than -@resp for NASM format).}
+    \item{labels.c: Changes islocal() macro to support TASM style @@local labels.}
+    \item{Added islocalchar() macro to support TASM style @@local labels.}
+    \item{parser.c: Added support for TASM style memory references (ie: mov
+        [DWORD eax],10 rather than the NASM style mov DWORD [eax],10).}
+    \item{preproc.c: Added new directives, \code{\%arg}, \code{\%local},
+        \code{\%stacksize} to directives table}
+    \item{Added support for TASM style directives without a leading \% symbol.}
+    \item{Integrated a block of changes from Andrew Zabolotny <bit@eltech.ru>:}
+    \item{A new keyword \code{\%xdefine} and its case-insensitive counterpart
+        \code{\%ixdefine}. They work almost the same way as \code{\%define} and
+        \code{\%idefine} but expand the definition immediately, not on the invocation.
+        Something like a cross between \code{\%define} and \code{\%assign}. The "x"
+        suffix stands for "eXpand", so "xdefine" can be deciphered as "expand-and-define".
+        Thus you can do things like this:
+\begin{lstlisting}
+%assign ofs     0
+
+%macro  arg     1
+    %xdefine %1 dword [esp+ofs]
+    %assign ofs ofs+4
+%endmacro
+\end{lstlisting}}
+    \item{Changed the place where the expansion of \%\$name macros are expanded.
+        Now they are converted into ..@ctxnum.name form when detokenizing, so
+        there are no quirks as before when using \%\$name arguments to macros,
+        in macros etc. For example:
+\begin{lstlisting}
+%macro  abc     1
+    %define %1 hello
+%endm
+    abc     %$here
+%$here
+\end{lstlisting}
+        Now last line will be expanded into "hello" as expected. This also allows
+        for lots of goodies, a good example are extended "proc" macros included
+        in this archive.}
+
+    \item{Added a check for "cstk" in smacro\_defined() before calling get\_ctx() -
+        this allows for things like:
+\begin{lstlisting}
+%ifdef %$abc
+%endif
+\end{lstlisting}
+        work without warnings even in no context.}
+    \item{Added a check for "cstk" in \%if*ctx and \%elif*ctx directives -
+        this allows to use \code{\%ifctx} without excessive warnings. If there is
+        no active context, \code{\%ifctx} goes through "false" branch.}
+    \item{Removed "user error: " prefix with \code{\%error} directive: it just clobbers the
+        output and has absolutely no functionality. Besides, this allows to write
+        macros that does not differ from built-in functions in any way.}
+    \item{Added expansion of string that is output by \code{\%error} directive. Now you
+        can do things like:
+\begin{lstlisting}
+%define hello(x) Hello, x!
+
+%define %$name andy
+%error "hello(%$name)"
+\end{lstlisting}
+        Same happened with \code{\%include} directive.}
+    \item{Now all directives that expect an identifier will try to expand and
+        concatenate everything without whitespaces in between before usage.
+        For example, with "unfixed" nasm the commands
+\begin{lstlisting}
+%define %$abc hello
+%define __%$abc goodbye
+__%$abc
+\end{lstlisting}
+        would produce "incorrect" output: last line will expand to
+\begin{lstlisting}
+hello goodbyehello
+\end{lstlisting}
+        Not quite what you expected, eh? :-) The answer is that preprocessor
+        treats the \code{\%define} construct as if it would be
+\begin{lstlisting}
+%define __ %$abc goodbye
+\end{lstlisting}
+        (note the white space between \_\_ and \%\$abc). After my "fix" it
+        will "correctly" expand into
+\begin{lstlisting}
+goodbye
+\end{lstlisting}
+        as expected. Note that I use quotes around words "correct", "incorrect"
+        etc because this is rather a feature not a bug; however current behaviour
+        is more logical (and allows more advanced macro usage :-).
+
+        Same change was applied to: \code{\%push},\code{\%macro},\code{\%imacro},
+        \code{\%define},\code{\%idefine},\code{\%xdefine},\code{\%ixdefine},
+        \code{\%assign},\code{\%iassign},\code{\%undef}}
+    \item{A new directive \code{[WARNING {+|-}warning-id]} have been added. It works only
+        if the assembly phase is enabled (i.e. it doesn't work with nasm -e).}
+    \item{A new warning type: macro-selfref. By default this warning is disabled;
+        when enabled NASM warns when a macro self-references itself; for example
+        the following source:
+\begin{lstlisting}
+[WARNING macro-selfref]
+%macro          push    1-*
+    %rep    %0
+        push    %1
+        %rotate 1
+    %endrep
+%endmacro
+
+        push    eax,ebx,ecx
+\end{lstlisting}
+        will produce a warning, but if we remove the first line we won't see it
+        anymore (which is The Right Thing To Do \texttrademark IMHO since C
+        preprocessor eats such constructs without warnings at all).}
+    \item{Added a "error" routine to preprocessor which always will set ERR\_PASS1
+        bit in severity\_code. This removes annoying repeated errors on first
+        and second passes from preprocessor.}
+    \item{Added the \%+ operator in single-line macros for concatenating two
+        identifiers. Usage example:
+\begin{lstlisting}
+%define _myfunc _otherfunc
+%define cextern(x) _ %+ x
+cextern (myfunc)
+\end{lstlisting}
+        After first expansion, third line will become "\_myfunc". After this
+        expansion is performed again so it becomes "\_otherunc".}
+    \item{Now if preprocessor is in a non-emitting state, no warning or error
+        will be emitted. Example:
+\begin{lstlisting}
+%if 1
+    mov eax,ebx
+%else
+    put anything you want between these two brackets,
+    even macro-parameter references %1 or local
+    labels %$zz or macro-local labels %%zz - no
+    warning will be emitted.
+%endif
+\end{lstlisting}}
+    \item{Context-local variables on expansion as a last resort are looked up
+        in outer contexts. For example, the following piece:
+\begin{lstlisting}
+%push   outer
+%define %$a [esp]
+
+    %push   inner
+    %$a
+    %pop
+%pop
+\end{lstlisting}
+        will expand correctly the fourth line to [esp]; if we'll define another
+        \%\$a inside the "inner" context, it will take precedence over outer
+        definition. However, this modification has been applied only to
+        expand\_smacro and not to smacro\_define: as a consequence expansion
+        looks in outer contexts, but \code{\%ifdef} won't look in outer contexts.
+
+        This behaviour is needed because we don't want nested contexts to
+        act on already defined local macros. Example:
+\begin{lstlisting}
+%define %$arg1  [esp+4]
+test    eax,eax
+if      nz
+    mov     eax,%$arg1
+endif
+\end{lstlisting}
+        In this example the "if" mmacro enters into the "if" context, so \%\$arg1
+        is not valid anymore inside "if". Of course it could be worked around
+        by using explicitely \%\$\$arg1 but this is ugly IMHO.}
+    \item{Fixed memory leak in \code{\%undef}. The origline wasn't freed before exiting on success.}
+    \item{Fixed trap in preprocessor when line expanded to empty set of tokens.
+        This happens, for example, in the following case:
+\begin{lstlisting}
+#define SOMETHING
+SOMETHING
+\end{lstlisting}}
+\end{itemize}
+
+\xsubsection{cl-0.98}{Version 0.98}
+
+All changes since NASM 0.98p3 have been produced by H. Peter Anvin <hpa@zytor.com>.
+
+\begin{itemize}
+    \item{The documentation comment delimiter is \code{\textbackslash \#} not \code{\#}.}
+    \item{Allow EQU definitions to refer to external labels; reported by Pedro Gimeno.}
+    \item{Re-enable support for RDOFF v1; reported by Pedro Gimeno.}
+    \item{Updated License file per OK from Simon and Julian.}
+\end{itemize}
+
+\xsubsection{cl-0.98p9}{Version 0.98p9}
+
+\begin{itemize}
+    \item{Update documentation (although the instruction set reference will
+        have to wait; I don't want to hold up the 0.98 release for it.)}
+    \item{Verified that the NASM implementation of the PEXTRW and PMOVMSKB
+        instructions is correct. The encoding differs from what the Intel
+        manuals document, but the Pentium III behaviour matches NASM, not
+        the Intel manuals.}
+    \item{Fix handling of implicit sizes in PSHUFW and PINSRW, reported by
+        Stefan Hoffmeister.}
+    \item{Resurrect the -s option, which was removed when changing the
+        diagnostic output to stdout.}
+\end{itemize}
+
+\xsubsection{cl-0.98p8}{Version 0.98p8}
+
+\begin{itemize}
+    \item{Fix for "DB" when NASM is running on a bigendian machine.}
+    \item{Invoke insns.pl once for each output script, making Makefile.in
+        legal for "make -j".}
+    \item{Improve the Unix configure-based makefiles to make package
+        creation easier.}
+    \item{Included an RPM .spec file for building RPM (RedHat Package Manager)
+        packages on Linux or Unix systems.}
+    \item{Fix Makefile dependency problems.}
+    \item{Change src/rdsrc.pl to include sectioning information in info
+        output; required for install-info to work.}
+    \item{Updated the RDOFF distribution to version 2 from Jules; minor
+        massaging to make it compile in my environment.}
+    \item{Split doc files that can be built by anyone with a Perl interpreter off
+        into a separate archive.}
+    \item{"Dress rehearsal" release!}
+\end{itemize}
+
+\xsubsection{cl-0.98p7}{Version 0.98p7}
+
+\begin{itemize}
+    \item{Fixed opcodes with a third byte-sized immediate argument to not
+        complain if given "byte" on the immediate.}
+    \item{Allow \code{\%undef} to remove single-line macros with arguments. This
+        matches the behaviour of \#undef in the C preprocessor.}
+    \item{Allow -d, -u, -i and -p to be specified as -D, -U, -I and -P for
+        compatibility with most C compilers and preprocessors. This allows
+        Makefile options to be shared between cc and nasm, for example.}
+    \item{Minor cleanups.}
+    \item{Went through the list of Katmai instructions and hopefully fixed the
+        (rather few) mistakes in it.}
+    \item{(Hopefully) fixed a number of disassembler bugs related to ambiguous
+        instructions (disambiguated by -p) and SSE instructions with REP.}
+    \item{Fix for bug reported by Mark Junger: "call dword 0x12345678" should
+        work and may add an OSP (affected CALL, JMP, Jcc).}
+    \item{Fix for environments when "stderr" isn't a compile-time constant.}
+\end{itemize}
+
+\xsubsection{cl-0.98p6}{Version 0.98p6}
+
+\begin{itemize}
+    \item{Took officially over coordination of the 0.98 release; so drop
+        the p3.x notation. Skipped p4 and p5 to avoid confusion with John
+        Fine's J4 and J5 releases.}
+    \item{Update the documentation; however, it still doesn't include
+        documentation for the various new instructions. I somehow wonder if
+        it makes sense to have an instruction set reference in the assembler
+        manual when Intel et al have PDF versions of their manuals online.}
+    \item{Recognize "idt" or "centaur" for the -p option to ndisasm.}
+    \item{Changed error messages back to stderr where they belong, but add an
+        -E option to redirect them elsewhere (the DOS shell cannot redirect
+        stderr.)}
+    \item{-M option to generate Makefile dependencies (based on code from Alex Verstak.)}
+    \item{\code{\%undef} preprocessor directive, and -u option, that undefines a
+        single-line macro.}
+    \item{OS/2 Makefile (Mkfiles/Makefile.os2) for Borland under OS/2; from
+        Chuck Crayne.}
+    \item{Various minor bugfixes (reported by):
+        - Dangling \code{\%s} in preproc.c (Martin Junker)}
+    \item{THERE ARE KNOWN BUGS IN SSE AND THE OTHER KATMAI INSTRUCTIONS. I am
+        on a trip and didn't bring the Katmai instruction reference, so I
+        can't work on them right now.}
+    \item{Updated the License file per agreement with Simon and Jules to
+        include a GPL distribution clause.}
+\end{itemize}
+
+\xsubsection{cl-0.98p3.7}{Version 0.98p3.7}
+
+\begin{itemize}
+    \item{(Hopefully) fixed the canned Makefiles to include the outrdf2 and
+        zoutieee modules.}
+    \item{Renamed changes.asm to changed.asm.}
+\end{itemize}
+
+\xsubsection{cl-0.98p3.6}{Version 0.98p3.6}
+
+\begin{itemize}
+    \item{Fixed a bunch of instructions that were added in 0.98p3.5 which had
+        memory operands, and the address-size prefix was missing from the
+        instruction pattern.}
+\end{itemize}
+
+\xsubsection{cl-0.98p3.5}{Version 0.98p3.5}
+
+\begin{itemize}
+    \item{Merged in changes from John S. Fine's 0.98-J5 release. John's based
+        0.98-J5 on my 0.98p3.3 release; this merges the changes.}
+    \item{Expanded the instructions flag field to a long so we can fit more
+        flags; mark SSE (KNI) and AMD or Katmai-specific instructions as
+        such.}
+    \item{Fix the "PRIV" flag on a bunch of instructions, and create new
+        "PROT" flag for protected-mode-only instructions (orthogonal to if
+        the instruction is privileged!) and new "SMM" flag for SMM-only
+        instructions.}
+    \item{Added AMD-only SYSCALL and SYSRET instructions.}
+    \item{Make SSE actually work, and add new Katmai MMX instructions.}
+    \item{Added a -p (preferred vendor) option to ndisasm so that it can
+        distinguish e.g. Cyrix opcodes also used in SSE. For example:
+\begin{lstlisting}
+ndisasm -p cyrix aliased.bin
+00000000  670F514310        paddsiw mm0,[ebx+0x10]
+00000005  670F514320        paddsiw mm0,[ebx+0x20]
+ndisasm -p intel aliased.bin
+00000000  670F514310        sqrtps xmm0,[ebx+0x10]
+00000005  670F514320        sqrtps xmm0,[ebx+0x20]
+\end{lstlisting}}
+    \item{Added a bunch of Cyrix-specific instructions.}
+\end{itemize}
+
+\xsubsection{cl-0.98p3.4}{Version 0.98p3.4}
+
+\begin{itemize}
+    \item{Made at least an attempt to modify all the additional Makefiles (in
+        the Mkfiles directory). I can't test it, but this was the best I
+        could do.}
+    \item{DOS DJGPP+"Opus Make" Makefile from John S. Fine.}
+    \item{changes.asm changes from John S. Fine.}
+\end{itemize}
+
+\xsubsection{cl-0.98p3.3}{Version 0.98p3.3}
+
+\begin{itemize}
+    \item{Patch from Conan Brink to allow nesting of \code{\%rep} directives.}
+    \item{If we're going to allow INT01 as an alias for INT1/ICEBP (one of
+        Jules 0.98p3 changes), then we should allow INT03 as an alias for INT3
+        as well.}
+    \item{Updated changes.asm to include the latest changes.}
+    \item{Tried to clean up the <CR>s that had snuck in from a DOS/Windows
+        environment into my Unix environment, and try to make sure than
+        DOS/Windows users get them back.}
+    \item{We would silently generate broken tools if insns.dat wasn't sorted
+        properly. Change insns.pl so that the order doesn't matter.}
+    \item{Fix bug in insns.pl (introduced by me) which would cause conditional
+        instructions to have an extra "cc" in disassembly, e.g. "jnz"
+        disassembled as "jccnz".}
+\end{itemize}
+
+\xsubsection{cl-0.98p3.2}{Version 0.98p3.2}
+
+\begin{itemize}
+    \item{Merged in John S. Fine's changes from his 0.98-J4 prerelease; see
+        http://www.csoft.net/cz/johnfine/}
+    \item{Changed previous "spotless" Makefile target (appropriate for distribution)
+        to "distclean", and added "cleaner" target which is same as "clean"
+        except deletes files generated by Perl scripts; "spotless" is union.}
+    \item{Removed BASIC programs from distribution. Get a Perl interpreter
+        instead (see below.)}
+    \item{Calling this "pre-release 3.2" rather than "p3-hpa2" because of
+        John's contributions.}
+    \item{Actually link in the IEEE output format (zoutieee.c); fix a bunch of
+        compiler warnings in that file. Note I don't know what IEEE output
+        is supposed to look like, so these changes were made "blind".}
+\end{itemize}
+
+\xsubsection{cl-0.98p3-hpa}{Version 0.98p3-hpa}
+
+\begin{itemize}
+    \item{Merged nasm098p3.zip with nasm-0.97.tar.gz to create a fully
+        buildable version for Unix systems (Makefile.in updates, etc.)}
+    \item{Changed insns.pl to create the instruction tables in nasm.h and
+        names.c, so that a new instruction can be added by adding it *only*
+        to insns.dat.}
+    \item{Added the following new instructions: SYSENTER, SYSEXIT, FXSAVE,
+        FXRSTOR, UD1, UD2 (the latter two are two opcodes that Intel
+        guarantee will never be used; one of them is documented as UD2 in
+        Intel documentation, the other one just as "Undefined Opcode" --
+        calling it UD1 seemed to make sense.)}
+    \item{MAX\_SYMBOL was defined to be 9, but LOADALL286 and LOADALL386 are 10
+        characters long. Now MAX\_SYMBOL is derived from insns.dat.}
+    \item{A note on the BASIC programs included: forget them. insns.bas is
+        already out of date. Get yourself a Perl interpreter for your
+        platform of choice at \href{http://www.cpan.org/ports/index.html}
+        {http://www.cpan.org/ports/index.html}.}
+\end{itemize}
+
+\xsubsection{cl-0.98p3}{Version 0.98 pre-release 3}
+
+\begin{itemize}
+    \item{added response file support, improved command line handling,
+        new layout help screen}
+    \item{fixed limit checking bug, 'OUT byte nn, reg' bug, and
+        a couple of rdoff related bugs, updated Wishlist; 0.98 Prerelease 3.}
+\end{itemize}
+
+\xsubsection{cl-0.98p2}{Version 0.98 pre-release 2}
+
+\begin{itemize}
+    \item{fixed bug in outcoff.c to do with truncating section names longer
+        than 8 characters, referencing beyond end of string; 0.98 pre-release 2}
+\end{itemize}
+
+\xsubsection{cl-0.98p1}{Version 0.98 pre-release 1}
+
+\begin{itemize}
+    \item{Fixed a bug whereby STRUC didn't work at all in RDF.}
+    \item{Fixed a problem with group specification in PUBDEFs in OBJ.}
+    \item{Improved ease of adding new output formats. Contribution due to Fox Cutter.}
+    \item{Fixed a bug in relocations in the `bin' format: was showing up when
+        a relocatable reference crossed an 8192-byte boundary in any output
+        section.}
+    \item{Fixed a bug in local labels: local-label lookups were inconsistent
+        between passes one and two if an EQU occurred between the definition
+        of a global label and the subsequent use of a local label local to
+        that global.}
+    \item{Fixed a seg-fault in the preprocessor (again) which happened when
+        you use a blank line as the first line of a multi-line macro
+        definition and then defined a label on the same line as a call to
+        that macro.}
+    \item{Fixed a stale-pointer bug in the handling of the NASM environment
+        variable. Thanks to Thomas McWilliams.}
+    \item{ELF had a hard limit on the number of sections which caused
+        segfaults when transgressed. Fixed.}
+    \item{Added ability for ndisasm to read from stdin by using `-' as the
+        filename.}
+    \item{ndisasm wasn't outputting the TO keyword. Fixed.}
+    \item{Fixed error cascade on bogus expression in \code{\%if} - an error in
+        evaluation was causing the entire \code{\%if} to be discarded, thus creating
+        trouble later when the \code{\%else} or \code{\%endif} was encountered.}
+    \item{Forward reference tracking was instruction-granular not operand-
+        granular, which was causing 286-specific code to be generated
+        needlessly on code of the form `shr word [forwardref],1'. Thanks to
+        Jim Hague for sending a patch.}
+    \item{All messages now appear on stdout, as sending them to stderr serves
+        no useful purpose other than to make redirection difficult.}
+    \item{Fixed the problem with EQUs pointing to an external symbol - this
+        now generates an error message.}
+    \item{Allowed multiple size prefixes to an operand, of which only the first
+        is taken into account.}
+    \item{Incorporated John Fine's changes, including fixes of a large number
+        of preprocessor bugs, some small problems in OBJ, and a reworking of
+        label handling to define labels before their line is assembled, rather
+        than after.}
+    \item{Reformatted a lot of the source code to be more readable. Included
+        'coding.txt' as a guideline for how to format code for contributors.}
+    \item{Stopped nested \code{\%reps} causing a panic - they now cause a slightly more
+        friendly error message instead.}
+    \item{Fixed floating point constant problems (patch by Pedro Gimeno)}
+    \item{Fixed the return value of insn\_size() not being checked for -1, indicating
+        an error.}
+    \item{Incorporated 3Dnow! instructions.}
+    \item{Fixed the 'mov eax, eax + ebx' bug.}
+    \item{Fixed the GLOBAL EQU bug in ELF. Released developers release 3.}
+    \item{Incorporated John Fine's command line parsing changes}
+    \item{Incorporated David Lindauer's OMF debug support}
+    \item{Made changes for LCC 4.0 support (\code{\_\_NASM\_CDecl\_\_}, removed register size
+        specification warning when sizes agree).}
+\end{itemize}
+
+\xsection{cl-0.9x}{NASM 0.9 Series}
+
+Revisions before 0.98.
+
+\xsubsection{cl-0.97}{Version 0.97 released December 1997}
+
+\begin{itemize}
+    \item{This was entirely a bug-fix release to 0.96, which seems to have got
+        cursed. Silly me.}
+    \item{Fixed stupid mistake in OBJ which caused `MOV EAX,<constant>' to
+        fail. Caused by an error in the `MOV EAX,<segment>' support.}
+    \item{ndisasm hung at EOF when compiled with lcc on Linux because lcc on
+        Linux somehow breaks feof(). ndisasm now does not rely on feof().}
+    \item{A heading in the documentation was missing due to a markup error in
+        the indexing. Fixed.}
+    \item{Fixed failure to update all pointers on realloc() within extended-
+        operand code in parser.c. Was causing wrong behaviour and seg faults
+        on lines such as `dd 0.0,0.0,0.0,0.0,...'}
+    \item{Fixed a subtle preprocessor bug whereby invoking one multi-line
+        macro on the first line of the expansion of another, when the second
+        had been invoked with a label defined before it, didn't expand the
+        inner macro.}
+    \item{Added internal.doc back in to the distribution archives - it was
+        missing in 0.96 *blush*}
+    \item{Fixed bug causing 0.96 to be unable to assemble its own test files,
+        specifically objtest.asm. *blush again*}
+    \item{Fixed seg-faults and bogus error messages caused by mismatching
+        \code{\%rep} and \code{\%endrep} within multi-line macro definitions.}
+    \item{Fixed a problem with buffer overrun in OBJ, which was causing
+        corruption at ends of long PUBDEF records.}
+    \item{Separated DOS archives into main-program and documentation to reduce
+        download size.}
+\end{itemize}
+
+\xsubsection{cl-0.96}{Version 0.96 released November 1997}
+
+\begin{itemize}
+    \item{Fixed a bug whereby, if `nasm sourcefile' would cause a filename
+        collision warning and put output into `nasm.out', then `nasm
+        sourcefile -o outputfile' still gave the warning even though the
+        `-o' was honoured.
+        Fixed name pollution under Digital UNIX: one of its header files
+        defined R\_SP, which broke the enum in nasm.h.}
+    \item{Fixed minor instruction table problems: FUCOM and FUCOMP didn't have
+        two-operand forms; NDISASM didn't recognise the longer register
+        forms of PUSH and POP (eg FF F3 for PUSH BX); TEST mem,imm32 was
+        flagged as undocumented; the 32-bit forms of CMOV had 16-bit operand
+        size prefixes; `AAD imm' and `AAM imm' are no longer flagged as
+        undocumented because the Intel Architecture reference documents
+        them.}
+    \item{Fixed a problem with the local-label mechanism, whereby strange
+        types of symbol (EQUs, auto-defined OBJ segment base symbols)
+        interfered with the `previous global label' value and screwed up
+        local labels.}
+    \item{Fixed a bug whereby the stub preprocessor didn't communicate with
+        the listing file generator, so that the -a and -l options in
+        conjunction would produce a useless listing file.}
+    \item{Merged `os2' object file format back into `obj', after discovering
+        that `obj' \emph{also} shouldn't have a link pass separator in a module
+        containing a non-trivial MODEND. Flat segments are now declared
+        using the FLAT attribute. `os2' is no longer a valid object format
+        name: use `obj'.}
+    \item{Removed the fixed-size temporary storage in the evaluator. Very very
+        long expressions (like `mov ax,1+1+1+1+...' for two hundred 1s or
+        so) should now no longer crash NASM.}
+    \item{Fixed a bug involving segfaults on disassembly of MMX instructions,
+        by changing the meaning of one of the operand-type flags in nasm.h.
+        This may cause other apparently unrelated MMX problems; it needs to
+        be tested thoroughly.}
+    \item{Fixed some buffer overrun problems with large OBJ output files.
+        Thanks to DJ Delorie for the bug report and fix.}
+    \item{Made preprocess-only mode actually listen to the \code{\%line} markers as it
+        prints them, so that it can report errors more sanely.}
+    \item{Re-designed the evaluator to keep more sensible track of expressions
+        involving forward references: can now cope with previously-nightmare
+        situations such as:
+\begin{lstlisting}
+mov ax,foo | bar
+foo equ 1
+bar equ 2
+\end{lstlisting}}
+    \item{Added the ALIGN and ALIGNB standard macros.}
+    \item{Added PIC support in ELF: use of WRT to obtain the four extra
+        relocation types needed.}
+    \item{Added the ability for output file formats to define their own
+        extensions to the GLOBAL, COMMON and EXTERN directives.}
+    \item{Implemented common-variable alignment, and global-symbol type and
+        size declarations, in ELF.}
+    \item{Implemented NEAR and FAR keywords for common variables, plus
+        far-common element size specification, in OBJ.}
+    \item{Added a feature whereby EXTERNs and COMMONs in OBJ can be given a
+        default WRT specification (either a segment or a group).}
+    \item{Transformed the Unix NASM archive into an auto-configuring package.}
+    \item{Added a sanity-check for people applying SEG to things which are
+        already segment bases: this previously went unnoticed by the SEG
+        processing and caused OBJ-driver panics later.}
+    \item{Added the ability, in OBJ format, to deal with `MOV EAX,<segment>'
+        type references: OBJ doesn't directly support dword-size segment
+        base fixups, but as long as the low two bytes of the constant term
+        are zero, a word-size fixup can be generated instead and it will
+        work.}
+    \item{Added the ability to specify sections' alignment requirements in
+        Win32 object files and pure binary files.}
+    \item{Added preprocess-time expression evaluation: the \code{\%assign} (and
+        \code{\%iassign}) directive and the bare \code{\%if} (and \code{\%elif}) conditional.
+        Added relational operators to the evaluator, for use only in \code{\%if}
+        constructs: the standard relationals = < > <= >= <> (and C-like
+        synonyms == and !=) plus low-precedence logical operators \&\&,
+        \textasciicircum \textasciicircum and ||.}
+    \item{Added a preprocessor repeat construct: \code{\%rep}, \code{\%exitrep},
+        \code{\%endrep}.}
+    \item{Added the \_\_FILE\_\_ and \_\_LINE\_\_ standard macros.}
+    \item{Added a sanity check for number constants being greater than
+        0xFFFFFFFF. The warning can be disabled.}
+    \item{Added the \%0 token whereby a variadic multi-line macro can tell how
+        many parameters it's been given in a specific invocation.}
+    \item{Added \code{\%rotate}, allowing multi-line macro parameters to be cycled.}
+    \item{Added the `*' option for the maximum parameter count on multi-line
+        macros, allowing them to take arbitrarily many parameters.}
+    \item{Added the ability for the user-level forms of EXTERN, GLOBAL and
+        COMMON to take more than one argument.}
+    \item{Added the IMPORT and EXPORT directives in OBJ format, to deal with
+        Windows DLLs.}
+    \item{Added some more preprocessor \code{\%if} constructs: \code{\%ifidn},
+        \code{\%ifidni} (exact textual identity), and \code{\%ifid},
+        \code{\%ifnum}, \code{\%ifstr} (token type testing).}
+    \item{Added the ability to distinguish SHL AX,1 (the 8086 version) from
+        SHL AX,BYTE 1 (the 286-and-upwards version whose constant happens to
+        be 1).}
+    \item{Added NetBSD/FreeBSD/OpenBSD's variant of a.out format, complete
+        with PIC shared library features.}
+    \item{Changed NASM's idiosyncratic handling of FCLEX, FDISI, FENI, FINIT,
+        FSAVE, FSTCW, FSTENV, and FSTSW to bring it into line with the
+        otherwise accepted standard. The previous behaviour, though it was a
+        deliberate feature, was a deliberate feature based on a
+        misunderstanding. Apologies for the inconvenience.}
+    \item{Improved the flexibility of ABSOLUTE: you can now give it an
+        expression rather than being restricted to a constant, and it can
+        take relocatable arguments as well.}
+    \item{Added the ability for a variable to be declared as EXTERN multiple
+        times, and the subsequent definitions are just ignored.}
+    \item{We now allow instruction prefixes (CS, DS, LOCK, REPZ etc) to be
+        alone on a line (without a following instruction).}
+    \item{Improved sanity checks on whether the arguments to EXTERN, GLOBAL
+        and COMMON are valid identifiers.}
+    \item{Added misc/exebin.mac to allow direct generation of .EXE files by
+        hacking up an EXE header using DB and DW; also added test/binexe.asm
+        to demonstrate the use of this. Thanks to Yann Guidon for
+        contributing the EXE header code.}
+    \item{ndisasm forgot to check whether the input file had been successfully
+        opened. Now it does. Doh!}
+    \item{Added the Cyrix extensions to the MMX instruction set.}
+    \item{Added a hinting mechanism to allow [EAX+EBX] and [EBX+EAX] to be
+        assembled differently. This is important since [ESI+EBP] and
+        [EBP+ESI] have different default base segment registers.}
+    \item{Added support for the PharLap OMF extension for 4096-byte segment
+        alignment.}
+\end{itemize}
+
+\xsubsection{cl-0.95}{Version 0.95 released July 1997}
+
+\begin{itemize}
+    \item{Fixed yet another ELF bug. This one manifested if the user relied on
+        the default segment, and attempted to define global symbols without
+        first explicitly declaring the target segment.}
+    \item{Added makefiles (for NASM and the RDF tools) to build Win32 console
+        apps under Symantec C++. Donated by Mark Junker.}
+    \item{Added `macros.bas' and `insns.bas', QBasic versions of the Perl
+        scripts that convert `standard.mac' to `macros.c' and convert
+        `insns.dat' to `insnsa.c' and `insnsd.c'. Also thanks to Mark
+        Junker.}
+    \item{Changed the diassembled forms of the conditional instructions so
+        that JB is now emitted as JC, and other similar changes. Suggested
+        list by Ulrich Doewich.}
+    \item{Added `@' to the list of valid characters to begin an identifier with.}
+    \item{Documentary changes, notably the addition of the `Common Problems'
+        section in nasm.doc.}
+    \item{Fixed a bug relating to 32-bit PC-relative fixups in OBJ.}
+    \item{Fixed a bug in perm\_copy() in labels.c which was causing exceptions
+        in cleanup\_labels() on some systems.}
+    \item{Positivity sanity check in TIMES argument changed from a warning to
+        an error following a further complaint.}
+    \item{Changed the acceptable limits on byte and word operands to allow
+        things like `\textasciitilde 10111001b' to work.}
+    \item{Fixed a major problem in the preprocessor which caused seg-faults if
+        macro definitions contained blank lines or comment-only lines.}
+    \item{Fixed inadequate error checking on the commas separating the
+        arguments to `db', `dw' etc.}
+    \item{Fixed a crippling bug in the handling of macros with operand counts
+        defined with a `+' modifier.}
+    \item{Fixed a bug whereby object file formats which stored the input file
+        name in the output file (such as OBJ and COFF) weren't doing so
+        correctly when the output file name was specified on the command
+        line.}
+    \item{Removed [INC] and [INCLUDE] support for good, since they were
+        obsolete anyway.}
+    \item{Fixed a bug in OBJ which caused all fixups to be output in 16-bit
+        (old-format) FIXUPP records, rather than putting the 32-bit ones in
+        FIXUPP32 (new-format) records.}
+    \item{Added, tentatively, OS/2 object file support (as a minor variant
+        on OBJ).}
+    \item{Updates to Fox Cutter's Borland C makefile, Makefile.bc2.}
+    \item{Removed a spurious second fclose() on the output file.}
+    \item{Added the `-s' command line option to redirect all messages which
+        would go to stderr (errors, help text) to stdout instead.}
+    \item{Added the `-w' command line option to selectively suppress some
+        classes of assembly warning messages.}
+    \item{Added the `-p' pre-include and `-d' pre-define command-line options.}
+    \item{Added an include file search path: the `-i' command line option.}
+    \item{Fixed a silly little preprocessor bug whereby starting a line with a
+        `\%!' environment-variable reference caused an `unknown directive'
+        error.}
+    \item{Added the long-awaited listing file support: the `-l' command line
+        option.}
+    \item{Fixed a problem with OBJ format whereby, in the absence of any
+        explicit segment definition, non-global symbols declared in the
+        implicit default segment generated spurious EXTDEF records in the
+        output.}
+    \item{Added the NASM environment variable.}
+    \item{From this version forward, Win32 console-mode binaries will be
+        included in the DOS distribution in addition to the 16-bit binaries.
+        Added Makefile.vc for this purpose.}
+    \item{Added `return 0;' to test/objlink.c to prevent compiler warnings.}
+    \item{Added the \_\_NASM\_MAJOR\_\_ and \_\_NASM\_MINOR\_\_ standard defines.}
+    \item{Added an alternative memory-reference syntax in which prefixing an
+        operand with `\&' is equivalent to enclosing it in square brackets,
+        at the request of Fox Cutter.}
+    \item{Errors in pass two now cause the program to return a non-zero error
+        code, which they didn't before.}
+    \item{Fixed the single-line macro cycle detection, which didn't work at
+        all on macros with no parameters (caused an infinite loop). Also
+        changed the behaviour of single-line macro cycle detection to work
+        like cpp, so that macros like `extrn' as given in the documentation
+        can be implemented.}
+    \item{Fixed the implementation of WRT, which was too restrictive in that
+        you couldn't do `mov ax,[di+abc wrt dgroup]' because (di+abc) wasn't
+        a relocatable reference.}
+\end{itemize}
+
+\xsubsection{cl-0.94}{Version 0.94 released April 1997}
+
+\begin{itemize}
+    \item{Major item: added the macro processor.}
+    \item{Added undocumented instructions SMI, IBTS, XBTS and LOADALL286. Also
+        reorganised CMPXCHG instruction into early-486 and Pentium forms.
+        Thanks to Thobias Jones for the information.}
+    \item{Fixed two more stupid bugs in ELF, which were causing `ld' to
+        continue to seg-fault in a lot of non-trivial cases.}
+    \item{Fixed a seg-fault in the label manager.}
+    \item{Stopped FBLD and FBSTP from \emph{requiring} the TWORD keyword, which is
+        the only option for BCD loads/stores in any case.}
+    \item{Ensured FLDCW, FSTCW and FSTSW can cope with the WORD keyword, if
+        anyone bothers to provide it. Previously they complained unless no
+        keyword at all was present.}
+    \item{Some forms of FDIV/FDIVR and FSUB/FSUBR were still inverted: a
+        vestige of a bug that I thought had been fixed in 0.92. This was
+        fixed, hopefully for good this time...}
+    \item{Another minor phase error (insofar as a phase error can \emph{ever} be
+        minor) fixed, this one occurring in code of the form
+\begin{lstlisting}
+rol ax,forward_reference
+forward_reference equ 1
+\end{lstlisting}}
+    \item{The number supplied to TIMES is now sanity-checked for positivity,
+        and also may be greater than 64K (which previously didn't work on
+        16-bit systems).}
+    \item{Added Watcom C makefiles, and misc/pmw.bat, donated by Dominik Behr.}
+    \item{Added the INCBIN pseudo-opcode.}
+    \item{Due to the advent of the preprocessor, the [INCLUDE] and [INC]
+        directives have become obsolete. They are still supported in this
+        version, with a warning, but won't be in the next.}
+    \item{Fixed a bug in OBJ format, which caused incorrect object records to
+        be output when absolute labels were made global.}
+    \item{Updates to RDOFF subdirectory, and changes to outrdf.c.}
+\end{itemize}
+
+\xsubsection{cl-0.93}{Version 0.93 released January 1997}
+
+This release went out in a great hurry after semi-crippling bugs
+were found in 0.92.
+
+\begin{itemize}
+    \item{Really \emph{did} fix the stack overflows this time. *blush*}
+    \item{Had problems with EA instruction sizes changing between passes, when
+        an offset contained a forward reference and so 4 bytes were
+        allocated for the offset in pass one; by pass two the symbol had
+        been defined and happened to be a small absolute value, so only 1
+        byte got allocated, causing instruction size mismatch between passes
+        and hence incorrect address calculations. Fixed.}
+    \item{Stupid bug in the revised ELF section generation fixed (associated
+        string-table section for .symtab was hard-coded as 7, even when this
+        didn't fit with the real section table). Was causing `ld' to
+        seg-fault under Linux.}
+    \item{Included a new Borland C makefile, Makefile.bc2, donated by Fox
+        Cutter <lmb@comtch.iea.com>.}
+\end{itemize}
+
+\xsubsection{cl-0.92}{Version 0.92 released January 1997}
+
+\begin{itemize}
+    \item{The FDIVP/FDIVRP and FSUBP/FSUBRP pairs had been inverted: this was
+        fixed. This also affected the LCC driver.}
+    \item{Fixed a bug regarding 32-bit effective addresses of the form
+        \code{[other\_register+ESP]}.}
+    \item{Documentary changes, notably documentation of the fact that Borland
+        Win32 compilers use `obj' rather than `win32' object format.}
+    \item{Fixed the COMENT record in OBJ files, which was formatted
+        incorrectly.}
+    \item{Fixed a bug causing segfaults in large RDF files.}
+    \item{OBJ format now strips initial periods from segment and group
+        definitions, in order to avoid complications with the local label
+        syntax.}
+    \item{Fixed a bug in disassembling far calls and jumps in NDISASM.}
+    \item{Added support for user-defined sections in COFF and ELF files.}
+    \item{Compiled the DOS binaries with a sensible amount of stack, to
+        prevent stack overflows on any arithmetic expression containing
+        parentheses.}
+    \item{Fixed a bug in handling of files that do not terminate in a newline.}
+\end{itemize}
+
+\xsubsection{cl-0.91}{Version 0.91 released November 1996}
+
+\begin{itemize}
+    \item{Loads of bug fixes.}
+    \item{Support for RDF added.}
+    \item{Support for DBG debugging format added.}
+    \item{Support for 32-bit extensions to Microsoft OBJ format added.}
+    \item{Revised for Borland C: some variable names changed, makefile added.}
+    \item{LCC support revised to actually work.}
+    \item{JMP/CALL NEAR/FAR notation added.}
+    \item{`a16', `o16', `a32' and `o32' prefixes added.}
+    \item{Range checking on short jumps implemented.}
+    \item{MMX instruction support added.}
+    \item{Negative floating point constant support added.}
+    \item{Memory handling improved to bypass 64K barrier under DOS.}
+    \item{\code{\$} prefix to force treatment of reserved words as identifiers added.}
+    \item{Default-size mechanism for object formats added.}
+    \item{Compile-time configurability added.}
+    \item{\code{\#}, \code{\@}, \code{\textasciitilde} and \code{?} are now valid characters in labels.}
+    \item{\code{-e} and \code{-k} options in NDISASM added.}
+\end{itemize}
+
+\xsubsection{cl-0.90} Version 0.90 released October 1996
+
+First release version. First support for object file output. Other
+changes from previous version (0.3x) too numerous to document.

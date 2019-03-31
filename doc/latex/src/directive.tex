@@ -1,0 +1,541 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{directive}{\textindexlc{Assembler Directives}}
+
+NASM, though it attempts to avoid the bureaucracy of assemblers like
+MASM and TASM, is nevertheless forced to support a \emph{few}
+directives. These are described in this chapter.
+
+NASM's directives come in two types: \index{directives!user-level}
+\emph{user-level} directives and \index{directives!primitive}
+\emph{primitive} directives. Typically, each directive has a
+user-level form and a primitive form. In almost all cases, we
+recommend that users use the user-level forms of the directives,
+which are implemented as macros which call the primitive forms.
+
+Primitive directives are enclosed in square brackets; user-level
+directives are not.
+
+In addition to the universal directives described in this chapter,
+each object file format can optionally supply extra directives in
+order to control particular features of that file format. These
+\index{directives!format-specific}\emph{format-specific} directives are
+documented along with the formats that implement them, in
+\nref{outfmt}.
+
+\xsection{bits}{\codeindex{BITS}: Specifying Target \textindexlc{Processor Mode}}
+
+The \code{BITS} directive specifies whether NASM should generate code
+\index{16-bit mode, versus 32-bit mode}designed to run on a processor
+operating in 16-bit mode, 32-bit mode or 64-bit mode. The syntax is
+\code{BITS XX}, where XX is 16, 32 or 64.
+
+In most cases, you should not need to use \code{BITS} explicitly. The
+\code{aout}, \code{coff}, \code{elf32}, \code{elf64}, \code{macho32},
+\code{macho64}, \code{win32} and \code{win64} object formats, which
+are designed for use in 32-bit or 64-bit operating systems, all cause
+NASM to select 32-bit or 64-bit mode, respectively, by default.
+The \code{obj} object format allows you to specify each segment
+you define as either \code{USE16} or \code{USE32}, and NASM will
+set its operating mode accordingly, so the use of the \code{BITS}
+directive is once again unnecessary.
+
+The most likely reason for using the \code{BITS} directive is to write
+32-bit or 64-bit code in a flat binary file; this is because the \code{bin}
+output format defaults to 16-bit mode in anticipation of it being
+used most frequently to write DOS \code{.COM} programs, DOS \code{.SYS}
+device drivers and boot loader software.
+
+The \code{BITS} directive can also be used to generate code for
+a different mode than the standard one for the output format.
+
+You do \emph{not} need to specify \code{BITS 32} merely in order
+to use 32-bit instructions in a 16-bit DOS program; if you do, the
+assembler will generate incorrect code because it will be writing
+code targeted at a 32-bit platform, to be run on a 16-bit one.
+
+When NASM is in \code{BITS 16} mode, instructions which use 32-bit
+data are prefixed with an 0x66 byte, and those referring to 32-bit
+addresses have an 0x67 prefix. In \code{BITS 32} mode, the reverse is
+true: 32-bit instructions require no prefixes, whereas instructions
+using 16-bit data need an 0x66 and those working on 16-bit
+addresses need an 0x67.
+
+When NASM is in \code{BITS 64} mode, most instructions operate the same
+as they do for \code{BITS 32} mode. However, there are 8 more general and
+SSE registers, and 16-bit addressing is no longer supported.
+
+The default address size is 64 bits; 32-bit addressing can be selected
+with the 0x67 prefix. The default operand size is still 32 bits,
+however, and the 0x66 prefix selects 16-bit operand size.
+The \code{REX} prefix is used both to select 64-bit operand size, and
+to access the new registers. NASM automatically inserts REX prefixes
+when necessary.
+
+When the \code{REX} prefix is used, the processor does not know how to
+address the AH, BH, CH or DH (high 8-bit legacy) registers. Instead,
+it is possible to access the the low 8-bits of the SP, BP SI and DI
+registers as SPL, BPL, SIL and DIL, respectively; but only when the
+REX prefix is used.
+
+The \code{BITS} directive has an exactly equivalent primitive form,
+\code{[BITS 16]}, \code{[BITS 32]} and \code{[BITS 64]}. The user-level
+form is a macro which has no function other than to call the primitive form.
+
+Note that the space is neccessary, e.g. \code{BITS32} will \emph{not} work!
+
+\xsubsection{use163264}{\codeindex{USE16}, \codeindex{USE32}
+and \codeindex{USE64}: Aliases for BITS}
+
+The \code{USE16}, \code{USE32} and \code{USE64} directives can be used
+in place of \code{BITS 16}, \code{BITS 32} and \code{BITS 64}, for
+compatibility with other assemblers.
+
+\xsection{default}{\codeindex{DEFAULT}: Change the assembler defaults}
+
+The \code{DEFAULT} directive changes the assembler defaults. Normally,
+NASM defaults to a mode where the programmer is expected to explicitly
+specify most features directly. However, this is occasionally obnoxious,
+as the explicit form is pretty much the only one one wishes to use.
+
+Currently, \code{DEFAULT} can be set to \code{REL}, \code{ABS}, \code{BND}
+and \code{NOBND}.
+
+\xsubsection{relabs}{\codeindex{REL} and \codeindex{ABS}: RIP-relative addressing}
+
+This sets whether registerless instructions in 64-bit mode are
+\code{RIP}-relative or not. By default, they are absolute unless
+overridden with the \codeindex{REL} specifier (see \nref{effaddr}).
+However, if \code{DEFAULT REL} is specified, \code{REL} is default, unless
+overridden with the \code{ABS} specifier, \emph{except when used with an
+FS or GS segment override}.
+
+The special handling of \code{FS} and \code{GS} overrides are due to the
+fact that these registers are generally used as thread pointers or
+other special functions in 64-bit mode, and generating
+\code{RIP}-relative addresses would be extremely confusing.
+
+\code{DEFAULT REL} is disabled with \code{DEFAULT ABS}.
+
+\xsubsection{bndnobnd}{\codeindex{BND} and \codeindex{NOBND}: \code{BND} prefix}
+
+If \code{DEFAULT BND} is set, all bnd-prefix available instructions
+following this directive are prefixed with bnd. To override it,
+\code{NOBND} prefix can be used.
+
+\begin{lstlisting}
+DEFAULT BND
+    call foo        ; BND will be prefixed
+    nobnd call foo  ; BND will NOT be prefixed
+\end{lstlisting}
+
+\code{DEFAULT NOBND} can disable \code{DEFAULT BND} and then
+\code{BND} prefix will be added only when explicitly specified
+in code.
+
+\code{DEFAULT BND} is expected to be the normal configuration
+for writing MPX-enabled code.
+
+\xsection{section}{\codeindex{SECTION} or \codeindex{SEGMENT}: Changing and
+\textindexlc{Defining Sections}}
+
+\index{sections!changing}\index{sections!switching between}
+The \code{SECTION} directive (\code{SEGMENT} is an exactly equivalent
+synonym) changes which section of the output file the code you write
+will be assembled into. In some object file formats, the number and
+names of sections are fixed; in others, the user may make up as many
+as they wish. Hence \code{SECTION} may sometimes give an error message,
+or may define a new section, if you try to switch to a section that does
+not (yet) exist.
+
+The Unix object formats, and the \code{bin} object format (but see
+\nref{multisec}), all support the \index{sections!standardized names}
+standardized names \code{.text}, \code{.data} and \code{.bss} for the code,
+data and uninitialized-data sections. The \code{obj} format, by contrast,
+does not recognize these section names as being special, and indeed will
+strip off the leading period of any section name that has one.
+
+\xsubsection{sectmac}{The \codeindex{\_\_SECT\_\_} Macro}
+
+The \code{SECTION} directive is unusual in that its user-level form
+functions differently from its primitive form. The primitive form,
+\code{[SECTION xyz]}, simply switches the current target section to the
+one given. The user-level form, \code{SECTION xyz}, however, first
+defines the single-line macro \code{\_\_SECT\_\_} to be the primitive
+\code{[SECTION]} directive which it is about to issue, and then issues
+it. So the user-level directive
+
+\begin{lstlisting}
+    SECTION .text
+\end{lstlisting}
+
+expands to the two lines
+
+\begin{lstlisting}
+%define __SECT__    [SECTION .text]
+    [SECTION .text]
+\end{lstlisting}
+
+Users may find it useful to make use of this in their own macros.
+For example, the \code{writefile} macro defined in \nref{mlmacgre}
+can be usefully rewritten in the following more sophisticated form:
+
+\begin{lstlisting}
+%macro  writefile 2+
+        [section .data]
+
+    %%str:      db %2
+    %%endstr:
+
+        __SECT__
+
+        mov     dx, %%str
+        mov     cx, %%endstr-%%str
+        mov     bx, %1
+        mov     ah, 0x40
+        int     0x21
+%endmacro
+\end{lstlisting}
+
+This form of the macro, once passed a string to output, first
+switches temporarily to the data section of the file, using the
+primitive form of the \code{SECTION} directive so as not to modify
+\code{\_\_SECT\_\_}. It then declares its string in the data section,
+and then invokes \code{\_\_SECT\_\_} to switch back to \emph{whichever}
+section the user was previously working in. It thus avoids the need,
+in the previous version of the macro, to include a \code{JMP} instruction
+to jump over the data, and also does not fail if, in a complicated
+\code{OBJ} format module, the user could potentially be assembling the
+code in any of several separate code sections.
+
+\xsection{absolute}{\codeindex{ABSOLUTE}: Defining Absolute Labels}
+
+The \code{ABSOLUTE} directive can be thought of as an alternative form
+of \code{SECTION}: it causes the subsequent code to be directed at no
+physical section, but at the hypothetical section starting at the
+given absolute address. The only instructions you can use in this
+mode are the \code{RESB} family.
+
+\code{ABSOLUTE} is used as follows:
+
+\begin{lstlisting}
+absolute 0x1A
+
+    kbuf_chr    resw    1
+    kbuf_free   resw    1
+    kbuf        resw    16
+\end{lstlisting}
+
+This example describes a section of the PC BIOS data area, at
+segment address 0x40: the above code defines \code{kbuf\_chr} to be
+0x1A, \code{kbuf\_free} to be 0x1C, and \code{kbuf} to be 0x1E.
+
+The user-level form of \code{ABSOLUTE}, like that of \code{SECTION},
+redefines the \codeindex{\_\_SECT\_\_} macro when it is invoked.
+
+\codeindex{STRUC} and \codeindex{ENDSTRUC} are defined as macros
+which use \code{ABSOLUTE} (and also \code{\_\_SECT\_\_}).
+
+\code{ABSOLUTE} doesn't have to take an absolute constant as an
+argument: it can take an expression (actually, a \textindex{critical
+expression}: see \nref{crit}) and it can be a value in a segment.
+For example, a TSR can re-use its setup code as run-time BSS like this:
+
+\begin{lstlisting}
+        org     100h        ; it's a .COM program
+        jmp     setup       ; setup code comes last
+        ; the resident part of the TSR goes here
+        ; ...
+setup:
+        ; now write the code that installs the TSR here
+        ; ...
+absolute setup
+
+runtimevar1     resw    1
+runtimevar2     resd    20
+
+tsr_end:
+\end{lstlisting}
+
+This defines some variables ``on top of'' the setup code, so that
+after the setup has finished running, the space it took up can be
+re-used as data storage for the running TSR. The symbol
+\code{tsr\_end} can be used to calculate the total size of
+the part of the TSR that needs to be made resident.
+
+\xsection{extern}{\codeindex{EXTERN}: \textindexlc{Importing Symbols} from Other Modules}
+
+\code{EXTERN} is similar to the MASM directive \code{EXTRN} and
+the C keyword \code{extern}: it is used to declare a symbol which
+is not defined anywhere in the module being assembled, but is assumed
+to be defined in some other module and needs to be referred to by this
+one. Not every object-file format can support external variables:
+the \code{bin} format cannot.
+
+The \code{EXTERN} directive takes as many arguments as you like.
+Each argument is the name of a symbol:
+
+\begin{lstlisting}
+extern  _printf
+extern  _sscanf,_fscanf
+\end{lstlisting}
+
+Some object-file formats provide extra features to the \code{EXTERN}
+directive. In all cases, the extra features are used by suffixing a
+colon to the symbol name followed by object-format specific text.
+For example, the \code{obj} format allows you to declare that the
+default segment base of an external should be the group \code{dgroup}
+by means of the directive
+
+\begin{lstlisting}
+extern  _variable:wrt dgroup
+\end{lstlisting}
+
+The primitive form of \code{EXTERN} differs from the user-level form
+only in that it can take only one argument at a time: the support
+for multiple arguments is implemented at the preprocessor level.
+
+You can declare the same variable as \code{EXTERN} more than once: NASM
+will quietly ignore the second and later redeclarations.
+
+If a variable is declared both \code{GLOBAL} and \code{EXTERN}, or
+if it is declared as \code{EXTERN} and then defined, it will be
+treated as \code{GLOBAL}. If a variable is declared both as
+\code{COMMON} and \code{EXTERN}, it will be treated as \code{COMMON}.
+
+\xsection{global}{\codeindex{GLOBAL}: \textindexlc{Exporting Symbols} to Other Modules}
+
+\code{GLOBAL} is the other end of \code{EXTERN}: if one module declares a
+symbol as \code{EXTERN} and refers to it, then in order to prevent
+linker errors, some other module must actually \emph{define} the
+symbol and declare it as \code{GLOBAL}. Some assemblers use the name
+\codeindex{PUBLIC} for this purpose.
+
+\code{GLOBAL} uses the same syntax as \code{EXTERN}, except that it must
+refer to symbols which \emph{are} defined in the same module as the
+\code{GLOBAL} directive. For example:
+
+\begin{lstlisting}
+global _main
+_main:
+        ; some code
+\end{lstlisting}
+
+\code{GLOBAL}, like \code{EXTERN}, allows object formats to define private
+extensions by means of a colon. The \code{elf} object format, for
+example, lets you specify whether global data items are functions or
+data:
+
+\begin{lstlisting}
+global  hashlookup:function, hashtable:data
+\end{lstlisting}
+
+Like \code{EXTERN}, the primitive form of \code{GLOBAL} differs
+from the user-level form only in that it can take only one argument
+at a time.
+
+\xsection{common}{\codeindex{COMMON}: Defining Common Data Areas}
+
+The \code{COMMON} directive is used to declare \textindex{\emph{common
+variables}}. A common variable is much like a global variable declared
+in the uninitialized data section, so that
+
+\begin{lstlisting}
+common  intvar  4
+\end{lstlisting}
+
+is similar in function to
+
+\begin{lstlisting}
+global  intvar
+section .bss
+
+intvar  resd    1
+\end{lstlisting}
+
+The difference is that if more than one module defines the same
+common variable, then at link time those variables will be
+\emph{merged}, and references to \code{intvar} in all modules
+will point at the same piece of memory.
+
+Like \code{GLOBAL} and \code{EXTERN}, \code{COMMON} supports
+object-format specific extensions. For example, the \code{obj}
+format allows common variables to be NEAR or FAR, and the \code{elf}
+format allows you to specify the alignment requirements of
+a common variable:
+
+\begin{lstlisting}
+common  commvar  4:near ; works in OBJ
+common  intarray 100:4  ; works in ELF: 4 byte aligned
+\end{lstlisting}
+
+Once again, like \code{EXTERN} and \code{GLOBAL}, the primitive form of
+\code{COMMON} differs from the user-level form only in that it can take
+only one argument at a time.
+
+\xsection{static}{\codeindex{STATIC}: Local Symbols within Modules}
+
+Opposite to \code{EXTERN} and \code{GLOBAL}, \code{STATIC} is local
+symbol, but should be named according to the global mangling rules
+(named by analogy with the C keyword \code{static} as applied to
+functions or global variables).
+
+\begin{lstlisting}
+static foo
+foo:
+    ; codes
+\end{lstlisting}
+
+Unlike \code{GLOBAL}, \code{STATIC} does not allow object formats
+to accept private extensions mentioned in \nref{global}.
+
+\xsection{mangling}{\codeindex{(G|L)PREFIX}, \codeindex{(G|L)POSTFIX}:
+Mangling Symbols}
+
+\code{PREFIX}, \code{GPREFIX}, \code{LPREFIX}, \code{POSTFIX},
+\code{GPOSTFIX}, and \code{LPOSTFIX} directives can prepend or
+append the given argument to a certain type of symbols. The directive
+should be as a preprocess statement. Each usage is:
+
+\begin{itemize}
+    \item{\code{PREFIX}|\code{GPREFIX}: Prepend the argument to all
+        \code{EXTERN} \code{COMMON}, \code{STATIC}, and
+        \code{GLOBAL} symbols}
+
+    \item{\code{LPREFIX}: Prepend the argument to all other symbols
+        such as Local Labels, and backend defined symbols}
+
+    \item{\code{POSTFIX}|\code{GPOSTFIX}: Append the argument to
+        all \code{EXTERN} \code{COMMON}, \code{STATIC}, and
+        \code{GLOBAL} symbols}
+
+    \item{\code{LPOSTFIX}: Append the argument to all other symbols
+        such as Local Labels, and backend defined symbols}
+\end{itemize}
+
+This is a macro implemented as a \code{\%pragma}:
+
+\begin{lstlisting}
+%pragma macho lprefix L_
+\end{lstlisting}
+
+Commandline option is also possible. See also \nref{opt-pfix}.
+
+Some toolchains is aware of a particular prefix for its own optimization
+options, such as code elimination. For instance, Mach-O backend has a
+linker that uses a simplistic naming scheme to chunk up sections into a
+meta section. When the \code{subsections\_via\_symbols} directive
+(\nref{macho-ssvs}) is declared, each symbol is the start of a
+separate block. The meta section is, then, defined to include sections
+before the one that starts with a 'L'. \code{LPREFIX} is useful here to
+mark all local symbols with the 'L' prefix to be excluded to the meta
+section. It converts local symbols compatible with the particular
+toolchain. Note that local symbols declared with \code{STATIC}
+(\nref{static}) are excluded from the symbol mangling and also
+not marked as global.
+
+\xsection{gen-namespace}{\codeindex{OUTPUT}, \codeindex{DEBUG}:
+Generic Namespaces}
+
+\code{OUTPUT} and \code{DEBUG} are generic \code{\%pragma} namespaces
+that are supposed to redirect to the current output and debug formats.
+For example, when mangling local symbols via the generic namespace:
+
+\begin{lstlisting}
+%pragma output gprefix _
+\end{lstlisting}
+
+This is useful when the directive is needed to be output format
+agnostic.
+
+The example is also euquivalent to this, when the output format is
+\code{elf}:
+
+\begin{lstlisting}
+%pragma elf gprefix _
+\end{lstlisting}
+
+
+\xsection{cpu}{\codeindex{CPU}: Defining CPU Dependencies}
+
+The \code{CPU} directive restricts assembly to those instructions which
+are available on the specified CPU.
+
+Options are:
+
+\begin{tabular}{ l l }
+  \code{CPU 8086} & Assemble only 8086 instruction set \\
+  \code{CPU 186} & Assemble instructions up to the 80186 instruction set \\
+  \code{CPU 286} & Assemble instructions up to the 286 instruction set \\
+  \code{CPU 386} & Assemble instructions up to the 386 instruction set \\
+  \code{CPU 486} & 486 instruction set \\
+  \code{CPU 586} & Pentium instruction set \\
+  \code{CPU PENTIUM} & Same as 586 \\
+  \code{CPU 686} & P6 instruction set \\
+  \code{CPU PPRO} & Same as 686 \\
+  \code{CPU P2} & Same as 686 \\
+  \code{CPU P3} & Pentium III (Katmai) instruction sets \\
+  \code{CPU KATMAI} & Same as P3 \\
+  \code{CPU P4} & Pentium 4 (Willamette) instruction set \\
+  \code{CPU WILLAMETTE} & Same as P4 \\
+  \code{CPU PRESCOTT} & Prescott instruction set \\
+  \code{CPU X64} & x86-64 (x64/AMD64/Intel 64) instruction set \\
+  \code{CPU IA64} & IA64 CPU (in x86 mode) instruction set \\
+\end{tabular}
+
+All options are case insensitive. All instructions will be selected
+only if they apply to the selected CPU or lower. By default, all
+instructions are available.
+
+\xsection{float}{\codeindex{FLOAT}: Handling of \index{constants!floating-point}
+floating-point constants}
+
+By default, floating-point constants are rounded to nearest, and IEEE
+denormals are supported. The following options can be set to alter
+this behaviour:
+
+\begin{tabular}{ l l }
+  \code{FLOAT DAZ} & Flush denormals to zero \\
+  \code{FLOAT NODAZ} & Do not flush denormals to zero (default) \\
+  \code{FLOAT NEAR} & Round to nearest (default) \\
+  \code{FLOAT UP} &  Round up (toward +Infinity) \\
+  \code{FLOAT DOWN} & Round down (toward -Infinity) \\
+  \code{FLOAT ZERO} & Round toward zero \\
+  \code{FLOAT DEFAULT} & Restore default settings \\
+\end{tabular}
+
+The standard macros \codeindex{\_\_FLOAT\_DAZ\_\_},
+\codeindex{\_\_FLOAT\_ROUND\_\_}, and \codeindex{\_\_FLOAT\_\_} contain
+the current state, as long as the programmer has avoided the use
+of the brackeded primitive form, (\code{[FLOAT]}).
+
+\code{\_\_FLOAT\_\_} contains the full set of floating-point settings;
+this value can be saved away and invoked later to restore the setting.
+
+\xsection{asmdir-warning}{\codeindex{[WARNING]}: Enable or disable warnings}
+
+The \code{[WARNING]} directive can be used to enable or disable classes
+of warnings in the same way as the \code{-w} option, see \nref{opt-w}
+for more details about warning classes.
+
+\begin{itemize}
+    \item{\code{[warning +\emph{warning-class}]} enables warnings for
+        \emph{warning-class}}.
+
+    \item{\code{[warning -\emph{warning-class}]} disables warnings for
+        \emph{warning-class}}.
+
+    \item{\code{[warning *\emph{warning-class}]} restores \emph{warning-class} to
+        the original value, either the default value or as specified on the
+        command line.}
+
+    \item{\code{[warning push]} saves the current warning state on a stack.}
+
+    \item{\code{[warning pop]} restores the current warning state from the stack.}
+\end{itemize}
+
+The \code{[WARNING]} directive also accepts the \code{all}, \code{error} and
+\code{error=}\emph{warning-class} specifiers.
+
+No ``user form'' (without the brackets) currently exists.

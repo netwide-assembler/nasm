@@ -1,0 +1,114 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{trouble}{Troubleshooting}
+
+This chapter describes some of the common problems that users have
+been known to encounter with NASM, and answers them. If you think you
+have found a bug in NASM, please see \nref{bugs}.
+
+\xsection{problems}{Common Problems}
+
+\xsubsection{inefficient}{NASM Generates \textindexlc{Inefficient Code}}
+
+We sometimes get `bug' reports about NASM generating inefficient, or
+even `wrong', code on instructions such as \code{ADD ESP,8}. This is a
+deliberate design feature, connected to predictability of output:
+NASM, on seeing \code{ADD ESP,8}, will generate the form of the
+instruction which leaves room for a 32-bit offset. You need to code
+\indexcode{BYTE}\code{ADD ESP,BYTE 8} if you want the space-efficient
+form of the instruction. This isn't a bug, it's user error: if you
+prefer to have NASM produce the more efficient code automatically enable
+optimization with the \code{-O} option (see \nref{opt-O}).
+
+\xsubsection{jmprange}{My Jumps are Out of Range}
+\index{out of range!jumps}
+
+Similarly, people complain that when they issue \textindex{conditional
+jumps} (which are \code{SHORT} by default) that try to jump too far,
+NASM reports `short jump out of range' instead of making the jumps
+longer.
+
+This, again, is partly a predictability issue, but in fact has a
+more practical reason as well. NASM has no means of being told what
+type of processor the code it is generating will be run on; so it
+cannot decide for itself that it should generate \codeindex{Jcc NEAR}
+type instructions, because it doesn't know that it's working for a 386 or
+above. Alternatively, it could replace the out-of-range short
+\code{JNE} instruction with a very short \code{JE} instruction that jumps
+over a \code{JMP NEAR}; this is a sensible solution for processors
+below a 386, but hardly efficient on processors which have good
+branch prediction \emph{and} could have used \code{JNE NEAR} instead. So,
+once again, it's up to the user, not the assembler, to decide what
+instructions should be generated. See \nref{opt-O}.
+
+\xsubsection{proborg}{\codeindex{ORG} Doesn't Work}
+
+People writing \textindex{boot sector} programs in the \code{bin} format often
+complain that \code{ORG} doesn't work the way they'd like: in order to
+place the \code{0xAA55} signature word at the end of a 512-byte boot
+sector, people who are used to MASM tend to code
+
+\begin{lstlisting}
+    ORG 0
+
+    ; some boot sector code
+
+    ORG 510
+    DW 0xAA55
+\end{lstlisting}
+
+This is not the intended use of the \code{ORG} directive in NASM, and
+will not work. The correct way to solve this problem in NASM is to
+use the \codeindex{TIMES} directive, like this:
+
+\begin{lstlisting}
+    ORG 0
+
+    ; some boot sector code
+
+    TIMES 510-($-$$) DB 0
+    DW 0xAA55
+\end{lstlisting}
+
+The \code{TIMES} directive will insert exactly enough zero bytes into
+the output to move the assembly point up to 510. This method also
+has the advantage that if you accidentally fill your boot sector too
+full, NASM will catch the problem at assembly time and report it, so
+you won't end up with a boot sector that you have to disassemble to
+find out what's wrong with it.
+
+\xsubsection{probtimes}{\codeindex{TIMES} Doesn't Work}
+
+The other common problem with the above code is people who write the
+\code{TIMES} line as
+
+\begin{lstlisting}
+    TIMES 510-$ DB 0
+\end{lstlisting}
+
+by reasoning that \code{\$} should be a pure number, just like 510, so
+the difference between them is also a pure number and can happily be
+fed to \code{TIMES}.
+
+NASM is a \emph{modular} assembler: the various component parts are
+designed to be easily separable for re-use, so they don't exchange
+information unnecessarily. In consequence, the \code{bin} output
+format, even though it has been told by the \code{ORG} directive that
+the \code{.text} section should start at 0, does not pass that
+information back to the expression evaluator. So from the
+evaluator's point of view, \code{\$} isn't a pure number: it's an offset
+from a section base. Therefore the difference between \code{\$} and 510
+is also not a pure number, but involves a section base. Values
+involving section bases cannot be passed as arguments to \code{TIMES}.
+
+The solution, as in the previous section, is to code the \code{TIMES}
+line in the form
+
+\begin{lstlisting}
+    TIMES 510-($-$$) DB 0
+\end{lstlisting}
+
+in which \code{\$} and \code{\$\$} are offsets from the same section base,
+and so their difference is a pure number. This will solve the
+problem and generate sensible code.

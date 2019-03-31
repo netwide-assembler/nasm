@@ -1,0 +1,163 @@
+%
+% vim: ts=4 sw=4 et
+%
+\documentclass[oneside,openany]{book}
+
+\usepackage[a4paper,margin=72pt]{geometry}
+
+\usepackage{listings}           % nasm listings
+\usepackage{imakeidx}           % indexing
+\usepackage{hyperref}           % pdf bookmarks and such
+\usepackage[Sonny]{fncychap}    % chapter style
+\usepackage{parskip}            % no indent on first line
+\usepackage{fontspec}           % selecting fonts
+\usepackage{xunicode}           % unicode support
+\usepackage{xcolor}             % coloring
+\usepackage{xspace}             % spacing
+\usepackage{appendix}           % appendix
+%\usepackage{xstring}            % strings for code
+\usepackage{sectsty}            % colors for sections
+\usepackage{graphicx}           % images
+\usepackage[titles]{tocloft}    % coloring TOC
+
+\title{NASM -- The Netwide Assembler}
+\author{The NASM Development Team}
+\date{1996 -- 2018}
+\input{src/version.tex}
+
+%
+% No rectangles
+\makeatletter
+\hypersetup{
+    pdfauthor=\@author,
+    pdftitle=\@title,
+    pdfkeywords={NASM,Netwide Assembler},
+    hidelinks,
+}
+\makeatother
+
+%
+% Up to 4 levels nesting in menu
+\setcounter{tocdepth}{4}
+
+%
+% Highlight listings
+\definecolor{light-gray}{gray}{0.96}
+
+%
+% Setup document fonts
+\setmainfont{Source Sans Pro}
+\setmonofont{FreeMono}
+
+% Listings font and settings
+\newfontfamily{\lstsansserif}{FreeMono}
+\lstset{
+    keepspaces=true,
+    backgroundcolor=\color{light-gray},
+    basicstyle=\lstsansserif,
+    breaklines=true,
+    breakatwhitespace=true,
+    framesep=10pt,
+    framexleftmargin=10pt,
+    frame=tb,
+    framerule=0pt,
+    xleftmargin=10pt,
+    xrightmargin=10pt,
+    aboveskip=10pt,
+    belowskip=5pt,
+    literate={-}{{-}}1
+}
+
+%
+% Heading colors
+\definecolor{hcolor}{RGB}{8,96,168}
+\chapterfont{\color{hcolor}}
+\sectionfont{\color{hcolor}}
+\subsectionfont{\color{hcolor}}
+
+%
+% Formatting macros
+\newcommand{\textindex}[1]{#1\index{#1}\xspace}
+\newcommand{\textindexlc}[1]{#1\index{\MakeLowercase{#1}}\xspace}
+\newcommand{\code}[1]{{\texttt{#1}}\xspace}
+\newcommand{\indexcode}[1]{\index{#1@\texttt{#1}}\xspace}
+\newcommand{\codeindex}[1]{\texttt{#1}\index{#1@\texttt{#1}}\xspace}
+\newcommand{\fullref}[1]{``\hyperref[{#1}]{\ref*{#1}\xspace\nameref*{#1}}''\xspace}
+\newcommand{\nref}[1]{\textcolor{hcolor}{\hyperref[{#1}]{\ref*{#1}\xspace}}}
+
+\newcommand{\xchapter}[2]{\chapter{#2}\label{#1}\xspace}
+\newcommand{\xsection}[2]{\section{#2}\label{#1}\xspace}
+\newcommand{\xsubsection}[2]{\subsection{#2}\label{#1}\xspace}
+%
+% Convertion table
+%
+% \C{name}              ->      \xchapter{label}{name}
+% \H{name}              ->      \xsection{label}{name}
+% \S{name}              ->      \xsubsection{label}{name}
+% \c{name}              ->      \code{name}
+% \c name               ->      \begin{lstlisting}
+%                               name
+%                               \end{lstlisting}
+% \i{name}              ->      \textindexlc{name}
+% \I{name}              ->      \index{name}
+% \I\c{name}            ->      \indexcode{name}
+% \i\c{name}            ->      \codeindex{name}
+% \k{name}              ->      \nref{name}
+
+%
+% Index into TOC
+\makeindex[title=Index,columns=2,intoc,options=-s src/idxconf.ist]
+
+%
+% TOC headers
+\renewcommand{\cftchapfont}{\bfseries\color{hcolor}}
+\renewcommand{\cfttoctitlefont}{\huge\bfseries\color{hcolor}}
+
+\begin{document}
+\raggedright
+
+\makeatletter
+\begin{titlepage}
+    \color{hcolor}
+    \begin{center} \vspace*{\fill}
+        \begin{flushleft}
+            {\huge \bfseries {\@title}}                         \\
+        \end{flushleft}
+        \noindent\makebox[\linewidth]{\rule{\textwidth}{2pt}}   \\
+        \begin{flushright}
+            {\large \bfseries \emph{version \version}}          \\[8ex]
+        \end{flushright}
+        \includegraphics[width=6cm]{src/nasmlogo.eps}
+    \vspace*{\fill} \end{center}
+\end{titlepage}
+\makeatother
+\thispagestyle{empty}
+
+\tableofcontents
+\addtocontents{toc}{~\hfill\textcolor{hcolor}{\textbf{Page}}\par}
+
+%
+% Document chapters
+\input{src/intro.tex}
+\input{src/running.tex}
+\input{src/language.tex}
+\input{src/preproc.tex}
+\input{src/macropkg.tex}
+\input{src/directive.tex}
+\input{src/outfmt.tex}
+\input{src/16bit.tex}
+\input{src/32bit.tex}
+\input{src/mixsize.tex}
+\input{src/64bit.tex}
+\input{src/trouble.tex}
+\begin{appendices}
+\input{src/ndisasm.tex}
+\input{src/inslist.tex}
+\input{src/changelog.tex}
+\input{src/source.tex}
+\input{src/contact.tex}
+\end{appendices}
+
+\printindex
+
+\end{document}

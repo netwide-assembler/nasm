@@ -1,0 +1,868 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{16bit}{Writing 16-bit Code (DOS, Windows 3/3.1)}
+
+This chapter attempts to cover some of the common issues encountered
+when writing 16-bit code to run under \code{MS-DOS} or \code{Windows 3.x}.
+It covers how to link programs to produce \code{.EXE} or \code{.COM} files,
+how to write \code{.SYS} device drivers, and how to interface assembly
+language code with 16-bit C compilers and with Borland Pascal.
+
+\xsection{exefiles}{Producing \codeindex{.EXE} Files}
+
+Any large program written under DOS needs to be built as a \code{.EXE}
+file: only \code{.EXE} files have the necessary internal structure
+required to span more than one 64K segment. \textindex{Windows} programs,
+also, have to be built as \code{.EXE} files, since Windows does not
+support the \code{.COM} format.
+
+In general, you generate \code{.EXE} files by using the \code{obj} output
+format to produce one or more \codeindex{.OBJ} files, and then linking
+them together using a linker. However, NASM also supports the direct
+generation of simple DOS \code{.EXE} files using the \code{bin} output
+format (by using \code{DB} and \code{DW} to construct the \code{.EXE} file
+header), and a macro package is supplied to do this. Thanks to
+Yann Guidon for contributing the code for this.
+
+NASM may also support \code{.EXE} natively as another output format in
+future releases.
+
+\xsubsection{objexe}{Using the \code{obj} Format To Generate \code{.EXE} Files}
+
+This section describes the usual method of generating \code{.EXE} files
+by linking \code{.OBJ} files together.
+
+Most 16-bit programming language packages come with a suitable
+linker; if you have none of these, there is a free linker called
+\textindex{VALX}\index{linker!VALX}, available as a part of
+CC386 compiler on \href{http://ladsoft.tripod.com/cc386\_compiler.html}
+{ladsoft.tripod.com}.
+
+There is another `free' linker (though this one doesn't come with
+sources) called \textindex{FREELINK}\index{linker!FREELINK}, available
+from \href{http://www.pcorner.com/tpc/old/3-101.html}{www.pcorner.com}.
+
+A third, \textindex{djlink}, written by DJ Delorie, is available at
+\href{http://www.delorie.com/djgpp/16bit/djlink/}{www.delorie.com}.
+
+A fourth linker, \textindex{ALINK}\index{linker!ALINK}, written by
+Anthony A.J. Williams, is available at \href{http://alink.sourceforge.net}
+{alink.sourceforge.net}.
+
+When linking several \code{.OBJ} files into a \code{.EXE} file, you should
+ensure that exactly one of them has a start point defined (using the
+\index{program entry point}\codeindex{..start} special symbol defined by the
+\code{obj} format: see \nref{dotdotstart}). If no module defines a start
+point, the linker will not know what value to give the entry-point
+field in the output file header; if more than one defines a start
+point, the linker will not know \emph{which} value to use.
+
+An example of a NASM source file which can be assembled to a
+\code{.OBJ} file and linked on its own to a \code{.EXE} is given here. It
+demonstrates the basic principles of defining a stack, initialising
+the segment registers, and declaring a start point. This file is
+also provided in the \index{test subdirectory}\code{test} subdirectory of
+the NASM archives, under the name \code{objexe.asm}.
+
+\begin{lstlisting}
+segment code
+
+..start:
+    mov     ax,data
+    mov     ds,ax
+    mov     ax,stack
+    mov     ss,ax
+    mov     sp,stacktop
+\end{lstlisting}
+
+This initial piece of code sets up \code{DS} to point to the data
+segment, and initializes \code{SS} and \code{SP} to point to the top of
+the provided stack. Notice that interrupts are implicitly disabled
+for one instruction after a move into \code{SS}, precisely for this
+situation, so that there's no chance of an interrupt occurring
+between the loads of \code{SS} and \code{SP} and not having a stack to
+execute on.
+
+Note also that the special symbol \code{..start} is defined at the
+beginning of this code, which means that will be the entry point
+into the resulting executable file.
+
+\begin{lstlisting}
+    mov     dx,hello
+    mov     ah,9
+    int     0x21
+\end{lstlisting}
+
+The above is the main program: load \code{DS:DX} with a pointer to the
+greeting message (\code{hello} is implicitly relative to the segment
+\code{data}, which was loaded into \code{DS} in the setup code, so the
+full pointer is valid), and call the DOS print-string function.
+
+\begin{lstlisting}
+    mov     ax,0x4c00
+    int     0x21
+\end{lstlisting}
+
+This terminates the program using another DOS system call.
+
+\begin{lstlisting}
+segment data
+
+hello:  db      'hello, world', 13, 10, '$'
+\end{lstlisting}
+
+The data segment contains the string we want to display.
+
+\begin{lstlisting}
+segment stack stack
+    resb 64
+stacktop:
+\end{lstlisting}
+
+The above code declares a stack segment containing 64 bytes of
+uninitialized stack space, and points \code{stacktop} at the top of it.
+The directive \code{segment stack stack} defines a segment \emph{called}
+\code{stack}, and also of \emph{type} \code{STACK}. The latter is not
+necessary to the correct running of the program, but linkers are
+likely to issue warnings or errors if your program has no segment of
+type \code{STACK}.
+
+The above file, when assembled into a \code{.OBJ} file, will link on
+its own to a valid \code{.EXE} file, which when run will print `hello,
+world' and then exit.
+
+\xsubsection{binexe}{Using the \code{bin} Format To Generate \code{.EXE} Files}
+
+The \code{.EXE} file format is simple enough that it's possible to
+build a \code{.EXE} file by writing a pure-binary program and sticking
+a 32-byte header on the front. This header is simple enough that it
+can be generated using \code{DB} and \code{DW} commands by NASM itself,
+so that you can use the \code{bin} output format to directly generate
+\code{.EXE} files.
+
+Included in the NASM archives, in the \index{misc subdirectory}\code{misc}
+subdirectory, is a file \codeindex{exebin.mac} of macros. It defines three
+macros: \codeindex{EXE\_begin}, \codeindex{EXE\_stack} and
+\codeindex{EXE\_end}.
+
+To produce a \code{.EXE} file using this method, you should start by
+using \code{\%include} to load the \code{exebin.mac} macro package into
+your source file. You should then issue the \code{EXE\_begin} macro call
+(which takes no arguments) to generate the file header data. Then
+write code as normal for the \code{bin} format - you can use all three
+standard sections \code{.text}, \code{.data} and \code{.bss}. At the end of
+the file you should call the \code{EXE\_end} macro (again, no arguments),
+which defines some symbols to mark section sizes, and these symbols
+are referred to in the header code generated by \code{EXE\_begin}.
+
+In this model, the code you end up writing starts at \code{0x100}, just
+like a \code{.COM} file - in fact, if you strip off the 32-byte header
+from the resulting \code{.EXE} file, you will have a valid \code{.COM}
+program. All the segment bases are the same, so you are limited to a
+64K program, again just like a \code{.COM} file. Note that an \code{ORG}
+directive is issued by the \code{EXE\_begin} macro, so you should not
+explicitly issue one of your own.
+
+You can't directly refer to your segment base value, unfortunately,
+since this would require a relocation in the header, and things
+would get a lot more complicated. So you should get your segment
+base by copying it out of \code{CS} instead.
+
+On entry to your \code{.EXE} file, \code{SS:SP} are already set up to
+point to the top of a 2Kb stack. You can adjust the default stack
+size of 2Kb by calling the \code{EXE\_stack} macro. For example, to
+change the stack size of your program to 64 bytes, you would call
+\code{EXE\_stack 64}.
+
+A sample program which generates a \code{.EXE} file in this way is
+given in the \code{test} subdirectory of the NASM archive, as
+\code{binexe.asm}.
+
+\xsection{comfiles}{Producing \codeindex{.COM} Files}
+
+While large DOS programs must be written as \code{.EXE} files, small
+ones are often better written as \code{.COM} files. \code{.COM} files are
+pure binary, and therefore most easily produced using the \code{bin}
+output format.
+
+\xsubsection{combinfmt}{Using the \code{bin} Format To Generate \code{.COM} Files}
+
+\code{.COM} files expect to be loaded at offset \code{100h} into their
+segment (though the segment may change). Execution then begins at
+\indexcode{ORG}\code{100h}, i.e. right at the start of the program.
+So to write a \code{.COM} program, you would create a source file
+looking like
+
+\begin{lstlisting}
+        org 100h
+
+section .text
+start:
+        ; put your code here
+
+section .data
+        ; put data items here
+
+section .bss
+        ; put uninitialized data here
+\end{lstlisting}
+
+The \code{bin} format puts the \code{.text} section first in the file,
+so you can declare data or BSS items before beginning to write code if
+you want to and the code will still end up at the front of the file
+where it belongs.
+
+The BSS (uninitialized data) section does not take up space in the
+\code{.COM} file itself: instead, addresses of BSS items are resolved
+to point at space beyond the end of the file, on the grounds that
+this will be free memory when the program is run. Therefore you
+should not rely on your BSS being initialized to all zeros when you
+run.
+
+To assemble the above program, you should use a command line like
+
+\begin{lstlisting}
+nasm myprog.asm -fbin -o myprog.com
+\end{lstlisting}
+
+The \code{bin} format would produce a file called \code{myprog} if no
+explicit output file name were specified, so you have to override it
+and give the desired file name.
+
+\xsubsection{comobjfmt}{Using the \code{obj} Format To Generate \code{.COM} Files}
+
+If you are writing a \code{.COM} program as more than one module, you
+may wish to assemble several \code{.OBJ} files and link them together
+into a \code{.COM} program. You can do this, provided you have a linker
+capable of outputting \code{.COM} files directly (\textindex{TLINK} does this),
+or alternatively a converter program such as \codeindex{EXE2BIN} to
+transform the \code{.EXE} file output from the linker into a \code{.COM}
+file.
+
+If you do this, you need to take care of several things:
+
+\begin{itemize}
+    \item{The first object file containing code should start its code
+        segment with a line like \code{RESB 100h}. This is to ensure
+        that the code begins at offset \code{100h} relative to the beginning
+        of the code segment, so that the linker or converter program does
+        not have to adjust address references within the file when generating
+        the \code{.COM} file. Other assemblers use an \codeindex{ORG} directive
+        for this purpose, but \code{ORG} in NASM is a format-specific directive
+        to the \code{bin} output format, and does not mean the same thing as
+        it does in MASM-compatible assemblers.}
+    \item{You don't need to define a stack segment.}
+    \item{All your segments should be in the same group, so that every time
+        your code or data references a symbol offset, all offsets are
+        relative to the same segment base. This is because, when a \code{.COM}
+        file is loaded, all the segment registers contain the same value.}
+\end{itemize}
+
+\xsection{sysfiles}{Producing \codeindex{.SYS} Files}
+
+\textindex{MS-DOS device drivers} - \code{.SYS} files - are pure binary files,
+similar to \code{.COM} files, except that they start at origin zero
+rather than \code{100h}. Therefore, if you are writing a device driver
+using the \code{bin} format, you do not need the \code{ORG} directive,
+since the default origin for \code{bin} is zero. Similarly, if you are
+using \code{obj}, you do not need the \code{RESB 100h} at the start of
+your code segment.
+
+\code{.SYS} files start with a header structure, containing pointers to
+the various routines inside the driver which do the work. This
+structure should be defined at the start of the code segment, even
+though it is not actually code.
+
+For more information on the format of \code{.SYS} files, and the data
+which has to go in the header structure, a list of books is given in
+the Frequently Asked Questions list for the newsgroup
+\href{news:comp.os.msdos.programmer}{comp.os.msdos.programmer}.
+
+\xsection{16c}{Interfacing to 16-bit C Programs}
+
+This section covers the basics of writing assembly routines that
+call, or are called from, C programs. To do this, you would
+typically write an assembly module as a \code{.OBJ} file, and link it
+with your C modules to produce a \textindex{mixed-language program}.
+
+\xsubsection{16cunder}{External Symbol Names}
+
+\index{C symbol names}\index{underscore!in C symbols}C compilers have the
+convention that the names of all global symbols (functions or data)
+they define are formed by prefixing an underscore to the name as it
+appears in the C program. So, for example, the function a C
+programmer thinks of as \code{printf} appears to an assembly language
+programmer as \code{\_printf}. This means that in your assembly
+programs, you can define symbols without a leading underscore, and
+not have to worry about name clashes with C symbols.
+
+If you find the underscores inconvenient, you can define macros to
+replace the \code{GLOBAL} and \code{EXTERN} directives as follows:
+
+\begin{lstlisting}
+%macro  cglobal 1
+    global  _%1
+    %define %1 _%1
+%endmacro
+
+%macro  cextern 1
+    extern  _%1
+    %define %1 _%1
+%endmacro
+\end{lstlisting}
+
+(These forms of the macros only take one argument at a time; a
+\code{\%rep} construct could solve this.)
+
+If you then declare an external like this:
+
+\begin{lstlisting}
+cextern printf
+\end{lstlisting}
+
+then the macro will expand it as
+
+\begin{lstlisting}
+extern  _printf
+%define printf _printf
+\end{lstlisting}
+
+Thereafter, you can reference \code{printf} as if it was a symbol, and
+the preprocessor will put the leading underscore on where necessary.
+
+The \code{cglobal} macro works similarly. You must use \code{cglobal}
+before defining the symbol in question, but you would have had to do
+that anyway if you used \code{GLOBAL}.
+
+Also see \nref{opt-pfix}.
+
+\xsubsection{16cmodels}{\textindexlc{Memory Models}}
+
+NASM contains no mechanism to support the various C memory models
+directly; you have to keep track yourself of which one you are
+writing for. This means you have to keep track of the following
+things:
+
+\begin{itemize}
+    \item{In models using a single code segment (tiny, small and compact),
+        functions are near. This means that function pointers, when stored
+        in data segments or pushed on the stack as function arguments, are
+        16 bits long and contain only an offset field (the \code{CS} register
+        never changes its value, and always gives the segment part of the
+        full function address), and that functions are called using ordinary
+        near \code{CALL} instructions and return using \code{RETN} (which, in
+        NASM, is synonymous with \code{RET} anyway). This means both that you
+        should write your own routines to return with \code{RETN}, and that you
+        should call external C routines with near \code{CALL} instructions.}
+
+    \item{In models using more than one code segment (medium, large and
+        huge), functions are far. This means that function pointers are 32
+        bits long (consisting of a 16-bit offset followed by a 16-bit
+        segment), and that functions are called using \code{CALL FAR} (or
+        \code{CALL seg:offset}) and return using \code{RETF}. Again, you should
+        therefore write your own routines to return with \code{RETF} and use
+        \code{CALL FAR} to call external routines.}
+
+    \item{In models using a single data segment (tiny, small and medium),
+        data pointers are 16 bits long, containing only an offset field (the
+        \code{DS} register doesn't change its value, and always gives the
+        segment part of the full data item address).}
+
+    \item{In models using more than one data segment (compact, large and
+        huge), data pointers are 32 bits long, consisting of a 16-bit offset
+        followed by a 16-bit segment. You should still be careful not to
+        modify \code{DS} in your routines without restoring it afterwards, but
+        \code{ES} is free for you to use to access the contents of 32-bit data
+        pointers you are passed.}
+
+    \item{The huge memory model allows single data items to exceed 64K in
+        size. In all other memory models, you can access the whole of a data
+        item just by doing arithmetic on the offset field of the pointer you
+        are given, whether a segment field is present or not; in huge model,
+        you have to be more careful of your pointer arithmetic.}
+
+    \item{In most memory models, there is a \emph{default} data segment, whose
+        segment address is kept in \code{DS} throughout the program. This data
+        segment is typically the same segment as the stack, kept in \code{SS},
+        so that functions' local variables (which are stored on the stack)
+        and global data items can both be accessed easily without changing
+        \code{DS}. Particularly large data items are typically stored in other
+        segments. However, some memory models (though not the standard
+        ones, usually) allow the assumption that \code{SS} and \code{DS} hold the
+        same value to be removed. Be careful about functions' local
+        variables in this latter case.}
+\end{itemize}
+
+In models with a single code segment, the segment is called \codeindex{\_TEXT},
+so your code segment must also go by this name in order to be linked into the
+same place as the main code segment. In models with a single data segment,
+or with a default data segment, it is called \codeindex{\_DATA}.
+
+\xsubsection{16cfunc}{Function Definitions and Function Calls}
+
+\index{functions!C calling convention}The \textindex{C calling convention}
+in 16-bit programs is as follows. In the following description, the
+words \emph{caller} and \emph{callee} are used to denote the function
+doing the calling and the function which gets called.
+
+\begin{itemize}
+    \item{The caller pushes the function's parameters on the stack, one
+        after another, in reverse order (right to left, so that the first
+        argument specified to the function is pushed last).}
+
+    \item{The caller then executes a \code{CALL} instruction to pass control
+        to the callee. This \code{CALL} is either near or far depending on the
+        memory model.}
+
+    \item{The callee receives control, and typically (although this is not
+        actually necessary, in functions which do not need to access their
+        parameters) starts by saving the value of \code{SP} in \code{BP} so as to
+        be able to use \code{BP} as a base pointer to find its parameters on
+        the stack. However, the caller was probably doing this too, so part
+        of the calling convention states that \code{BP} must be preserved by
+        any C function. Hence the callee, if it is going to set up \code{BP} as
+        a \emph{\textindex{frame pointer}}, must push the previous value first.}
+
+    \item{The callee may then access its parameters relative to \code{BP}.
+        The word at \code{[BP]} holds the previous value of \code{BP} as it was
+        pushed; the next word, at \code{[BP+2]}, holds the offset part of the
+        return address, pushed implicitly by \code{CALL}. In a small-model
+        (near) function, the parameters start after that, at \code{[BP+4]}; in
+        a large-model (far) function, the segment part of the return address
+        lives at \code{[BP+4]}, and the parameters begin at \code{[BP+6]}. The
+        leftmost parameter of the function, since it was pushed last, is
+        accessible at this offset from \code{BP}; the others follow, at
+        successively greater offsets. Thus, in a function such as \code{printf}
+        which takes a variable number of parameters, the pushing of the
+        parameters in reverse order means that the function knows where to
+        find its first parameter, which tells it the number and type of the
+        remaining ones.}
+
+    \item{The callee may also wish to decrease \code{SP} further, so as to
+        allocate space on the stack for local variables, which will then be
+        accessible at negative offsets from \code{BP}.}
+
+    \item{The callee, if it wishes to return a value to the caller, should
+        leave the value in \code{AL}, \code{AX} or \code{DX:AX} depending
+        on the size of the value. Floating-point results are sometimes
+        (depending on the compiler) returned in \code{ST0}.}
+
+    \item{Once the callee has finished processing, it restores \code{SP} from
+        \code{BP} if it had allocated local stack space, then pops the previous
+        value of \code{BP}, and returns via \code{RETN} or \code{RETF} depending on
+        memory model.}
+
+    \item{When the caller regains control from the callee, the function
+        parameters are still on the stack, so it typically adds an immediate
+        constant to \code{SP} to remove them (instead of executing a number of
+        slow \code{POP} instructions). Thus, if a function is accidentally
+        called with the wrong number of parameters due to a prototype
+        mismatch, the stack will still be returned to a sensible state since
+        the caller, which \emph{knows} how many parameters it pushed, does the
+        removing.}
+\end{itemize}
+
+It is instructive to compare this calling convention with that for
+Pascal programs (described in \nref{16bpfunc}). Pascal has
+a simpler convention, since no functions have variable numbers of parameters.
+Therefore the callee knows how many parameters it should have been
+passed, and is able to deallocate them from the stack itself by
+passing an immediate argument to the \code{RET} or \code{RETF}
+instruction, so the caller does not have to do it. Also, the
+parameters are pushed in left-to-right order, not right-to-left,
+which means that a compiler can give better guarantees about
+sequence points without performance suffering.
+
+Thus, you would define a function in C style in the following way.
+The following example is for small model:
+
+\begin{lstlisting}
+global  _myfunc
+
+_myfunc:
+    push    bp
+    mov     bp,sp
+    sub     sp,0x40         ; 64 bytes of local stack space
+    mov     bx,[bp+4]       ; first parameter to function
+
+    ; some more code
+
+    mov     sp,bp           ; undo "sub sp,0x40" above
+    pop     bp
+    ret
+\end{lstlisting}
+
+For a large-model function, you would replace \code{RET} by \code{RETF},
+and look for the first parameter at \code{[BP+6]} instead of
+\code{[BP+4]}. Of course, if one of the parameters is a pointer, then
+the offsets of \emph{subsequent} parameters will change depending on
+the memory model as well: far pointers take up four bytes on the
+stack when passed as a parameter, whereas near pointers take up two.
+
+At the other end of the process, to call a C function from your
+assembly code, you would do something like this:
+
+\begin{lstlisting}
+extern  _printf
+    ; and then, further down...
+
+    push    word [myint]        ; one of my integer variables
+    push    word mystring       ; pointer into my data segment
+    call    _printf
+    add     sp,byte 4           ; `byte' saves space
+
+    ; then those data items...
+segment _DATA
+
+myint       dw  1234
+mystring    db  'This number -> %d <- should be 1234',10,0
+\end{lstlisting}
+
+This piece of code is the small-model assembly equivalent of the C
+code
+
+\begin{lstlisting}
+    int myint = 1234;
+    printf("This number -> %d <- should be 1234\n", myint);
+\end{lstlisting}
+
+In large model, the function-call code might look more like this. In
+this example, it is assumed that \code{DS} already holds the segment
+base of the segment \code{\_DATA}. If not, you would have to initialize
+it first.
+
+\begin{lstlisting}
+    push    word [myint]
+    push    word seg mystring   ; Now push the segment, and...
+    push    word mystring       ; ... offset of "mystring"
+    call    far _printf
+    add    sp,byte 6
+\end{lstlisting}
+
+The integer value still takes up one word on the stack, since large
+model does not affect the size of the \code{int} data type. The first
+argument (pushed last) to \code{printf}, however, is a data pointer,
+and therefore has to contain a segment and offset part. The segment
+should be stored second in memory, and therefore must be pushed
+first. (Of course, \code{PUSH DS} would have been a shorter instruction
+than \code{PUSH WORD SEG mystring}, if \code{DS} was set up as the above
+example assumed.) Then the actual call becomes a far call, since
+functions expect far calls in large model; and \code{SP} has to be
+increased by 6 rather than 4 afterwards to make up for the extra
+word of parameters.
+
+\xsubsection{16cdata}{Accessing Data Items}
+
+To get at the contents of C variables, or to declare variables which
+C can access, you need only declare the names as \code{GLOBAL} or
+\code{EXTERN}. (Again, the names require leading underscores, as stated
+in \nref{16cunder}.) Thus, a C variable declared as \code{int i}
+can be accessed from assembler as
+
+\begin{lstlisting}
+extern _i
+
+    mov ax,[_i]
+\end{lstlisting}
+
+And to declare your own integer variable which C programs can access
+as \code{extern int j}, you do this (making sure you are assembling in
+the \code{\_DATA} segment, if necessary):
+
+\begin{lstlisting}
+global  _j
+
+_j      dw  0
+\end{lstlisting}
+
+To access a C array, you need to know the size of the components of
+the array. For example, \code{int} variables are two bytes long, so if
+a C program declares an array as \code{int a[10]}, you can access
+\code{a[3]} by coding \code{mov ax,[\_a+6]}. (The byte offset 6 is obtained
+by multiplying the desired array index, 3, by the size of the array
+element, 2.) The sizes of the C base types in 16-bit compilers are:
+1 for \code{char}, 2 for \code{short} and \code{int}, 4 for \code{long}
+and \code{float}, and 8 for \code{double}.
+
+To access a C \textindex{data structure}, you need to know the offset from
+the base of the structure to the field you are interested in. You
+can either do this by converting the C structure definition into a
+NASM structure definition (using \codeindex{STRUC}), or by calculating the
+one offset and using just that.
+
+To do either of these, you should read your C compiler's manual to
+find out how it organizes data structures. NASM gives no special
+alignment to structure members in its own \code{STRUC} macro, so you
+have to specify alignment yourself if the C compiler generates it.
+Typically, you might find that a structure like
+
+\begin{lstlisting}
+struct {
+    char c;
+    int i;
+} foo;
+\end{lstlisting}
+
+might be four bytes long rather than three, since the \code{int} field
+would be aligned to a two-byte boundary. However, this sort of
+feature tends to be a configurable option in the C compiler, either
+using command-line options or \code{\#pragma} lines, so you have to find
+out how your own compiler does it.
+
+\xsubsection{16cmacro}{\codeindex{c16.mac}: Helper Macros for the 16-bit C Interface}
+
+Included in the NASM archives, in the \index{misc subdirectory}\code{misc}
+directory, is a file \code{c16.mac} of macros. It defines three macros:
+\codeindex{proc}, \codeindex{arg} and \codeindex{endproc}. These are intended
+to be used for C-style procedure definitions, and they automate a lot of
+the work involved in keeping track of the calling convention.
+
+(An alternative, TASM compatible form of \code{arg} is also now built
+into NASM's preprocessor. See \nref{stackrel} for details.)
+
+An example of an assembly function using the macro set is given
+here:
+
+\begin{lstlisting}
+proc    _nearproc
+%$i     arg
+%$j     arg
+        mov     ax,[bp + %$i]
+        mov     bx,[bp + %$j]
+        add     ax,[bx]
+endproc
+\end{lstlisting}
+
+This defines \code{\_nearproc} to be a procedure taking two arguments,
+the first (\code{i}) an integer and the second (\code{j}) a pointer to an
+integer. It returns \code{i + *j}.
+
+Note that the \code{arg} macro has an \code{EQU} as the first line of its
+expansion, and since the label before the macro call gets prepended
+to the first line of the expanded macro, the \code{EQU} works, defining
+\code{\%\$i} to be an offset from \code{BP}. A context-local variable is
+used, local to the context pushed by the \code{proc} macro and popped
+by the \code{endproc} macro, so that the same argument name can be used
+in later procedures. Of course, you don't \emph{have} to do that.
+
+The macro set produces code for near functions (tiny, small and
+compact-model code) by default. You can have it generate far
+functions (medium, large and huge-model code) by means of coding
+\indexcode{FARCODE}\code{\%define FARCODE}. This changes the kind of
+return instruction generated by \code{endproc}, and also changes the
+starting point for the argument offsets. The macro set contains no
+intrinsic dependency on whether data pointers are far or not.
+
+\code{arg} can take an optional parameter, giving the size of the
+argument. If no size is given, 2 is assumed, since it is likely that
+many function parameters will be of type \code{int}.
+
+The large-model equivalent of the above function would look like this:
+
+\begin{lstlisting}
+%define FARCODE
+
+proc    _farproc
+%$i     arg
+%$j     arg     4
+        mov     ax,[bp + %$i]
+        mov     bx,[bp + %$j]
+        mov     es,[bp + %$j + 2]
+        add     ax,[bx]
+endproc
+\end{lstlisting}
+
+This makes use of the argument to the \code{arg} macro to define a
+parameter of size 4, because \code{j} is now a far pointer. When we
+load from \code{j}, we must load a segment and an offset.
+
+\xsection{16bp}{Interfacing to \textindex{Borland Pascal} Programs}
+
+Interfacing to Borland Pascal programs is similar in concept to
+interfacing to 16-bit C programs. The differences are:
+
+\begin{itemize}
+    \item{The leading underscore required for interfacing to C programs is
+        not required for Pascal.}
+
+    \item{The memory model is always large: functions are far, data
+        pointers are far, and no data item can be more than 64K long.
+        (Actually, some functions are near, but only those functions that
+        are local to a Pascal unit and never called from outside it. All
+        assembly functions that Pascal calls, and all Pascal functions that
+        assembly routines are able to call, are far.) However, all static
+        data declared in a Pascal program goes into the default data
+        segment, which is the one whose segment address will be in \code{DS}
+        when control is passed to your assembly code. The only things that
+        do not live in the default data segment are local variables (they
+        live in the stack segment) and dynamically allocated variables. All
+        data \emph{pointers}, however, are far.}
+
+    \item{The function calling convention is different - described below.}
+
+    \item{Some data types, such as strings, are stored differently.}
+
+    \item{There are restrictions on the segment names you are allowed to
+        use - Borland Pascal will ignore code or data declared in a segment
+        it doesn't like the name of. The restrictions are described below.}
+\end{itemize}
+
+\xsubsection{16bpfunc}{The Pascal Calling Convention}
+
+\index{functions!Pascal calling convention}\index{Pascal calling
+convention}The 16-bit Pascal calling convention is as follows. In
+the following description, the words \emph{caller} and \emph{callee} are
+used to denote the function doing the calling and the function which
+gets called.
+
+\begin{itemize}
+    \item{The caller pushes the function's parameters on the stack, one
+        after another, in normal order (left to right, so that the first
+        argument specified to the function is pushed first).}
+
+    \item{The caller then executes a far \code{CALL} instruction to pass
+        control to the callee.}
+
+    \item{The callee receives control, and typically (although this is not
+        actually necessary, in functions which do not need to access their
+        parameters) starts by saving the value of \code{SP} in \code{BP} so as to
+        be able to use \code{BP} as a base pointer to find its parameters on
+        the stack. However, the caller was probably doing this too, so part
+        of the calling convention states that \code{BP} must be preserved by
+        any function. Hence the callee, if it is going to set up \code{BP} as a
+        \textindex{frame pointer}, must push the previous value first.}
+
+    \item{The callee may then access its parameters relative to \code{BP}.
+        The word at \code{[BP]} holds the previous value of \code{BP} as it was
+        pushed. The next word, at \code{[BP+2]}, holds the offset part of the
+        return address, and the next one at \code{[BP+4]} the segment part. The
+        parameters begin at \code{[BP+6]}. The rightmost parameter of the
+        function, since it was pushed last, is accessible at this offset
+        from \code{BP}; the others follow, at successively greater offsets.}
+
+    \item{The callee may also wish to decrease \code{SP} further, so as to
+        allocate space on the stack for local variables, which will then be
+        accessible at negative offsets from \code{BP}.}
+
+    \item{The callee, if it wishes to return a value to the caller, should
+        leave the value in \code{AL}, \code{AX} or \code{DX:AX} depending on
+        the size of the value. Floating-point results are returned in \code{ST0}.
+        Results of type \code{Real} (Borland's own custom floating-point data
+        type, not handled directly by the FPU) are returned in \code{DX:BX:AX}.
+        To return a result of type \code{String}, the caller pushes a pointer
+        to a temporary string before pushing the parameters, and the callee
+        places the returned string value at that location. The pointer is
+        not a parameter, and should not be removed from the stack by the
+        \code{RETF} instruction.}
+
+    \item{Once the callee has finished processing, it restores \code{SP} from
+        \code{BP} if it had allocated local stack space, then pops the previous
+        value of \code{BP}, and returns via \code{RETF}. It uses the form of
+        \code{RETF} with an immediate parameter, giving the number of bytes
+        taken up by the parameters on the stack. This causes the parameters
+        to be removed from the stack as a side effect of the return
+        instruction.}
+
+    \item{When the caller regains control from the callee, the function
+        parameters have already been removed from the stack, so it needs to
+        do nothing further.}
+\end{itemize}
+
+Thus, you would define a function in Pascal style, taking two
+\code{Integer}-type parameters, in the following way:
+
+\begin{lstlisting}
+global  myfunc
+
+myfunc:
+    push    bp
+    mov     bp,sp
+    sub     sp,0x40     ; 64 bytes of local stack space
+    mov     bx,[bp+8]   ; first parameter to function
+    mov     bx,[bp+6]   ; second parameter to function
+
+    ; some more code
+
+    mov     sp,bp       ; undo "sub sp,0x40" above
+    pop     bp
+    retf    4           ; total size of params is 4
+\end{lstlisting}
+
+At the other end of the process, to call a Pascal function from your
+assembly code, you would do something like this:
+
+\begin{lstlisting}
+extern  SomeFunc
+    ; and then, further down...
+    push    word seg mystring   ; Now push the segment, and...
+    push    word mystring       ; ... offset of "mystring"
+    push    word [myint]        ; one of my variables
+    call    far SomeFunc
+\end{lstlisting}
+
+This is equivalent to the Pascal code
+
+\begin{lstlisting}
+procedure SomeFunc(String: PChar; Int: Integer);
+    SomeFunc(@mystring, myint);
+\end{lstlisting}
+
+\xsubsection{16bpseg}{Borland Pascal Segment Name Restrictions}
+\index{segment names!Borland Pascal}
+
+Since Borland Pascal's internal unit file format is completely
+different from \code{OBJ}, it only makes a very sketchy job of actually
+reading and understanding the various information contained in a
+real \code{OBJ} file when it links that in. Therefore an object file
+intended to be linked to a Pascal program must obey a number of
+restrictions:
+
+\begin{itemize}
+    \item{Procedures and functions must be in a segment whose name is
+        either \code{CODE}, \code{CSEG}, or something ending in
+        \code{\_TEXT}.}
+
+    \item{initialized data must be in a segment whose name is either
+        \code{CONST} or something ending in \code{\_DATA}.}
+
+    \item{Uninitialized data must be in a segment whose name is either
+        \code{DATA}, \code{DSEG}, or something ending in \code{\_BSS}.}
+
+    \item{Any other segments in the object file are completely ignored.
+        \code{GROUP} directives and segment attributes are also ignored.}
+\end{itemize}
+
+\xsubsection{16bpmacro}{Using \codeindex{c16.mac} With Pascal Programs}
+
+The \code{c16.mac} macro package, described in \nref{16cmacro},
+can also be used to simplify writing functions to be called from Pascal
+programs, if you code \indexcode{PASCAL}\code{\%define PASCAL}. This
+definition ensures that functions are far (it implies \codeindex{FARCODE}),
+and also causes procedure return instructions to be generated with
+an operand.
+
+Defining \code{PASCAL} does not change the code which calculates the
+argument offsets; you must declare your function's arguments in
+reverse order. For example:
+
+\begin{lstlisting}
+%define PASCAL
+
+proc    _pascalproc
+%$j     arg 4
+%$i     arg
+        mov     ax,[bp + %$i]
+        mov     bx,[bp + %$j]
+        mov     es,[bp + %$j + 2]
+        add     ax,[bx]
+endproc
+\end{lstlisting}
+
+This defines the same routine, conceptually, as the example in
+\nref{16cmacro}: it defines a function taking two arguments,
+an integer and a pointer to an integer, which returns the sum of
+the integer and the contents of the pointer. The only difference
+between this code and the large-model C version is that \code{PASCAL}
+is defined instead of \code{FARCODE}, and that the arguments are
+declared in reverse order.

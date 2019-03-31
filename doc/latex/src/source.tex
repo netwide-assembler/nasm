@@ -1,0 +1,53 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{source}{Building NASM from Source}
+
+The source code for NASM is available from our website,
+\href{http://www.nasm.us/}{http://wwww.nasm.us/},
+see \nref{website}.
+
+\xsection{tarball}{Building from a Source Archive}
+
+The source archives available on the web site should be capable of
+building on a number of platforms.  This is the recommended method for
+building NASM to support platforms for which executables are not
+available.
+
+On a system which has Unix shell (\code{sh}), run:
+
+\begin{lstlisting}
+sh configure
+make everything
+\end{lstlisting}
+
+A number of options can be passed to \code{configure}; see
+\code{sh configure --help}.
+
+A set of Makefiles for some other environments are also available;
+please see the file \code{Mkfiles/README}.
+
+To build the installer for the Windows platform, you will need the
+Nullsoft Scriptable Installer, \textindex{NSIS}, installed.
+
+To build the documentation, you will need a set of additional tools.
+The documentation is not likely to be able to build on non-Unix
+systems.
+
+\xsection{git}{Building from the \codeindex{git} Repository}
+
+The NASM development tree is kept in a source code repository using
+the \code{git} distributed source control system.  The link is available
+on the website.  This is recommended only to participate in the
+development of NASM or to assist with testing the development code.
+
+To build NASM from the \code{git} repository you will need a Perl and, if
+building on a Unix system, GNU autoconf.
+
+To build on a Unix system, run:
+
+\begin{lstlisting}
+sh autogen.sh
+\end{lstlisting}
+
+to create the \code{configure} script and then build as listed above.

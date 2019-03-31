@@ -1,0 +1,2400 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{preproc}{The NASM \textindexlc{Preprocessor}}
+
+NASM contains a powerful \textindex{macro processor}, which supports
+conditional assembly, multi-level file inclusion, two forms of macro
+(single-line and multi-line), and a ``context stack'' mechanism for
+extra macro power. Preprocessor directives all begin with a \code{\%}
+sign.
+
+The preprocessor collapses all lines which end with a backslash
+\code{\textbackslash} character into a single line.
+Thus:
+
+\begin{lstlisting}
+%define THIS_VERY_LONG_MACRO_NAME_IS_DEFINED_TO \
+        THIS_VALUE
+\end{lstlisting}
+
+will work like a single-line macro without the backslash-newline
+sequence.
+
+\xsection{slmacro}{\textindexlc{Single-Line Macros}}
+
+\xsubsection{define}{The Normal Way: \indexcode{\%idefine}\codeindex{\%define}}
+
+Single-line macros are defined using the \code{\%define} preprocessor
+directive. The definitions work in a similar way to C; so you can do
+things like
+
+\begin{lstlisting}
+%define ctrl    0x1F &
+%define param(a,b) ((a)+(a)*(b))
+
+        mov     byte [param(2,ebx)], ctrl 'D'
+\end{lstlisting}
+
+which will expand to
+
+\begin{lstlisting}
+        mov     byte [(2)+(2)*(ebx)], 0x1F & 'D'
+\end{lstlisting}
+
+When the expansion of a single-line macro contains tokens which
+invoke another macro, the expansion is performed at invocation time,
+not at definition time. Thus the code
+
+\begin{lstlisting}
+%define a(x)    1+b(x)
+%define b(x)    2*x
+
+        mov     ax,a(8)
+\end{lstlisting}
+
+will evaluate in the expected way to \code{mov ax,1+2*8}, even though
+the macro \code{b} wasn't defined at the time of definition of \code{a}.
+
+Macros defined with \code{\%define} are \textindex{case sensitive}: after
+\code{\%define foo bar}, only \code{foo} will expand to \code{bar}:
+\code{Foo} or \code{FOO} will not. By using \code{\%idefine} instead of
+\code{\%define} (the ``i'' stands for ``insensitive'') you can define
+all the case variants of a macro at once, so that \code{\%idefine foo bar}
+would cause \code{foo}, \code{Foo}, \code{FOO}, \code{fOO} and so on
+all to expand to \code{bar}.
+
+There is a mechanism which detects when a macro call has occurred as
+a result of a previous expansion of the same macro, to guard against
+\textindex{circular references} and infinite loops. If this happens,
+the preprocessor will only expand the first occurrence of the macro.
+Hence, if you code
+
+\begin{lstlisting}
+%define a(x)    1+a(x)
+
+        mov     ax,a(3)
+\end{lstlisting}
+
+the macro \code{a(3)} will expand once, becoming \code{1+a(3)}, and will
+then expand no further. This behaviour can be useful: see \nref{32c}
+for an example of its use.
+
+You can \index{overloading!single-line macros}overload single-line
+macros: if you write
+
+\begin{lstlisting}
+%define foo(x)   1+x
+%define foo(x,y) 1+x*y
+\end{lstlisting}
+
+the preprocessor will be able to handle both types of macro call,
+by counting the parameters you pass; so \code{foo(3)} will become
+\code{1+3} whereas \code{foo(ebx,2)} will become \code{1+ebx*2}.
+However, if you define
+
+\begin{lstlisting}
+%define foo bar
+\end{lstlisting}
+
+then no other definition of \code{foo} will be accepted: a macro with
+no parameters prohibits the definition of the same name as a macro
+\emph{with} parameters, and vice versa.
+
+This doesn't prevent single-line macros being \emph{redefined}:
+you can perfectly well define a macro with
+
+\begin{lstlisting}
+%define foo bar
+\end{lstlisting}
+
+and then re-define it later in the same source file with
+
+\begin{lstlisting}
+%define foo baz
+\end{lstlisting}
+
+Then everywhere the macro \code{foo} is invoked, it will be expanded
+according to the most recent definition. This is particularly useful
+when defining single-line macros with \code{\%assign}
+(see \nref{assign}).
+
+You can \textindex{pre-define} single-line macros using the \code{-d}
+option on the NASM command line: see \nref{opt-d}.
+
+\xsubsection{xdefine}{Resolving \code{\%define}: \indexcode{\%ixdefine}\codeindex{\%xdefine}}
+
+To have a reference to an embedded single-line macro resolved at the
+time that the embedding macro is \emph{defined}, as opposed to when the
+embedding macro is \emph{expanded}, you need a different mechanism to the
+one offered by \code{\%define}. The solution is to use \code{\%xdefine}, or
+it's \index{case sensitive}case-insensitive counterpart \code{\%ixdefine}.
+
+Suppose you have the following code:
+
+\begin{lstlisting}
+%define  isTrue  1
+%define  isFalse isTrue
+%define  isTrue  0
+
+val1:    db      isFalse
+
+%define  isTrue  1
+
+val2:    db      isFalse
+\end{lstlisting}
+
+In this case, \code{val1} is equal to 0, and \code{val2} is equal to 1.
+This is because, when a single-line macro is defined using \code{\%define},
+it is expanded only when it is called. As \code{isFalse} expands to \code{isTrue},
+the expansion will be the current value of \code{isTrue}. The first time it is called
+that is 0, and the second time it is 1.
+
+If you wanted \code{isFalse} to expand to the value assigned to the
+embedded macro \code{isTrue} at the time that \code{isFalse} was defined,
+you need to change the above code to use \code{\%xdefine}.
+
+\begin{lstlisting}
+%xdefine isTrue  1
+%xdefine isFalse isTrue
+%xdefine isTrue  0
+
+val1:    db      isFalse
+
+%xdefine isTrue  1
+
+val2:    db      isFalse
+\end{lstlisting}
+
+Now, each time that \code{isFalse} is called, it expands to 1,
+as that is what the embedded macro \code{isTrue} expanded to at
+the time that \code{isFalse} was defined.
+
+% FIXME the keys
+\xsubsection{indmacro}{\textindexlc{Macro Indirection}: \indexcode{\%[}\code{\%[...]}}
+
+The \code{\%[...]} construct can be used to expand macros in contexts
+where macro expansion would otherwise not occur, including in the
+names other macros. For example, if you have a set of macros named
+\code{Foo16}, \code{Foo32} and \code{Foo64}, you could write:
+
+\begin{lstlisting}
+mov ax,Foo%[__BITS__]       ; The Foo value
+\end{lstlisting}
+
+to use the builtin macro \code{\_\_BITS\_\_} (see \nref{bitsm})
+to automatically select between them. Similarly, the two statements:
+
+\begin{lstlisting}
+%xdefine Bar        Quux    ; Expands due to %xdefine
+%define  Bar        %[Quux] ; Expands due to %[...]
+\end{lstlisting}
+
+have, in fact, exactly the same effect.
+
+\code{\%[...]} concatenates to adjacent tokens in the same way that
+multi-line macro parameters do, see \nref{concat} for details.
+
+% FIXME concatmacro key
+\xsubsection{concatmacro}{Concatenating Single Line Macro Tokens: \codeindex{\%+}}
+
+Individual tokens in single line macros can be concatenated, to produce
+longer tokens for later processing. This can be useful if there are
+several similar macros that perform similar functions.
+
+Please note that a space is required after \code{\%+}, in order to
+disambiguate it from the syntax \code{\%+1} used in multiline macros.
+
+As an example, consider the following:
+
+\begin{lstlisting}
+%define BDASTART 400h                ; Start of BIOS data area
+
+struc   tBIOSDA                      ; its structure
+        .COM1addr       RESW    1
+        .COM2addr       RESW    1
+        ; ..and so on
+endstruc
+\end{lstlisting}
+
+Now, if we need to access the elements of tBIOSDA in different places,
+we can end up with:
+
+\begin{lstlisting}
+mov     ax,BDASTART + tBIOSDA.COM1addr
+mov     bx,BDASTART + tBIOSDA.COM2addr
+\end{lstlisting}
+
+This will become pretty ugly (and tedious) if used in many places, and
+can be reduced in size significantly by using the following macro:
+
+\begin{lstlisting}
+; Macro to access BIOS variables by their names (from tBDA):
+
+%define BDA(x)  BDASTART + tBIOSDA. %+ x
+\end{lstlisting}
+
+Now the above code can be written as:
+
+\begin{lstlisting}
+mov     ax,BDA(COM1addr)
+mov     bx,BDA(COM2addr)
+\end{lstlisting}
+
+Using this feature, we can simplify references to a lot of macros
+(and, in turn, reduce typing errors).
+
+% FIXME they key
+\xsubsection{selfref}{The Macro Name Itself: \codeindex{\%?} and \codeindex{\%??}}
+
+The special symbols \code{\%?} and \code{\%??} can be used to
+reference the macro name itself inside a macro expansion,
+this is supported for both single-and multi-line macros.
+\code{\%?} refers to the macro name as \emph{invoked}, whereas
+\code{\%??} refers to the macro name as \emph{declared}.
+The two are always the same for case-sensitive macros, but
+for case-insensitive macros, they can differ.
+
+For example:
+
+\begin{lstlisting}
+%idefine Foo mov %?,%??
+
+        foo
+        FOO
+\end{lstlisting}
+
+will expand to:
+
+\begin{lstlisting}
+        mov foo,Foo
+        mov FOO,Foo
+\end{lstlisting}
+
+The sequence:
+
+\begin{lstlisting}
+%idefine keyword $%?
+\end{lstlisting}
+
+can be used to make a keyword ``disappear'', for example in case a new
+instruction has been used as a label in older code.  For example:
+
+\begin{lstlisting}
+%idefine pause $%?      ; Hide the PAUSE instruction
+\end{lstlisting}
+
+\xsubsection{undef}{Undefining Single-Line Macros: \codeindex{\%undef}}
+
+Single-line macros can be removed with the \code{\%undef} directive.
+For example, the following sequence:
+
+\begin{lstlisting}
+%define foo bar
+%undef  foo
+
+        mov     eax, foo
+\end{lstlisting}
+
+will expand to the instruction \code{mov eax, foo}, since after
+\code{\%undef} the macro \code{foo} is no longer defined.
+
+Macros that would otherwise be pre-defined can be undefined on the
+command-line using the \code{-u} option on the NASM command line:
+see \nref{opt-u}.
+
+\xsubsection{assign}{\textindex{Preprocessor Variables}: \codeindex{\%assign}}
+
+An alternative way to define single-line macros is by means of the
+\code{\%assign} command (and its \index{case sensitive}case-insensitive
+counterpart \codeindex{\%iassign}, which differs from \code{\%assign} in
+exactly the same way that \code{\%idefine} differs from \code{\%define}).
+
+\code{\%assign} is used to define single-line macros which take no
+parameters and have a numeric value. This value can be specified in
+the form of an expression, and it will be evaluated once, when the
+\code{\%assign} directive is processed.
+
+Like \code{\%define}, macros defined using \code{\%assign} can be
+re-defined later, so you can do things like
+
+\begin{lstlisting}
+%assign i i+1
+\end{lstlisting}
+
+to increment the numeric value of a macro.
+
+\code{\%assign} is useful for controlling the termination of \code{\%rep}
+preprocessor loops: see \nref{rep} for an example of this. Another
+use for \code{\%assign} is given in \nref{16c} and \nref{32c}.
+
+The expression passed to \code{\%assign} is a \textindex{critical expression}
+(see \nref{crit}), and must also evaluate to a pure number
+(rather than a relocatable reference such as a code or data address,
+or anything involving a register).
+
+\xsubsection{defstr}{Defining Strings: \indexcode{\%idefstr}\codeindex{\%defstr}}
+
+\code{\%defstr}, and its case-insensitive counterpart \code{\%idefstr},
+define or redefine a single-line macro without parameters but converts
+the entire right-hand side, after macro expansion, to a quoted string
+before definition.
+
+For example:
+
+\begin{lstlisting}
+%defstr test TEST
+\end{lstlisting}
+
+is equivalent to
+
+\begin{lstlisting}
+%define test 'TEST'
+\end{lstlisting}
+
+This can be used, for example, with the \code{\%!} construct
+(see \nref{getenv}):
+
+\begin{lstlisting}
+%defstr PATH %!PATH          ; The operating system PATH variable
+\end{lstlisting}
+
+\xsubsection{deftok}{Defining Tokens: \indexcode{\%ideftok}\codeindex{\%deftok}}
+
+\code{\%deftok}, and its case-insensitive counterpart \code{\%ideftok},
+define or redefine a single-line macro without parameters but converts
+the second parameter, after string conversion, to a sequence of tokens.
+
+For example:
+
+\begin{lstlisting}
+%deftok test 'TEST'
+\end{lstlisting}
+
+is equivalent to
+
+\begin{lstlisting}
+%define test TEST
+\end{lstlisting}
+
+\xsection{strmanip}{\textindexlc{String Manipulation in Macros}}
+
+It's often useful to be able to handle strings in macros. NASM
+supports a few simple string handling macro operators from which
+more complex operations can be constructed.
+
+All the string operators define or redefine a value (either a string
+or a numeric value) to a single-line macro. When producing a string
+value, it may change the style of quoting of the input string or
+strings, and possibly use \code{\textbackslash}-escapes inside
+\code{`}-quoted strings.
+
+\xsubsection{strcat}{\textindexlc{Concatenating Strings}: \codeindex{\%strcat}}
+
+The \code{\%strcat} operator concatenates quoted strings and assign
+them to a single-line macro.
+
+For example:
+
+\begin{lstlisting}
+%strcat alpha "Alpha: ", '12" screen'
+\end{lstlisting}
+
+would assign the value \code{'Alpha: 12" screen'} to \code{alpha}.
+Similarly:
+
+\begin{lstlisting}
+%strcat beta '"foo"\', "'bar'"
+\end{lstlisting}
+
+would assign the value \code{`"foo" \textbackslash \textbackslash 'bar'`}
+to \code{beta}.
+
+The use of commas to separate strings is permitted but optional.
+
+\xsubsection{strlen}{\textindexlc{String Length}: \codeindex{\%strlen}}
+
+The \code{\%strlen} operator assigns the length of a string to a macro.
+For example:
+
+\begin{lstlisting}
+%strlen charcnt 'my string'
+\end{lstlisting}
+
+In this example, \code{charcnt} would receive the value 9, just as
+if an \code{\%assign} had been used. In this example, \code{'my string'}
+was a literal string but it could also have been a single-line
+macro that expands to a string, as in the following example:
+
+\begin{lstlisting}
+%define sometext 'my string'
+%strlen charcnt sometext
+\end{lstlisting}
+
+As in the first case, this would result in \code{charcnt} being
+assigned the value of 9.
+
+\xsubsection{substr}{\textindexlc{Extracting Substrings}: \codeindex{\%substr}}
+
+Individual letters or substrings in strings can be extracted using the
+\code{\%substr} operator. An example of its use is probably more useful
+than the description:
+
+\begin{lstlisting}
+%substr mychar 'xyzw' 1     ; equivalent to %define mychar 'x'
+%substr mychar 'xyzw' 2     ; equivalent to %define mychar 'y'
+%substr mychar 'xyzw' 3     ; equivalent to %define mychar 'z'
+%substr mychar 'xyzw' 2,2   ; equivalent to %define mychar 'yz'
+%substr mychar 'xyzw' 2,-1  ; equivalent to %define mychar 'yzw'
+%substr mychar 'xyzw' 2,-2  ; equivalent to %define mychar 'yz'
+\end{lstlisting}
+
+As with \code{\%strlen} (see \nref{strlen}), the first
+parameter is the single-line macro to be created and the second
+is the string. The third parameter specifies the first character
+to be selected, and the optional fourth parameter (preceeded by comma)
+is the length. Note that the first index is 1, not 0 and the last
+index is equal to the value that \code{\%strlen} would assign given
+the same string. Index values out of range result in an empty string.
+A negative length means ``until N-1 characters before the end of string'',
+i.e. \code{-1} means until end of string, \code{-2} until one character
+before, etc.
+
+\xsection{mlmacro}{\textindexlc{Multi-Line Macros}: \indexcode{\%imacro}\codeindex{\%macro}}
+
+Multi-line macros are much more like the type of macro seen in MASM
+and TASM: a multi-line macro definition in NASM looks something like
+this.
+
+\begin{lstlisting}
+%macro  prologue 1
+
+        push    ebp
+        mov     ebp,esp
+        sub     esp,%1
+
+%endmacro
+\end{lstlisting}
+
+This defines a C-like function prologue as a macro: so you would
+invoke the macro with a call such as
+
+\begin{minipage}{\linewidth}
+\begin{lstlisting}
+myfunc:   prologue 12
+\end{lstlisting}
+\end{minipage}
+
+which would expand to the three lines of code
+
+\begin{lstlisting}
+myfunc: push    ebp
+        mov     ebp,esp
+        sub     esp,12
+\end{lstlisting}
+
+The number \code{1} after the macro name in the \code{\%macro} line
+defines the number of parameters the macro \code{prologue} expects
+to receive. The use of \code{\%1} inside the macro definition refers
+to the first parameter to the macro call. With a macro taking more
+than one parameter, subsequent parameters would be referred to as
+\code{\%2}, \code{\%3} and so on.
+
+Multi-line macros, like single-line macros, are \textindex{case-sensitive},
+unless you define them using the alternative directive \code{\%imacro}.
+
+If you need to pass a comma as \emph{part} of a parameter to a
+multi-line macro, you can do that by enclosing the entire parameter
+in \index{braces!around macro parameters}braces. So you could code
+things like
+
+\begin{lstlisting}
+%macro  silly 2
+
+    %2: db      %1
+
+%endmacro
+
+        silly 'a', letter_a             ; letter_a:  db 'a'
+        silly 'ab', string_ab           ; string_ab: db 'ab'
+        silly {13,10}, crlf             ; crlf:      db 13,10
+\end{lstlisting}
+
+\xsubsection{mlmacover}{Overloading Multi-Line Macros}
+\index{overloading!multi-line macros}
+
+As with single-line macros, multi-line macros can be overloaded by
+defining the same macro name several times with different numbers of
+parameters. This time, no exception is made for macros with no
+parameters at all. So you could define
+
+\begin{lstlisting}
+%macro  prologue 0
+
+        push    ebp
+        mov     ebp,esp
+
+%endmacro
+\end{lstlisting}
+
+to define an alternative form of the function prologue which
+allocates no local stack space.
+
+Sometimes, however, you might want to ``overload'' a machine
+instruction; for example, you might want to define
+
+\begin{lstlisting}
+%macro  push 2
+
+        push    %1
+        push    %2
+
+%endmacro
+\end{lstlisting}
+
+so that you could code
+
+\begin{lstlisting}
+        push    ebx             ; this line is not a macro call
+        push    eax,ecx         ; but this one is
+\end{lstlisting}
+
+Ordinarily, NASM will give a warning for the first of the above two
+lines, since \code{push} is now defined to be a macro, and is being
+invoked with a number of parameters for which no definition has been
+given. The correct code will still be generated, but the assembler
+will give a warning. This warning can be disabled by the use of the
+\code{-w-macro-params} command-line option (see \nref{opt-w}).
+
+\xsubsection{maclocal}{\textindexlc{Macro-Local Labels}}
+
+NASM allows you to define labels within a multi-line macro definition
+in such a way as to make them local to the macro call: so calling
+the same macro multiple times will use a different label each time.
+You do this by prefixing \codeindex{\%\%} to the label name.
+So you can invent an instruction which executes a \code{RET} if the
+\code{Z} flag is set by doing this:
+
+\begin{lstlisting}
+%macro  retz 0
+
+        jnz     %%skip
+        ret
+    %%skip:
+
+%endmacro
+\end{lstlisting}
+
+You can call this macro as many times as you want, and every time
+you call it NASM will make up a different ``real'' name to substitute
+for the label \code{\%\%skip}. The names NASM invents are of the form
+\code{..@2345.skip}, where the number 2345 changes with every macro
+call. The \codeindex{..@} prefix prevents macro-local labels from
+interfering with the local label mechanism, as described in
+\nref{locallab}. You should avoid defining your own labels
+in this form (the \code{..@} prefix, then a number, then another period)
+in case they interfere with macro-local labels.
+
+\xsubsection{mlmacgre}{\textindexlc{Greedy Macro Parameters}}
+
+Occasionally it is useful to define a macro which lumps its entire
+command line into one parameter definition, possibly after
+extracting one or two smaller parameters from the front. An example
+might be a macro to write a text string to a file in MS-DOS, where
+you might want to be able to write
+
+\begin{lstlisting}
+writefile [filehandle],"hello, world",13,10
+\end{lstlisting}
+
+NASM allows you to define the last parameter of a macro to be
+\emph{greedy}, meaning that if you invoke the macro with more
+parameters than it expects, all the spare parameters get lumped into
+the last defined one along with the separating commas. So if you
+code:
+
+\begin{lstlisting}
+%macro  writefile 2+
+
+        jmp     %%endstr
+  %%str:        db      %2
+  %%endstr:
+        mov     dx,%%str
+        mov     cx,%%endstr-%%str
+        mov     bx,%1
+        mov     ah,0x40
+        int     0x21
+
+%endmacro
+\end{lstlisting}
+
+then the example call to \code{writefile} above will work as expected:
+the text before the first comma, \code{[filehandle]}, is used as the
+first macro parameter and expanded when \code{\%1} is referred to, and
+all the subsequent text is lumped into \code{\%2} and placed after the
+\code{db}.
+
+The greedy nature of the macro is indicated to NASM by the use of
+the \index{modifier!+}\code{+} sign after the parameter count on the
+\code{\%macro} line.
+
+If you define a greedy macro, you are effectively telling NASM how
+it should expand the macro given \emph{any} number of parameters from
+the actual number specified up to infinity; in this case, for
+example, NASM now knows what to do when it sees a call to
+\code{writefile} with 2, 3, 4 or more parameters. NASM will take this
+into account when overloading macros, and will not allow you to
+define another form of \code{writefile} taking 4 parameters (for
+example).
+
+Of course, the above macro could have been implemented as a
+non-greedy macro, in which case the call to it would have had to
+look like
+
+\begin{lstlisting}
+writefile [filehandle], {"hello, world",13,10}
+\end{lstlisting}
+
+NASM provides both mechanisms for putting \textindex{commas in macro
+parameters}, and you choose which one you prefer for each macro
+definition.
+
+See \nref{sectmac} for a better way to write the above macro.
+
+\xsubsection{mlmacrange}{\textindexlc{Macro Parameters Range}}
+
+NASM allows you to expand parameters via special construction \code{\%\{x:y\}}
+where \code{x} is the first parameter index and \code{y} is the last.
+Any index can be either negative or positive but must never be zero.
+
+For example
+
+\begin{lstlisting}
+%macro mpar 1-*
+     db %{3:5}
+%endmacro
+
+mpar 1,2,3,4,5,6
+\end{lstlisting}
+
+expands to \code{3,4,5} range.
+
+Even more, the parameters can be reversed so that
+
+\begin{lstlisting}
+%macro mpar 1-*
+     db %{5:3}
+%endmacro
+
+mpar 1,2,3,4,5,6
+\end{lstlisting}
+
+expands to \code{5,4,3} range.
+
+But even this is not the last. The parameters can be addressed via negative
+indices so NASM will count them reversed. The ones who know Python may see
+the analogue here.
+
+\begin{lstlisting}
+%macro mpar 1-*
+     db %{-1:-3}
+%endmacro
+
+mpar 1,2,3,4,5,6
+\end{lstlisting}
+
+expands to \code{6,5,4} range.
+
+Note that NASM uses \textindex{comma} to separate parameters being expanded.
+
+By the way, here is a trick - you might use the index \code{\%{-1:-1}}
+which gives you the \textindex{last} argument passed to a macro.
+
+\xsubsection{mlmacdef}{\textindexlc{Default Macro Parameters}}
+
+NASM also allows you to define a multi-line macro with a \emph{range}
+of allowable parameter counts. If you do this, you can specify
+defaults for \textindex{omitted parameters}. So, for example:
+
+\begin{lstlisting}
+%macro  die 0-1 "Painful program death has occurred."
+
+        writefile 2,%1
+        mov     ax,0x4c01
+        int     0x21
+
+%endmacro
+\end{lstlisting}
+
+This macro (which makes use of the \code{writefile} macro defined in
+\nref{mlmacgre}) can be called with an explicit error message,
+which it will display on the error output stream before exiting, or it can be
+called with no parameters, in which case it will use the default
+error message supplied in the macro definition.
+
+In general, you supply a minimum and maximum number of parameters
+for a macro of this type; the minimum number of parameters are then
+required in the macro call, and then you provide defaults for the
+optional ones. So if a macro definition began with the line
+
+\begin{lstlisting}
+%macro foobar 1-3 eax,[ebx+2]
+\end{lstlisting}
+
+then it could be called with between one and three parameters, and
+\code{\%1} would always be taken from the macro call. \code{\%2}, if not
+specified by the macro call, would default to \code{eax}, and \code{\%3}
+if not specified would default to \code{[ebx+2]}.
+
+You can provide extra information to a macro by providing
+too many default parameters:
+
+\begin{lstlisting}
+%macro quux 1 something
+\end{lstlisting}
+
+This will trigger a warning by default; see \nref{opt-w} for
+more information.
+When \code{quux} is invoked, it receives not one but two parameters.
+\code{something} can be referred to as \code{\%2}. The difference
+between passing \code{something} this way and writing \code{something}
+in the macro body is that with this way \code{something} is evaluated
+when the macro is defined, not when it is expanded.
+
+You may omit parameter defaults from the macro definition, in which
+case the parameter default is taken to be blank. This can be useful
+for macros which can take a variable number of parameters, since the
+\codeindex{\%0} token (see \nref{percent0}) allows you to
+determine how many parameters were really passed to the macro call.
+
+This defaulting mechanism can be combined with the greedy-parameter
+mechanism; so the \code{die} macro above could be made more powerful,
+and more useful, by changing the first line of the definition to
+
+\begin{lstlisting}
+%macro die 0-1+ "Painful program death has occurred.",13,10
+\end{lstlisting}
+
+The maximum parameter count can be infinite, denoted by \code{*}. In
+this case, of course, it is impossible to provide a \emph{full} set of
+default parameters. Examples of this usage are shown in
+\nref{rotate}.
+
+\xsubsection{percent0}{\codeindex{\%0}: \index{counting macro parameters}Macro Parameter Counter}
+
+The parameter reference \code{\%0} will return a numeric constant giving the
+number of parameters received, that is, if \code{\%0} is n then \code{\%}n
+is the last parameter. \code{\%0} is mostly useful for macros that can take a variable
+number of parameters. It can be used as an argument to \code{\%rep}
+(see \nref{rep}) in order to iterate through all the parameters
+of a macro. Examples are given in \nref{rotate}.
+
+\xsubsection{percent00}{\codeindex{\%00}: \index{label preceeding macro}Label Preceeding Macro}
+
+\code{\%00} will return the label preceeding the macro invocation, if any. The
+label must be on the same line as the macro invocation, may be a local label
+(see \nref{locallab}), and need not end in a colon.
+
+\xsubsection{rotate}{\codeindex{\%rotate}: \textindexlc{Rotating Macro Parameters}}
+
+Unix shell programmers will be familiar with the \index{shift
+command}\code{shift} shell command, which allows the arguments passed
+to a shell script (referenced as \code{\$1}, \code{\$2} and so on) to be
+moved left by one place, so that the argument previously referenced
+as \code{\$2} becomes available as \code{\$1}, and the argument previously
+referenced as \code{\$1} is no longer available at all.
+
+NASM provides a similar mechanism, in the form of \code{\%rotate}. As
+its name suggests, it differs from the Unix \code{shift} in that no
+parameters are lost: parameters rotated off the left end of the
+argument list reappear on the right, and vice versa.
+
+\code{\%rotate} is invoked with a single numeric argument (which may be
+an expression). The macro parameters are rotated to the left by that
+many places. If the argument to \code{\%rotate} is negative, the macro
+parameters are rotated to the right.
+
+\index{iterating over macro parameters}So a pair of macros to save and
+restore a set of registers might work as follows:
+
+\begin{lstlisting}
+%macro  multipush 1-*
+
+  %rep  %0
+        push    %1
+  %rotate 1
+  %endrep
+
+%endmacro
+\end{lstlisting}
+
+This macro invokes the \code{PUSH} instruction on each of its arguments
+in turn, from left to right. It begins by pushing its first
+argument, \code{\%1}, then invokes \code{\%rotate} to move all the arguments
+one place to the left, so that the original second argument is now
+available as \code{\%1}. Repeating this procedure as many times as there
+were arguments (achieved by supplying \code{\%0} as the argument to
+\code{\%rep}) causes each argument in turn to be pushed.
+
+Note also the use of \code{*} as the maximum parameter count,
+indicating that there is no upper limit on the number of parameters
+you may supply to the \codeindex{multipush} macro.
+
+It would be convenient, when using this macro, to have a \code{POP}
+equivalent, which \emph{didn't} require the arguments to be given in
+reverse order. Ideally, you would write the \code{multipush} macro
+call, then cut-and-paste the line to where the pop needed to be
+done, and change the name of the called macro to \code{multipop}, and
+the macro would take care of popping the registers in the opposite
+order from the one in which they were pushed.
+
+This can be done by the following definition:
+
+\begin{lstlisting}
+%macro  multipop 1-*
+
+  %rep %0
+  %rotate -1
+        pop     %1
+  %endrep
+
+%endmacro
+\end{lstlisting}
+
+This macro begins by rotating its arguments one place to the
+\emph{right}, so that the original \emph{last} argument appears
+as \code{\%1}. This is then popped, and the arguments are rotated
+right again, socthe second-to-last argument becomes \code{\%1}.
+Thus the arguments are iterated through in reverse order.
+
+\xsubsection{concat}{\textindexlc{Concatenating Macro Parameters}}
+
+NASM can concatenate macro parameters and macro indirection constructs
+on to other text surrounding them. This allows you to declare a family
+of symbols, for example, in a macro definition. If, for example, you
+wanted to generate a table of key codes along with offsets into the
+table, you could code something like
+
+\begin{lstlisting}
+%macro keytab_entry 2
+
+    keypos%1    equ     $-keytab
+                db      %2
+
+%endmacro
+
+keytab:
+          keytab_entry F1,128+1
+          keytab_entry F2,128+2
+          keytab_entry Return,13
+\end{lstlisting}
+
+which would expand to
+
+\begin{lstlisting}
+keytab:
+keyposF1        equ     $-keytab
+                db     128+1
+keyposF2        equ     $-keytab
+                db      128+2
+keyposReturn    equ     $-keytab
+                db      13
+\end{lstlisting}
+
+You can just as easily concatenate text on to the other end of a
+macro parameter, by writing \code{\%1foo}.
+
+If you need to append a \emph{digit} to a macro parameter, for example
+defining labels \code{foo1} and \code{foo2} when passed the parameter
+\code{foo}, you can't code \code{\%11} because that would be taken as the
+eleventh macro parameter. Instead, you must code
+\index{braces!after \% sign}\code{\%\{1\}1}, which will separate the first
+\code{1} (giving the number of the macro parameter) from the second
+(literal text to be concatenated to the parameter).
+
+This concatenation can also be applied to other preprocessor in-line
+objects, such as macro-local labels (\nref{maclocal})
+and context-local labels (\nref{ctxlocal}).
+In all cases, ambiguities in syntax can be resolved by enclosing
+everything after the \code{\%} sign and before the literal text
+in braces: so \code{\%\{\%foo\}bar} concatenates the text \code{bar}
+to the end of the real name of the macro-local label \code{\%\%foo}.
+(This is unnecessary, since the form NASM uses for the real names of
+macro-local labels means that the two usages \code{\%\{\%foo\}bar}
+and \code{\%\%foobar} would both expand to the same
+thing anyway; nevertheless, the capability is there.)
+
+The single-line macro indirection construct, \code{\%[...]}
+(\nref{indmacro}), behaves the same way as macro
+parameters for the purpose of concatenation.
+
+See also the \code{\%+} operator, \nref{concatmacro}.
+
+\xsubsection{mlmaccc}{\textindexlc{Condition Codes as Macro Parameters}}
+
+NASM can give special treatment to a macro parameter which contains
+a condition code. For a start, you can refer to the macro parameter
+\code{\%1} by means of the alternative syntax \codeindex{\%+1},
+which informs NASM that this macro parameter is supposed to contain
+a condition code, and will cause the preprocessor to report an
+error message if the macro is called with a parameter which is
+\emph{not} a valid condition code.
+
+Far more usefully, though, you can refer to the macro parameter by
+means of \codeindex{\%-1}, which NASM will expand as the \emph{inverse}
+condition code. So the \code{retz} macro defined in \nref{maclocal}
+can be replaced by a general \textindexlc{conditional-return macro} like this:
+
+\begin{lstlisting}
+%macro  retc 1
+
+        j%-1    %%skip
+        ret
+  %%skip:
+
+%endmacro
+\end{lstlisting}
+
+This macro can now be invoked using calls like \code{retc ne}, which
+will cause the conditional-jump instruction in the macro expansion
+to come out as \code{JE}, or \code{retc po} which will make the jump a
+\code{JPE}.
+
+The \code{\%+1} macro-parameter reference is quite happy to interpret
+the arguments \code{CXZ} and \code{ECXZ} as valid condition codes;
+however, \code{\%-1} will report an error if passed either of these,
+because no inverse condition code exists.
+
+\xsubsection{nolist}{\textindexlc{Disabling Listing Expansion}\indexcode{.nolist}}
+
+When NASM is generating a listing file from your program, it will
+generally expand multi-line macros by means of writing the macro
+call and then listing each line of the expansion. This allows you to
+see which instructions in the macro expansion are generating what
+code; however, for some macros this clutters the listing up
+unnecessarily.
+
+NASM therefore provides the \code{.nolist} qualifier, which you can
+include in a macro definition to inhibit the expansion of the macro
+in the listing file. The \code{.nolist} qualifier comes directly after
+the number of parameters, like this:
+
+\begin{lstlisting}
+%macro foo 1.nolist
+\end{lstlisting}
+
+Or like this:
+
+\begin{lstlisting}
+%macro bar 1-5+.nolist a,b,c,d,e,f,g,h
+\end{lstlisting}
+
+\xsubsection{unmacro}{Undefining Multi-Line Macros: \codeindex{\%unmacro}}
+
+Multi-line macros can be removed with the \code{\%unmacro} directive.
+Unlike the \code{\%undef} directive, however, \code{\%unmacro} takes an
+argument specification, and will only remove \textindex{exact matches} with
+that argument specification.
+
+For example:
+
+\begin{lstlisting}
+%macro foo 1-3
+        ; Do something
+%endmacro
+%unmacro foo 1-3
+\end{lstlisting}
+
+removes the previously defined macro \code{foo}, but
+
+\begin{lstlisting}
+%macro bar 1-3
+        ; Do something
+%endmacro
+%unmacro bar 1
+\end{lstlisting}
+
+does \emph{not} remove the macro \code{bar}, since the argument
+specification does not match exactly.
+
+\xsection{condasm}{\textindexlc{Conditional Assembly}\indexcode{\%if}}
+
+Similarly to the C preprocessor, NASM allows sections of a source
+file to be assembled only if certain conditions are met. The general
+syntax of this feature looks like this:
+
+\begin{lstlisting}
+%if<condition>
+    ; some code which only appears if <condition> is met
+%elif<condition2>
+    ; only appears if <condition> is not met but <condition2> is
+%else
+    ; this appears if neither <condition> nor <condition2> was met
+%endif
+\end{lstlisting}
+
+The inverse forms \codeindex{\%ifn} and \codeindex{\%elifn} are also supported.
+
+The \codeindex{\%else} clause is optional, as is the \codeindex{\%elif} clause.
+You can have more than one \code{\%elif} clause as well.
+
+There are a number of variants of the \code{\%if} directive.  Each has its
+corresponding \code{\%elif}, \code{\%ifn}, and \code{\%elifn} directives; for
+example, the equivalents to the \code{\%ifdef} directive are \code{\%elifdef},
+\code{\%ifndef}, and \code{\%elifndef}.
+
+\xsubsection{ifdef}{\codeindex{\%ifdef}: Testing Single-Line Macro Existence
+\index{testing, single-line macro existence}}
+
+Beginning a conditional-assembly block with the line \code{\%ifdef MACRO}
+will assemble the subsequent code if, and only if, a single-line macro called
+\code{MACRO} is defined. If not, then the \code{\%elif} and \code{\%else}
+blocks (if any) will be processed instead.
+
+For example, when debugging a program, you might want to write code
+such as
+
+\begin{lstlisting}
+          ; perform some function
+%ifdef DEBUG
+          writefile 2,"Function performed successfully",13,10
+%endif
+          ; go and do something else
+\end{lstlisting}
+
+Then you could use the command-line option \code{-dDEBUG} to create a
+version of the program which produced debugging messages, and remove
+the option to generate the final release version of the program.
+
+You can test for a macro \emph{not} being defined by using
+\codeindex{\%ifndef} instead of \code{\%ifdef}. You can also test
+for macro definitions in \code{\%elif} blocks by using
+\codeindex{\%elifdef} and \codeindex{\%elifndef}.
+
+\xsubsection{ifmacro}{\codeindex{\%ifmacro}: Testing Multi-Line Macro Existence
+\index{testing!multi-line macro existence}}
+
+The \code{\%ifmacro} directive operates in the same way as the \code{\%ifdef}
+directive, except that it checks for the existence of a multi-line macro.
+
+For example, you may be working with a large project and not have control
+over the macros in a library. You may want to create a macro with one
+name if it doesn't already exist, and another name if one with that name
+does exist.
+
+The \code{\%ifmacro} is considered true if defining a macro with the given name
+and number of arguments would cause a definitions conflict. For example:
+
+\begin{lstlisting}
+%ifmacro MyMacro 1-3
+
+     %error "MyMacro 1-3" causes a conflict with an existing macro.
+
+%else
+
+     %macro MyMacro 1-3
+
+             ; insert code to define the macro
+
+     %endmacro
+
+%endif
+\end{lstlisting}
+
+This will create the macro ``\code{MyMacro 1-3}'' if no macro already exists which
+would conflict with it, and emits a warning if there would be a definition
+conflict.
+
+You can test for the macro not existing by using the \codeindex{\%ifnmacro}
+instead of \code{\%ifmacro}. Additional tests can be performed in
+\code{\%elif} blocks by using \codeindex{\%elifmacro} and
+\codeindex{\%elifnmacro}.
+
+\xsubsection{ifctx}{\codeindex{\%ifctx}: Testing the Context Stack
+\index{testing!context stack}}
+
+The conditional-assembly construct \code{\%ifctx} will cause the
+subsequent code to be assembled if and only if the top context on
+the preprocessor's context stack has the same name as one of the arguments.
+As with \code{\%ifdef}, the inverse and \code{\%elif} forms \codeindex{\%ifnctx},
+\codeindex{\%elifctx} and \codeindex{\%elifnctx} are also supported.
+
+For more details of the context stack, see \nref{ctxstack}.
+For a sample use of \code{\%ifctx}, see \nref{blockif}.
+
+\xsubsection{if}{\codeindex{\%if}: Testing Arbitrary Numeric Expressions}
+\index{testing!arbitrary numeric expressions}
+
+The conditional-assembly construct \code{\%if expr} will cause the
+subsequent code to be assembled if and only if the value of the
+numeric expression \code{expr} is non-zero. An example of the use of
+this feature is in deciding when to break out of a \code{\%rep}
+preprocessor loop: see \nref{rep} for a detailed example.
+
+The expression given to \code{\%if}, and its counterpart
+\codeindex{\%elif}, is a critical expression (see \nref{crit}).
+
+\code{\%if} extends the normal NASM expression syntax, by providing a
+set of \textindexlc{relational operators} which are not normally available in
+expressions. The operators \codeindex{=}, \codeindex{\textless},
+\codeindex{\textgreater}, \codeindex{\textless=}, \codeindex{\textgreater=}
+and \codeindex{\textless\textgreater} test equality,
+less-than, greater-than, less-or-equal, greater-or-equal and not-equal
+respectively. The C-like forms \codeindex{==} and \codeindex{!=} are
+supported as alternative forms of \code{=} and \code{\textless\textgreater}.
+In addition, low-priority logical operators \codeindex{\&\&},
+\codeindex{\^{}\^{}} and \codeindex{||} are provided, supplying
+\textindex{logical!ND}, \textindex{logical!XOR} and \textindex{logical!OR}.
+These work like the C logical operators (although C has no logical XOR),
+in that they always return either 0 or 1, and treat any non-zero input as 1
+(so that \code{\^{}\^{}}, for example, returns 1 if exactly one of its inputs
+is zero, and 0 otherwise). The relational operators also return 1
+for true and 0 for false.
+
+Like other \code{\%if} constructs, \code{\%if} has a counterpart
+\codeindex{\%elif}, and negative forms \codeindex{\%ifn} and \codeindex{\%elifn}.
+
+\xsubsection{ifidn}{\codeindex{\%ifidn} and \codeindex{\%ifidni}: Testing Exact Text Identity}
+\index{testing!exact text identity}
+
+The construct \code{\%ifidn text1,text2} will cause the subsequent code
+to be assembled if and only if \code{text1} and \code{text2}, after
+expanding single-line macros, are identical pieces of text.
+Differences in white space are not counted.
+
+\code{\%ifidni} is similar to \code{\%ifidn}, but is \textindex{case-insensitive}.
+
+For example, the following macro pushes a register or number on the
+stack, and allows you to treat \code{IP} as a real register:
+
+\begin{lstlisting}
+%macro  pushparam 1
+
+  %ifidni %1,ip
+        call    %%label
+  %%label:
+  %else
+        push    %1
+  %endif
+
+%endmacro
+\end{lstlisting}
+
+Like other \code{\%if} constructs, \code{\%ifidn} has a counterpart
+\codeindex{\%elifidn}, and negative forms \codeindex{\%ifnidn} and
+\codeindex{\%elifnidn}. Similarly, \code{\%ifidni} has counterparts
+\codeindex{\%elifidni}, \codeindex{\%ifnidni} and \codeindex{\%elifnidni}.
+
+\xsubsection{iftyp}{\codeindex{\%ifid}, \codeindex{\%ifnum}, \codeindex{\%ifstr}: Testing Token Types}
+\index{testing!token types}
+
+Some macros will want to perform different tasks depending on
+whether they are passed a number, a string, or an identifier. For
+example, a string output macro might want to be able to cope with
+being passed either a string constant or a pointer to an existing
+string.
+
+The conditional assembly construct \code{\%ifid}, taking one parameter
+(which may be blank), assembles the subsequent code if and only if
+the first token in the parameter exists and is an identifier.
+\code{\%ifnum} works similarly, but tests for the token being a numeric
+constant; \code{\%ifstr} tests for it being a string.
+
+For example, the \code{writefile} macro defined in \nref{mlmacgre}
+can be extended to take advantage of \code{\%ifstr} in the following fashion:
+
+\begin{lstlisting}
+%macro writefile 2-3+
+
+  %ifstr %2
+        jmp     %%endstr
+    %if %0 = 3
+      %%str:    db      %2,%3
+    %else
+      %%str:    db      %2
+    %endif
+      %%endstr: mov     dx,%%str
+                mov     cx,%%endstr-%%str
+  %else
+                mov     dx,%2
+                mov     cx,%3
+  %endif
+                mov     bx,%1
+                mov     ah,0x40
+                int     0x21
+
+%endmacro
+\end{lstlisting}
+
+Then the \code{writefile} macro can cope with being called in either of
+the following two ways:
+
+\begin{lstlisting}
+writefile [file], strpointer, length
+writefile [file], "hello", 13, 10
+\end{lstlisting}
+
+In the first, \code{strpointer} is used as the address of an
+already-declared string, and \code{length} is used as its length; in
+the second, a string is given to the macro, which therefore declares
+it itself and works out the address and length for itself.
+
+Note the use of \code{\%if} inside the \code{\%ifstr}: this is to detect
+whether the macro was passed two arguments (so the string would be a
+single string constant, and \code{db \%2} would be adequate) or more (in
+which case, all but the first two would be lumped together into
+\code{\%3}, and \code{db \%2,\%3} would be required).
+
+The usual \indexcode{\%elifid}\indexcode{\%elifnum}\indexcode{\%elifstr}\code{\%elif}...,
+\indexcode{\%ifnid}\indexcode{\%ifnnum}\indexcode{\%ifnstr}\code{\%ifn}..., and
+\indexcode{\%elifnid}\indexcode{\%elifnnum}\indexcode{\%elifnstr}\code{\%elifn}...
+versions exist for each of \code{\%ifid}, \code{\%ifnum} and \code{\%ifstr}.
+
+\xsubsection{iftoken}{\codeindex{\%iftoken}: Test for a Single Token}
+
+Some macros will want to do different things depending on if it is
+passed a single token (e.g. paste it to something else using \code{\%+})
+versus a multi-token sequence.
+
+The conditional assembly construct \code{\%iftoken} assembles the
+subsequent code if and only if the expanded parameters consist of
+exactly one token, possibly surrounded by whitespace.
+
+For example:
+
+\begin{lstlisting}
+%iftoken 1
+\end{lstlisting}
+
+will assemble the subsequent code, but
+
+\begin{lstlisting}
+%iftoken -1
+\end{lstlisting}
+
+will not, since \code{-1} contains two tokens: the unary minus operator
+\code{-}, and the number \code{1}.
+
+The usual \codeindex{\%eliftoken}, \codeindex{\%ifntoken}, and
+\codeindex{\%elifntoken} variants are also provided.
+
+\xsubsection{ifempty}{\codeindex{\%ifempty}: Test for Empty Expansion}
+
+The conditional assembly construct \code{\%ifempty} assembles the
+subsequent code if and only if the expanded parameters do not contain
+any tokens at all, whitespace excepted.
+
+The usual \codeindex{\%elifempty}, \codeindex{\%ifnempty}, and
+\codeindex{\%elifnempty} variants are also provided.
+
+\xsubsection{ifenv}{\codeindex{\%ifenv}: Test If Environment Variable Exists}
+
+The conditional assembly construct \code{\%ifenv} assembles the
+subsequent code if and only if the environment variable referenced by
+the \code{\%^^21}\emph{variable} directive exists.
+
+The usual \codeindex{\%elifenv}, \codeindex{\%ifnenv}, and \codeindex{\%elifnenv}
+variants are also provided.
+
+Just as for \code{\%^^21}\emph{variable} the argument should be written as a
+string if it contains characters that would not be legal in an
+identifier. See \nref{getenv}.
+
+\xsection{rep}{\textindexlc{Preprocessor Loops}\index{repeating code}: \codeindex{\%rep}}
+
+NASM's \code{TIMES} prefix, though useful, cannot be used to invoke a
+multi-line macro multiple times, because it is processed by NASM
+after macros have already been expanded. Therefore NASM provides
+another form of loop, this time at the preprocessor level: \code{\%rep}.
+
+The directives \code{\%rep} and \codeindex{\%endrep} (\code{\%rep}
+takes a numeric argument, which can be an expression; \code{\%endrep}
+takes no arguments) can be used to enclose a chunk of code, which is then
+replicated as many times as specified by the preprocessor:
+
+\begin{lstlisting}
+%assign i 0
+%rep    64
+        inc     word [table+2*i]
+%assign i i+1
+%endrep
+\end{lstlisting}
+
+This will generate a sequence of 64 \code{INC} instructions,
+incrementing every word of memory from \code{[table]} to
+\code{[table+126]}.
+
+For more complex termination conditions, or to break out of a repeat
+loop part way along, you can use the \codeindex{\%exitrep} directive to
+terminate the loop, like this:
+
+\begin{lstlisting}
+fibonacci:
+%assign i 0
+%assign j 1
+%rep 100
+%if j > 65535
+        %exitrep
+%endif
+        dw j
+%assign k j+i
+%assign i j
+%assign j k
+%endrep
+
+fib_number equ ($-fibonacci)/2
+\end{lstlisting}
+
+This produces a list of all the Fibonacci numbers that will fit in
+16 bits. Note that a maximum repeat count must still be given to
+\code{\%rep}. This is to prevent the possibility of NASM getting into an
+infinite loop in the preprocessor, which (on multitasking or
+multi-user systems) would typically cause all the system memory to
+be gradually used up and other applications to start crashing.
+
+Note a maximum repeat count is limited by 62 bit number, though it
+is hardly possible that you ever need anything bigger.
+
+\xsection{files}{Source Files and Dependencies}
+
+These commands allow you to split your sources into multiple files.
+
+\xsubsection{include}{\codeindex{\%include}: \textindexlc{Including Other Files}}
+
+Using, once again, a very similar syntax to the C preprocessor,
+NASM's preprocessor lets you include other source files into your
+code. This is done by the use of the \codeindex{\%include} directive:
+
+\begin{lstlisting}
+%include "macros.mac"
+\end{lstlisting}
+
+will include the contents of the file \code{macros.mac} into the source
+file containing the \code{\%include} directive.
+
+Include files are \index{searching for include files}searched for in the
+current directory (the directory you're in when you run NASM, as
+opposed to the location of the NASM executable or the location of
+the source file), plus any directories specified on the NASM command
+line using the \code{-i} option.
+
+The standard C idiom for preventing a file being included more than
+once is just as applicable in NASM: if the file \code{macros.mac} has
+the form
+
+\begin{lstlisting}
+%ifndef MACROS_MAC
+    %define MACROS_MAC
+    ; now define some macros
+%endif
+\end{lstlisting}
+
+then including the file more than once will not cause errors,
+because the second time the file is included nothing will happen
+because the macro \code{MACROS\_MAC} will already be defined.
+
+You can force a file to be included even if there is no \code{\%include}
+directive that explicitly includes it, by using the \codeindex{-p} option
+on the NASM command line (see \nref{opt-p}).
+
+\xsubsection{pathsearch}{\codeindex{\%pathsearch}: Search the Include Path}
+
+The \code{\%pathsearch} directive takes a single-line macro name and a
+filename, and declare or redefines the specified single-line macro to
+be the \emph{include-path-resolved} version of the filename, if the file
+exists (otherwise, it is passed unchanged).
+
+For example,
+
+\begin{lstlisting}
+%pathsearch MyFoo "foo.bin"
+\end{lstlisting}
+
+... with \code{-Ibins/} in the include path may end up defining the macro
+\code{MyFoo} to be \code{"bins/foo.bin"}.
+
+\xsubsection{depend}{\codeindex{\%depend}: Add Dependent Files}
+
+The \code{\%depend} directive takes a filename and adds it to the list of
+files to be emitted as dependency generation when the \code{-M} options
+and its relatives (see \nref{opt-M}) are used. It produces
+no output.
+
+This is generally used in conjunction with \code{\%pathsearch}. For
+example, a simplified version of the standard macro wrapper for the
+\code{INCBIN} directive looks like:
+
+\begin{lstlisting}
+%imacro incbin 1-2+ 0
+%pathsearch dep %1
+%depend dep
+        incbin dep,%2
+%endmacro
+\end{lstlisting}
+
+This first resolves the location of the file into the macro \code{dep},
+then adds it to the dependency lists, and finally issues the
+assembler-level \code{INCBIN} directive.
+
+\xsubsection{use}{\codeindex{\%use}: Include Standard Macro Package}
+
+The \code{\%use} directive is similar to \code{\%include}, but rather than
+including the contents of a file, it includes a named standard macro
+package.  The standard macro packages are part of NASM, and are
+described in \nref{macropkg}.
+
+Unlike the \code{\%include} directive, package names for the \code{\%use}
+directive do not require quotes, but quotes are permitted. In NASM
+2.04 and 2.05 the unquoted form would be macro-expanded; this is no
+longer true. Thus, the following lines are equivalent:
+
+\begin{lstlisting}
+%use altreg
+%use 'altreg'
+\end{lstlisting}
+
+Standard macro packages are protected from multiple inclusion. When a
+standard macro package is used, a testable single-line macro of the
+form \code{\_\_USE\_\emph{package}\_\_} is also defined,
+see \nref{usedef}.
+
+\xsection{ctxstack}{The \textindexlc{Context Stack}}
+
+Having labels that are local to a macro definition is sometimes not
+quite powerful enough: sometimes you want to be able to share labels
+between several macro calls. An example might be a \code{REPEAT} ...
+\code{UNTIL} loop, in which the expansion of the \code{REPEAT} macro
+would need to be able to refer to a label which the \code{UNTIL} macro
+had defined. However, for such a macro you would also want to be
+able to nest these loops.
+
+NASM provides this level of power by means of a \emph{context stack}.
+The preprocessor maintains a stack of \emph{contexts}, each of which is
+characterized by a name. You add a new context to the stack using
+the \codeindex{\%push} directive, and remove one using \codeindex{\%pop}.
+You can define labels that are local to a particular context on the stack.
+
+\xsubsection{pushpop}{\codeindex{\%push} and \codeindex{\%pop}: Creating and Removing Contexts}
+\index{context!create}
+\index{context!remove }
+
+The \code{\%push} directive is used to create a new context and place it
+on the top of the context stack. \code{\%push} takes an optional argument,
+which is the name of the context. For example:
+
+\begin{lstlisting}
+%push    foobar
+\end{lstlisting}
+
+This pushes a new context called \code{foobar} on the stack. You can have
+several contexts on the stack with the same name: they can still be
+distinguished.  If no name is given, the context is unnamed (this is
+normally used when both the \code{\%push} and the \code{\%pop} are inside a
+single macro definition.)
+
+The directive \code{\%pop}, taking one optional argument, removes the top
+context from the context stack and destroys it, along with any
+labels associated with it.  If an argument is given, it must match the
+name of the current context, otherwise it will issue an error.
+
+\xsubsection{ctxlocal}{\textindexlc{Context-Local Labels}}
+
+Just as the usage \code{\%\%foo} defines a label which is local to the
+particular macro call in which it is used, the usage \indexcode{\%\$}\code{\%\$foo}
+is used to define a label which is local to the context on the top
+of the context stack. So the \code{REPEAT} and \code{UNTIL} example given
+above could be implemented by means of:
+
+\begin{lstlisting}
+%macro repeat 0
+
+    %push   repeat
+    %$begin:
+
+%endmacro
+
+%macro until 1
+
+        j%-1    %$begin
+    %pop
+
+%endmacro
+\end{lstlisting}
+
+and invoked by means of, for example,
+
+\begin{lstlisting}
+mov     cx,string
+repeat
+add     cx,3
+scasb
+until   e
+\end{lstlisting}
+
+which would scan every fourth byte of a string in search of the byte
+in \code{AL}.
+
+If you need to define, or access, labels local to the context
+\emph{below} the top one on the stack, you can use
+\indexcode{\%\$\$}\code{\%\$\$foo}, or \code{\%\$\$\$foo} for
+the context below that, and so on.
+
+\xsubsection{ctxdefine}{\textindexlc{Context-Local Single-Line Macros}}
+
+NASM also allows you to define single-line macros which are local to
+a particular context, in just the same way:
+
+\begin{lstlisting}
+%define %$localmac 3
+\end{lstlisting}
+
+will define the single-line macro \code{\%\$localmac} to be local to the
+top context on the stack. Of course, after a subsequent \code{\%push},
+it can then still be accessed by the name \code{\%\$\$localmac}.
+
+\xsubsection{ctxfallthrough}{\textindexlc{Context Fall-Through Lookup} \emph{(deprecated)}}
+
+Context fall-through lookup (automatic searching of outer contexts)
+is a feature that was added in NASM version 0.98.03. Unfortunately,
+this feature is unintuitive and can result in buggy code that would
+have otherwise been prevented by NASM's error reporting. As a result,
+this feature has been \emph{deprecated}. NASM version 2.09 will issue a
+warning when usage of this \emph{deprecated} feature is detected. Starting
+with NASM version 2.10, usage of this \emph{deprecated} feature will simply
+result in an \emph{expression syntax error}.
+
+An example usage of this \emph{deprecated} feature follows:
+
+\begin{lstlisting}
+%macro ctxthru 0
+%push ctx1
+    %assign %$external 1
+        %push ctx2
+            %assign %$internal 1
+            mov eax, %$external
+            mov eax, %$internal
+        %pop
+%pop
+%endmacro
+\end{lstlisting}
+
+As demonstrated, \code{\%\$external} is being defined in the \code{ctx1}
+context and referenced within the \code{ctx2} context. With context
+fall-through lookup, referencing an undefined context-local macro
+like this implicitly searches through all outer contexts until a match
+is made or isn't found in any context. As a result, \code{\%\$external}
+referenced within the \code{ctx2} context would implicitly use \code{\%\$external}
+as defined in \code{ctx1}. Most people would expect NASM to issue an error in
+this situation because \code{\%\$external} was never defined within \code{ctx2}
+and also isn't qualified with the proper context depth, \code{\%\$\$external}.
+
+Here is a revision of the above example with proper context depth:
+
+\begin{lstlisting}
+%macro ctxthru 0
+%push ctx1
+    %assign %$external 1
+        %push ctx2
+            %assign %$internal 1
+            mov eax, %$$external
+            mov eax, %$internal
+        %pop
+%pop
+%endmacro
+\end{lstlisting}
+
+As demonstrated, \code{\%\$external} is still being defined in the \code{ctx1}
+context and referenced within the \code{ctx2} context. However, the
+reference to \code{\%\$external} within \code{ctx2} has been fully qualified with
+the proper context depth, \code{\%\$\$external}, and thus is no longer ambiguous,
+unintuitive or erroneous.
+
+\xsubsection{ctxrepl}{\codeindex{\%repl}: Renaming a Context}
+\index{context!rename}
+
+If you need to change the name of the top context on the stack (in
+order, for example, to have it respond differently to \code{\%ifctx}),
+you can execute a \code{\%pop} followed by a \code{\%push}; but this will
+have the side effect of destroying all context-local labels and
+macros associated with the context that was just popped.
+
+NASM provides the directive \code{\%repl}, which \emph{replaces} a context
+with a different name, without touching the associated macros and
+labels. So you could replace the destructive code
+
+\begin{lstlisting}
+%pop
+%push   newname
+\end{lstlisting}
+
+with the non-destructive version \code{\%repl newname}.
+
+\xsubsection{blockif}{Example Use of the \textindexlc{Context Stack}:
+\textindexlc{Block IFs}}
+
+This example makes use of almost all the context-stack features,
+including the conditional-assembly construct \codeindex{\%ifctx}, to
+implement a block IF statement as a set of macros.
+
+\begin{lstlisting}
+%macro if 1
+
+    %push if
+    j%-1  %$ifnot
+
+%endmacro
+
+%macro else 0
+
+  %ifctx if
+        %repl   else
+        jmp     %$ifend
+        %$ifnot:
+  %else
+        %error  "expected `if' before `else'"
+  %endif
+
+%endmacro
+
+%macro endif 0
+
+  %ifctx if
+        %$ifnot:
+        %pop
+  %elifctx      else
+        %$ifend:
+        %pop
+  %else
+        %error  "expected `if' or `else' before `endif'"
+  %endif
+
+%endmacro
+\end{lstlisting}
+
+This code is more robust than the \code{REPEAT} and \code{UNTIL} macros
+given in \nref{ctxlocal}, because it uses conditional assembly to check
+that the macros are issued in the right order (for example, not calling \code{endif}
+before \code{if}) and issues a \code{\%error} if they're not.
+
+In addition, the \code{endif} macro has to be able to cope with the two
+distinct cases of either directly following an \code{if}, or following
+an \code{else}. It achieves this, again, by using conditional assembly
+to do different things depending on whether the context on top of
+the stack is \code{if} or \code{else}.
+
+The \code{else} macro has to preserve the context on the stack, in
+order to have the \code{\%\$ifnot} referred to by the \code{if} macro be the
+same as the one defined by the \code{endif} macro, but has to change
+the context's name so that \code{endif} will know there was an
+intervening \code{else}. It does this by the use of \code{\%repl}.
+
+A sample usage of these macros might look like:
+
+\begin{lstlisting}
+cmp     ax,bx
+
+if ae
+       cmp     bx,cx
+
+       if ae
+               mov     ax,cx
+       else
+               mov     ax,bx
+       endif
+
+else
+       cmp     ax,cx
+
+       if ae
+               mov     ax,cx
+       endif
+
+endif
+\end{lstlisting}
+
+The block-\code{IF} macros handle nesting quite happily, by means of
+pushing another context, describing the inner \code{if}, on top of the
+one describing the outer \code{if}; thus \code{else} and \code{endif}
+always refer to the last unmatched \code{if} or \code{else}.
+
+\xsection{stackrel}{\textindexlc{Stack Relative Preprocessor Directives}}
+
+The following preprocessor directives provide a way to use
+labels to refer to local variables allocated on the stack:
+
+\begin{itemize}
+    \item{\code{\%arg}  (see \nref{arg});}
+    \item{\code{\%stacksize}  (see \nref{stacksize});}
+    \item{\code{\%local}  (see \nref{local}).}
+\end{itemize}
+
+\xsubsection{arg}{\codeindex{\%arg} Directive}
+
+The \code{\%arg} directive is used to simplify the handling of
+parameters passed on the stack. Stack based parameter passing
+is used by many high level languages, including C, C++ and Pascal.
+
+While NASM has macros which attempt to duplicate this functionality
+(see \nref{16cmacro}), the syntax is not particularly convenient
+to use and is not TASM compatible. Here is an example which shows the use
+of \code{\%arg} without any external macros:
+
+\begin{lstlisting}
+some_function:
+
+    %push     mycontext        ; save the current context
+    %stacksize large           ; tell NASM to use bp
+    %arg      i:word, j_ptr:word
+
+        mov     ax,[i]
+        mov     bx,[j_ptr]
+        add     ax,[bx]
+        ret
+
+    %pop                       ; restore original context
+\end{lstlisting}
+
+This is similar to the procedure defined in \nref{16cmacro}
+and adds the value in i to the value pointed to by j\_ptr and returns
+the sum in the ax register. See \nref{pushpop} for an
+explanation of \code{push} and \code{pop} and the use of context stacks.
+
+\xsubsection{stacksize}{\codeindex{\%stacksize} Directive}
+
+The \code{\%stacksize} directive is used in conjunction with the
+\code{\%arg} (see \nref{arg}) and the \code{\%local}
+(see \nref{local}) directives. It tells NASM the default
+size to use for subsequent \code{\%arg} and \code{\%local} directives.
+The \code{\%stacksize} directive takes one required argument
+which is one of \code{flat}, \code{flat64}, \code{large} or \code{small}.
+
+\begin{lstlisting}
+%stacksize flat
+\end{lstlisting}
+
+This form causes NASM to use stack-based parameter addressing
+relative to \code{ebp} and it assumes that a near form of call
+was used to get to this label (i.e. that \code{eip} is on the stack).
+
+\begin{lstlisting}
+%stacksize flat64
+\end{lstlisting}
+
+This form causes NASM to use stack-based parameter addressing
+relative to \code{rbp} and it assumes that a near form of call was used
+to get to this label (i.e. that \code{rip} is on the stack).
+
+\begin{lstlisting}
+%stacksize large
+\end{lstlisting}
+
+This form uses \code{bp} to do stack-based parameter addressing and
+assumes that a far form of call was used to get to this address
+(i.e. that \code{ip} and \code{cs} are on the stack).
+
+\begin{lstlisting}
+%stacksize small
+\end{lstlisting}
+
+This form also uses \code{bp} to address stack parameters, but it is
+different from \code{large} because it also assumes that the old value
+of bp is pushed onto the stack (i.e. it expects an \code{ENTER}
+instruction). In other words, it expects that \code{bp}, \code{ip} and
+\code{cs} are on the top of the stack, underneath any local space which
+may have been allocated by \code{ENTER}. This form is probably most
+useful when used in combination with the \code{\%local} directive
+(see \nref{local}).
+
+\xsubsection{local}{\codeindex{\%local} Directive}
+
+The \code{\%local} directive is used to simplify the use of local
+temporary stack variables allocated in a stack frame. Automatic
+local variables in C are an example of this kind of variable. The
+\code{\%local} directive is most useful when used with the \code{\%stacksize}
+(see \nref{stacksize} and is also compatible with the \code{\%arg} directive
+(see \nref{arg}). It allows simplified reference to variables on the
+stack which have been allocated typically by using the \code{ENTER}
+instruction.
+% (see \nref{insENTER} for a description of that instruction).
+An example of its use is the following:
+
+\begin{lstlisting}
+silly_swap:
+
+    %push mycontext             ; save the current context
+    %stacksize small            ; tell NASM to use bp
+    %assign %$localsize 0       ; see text for explanation
+    %local old_ax:word, old_dx:word
+
+        enter   %$localsize,0   ; see text for explanation
+        mov     [old_ax],ax     ; swap ax & bx
+        mov     [old_dx],dx     ; and swap dx & cx
+        mov     ax,bx
+        mov     dx,cx
+        mov     bx,[old_ax]
+        mov     cx,[old_dx]
+        leave                   ; restore old bp
+        ret                     ;
+
+    %pop                        ; restore original context
+\end{lstlisting}
+
+The \code{\%\$localsize} variable is used internally by the
+\code{\%local} directive and \emph{must} be defined within the
+current context before the \code{\%local} directive may be used.
+Failure to do so will result in one expression syntax error for
+each \code{\%local} variable declared. It then may be used in
+the construction of an appropriately sized ENTER instruction
+as shown in the example.
+
+\xsection{pperror}{Reporting \textindexlc{User-Defined Errors}:
+\codeindex{\%error}, \codeindex{\%warning}, \codeindex{\%fatal}}
+
+The preprocessor directive \code{\%error} will cause NASM to report an
+error if it occurs in assembled code. So if other users are going to
+try to assemble your source files, you can ensure that they define the
+right macros by means of code like this:
+
+\begin{lstlisting}
+%ifdef F1
+    ; do some setup
+%elifdef F2
+    ; do some different setup
+%else
+    %error "Neither F1 nor F2 was defined."
+%endif
+\end{lstlisting}
+
+Then any user who fails to understand the way your code is supposed
+to be assembled will be quickly warned of their mistake, rather than
+having to wait until the program crashes on being run and then not
+knowing what went wrong.
+
+Similarly, \code{\%warning} issues a warning, but allows assembly to continue:
+
+\begin{lstlisting}
+%ifdef F1
+    ; do some setup
+%elifdef F2
+    ; do some different setup
+%else
+    %warning "Neither F1 nor F2 was defined, assuming F1."
+    %define F1
+%endif
+\end{lstlisting}
+
+\code{\%error} and \code{\%warning} are issued only on the final assembly
+pass. This makes them safe to use in conjunction with tests that
+depend on symbol values.
+
+\code{\%fatal} terminates assembly immediately, regardless of pass. This
+is useful when there is no point in continuing the assembly further,
+and doing so is likely just going to cause a spew of confusing error
+messages.
+
+It is optional for the message string after \code{\%error}, \code{\%warning}
+or \code{\%fatal} to be quoted. If it is \emph{not}, then single-line macros
+are expanded in it, which can be used to display more information to
+the user. For example:
+
+\begin{lstlisting}
+%if foo > 64
+    %assign foo_over foo-64
+    %error foo is foo_over bytes too large
+%endif
+\end{lstlisting}
+
+\xsection{otherpreproc}{\textindexlc{Other Preprocessor Directives}}
+
+\xsubsection{line}{\codeindex{\%line} Directive}
+
+The \code{\%line} directive is used to notify NASM that the input line
+corresponds to a specific line number in another file. Typically
+this other file would be an original source file, with the current
+NASM input being the output of a pre-processor. The \code{\%line}
+directive allows NASM to output messages which indicate the line
+number of the original source file, instead of the file that is being
+read by NASM.
+
+This preprocessor directive is not generally used directly by
+programmers, but may be of interest to preprocessor authors. The
+usage of the \code{\%line} preprocessor directive is as follows:
+
+\begin{lstlisting}
+%line nnn[+mmm] [filename]
+\end{lstlisting}
+
+In this directive, \code{nnn} identifies the line of the original source
+file which this line corresponds to. \code{mmm} is an optional parameter
+which specifies a line increment value; each line of the input file
+read in is considered to correspond to \code{mmm} lines of the original
+source file. Finally, \code{filename} is an optional parameter which
+specifies the file name of the original source file.
+
+After reading a \code{\%line} preprocessor directive, NASM will report
+all file name and line numbers relative to the values specified
+therein.
+
+If the command line option \codeindex{--no-line} is given, all \code{\%line}
+directives are ignored. This may be useful for debugging preprocessed
+code. See \nref{opt-no-line}.
+
+\xsubsection{getenv}{\codeindex{\%^^21\emph{variable}}: Read an Environment Variable}
+
+The \code{\%^^21\emph{variable}} directive makes it possible to read the
+value of an environment variable at assembly time. This could, for example,
+be used to store the contents of an environment variable into a string, which
+could be used at some other point in your code.
+
+For example, suppose that you have an environment variable \code{FOO},
+and you want the contents of \code{FOO} to be embedded in your program as
+a quoted string. You could do that as follows:
+
+\begin{lstlisting}
+%defstr FOO          %!FOO
+\end{lstlisting}
+
+See \nref{defstr} for notes on the \code{\%defstr} directive.
+
+If the name of the environment variable contains non-identifier
+characters, you can use string quotes to surround the name of the
+variable, for example:
+
+\begin{lstlisting}
+%defstr C_colon      %!'C:'
+\end{lstlisting}
+
+\xsection{stdmac}{\textindexlc{Standard Macros}}
+
+NASM defines a set of standard macros, which are already defined
+when it starts to process any source file. If you really need a
+program to be assembled with no pre-defined macros, you can use the
+\codeindex{\%clear} directive to empty the preprocessor of everything
+but context-local preprocessor variables and single-line macros.
+
+Most \textindex{user-level assembler directives} are implemented as macros
+which invoke primitive directives; these are described in \nref{directive}.
+The rest of the standard macro set is described here.
+
+\xsubsection{stdmacver}{\textindexlc{NASM Version} Macros}
+
+The single-line macros \codeindex{\_\_NASM\_MAJOR\_\_}, \codeindex{\_\_NASM\_MINOR\_\_},
+\codeindex{\_\_NASM\_SUBMINOR\_\_} and \codeindex{\_\_NASM\_PATCHLEVEL\_\_} expand to
+the major, minor, subminor and patch level parts of the \textindexlc{version number of NASM}
+being used. So, under NASM 0.98.32p1 for example, \code{\_\_NASM\_MAJOR\_\_}
+would be defined to be 0, \code{\_\_NASM\_MINOR\_\_} would be defined as 98,
+\code{\_\_NASM\_SUBMINOR\_\_} would be defined to 32, and \code{\_\_NASM\_PATCHLEVEL\_\_}
+would be defined as 1.
+
+Additionally, the macro \codeindex{\_\_NASM\_SNAPSHOT\_\_} is defined for
+automatically generated snapshot releases \emph{only}.
+
+\xsubsection{stdmacverid}{\codeindex{\_\_NASM\_VERSION\_ID\_\_}:
+\textindexlc{NASM Version ID}}
+
+The single-line macro \code{\_\_NASM\_VERSION\_ID\_\_} expands to a dword integer
+representing the full version number of the version of nasm being used.
+The value is the equivalent to \code{\_\_NASM\_MAJOR\_\_}, \code{\_\_NASM\_MINOR\_\_},
+\code{\_\_NASM\_SUBMINOR\_\_} and \code{\_\_NASM\_PATCHLEVEL\_\_} concatenated to
+produce a single doubleword. Hence, for 0.98.32p1, the returned number
+would be equivalent to:
+
+\begin{lstlisting}
+dd      0x00622001
+\end{lstlisting}
+
+or
+
+\begin{lstlisting}
+db      1,32,98,0
+\end{lstlisting}
+
+Note that the above lines are generate exactly the same code, the second
+line is used just to give an indication of the order that the separate
+values will be present in memory.
+
+
+\xsubsection{stdmacverstr}{\codeindex{\_\_NASM\_VER\_\_}:
+\textindexlc{NASM Version string}}
+
+The single-line macro \code{\_\_NASM\_VER\_\_} expands to a string which defines
+the version number of nasm being used. So, under NASM 0.98.32 for example,
+
+\begin{lstlisting}
+db      __NASM_VER__
+\end{lstlisting}
+
+would expand to
+
+\begin{lstlisting}
+db      "0.98.32"
+\end{lstlisting}
+
+\xsubsection{fileline}{\codeindex{\_\_FILE\_\_} and \codeindex{\_\_LINE\_\_}:
+File Name and Line Number}
+
+Like the C preprocessor, NASM allows the user to find out the file
+name and line number containing the current instruction. The macro
+\code{\_\_FILE\_\_} expands to a string constant giving the name of the
+current input file (which may change through the course of assembly
+if \code{\%include} directives are used), and \code{\_\_LINE\_\_} expands
+to a numeric constant giving the current line number in the input file.
+
+These macros could be used, for example, to communicate debugging
+information to a macro, since invoking \code{\_\_LINE\_\_} inside a macro
+definition (either single-line or multi-line) will return the line
+number of the macro \emph{call}, rather than \emph{definition}. So to
+determine where in a piece of code a crash is occurring, for example,
+one could write a routine \code{stillhere}, which is passed a line number
+in \code{EAX} and outputs something like "line 155: still here".
+You could then write a macro
+
+\begin{lstlisting}
+%macro  notdeadyet 0
+    push    eax
+    mov     eax,__LINE__
+    call    stillhere
+    pop     eax
+%endmacro
+\end{lstlisting}
+
+and then pepper your code with calls to \c{notdeadyet} until you
+find the crash point.
+
+\xsubsection{bitsm}{\codeindex{\_\_BITS\_\_}: Current BITS Mode}
+
+The \code{\_\_BITS\_\_} standard macro is updated every time that the BITS
+mode is set using the \code{BITS XX} or \code{[BITS XX]} directive,
+where XX is a valid mode number of 16, 32 or 64. \code{\_\_BITS\_\_} receives
+the specified mode number and makes it globally available. This can be very
+useful for those who utilize mode-dependent macros.
+
+\xsubsection{ofmtm}{\codeindex{\_\_OUTPUT\_FORMAT\_\_}: Current Output Format}
+
+The \code{\_\_OUTPUT\_FORMAT\_\_} standard macro holds the current output
+format name, as given by the \code{-f} option or NASM's default. Type
+\code{nasm -hf} for a list.
+
+\begin{lstlisting}
+%ifidn __OUTPUT_FORMAT__, win32
+    %define NEWLINE 13, 10
+%elifidn __OUTPUT_FORMAT__, elf32
+    %define NEWLINE 10
+%endif
+\end{lstlisting}
+
+\xsubsection{dfmtm}{\codeindex{\_\_DEBUG\_FORMAT\_\_}:
+Current Debug Format}
+
+If debugging information generation is enabled, The
+\code{\_\_DEBUG\_FORMAT\_\_} standard macro holds the current
+debug format name as specified by the \code{-F} or \code{-g} option
+or the output format default. Type \code{nasm -f} \emph{output}
+\code{y} for a list.
+
+\code{\_\_DEBUG\_FORMAT\_\_} is not defined if debugging is not
+enabled, or if the debug format specified is \code{null}.
+
+\xsubsection{datetime}{Assembly Date and Time Macros}
+
+NASM provides a variety of macros that represent the timestamp of the
+assembly session.
+
+\begin{itemize}
+    \item{The \codeindex{\_\_DATE\_\_} and \codeindex{\_\_TIME\_\_}
+        macros give the assembly date and time as strings, in ISO 8601
+        format (\code{"YYYY-MM-DD"} and \code{"HH:MM:SS"}, respectively).}
+
+    \item{The \codeindex{\_\_DATE\_NUM\_\_} and \codeindex{\_\_TIME\_NUM\_\_}
+        macros give the assembly date and time in numeric form; in the format
+        \code{YYYYMMDD} and \code{HHMMSS} respectively.}
+
+    \item{The \codeindex{\_\_UTC\_DATE\_\_} and \codeindex{\_\_UTC\_TIME\_\_}
+        macros give the assembly date and time in universal time (UTC) as strings,
+        in ISO 8601 format (\code{"YYYY-MM-DD"} and \code{"HH:MM:SS"}, respectively).
+        If the host platform doesn't provide UTC time, these macros are undefined.}
+
+    \item{The \codeindex{\_\_UTC\_DATE\_NUM\_\_} and \codeindex{\_\_UTC\_TIME\_NUM\_\_}
+        macros give the assembly date and time universal time (UTC) in numeric form;
+        in the format \code{YYYYMMDD} and \code{HHMMSS} respectively. If the
+        host platform doesn't provide UTC time, these macros are undefined.}
+
+    \item{The \code{\_\_POSIX\_TIME\_\_} macro is defined as a number containing
+        the number of seconds since the POSIX epoch, 1 January 1970 00:00:00 UTC;
+        excluding any leap seconds. This is computed using UTC time if
+        available on the host platform, otherwise it is computed using the
+        local time as if it was UTC.}
+\end{itemize}
+
+All instances of time and date macros in the same assembly session
+produce consistent output.  For example, in an assembly session
+started at 42 seconds after midnight on January 1, 2010 in Moscow
+(timezone UTC+3) these macros would have the following values,
+assuming, of course, a properly configured environment with a correct
+clock:
+
+\begin{lstlisting}
+__DATE__            "2010-01-01"
+__TIME__            "00:00:42"
+__DATE_NUM__        20100101
+__TIME_NUM__        000042
+__UTC_DATE__        "2009-12-31"
+__UTC_TIME__        "21:00:42"
+__UTC_DATE_NUM__    20091231
+__UTC_TIME_NUM__    210042
+__POSIX_TIME__      1262293242
+\end{lstlisting}
+
+\xsubsection{usedef}{\indexcode{\_\_USE\_*\_\_}\code{\_\_USE\_}
+\emph{package}\code{\_\_}: Package Include Test}
+
+When a standard macro package (see \nref{macropkg}) is included with the
+\code{\%use} directive (see \nref{use}), a single-line macro of
+the form \code{\_\_USE\_}\emph{package}\code{\_\_} is automatically defined.
+This allows testing if a particular package is invoked or not.
+
+For example, if the \code{altreg} package is included (see \nref{pkgaltreg}),
+then the macro \code{\_\_USE\_ALTREG\_\_} is defined.
+
+\xsubsection{passdef}{\codeindex{\_\_PASS\_\_}: Assembly Pass}
+
+The macro \code{\_\_PASS\_\_} is defined to be \code{1} on preparatory passes,
+and \code{2} on the final pass.  In preprocess-only mode, it is set to
+\code{3}, and when running only to generate dependencies (due to the
+\code{-M} or \code{-MG} option, see \nref{opt-M}) it is set to \code{0}.
+
+\emph{Avoid using this macro if at all possible. It is tremendously easy
+to generate very strange errors by misusing it, and the semantics may
+change in future versions of NASM.}
+
+\xsubsection{struc}{\codeindex{STRUC} and \codeindex{ENDSTRUC}:
+\textindexlc{Declaring Structure} Data Types}
+
+The core of NASM contains no intrinsic means of defining data
+structures; instead, the preprocessor is sufficiently powerful that
+data structures can be implemented as a set of macros. The macros
+\code{STRUC} and \code{ENDSTRUC} are used to define a structure
+data type.
+
+\code{STRUC} takes one or two parameters. The first parameter is the name
+of the data type. The second, optional parameter is the base offset of
+the structure. The name of the data type is defined as a symbol with
+the value of the base offset, and the name of the data type with the
+suffix \code{\_size} appended to it is defined as an \code{EQU} giving
+the size of the structure. Once \code{STRUC} has been issued, you are
+defining the structure, and should define fields using the \code{RESB}
+family of pseudo-instructions, and then invoke \code{ENDSTRUC} to finish
+the definition.
+
+For example, to define a structure called \code{mytype} containing a
+longword, a word, a byte and a string of bytes, you might code
+
+\begin{lstlisting}
+struc mytype
+    mt_long:    resd    1
+    mt_word:    resw    1
+    mt_byte:    resb    1
+    mt_str:     resb    32
+endstruc
+\end{lstlisting}
+
+The above code defines six symbols: \code{mt\_long} as 0 (the offset
+from the beginning of a \code{mytype} structure to the longword field),
+\code{mt\_word} as 4, \code{mt\_byte} as 6, \code{mt\_str} as 7,
+\code{mytype\_size} as 39, and \code{mytype} itself as zero.
+
+The reason why the structure type name is defined at zero by default
+is a side effect of allowing structures to work with the local label
+mechanism: if your structure members tend to have the same names in
+more than one structure, you can define the above structure like this:
+
+\begin{lstlisting}
+struc mytype
+    .long:  resd    1
+    .word:  resw    1
+    .byte:  resb    1
+    .str:   resb    32
+endstruc
+\end{lstlisting}
+
+This defines the offsets to the structure fields as \code{mytype.long},
+\code{mytype.word}, \code{mytype.byte} and \code{mytype.str}.
+
+NASM, since it has no \emph{intrinsic} structure support, does not
+support any form of period notation to refer to the elements of a
+structure once you have one (except the above local-label notation),
+so code such as \code{mov ax,[mystruc.mt\_word]} is not valid.
+\code{mt\_word} is a constant just like any other constant, so the
+correct syntax is \code{mov ax,[mystruc+mt\_word]} or
+\code{mov ax,[mystruc+mytype.word]}.
+
+Sometimes you only have the address of the structure displaced by an
+offset. For example, consider this standard stack frame setup:
+
+\begin{lstlisting}
+push    ebp
+mov     ebp, esp
+sub     esp, 40
+\end{lstlisting}
+
+In this case, you could access an element by subtracting the offset:
+
+\begin{lstlisting}
+mov [ebp - 40 + mytype.word], ax
+\end{lstlisting}
+
+However, if you do not want to repeat this offset, you can use -40 as
+a base offset:
+
+\begin{lstlisting}
+struc mytype, -40
+\end{lstlisting}
+
+And access an element this way:
+
+\begin{lstlisting}
+mov [ebp + mytype.word], ax
+\end{lstlisting}
+
+\xsubsection{istruc}{\codeindex{ISTRUC}, \codeindex{AT} and
+\codeindex{IEND}: Declaring}
+\textindexlc{Instances of Structures}
+
+Having defined a structure type, the next thing you typically want
+to do is to declare instances of that structure in your data
+segment. NASM provides an easy way to do this in the \code{ISTRUC}
+mechanism. To declare a structure of type \code{mytype} in a program,
+you code something like this:
+
+\begin{lstlisting}
+mystruc:
+    istruc mytype
+        at mt_long, dd  123456
+        at mt_word, dw  1024
+        at mt_byte, db  'x'
+        at mt_str,  db  'hello, world', 13, 10, 0
+    iend
+\end{lstlisting}
+
+The function of the \code{AT} macro is to make use of the \code{TIMES}
+prefix to advance the assembly position to the correct point for the
+specified structure field, and then to declare the specified data.
+Therefore the structure fields must be declared in the same order as
+they were specified in the structure definition.
+
+If the data to go in a structure field requires more than one source
+line to specify, the remaining source lines can easily come after
+the \code{AT} line. For example:
+
+\begin{lstlisting}
+at mt_str,  db  123,134,145,156,167,178,189
+            db  190,100,0
+\end{lstlisting}
+
+Depending on personal taste, you can also omit the code part of the
+\code{AT} line completely, and start the structure field on the next
+line:
+
+\begin{lstlisting}
+at mt_str
+        db  'hello, world'
+        db  13,10,0
+\end{lstlisting}
+
+\xsubsection{align}{\codeindex{ALIGN} and \codeindex{ALIGNB}: Data Alignment}
+
+The \code{ALIGN} and \code{ALIGNB} macros provides a convenient way to
+align code or data on a word, longword, paragraph or other boundary.
+Some assemblers call this directive \codeindex{EVEN}. The syntax of the
+\code{ALIGN} and \code{ALIGNB} macros is
+
+\begin{lstlisting}
+align   4           ; align on 4-byte boundary
+align   16          ; align on 16-byte boundary
+align   8,db 0      ; pad with 0s rather than NOPs
+align   4,resb 1    ; align to 4 in the BSS
+alignb  4           ; equivalent to previous line
+\end{lstlisting}
+
+Both macros require their first argument to be a power of two; they
+both compute the number of additional bytes required to bring the
+length of the current section up to a multiple of that power of two,
+and then apply the \code{TIMES} prefix to their second argument to
+perform the alignment.
+
+If the second argument is not specified, the default for \code{ALIGN}
+is \code{NOP}, and the default for \code{ALIGNB} is \code{RESB 1}.
+So if the second argument is specified, the two macros are equivalent.
+Normally, you can just use \code{ALIGN} in code and data sections and
+\code{ALIGNB} in BSS sections, and never need the second argument
+except for special purposes.
+
+\code{ALIGN} and \code{ALIGNB}, being simple macros, perform no error
+checking: they cannot warn you if their first argument fails to be a
+power of two, or if their second argument generates more than one
+byte of code. In each of these cases they will silently do the wrong
+thing.
+
+\code{ALIGNB} (or \code{ALIGN} with a second argument of \code{RESB 1})
+can be used within structure definitions:
+
+\begin{lstlisting}
+struc mytype2
+    mt_byte:
+        resb 1
+        alignb 2
+    mt_word:
+        resw 1
+        alignb 4
+    mt_long:
+        resd 1
+    mt_str:
+        resb 32
+endstruc
+\end{lstlisting}
+
+This will ensure that the structure members are sensibly aligned
+relative to the base of the structure.
+
+A final caveat: \code{ALIGN} and \code{ALIGNB} work relative to the
+beginning of the \emph{section}, not the beginning of the address space
+in the final executable. Aligning to a 16-byte boundary when the
+section you're in is only guaranteed to be aligned to a 4-byte
+boundary, for example, is a waste of effort. Again, NASM does not
+check that the section's alignment characteristics are sensible for
+the use of \code{ALIGN} or \code{ALIGNB}.
+
+Both \code{ALIGN} and \code{ALIGNB} do call \code{SECTALIGN} macro implicitly.
+See \nref{sectalign} for details.
+
+See also the \code{smartalign} standard macro package, \nref{pkgsmartalign}.
+
+\xsubsection{sectalign}{\codeindex{SECTALIGN}: Section Alignment}
+
+The \code{SECTALIGN} macros provides a way to modify alignment attribute
+of output file section. Unlike the \code{align=} attribute (which is allowed
+at section definition only) the \code{SECTALIGN} macro may be used at any time.
+
+For example the directive
+
+\begin{lstlisting}
+SECTALIGN 16
+\end{lstlisting}
+
+sets the section alignment requirements to 16 bytes. Once increased it can
+not be decreased, the magnitude may grow only.
+
+Note that \code{ALIGN} (see \nref{align}) calls the \code{SECTALIGN}
+macro implicitly so the active section alignment requirements may be updated.
+This is by default behaviour, if for some reason you want the \code{ALIGN}
+do not call \code{SECTALIGN} at all use the directive
+
+\begin{lstlisting}
+SECTALIGN OFF
+\end{lstlisting}
+
+It is still possible to turn in on again by
+
+\begin{lstlisting}
+SECTALIGN ON
+\end{lstlisting}

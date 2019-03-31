@@ -1,0 +1,945 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{lang}{The NASM Language}
+
+\xsection{syntax}{Layout of a NASM Source Line}
+
+Like most assemblers, each NASM source line contains (unless it
+is a macro, a preprocessor directive or an assembler directive: see
+\nref{preproc} and \nref{directive}) some combination
+of the four fields
+
+\begin{lstlisting}
+label:    instruction operands        ; comment
+\end{lstlisting}
+
+As usual, most of these fields are optional; the presence or absence
+of any combination of a label, an instruction and a comment is allowed.
+Of course, the operand field is either required or forbidden by the
+presence and nature of the instruction field.
+
+NASM uses backslash (\code{\textbackslash}) as the line continuation character;
+if a line ends with backslash, the next line is considered to be
+a part of the backslash-ended line.
+
+NASM places no restrictions on white space within a line: labels may
+have white space before them, or instructions may have no space
+before them, or anything. The \textindex{colon} after a label is also
+optional. (Note that this means that if you intend to code \code{lodsb}
+alone on a line, and type \code{lodab} by accident, then that's still a
+valid source line which does nothing but define a label. Running
+NASM with the command-line option \index{orphan-labels}\code{-w+orphan-labels}
+will cause it to warn you if you define a label alone on a line without
+a \textindex{trailing colon}.)
+
+\textindex{Valid characters} in labels are letters, numbers, \code{\_},
+\code{\$}, \code{\#}, \code{\@}, \code{~}, \code{.}, and \code{?}.
+The only characters which may be used as the \emph{first} character of
+an identifier are letters, \code{\.} (with special meaning: see
+\nref{locallab}), \code{\_} and \code{?}.
+An identifier may also be prefixed with a \codeindex{\$} to indicate
+that it is intended to be read as an identifier and not a reserved word;
+thus, if some other module you are linking with defines a symbol called
+\code{eax}, you can refer to \code{\$eax} in NASM code to distinguish
+the symbol from the register. Maximum length of an identifier is
+4095 characters.
+
+The instruction field may contain any machine instruction: Pentium
+and P6 instructions, FPU instructions, MMX instructions and even
+undocumented instructions are all supported. The instruction may be
+prefixed by \code{LOCK}, \code{REP}, \code{REPE}/\code{REPZ},
+\code{REPNE}/\code{REPNZ}, \code{XACQUIRE}/\code{XRELEASE} or
+\code{BND}/\code{NOBND}, in the usual way. Explicit
+\index{address-size!prefixes}address-size and \textindex{operand-size!prefixes}
+\codeindex{A16}, \codeindex{A32}, \codeindex{A64}, \codeindex{O16}
+and \codeindex{O32}, \codeindex{O64} are provided~-- one example of their
+use is given in \nref{mixsize}. You can also use the name of a
+\index{segment override}segment register as an instruction prefix: coding
+\code{es mov [bx],ax} is equivalent to coding \code{mov [es:bx],ax}.
+We recommend the latter syntax, since it is consistent with other syntactic
+features of the language, but for instructions such as \code{LODSB}, which
+has no operands and yet can require a segment override, there is no clean
+syntactic way to proceed apart from \code{es lodsb}.
+
+An instruction is not required to use a prefix: prefixes such as
+\code{CS}, \code{A32}, \code{LOCK} or \code{REPE} can appear on
+a line by themselves, and NASM will just generate the prefix bytes.
+
+In addition to actual machine instructions, NASM also supports a
+number of pseudo-instructions, described in \k{pseudop}.
+
+Instruction \textindex{operands} may take a number of forms: they can be
+registers, described simply by the register name (e.g. \code{ax},
+\code{bp}, \code{ebx}, \code{cr0}: NASM does not use the \code{gas}-style
+syntax in which register names must be prefixed by a \code{\%} sign),
+or they can be \textindex{effective addresses} (see \nref{effaddr}),
+constants (\nref{const}) or expressions (\nref{expr}).
+
+For x87 \textindex{floating-point} instructions, NASM accepts a wide
+range of syntaxes: you can use two-operand forms like MASM supports,
+or you can use NASM's native single-operand forms in most cases.
+% Details of all forms of each supported instruction are given in
+% \nref{iref}.
+For example, you can code:
+
+\begin{lstlisting}
+fadd    st1             ; this sets st0 := st0 + st1
+fadd    st0,st1         ; so does this
+
+fadd    st1,st0         ; this sets st1 := st1 + st0
+fadd    to st1          ; so does this
+\end{lstlisting}
+
+Almost any x87 floating-point instruction that references memory must
+use one of the prefixes \codeindex{DWORD}, \codeindex{QWORD} or
+\codeindex{TWORD} to indicate what size of \textindex{memory operand}
+it refers to.
+
+\xsection{pseudop}{\textindexlc{Pseudo-Instructions}}
+
+Pseudo-instructions are things which, though not real x86 machine
+instructions, are used in the instruction field anyway because that's
+the most convenient place to put them. The current pseudo-instructions
+are \codeindex{DB}, \codeindex{DW}, \codeindex{DD}, \codeindex{DQ},
+\codeindex{DT}, \codeindex{DO}, \codeindex{DY} and \codeindex{DZ};
+their \textindex{uninitialized} counterparts \codeindex{RESB},
+\codeindex{RESW}, \codeindex{RESD}, \codeindex{RESQ},
+\codeindex{REST}, \codeindex{RESO}, \codeindex{RESY} and
+\codeindex{RESZ}; the \codeindex{INCBIN} command, the \codeindex{EQU}
+command, and the \codeindex{TIMES} prefix.
+
+\xsubsection{db}{DB and Friends: Declaring Initialized Data}
+
+\codeindex{DB}, \codeindex{DW}, \codeindex{DD}, \codeindex{DQ},
+\codeindex{DT}, \codeindex{DO}, \codeindex{DY} and \codeindex{DZ}
+are used, much as in MASM, to declare initialized data in
+the output file. They can be invoked in a wide range of ways:
+\index{constants!floating-point}
+\index{constants!character}
+\index{constants!string}
+
+\begin{lstlisting}
+db    0x55                ; just the byte 0x55
+db    0x55,0x56,0x57      ; three bytes in succession
+db    'a',0x55            ; character constants are OK
+db    'hello',13,10,'$'   ; so are string constants
+dw    0x1234              ; 0x34 0x12
+dw    'a'                 ; 0x61 0x00 (it's just a number)
+dw    'ab'                ; 0x61 0x62 (character constant)
+dw    'abc'               ; 0x61 0x62 0x63 0x00 (string)
+dd    0x12345678          ; 0x78 0x56 0x34 0x12
+dd    1.234567e20         ; floating-point constant
+dq    0x123456789abcdef0  ; eight byte constant
+dq    1.234567e20         ; double-precision float
+dt    1.234567e20         ; extended-precision float
+\end{lstlisting}
+
+\code{DT}, \code{DO}, \code{DY} and \code{DZ} do not accept
+numeric constants as operands.
+\index{constants!numeric}
+
+\xsubsection{resb}{RESB and Friends: Declaring \textindexlc{Uninitialized} Data}
+
+\codeindex{RESB}, \codeindex{RESW}, \codeindex{RESD}, \codeindex{RESQ},
+\codeindex{REST}, \codeindex{RESO}, \codeindex{RESY} and \codeindex{RESZ}
+are designed to be used in the BSS section of a module: they declare
+\emph{uninitialized} storage space. Each takes a single operand, which is
+the number of bytes, words, doublewords or whatever to reserve. As stated
+in \nref{qsother}, NASM does not support the MASM/TASM syntax of
+reserving uninitialized space by writing \index{?}\code{DW ?} or similar
+things: this is what it does instead. The operand to a \code{RESB}-type
+pseudo-instruction is a \textindex{critical expression}:
+see \nref{crit}.
+
+For example:
+
+\begin{lstlisting}
+buffer:         resb    64              ; reserve 64 bytes
+wordvar:        resw    1               ; reserve a word
+realarray       resq    10              ; array of ten reals
+ymmval:         resy    1               ; one YMM register
+zmmvals:        resz    32              ; 32 ZMM registers
+\end{lstlisting}
+
+\xsubsection{incbin}{\codeindex{INCBIN}: Including External \textindexlc{Binary Files}}
+
+\code{INCBIN} is borrowed from the old Amiga assembler \textindex{DevPac}:
+it includes a binary file verbatim into the output file. This can be handy
+for (for example) including \textindex{graphics} and \textindex{sound} data
+directly into a game executable file. It can be called in one of these
+three ways:
+
+\begin{lstlisting}
+incbin  "file.dat"             ; include the whole file
+incbin  "file.dat",1024        ; skip the first 1024 bytes
+incbin  "file.dat",1024,512    ; skip the first 1024, and
+\end{lstlisting}
+
+\code{INCBIN} is both a directive and a standard macro; the standard
+macro version searches for the file in the include file search path
+and adds the file to the dependency lists. This macro can be
+overridden if desired.
+
+\xsubsection{equ}{\codeindex{EQU}: Defining Constants}
+
+\code{EQU} defines a symbol to a given constant value: when \code{EQU} is
+used, the source line must contain a label. The action of \code{EQU} is
+to define the given label name to the value of its (only) operand.
+This definition is absolute, and cannot change later. So, for
+example,
+
+\begin{lstlisting}
+message         db      'hello, world'
+msglen          equ     $-message
+\end{lstlisting}
+
+defines \code{msglen} to be the constant 12. \code{msglen} may
+not then be redefined later. This is not a \textindex{preprocessor}
+definition either: the value of \code{msglen} is evaluated \code{once},
+using the value of \code{\$} (see \nref{expr} for an explanation
+of \code{\$}) at the point of definition, rather than being evaluated
+wherever it is referenced and using the value of \code{\$} at
+the point of reference.
+
+\xsubsection{times}{\codeindex{TIMES}: \textindexlc{Repeating} Instructions or Data}
+
+The \code{TIMES} prefix causes the instruction to be assembled multiple
+times. This is partly present as NASM's equivalent of the \codeindex{DUP}
+syntax supported by \textindex{MASM}-compatible assemblers, in that you can
+code
+
+\begin{lstlisting}
+zerobuf:        times 64 db 0
+\end{lstlisting}
+
+or similar things; but \code{TIMES} is more versatile than that. The
+argument to \code{TIMES} is not just a numeric constant, but a numeric
+\emph{expression}, so you can do things like
+
+\begin{lstlisting}
+buffer: db      'hello, world'
+        times 64-$+buffer db ' '
+\end{lstlisting}
+
+which will store exactly enough spaces to make the total length of
+\code{buffer} up to 64. Finally, \code{TIMES} can be applied to ordinary
+instructions, so you can code trivial \textindex{unrolled loops} in it:
+
+\begin{lstlisting}
+times 100 movsb
+\end{lstlisting}
+
+Note that there is no effective difference between \code{times 100 resb
+1} and \code{resb 100}, except that the latter will be assembled about
+100 times faster due to the internal structure of the assembler.
+
+The operand to \code{TIMES} is a critical expression (\nref{crit}).
+
+Note also that \code{TIMES} can't be applied to \textindex{macros}: the reason
+for this is that \code{TIMES} is processed after the macro phase, which
+allows the argument to \code{TIMES} to contain expressions such as
+\code{64-\$+buffer} as above. To repeat more than one line of code,
+or a complex macro, use the preprocessor \codeindex{\%rep} directive.
+
+\xsection{effaddr}{Effective Addresses}
+
+An \textindex{effective address} is any operand to an instruction which
+\index{memory reference}references memory. Effective addresses, in NASM,
+have a very simple syntax: they consist of an expression evaluating
+to the desired address, enclosed in \textindex{square brackets}. For
+example:
+
+\begin{lstlisting}
+wordvar dw      123
+        mov     ax,[wordvar]
+        mov     ax,[wordvar+1]
+        mov     ax,[es:wordvar+bx]
+\end{lstlisting}
+
+Anything not conforming to this simple system is not a valid memory
+reference in NASM, for example \code{es:wordvar[bx]}.
+
+More complicated effective addresses, such as those involving more
+than one register, work in exactly the same way:
+
+\begin{lstlisting}
+mov     eax,[ebx*2+ecx+offset]
+mov     ax,[bp+di+8]
+\end{lstlisting}
+
+NASM is capable of doing \textindex{algebra} on these effective addresses,
+so that things which don't necessarily \emph{look} legal are perfectly
+all right:
+
+\begin{lstlisting}
+mov     eax,[ebx*5]             ; assembles as [ebx*4+ebx]
+mov     eax,[label1*2-label2]   ; ie [label1+(label1-label2)]
+\end{lstlisting}
+
+Some forms of effective address have more than one assembled form;
+in most such cases NASM will generate the smallest form it can. For
+example, there are distinct assembled forms for the 32-bit effective
+addresses \code{[eax*2+0]} and \code{[eax+eax]}, and NASM will
+generally generate the latter on the grounds that the former requires
+four bytes to store a zero offset.
+
+NASM has a hinting mechanism which will cause \code{[eax+ebx]} and
+\code{[ebx+eax]} to generate different opcodes; this is occasionally
+useful because \code{[esi+ebp]} and \code{[ebp+esi]} have different
+default segment registers.
+
+However, you can force NASM to generate an effective address in a
+particular form by the use of the keywords \code{BYTE}, \code{WORD},
+\code{DWORD} and \code{NOSPLIT}. If you need \code{[eax+3]} to be
+assembled using a double-word offset field instead of the one byte NASM
+will normally generate, you can code \code{[dword eax+3]}. Similarly, you
+can force NASM to use a byte offset for a small value which it hasn't seen
+on the first pass (see \nref{crit} for an example of such a code
+fragment) by using \code{[byte eax+offset]}. As special cases, \code{[byte eax]}
+will code \code{[eax+0]} with a byte offset of zero, and \code{[dword eax]}
+will code it with a double-word offset of zero. The normal form, \code{[eax]},
+will be coded with no offset field.
+
+The form described in the previous paragraph is also useful if you
+are trying to access data in a 32-bit segment from within 16 bit code.
+For more information on this see the section on mixed-size addressing
+(\nref{mixaddr}). In particular, if you need to access data with
+a known offset that is larger than will fit in a 16-bit value, if you don't
+specify that it is a dword offset, nasm will cause the high word of
+the offset to be lost.
+
+Similarly, NASM will split \code{[eax*2]} into \code{[eax+eax]} because
+that allows the offset field to be absent and space to be saved; in fact,
+it will also split \code{[eax*2+offset]} into \code{[eax+eax+offset]}.
+You can combat this behaviour by the use of the \code{NOSPLIT} keyword:
+\code{[nosplit eax*2]} will force \code{[eax*2+0]} to be generated literally.
+\code{[nosplit eax*1]} also has the same effect. In another way, a split EA
+form \code{[0, eax*2]} can be used, too. However, \code{NOSPLIT} in
+\code{[nosplit eax+eax]} will be ignored because user's intention here
+is considered as \code{[eax+eax]}.
+
+In 64-bit mode, NASM will by default generate absolute addresses. The
+\codeindex{REL} keyword makes it produce \code{RIP}-relative addresses.
+Since this is frequently the normally desired behaviour, see the \code{DEFAULT}
+directive (\nref{default}). The keyword \codeindex{ABS} overrides
+\codeindex{REL}.
+
+A new form of split effective addres syntax is also supported. This is
+mainly intended for mib operands as used by MPX instructions, but can
+be used for any memory reference. The basic concept of this form is
+splitting base and index.
+
+\begin{lstlisting}
+mov eax,[ebx+8,ecx*4]   ; ebx=base, ecx=index, 4=scale, 8=disp
+\end{lstlisting}
+
+For mib operands, there are several ways of writing effective address
+depending on the tools. NASM supports all currently possible ways of
+mib syntax:
+
+\begin{lstlisting}
+; bndstx
+; next 5 lines are parsed same
+; base=rax, index=rbx, scale=1, displacement=3
+bndstx [rax+0x3,rbx], bnd0      ; NASM - split EA
+bndstx [rbx*1+rax+0x3], bnd0    ; GAS - '*1' indecates an index reg
+bndstx [rax+rbx+3], bnd0        ; GAS - without hints
+bndstx [rax+0x3], bnd0, rbx     ; ICC-1
+bndstx [rax+0x3], rbx, bnd0     ; ICC-2
+\end{lstlisting}
+
+When broadcasting decorator is used, the opsize keyword should match
+the size of each element.
+
+\begin{lstlisting}
+vdivps zmm4, zmm5, dword [rbx]{1to16}   ; single-precision float
+vdivps zmm4, zmm5, zword [rbx]          ; packed 512 bit memory
+\end{lstlisting}
+
+\xsection{const}{\textindexlc{Constants}}
+
+NASM understands four different types of constant: numeric,
+character, string and floating-point.
+
+\xsubsection{numconst}{Numeric Constants}
+\index{constants!numeric}
+\index{constants!hexadecimal}
+\index{constants!decimal}
+\index{constants!octal}
+\index{constants!binary}
+
+A numeric constant is simply a number. NASM allows you to specify
+numbers in a variety of number bases, in a variety of ways: you can
+suffix \code{H} or \code{X}, \code{D} or \code{T}, \code{Q} or
+\code{O}, and \code{B} or \code{Y} for hexadecimal, decimal, octal and
+binary respectively, or you can prefix \code{0x}, for hexadecimal in
+the style of C, or you can prefix \code{\$} for hexadecimal in the style
+of Borland Pascal or Motorola Assemblers. Note, though, that the \index{prefix}
+\codeindex{\$} prefix does double duty as a prefix on identifiers (see \nref{syntax}),
+so a hex number prefixed with a \code{\$} sign must have a digit after the
+\code{\$} rather than a letter. In addition, current versions of NASM accept
+the prefix \code{0h} for hexadecimal, \code{0d} or \code{0t} for decimal,
+\code{0o} or \code{0q} for octal, and \code{0b} or \code{0y} for binary.
+Please note that unlike C, a \code{0} prefix by itself does \emph{not} imply
+an octal constant!
+
+Numeric constants can have underscores (\code{\_}) interspersed to break
+up long strings.
+
+Some examples (all producing exactly the same code):
+
+\begin{lstlisting}
+mov     ax,200          ; decimal
+mov     ax,0200         ; still decimal
+mov     ax,0200d        ; explicitly decimal
+mov     ax,0d200        ; also decimal
+mov     ax,0c8h         ; hex
+mov     ax,$0c8         ; hex again: the 0 is required
+mov     ax,0xc8         ; hex yet again
+mov     ax,0hc8         ; still hex
+mov     ax,310q         ; octal
+mov     ax,310o         ; octal again
+mov     ax,0o310        ; octal yet again
+mov     ax,0q310        ; octal yet again
+mov     ax,11001000b    ; binary
+mov     ax,1100_1000b   ; same binary constant
+mov     ax,1100_1000y   ; same binary constant once more
+mov     ax,0b1100_1000  ; same binary constant yet again
+mov     ax,0y1100_1000  ; same binary constant yet again
+\end{lstlisting}
+
+\xsubsection{strings}{\index{strings}Character Strings}
+
+A character string consists of up to eight characters enclosed in
+either single quotes (\code{'...'}), double quotes (\code{"..."}) or
+backquotes (\code{`...`}). Single or double quotes are equivalent to
+NASM (except of course that surrounding the constant with single
+quotes allows double quotes to appear within it and vice versa); the
+contents of those are represented verbatim. Strings enclosed in
+backquotes support C-style \code{\textbackslash}-escapes for
+special characters.
+
+The following \textindex{escape sequences} are recognized by
+backquoted strings:
+
+\begin{lstlisting}
+\'          single quote (')
+\"          double quote (")
+\`          backquote (`)
+\\          backslash (\)
+\?          question mark (?)
+\a          BEL (ASCII 7)
+\b          BS  (ASCII 8)
+\t          TAB (ASCII 9)
+\n          LF  (ASCII 10)
+\v          VT  (ASCII 11)
+\f          FF  (ASCII 12)
+\r          CR  (ASCII 13)
+\e          ESC (ASCII 27)
+\377        Up to 3 octal digits - literal byte
+\xFF        Up to 2 hexadecimal digits - literal byte
+\u1234      4 hexadecimal digits - Unicode character
+\U12345678  8 hexadecimal digits - Unicode character
+\end{lstlisting}
+
+All other escape sequences are reserved. Note that \code{\textbackslash 0},
+meaning a \code{NUL} character (ASCII 0), is a special case of
+the octal escape sequence.
+
+\textindex{Unicode} characters specified with \code{\textbackslash u}
+or \code{\textbackslash U} are converted to \textindex{UTF-8}.
+For example, the following lines are all equivalent:
+
+\begin{lstlisting}
+db `\u263a`            ; UTF-8 smiley face
+db `\xe2\x98\xba`      ; UTF-8 smiley face
+db 0E2h, 098h, 0BAh    ; UTF-8 smiley face
+\end{lstlisting}
+
+\xsubsection{chrconst}{Character Constants}
+\index{constants!character}
+
+A character constant consists of a string up to eight bytes long, used
+in an expression context. It is treated as if it was an integer.
+
+A character constant with more than one byte will be arranged
+with \textindex{little-endian} order in mind: if you code
+
+\begin{lstlisting}
+mov eax,'abcd'
+\end{lstlisting}
+
+then the constant generated is not \code{0x61626364}, but \code{0x64636261},
+so that if you were then to store the value into memory, it would read
+\code{abcd} rather than \code{dcba}. This is also the sense of character
+constants understood by the Pentium's \codeindex{CPUID} instruction.
+
+\xsubsection{strconst}{String Constants}
+\index{constants!string}
+
+String constants are character strings used in the context of some
+pseudo-instructions, namely the \indexcode{DW}\indexcode{DD}\indexcode{DQ}
+\indexcode{DT}\indexcode{DO}\indexcode{DY}\codeindex{DB} family and
+\codeindex{INCBIN} (where it represents a filename.) They are also used in
+certain preprocessor directives.
+
+A string constant looks like a character constant, only longer. It
+is treated as a concatenation of maximum-size character constants
+for the conditions. So the following are equivalent:
+
+\begin{lstlisting}
+db    'hello'               ; string constant
+db    'h','e','l','l','o'   ; equivalent character constants
+\end{lstlisting}
+
+And the following are also equivalent:
+
+\begin{lstlisting}
+dd    'ninechars'           ; doubleword string constant
+dd    'nine','char','s'     ; becomes three doublewords
+db    'ninechars',0,0,0     ; and really looks like this
+\end{lstlisting}
+
+Note that when used in a string-supporting context, quoted strings are
+treated as a string constants even if they are short enough to be a
+character constant, because otherwise \code{db 'ab'} would have the same
+effect as \code{db 'a'}, which would be silly. Similarly, three-character
+or four-character constants are treated as strings when they are
+operands to \code{DW}, and so forth.
+
+\xsubsection{unicode}{Unicode Constants}
+\index{constants!unicode}
+\index{UTF-16}
+\index{UTF-32}
+
+The special operators \codeindex{\_\_utf16\_\_}, \codeindex{\_\_utf16le\_\_},
+\codeindex{\_\_utf16be\_\_}, \codeindex{\_\_utf32\_\_}, \codeindex{\_\_utf32le\_\_}
+and \codeindex{\_\_utf32be\_\_} allows definition of Unicode strings.
+They take a string in UTF-8 format and converts it to UTF-16 or UTF-32,
+respectively. Unless the \code{be} forms are specified, the output is
+littleendian.
+
+For example:
+
+\begin{lstlisting}
+%define u(x) __utf16__(x)
+%define w(x) __utf32__(x)
+
+      dw u('C:\WINDOWS'), 0       ; Pathname in UTF-16
+      dd w(`A + B = \u206a`), 0   ; String in UTF-32
+\end{lstlisting}
+
+The UTF operators can be applied either to strings passed to the
+\code{DB} family instructions, or to character constants in an expression
+context.
+
+\xsubsection{fltconst}{Floating-Point Constants}
+\index{constants!floating-point}
+
+\textindexlc{Floating-point} constants are acceptable only as arguments to
+\codeindex{DB}, \codeindex{DW}, \codeindex{DD}, \codeindex{DQ}, \codeindex{DT},
+and \codeindex{DO}, or as arguments to the special operators \codeindex{\_\_float8\_\_},
+\codeindex{\_\_float16\_\_}, \codeindex{\_\_float32\_\_}, \codeindex{\_\_float64\_\_},
+\codeindex{\_\_float80m\_\_}, \codeindex{\_\_float80e\_\_}, \codeindex{\_\_float128l\_\_},
+and \codeindex{\_\_float128h\_\_}.
+
+Floating-point constants are expressed in the traditional form:
+digits, then a period, then optionally more digits, then optionally an
+\code{E} followed by an exponent. The period is mandatory, so that NASM
+can distinguish between \code{dd 1}, which declares an integer constant,
+and \code{dd 1.0} which declares a floating-point constant.
+
+NASM also support C99-style hexadecimal floating-point: \code{0x},
+hexadecimal digits, period, optionally more hexadeximal digits, then
+optionally a \code{P} followed by a \emph{binary} (not hexadecimal)
+exponent in decimal notation. As an extension, NASM additionally
+supports the \code{0h} and \code{\$} prefixes for hexadecimal,
+as well binary and octal floating-point, using the \code{0b} or
+\code{0y} and \code{0o} or \code{0q} prefixes, respectively.
+
+Underscores to break up groups of digits are permitted in
+floating-point constants as well.
+
+Some examples:
+
+\begin{lstlisting}
+db    -0.2                    ; "Quarter precision"
+dw    -0.5                    ; IEEE 754r/SSE5 half precision
+dd    1.2                     ; an easy one
+dd    1.222_222_222           ; underscores are permitted
+dd    0x1p+2                  ; 1.0x2^2 = 4.0
+dq    0x1p+32                 ; 1.0x2^32 = 4 294 967 296.0
+dq    1.e10                   ; 10 000 000 000.0
+dq    1.e+10                  ; synonymous with 1.e10
+dq    1.e-10                  ; 0.000 000 000 1
+dt    3.141592653589793238462 ; pi
+do    1.e+4000                ; IEEE 754r quad precision
+\end{lstlisting}
+
+The 8-bit "quarter-precision" floating-point format is
+sign:exponent:mantissa = 1:4:3 with an exponent bias of 7. This
+appears to be the most frequently used 8-bit floating-point format,
+although it is not covered by any formal standard. This is sometimes
+called a ``\textindex{minifloat}''.
+
+The special operators are used to produce floating-point numbers in
+other contexts. They produce the binary representation of a specific
+floating-point number as an integer, and can use anywhere integer
+constants are used in an expression. \code{\_\_float80m\_\_} and
+\code{\_\_float80e\_\_} produce the 64-bit mantissa and 16-bit
+exponent of an 80-bit floating-point number, and \code{\_\_float128l\_\_}
+and \code{\_\_float128h\_\_} produce the lower and upper 64-bit halves
+of a 128-bit floating-point number, respectively.
+
+For example:
+
+\begin{lstlisting}
+mov    rax,__float64__(3.141592653589793238462)
+\end{lstlisting}
+
+would assign the binary representation of pi as a 64-bit floating
+point number into \code{RAX}. This is exactly equivalent to:
+
+\begin{lstlisting}
+mov    rax,0x400921fb54442d18
+\end{lstlisting}
+
+NASM cannot do compile-time arithmetic on floating-point constants.
+This is because NASM is designed to be portable - although it always
+generates code to run on x86 processors, the assembler itself can
+run on any system with an ANSI C compiler. Therefore, the assembler
+cannot guarantee the presence of a floating-point unit capable of
+handling the \textindexlc{Intel number formats}, and so for NASM
+to be able to do floating arithmetic it would have to include its
+own complete set of floating-point routines, which would significantly
+increase the size of the assembler for very little benefit.
+
+The special tokens \codeindex{\_\_Infinity\_\_}, \codeindex{\_\_QNaN\_\_} (or
+\codeindex{\_\_NaN\_\_}) and \codeindex{\_\_SNaN\_\_} can be used to generate
+\index{infinity}infinities, quiet \textindex{NaN}s, and signalling NaNs,
+respectively. These are normally used as macros:
+
+\begin{lstlisting}
+%define Inf __Infinity__
+%define NaN __QNaN__
+
+      dq    +1.5, -Inf, NaN         ; Double-precision constants
+\end{lstlisting}
+
+The \code{\%use fp} standard macro package contains a set of convenience
+macros. See \nref{pkgfp}.
+
+\xsubsection{bcdconst}{Packed BCD Constants}
+\index{constants!packed BCD}
+
+x87-style packed BCD constants can be used in the same contexts as
+80-bit floating-point numbers. They are suffixed with \code{p} or
+prefixed with \code{0p}, and can include up to 18 decimal digits.
+
+As with other numeric constants, underscores can be used
+to separate digits.
+
+For example:
+
+\begin{lstlisting}
+dt 12_345_678_901_245_678p
+dt -12_345_678_901_245_678p
+dt +0p33
+dt 33p
+\end{lstlisting}
+
+\xsection{expr}{\textindex{Expressions}}
+
+Expressions in NASM are similar in syntax to those in C. Expressions
+are evaluated as 64-bit integers which are then adjusted to the
+appropriate size.
+
+NASM supports two special tokens in expressions, allowing
+calculations to involve the current assembly position: the
+\index{\$}\index{here}\code{\$} and \codeindex{\$\$} tokens.
+\code{\$} evaluates to the assembly position at the beginning
+of the line containing the expression; so you can code an
+\textindex{infinite loop} using \code{JMP \$}. \code{\$\$}
+evaluates to the beginning of the current section; so you can
+tell how far into the section you are by using \code{(\$-\$\$)}.
+
+The arithmetic \textindex{operators} provided by NASM are listed here,
+in increasing order of \textindex{precedence}.
+
+\xsubsection{expor}{\codeindex{|}: Bitwise OR Operator}
+\index{bitwise!OR}
+
+The \code{|} operator gives a bitwise OR, exactly as performed by the
+\code{OR} machine instruction. Bitwise OR is the lowest-priority
+arithmetic operator supported by NASM.
+
+\xsubsection{expxor}{\codeindex{\textasciicircum}: Bitwise XOR Operator}
+\index{bitwise!XOR}
+
+The \code{\textasciicircum} operator provides the bitwise XOR operation.
+
+\xsubsection{expand}{\codeindex{\&}: Bitwise AND Operator}
+\index{bitwise!AND}
+
+The \code{\&} operator provides the bitwise AND operation.
+
+\xsubsection{expshift}{\codeindex{<<} and \codeindex{>>}: \textindexlc{Bit Shift} Operators}
+
+\code{<<} gives a bit-shift to the left, just as it does in C.
+So \code{5<<3} evaluates to 5 times 8, or 40. \code{>>} gives
+a bit-shift to the right; in NASM, such a shift is \emph{always}
+unsigned, so that the bits shifted in from the left-hand end
+are filled with zero rather than a sign-extension of the
+previous highest bit.
+
+\xsubsection{expplmi}{\codeindex{+} and \codeindex{-}:
+\textindexlc{Addition} and \textindexlc{Subtraction} Operators}
+
+The \code{+} and \code{-} operators do perfectly ordinary addition
+and subtraction.
+
+\xsubsection{expmul}{\codeindex{*}, \codeindex{/},
+\codeindex{//} and \codeindex{\%\%}:
+\textindexlc{Multiplication} and \textindexlc{Division}}
+
+\code{*} is the multiplication operator. \code{/} and \code{//} are both
+division operators: \code{/} is \textindex{unsigned division} and
+\code{//} is \textindex{signed division}. Similarly, \code{\%} and
+\code{\%\%} provide \index{unsigned modulo}\index{modulo operators}unsigned
+and \textindex{signed modulo} operators respectively.
+
+NASM, like ANSI C, provides no guarantees about the sensible
+operation of the signed modulo operator.
+
+Since the \code{\%} character is used extensively by the macro
+\textindex{preprocessor}, you should ensure that both the signed
+and unsigned modulo operators are followed by white space wherever
+they appear.
+
+\xsubsection{expunary}{\textindex{Unary Operators}}
+\index{unary!+}
+\index{unary!-}
+\index{unary!\textasciitilde}
+\index{unary!seg}
+
+The highest-priority operators in NASM's expression grammar are those
+which only apply to one argument. These are \codeindex{+},
+\codeindex{-}, \codeindex{\textasciitilde}, \codeindex{!},
+\codeindex{SEG}, and the \textindex{integer functions} operators.
+
+\code{-} negates its operand, \code{+} does nothing (it's provided for
+symmetry with \code{-}), \code{\textasciitilde} computes the
+\textindex{one's complement} of its operand, \code{!} is the
+\textindex{logical negation} operator.
+
+\code{SEG} provides the \textindex{segment address}
+of its operand (explained in more detail in \nref{segwrt}).
+
+A set of additional operators with leading and trailing double
+underscores are used to implement the integer functions of the
+\code{ifunc} macro package, see \nref{pkgifunc}.
+
+\xsection{segwrt}{\codeindex{SEG} and \codeindex{WRT}}
+
+When writing large 16-bit programs, which must be split into
+multiple \textindex{segments}, it is often necessary to be able
+to refer to the \index{segment address}segment part of the address
+of a symbol. NASM supports the \code{SEG} operator to perform
+this function.
+
+The \code{SEG} operator returns the \emph{\textindex{preferred}}
+segment base of a symbol, defined as the segment base relative
+to which the offset of the symbol makes sense. So the code
+
+\begin{lstlisting}
+mov     ax,seg symbol
+mov     es,ax
+mov     bx,symbol
+\end{lstlisting}
+
+will load \code{ES:BX} with a valid pointer to the symbol
+\code{symbol}.
+
+Things can be more complex than this: since 16-bit segments and
+\textindex{groups} may \index{overlapping segments}overlap,
+you might occasionally want to refer to some symbol using
+a different segment base from the preferred one. NASM lets you
+do this, by the use of the \code{WRT} (With Reference To) keyword.
+So you can do things like
+
+\begin{lstlisting}
+mov     ax,weird_seg        ; weird_seg is a segment base
+mov     es,ax
+mov     bx,symbol wrt weird_seg
+\end{lstlisting}
+
+to load \code{ES:BX} with a different, but functionally equivalent,
+pointer to the symbol \code{symbol}.
+
+NASM supports far (inter-segment) calls and jumps by means of the
+syntax \code{call segment:offset}, where \code{segment}
+and \code{offset} both represent immediate values. So to call
+a far procedure, you could code either of
+
+\begin{lstlisting}
+call    (seg procedure):procedure
+call    weird_seg:(procedure wrt weird_seg)
+\end{lstlisting}
+
+(The parentheses are included for clarity, to show the intended
+parsing of the above instructions. They are not necessary in
+practice.)
+
+NASM supports the syntax \indexcode{CALL FAR}\code{call far procedure}
+as a synonym for the first of the above usages. \code{JMP} works
+identically to \code{CALL} in these examples.
+
+To declare a \textindex{far pointer} to a data item in a data
+segment, you must code
+
+\begin{lstlisting}
+dw      symbol, seg symbol
+\end{lstlisting}
+
+NASM supports no convenient synonym for this, though you can always
+invent one using the macro processor.
+
+\xsection{strict}{\codeindex{STRICT}: Inhibiting Optimization}
+
+When assembling with the optimizer set to level 2 or higher (see
+\nref{opt-O}), NASM will use size specifiers (\code{BYTE},
+\code{WORD}, \code{DWORD}, \code{QWORD}, \code{TWORD}, \code{OWORD},
+\code{YWORD} or \code{ZWORD}), but will give them the smallest possible
+size. The keyword \code{STRICT} can be used to inhibit optimization
+and force a particular operand to be emitted in the specified size.
+For example, with the optimizer on, and in \code{BITS 16} mode,
+
+\begin{lstlisting}
+push dword 33
+\end{lstlisting}
+
+is encoded in three bytes \code{66 6A 21}, whereas
+
+\begin{lstlisting}
+push strict dword 33
+\end{lstlisting}
+
+is encoded in six bytes, with a full dword immediate operand
+\code{66 68 21 00 00 00}.
+
+With the optimizer off, the same code (six bytes) is generated whether
+the \code{STRICT} keyword was used or not.
+
+\xsection{crit}{\textindexlc{Critical Expressions}}
+
+Although NASM has an optional multi-pass optimizer, there are some
+expressions which must be resolvable on the first pass. These are
+called \emph{Critical Expressions}.
+
+The first pass is used to determine the size of all the assembled
+code and data, so that the second pass, when generating all the
+code, knows all the symbol addresses the code refers to. So one
+thing NASM can't handle is code whose size depends on the value
+of a symbol declared after the code in question. For example,
+
+\begin{lstlisting}
+times (label-$) db 0
+label:	db      'Where am I?'
+\end{lstlisting}
+
+The argument to \codeindex{TIMES} in this case could equally legally
+evaluate to anything at all; NASM will reject this example because
+it cannot tell the size of the \code{TIMES} line when it first sees it.
+It will just as firmly reject the slightly \index{paradox}paradoxical
+code
+
+\begin{lstlisting}
+times (label-$+1) db 0
+label:  db      'NOW where am I?'
+\end{lstlisting}
+
+in which \emph{any} value for the \code{TIMES} argument
+is by definition wrong!
+
+NASM rejects these examples by means of a concept called a
+\emph{critical expression}, which is defined to be an
+expression whose value is required to be computable in
+the first pass, and which must therefore depend only
+on symbols defined before it. The argument to the \code{TIMES}
+prefix is a critical expression.
+
+\xsection{locallab}{\textindexlc{Local Labels}}
+
+NASM gives special treatment to symbols beginning with a \textindex{period}.
+A label beginning with a single period is treated as a \emph{local}
+label, which means that it is associated with the previous non-local
+label. So, for example:
+
+\begin{lstlisting}
+label1  ; some code
+
+.loop
+    ; some more code
+
+    jne     .loop
+    ret
+
+label2  ; some code
+
+.loop
+    ; some more code
+
+    jne     .loop
+    ret
+\end{lstlisting}
+
+In the above code fragment, each \code{JNE} instruction jumps to the
+line immediately before it, because the two definitions of
+\code{.loop} are kept separate by virtue of each being associated
+with the previous non-local label.
+
+This form of local label handling is borrowed from the old Amiga
+assembler \textindex{DevPac}; however, NASM goes one step further,
+in allowing access to local labels from other parts of the code. This
+is achieved by means of \emph{defining} a local label in terms of the
+previous non-local label: the first definition of \code{.loop} above is
+really defining a symbol called \code{label1.loop}, and the second
+defines a symbol called \code{label2.loop}. So, if you really needed
+to, you could write
+
+\begin{lstlisting}
+label3  ; some more code
+    ; and some more
+
+    jmp label1.loop
+\end{lstlisting}
+
+Sometimes it is useful - in a macro, for instance - to be able to
+define a label which can be referenced from anywhere but which
+doesn't interfere with the normal local-label mechanism. Such a
+label can't be non-local because it would interfere with subsequent
+definitions of, and references to, local labels; and it can't be
+local because the macro that defined it wouldn't know the label's
+full name. NASM therefore introduces a third type of label, which is
+probably only useful in macro definitions: if a label begins with
+the \index{label prefix}special prefix \codeindex{..@}, then it
+does nothing to the local label mechanism. So you could code
+
+\begin{lstlisting}
+label1:             ; a non-local label
+.local:             ; this is really label1.local
+..@foo:             ; this is a special symbol
+label2:             ; another non-local label
+.local:             ; this is really label2.local
+
+    jmp     ..@foo  ; this will jump three lines up
+\end{lstlisting}
+
+NASM has the capacity to define other special symbols beginning with
+a double period: for example, \code{..start} is used to specify the
+entry point in the \code{obj} output format (see \nref{dotdotstart}),
+\code{..imagebase} is used to find out the offset from a base address
+of the current image in the \code{win64} output format
+(see \nref{win64pic}). So just keep in mind that symbols
+beginning with a double period are special.

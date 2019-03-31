@@ -1,0 +1,174 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{ndisasm}{Ndisasm}
+
+The Netwide Disassembler, NDISASM.
+
+\xsection{ndisintro}{Introduction}
+
+The Netwide Disassembler is a small companion program to the Netwide
+Assembler, NASM. It seemed a shame to have an x86 assembler,
+complete with a full instruction table, and not make as much use of
+it as possible, so here's a disassembler which shares the
+instruction table (and some other bits of code) with NASM.
+
+The Netwide Disassembler does nothing except to produce
+disassemblies of \emph{binary} source files. NDISASM does not have any
+understanding of object file formats, like \code{objdump}, and it will
+not understand \code{DOS .EXE} files like \code{debug} will. It just
+disassembles.
+
+\xsection{ndisrun}{Running NDISASM}
+
+To disassemble a file, you will typically use a command of the form
+
+\begin{lstlisting}
+ndisasm -b {16|32|64} filename
+\end{lstlisting}
+
+NDISASM can disassemble 16-, 32- or 64-bit code equally easily,
+provided of course that you remember to specify which it is to work
+with. If no \codeindex{-b} switch is present, NDISASM works in 16-bit mode
+by default. The \codeindex{-u} switch (for USE32) also invokes 32-bit mode.
+
+Two more command line options are \codeindex{-r} which reports the version
+number of NDISASM you are running, and \codeindex{-h} which gives a short
+summary of command line options.
+
+\xsubsection{ndiscom}{COM Files: Specifying an Origin}
+
+To disassemble a \code{DOS .COM} file correctly, a disassembler must
+assume that the first instruction in the file is loaded at address
+\code{0x100}, rather than at zero. NDISASM, which assumes by default
+that any file you give it is loaded at zero, will therefore need
+to be informed of this.
+
+The \codeindex{-o} option allows you to declare a different origin
+for the file you are disassembling. Its argument may be expressed
+in any of the NASM numeric formats: decimal by default, if it begins
+with `\code{\$}' or `\code{0x}' or ends in `\code{H}' it's \code{hex},
+if it ends in `\code{Q}' it's \code{octal}, and if it ends in
+`\code{B}' it's \code{binary}.
+
+Hence, to disassemble a \code{.COM} file:
+
+\begin{lstlisting}
+ndisasm -o100h filename.com
+\end{lstlisting}
+
+will do the trick.
+
+\xsubsection{ndissync}{Code Following Data: Synchronisation}
+
+Suppose you are disassembling a file which contains some data which
+isn't machine code, and \emph{then} contains some machine code. NDISASM
+will faithfully plough through the data section, producing machine
+instructions wherever it can (although most of them will look
+bizarre, and some may have unusual prefixes, e.g. `\code{FS OR AX,0x240A}'),
+and generating `DB' instructions ever so often if it's totally stumped.
+Then it will reach the code section.
+
+Supposing NDISASM has just finished generating a strange machine
+instruction from part of the data section, and its file position is
+now one byte \emph{before} the beginning of the code section. It's
+entirely possible that another spurious instruction will get
+generated, starting with the final byte of the data section, and
+then the correct first instruction in the code section will not be
+seen because the starting point skipped over it. This isn't really
+ideal.
+
+To avoid this, you can specify a `\codeindex{synchronisation}' point, or indeed
+as many synchronisation points as you like (although NDISASM can
+only handle 2147483647 sync points internally). The definition of a sync
+point is this: NDISASM guarantees to hit sync points exactly during
+disassembly. If it is thinking about generating an instruction which
+would cause it to jump over a sync point, it will discard that
+instruction and output a `\code{db}' instead. So it \emph{will} start
+disassembly exactly from the sync point, and so you \emph{will} see all
+the instructions in your code section.
+
+Sync points are specified using the \codeindex{-s} option: they are measured
+in terms of the program origin, not the file position. So if you
+want to synchronize after 32 bytes of a \codeindex{.COM} file, you would have to
+do
+
+\begin{lstlisting}
+ndisasm -o100h -s120h file.com
+\end{lstlisting}
+
+rather than
+
+\begin{lstlisting}
+ndisasm -o100h -s20h file.com
+\end{lstlisting}
+
+As stated above, you can specify multiple sync markers if you need
+to, just by repeating the \code{-s} option.
+
+
+\xsubsection{ndisisync}{Mixed Code and Data: Automatic (Intelligent)
+Synchronisation}
+\indexcode{auto-sync}
+
+Suppose you are disassembling the boot sector of a \code{DOS} floppy (maybe
+it has a virus, and you need to understand the virus so that you
+know what kinds of damage it might have done you). Typically, this
+will contain a \code{JMP} instruction, then some data, then the rest of the
+code. So there is a very good chance of NDISASM being \emph{misaligned}
+when the data ends and the code begins. Hence a sync point is
+needed.
+
+On the other hand, why should you have to specify the sync point
+manually? What you'd do in order to find where the sync point would
+be, surely, would be to read the \code{JMP} instruction, and then to use
+its target address as a sync point. So can NDISASM do that for you?
+
+The answer, of course, is yes: using either of the synonymous
+switches \codeindex{-a} (for automatic sync) or \codeindex{-i}
+(for intelligent sync) will enable \code{auto-sync} mode. Auto-sync
+mode automatically generates a sync point for any forward-referring
+PC-relative jump or call instruction that NDISASM encounters. (Since
+NDISASM is one-pass, if it encounters a PC-relative jump whose target
+has already been processed, there isn't much it can do about it...)
+
+Only PC-relative jumps are processed, since an absolute jump is
+either through a register (in which case NDISASM doesn't know what
+the register contains) or involves a segment address (in which case
+the target code isn't in the same segment that NDISASM is working
+in, and so the sync point can't be placed anywhere useful).
+
+For some kinds of file, this mechanism will automatically put sync
+points in all the right places, and save you from having to place
+any sync points manually. However, it should be stressed that
+auto-sync mode is \emph{not} guaranteed to catch all the sync points, and
+you may still have to place some manually.
+
+Auto-sync mode doesn't prevent you from declaring manual sync
+points: it just adds automatically generated ones to the ones you
+provide. It's perfectly feasible to specify \code{-i} \emph{and}
+some \code{-s} options.
+
+Another caveat with auto-sync mode is that if, by some unpleasant
+fluke, something in your data section should disassemble to a
+PC-relative call or jump instruction, NDISASM may obediently place a
+sync point in a totally random place, for example in the middle of
+one of the instructions in your code section. So you may end up with
+a wrong disassembly even if you use auto-sync. Again, there isn't
+much I can do about this. If you have problems, you'll have to use
+manual sync points, or use the \code{-k} option (documented below) to
+suppress disassembly of the data area.
+
+\xsubsection{ndisother}{Other Options}
+
+The \codeindex{-e} option skips a header on the file, by ignoring the first N
+bytes. This means that the header is \emph{not} counted towards the
+disassembly offset: if you give \code{-e10 -o10}, disassembly will start
+at byte 10 in the file, and this will be given offset 10, not 20.
+
+The \codeindex{-k} option is provided with two comma-separated numeric
+arguments, the first of which is an assembly offset and the second
+is a number of bytes to skip. This \emph{will} count the skipped bytes
+towards the assembly offset: its use is to suppress disassembly of a
+data section which wouldn't contain anything you wanted to see
+anyway.

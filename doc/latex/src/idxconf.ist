@@ -1,0 +1,9 @@
+%
+% vim: ts=4 sw=4 et
+%
+headings_flag 1
+heading_prefix "\\textcolor{hcolor}{\\textbf{"
+heading_suffix "}}\\nopagebreak\n"
+delim_0 " \\dotfill "
+delim_1 " \\dotfill "
+delim_2 " \\dotfill "

@@ -1,0 +1,185 @@
+%
+% vim: ts=4 sw=4 et
+%
+\xchapter{mixsize}{Mixing 16 and 32 Bit Code}
+
+This chapter tries to cover some of the issues, largely related to
+unusual forms of addressing and jump instructions, encountered when
+writing operating system code such as protected-mode initialisation
+routines, which require code that operates in mixed segment sizes,
+such as code in a 16-bit segment trying to modify data in a 32-bit
+one, or jumps between different-size segments.
+
+\xsection{mixjump}{Mixed-Size Jumps}
+\index{jumps!mixed-size}
+\index{operating system, writing}
+\index{writing operating systems}
+
+The most common form of \textindex{mixed-size instruction} is the one
+used when writing a 32-bit OS: having done your setup in 16-bit mode,
+such as loading the kernel, you then have to boot it by switching into
+protected mode and jumping to the 32-bit kernel start address. In a
+fully 32-bit OS, this tends to be the \emph{only} mixed-size
+instruction you need, since everything before it can be done in pure
+16-bit code, and everything after it can be pure 32-bit.
+
+This jump must specify a 48-bit far address, since the target
+segment is a 32-bit one. However, it must be assembled in a 16-bit
+segment, so just coding, for example,
+
+\begin{lstlisting}
+jmp 0x1234:0x56789ABC           ; wrong!
+\end{lstlisting}
+
+will not work, since the offset part of the address will be
+truncated to \code{0x9ABC} and the jump will be an ordinary 16-bit far
+one.
+
+The Linux kernel setup code gets round the inability of \code{as86} to
+generate the required instruction by coding it manually, using
+\code{DB} instructions. NASM can go one better than that, by actually
+generating the right instruction itself. Here's how to do it right:
+
+\begin{lstlisting}
+jmp     dword 0x1234:0x56789ABC ; right
+\end{lstlisting}
+
+\indexcode{JMP DWORD}The \code{DWORD} prefix (strictly speaking,
+it should come \emph{after} the colon, since it is declaring the
+\emph{offset} field to be a doubleword; but NASM will accept either
+form, since both are unambiguous) forces the offset part to be treated
+as far, in the assumption that you are deliberately writing a jump from
+a 16-bit segment to a 32-bit one.
+
+You can do the reverse operation, jumping from a 32-bit segment to a
+16-bit one, by means of the \code{WORD} prefix:
+
+\begin{lstlisting}
+jmp     word 0x8765:0x4321  ; 32 to 16 bit
+\end{lstlisting}
+
+If the \code{WORD} prefix is specified in 16-bit mode, or the
+\code{DWORD} prefix in 32-bit mode, they will be ignored, since each is
+explicitly forcing NASM into a mode it was in anyway.
+
+\xsection{mixaddr}{Addressing Between Different-Size Segments}
+\index{addressing!mixed-size}
+\index{mixed-size addressing}
+
+If your OS is mixed 16 and 32-bit, or if you are writing a DOS
+extender, you are likely to have to deal with some 16-bit segments
+and some 32-bit ones. At some point, you will probably end up
+writing code in a 16-bit segment which has to access data in a
+32-bit segment, or vice versa.
+
+If the data you are trying to access in a 32-bit segment lies within
+the first 64K of the segment, you may be able to get away with using
+an ordinary 16-bit addressing operation for the purpose; but sooner
+or later, you will want to do 32-bit addressing from 16-bit mode.
+
+The easiest way to do this is to make sure you use a register for
+the address, since any effective address containing a 32-bit
+register is forced to be a 32-bit address. So you can do
+
+\begin{lstlisting}
+mov     eax,offset_into_32_bit_segment_specified_by_fs
+mov     dword [fs:eax],0x11223344
+\end{lstlisting}
+
+This is fine, but slightly cumbersome (since it wastes an
+instruction and a register) if you already know the precise offset
+you are aiming at. The x86 architecture does allow 32-bit effective
+addresses to specify nothing but a 4-byte offset, so why shouldn't
+NASM be able to generate the best instruction for the purpose?
+
+It can. As in \nref{mixjump}, you need only prefix the address
+with the \code{DWORD} keyword, and it will be forced to be a 32-bit
+address:
+
+\begin{lstlisting}
+mov     dword [fs:dword my_offset],0x11223344
+\end{lstlisting}
+
+Also as in \nref{mixjump}, NASM is not fussy about whether the
+\code{DWORD} prefix comes before or after the segment override, so
+arguably a nicer-looking way to code the above instruction is
+
+\begin{lstlisting}
+mov     dword [dword fs:my_offset],0x11223344
+\end{lstlisting}
+
+Don't confuse the \code{DWORD} prefix \emph{outside} the square brackets,
+which controls the size of the data stored at the address, with the
+one \code{inside} the square brackets which controls the length of the
+address itself. The two can quite easily be different:
+
+\begin{lstlisting}
+mov     word [dword 0x12345678],0x9ABC
+\end{lstlisting}
+
+This moves 16 bits of data to an address specified by a 32-bit
+offset.
+
+You can also specify \code{WORD} or \code{DWORD} prefixes along with the
+\code{FAR} prefix to indirect far jumps or calls. For example:
+
+\begin{lstlisting}
+call    dword far [fs:word 0x4321]
+\end{lstlisting}
+
+This instruction contains an address specified by a 16-bit offset;
+it loads a 48-bit far pointer from that (16-bit segment and 32-bit
+offset), and calls that address.
+
+\xsection{mixother}{Other Mixed-Size Instructions}
+
+The other way you might want to access data might be using the
+string instructions (\code{LODSx}, \code{STOSx} and so on) or the
+\code{XLATB} instruction. These instructions, since they take no
+parameters, might seem to have no easy way to make them perform
+32-bit addressing when assembled in a 16-bit segment.
+
+This is the purpose of NASM's \codeindex{a16}, \codeindex{a32} and
+\codeindex{a64} prefixes. If you are coding \code{LODSB} in a 16-bit
+segment but it is supposed to be accessing a string in a 32-bit segment,
+you should load the desired address into \code{ESI} and then code
+
+\begin{lstlisting}
+a32     lodsb
+\end{lstlisting}
+
+The prefix forces the addressing size to 32 bits, meaning that
+\code{LODSB} loads from \code{[DS:ESI]} instead of \code{[DS:SI]}.
+To access a string in a 16-bit segment when coding in a 32-bit one,
+the corresponding \code{a16} prefix can be used.
+
+The \code{a16}, \code{a32} and \code{a64} prefixes can be applied to
+any instruction in NASM's instruction table, but most of them can
+generate all the useful forms without them. The prefixes are necessary
+only for instructions with implicit addressing: \code{CMPSx},
+\code{SCASx}, \code{LODSx}, \code{STOSx}, \code{MOVSx}, \code{INSx},
+\code{OUTSx}, and \code{XLATB}. Also, the various push and pop
+instructions (\code{PUSHA} and \code{POPF} as well as the more usual
+\code{PUSH} and \code{POP}) can accept \code{a16}, \code{a32} or
+\code{a64} prefixes to force a particular one of \code{SP}, \code{ESP} or
+\code{RSP} to be used as a stack pointer, in case the stack segment in
+use is a different size from the code segment.
+
+\code{PUSH} and \code{POP}, when applied to segment registers in 32-bit
+mode, also have the slightly odd behaviour that they push and pop 4
+bytes at a time, of which the top two are ignored and the bottom two
+give the value of the segment register being manipulated. To force
+the 16-bit behaviour of segment-register push and pop instructions,
+you can use the operand-size prefix \codeindex{o16}:
+
+\begin{lstlisting}
+o16 push    ss
+o16 push    ds
+\end{lstlisting}
+
+This code saves a doubleword of stack space by fitting two segment
+registers into the space which would normally be consumed by pushing
+one.
+
+(You can also use the \codeindex{o32} prefix to force the 32-bit behaviour
+when in 16-bit mode, but this seems less useful.)
