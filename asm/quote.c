@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -40,6 +40,8 @@
 
 #include "nasmlib.h"
 #include "quote.h"
+#include "nctype.h"
+#include "error.h"
 
 char *nasm_quote(const char *str, size_t len)
 {
@@ -180,39 +182,55 @@ char *nasm_quote(const char *str, size_t len)
     return nstr;
 }
 
-static char *emit_utf8(char *q, int32_t v)
+static unsigned char *emit_utf8(unsigned char *q, uint32_t v)
 {
-    if (v < 0) {
-	/* Impossible - do nothing */
-    } else if (v <= 0x7f) {
+    uint32_t vb1, vb2, vb3, vb4, vb5;
+
+    if (v <= 0x7f) {
 	*q++ = v;
-    } else if (v <= 0x000007ff) {
-	*q++ = 0xc0 | (v >> 6);
-	*q++ = 0x80 | (v & 63);
-    } else if (v <= 0x0000ffff) {
-	*q++ = 0xe0 | (v >> 12);
-	*q++ = 0x80 | ((v >> 6) & 63);
-	*q++ = 0x80 | (v & 63);
-    } else if (v <= 0x001fffff) {
-	*q++ = 0xf0 | (v >> 18);
-	*q++ = 0x80 | ((v >> 12) & 63);
-	*q++ = 0x80 | ((v >> 6) & 63);
-	*q++ = 0x80 | (v & 63);
-    } else if (v <= 0x03ffffff) {
-	*q++ = 0xf8 | (v >> 24);
-	*q++ = 0x80 | ((v >> 18) & 63);
-	*q++ = 0x80 | ((v >> 12) & 63);
-	*q++ = 0x80 | ((v >> 6) & 63);
-	*q++ = 0x80 | (v & 63);
-    } else {
-	*q++ = 0xfc | (v >> 30);
-	*q++ = 0x80 | ((v >> 24) & 63);
-	*q++ = 0x80 | ((v >> 18) & 63);
-	*q++ = 0x80 | ((v >> 12) & 63);
-	*q++ = 0x80 | ((v >> 6) & 63);
-	*q++ = 0x80 | (v & 63);
+        goto out0;
     }
-    return q;
+
+    vb1 = v >> 6;
+    if (vb1 <= 0x3f) {
+	*q++ = 0xc0 + vb1;
+        goto out1;
+    }
+
+    vb2 = vb1 >> 6;
+    if (vb2 <= 0x1f) {
+        *q++ = 0xe0 + vb2;
+        goto out2;
+    }
+
+    vb3 = vb2 >> 6;
+    if (vb3 <= 0x0f) {
+        *q++ = 0xf0 + vb3;
+        goto out3;
+    }
+
+    vb4 = vb3 >> 6;
+    if (vb4 <= 0x07) {
+        *q++ = 0xf8 + vb4;
+        goto out4;
+    }
+
+    vb5 = vb4 >> 6;
+    if (vb5 <= 0x03) {
+        *q++ = 0xfc + vb5;
+        goto out5;
+    }
+
+    /* Otherwise invalid, even with 31-bit "extended Unicode" (pre-UTF-16) */
+    goto out0;
+
+    /* Emit extension bytes as appropriate */
+out5: *q++ = 0x80 + (vb4 & 63);
+out4: *q++ = 0x80 + (vb3 & 63);
+out3: *q++ = 0x80 + (vb2 & 63);
+out2: *q++ = 0x80 + (vb1 & 63);
+out1: *q++ = 0x80 + (v & 63);
+out0: return q;
 }
 
 /*
@@ -223,13 +241,27 @@ static char *emit_utf8(char *q, int32_t v)
  * shorter than or equal to the quoted length.
  *
  * *ep points to the final quote, or to the null if improperly quoted.
+ *
+ * Issue an error if the string contains characters less than cerr; in
+ * that case, the output string, but not *ep, is truncated before the
+ * first invalid character.
  */
-size_t nasm_unquote(char *str, char **ep)
+#define EMIT(c)                                                 \
+    do {                                                        \
+        unsigned char ec = (c);                                 \
+        err |= ec < cerr;                                       \
+        if (!err)                                               \
+            *q++ = (c);                                         \
+    } while (0)
+
+static size_t nasm_unquote_common(char *str, char **ep,
+                                  const unsigned char cerr)
 {
     char bq;
-    char *p, *q;
-    char *escp = NULL;
-    char c;
+    unsigned char *p, *q;
+    unsigned char *escp = NULL;
+    unsigned char c;
+    bool err = false;
     enum unq_state {
 	st_start,
 	st_backslash,
@@ -238,10 +270,10 @@ size_t nasm_unquote(char *str, char **ep)
 	st_ucs
     } state;
     int ndig = 0;
-    int32_t nval = 0;
+    uint32_t nval = 0;
 
-    p = q = str;
-    
+    p = q = (unsigned char *)str;
+
     bq = *p++;
     if (!bq)
 	return 0;
@@ -250,11 +282,21 @@ size_t nasm_unquote(char *str, char **ep)
     case '\'':
     case '\"':
 	/* '...' or "..." string */
-	while ((c = *p) && c != bq) {
-	    p++;
-	    *q++ = c;
-	}
-	*q = '\0';
+        while (1) {
+            c = *p;
+            if (!c) {
+                break;
+            } else if (c == bq) {
+                /* Doubled quote = escaped quote */
+                c = p[1];
+                if (c != bq)
+                    break;
+                p++;
+            }
+            p++;
+            EMIT(c);
+        }
+        *q = '\0';
 	break;
 
     case '`':
@@ -273,7 +315,7 @@ size_t nasm_unquote(char *str, char **ep)
 		    p--;
 		    goto out;
 		default:
-		    *q++ = c;
+                    EMIT(c);
 		    break;
 		}
 		break;
@@ -284,25 +326,25 @@ size_t nasm_unquote(char *str, char **ep)
 		nval = 0;
 		switch (c) {
 		case 'a':
-		    *q++ = 7;
+		    nval = 7;
 		    break;
 		case 'b':
-		    *q++ = 8;
+		    nval = 8;
 		    break;
 		case 'e':
-		    *q++ = 27;
+		    nval = 27;
 		    break;
 		case 'f':
-		    *q++ = 12;
+		    nval = 12;
 		    break;
 		case 'n':
-		    *q++ = 10;
+		    nval = 10;
 		    break;
 		case 'r':
-		    *q++ = 13;
+		    nval = 13;
 		    break;
 		case 't':
-		    *q++ = 9;
+		    nval = 9;
 		    break;
 		case 'u':
 		    state = st_ucs;
@@ -313,7 +355,7 @@ size_t nasm_unquote(char *str, char **ep)
 		    ndig = 8;
 		    break;
 		case 'v':
-		    *q++ = 11;
+		    nval = 11;
 		    break;
 		case 'x':
 		case 'X':
@@ -333,9 +375,11 @@ size_t nasm_unquote(char *str, char **ep)
 		    nval = c - '0';
 		    break;
 		default:
-		    *q++ = c;
+		    nval = c;
 		    break;
 		}
+                if (state == st_start)
+                    EMIT(nval);
 		break;
 
 	    case st_oct:
@@ -347,15 +391,13 @@ size_t nasm_unquote(char *str, char **ep)
 		    }
 		} else {
 		    p--;	/* Process this character again */
-		    *q++ = nval;
+		    EMIT(nval);
 		    state = st_start;
 		}
 		break;
 
 	    case st_hex:
-		if ((c >= '0' && c <= '9') ||
-		    (c >= 'A' && c <= 'F') ||
-		    (c >= 'a' && c <= 'f')) {
+		if (nasm_isxdigit(c)) {
 		    nval = (nval << 4) + numvalue(c);
 		    if (!--ndig) {
 			*q++ = nval;
@@ -363,26 +405,29 @@ size_t nasm_unquote(char *str, char **ep)
 		    }
 		} else {
 		    p--;	/* Process this character again */
-		    *q++ = (p > escp) ? nval : escp[-1];
+		    EMIT((p > escp) ? nval : escp[-1]);
 		    state = st_start;
 		}
 		break;
 
 	    case st_ucs:
-		if ((c >= '0' && c <= '9') ||
-		    (c >= 'A' && c <= 'F') ||
-		    (c >= 'a' && c <= 'f')) {
+		if (nasm_isxdigit(c)) {
 		    nval = (nval << 4) + numvalue(c);
 		    if (!--ndig) {
-			q = emit_utf8(q, nval);
+                        err |= nval < cerr;
+                        if (!err)
+                            q = emit_utf8(q, nval);
 			state = st_start;
 		    }
 		} else {
 		    p--;	/* Process this character again */
-		    if (p > escp)
-			q = emit_utf8(q, nval);
-		    else
-			*q++ = escp[-1];
+		    if (p > escp) {
+                        err |= nval < cerr;
+                        if (!err)
+                            q = emit_utf8(q, nval);
+                    } else {
+			EMIT(escp[-1]);
+                    }
 		    state = st_start;
 		}
 		break;
@@ -393,16 +438,19 @@ size_t nasm_unquote(char *str, char **ep)
 	case st_backslash:
 	    break;
 	case st_oct:
-	    *q++ = nval;
+	    EMIT(nval);
 	    break;
 	case st_hex:
-	    *q++ = (p > escp) ? nval : escp[-1];
+	    EMIT((p > escp) ? nval : escp[-1]);
 	    break;
 	case st_ucs:
-	    if (p > escp)
-		q = emit_utf8(q, nval);
-	    else
-		*q++ = escp[-1];
+	    if (p > escp) {
+                err |= nval < cerr;
+                if (!err)
+                    q = emit_utf8(q, nval);
+            } else {
+		EMIT(escp[-1]);
+            }
 	    break;
 	}
     out:
@@ -410,13 +458,32 @@ size_t nasm_unquote(char *str, char **ep)
 
     default:
 	/* Not a quoted string, just return the input... */
-	p = q = strchr(str, '\0');
+        while ((c = *p++)) {
+            if (!c)
+                break;
+            EMIT(c);
+        }
 	break;
     }
 
+    *q = '\0';
+
+    if (err)
+        nasm_nonfatal("control character in string not allowed here");
+
     if (ep)
-	*ep = p;
-    return q-str;
+	*ep = (char *)p;
+    return (char *)q - str;
+}
+#undef EMIT
+
+size_t nasm_unquote(char *str, char **ep)
+{
+    return nasm_unquote_common(str, ep, 0);
+}
+size_t nasm_unquote_cstr(char *str, char **ep)
+{
+    return nasm_unquote_common(str, ep, ' ');
 }
 
 /*
@@ -436,8 +503,10 @@ char *nasm_skip_string(char *str)
     bq = str[0];
     if (bq == '\'' || bq == '\"') {
 	/* '...' or "..." string */
-	for (p = str+1; *p && *p != bq; p++)
-	    ;
+	for (p = str+1; *p; p++) {
+            if (p[0] == bq && p[1] != bq)
+                break;
+        }
 	return p;
     } else if (bq == '`') {
 	/* `...` string */

@@ -38,6 +38,7 @@
 
 char *nasm_quote(const char *str, size_t len);
 size_t nasm_unquote(char *str, char **endptr);
+size_t nasm_unquote_cstr(char *str, char **endptr);
 char *nasm_skip_string(char *str);
 
 #endif /* NASM_QUOTE_H */
