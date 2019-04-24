@@ -43,6 +43,11 @@ AS_IF([test x"$pa_init_cflags" = x],
 AS_IF([test x"$pa_optimize" = "x-O0"],
       [PA_ADD_CFLAGS([-fno-omit-frame-pointer])])
 
+dnl Profiling
+PA_ARG_ENABLED([profiling],
+ [compile with profiling (-pg option)],
+ [PA_ADD_CFLAGS([-pg])])
+
 dnl Abort on panic
 PA_ARG_ENABLED([panic-abort],
  [call abort() on panic to trap in the debugger],

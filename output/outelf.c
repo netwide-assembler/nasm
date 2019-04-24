@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -50,6 +50,7 @@
 #include "outform.h"
 #include "outlib.h"
 #include "rbtree.h"
+#include "hashtbl.h"
 #include "ver.h"
 
 #include "dwarf.h"
@@ -74,8 +75,13 @@ static int32_t def_seg;
 
 static struct RAA *bsym;
 
+static struct SAA *symtab, *symtab_shndx;
+
 static struct SAA *strs;
 static uint32_t strslen;
+
+static struct RAAPTR *section_by_index;
+static struct hash_table section_by_name;
 
 static struct elf_symbol *fwds;
 
@@ -102,9 +108,11 @@ static void elf_section_header(int name, int type, uint64_t flags,
                                int link, int info,
                                uint64_t align, uint64_t entsize);
 static void elf_write_sections(void);
-static struct SAA *elf_build_symtab(int32_t *, int32_t *);
-static struct SAA *elf_build_reltab(uint64_t *, struct elf_reloc *);
-static void add_sectname(const char *, const char *);
+static size_t elf_build_symtab(void);
+static int add_sectname(const char *, const char *);
+
+/* First debugging section index */
+static int sec_debug;
 
 struct erel {
     int                 offset;
@@ -178,9 +186,33 @@ static void dwarf_cleanup(void);
 static void dwarf_findfile(const char *);
 static void dwarf_findsect(const int);
 
-static bool is_elf64(void);
-static bool is_elf32(void);
-static bool is_elfx32(void);
+struct elf_format_info {
+    size_t word;                /* Word size (4 or 8) */
+    size_t ehdr_size;           /* Size of the ELF header */
+    size_t shdr_size;           /* Size of a section header */
+    size_t sym_size;            /* Size of a symbol */
+    size_t rel_size;            /* Size of a reltype relocation */
+    size_t rela_size;           /* Size of a RELA relocation */
+    char relpfx[8];             /* Relocation section prefix */
+    uint32_t reltype;           /* Relocation section type */
+    uint16_t e_machine;         /* Header e_machine field */
+    uint8_t ei_class;           /* ELFCLASS32 or ELFCLASS64 */
+    bool elf64;                 /* 64-bit ELF */
+
+    /* Write a symbol */
+    void (*elf_sym)(const struct elf_symbol *);
+
+    /* Build a relocation table */
+    struct SAA *(*elf_build_reltab)(const struct elf_reloc *);
+};
+static const struct elf_format_info *efmt;
+
+static void elf32_sym(const struct elf_symbol *sym);
+static void elf64_sym(const struct elf_symbol *sym);
+
+static struct SAA *elf32_build_reltab(const struct elf_reloc *r);
+static struct SAA *elfx32_build_reltab(const struct elf_reloc *r);
+static struct SAA *elf64_build_reltab(const struct elf_reloc *r);
 
 static bool dfmt_is_stabs(void);
 static bool dfmt_is_dwarf(void);
@@ -196,23 +228,61 @@ static int32_t elf_sym_sect, elf_gottpoff_sect, elf_tlsie_sect;
 uint8_t elf_osabi = 0;      /* Default OSABI = 0 (System V or Linux) */
 uint8_t elf_abiver = 0;     /* Current ABI version */
 
-const struct elf_known_section elf_known_sections[] = {
-    { ".text",    SHT_PROGBITS, SHF_ALLOC|SHF_EXECINSTR,     16 },
-    { ".rodata",  SHT_PROGBITS, SHF_ALLOC,                    4 },
-    { ".lrodata", SHT_PROGBITS, SHF_ALLOC,                    4 },
-    { ".data",    SHT_PROGBITS, SHF_ALLOC|SHF_WRITE,          4 },
-    { ".ldata",   SHT_PROGBITS, SHF_ALLOC|SHF_WRITE,          4 },
-    { ".bss",     SHT_NOBITS,   SHF_ALLOC|SHF_WRITE,          4 },
-    { ".lbss",    SHT_NOBITS,   SHF_ALLOC|SHF_WRITE,          4 },
-    { ".tdata",   SHT_PROGBITS, SHF_ALLOC|SHF_WRITE|SHF_TLS,  4 },
-    { ".tbss",    SHT_NOBITS,   SHF_ALLOC|SHF_WRITE|SHF_TLS,  4 },
-    { ".comment", SHT_PROGBITS, 0,                            1 },
-    { NULL,       SHT_PROGBITS, SHF_ALLOC,                    1 } /* default */
+/* Known sections with nonstandard defaults. -n means n*pointer size. */
+struct elf_known_section {
+    const char *name;   /* Name of section */
+    int type;           /* Section type (SHT_) */
+    uint32_t flags;     /* Section flags (SHF_) */
+    int align;          /* Section alignment */
+    int entsize;	/* Entry size, if applicable */
 };
 
+static const struct elf_known_section elf_known_sections[] = {
+    { ".text",          SHT_PROGBITS,      SHF_ALLOC|SHF_EXECINSTR,     16,  0 },
+    { ".rodata",        SHT_PROGBITS,      SHF_ALLOC,                    4,  0 },
+    { ".lrodata",       SHT_PROGBITS,      SHF_ALLOC,                    4,  0 },
+    { ".data",          SHT_PROGBITS,      SHF_ALLOC|SHF_WRITE,          4,  0 },
+    { ".ldata",         SHT_PROGBITS,      SHF_ALLOC|SHF_WRITE,          4,  0 },
+    { ".bss",           SHT_NOBITS,        SHF_ALLOC|SHF_WRITE,          4,  0 },
+    { ".lbss",          SHT_NOBITS,        SHF_ALLOC|SHF_WRITE,          4,  0 },
+    { ".tdata",         SHT_PROGBITS,      SHF_ALLOC|SHF_WRITE|SHF_TLS,  4,  0 },
+    { ".tbss",          SHT_NOBITS,        SHF_ALLOC|SHF_WRITE|SHF_TLS,  4,  0 },
+    { ".comment",       SHT_PROGBITS,      0,                            1,  0 },
+    { ".preinit_array", SHT_PREINIT_ARRAY, SHF_ALLOC,                   -1, -1 },
+    { ".init_array",    SHT_INIT_ARRAY,    SHF_ALLOC,                   -1, -1 },
+    { ".fini_array",    SHT_FINI_ARRAY,    SHF_ALLOC,                   -1, -1 },
+    { ".note",          SHT_NOTE,          0,                            4,  0 },
+    { NULL /*default*/, SHT_PROGBITS,      SHF_ALLOC,                    1,  0 }
+};
+
+struct size_unit {
+    char name[8];
+    int bytes;
+    int align;
+};
+static const struct size_unit size_units[] =
+{
+    { "byte",     1,  1 },
+    { "word",     2,  2 },
+    { "dword",    4,  4 },
+    { "qword",    8,  8 },
+    { "tword",   10,  2 },
+    { "tbyte",   10,  2 },
+    { "oword",   16, 16 },
+    { "xword",   16, 16 },
+    { "yword",   32, 32 },
+    { "zword",   64, 64 },
+    { "pointer", -1, -1 },
+    { "",         0,  0 }
+};
+
+static inline size_t to_bytes(int val)
+{
+    return (val >= 0) ? (size_t)val : -val * efmt->word;
+}
+
 /* parse section attributes */
-static void elf_section_attrib(char *name, char *attr, int pass,
-                               uint32_t *flags_and, uint32_t *flags_or,
+static void elf_section_attrib(char *name, char *attr, uint32_t *flags_and, uint32_t *flags_or,
                                uint64_t *alignp, uint64_t *entsize, int *type)
 {
     char *opt, *val, *next;
@@ -254,7 +324,8 @@ static void elf_section_attrib(char *name, char *attr, int pass,
         } else if (!nasm_stricmp(opt, "write")) {
             *flags_and  |= SHF_WRITE;
             *flags_or   |= SHF_WRITE;
-        } else if (!nasm_stricmp(opt, "nowrite")) {
+        } else if (!nasm_stricmp(opt, "nowrite") ||
+		   !nasm_stricmp(opt, "readonly")) {
             *flags_and  |= SHF_WRITE;
             *flags_or   &= ~SHF_WRITE;
         } else if (!nasm_stricmp(opt, "tls")) {
@@ -279,52 +350,64 @@ static void elf_section_attrib(char *name, char *attr, int pass,
             *type = SHT_PROGBITS;
         } else if (!nasm_stricmp(opt, "nobits")) {
             *type = SHT_NOBITS;
-        } else if (!nasm_stricmp(opt, "ent") || !nasm_stricmp(opt,"entsize")) {
-            bool err;
-            uint64_t es;
-            if (!val) {
-                nasm_error(ERR_NONFATAL,
-                           "section attribute %s without value specified", opt);
-            } else {
-                es = readnum(val, &err);
-                if (err) {
-                    nasm_error(ERR_NONFATAL,
-                               "invalid value %s for section attribute %s",
-                               val, opt);
-                } else {
-                    *entsize = es;
-                }
-            }
-        } else if (!nasm_stricmp(opt, "byte")) {
-            xalign = *entsize = 1;
-        } else if (!nasm_stricmp(opt, "word")) {
-            xalign = *entsize = 2;
-        } else if (!nasm_stricmp(opt, "dword")) {
-            xalign = *entsize = 4;
-        } else if (!nasm_stricmp(opt, "qword")) {
-            xalign = *entsize = 8;
-        } else if (!nasm_stricmp(opt, "tword")) {
-            *entsize = 10;
-            xalign = 2;
-        } else if (!nasm_stricmp(opt, "oword")) {
-            xalign = *entsize = 16;
-        } else if (!nasm_stricmp(opt, "yword")) {
-            xalign = *entsize = 32;
-        } else if (!nasm_stricmp(opt, "zword")) {
-            xalign = *entsize = 64;
-        } else if (pass == 1) {
-            nasm_error(ERR_WARNING,
-                       "Unknown section attribute '%s' ignored on"
-                       " declaration of section `%s'", opt, name);
+        } else if (!nasm_stricmp(opt, "note")) {
+            *type = SHT_NOTE;
+	} else if (!nasm_stricmp(opt, "preinit_array")) {
+	    *type = SHT_PREINIT_ARRAY;
+	} else if (!nasm_stricmp(opt, "init_array")) {
+	    *type = SHT_INIT_ARRAY;
+	} else if (!nasm_stricmp(opt, "fini_array")) {
+	    *type = SHT_FINI_ARRAY;
+        } else {
+	    uint64_t mult;
+	    size_t l;
+	    const char *a = strchr(opt, '*');
+	    bool err;
+	    const struct size_unit *su;
+
+	    if (a) {
+		l = a - opt - 1;
+		mult = readnum(a+1, &err);
+	    } else {
+		l = strlen(opt);
+		mult = 1;
+	    }
+
+	    for (su = size_units; su->bytes; su++) {
+		if (!nasm_strnicmp(opt, su->name, l))
+		    break;
+	    }
+
+	    if (su->bytes) {
+		*entsize = to_bytes(su->bytes) * mult;
+		xalign = to_bytes(su->align);
+	    } else {
+		/* Unknown attribute */
+		nasm_error(ERR_WARNING|ERR_PASS1,
+			   "unknown section attribute '%s' ignored on"
+			   " declaration of section `%s'", opt, name);
+	    }
         }
         opt = next;
     }
 
-    if (!align)
-        align = xalign;
+    switch (*type) {
+    case SHT_PREINIT_ARRAY:
+    case SHT_INIT_ARRAY:
+    case SHT_FINI_ARRAY:
+	if (!xalign)
+	    xalign = efmt->word;
+	if (!*entsize)
+	    *entsize = efmt->word;
+	break;
+    default:
+	break;
+    }
 
     if (!align)
-        align = SHA_ANY;
+        align = xalign;
+    if (!align)
+	align = SHA_ANY;
 
     *alignp = align;
 }
@@ -373,8 +456,81 @@ elf_directive(enum directive directive, char *value, int pass)
     }
 }
 
+static void elf_init(void);
+
+static void elf32_init(void)
+{
+    static const struct elf_format_info ef_elf32 = {
+        4,
+        sizeof(Elf32_Ehdr),
+        sizeof(Elf32_Shdr),
+        sizeof(Elf32_Sym),
+        sizeof(Elf32_Rel),
+        sizeof(Elf32_Rela),
+        ".rel",
+        SHT_REL,
+        EM_386,
+        ELFCLASS32,
+        false,
+
+        elf32_sym,
+        elf32_build_reltab
+    };
+    efmt = &ef_elf32;
+    elf_init();
+}
+
+static void elfx32_init(void)
+{
+    static const struct elf_format_info ef_elfx32 = {
+        4,
+        sizeof(Elf32_Ehdr),
+        sizeof(Elf32_Shdr),
+        sizeof(Elf32_Sym),
+        sizeof(Elf32_Rela),
+        sizeof(Elf32_Rela),
+        ".rela",
+        SHT_RELA,
+        EM_X86_64,
+        ELFCLASS32,
+        false,
+
+        elf32_sym,
+        elfx32_build_reltab
+    };
+    efmt = &ef_elfx32;
+    elf_init();
+}
+
+static void elf64_init(void)
+{
+    static const struct elf_format_info ef_elf64 = {
+        8,
+        sizeof(Elf64_Ehdr),
+        sizeof(Elf64_Shdr),
+        sizeof(Elf64_Sym),
+        sizeof(Elf64_Rela),
+        sizeof(Elf64_Rela),
+        ".rela",
+        SHT_RELA,
+        EM_X86_64,
+        ELFCLASS64,
+        true,
+
+        elf64_sym,
+        elf64_build_reltab
+    };
+    efmt = &ef_elf64;
+    elf_init();
+}
+
 static void elf_init(void)
 {
+    static const char * const reserved_sections[] = {
+        ".shstrtab", ".strtab", ".symtab", ".symtab_shndx", NULL
+    };
+    const char * const *p;
+
     strlcpy(elf_module, inname, sizeof(elf_module));
     sects = NULL;
     nsects = sectlen = 0;
@@ -387,15 +543,27 @@ static void elf_init(void)
     strslen = 2 + strlen(elf_module);
     shstrtab = NULL;
     shstrtablen = shstrtabsize = 0;;
-    add_sectname("", "");
+    add_sectname("", "");       /* SHN_UNDEF */
 
     fwds = NULL;
+
+    hash_init(&section_by_name, HASH_MEDIUM);
+    section_by_index = raa_init_ptr();
+
+    /*
+     * Add reserved section names to the section hash, with NULL
+     * as the data pointer
+     */
+    for (p = reserved_sections; *p; p++) {
+        struct hash_insert hi;
+        hash_find(&section_by_name, *p, &hi);
+        hash_add(&hi, *p, NULL);
+    }
 
     /*
      * FIXME: tlsie is Elf32 only and
      * gottpoff is Elfx32|64 only.
      */
-
     elf_gotpc_sect = seg_alloc();
     backend_label("..gotpc", elf_gotpc_sect + 1, 0L);
     elf_gotoff_sect = seg_alloc();
@@ -423,7 +591,7 @@ static void elf_cleanup(void)
     for (i = 0; i < nsects; i++) {
         if (sects[i]->type != SHT_NOBITS)
             saa_free(sects[i]->data);
-        if (sects[i]->head)
+        if (sects[i]->rel)
             saa_free(sects[i]->rel);
         while (sects[i]->head) {
             r = sects[i]->head;
@@ -431,6 +599,8 @@ static void elf_cleanup(void)
             nasm_free(r);
         }
     }
+    hash_free(&section_by_name);
+    raa_free_ptr(section_by_index);
     nasm_free(sects);
     saa_free(syms);
     raa_free(bsym);
@@ -438,18 +608,31 @@ static void elf_cleanup(void)
     dfmt->cleanup();
 }
 
-/* add entry to the elf .shstrtab section */
-static void add_sectname(const char *firsthalf, const char *secondhalf)
+/*
+ * Add entry to the elf .shstrtab section and increment nsections.
+ * Returns the section index for this new section.
+ *
+ * IMPORTANT: this needs to match the order the section headers are
+ * emitted.
+ */
+static int add_sectname(const char *firsthalf, const char *secondhalf)
 {
-    int len = strlen(firsthalf) + strlen(secondhalf);
-    while (shstrtablen + len + 1 > shstrtabsize)
+    int l1 = strlen(firsthalf);
+    int l2 = strlen(secondhalf);
+
+    while (shstrtablen + l1 + l2 + 1 > shstrtabsize)
         shstrtab = nasm_realloc(shstrtab, (shstrtabsize += SHSTR_DELTA));
-    strcpy(shstrtab + shstrtablen, firsthalf);
-    strcat(shstrtab + shstrtablen, secondhalf);
-    shstrtablen += len + 1;
+
+    memcpy(shstrtab + shstrtablen, firsthalf, l1);
+    shstrtablen += l1;
+    memcpy(shstrtab + shstrtablen, secondhalf, l2+1);
+    shstrtablen += l2 + 1;
+
+    return nsections++;
 }
 
-static int elf_make_section(char *name, int type, int flags, uint64_t align)
+static struct elf_section *
+elf_make_section(char *name, int type, int flags, uint64_t align)
 {
     struct elf_section *s;
 
@@ -462,18 +645,18 @@ static int elf_make_section(char *name, int type, int flags, uint64_t align)
         s->index = def_seg;
     else
         s->index = seg_alloc();
-    add_sectname("", name);
 
     s->name     = nasm_strdup(name);
     s->type     = type;
     s->flags    = flags;
     s->align    = align;
+    s->shndx    = add_sectname("", name);
 
     if (nsects >= sectlen)
         sects = nasm_realloc(sects, (sectlen += SECT_DELTA) * sizeof(*sects));
     sects[nsects++] = s;
 
-    return nsects - 1;
+    return s;
 }
 
 static int32_t elf_section_names(char *name, int pass, int *bits)
@@ -481,8 +664,12 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
     char *p;
     uint32_t flags, flags_and, flags_or;
     uint64_t align, entsize;
+    void **hp;
     struct elf_section *s;
-    int type, i;
+    struct hash_insert hi;
+    int type;
+
+    (void)pass;
 
     if (!name) {
         *bits = ofmt->maxbits;
@@ -494,21 +681,17 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         *p++ = '\0';
     flags_and = flags_or = type = align = entsize = 0;
 
-    elf_section_attrib(name, p, pass, &flags_and,
-                       &flags_or, &align, &entsize, &type);
+    elf_section_attrib(name, p, &flags_and, &flags_or, &align, &entsize, &type);
 
-    if (!strcmp(name, ".shstrtab") ||
-        !strcmp(name, ".symtab") ||
-        !strcmp(name, ".strtab")) {
-        nasm_error(ERR_NONFATAL, "attempt to redefine reserved section"
-              "name `%s'", name);
-        return NO_SEG;
-    }
-
-    for (i = 0; i < nsects; i++)
-        if (!strcmp(name, sects[i]->name))
-            break;
-    if (i == nsects) {
+    hp = hash_find(&section_by_name, name, &hi);
+    if (hp) {
+        s = *hp;
+        if (!s) {
+            nasm_error(ERR_NONFATAL, "attempt to redefine reserved section"
+                       "name `%s'", name);
+            return NO_SEG;
+        }
+    } else {
         const struct elf_known_section *ks = elf_known_sections;
 
         while (ks->name) {
@@ -518,13 +701,16 @@ static int32_t elf_section_names(char *name, int pass, int *bits)
         }
 
         type = type ? type : ks->type;
-        align = align ? align : ks->align;
+	if (!align)
+	    align = to_bytes(ks->align);
+	if (!entsize)
+	    entsize = to_bytes(ks->entsize);
         flags = (ks->flags & ~flags_and) | flags_or;
 
-        i = elf_make_section(name, type, flags, align);
+        s = elf_make_section(name, type, flags, align);
+        hash_add(&hi, s->name, s);
+        section_by_index = raa_write_ptr(section_by_index, s->index >> 1, s);
     }
-
-    s = sects[i];
 
     if (pass == 1) {
         if ((type && s->type != type)
@@ -626,28 +812,25 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
     sym->other = STV_DEFAULT;
     sym->size = 0;
     if (segment == NO_SEG)
-        sym->section = SHN_ABS;
+        sym->section = XSHN_ABS;
     else {
-        int i;
-        sym->section = SHN_UNDEF;
+        const struct elf_section *s;
+        sym->section = XSHN_UNDEF;
         if (segment == def_seg) {
             /* we have to be sure at least text section is there */
             int tempint;
             if (segment != elf_section_names(".text", 2, &tempint))
                 nasm_panic(0, "strange segment conditions in ELF driver");
         }
-        for (i = 0; i < nsects; i++) {
-            if (segment == sects[i]->index) {
-                sym->section = i + 1;
-                break;
-            }
-        }
+        s = raa_read_ptr(section_by_index, segment >> 1);
+        if (s)
+            sym->section = s->shndx;
     }
 
     if (is_global == 2) {
         sym->size = offset;
         sym->symv.key = 0;
-        sym->section = SHN_COMMON;
+        sym->section = XSHN_COMMON;
         /*
          * We have a common variable. Check the special text to see
          * if it's a valid number and power of two; if so, store it
@@ -665,7 +848,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
         }
         special_used = true;
     } else
-        sym->symv.key = (sym->section == SHN_UNDEF ? 0 : offset);
+        sym->symv.key = (sym->section == XSHN_UNDEF ? 0 : offset);
 
     if (sym->type == SYM_GLOBAL) {
         /*
@@ -678,9 +861,9 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
          * To avoid such a crash, such requests are silently discarded.
          * This may not be the best solution.
          */
-        if (sym->section == SHN_UNDEF || sym->section == SHN_COMMON) {
+        if (sym->section == XSHN_UNDEF || sym->section == XSHN_COMMON) {
             bsym = raa_write(bsym, segment, nglobs);
-        } else if (sym->section != SHN_ABS) {
+        } else if (sym->section != XSHN_ABS) {
             /*
              * This is a global symbol; so we must add it to the rbtree
              * of global symbols in its section.
@@ -782,11 +965,11 @@ static void elf_add_reloc(struct elf_section *sect, int32_t segment,
     r->offset = offset;
 
     if (segment != NO_SEG) {
-        int i;
-        for (i = 0; i < nsects; i++)
-            if (segment == sects[i]->index)
-                r->symbol = i + 2;
-        if (!r->symbol)
+        const struct elf_section *s;
+        s = raa_read_ptr(section_by_index, segment >> 1);
+        if (s)
+            r->symbol = s->shndx + 1;
+        else
             r->symbol = GLOBAL_TEMP_BASE + raa_read(bsym, segment);
     }
     r->type = type;
@@ -824,7 +1007,6 @@ static int64_t elf_add_gsym_reloc(struct elf_section *sect,
     struct elf_section *s;
     struct elf_symbol *sym;
     struct rbtree *srb;
-    int i;
 
     /*
      * First look up the segment/offset pair and find a global
@@ -833,13 +1015,7 @@ static int64_t elf_add_gsym_reloc(struct elf_section *sect,
      * doing a normal elf_add_reloc after first sanity-checking
      * that the offset from the symbol is zero.
      */
-    s = NULL;
-    for (i = 0; i < nsects; i++)
-        if (segment == sects[i]->index) {
-            s = sects[i];
-            break;
-        }
-
+    s = raa_read_ptr(section_by_index, segment >> 1);
     if (!s) {
         if (exact && offset)
             nasm_error(ERR_NONFATAL, "invalid access to an external symbol");
@@ -876,7 +1052,6 @@ static void elf32_out(int32_t segto, const void *data,
     struct elf_section *s;
     int64_t addr;
     int reltype, bytes;
-    int i;
     static struct symlininfo sinfo;
 
     /*
@@ -889,25 +1064,18 @@ static void elf32_out(int32_t segto, const void *data,
         return;
     }
 
-    s = NULL;
-    for (i = 0; i < nsects; i++)
-        if (segto == sects[i]->index) {
-            s = sects[i];
-            break;
-        }
+    s = raa_read_ptr(section_by_index, segto >> 1);
     if (!s) {
         int tempint;            /* ignored */
         if (segto != elf_section_names(".text", 2, &tempint))
             nasm_panic(0, "strange segment conditions in ELF driver");
-        else {
+        else
             s = sects[nsects - 1];
-            i = nsects - 1;
-        }
     }
 
     /* again some stabs debugging stuff */
     sinfo.offset = s->len;
-    sinfo.section = i;
+    sinfo.section = s->shndx;
     sinfo.segto = segto;
     sinfo.name = s->name;
     dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
@@ -922,7 +1090,7 @@ static void elf32_out(int32_t segto, const void *data,
 
     switch (type) {
     case OUT_RESERVE:
-        if (s->type == SHT_PROGBITS) {
+        if (s->type != SHT_NOBITS) {
             nasm_error(ERR_WARNING, "uninitialized space declared in"
                   " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
@@ -1095,7 +1263,6 @@ static void elf64_out(int32_t segto, const void *data,
     struct elf_section *s;
     int64_t addr;
     int reltype, bytes;
-    int i;
     static struct symlininfo sinfo;
 
     /*
@@ -1108,25 +1275,18 @@ static void elf64_out(int32_t segto, const void *data,
         return;
     }
 
-    s = NULL;
-    for (i = 0; i < nsects; i++)
-        if (segto == sects[i]->index) {
-            s = sects[i];
-            break;
-        }
+    s = raa_read_ptr(section_by_index, segto >> 1);
     if (!s) {
         int tempint;            /* ignored */
         if (segto != elf_section_names(".text", 2, &tempint))
             nasm_panic(0, "strange segment conditions in ELF driver");
-        else {
+        else
             s = sects[nsects - 1];
-            i = nsects - 1;
-        }
     }
 
     /* again some stabs debugging stuff */
     sinfo.offset = s->len;
-    sinfo.section = i;
+    sinfo.section = s->shndx;
     sinfo.segto = segto;
     sinfo.name = s->name;
     dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
@@ -1141,7 +1301,7 @@ static void elf64_out(int32_t segto, const void *data,
 
     switch (type) {
     case OUT_RESERVE:
-        if (s->type == SHT_PROGBITS) {
+        if (s->type != SHT_NOBITS) {
             nasm_error(ERR_WARNING, "uninitialized space declared in"
                   " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
@@ -1385,7 +1545,6 @@ static void elfx32_out(int32_t segto, const void *data,
     struct elf_section *s;
     int64_t addr;
     int reltype, bytes;
-    int i;
     static struct symlininfo sinfo;
 
     /*
@@ -1398,25 +1557,18 @@ static void elfx32_out(int32_t segto, const void *data,
         return;
     }
 
-    s = NULL;
-    for (i = 0; i < nsects; i++)
-        if (segto == sects[i]->index) {
-            s = sects[i];
-            break;
-        }
+    s = raa_read_ptr(section_by_index, segto >> 1);
     if (!s) {
         int tempint;            /* ignored */
         if (segto != elf_section_names(".text", 2, &tempint))
             nasm_panic(0, "strange segment conditions in ELF driver");
-        else {
+        else
             s = sects[nsects - 1];
-            i = nsects - 1;
-        }
     }
 
     /* again some stabs debugging stuff */
     sinfo.offset = s->len;
-    sinfo.section = i;
+    sinfo.section = s->shndx;
     sinfo.segto = segto;
     sinfo.name = s->name;
     dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
@@ -1431,7 +1583,7 @@ static void elfx32_out(int32_t segto, const void *data,
 
     switch (type) {
     case OUT_RESERVE:
-        if (s->type == SHT_PROGBITS) {
+        if (s->type != SHT_NOBITS) {
             nasm_error(ERR_WARNING, "uninitialized space declared in"
                   " non-BSS section `%s': zeroing", s->name);
             elf_sect_write(s, NULL, size);
@@ -1630,51 +1782,53 @@ rel12adr:
     }
 }
 
+/*
+ * Section index/count with a specified overflow value (usually SHN_INDEX,
+ * but 0 for e_shnum.
+ */
+static inline uint16_t elf_shndx(int section, uint16_t overflow)
+{
+    return cpu_to_le16(section < (int)SHN_LORESERVE ? section : overflow);
+}
+
+struct ehdr_common {
+    uint8_t	e_ident[EI_NIDENT];
+    uint16_t    e_type;
+    uint16_t    e_machine;
+    uint32_t	e_version;
+};
+
+union ehdr {
+    Elf32_Ehdr ehdr32;
+    Elf64_Ehdr ehdr64;
+    struct ehdr_common com;
+};
+
 static void elf_write(void)
 {
     int align;
     char *p;
     int i;
-
-    struct SAA *symtab;
-    int32_t symtablen, symtablocal;
+    size_t symtablocal;
+    int sec_shstrtab, sec_symtab, sec_strtab;
+    union ehdr ehdr;
 
     /*
-     * Work out how many sections we will have. We have SHN_UNDEF,
-     * then the flexible user sections, then the fixed sections
-     * `.shstrtab', `.symtab' and `.strtab', then optionally
-     * relocation sections for the user sections.
+     * Add any sections we don't already have:
+     * rel/rela sections for the user sections, debug sections, and
+     * the ELF special sections.
      */
-    nsections = sec_numspecial + 1;
-	if (dfmt_is_stabs())
-        nsections += 3;
-    else if (dfmt_is_dwarf())
-        nsections += 10;
 
-    add_sectname("", ".shstrtab");
-    add_sectname("", ".symtab");
-    add_sectname("", ".strtab");
-    for (i = 0; i < nsects; i++) {
-        nsections++;            /* for the section itself */
-        if (sects[i]->head) {
-            nsections++;        /* for its relocations */
-            add_sectname(is_elf32() ? ".rel" : ".rela", sects[i]->name);
-        }
-    }
-
+    sec_debug = nsections;
     if (dfmt_is_stabs()) {
         /* in case the debug information is wanted, just add these three sections... */
         add_sectname("", ".stab");
         add_sectname("", ".stabstr");
-        add_sectname(is_elf32() ? ".rel" : ".rela", ".stab");
+        add_sectname(efmt->relpfx, ".stab");
     } else if (dfmt_is_dwarf()) {
         /* the dwarf debug standard specifies the following ten sections,
            not all of which are currently implemented,
            although all of them are defined. */
-#define debug_aranges (int64_t) (nsections-10)
-#define debug_info (int64_t) (nsections-7)
-#define debug_abbrev (int64_t) (nsections-5)
-#define debug_line (int64_t) (nsections-4)
         add_sectname("", ".debug_aranges");
         add_sectname(".rela", ".debug_aranges");
         add_sectname("", ".debug_pubnames");
@@ -1687,87 +1841,72 @@ static void elf_write(void)
         add_sectname("", ".debug_loc");
     }
 
-    /*
-     * Output the ELF header.
-     */
-    if (is_elf32() || is_elfx32()) {
-        Elf32_Ehdr ehdr;
-
-        nasm_zero(ehdr.e_ident);
-        memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
-        ehdr.e_ident[EI_CLASS]      = ELFCLASS32;
-        ehdr.e_ident[EI_DATA]       = ELFDATA2LSB;
-        ehdr.e_ident[EI_VERSION]    = EV_CURRENT;
-        ehdr.e_ident[EI_OSABI]      = elf_osabi;
-        ehdr.e_ident[EI_ABIVERSION] = elf_abiver;
-
-        ehdr.e_type                 = cpu_to_le16(ET_REL);
-        ehdr.e_machine              = cpu_to_le16(is_elf32() ? EM_386 : EM_X86_64);
-        ehdr.e_version              = cpu_to_le16(EV_CURRENT);
-        ehdr.e_entry                = 0;
-        ehdr.e_phoff                = 0;
-        ehdr.e_shoff                = sizeof(Elf64_Ehdr);
-        ehdr.e_flags                = 0;
-        ehdr.e_ehsize               = cpu_to_le16(sizeof(Elf32_Ehdr));
-        ehdr.e_phentsize            = 0;
-        ehdr.e_phnum                = 0;
-        ehdr.e_shentsize            = cpu_to_le16(sizeof(Elf32_Shdr));
-        ehdr.e_shnum                = cpu_to_le16(nsections);
-        ehdr.e_shstrndx             = cpu_to_le16(sec_shstrtab);
-
-        nasm_write(&ehdr, sizeof(ehdr), ofile);
-        fwritezero(sizeof(Elf64_Ehdr) - sizeof(Elf32_Ehdr), ofile);
-    } else {
-        Elf64_Ehdr ehdr;
-
-        nasm_assert(is_elf64());
-
-        nasm_zero(ehdr.e_ident);
-        memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
-        ehdr.e_ident[EI_CLASS]      = ELFCLASS64;
-        ehdr.e_ident[EI_DATA]       = ELFDATA2LSB;
-        ehdr.e_ident[EI_VERSION]    = EV_CURRENT;
-        ehdr.e_ident[EI_OSABI]      = elf_osabi;
-        ehdr.e_ident[EI_ABIVERSION] = elf_abiver;
-
-        ehdr.e_type                 = cpu_to_le16(ET_REL);
-        ehdr.e_machine              = cpu_to_le16(EM_X86_64);
-        ehdr.e_version              = cpu_to_le16(EV_CURRENT);
-        ehdr.e_entry                = 0;
-        ehdr.e_phoff                = 0;
-        ehdr.e_shoff                = sizeof(Elf64_Ehdr);
-        ehdr.e_flags                = 0;
-        ehdr.e_ehsize               = cpu_to_le16(sizeof(Elf64_Ehdr));
-        ehdr.e_phentsize            = 0;
-        ehdr.e_phnum                = 0;
-        ehdr.e_shentsize            = cpu_to_le16(sizeof(Elf64_Shdr));
-        ehdr.e_shnum                = cpu_to_le16(nsections);
-        ehdr.e_shstrndx             = cpu_to_le16(sec_shstrtab);
-
-        nasm_write(&ehdr, sizeof(ehdr), ofile);
-    }
+    sec_shstrtab = add_sectname("", ".shstrtab");
+    sec_symtab   = add_sectname("", ".symtab");
+    sec_strtab   = add_sectname("", ".strtab");
 
     /*
      * Build the symbol table and relocation tables.
      */
-    symtab = elf_build_symtab(&symtablen, &symtablocal);
-    for (i = 0; i < nsects; i++)
-        if (sects[i]->head)
-            sects[i]->rel = elf_build_reltab(&sects[i]->rellen,
-                                             sects[i]->head);
+    symtablocal = elf_build_symtab();
+
+    /* Do we need an .symtab_shndx section? */
+    if (symtab_shndx)
+        add_sectname("", ".symtab_shndx");
+
+    for (i = 0; i < nsects; i++) {
+        if (sects[i]->head) {
+            add_sectname(efmt->relpfx, sects[i]->name);
+            sects[i]->rel = efmt->elf_build_reltab(sects[i]->head);
+        }
+    }
+
+    /*
+     * Output the ELF header.
+     */
+    nasm_zero(ehdr);
+
+    /* These fields are in the same place for 32 and 64 bits */
+    memcpy(&ehdr.com.e_ident[EI_MAG0], ELFMAG, SELFMAG);
+    ehdr.com.e_ident[EI_CLASS]      = efmt->ei_class;
+    ehdr.com.e_ident[EI_DATA]       = ELFDATA2LSB;
+    ehdr.com.e_ident[EI_VERSION]    = EV_CURRENT;
+    ehdr.com.e_ident[EI_OSABI]      = elf_osabi;
+    ehdr.com.e_ident[EI_ABIVERSION] = elf_abiver;
+    ehdr.com.e_type                 = cpu_to_le16(ET_REL);
+    ehdr.com.e_machine              = cpu_to_le16(efmt->e_machine);
+    ehdr.com.e_version              = cpu_to_le16(EV_CURRENT);
+
+    if (!efmt->elf64) {
+        ehdr.ehdr32.e_shoff         = cpu_to_le32(sizeof ehdr);
+        ehdr.ehdr32.e_ehsize        = cpu_to_le16(sizeof(Elf32_Ehdr));
+        ehdr.ehdr32.e_shentsize     = cpu_to_le16(sizeof(Elf32_Shdr));
+        ehdr.ehdr32.e_shnum         = elf_shndx(nsections, 0);
+        ehdr.ehdr32.e_shstrndx      = elf_shndx(sec_shstrtab, SHN_XINDEX);
+    } else {
+        ehdr.ehdr64.e_shoff         = cpu_to_le64(sizeof ehdr);
+        ehdr.ehdr64.e_ehsize        = cpu_to_le16(sizeof(Elf64_Ehdr));
+        ehdr.ehdr64.e_shentsize     = cpu_to_le16(sizeof(Elf64_Shdr));
+        ehdr.ehdr64.e_shnum         = elf_shndx(nsections, 0);
+        ehdr.ehdr64.e_shstrndx      = elf_shndx(sec_shstrtab, SHN_XINDEX);
+    }
+
+    nasm_write(&ehdr, sizeof(ehdr), ofile);
+    elf_foffs = sizeof ehdr + efmt->shdr_size * nsections;
 
     /*
      * Now output the section header table.
      */
-
-    elf_foffs = sizeof(Elf64_Ehdr) + (is_elf64() ? sizeof(Elf64_Shdr): sizeof(Elf32_Shdr)) * nsections;
     align = ALIGN(elf_foffs, SEC_FILEALIGN) - elf_foffs;
     elf_foffs += align;
     elf_nsect = 0;
     elf_sects = nasm_malloc(sizeof(*elf_sects) * nsections);
 
     /* SHN_UNDEF */
-    elf_section_header(0, SHT_NULL, 0, NULL, false, 0, SHN_UNDEF, 0, 0, 0);
+    elf_section_header(0, SHT_NULL, 0, NULL, false,
+                       nsections > (int)SHN_LORESERVE ? nsections : 0,
+                       sec_shstrtab >= (int)SHN_LORESERVE ? sec_shstrtab : 0,
+                       0, 0, 0);
     p = shstrtab + 1;
 
     /* The normal sections */
@@ -1779,53 +1918,7 @@ static void elf_write(void)
         p += strlen(p) + 1;
     }
 
-    /* .shstrtab */
-    elf_section_header(p - shstrtab, SHT_STRTAB, 0, shstrtab, false,
-                       shstrtablen, 0, 0, 1, 0);
-    p += strlen(p) + 1;
-
-    /* .symtab */
-    if (is_elf64())
-        elf_section_header(p - shstrtab, SHT_SYMTAB, 0, symtab, true,
-                           symtablen, sec_strtab, symtablocal, 8, 24);
-    else
-        elf_section_header(p - shstrtab, SHT_SYMTAB, 0, symtab, true,
-                           symtablen, sec_strtab, symtablocal, 4, 16);
-    p += strlen(p) + 1;
-
-    /* .strtab */
-    elf_section_header(p - shstrtab, SHT_STRTAB, 0, strs, true,
-                       strslen, 0, 0, 1, 0);
-    p += strlen(p) + 1;
-
-    /* The relocation sections */
-    if (is_elf32()) {
-        for (i = 0; i < nsects; i++) {
-            if (sects[i]->head) {
-                elf_section_header(p - shstrtab, SHT_REL, 0, sects[i]->rel, true,
-                                   sects[i]->rellen, sec_symtab, i + 1, 4, 8);
-                p += strlen(p) + 1;
-            }
-        }
-    } else if (is_elfx32()) {
-        for (i = 0; i < nsects; i++) {
-            if (sects[i]->head) {
-                elf_section_header(p - shstrtab, SHT_RELA, 0, sects[i]->rel, true,
-                                   sects[i]->rellen, sec_symtab, i + 1, 4, 12);
-                p += strlen(p) + 1;
-            }
-        }
-    } else {
-        nasm_assert(is_elf64());
-        for (i = 0; i < nsects; i++) {
-            if (sects[i]->head) {
-                elf_section_header(p - shstrtab, SHT_RELA, 0, sects[i]->rel, true,
-                                   sects[i]->rellen, sec_symtab, i + 1, 8, 24);
-                p += strlen(p) + 1;
-            }
-        }
-    }
-
+    /* The debugging sections */
     if (dfmt_is_stabs()) {
         /* for debugging information, create the last three sections
            which are the .stab , .stabstr and .rel.stab sections respectively */
@@ -1835,7 +1928,7 @@ static void elf_write(void)
 
         if (stabbuf && stabstrbuf && stabrelbuf) {
             elf_section_header(p - shstrtab, SHT_PROGBITS, 0, stabbuf, false,
-                                stablen, sec_stabstr, 0, 4, 12);
+                               stablen, sec_stabstr, 0, 4, 12);
             p += strlen(p) + 1;
 
             elf_section_header(p - shstrtab, SHT_STRTAB, 0, stabstrbuf, false,
@@ -1843,67 +1936,99 @@ static void elf_write(void)
             p += strlen(p) + 1;
 
             /* link -> symtable  info -> section to refer to */
-            if (is_elf32()) {
-                elf_section_header(p - shstrtab, SHT_REL, 0, stabrelbuf, false,
-                                   stabrellen, sec_symtab, sec_stab, 4, 8);
-            } else {
-                elf_section_header(p - shstrtab, SHT_RELA, 0, stabrelbuf, false,
-                                   stabrellen, sec_symtab, sec_stab, 4, is_elf64() ? 24 : 12);
-            }
+            elf_section_header(p - shstrtab, efmt->reltype, 0,
+                               stabrelbuf, false, stabrellen,
+                               sec_symtab, sec_stab,
+                               efmt->word, efmt->rel_size);
             p += strlen(p) + 1;
         }
     } else if (dfmt_is_dwarf()) {
-            /* for dwarf debugging information, create the ten dwarf sections */
+        /* for dwarf debugging information, create the ten dwarf sections */
 
-            /* this function call creates the dwarf sections in memory */
-            if (dwarf_fsect)
-                dwarf_generate();
+        /* this function call creates the dwarf sections in memory */
+        if (dwarf_fsect)
+            dwarf_generate();
 
-            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, arangesbuf, false,
-                               arangeslen, 0, 0, 1, 0);
+        elf_section_header(p - shstrtab, SHT_PROGBITS, 0, arangesbuf, false,
+                           arangeslen, 0, 0, 1, 0);
+        p += strlen(p) + 1;
+
+        elf_section_header(p - shstrtab, SHT_RELA, 0, arangesrelbuf, false,
+                           arangesrellen, sec_symtab,
+                           sec_debug_aranges,
+                           efmt->word, efmt->rela_size);
+        p += strlen(p) + 1;
+
+        elf_section_header(p - shstrtab, SHT_PROGBITS, 0, pubnamesbuf,
+                           false, pubnameslen, 0, 0, 1, 0);
+        p += strlen(p) + 1;
+
+        elf_section_header(p - shstrtab, SHT_PROGBITS, 0, infobuf, false,
+                           infolen, 0, 0, 1, 0);
+        p += strlen(p) + 1;
+
+        elf_section_header(p - shstrtab, SHT_RELA, 0, inforelbuf, false,
+                           inforellen, sec_symtab,
+                           sec_debug_info,
+                           efmt->word, efmt->rela_size);
+        p += strlen(p) + 1;
+
+        elf_section_header(p - shstrtab, SHT_PROGBITS, 0, abbrevbuf, false,
+                           abbrevlen, 0, 0, 1, 0);
+        p += strlen(p) + 1;
+
+        elf_section_header(p - shstrtab, SHT_PROGBITS, 0, linebuf, false,
+                           linelen, 0, 0, 1, 0);
+        p += strlen(p) + 1;
+
+        elf_section_header(p - shstrtab, SHT_RELA, 0, linerelbuf, false,
+                           linerellen, sec_symtab,
+                           sec_debug_line,
+                           efmt->word, efmt->rela_size);
+        p += strlen(p) + 1;
+
+        elf_section_header(p - shstrtab, SHT_PROGBITS, 0, framebuf, false,
+                           framelen, 0, 0, 8, 0);
+        p += strlen(p) + 1;
+
+        elf_section_header(p - shstrtab, SHT_PROGBITS, 0, locbuf, false,
+                           loclen, 0, 0, 1, 0);
+        p += strlen(p) + 1;
+    }
+
+    /* .shstrtab */
+    elf_section_header(p - shstrtab, SHT_STRTAB, 0, shstrtab, false,
+                       shstrtablen, 0, 0, 1, 0);
+    p += strlen(p) + 1;
+
+    /* .symtab */
+    elf_section_header(p - shstrtab, SHT_SYMTAB, 0, symtab, true,
+                       symtab->datalen, sec_strtab, symtablocal,
+                       efmt->word, efmt->sym_size);
+    p += strlen(p) + 1;
+
+    /* .strtab */
+    elf_section_header(p - shstrtab, SHT_STRTAB, 0, strs, true,
+                       strslen, 0, 0, 1, 0);
+    p += strlen(p) + 1
+;
+    /* .symtab_shndx */
+    if (symtab_shndx) {
+        elf_section_header(p - shstrtab, SHT_SYMTAB_SHNDX, 0,
+                           symtab_shndx, true, symtab_shndx->datalen,
+                           sec_symtab, 0, 1, 0);
+        p += strlen(p) + 1;
+    }
+
+    /* The relocation sections */
+    for (i = 0; i < nsects; i++) {
+        if (sects[i]->rel) {
+            elf_section_header(p - shstrtab, efmt->reltype, 0,
+                               sects[i]->rel, true, sects[i]->rel->datalen,
+                               sec_symtab, sects[i]->shndx,
+                               efmt->word, efmt->rel_size);
             p += strlen(p) + 1;
-
-            elf_section_header(p - shstrtab, SHT_RELA, 0, arangesrelbuf, false,
-                               arangesrellen, sec_symtab,
-                               is_elf64() ? debug_aranges : sec_debug_aranges,
-                               1, is_elf64() ? 24 : 12);
-            p += strlen(p) + 1;
-
-            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, pubnamesbuf,
-                               false, pubnameslen, 0, 0, 1, 0);
-            p += strlen(p) + 1;
-
-            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, infobuf, false,
-                               infolen, 0, 0, 1, 0);
-            p += strlen(p) + 1;
-
-            elf_section_header(p - shstrtab, SHT_RELA, 0, inforelbuf, false,
-                               inforellen, sec_symtab,
-                               is_elf64() ? debug_info : sec_debug_info,
-                               1, is_elf64() ? 24 : 12);
-            p += strlen(p) + 1;
-
-            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, abbrevbuf, false,
-                               abbrevlen, 0, 0, 1, 0);
-            p += strlen(p) + 1;
-
-            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, linebuf, false,
-                               linelen, 0, 0, 1, 0);
-            p += strlen(p) + 1;
-
-            elf_section_header(p - shstrtab, SHT_RELA, 0, linerelbuf, false,
-                               linerellen, sec_symtab,
-                               is_elf64() ? debug_line : sec_debug_line,
-                               1, is_elf64() ? 24 : 12);
-            p += strlen(p) + 1;
-
-            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, framebuf, false,
-                               framelen, 0, 0, 8, 0);
-            p += strlen(p) + 1;
-
-            elf_section_header(p - shstrtab, SHT_PROGBITS, 0, locbuf, false,
-                               loclen, 0, 0, 1, 0);
-            p += strlen(p) + 1;
+        }
     }
     fwritezero(align, ofile);
 
@@ -1914,241 +2039,155 @@ static void elf_write(void)
 
     nasm_free(elf_sects);
     saa_free(symtab);
+    if (symtab_shndx)
+        saa_free(symtab_shndx);
 }
 
-static struct SAA *elf_build_symtab(int32_t *len, int32_t *local)
+static size_t nsyms;
+
+static void elf_sym(const struct elf_symbol *sym)
 {
-    struct SAA *s = saa_init(1L);
-    struct elf_symbol *sym;
+    int shndx = sym->section;
+
+    /*
+     * Careful here. This relies on sym->section being signed; for
+     * special section indicies this value needs to be cast to
+     * (int16_t) so that it sign-extends, however, here SHN_LORESERVE
+     * is used as an unsigned constant.
+     */
+    if (shndx >= (int)SHN_LORESERVE) {
+        if (unlikely(!symtab_shndx)) {
+            /* Create symtab_shndx and fill previous entries with zero */
+            symtab_shndx = saa_init(1);
+            saa_wbytes(symtab_shndx, NULL, nsyms << 2);
+        }
+    } else {
+        shndx = 0;              /* Section index table always write zero */
+    }
+
+    if (symtab_shndx)
+        saa_write32(symtab_shndx, shndx);
+
+    efmt->elf_sym(sym);
+    nsyms++;
+}
+
+static void elf32_sym(const struct elf_symbol *sym)
+{
+    Elf32_Sym sym32;
+
+    sym32.st_name     = cpu_to_le32(sym->strpos);
+    sym32.st_value    = cpu_to_le32(sym->symv.key);
+    sym32.st_size     = cpu_to_le32(sym->size);
+    sym32.st_info     = sym->type;
+    sym32.st_other    = sym->other;
+    sym32.st_shndx    = elf_shndx(sym->section, SHN_XINDEX);
+    saa_wbytes(symtab, &sym32, sizeof sym32);
+}
+
+static void elf64_sym(const struct elf_symbol *sym)
+{
+    Elf64_Sym sym64;
+
+    sym64.st_name     = cpu_to_le32(sym->strpos);
+    sym64.st_value    = cpu_to_le64(sym->symv.key);
+    sym64.st_size     = cpu_to_le64(sym->size);
+    sym64.st_info     = sym->type;
+    sym64.st_other    = sym->other;
+    sym64.st_shndx    = elf_shndx(sym->section, SHN_XINDEX);
+    saa_wbytes(symtab, &sym64, sizeof sym64);
+}
+
+static size_t elf_build_symtab(void)
+{
+    struct elf_symbol *sym, xsym;
+    size_t nlocal;
     int i;
 
-    size_t usize = is_elf64() ? sizeof(Elf64_Sym) : sizeof(Elf32_Sym);
-    union {
-        Elf32_Sym   sym32;
-        Elf64_Sym   sym64;
-    } u;
-
-    *len = *local = 0;
+    symtab       = saa_init(1);
+    symtab_shndx = NULL;
 
     /*
      * Zero symbol first as required by spec.
      */
-    saa_wbytes(s, NULL, usize);
-    *len += usize;
-    (*local)++;
+    nasm_zero(xsym);
+    elf_sym(&xsym);
 
     /*
      * Next, an entry for the file name.
      */
-    if (is_elf64()) {
-        u.sym64.st_name     = cpu_to_le32(1);
-        u.sym64.st_info     = ELF64_ST_INFO(STB_LOCAL, STT_FILE);
-        u.sym64.st_other    = 0;
-        u.sym64.st_shndx    = cpu_to_le16(SHN_ABS);
-        u.sym64.st_value    = 0;
-        u.sym64.st_size     = 0;
-    } else {
-        u.sym32.st_name     = cpu_to_le32(1);
-        u.sym32.st_value    = 0;
-        u.sym32.st_size     = 0;
-        u.sym32.st_info     = ELF32_ST_INFO(STB_LOCAL, STT_FILE);
-        u.sym32.st_other    = 0;
-        u.sym32.st_shndx    = cpu_to_le16(SHN_ABS);
-    }
-    saa_wbytes(s, &u, usize);
-    *len += usize;
-    (*local)++;
-
+    nasm_zero(xsym);
+    xsym.strpos  = 1;
+    xsym.type    = ELF32_ST_INFO(STB_LOCAL, STT_FILE);
+    xsym.section = XSHN_ABS;
+    elf_sym(&xsym);
 
     /*
      * Now some standard symbols defining the segments, for relocation
      * purposes.
      */
-    if (is_elf64()) {
-        u.sym64.st_name     = 0;
-        u.sym64.st_other    = 0;
-        u.sym64.st_value    = 0;
-        u.sym64.st_size     = 0;
-        for (i = 1; i <= nsects; i++) {
-            u.sym64.st_info      = ELF64_ST_INFO(STB_LOCAL, STT_SECTION);
-            u.sym64.st_shndx     = cpu_to_le16(i);
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-            (*local)++;
-        }
-    } else {
-        u.sym32.st_name     = 0;
-        u.sym32.st_value    = 0;
-        u.sym32.st_size     = 0;
-        u.sym32.st_other    = 0;
-        for (i = 1; i <= nsects; i++) {
-            u.sym32.st_info      = ELF32_ST_INFO(STB_LOCAL, STT_SECTION);
-            u.sym32.st_shndx     = cpu_to_le16(i);
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-            (*local)++;
-        }
+    nasm_zero(xsym);
+    for (i = 1; i <= nsects; i++) {
+        xsym.type    = ELF64_ST_INFO(STB_LOCAL, STT_SECTION);
+        xsym.section = i;
+        elf_sym(&xsym);
+    }
+
+    /*
+     * dwarf needs symbols for debug sections
+     * which are relocation targets.
+     */
+    if (dfmt_is_dwarf()) {
+        dwarf_infosym   = nsyms;
+        xsym.section    = sec_debug_info;
+        elf_sym(&xsym);
+
+        dwarf_abbrevsym = nsyms;
+        xsym.section    = sec_debug_abbrev;
+        elf_sym(&xsym);
+
+        dwarf_linesym   = nsyms;
+        xsym.section    = sec_debug_line;
+        elf_sym(&xsym);
     }
 
     /*
      * Now the other local symbols.
      */
     saa_rewind(syms);
-    if (is_elf64()) {
-        while ((sym = saa_rstruct(syms))) {
-            if (sym->type & SYM_GLOBAL)
-                continue;
-            u.sym64.st_name     = cpu_to_le32(sym->strpos);
-            u.sym64.st_info     = sym->type;
-            u.sym64.st_other    = sym->other;
-            u.sym64.st_shndx    = cpu_to_le16(sym->section);
-            u.sym64.st_value    = cpu_to_le64(sym->symv.key);
-            u.sym64.st_size     = cpu_to_le64(sym->size);
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-            (*local)++;
-        }
-        /*
-         * dwarf needs symbols for debug sections
-         * which are relocation targets.
-         */
-        if (dfmt_is_dwarf()) {
-            dwarf_infosym = *local;
-            u.sym64.st_name     = 0;
-            u.sym64.st_info     = ELF64_ST_INFO(STB_LOCAL, STT_SECTION);
-            u.sym64.st_other    = 0;
-            u.sym64.st_shndx    = cpu_to_le16(debug_info);
-            u.sym64.st_value    = 0;
-            u.sym64.st_size     = 0;
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-            (*local)++;
-            dwarf_abbrevsym = *local;
-            u.sym64.st_name     = 0;
-            u.sym64.st_info     = ELF64_ST_INFO(STB_LOCAL, STT_SECTION);
-            u.sym64.st_other    = 0;
-            u.sym64.st_shndx    = cpu_to_le16(debug_abbrev);
-            u.sym64.st_value    = 0;
-            u.sym64.st_size     = 0;
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-            (*local)++;
-            dwarf_linesym = *local;
-            u.sym64.st_name     = 0;
-            u.sym64.st_info     = ELF64_ST_INFO(STB_LOCAL, STT_SECTION);
-            u.sym64.st_other    = 0;
-            u.sym64.st_shndx    = cpu_to_le16(debug_line);
-            u.sym64.st_value    = 0;
-            u.sym64.st_size     = 0;
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-            (*local)++;
-        }
-    } else {
-        while ((sym = saa_rstruct(syms))) {
-            if (sym->type & SYM_GLOBAL)
-                continue;
-            u.sym32.st_name     = cpu_to_le32(sym->strpos);
-            u.sym32.st_value    = cpu_to_le32(sym->symv.key);
-            u.sym32.st_size     = cpu_to_le32(sym->size);
-            u.sym32.st_info     = sym->type;
-            u.sym32.st_other    = sym->other;
-            u.sym32.st_shndx    = cpu_to_le16(sym->section);
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-            (*local)++;
-        }
-        /*
-         * dwarf needs symbols for debug sections
-         * which are relocation targets.
-         */
-        if (dfmt_is_dwarf()) {
-            dwarf_infosym = *local;
-            u.sym32.st_name     = 0;
-            u.sym32.st_value    = 0;
-            u.sym32.st_size     = 0;
-            u.sym32.st_info     = ELF32_ST_INFO(STB_LOCAL, STT_SECTION);
-            u.sym32.st_other    = 0;
-            u.sym32.st_shndx    = cpu_to_le16(sec_debug_info);
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-            (*local)++;
-            dwarf_abbrevsym = *local;
-            u.sym32.st_name     = 0;
-            u.sym32.st_value    = 0;
-            u.sym32.st_size     = 0;
-            u.sym32.st_info     = ELF32_ST_INFO(STB_LOCAL, STT_SECTION);
-            u.sym32.st_other    = 0;
-            u.sym32.st_shndx    = cpu_to_le16(sec_debug_abbrev);
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-            (*local)++;
-            dwarf_linesym = *local;
-            u.sym32.st_name     = 0;
-            u.sym32.st_value    = 0;
-            u.sym32.st_size     = 0;
-            u.sym32.st_info     = ELF32_ST_INFO(STB_LOCAL, STT_SECTION);
-            u.sym32.st_other    = 0;
-            u.sym32.st_shndx    = cpu_to_le16(sec_debug_line);
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-            (*local)++;
-        }
+    while ((sym = saa_rstruct(syms))) {
+        if (sym->type & SYM_GLOBAL)
+            continue;
+
+        elf_sym(sym);
     }
+
+    nlocal = nsyms;
 
     /*
      * Now the global symbols.
      */
     saa_rewind(syms);
-    if (is_elf64()) {
-        while ((sym = saa_rstruct(syms))) {
-            if (!(sym->type & SYM_GLOBAL))
-                continue;
-            u.sym64.st_name     = cpu_to_le32(sym->strpos);
-            u.sym64.st_info     = sym->type;
-            u.sym64.st_other    = sym->other;
-            u.sym64.st_shndx    = cpu_to_le16(sym->section);
-            u.sym64.st_value    = cpu_to_le64(sym->symv.key);
-            u.sym64.st_size     = cpu_to_le64(sym->size);
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-        }
-    } else {
-        while ((sym = saa_rstruct(syms))) {
-            if (!(sym->type & SYM_GLOBAL))
-                continue;
-            u.sym32.st_name     = cpu_to_le32(sym->strpos);
-            u.sym32.st_value    = cpu_to_le32(sym->symv.key);
-            u.sym32.st_size     = cpu_to_le32(sym->size);
-            u.sym32.st_info     = sym->type;
-            u.sym32.st_other    = sym->other;
-            u.sym32.st_shndx    = cpu_to_le16(sym->section);
-            saa_wbytes(s, &u, usize);
-            *len += usize;
-        }
+    while ((sym = saa_rstruct(syms))) {
+        if (!(sym->type & SYM_GLOBAL))
+            continue;
+
+        elf_sym(sym);
     }
 
-    return s;
+    return nlocal;
 }
 
-static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
+static struct SAA *elf32_build_reltab(const struct elf_reloc *r)
 {
     struct SAA *s;
     int32_t global_offset;
-
-    size_t usize = is_elf64() ? sizeof(Elf64_Rela) :
-        (is_elfx32() ? sizeof(Elf32_Rela) : sizeof(Elf32_Rel));
-    union {
-        Elf32_Rel   rel32;
-        Elf32_Rela  rela32;
-        Elf64_Rela  rela64;
-    } u;
+    Elf32_Rel rel32;
 
     if (!r)
         return NULL;
 
     s = saa_init(1L);
-    *len = 0;
 
     /*
      * How to onvert from a global placeholder to a real symbol index;
@@ -2157,51 +2196,87 @@ static struct SAA *elf_build_reltab(uint64_t *len, struct elf_reloc *r)
      */
     global_offset = -GLOBAL_TEMP_BASE + nsects + nlocals + ndebugs + 2;
 
-    if (is_elf32()) {
-        while (r) {
-            int32_t sym = r->symbol;
+    while (r) {
+        int32_t sym = r->symbol;
 
-            if (sym >= GLOBAL_TEMP_BASE)
-                sym += global_offset;
+        if (sym >= GLOBAL_TEMP_BASE)
+            sym += global_offset;
 
-            u.rel32.r_offset    = cpu_to_le32(r->address);
-            u.rel32.r_info      = cpu_to_le32(ELF32_R_INFO(sym, r->type));
-            saa_wbytes(s, &u, usize);
-            *len += usize;
+        rel32.r_offset    = cpu_to_le32(r->address);
+        rel32.r_info      = cpu_to_le32(ELF32_R_INFO(sym, r->type));
+        saa_wbytes(s, &rel32, sizeof rel32);
 
-            r = r->next;
-        }
-    } else if (is_elfx32()) {
-        while (r) {
-            int32_t sym = r->symbol;
+        r = r->next;
+    }
 
-            if (sym >= GLOBAL_TEMP_BASE)
-                sym += global_offset;
+    return s;
+}
 
-            u.rela32.r_offset   = cpu_to_le32(r->address);
-            u.rela32.r_info     = cpu_to_le32(ELF32_R_INFO(sym, r->type));
-            u.rela32.r_addend   = cpu_to_le32(r->offset);
-            saa_wbytes(s, &u, usize);
-            *len += usize;
+static struct SAA *elfx32_build_reltab(const struct elf_reloc *r)
+{
+    struct SAA *s;
+    int32_t global_offset;
+    Elf32_Rela rela32;
 
-            r = r->next;
-        }
-    } else {
-        nasm_assert(is_elf64());
-        while (r) {
-            int32_t sym = r->symbol;
+    if (!r)
+        return NULL;
 
-            if (sym >= GLOBAL_TEMP_BASE)
-                sym += global_offset;
+    s = saa_init(1L);
 
-            u.rela64.r_offset   = cpu_to_le64(r->address);
-            u.rela64.r_info     = cpu_to_le64(ELF64_R_INFO(sym, r->type));
-            u.rela64.r_addend   = cpu_to_le64(r->offset);
-            saa_wbytes(s, &u, usize);
-            *len += usize;
+    /*
+     * How to onvert from a global placeholder to a real symbol index;
+     * the +2 refers to the two special entries, the null entry and
+     * the filename entry.
+     */
+    global_offset = -GLOBAL_TEMP_BASE + nsects + nlocals + ndebugs + 2;
 
-            r = r->next;
-        }
+    while (r) {
+        int32_t sym = r->symbol;
+
+        if (sym >= GLOBAL_TEMP_BASE)
+            sym += global_offset;
+
+        rela32.r_offset   = cpu_to_le32(r->address);
+        rela32.r_info     = cpu_to_le32(ELF32_R_INFO(sym, r->type));
+        rela32.r_addend   = cpu_to_le32(r->offset);
+        saa_wbytes(s, &rela32, sizeof rela32);
+
+        r = r->next;
+    }
+
+    return s;
+}
+
+static struct SAA *elf64_build_reltab(const struct elf_reloc *r)
+{
+    struct SAA *s;
+    int32_t global_offset;
+    Elf64_Rela rela64;
+
+    if (!r)
+        return NULL;
+
+    s = saa_init(1L);
+
+    /*
+     * How to onvert from a global placeholder to a real symbol index;
+     * the +2 refers to the two special entries, the null entry and
+     * the filename entry.
+     */
+    global_offset = -GLOBAL_TEMP_BASE + nsects + nlocals + ndebugs + 2;
+
+    while (r) {
+        int32_t sym = r->symbol;
+
+        if (sym >= GLOBAL_TEMP_BASE)
+            sym += global_offset;
+
+        rela64.r_offset   = cpu_to_le64(r->address);
+        rela64.r_info     = cpu_to_le64(ELF64_R_INFO(sym, r->type));
+        rela64.r_addend   = cpu_to_le64(r->offset);
+        saa_wbytes(s, &rela64, sizeof rela64);
+
+        r = r->next;
     }
 
     return s;
@@ -2212,47 +2287,46 @@ static void elf_section_header(int name, int type, uint64_t flags,
                                int link, int info,
                                uint64_t align, uint64_t entsize)
 {
-    union {
-        Elf32_Shdr  shdr32;
-        Elf64_Shdr  shdr64;
-    } shdr;
-
     elf_sects[elf_nsect].data = data;
     elf_sects[elf_nsect].len = datalen;
     elf_sects[elf_nsect].is_saa = is_saa;
     elf_nsect++;
 
-    if (is_elf32() || is_elfx32()) {
-        shdr.shdr32.sh_name         = cpu_to_le32(name);
-        shdr.shdr32.sh_type         = cpu_to_le32(type);
-        shdr.shdr32.sh_flags        = cpu_to_le32(flags);
-        shdr.shdr32.sh_addr         = 0;
-        shdr.shdr32.sh_offset       = cpu_to_le32(type == SHT_NULL ? 0 : elf_foffs);
-        shdr.shdr32.sh_size         = cpu_to_le32(datalen);
+    if (!efmt->elf64) {
+        Elf32_Shdr  shdr;
+
+        shdr.sh_name         = cpu_to_le32(name);
+        shdr.sh_type         = cpu_to_le32(type);
+        shdr.sh_flags        = cpu_to_le32(flags);
+        shdr.sh_addr         = 0;
+        shdr.sh_offset       = cpu_to_le32(type == SHT_NULL ? 0 : elf_foffs);
+        shdr.sh_size         = cpu_to_le32(datalen);
         if (data)
             elf_foffs += ALIGN(datalen, SEC_FILEALIGN);
-        shdr.shdr32.sh_link         = cpu_to_le32(link);
-        shdr.shdr32.sh_info         = cpu_to_le32(info);
-        shdr.shdr32.sh_addralign    = cpu_to_le32(align);
-        shdr.shdr32.sh_entsize      = cpu_to_le32(entsize);
+        shdr.sh_link         = cpu_to_le32(link);
+        shdr.sh_info         = cpu_to_le32(info);
+        shdr.sh_addralign    = cpu_to_le32(align);
+        shdr.sh_entsize      = cpu_to_le32(entsize);
+
+        nasm_write(&shdr, sizeof shdr, ofile);
     } else {
-        nasm_assert(is_elf64());
+        Elf64_Shdr  shdr;
 
-        shdr.shdr64.sh_name         = cpu_to_le32(name);
-        shdr.shdr64.sh_type         = cpu_to_le32(type);
-        shdr.shdr64.sh_flags        = cpu_to_le64(flags);
-        shdr.shdr64.sh_addr         = 0;
-        shdr.shdr64.sh_offset       = cpu_to_le64(type == SHT_NULL ? 0 : elf_foffs);
-        shdr.shdr64.sh_size         = cpu_to_le32(datalen);
+        shdr.sh_name         = cpu_to_le32(name);
+        shdr.sh_type         = cpu_to_le32(type);
+        shdr.sh_flags        = cpu_to_le64(flags);
+        shdr.sh_addr         = 0;
+        shdr.sh_offset       = cpu_to_le64(type == SHT_NULL ? 0 : elf_foffs);
+        shdr.sh_size         = cpu_to_le64(datalen);
         if (data)
             elf_foffs += ALIGN(datalen, SEC_FILEALIGN);
-        shdr.shdr64.sh_link        = cpu_to_le32(link);
-        shdr.shdr64.sh_info        = cpu_to_le32(info);
-        shdr.shdr64.sh_addralign   = cpu_to_le64(align);
-        shdr.shdr64.sh_entsize     = cpu_to_le64(entsize);
-    }
+        shdr.sh_link        = cpu_to_le32(link);
+        shdr.sh_info        = cpu_to_le32(info);
+        shdr.sh_addralign   = cpu_to_le64(align);
+        shdr.sh_entsize     = cpu_to_le64(entsize);
 
-    nasm_write(&shdr, is_elf64() ? sizeof(shdr.shdr64) : sizeof(shdr.shdr32), ofile);
+        nasm_write(&shdr, sizeof shdr, ofile);
+    }
 }
 
 static void elf_write_sections(void)
@@ -2285,15 +2359,9 @@ static void elf_sect_writeaddr(struct elf_section *sect, int64_t data, size_t le
 
 static void elf_sectalign(int32_t seg, unsigned int value)
 {
-    struct elf_section *s = NULL;
-    int i;
+    struct elf_section *s;
 
-    for (i = 0; i < nsects; i++) {
-        if (sects[i]->index == seg) {
-            s = sects[i];
-            break;
-        }
-    }
+    s = raa_read_ptr(section_by_index, seg >> 1);
     if (!s || !is_power2(value))
         return;
 
@@ -2354,7 +2422,7 @@ const struct ofmt of_elf32 = {
     elf32_debugs_arr,
     &elf32_df_stabs,
     elf_stdmac,
-    elf_init,
+    elf32_init,
     null_reset,
     nasm_do_legacy_output,
     elf32_out,
@@ -2406,7 +2474,7 @@ const struct ofmt of_elf64 = {
     elf64_debugs_arr,
     &elf64_df_stabs,
     elf_stdmac,
-    elf_init,
+    elf64_init,
     null_reset,
     nasm_do_legacy_output,
     elf64_out,
@@ -2458,7 +2526,7 @@ const struct ofmt of_elfx32 = {
     elfx32_debugs_arr,
     &elfx32_df_stabs,
     elf_stdmac,
-    elf_init,
+    elfx32_init,
     null_reset,
     nasm_do_legacy_output,
     elfx32_out,
