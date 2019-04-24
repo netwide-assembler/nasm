@@ -62,17 +62,13 @@ STD: nasm
 %endmacro
 
 %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 1
-%imacro sectalign 1.nolist
-    %ifnum %1
-        %if __SECTALIGN_ALIGN_UPDATES_SECTION__ = 1
-            [sectalign %1]
-        %endif
+%imacro sectalign 1+.nolist
+    %ifidni %1,off
+        %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 0
+    %elifidni %1,on
+        %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 1
     %else
-        %ifidni %1,off
-            %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 0
-        %elifidni %1,on
-            %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 1
-        %endif
+        [sectalign %1]
     %endif
 %endmacro
 
@@ -111,12 +107,16 @@ STD: nasm
 %endmacro
 
 %imacro align 1-2+.nolist nop
-    sectalign %1
+    %if __SECTALIGN_ALIGN_UPDATES_SECTION__
+        sectalign %1
+    %endif
     times (((%1) - (($-$$) % (%1))) % (%1)) %2
 %endmacro
 
 %imacro alignb 1-2+.nolist
-    sectalign %1
+    %if __SECTALIGN_ALIGN_UPDATES_SECTION__
+        sectalign %1
+    %endif
     %ifempty %2
         [warning push]
         [warning -zeroing]
