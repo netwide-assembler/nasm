@@ -42,6 +42,11 @@ AS_IF([$pa_no_optimize],
       [PA_ADD_CFLAGS([-O0])
        PA_ADD_CFLAGS([-fno-omit-frame-pointer])])
 
+dnl Profiling
+PA_ARG_ENABLED([profiling],
+ [compile with profiling (-pg option)],
+ [PA_ADD_CFLAGS([-pg])])
+
 dnl Abort on panic
 PA_ARG_ENABLED([panic-abort],
  [call abort() on panic to trap in the debugger],

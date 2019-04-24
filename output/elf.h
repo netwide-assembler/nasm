@@ -148,23 +148,27 @@
 #define PF_R		0x4
 
 /* Section header types */
-#define SHT_NULL	0
-#define SHT_PROGBITS	1
-#define SHT_SYMTAB	2
-#define SHT_STRTAB	3
-#define SHT_RELA	4
-#define SHT_HASH	5
-#define SHT_DYNAMIC	6
-#define SHT_NOTE	7
-#define SHT_NOBITS	8
-#define SHT_REL		9
-#define SHT_SHLIB	10
-#define SHT_DYNSYM	11
-#define SHT_NUM		12
-#define SHT_LOPROC	0x70000000
-#define SHT_HIPROC	0x7fffffff
-#define SHT_LOUSER	0x80000000
-#define SHT_HIUSER	0xffffffff
+#define SHT_NULL        0
+#define SHT_PROGBITS    1
+#define SHT_SYMTAB      2
+#define SHT_STRTAB      3
+#define SHT_RELA        4
+#define SHT_HASH        5
+#define SHT_DYNAMIC     6
+#define SHT_NOTE        7
+#define SHT_NOBITS      8
+#define SHT_REL         9
+#define SHT_SHLIB       10
+#define SHT_DYNSYM      11
+#define SHT_INIT_ARRAY	14
+#define SHT_FINI_ARRAY	15
+#define SHT_PREINIT_ARRAY 16
+#define SHT_GROUP	17
+#define SHT_SYMTAB_SHNDX 18
+#define SHT_LOPROC      0x70000000
+#define SHT_HIPROC      0x7fffffff
+#define SHT_LOUSER      0x80000000
+#define SHT_HIUSER      0xffffffff
 
 /* Section header flags */
 #define SHF_WRITE		(1 << 0)	/* Writable */
@@ -179,13 +183,24 @@
 #define SHF_TLS			(1 << 10)	/* Section hold thread-local data */
 
 /* Special section numbers */
-#define SHN_UNDEF	0
-#define SHN_LORESERVE	0xff00
-#define SHN_LOPROC	0xff00
-#define SHN_HIPROC	0xff1f
-#define SHN_ABS		0xfff1
-#define SHN_COMMON	0xfff2
-#define SHN_HIRESERVE	0xffff
+#define SHN_UNDEF       0x0000
+#define SHN_LORESERVE   0xff00
+#define SHN_LOPROC      0xff00
+#define SHN_HIPROC      0xff1f
+#define SHN_ABS         0xfff1
+#define SHN_COMMON      0xfff2
+#define SHN_XINDEX	0xffff
+#define SHN_HIRESERVE   0xffff
+
+/* Same, but signed/sign-extended */
+#define XSHN_UNDEF      ((int16_t)SHN_UNDEF)
+#define XSHN_LORESERVE  ((int16_t)SHN_LORESERVE)
+#define XSHN_LOPROC     ((int16_t)SHN_LOPROC)
+#define XSHN_HIPROC     ((int16_t)SHN_HIPROC)
+#define XSHN_ABS        ((int16_t)SHN_ABS)
+#define XSHN_COMMON     ((int16_t)SHN_COMMON)
+#define XSHN_XINDEX     ((int16_t)SHN_XINDEX)
+#define XSHN_HIRESERVE  ((int16_t)SHN_HIRESERVE)
 
 /* Section align flag */
 #define SHA_ANY		1	/* No alignment constraint */

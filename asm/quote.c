@@ -216,6 +216,14 @@ static char *emit_utf8(char *q, int32_t v)
 }
 
 /*
+ * Quote a C string
+ */
+char *nasm_quote_cstr(const char *str)
+{
+    return nasm_quote(str, strlen(str));
+}
+
+/*
  * Do an *in-place* dequoting of the specified string, returning the
  * resulting length (which may be containing embedded nulls.)
  *
