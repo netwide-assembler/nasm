@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -242,7 +242,7 @@ struct tokseq_match {
 struct Token {
     Token *next;
     char *text;
-    size_t len;                 /* scratch length field */
+    size_t len;
     enum pp_token_type type;
 };
 
@@ -834,7 +834,8 @@ static char *line_from_stdmac(void)
 
 static char *read_line(void)
 {
-    unsigned int size, c, next;
+    int c;
+    unsigned int size, next;
     const unsigned int delta = 512;
     const unsigned int pad = 8;
     unsigned int nr_cont = 0;
@@ -849,14 +850,18 @@ static char *read_line(void)
     size = delta;
     p = buffer = nasm_malloc(size);
 
-    for (;;) {
+    do {
         c = fgetc(istk->fp);
-        if ((int)(c) == EOF) {
-            p[0] = 0;
-            break;
-        }
 
         switch (c) {
+        case EOF:
+            if (p == buffer) {
+                nasm_free(buffer);
+                return NULL;
+            }
+            c = 0;
+            break;
+
         case '\r':
             next = fgetc(istk->fp);
             if (next != '\n')
@@ -865,6 +870,7 @@ static char *read_line(void)
                 cont = false;
                 continue;
             }
+            c = 0;
             break;
 
         case '\n':
@@ -872,6 +878,11 @@ static char *read_line(void)
                 cont = false;
                 continue;
             }
+            c = 0;
+            break;
+
+        case 032:               /* ^Z = legacy MS-DOS end of file mark */
+            c = 0;
             break;
 
         case '\\':
@@ -885,34 +896,17 @@ static char *read_line(void)
             break;
         }
 
-        if (c == '\r' || c == '\n') {
-            *p++ = 0;
-            break;
-        }
-
         if (p >= (buffer + size - pad)) {
             buffer = nasm_realloc(buffer, size + delta);
             p = buffer + size - pad;
             size += delta;
         }
 
-        *p++ = (unsigned char)c;
-    }
-
-    if (p == buffer) {
-        nasm_free(buffer);
-        return NULL;
-    }
+        *p++ = c;
+    } while (c);
 
     src_set_linnum(src_get_linnum() + istk->lineinc +
                    (nr_cont * istk->lineinc));
-
-    /*
-     * Handle spurious ^Z, which may be inserted into source files
-     * by some file transfer utilities.
-     */
-    buffer[strcspn(buffer, "\032")] = '\0';
-
     lfmt->line(LIST_READ, buffer);
 
     return buffer;
@@ -2238,7 +2232,7 @@ static void do_pragma_preproc(Token *tline)
  * @return DIRECTIVE_FOUND or NO_DIRECTIVE_FOUND
  *
  */
-static int do_directive(Token *tline, char **output)
+static int do_directive(Token *tline, Token **output)
 {
     enum preproc_token i;
     int j;
@@ -2369,8 +2363,7 @@ static int do_directive(Token *tline, char **output)
                 for (t = tline; t->next; t = t->next)
                     ;
                 t->next = new_Token(NULL, TOK_OTHER, "]", 1);
-                /* true here can be revisited in the future */
-                *output = detoken(tline, true);
+                *output = tline;
             }
         }
         free_tlist(origline);
@@ -4921,7 +4914,7 @@ static int expand_mmacro(Token * tline)
                 }
                 /* fall through */
             default:
-                tt = *tail = new_Token(NULL, x->type, x->text, 0);
+                tt = *tail = dup_Token(NULL, x);
                 break;
             }
             tail = &tt->next;
@@ -4937,7 +4930,7 @@ static int expand_mmacro(Token * tline)
         if (dont_prepend < 0)
             free_tlist(startline);
         else {
-            ll = nasm_malloc(sizeof(Line));
+            nasm_new(ll);
             ll->finishes = NULL;
             ll->next = istk->expansion;
             istk->expansion = ll;
@@ -5158,14 +5151,18 @@ static void pp_init(void)
 {
 }
 
-static char *pp_getline(void)
+/*
+ * Get a line of tokens. If we popped the macro expansion/include stack,
+ * we return a pointer to the dummy token tok_pop; at that point if
+ * istk is NULL then we have reached end of input;
+ */
+static Token tok_pop;           /* Dummy token placeholder */
+
+static Token *pp_tokline(void)
 {
-    char *line;
-    Token *tline;
+    Token *tline, *dtline;
 
-    real_verror = nasm_set_verror(pp_verror);
-
-    while (1) {
+    while (true) {
         /*
          * Fetch a tokenized line, either from the macro-expansion
          * buffer or from the input file.
@@ -5205,7 +5202,6 @@ static char *pp_getline(void)
                             tail = &tt->next;
                         }
                     }
-
                     istk->expansion = ll;
                 }
             } else {
@@ -5263,34 +5259,30 @@ static char *pp_getline(void)
                 istk->expansion = l->next;
                 nasm_free(l);
                 lfmt->downlevel(LIST_MACRO);
+                return &tok_pop;
             }
         }
-        while (1) {             /* until we get a line we can use */
+        do {                    /* until we get a line we can use */
+            char *line;
 
             if (istk->expansion) {      /* from a macro expansion */
-                char *p;
                 Line *l = istk->expansion;
                 if (istk->mstk)
                     istk->mstk->lineno++;
                 tline = l->first;
                 istk->expansion = l->next;
                 nasm_free(l);
-                p = detoken(tline, false);
-                lfmt->line(LIST_MACRO, p);
-                nasm_free(p);
-                break;
-            }
-            line = read_line();
-            if (line) {         /* from the current input file */
+                line = detoken(tline, false);
+                lfmt->line(LIST_MACRO, line);
+                nasm_free(line);
+            } else if ((line = read_line())) {
                 line = prepreproc(line);
                 tline = tokenize(line);
                 nasm_free(line);
-                break;
-            }
-            /*
-             * The current file has ended; work down the istk
-             */
-            {
+            } else {
+                /*
+                 * The current file has ended; work down the istk
+                 */
                 Include *i = istk;
                 fclose(i->fp);
                 if (i->conds) {
@@ -5303,14 +5295,9 @@ static char *pp_getline(void)
                 istk = i->next;
                 lfmt->downlevel(LIST_INCLUDE);
                 nasm_free(i);
-                if (!istk) {
-		    line = NULL;
-		    goto done;
-		}
-                if (istk->expansion && istk->expansion->finishes)
-                    break;
+                return &tok_pop;
             }
-        }
+        } while (0);
 
         /*
          * We must expand MMacro parameters and MMacro-local labels
@@ -5330,11 +5317,9 @@ static char *pp_getline(void)
         /*
          * Check the line to see if it's a preprocessor directive.
          */
-        if (do_directive(tline, &line) == DIRECTIVE_FOUND) {
-            if (line)
-                break;          /* Directive generated output */
-            else
-                continue;
+        if (do_directive(tline, &dtline) == DIRECTIVE_FOUND) {
+            if (dtline)
+                return dtline;
         } else if (defining) {
             /*
              * We're defining a multi-line macro. We emit nothing
@@ -5346,7 +5331,6 @@ static char *pp_getline(void)
             l->first = tline;
             l->finishes = NULL;
             defining->expansion = l;
-            continue;
         } else if (istk->conds && !emitting(istk->conds->state)) {
             /*
              * We're in a non-emitting branch of a condition block.
@@ -5355,7 +5339,6 @@ static char *pp_getline(void)
              * directive so we keep our place correctly.
              */
             free_tlist(tline);
-            continue;
         } else if (istk->mstk && !istk->mstk->in_progress) {
             /*
              * We're in a %rep block which has been terminated, so
@@ -5366,23 +5349,40 @@ static char *pp_getline(void)
              * correctly.
              */
             free_tlist(tline);
-            continue;
         } else {
             tline = expand_smacro(tline);
-            if (!expand_mmacro(tline)) {
-                /*
-                 * De-tokenize the line again, and emit it.
-                 */
-                line = detoken(tline, true);
-                free_tlist(tline);
+            if (!expand_mmacro(tline))
+                return tline;
+        }
+    }
+}
+
+static char *pp_getline(void)
+{
+    char *line = NULL;
+    Token *tline;
+
+    real_verror = nasm_set_verror(pp_verror);
+
+    while (true) {
+        tline = pp_tokline();
+        if (tline == &tok_pop) {
+            /*
+             * We popped the macro/include stack. If istk is empty,
+             * we are at end of input, otherwise just loop back.
+             */
+            if (!istk)
                 break;
-            } else {
-                continue;       /* expand_mmacro calls free_tlist */
-            }
+        } else {
+            /*
+             * De-tokenize the line and emit it.
+             */
+            line = detoken(tline, true);
+            free_tlist(tline);
+            break;
         }
     }
 
-done:
     nasm_set_verror(real_verror);
     return line;
 }
