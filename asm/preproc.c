@@ -96,19 +96,23 @@ typedef struct Cond Cond;
  */
 
 /*
+ * Function call for a magic smacro
+ */
+typedef Token *(*MagicSMacro)(const SMacro *s, Token **params,
+                              unsigned int nparams, bool *free_expansion);
+
+/*
  * Store the definition of a single-line macro.
  */
 struct SMacro {
     SMacro *next;               /* MUST BE FIRST - see free_smacro() */
     char *name;
-    union {
-        Token *expansion;
-        Token *(*magic)(const SMacro *s, Token **params, int *paramsize);
-    } e;
+    Token *expansion;
+    MagicSMacro magic;
+    intorptr magicpvt;
     bool *eval_param;
     unsigned int nparam;
     bool casesense;
-    bool magic;
     bool in_progress;
 };
 
@@ -210,7 +214,6 @@ enum pp_token_type {
     TOK_PREPROC_Q, TOK_PREPROC_QQ,
     TOK_PASTE,              /* %+ */
     TOK_INDIRECT,           /* %[...] */
-    TOK_SMAC_END,           /* Marker for the end of smacro expansion */
     TOK_SMAC_START_PARAMS,  /* MUST BE LAST IN THE LIST!!! */
     TOK_MAX = INT_MAX       /* Keep compiler from reducing the range */
 };
@@ -239,10 +242,7 @@ struct tokseq_match {
 struct Token {
     Token *next;
     char *text;
-    union {
-        SMacro *mac;        /* associated macro for TOK_SMAC_END */
-        size_t len;         /* scratch length field */
-    } a;                    /* Auxiliary data */
+    size_t len;                 /* scratch length field */
     enum pp_token_type type;
 };
 
@@ -470,7 +470,8 @@ static vefunc real_verror;
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
 static Token *new_Token(Token * next, enum pp_token_type type,
-                        const char *text, int txtlen);
+                        const char *text, size_t txtlen);
+static Token *dup_Token(Token *next, const Token *src);
 static Token *delete_Token(Token * t);
 
 /*
@@ -482,19 +483,25 @@ static Token *delete_Token(Token * t);
 #define tok_isnt_(x,v)  ((x) && ((x)->type!=TOK_OTHER || strcmp((x)->text,(v))))
 
 /*
- * nasm_unquote with error if the string contains NUL characters.
- * If the string contains NUL characters, issue an error and return
- * the C len, i.e. truncate at the NUL.
+ * nasm_unquote with error if the string contains control characters.
+ * If the string contains control characters, issue an error and return
+ * the C len, i.e. truncate at the control character.
  */
 static size_t nasm_unquote_cstr(char *qstr, enum preproc_token directive)
 {
     size_t len = nasm_unquote(qstr, NULL);
-    size_t clen = strlen(qstr);
+    size_t i;
 
-    if (len != clen)
-        nasm_nonfatal("NUL character in `%s' directive",
-                      pp_directives[directive]);
-    return clen;
+    for (i = 0; i < len; i++) {
+        if (qstr[i] < ' ') {
+            nasm_nonfatal("control character in `%s' directive string",
+                          pp_directives[directive]);
+            break;
+        }
+    }
+
+    qstr[i] = '\0';
+    return i;
 }
 
 /*
@@ -633,20 +640,29 @@ static void free_mmacro(MMacro * m)
 }
 
 /*
- * Free an SMacro
+ * Clear or free an SMacro
  */
-static void free_smacro(SMacro *s, bool really)
+static void free_smacro_members(SMacro *s)
 {
     nasm_free(s->name);
-    if (!s->magic)
-        free_tlist(s->e.expansion);
+    free_tlist(s->expansion);
     nasm_free(s->eval_param);
-    if (really) {
-        nasm_free(s);
-    } else {
-        /* Wipe everything except the next pointer */
-        memset(&s->next + 1, 0, sizeof *s - sizeof s->next);
-    }
+}
+
+static void clear_smacro(SMacro *s)
+{
+    free_smacro_members(s);
+    /* Wipe everything except the next pointer */
+    memset(&s->next + 1, 0, sizeof *s - sizeof s->next);
+}
+
+/*
+ * Free an SMacro
+ */
+static void free_smacro(SMacro *s)
+{
+    free_smacro_members(s);
+    nasm_free(s);
 }
 
 /*
@@ -662,7 +678,7 @@ static void free_smacro_table(struct hash_table *smt)
         SMacro *s = np->data;
         nasm_free((void *)np->key);
         list_for_each_safe(s, tmp, s)
-            free_smacro(s, true);
+            free_smacro(s);
     }
     hash_free(smt);
 }
@@ -1208,11 +1224,10 @@ static void delete_Blocks(void)
 
 /*
  *  this function creates a new Token and passes a pointer to it
- *  back to the caller.  It sets the type and text elements, and
- *  also the a.mac and next elements to NULL.
+ *  back to the caller.  It sets the type, text, and next pointer elements.
  */
 static Token *new_Token(Token * next, enum pp_token_type type,
-                        const char *text, int txtlen)
+                        const char *text, size_t txtlen)
 {
     Token *t;
     int i;
@@ -1226,18 +1241,24 @@ static Token *new_Token(Token * next, enum pp_token_type type,
     t = freeTokens;
     freeTokens = t->next;
     t->next = next;
-    t->a.mac = NULL;
     t->type = type;
     if (type == TOK_WHITESPACE || !text) {
+        t->len  = 0;
         t->text = NULL;
     } else {
-        if (txtlen == 0)
+        if (txtlen == 0 && text[0])
             txtlen = strlen(text);
+        t->len = txtlen;
         t->text = nasm_malloc(txtlen+1);
         memcpy(t->text, text, txtlen);
         t->text[txtlen] = '\0';
     }
     return t;
+}
+
+static Token *dup_Token(Token *next, const Token *src)
+{
+    return new_Token(next, src->type, src->text, src->len);
 }
 
 static Token *delete_Token(Token * t)
@@ -2054,7 +2075,7 @@ static SMacro *define_smacro(Context *ctx, const char *mname,
              * existing SMacro structure. This means freeing
              * what was already in it, but not the structure itself.
              */
-            free_smacro(smac, false);
+            clear_smacro(smac);
         }
     } else {
         smtbl  = ctx ? &ctx->localmac : &smacros;
@@ -2066,7 +2087,7 @@ static SMacro *define_smacro(Context *ctx, const char *mname,
     smac->name = nasm_strdup(mname);
     smac->casesense = casesense;
     smac->nparam = nparam;
-    smac->e.expansion = expansion;
+    smac->expansion = expansion;
     return smac;
 }
 
@@ -2089,7 +2110,7 @@ static void undef_smacro(Context *ctx, const char *mname)
         while ((s = *sp) != NULL) {
             if (!mstrcmp(s->name, mname, s->casesense)) {
                 *sp = s->next;
-                free_smacro(s, true);
+                free_smacro(s);
             } else {
                 sp = &s->next;
             }
@@ -3176,7 +3197,9 @@ issue_error:
         while (t) {
             if (t->type == TOK_ID) {
                 list_for_each(tt, param_start)
-                    if (is_smac_param(tt->type) && !strcmp(tt->text, t->text))
+                    if (is_smac_param(tt->type) &&
+                        tt->len == t->len &&
+                        !memcmp(tt->text, t->text, tt->len))
                         t->type = tt->type;
             }
             tt = t->next;
@@ -3437,7 +3460,7 @@ issue_error:
             case TOK_WHITESPACE:
                 break;
             case TOK_STRING:
-                len += t->a.len = nasm_unquote(t->text, NULL);
+                len += t->len = nasm_unquote(t->text, NULL);
                 break;
             case TOK_OTHER:
                 if (!strcmp(t->text, ",")) /* permit comma separators */
@@ -3454,8 +3477,8 @@ issue_error:
         p = pp = nasm_malloc(len);
         list_for_each(t, tline) {
             if (t->type == TOK_STRING) {
-                memcpy(p, t->text, t->a.len);
-                p += t->a.len;
+                memcpy(p, t->text, t->len);
+                p += t->len;
             }
         }
 
@@ -3556,7 +3579,9 @@ issue_error:
             start = -1, count = 0; /* empty string */
 
 	macro_start = new_Token(NULL, TOK_STRING, NULL, 0);
-        macro_start->text = nasm_quote((start < 0) ? "" : t->text + start, count);
+        macro_start->len = count;
+        macro_start->text = nasm_quote((start < 0) ? "" : t->text + start,
+                                       &macro_start->len);
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -3689,9 +3714,11 @@ static int find_cc(Token * t)
 }
 
 /*
- * This routines walks over tokens strem and hadnles tokens
+ * This routines walks over tokens strem and handles tokens
  * pasting, if @handle_explicit passed then explicit pasting
  * term is handled, otherwise -- implicit pastings only.
+ * The @m array can contain a series of token types which are
+ * executed as separate passes.
  */
 static bool paste_tokens(Token **head, const struct tokseq_match *m,
                          size_t mnum, bool handle_explicit)
@@ -4087,7 +4114,7 @@ static Token *expand_mmac_params(Token * tline)
                 t->type = type;
                 nasm_free(t->text);
                 t->text = text;
-                t->a.mac = NULL;
+                t->len = strlen(text);
             }
             changed = true;
             continue;
@@ -4099,7 +4126,6 @@ static Token *expand_mmac_params(Token * tline)
             tt = expand_smacro(tt);
             *tail = tt;
             while (tt) {
-                tt->a.mac = NULL; /* Necessary? */
                 tail = &tt->next;
                 tt = tt->next;
             }
@@ -4108,7 +4134,6 @@ static Token *expand_mmac_params(Token * tline)
         } else {
             t = *tail = tline;
             tline = tline->next;
-            t->a.mac = NULL;
             tail = &t->next;
         }
     }
@@ -4136,26 +4161,324 @@ static Token *expand_mmac_params(Token * tline)
 }
 
 /*
+ * Expand *one* single-line macro instance. If the first token is not
+ * a macro at all, it is simply copied to the output. tpp should be
+ * a pointer to a pointer (usually the next pointer of the previous token)
+ * to the first token. **tpp is updated to point to the pointer to first token
+ * of the expansion, which is also the return value, and then *tpp will point to
+ * the pointer to the first input token after the expansion.
+ *
+ * If the expansion is empty, then these two values point to the same token.
+ *
+ */
+static Token *expand_smacro_noreset(Token * tline);
+
+static Token *expand_one_smacro(Token ***tpp)
+{
+    Token **params = NULL;
+    const char *mname;
+    Token *tline = **tpp;
+    Token **tnextp;
+    SMacro *head, *m;
+    unsigned int nparam, i;
+    Token *expansion;
+    Token *t, *mstart, **ttail;
+    bool free_expansion;
+
+    if (!tline)
+        return NULL;
+
+    mname = tline->text;
+    tnextp = &tline->next;      /* By default we shift out one token */
+
+    if (tline->type == TOK_ID) {
+        head = (SMacro *)hash_findix(&smacros, mname);
+    } else if (tline->type == TOK_PREPROC_ID) {
+        Context *ctx = get_ctx(mname, &mname);
+        head = ctx ? (SMacro *)hash_findix(&ctx->localmac, mname) : NULL;
+    } else {
+        goto not_a_macro;
+    }
+
+    /*
+     * We've hit an identifier of some sort. First check whether the
+     * identifier is a single-line macro at all, then think about
+     * checking for parameters if necessary.
+     */
+    list_for_each(m, head) {
+        if (!mstrcmp(m->name, mname, m->casesense))
+            break;
+    }
+
+    if (!m) {
+        goto not_a_macro;
+    }
+
+    /* Parse parameters, if applicable */
+
+    params = NULL;
+    nparam = 0;
+
+    if (m->nparam == 0) {
+        /*
+         * Simple case: the macro is parameterless.
+         * Nothing to parse; the expansion code will
+         * drop the macro name token.
+         */
+    } else {
+        /*
+         * Complicated case: at least one macro with this name
+         * exists and takes parameters. We must find the
+         * parameters in the call, count them, find the SMacro
+         * that corresponds to that form of the macro call, and
+         * substitute for the parameters when we expand. What a
+         * pain.
+         */
+        Token **pep;
+        int paren;
+        int white = 0;
+        int brackets = 0;
+        bool bracketed = false;
+        bool bad_bracket = false;
+        unsigned int sparam = PARAM_DELTA;
+
+        tline = tline->next;
+
+        while (tok_type_(tline, TOK_WHITESPACE)) {
+            tline = tline->next;
+        }
+        if (!tok_is_(tline, "(")) {
+            /*
+             * This macro wasn't called with parameters: ignore
+             * the call. (Behaviour borrowed from gnu cpp.)
+             */
+            goto not_a_macro;
+        }
+
+        paren = 1;
+        nparam = 0;
+        params = nasm_malloc(sparam * sizeof *params);
+        params[0] = NULL;
+        pep = &params[0];
+
+        while (true) {
+            bool skip = false;
+            char ch;
+
+            if (!tline->next) {
+                nasm_nonfatal("macro call expects terminating `)'");
+                break;
+            }
+            tline = tline->next;
+
+            ch = (tline->type == TOK_OTHER && !tline->text[1])
+                ? tline->text[0] : 0;
+
+            if (!brackets) {
+                if (tline->type == TOK_WHITESPACE) {
+                    if (params[nparam]) {
+                        /* Keep interior whitespace */
+                        white++;
+                    }
+                    skip = true;
+                }
+
+                switch (ch) {
+                case ',':
+                    if (!paren) {
+                        if (++nparam >= sparam) {
+                            sparam += PARAM_DELTA;
+                            params = nasm_realloc(params, sparam * sizeof *params);
+                        }
+                        params[nparam] = NULL;
+                        pep = &params[nparam];
+                        white = 0;
+                        bracketed = false;
+                    }
+                    break;
+
+                case '{':
+                    brackets++;
+                    bracketed = skip = !params[nparam];
+                    break;
+
+                case '(':
+                    paren++;
+                    break;
+
+                case ')':
+                    paren--;
+                    break;
+
+                default:
+                    break;      /* Just advance to the next token */
+                }
+            } else {
+                if (ch == '}')
+                    brackets--;
+
+                if (brackets == 0)
+                    skip = bracketed;
+            }
+
+            if (!paren)
+                break;          /* We are done */
+
+            if (!skip) {
+                Token *t;
+
+                if (bracketed && !brackets)
+                    bad_bracket = true;
+
+                if (white) {
+                    t = new_Token(NULL, TOK_WHITESPACE, NULL, 0);
+                    *pep = t;
+                    pep = &t->next;
+                }
+
+                t = new_Token(NULL, tline->type, tline->text, 0);
+                *pep = t;
+                pep = &t->next;
+                white = 0;
+            }
+        }
+        nparam++;               /* Count the last parameter */
+
+        if (bad_bracket)
+            nasm_nonfatal("braces do not enclose all of macro parameter");
+
+        /* Look for a macro matching in both name and parameter count */
+        while (m && (m->nparam != nparam ||
+                     mstrcmp(m->name, mname, m->casesense)))
+            m = m->next;
+
+        if (!m) {
+            /*!
+             *!macro-params [on] macro calls with wrong parameter count
+             *!  covers warnings about \i{multi-line macros} being invoked
+             *!  with the wrong number of parameters. See \k{mlmacover} for an
+             *!  example of why you might want to disable this warning.
+             */
+            nasm_warn(WARN_MACRO_PARAMS,
+                      "macro `%s' exists, "
+                      "but not taking %d parameters",
+                      mname, nparam);
+            goto not_a_macro_cleanup;
+        }
+    }
+
+    if (m->in_progress)
+        goto not_a_macro_cleanup;
+
+    /* Expand each parameter */
+    m->in_progress = true;
+
+    for (i = 0; i < nparam; i++) {
+        params[i] = expand_smacro_noreset(params[i]);
+
+        if (m->eval_param && m->eval_param[i]) {
+            /* Evaluate this parameter as a number */
+            struct ppscan pps;
+            struct tokenval tokval;
+            expr *evalresult;
+
+            pps.tptr = params[i];
+            pps.ntokens = -1;
+            tokval.t_type = TOKEN_INVALID;
+            evalresult = evaluate(ppscan, &pps, &tokval, NULL, true, NULL);
+
+            if (!evalresult) {
+                /* Nothing meaningful to do */
+            } else if (tokval.t_type) {
+                nasm_nonfatal("invalid expression in parameter %d of macro `%s'", i, m->name);
+            } else if (!is_simple(evalresult)) {
+                nasm_nonfatal("non-constant expression in parameter %d of macro `%s'", i, m->name);
+            } else {
+                free_tlist(params[i]);
+                params[i] = make_tok_num(reloc_value(evalresult));
+            }
+        }
+
+        /* Put tokens in reverse order like the expansion list */
+        params[i] = reverse_tokens(params[i]);
+    }
+
+    t = tline;
+    tline = tline->next;
+    t->next = NULL;         /* Remove the macro call from the input */
+
+    if (unlikely(m->magic)) {
+        expansion = m->magic(m, params, nparam, &free_expansion);
+    } else {
+        expansion = m->expansion;
+        free_expansion = false;
+    }
+
+    ttail = NULL;
+
+    list_for_each(t, expansion) {
+        if (is_smac_param(t->type)) {
+            Token *ttt;
+            list_for_each(ttt, params[smac_nparam(t->type)]) {
+                tline = dup_Token(tline, ttt);
+                if (!ttail)
+                    ttail = &tline->next;
+            }
+        } else {
+            if (t->type == TOK_PREPROC_Q) {
+                tline = new_Token(tline, TOK_ID, mname, 0);
+            } else if (t->type == TOK_PREPROC_QQ) {
+                tline = new_Token(tline, TOK_ID, m->name, 0);
+            } else {
+                tline = dup_Token(tline, t);
+            }
+            if (!ttail)
+                ttail = &tline->next;
+        }
+    }
+
+    if (free_expansion)
+        free_tlist(expansion);
+
+    m->in_progress = false;
+
+    /* Don't do this until after expansion or we will clobber mname */
+    mstart = **tpp;
+    tnextp = ttail ? ttail : *tpp;
+    **tpp = tline;
+    free_tlist(mstart);
+
+    /*
+     * No macro expansion needed; roll back to mstart (if necessary)
+     * and then advance to the next input token.
+     */
+not_a_macro_cleanup:
+    nasm_free(params);
+
+not_a_macro:
+    t = **tpp;
+    *tpp = tnextp;
+    return t;
+}
+
+/*
  * Expand all single-line macro calls made in the given line.
  * Return the expanded version of the line. The original is deemed
  * to be destroyed in the process. (In reality we'll just move
  * Tokens from input to output a lot of the time, rather than
  * actually bothering to destroy and replicate.)
  */
-
-static Token *expand_smacro(Token * tline)
+static int64_t smacro_deadman;
+static Token *expand_smacro(Token *tline)
 {
-    Token *t, *tt, *mstart, **tail, *thead;
-    SMacro *head = NULL, *m;
-    Token **params;
-    int *paramsize;
-    Token *eparams;
-    unsigned int nparam, sparam, i;
-    int brackets;
+    smacro_deadman = nasm_limit[LIMIT_MACROS];
+    return expand_smacro_noreset(tline);
+}
+
+static Token *expand_smacro_noreset(Token * tline)
+{
+    Token *t, **tail, *thead;
     Token *org_tline = tline;
-    Context *ctx;
-    const char *mname;
-    int64_t deadman = nasm_limit[LIMIT_MACROS];
     bool expanded;
 
     /*
@@ -4167,7 +4490,6 @@ static Token *expand_smacro(Token * tline)
     if (org_tline) {
         tline = new_Token(org_tline->next, org_tline->type,
                           org_tline->text, 0);
-        tline->a.mac = org_tline->a.mac;
         nasm_free(org_tline->text);
         org_tline->text = NULL;
     }
@@ -4175,310 +4497,20 @@ static Token *expand_smacro(Token * tline)
     expanded = true;            /* Always expand %+ at least once */
 
 again:
-    thead = NULL;
+    thead = tline;
     tail = &thead;
 
-    while (tline) {             /* main token loop */
-        if (!--deadman) {
+    while ((t = *tail)) {             /* main token loop */
+        if (!--smacro_deadman) {
             nasm_nonfatal("interminable macro recursion");
             goto err;
         }
 
-        if ((mname = tline->text)) {
-            /* if this token is a local macro, look in local context */
-            if (tline->type == TOK_ID) {
-                head = (SMacro *)hash_findix(&smacros, mname);
-            } else if (tline->type == TOK_PREPROC_ID) {
-                ctx = get_ctx(mname, &mname);
-                head = ctx ? (SMacro *)hash_findix(&ctx->localmac, mname) : NULL;
-            } else
-                head = NULL;
-
-            /*
-             * We've hit an identifier. As in is_mmacro below, we first
-             * check whether the identifier is a single-line macro at
-             * all, then think about checking for parameters if
-             * necessary.
-             */
-            list_for_each(m, head) {
-                if (!mstrcmp(m->name, mname, m->casesense))
-                    break;
-            }
-            if (m) {
-                mstart = tline;
-                params = NULL;
-                paramsize = NULL;
-		eparams = NULL;
-
-                if (m->nparam == 0) {
-                    /*
-                     * Simple case: the macro is parameterless.
-                     * Nothing to parse; just drop the macro token itself.
-                     */
-                    tline = tline->next;
-                } else {
-                    /*
-                     * Complicated case: at least one macro with this name
-                     * exists and takes parameters. We must find the
-                     * parameters in the call, count them, find the SMacro
-                     * that corresponds to that form of the macro call, and
-                     * substitute for the parameters when we expand. What a
-                     * pain.
-                     */
-                    /*tline = tline->next;
-                      skip_white_(tline); */
-                    do {
-                        t = tline->next;
-                        while (tok_type_(t, TOK_SMAC_END)) {
-                            if (t->a.mac)
-                                t->a.mac->in_progress = false;
-                            t->text = NULL;
-                            t = tline->next = delete_Token(t);
-                        }
-                        tline = t;
-                    } while (tok_type_(tline, TOK_WHITESPACE));
-                    if (!tok_is_(tline, "(")) {
-                        /*
-                         * This macro wasn't called with parameters: ignore
-                         * the call. (Behaviour borrowed from gnu cpp.)
-                         */
-                        tline = mstart;
-                        m = NULL;
-                    } else {
-                        int paren = 0;
-                        int white = 0;
-                        brackets = 0;
-                        nparam = 0;
-                        sparam = PARAM_DELTA;
-                        params = nasm_malloc(sparam * sizeof(Token *));
-                        params[0] = tline->next;
-                        paramsize = nasm_malloc(sparam * sizeof(int));
-                        paramsize[0] = 0;
-                        while (true) {  /* parameter loop */
-                            /*
-                             * For some unusual expansions
-                             * which concatenates function call
-                             */
-                            t = tline->next;
-                            while (tok_type_(t, TOK_SMAC_END)) {
-                                if (t->a.mac)
-                                    t->a.mac->in_progress = false;
-                                t->text = NULL;
-                                t = tline->next = delete_Token(t);
-                            }
-                            tline = t;
-
-                            if (!tline) {
-                                nasm_nonfatal("macro call expects terminating `)'");
-                                break;
-                            }
-                            if (tline->type == TOK_WHITESPACE
-                                && brackets <= 0) {
-                                if (paramsize[nparam])
-                                    white++;
-                                else
-                                    params[nparam] = tline->next;
-                                continue;       /* parameter loop */
-                            }
-                            if (tline->type == TOK_OTHER
-                                && tline->text[1] == 0) {
-                                char ch = tline->text[0];
-                                if (ch == ',' && !paren && brackets <= 0) {
-                                    if (++nparam >= sparam) {
-                                        sparam += PARAM_DELTA;
-                                        params = nasm_realloc(params,
-                                                        sparam * sizeof(Token *));
-                                        paramsize = nasm_realloc(paramsize,
-                                                        sparam * sizeof(int));
-                                    }
-                                    params[nparam] = tline->next;
-                                    paramsize[nparam] = 0;
-                                    white = 0;
-                                    continue;   /* parameter loop */
-                                }
-                                if (ch == '{' &&
-                                    (brackets > 0 || (brackets == 0 &&
-                                                      !paramsize[nparam])))
-                                {
-                                    if (!(brackets++)) {
-                                        params[nparam] = tline->next;
-                                        continue;       /* parameter loop */
-                                    }
-                                }
-                                if (ch == '}' && brackets > 0)
-                                    if (--brackets == 0) {
-                                        brackets = -1;
-                                        continue;       /* parameter loop */
-                                    }
-                                if (ch == '(' && !brackets)
-                                    paren++;
-                                if (ch == ')' && brackets <= 0)
-                                    if (--paren < 0)
-                                        break;
-                            }
-                            if (brackets < 0) {
-                                brackets = 0;
-                                nasm_nonfatal("braces do not "
-                                      "enclose all of macro parameter");
-                            }
-                            paramsize[nparam] += white + 1;
-                            white = 0;
-                        }       /* parameter loop */
-                        nparam++;
-
-                        while (m && (m->nparam != nparam ||
-                                     mstrcmp(m->name, mname, m->casesense)))
-                            m = m->next;
-                        if (!m) {
-                            /*!
-                             *!macro-params [on] macro calls with wrong parameter count
-                             *!  covers warnings about \i{multi-line macros} being invoked
-                             *!  with the wrong number of parameters. See \k{mlmacover} for an
-                             *!  example of why you might want to disable this warning.
-                             */
-                            nasm_warn(WARN_MACRO_PARAMS,
-                                       "macro `%s' exists, "
-                                       "but not taking %d parameters",
-                                       mstart->text, nparam);
-                        } else if (m->eval_param) {
-			    struct ppscan pps;
-			    struct tokenval tokval;
-			    expr *evalresult;
-
-                            /* Evaluate parameters if applicable */
-                            for (i = 0; i < nparam; i++) {
-                                if (!m->eval_param[i])
-				    continue;
-
-				pps.tptr = params[i];
-				pps.ntokens = paramsize[i];
-				tokval.t_type = TOKEN_INVALID;
-				evalresult = evaluate(ppscan, &pps, &tokval,
-						      NULL, true, NULL);
-				if (!evalresult)
-				    continue;
-
-				if (tokval.t_type) {
-				    nasm_error(ERR_NONFATAL,
-					       "invalid expression in parameter %d of macro `%s'", i, m->name);
-				    continue;
-				}
-
-				if (!is_simple(evalresult)) {
-				    nasm_error(ERR_NONFATAL,
-					       "non-constant expression in parameter %d of macro `%s'", i, m->name);
-				    continue;
-				}
-				params[i] = make_tok_num(reloc_value(evalresult));
-				params[i]->next = eparams;
-				eparams = params[i];
-				paramsize[i] = 1;
-			    }
-			}
-                    }
-                }
-                if (m && m->in_progress)
-                    m = NULL;
-                if (!m) {
-                    /* in progress or didn't find '(' or wrong nparam */
-                    /*
-                     * Design question: should we handle !tline, which
-                     * indicates missing ')' here, or expand those
-                     * macros anyway, which requires the (t) test a few
-                     * lines down?
-                     */
-		    free_tlist(eparams);
-                    nasm_free(params);
-                    nasm_free(paramsize);
-                    tline = mstart;
-                } else {
-                    /*
-                     * Expand the macro: we are placed on the last token of the
-                     * call, so that we can easily split the call from the
-                     * following tokens. We also start by pushing an SMAC_END
-                     * token for the cycle removal.
-                     */
-                    Token *expansion;
-
-                    t = tline;
-                    if (t) {
-                        tline = t->next;
-                        t->next = NULL;
-                    }
-                    tt = new_Token(tline, TOK_SMAC_END, NULL, 0);
-                    tt->a.mac = m;
-                    m->in_progress = true;
-                    if (unlikely(m->magic))
-                        expansion = m->e.magic(m, params, paramsize);
-                    else
-                        expansion = m->e.expansion;
-
-                    tline = tt;
-                    list_for_each(t, expansion) {
-                        if (is_smac_param(t->type)) {
-                            Token *pcopy = tline, **ptail = &pcopy;
-                            Token *ttt, *pt;
-                            int i;
-
-                            ttt = params[smac_nparam(t->type)];
-                            i = paramsize[smac_nparam(t->type)];
-                            while (--i >= 0) {
-                                nasm_assert(ttt);
-                                pt = *ptail = new_Token(tline, ttt->type,
-                                                        ttt->text, 0);
-                                ptail = &pt->next;
-                                ttt = ttt->next;
-                                if (!ttt && i > 0) {
-                                    /*
-                                     * FIXME: Need to handle more gracefully,
-                                     * exiting early on arguments analysis.
-                                     */
-                                    nasm_fatal("macro `%s' expects %d args",
-                                               mstart->text,
-                                               paramsize[t->type - TOK_SMAC_START_PARAMS]);
-                                }
-                            }
-                            tline = pcopy;
-                        } else if (t->type == TOK_PREPROC_Q) {
-                            tt = new_Token(tline, TOK_ID, mname, 0);
-                            tline = tt;
-                        } else if (t->type == TOK_PREPROC_QQ) {
-                            tt = new_Token(tline, TOK_ID, m->name, 0);
-                            tline = tt;
-                        } else {
-                            tt = new_Token(tline, t->type, t->text, 0);
-                            tline = tt;
-                        }
-                    }
-
-                    /*
-                     * Having done that, get rid of the macro call, and clean
-                     * up the parameters.
-                     */
-                    nasm_free(params);
-                    nasm_free(paramsize);
-                    free_tlist(mstart);
-		    free_tlist(eparams);
-                    if (m->magic)
-                        free_tlist(expansion);
-                    expanded = true;
-                    continue;   /* main token loop */
-                }
-            }
-        }
-
-        if (tline->type == TOK_SMAC_END) {
-            /* On error path it might already be dropped */
-            if (tline->a.mac)
-                tline->a.mac->in_progress = false;
-            tline = delete_Token(tline);
-        } else {
-            t = *tail = tline;
-            tline = tline->next;
-            t->a.mac = NULL;
-            t->next = NULL;
-            tail = &t->next;
-        }
+        /*
+         * An expansion happened if and only if the first token of the
+         * expansion was the first token of the original simply moved over.
+         */
+        expanded |= (expand_one_smacro(&tail) != t);
     }
 
     /*
@@ -4967,62 +4999,74 @@ static void pp_verror(errflags severity, const char *fmt, va_list arg)
     }
 }
 
-static Token *stdmac_file(const SMacro *s, Token **params, int *paramsize)
+static Token *stdmac_file(const SMacro *s, Token **params,
+                          unsigned int nparams, bool *free_expansion)
 {
     (void)s;
     (void)params;
-    (void)paramsize;
+    (void)nparams;
 
+    *free_expansion = true;
     return make_tok_qstr(src_get_fname());
 }
 
-static Token *stdmac_line(const SMacro *s, Token **params, int *paramsize)
+static Token *stdmac_line(const SMacro *s, Token **params,
+                          unsigned int nparams, bool *free_expansion)
 {
     (void)s;
     (void)params;
-    (void)paramsize;
+    (void)nparams;
 
+    *free_expansion = true;
     return make_tok_num(src_get_linnum());
 }
 
-static Token *stdmac_bits(const SMacro *s, Token **params, int *paramsize)
+static Token *stdmac_bits(const SMacro *s, Token **params,
+                          unsigned int nparams, bool *free_expansion)
 {
     (void)s;
     (void)params;
-    (void)paramsize;
+    (void)nparams;
 
+    *free_expansion = true;
     return make_tok_num(globalbits);
 }
 
-static Token *stdmac_ptr(const SMacro *s, Token **params, int *paramsize)
+static Token *stdmac_ptr(const SMacro *s, Token **params,
+                         unsigned int nparams, bool *free_expansion)
 {
-    const char *name;
+    const Token *t;
+    static const Token ptr_word  = { NULL, "word", 4, TOKEN_ID };
+    static const Token ptr_dword = { NULL, "dword", 5, TOKEN_ID };
+    static const Token ptr_qword = { NULL, "qword", 5, TOKEN_ID };
 
     (void)s;
     (void)params;
-    (void)paramsize;
+    (void)nparams;
 
     switch (globalbits) {
     case 16:
-        name = "word";
+        t = &ptr_word;
         break;
     case 32:
-        name = "dword";
+        t = &ptr_dword;
         break;
     case 64:
-        name = "qword";
+        t = &ptr_qword;
         break;
     default:
         panic();
     }
-    return new_Token(NULL, TOK_ID, name, 0);
+
+    *free_expansion = false;
+    return (Token *)t;
 }
 
 /* Add magic standard macros */
 struct magic_macros {
     const char *name;
     int nparams;
-    Token *(*func)(const SMacro *s, Token **params, int *paramsize);
+    MagicSMacro func;
 };
 static const struct magic_macros magic_macros[] =
 {
@@ -5040,8 +5084,7 @@ static void pp_add_magic_stdmac(void)
 
     for (m = magic_macros; m->name; m++) {
         s = define_smacro(NULL, m->name, true, m->nparams, NULL);
-        s->magic = true;
-        s->e.magic = m->func;
+        s->magic = m->func;
     }
 }
 
@@ -5503,7 +5546,7 @@ static Token *make_tok_num(int64_t val)
 static Token *make_tok_qstr(const char *str)
 {
     Token *t = new_Token(NULL, TOK_STRING, NULL, 0);
-    t->text = nasm_quote_cstr(str);
+    t->text = nasm_quote_cstr(str, &t->len);
     return t;
 }
 

@@ -42,6 +42,19 @@
 #include "bytesex.h"
 
 /*
+ * Useful construct for private values
+ */
+union intorptr {
+    int64_t i;
+    uint64_t u;
+    size_t s;
+    void *p;
+    const void *cp;
+    uintptr_t up;
+};
+typedef union intorptr intorptr;
+
+/*
  * Wrappers around malloc, realloc, free and a few more. nasm_malloc
  * will fatal-error and die rather than return NULL; nasm_realloc will
  * do likewise, and will also guarantee to work right on being passed

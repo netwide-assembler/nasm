@@ -41,13 +41,19 @@
 #include "nasmlib.h"
 #include "quote.h"
 
-char *nasm_quote(const char *str, size_t len)
+/*
+ * Create a NASM quoted string in newly allocated memory. Update the
+ * *lenp parameter with the output length (sans final NUL).
+ */
+
+char *nasm_quote(const char *str, size_t *lenp)
 {
     const char *p, *ep;
     char c, c1, *q, *nstr;
     unsigned char uc;
     bool sq_ok, dq_ok;
     size_t qlen;
+    size_t len = *lenp;
 
     sq_ok = dq_ok = true;
     ep = str+len;
@@ -105,7 +111,7 @@ char *nasm_quote(const char *str, size_t len)
 	/* Use '...' or "..." */
 	nstr = nasm_malloc(len+3);
 	nstr[0] = nstr[len+1] = sq_ok ? '\'' : '\"';
-	nstr[len+2] = '\0';
+        q = &nstr[len+2];
 	if (len > 0)
 	    memcpy(nstr+1, str, len);
     } else {
@@ -174,9 +180,10 @@ char *nasm_quote(const char *str, size_t len)
 	    }
 	}
 	*q++ = '`';
-	*q++ = '\0';
-	nasm_assert((size_t)(q-nstr) == qlen+3);
+	nasm_assert((size_t)(q-nstr) == qlen+2);
     }
+    *q = '\0';
+    *lenp = q - nstr;
     return nstr;
 }
 
@@ -216,11 +223,16 @@ static char *emit_utf8(char *q, int32_t v)
 }
 
 /*
- * Quote a C string
+ * Same as nasm_quote, but take the length of a C string;
+ * the lenp argument is optional.
  */
-char *nasm_quote_cstr(const char *str)
+char *nasm_quote_cstr(const char *str, size_t *lenp)
 {
-    return nasm_quote(str, strlen(str));
+    size_t len = strlen(str);
+    char *qstr = nasm_quote(str, &len);
+    if (lenp)
+        *lenp = len;
+    return qstr;
 }
 
 /*
