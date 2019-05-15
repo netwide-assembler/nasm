@@ -216,6 +216,9 @@ FILE *nasm_open_write(const char *filename, enum file_flags flags)
     return f;
 }
 
+/* The appropriate "rb" strings for os_fopen() */
+static const os_fopenflag fopenflags_rb[3] = { 'r', 'b', 0 };
+
 /*
  * Report the existence of a file
  */
@@ -232,8 +235,7 @@ bool nasm_file_exists(const char *filename)
     exists = os_access(osfname, R_OK) == 0;
 #else
     FILE *f;
-
-    f = os_fopen(osfname, "rb");
+    f = os_fopen(osfname, fopenflags_rb);
     exists = f != NULL;
     if (f)
         fclose(f);
@@ -292,18 +294,13 @@ off_t nasm_file_size_by_path(const char *pathname)
     off_t len = -1;
     os_struct_stat st;
     FILE *fp;
-    os_fopenflag fopen_flags[3];
 
     osfname = os_mangle_filename(pathname);
 
     if (!os_stat(osfname, &st) && S_ISREG(st.st_mode))
         len = st.st_size;
 
-    fopen_flags[0] = 'r';
-    fopen_flags[1] = 'b';
-    fopen_flags[2] = '\0';
-
-    fp = os_fopen(osfname, fopen_flags);
+    fp = os_fopen(osfname, fopenflags_rb);
     if (fp) {
         len = nasm_file_size(fp);
         fclose(fp);
