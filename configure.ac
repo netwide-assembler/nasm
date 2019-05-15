@@ -137,7 +137,6 @@ AC_CHECK_FUNCS([_fseeki64])
 AC_CHECK_FUNCS([ftruncate _chsize _chsize_s])
 AC_CHECK_FUNCS([fileno _fileno])
 
-AC_CHECK_FUNCS(_filelengthi64)
 AC_FUNC_MMAP
 AC_CHECK_FUNCS(getpagesize)
 AC_CHECK_FUNCS(sysconf)
@@ -165,6 +164,7 @@ AC_CHECK_TYPES([struct _stati64])
 AC_CHECK_TYPES([struct stat])
 AC_CHECK_FUNCS([stat _stati64])
 AC_CHECK_FUNCS([fstat _fstati64])
+AC_CHECK_FUNCS([S_ISREG])
 
 dnl Check for functions that might not be declared in the headers for
 dnl various idiotic reasons (mostly because of library authors
