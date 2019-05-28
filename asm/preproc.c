@@ -5029,9 +5029,9 @@ static Token *stdmac_ptr(const SMacro *s, Token **params,
                          unsigned int nparams, bool *free_expansion)
 {
     const Token *t;
-    static const Token ptr_word  = { NULL, "word", 4, TOKEN_ID };
-    static const Token ptr_dword = { NULL, "dword", 5, TOKEN_ID };
-    static const Token ptr_qword = { NULL, "qword", 5, TOKEN_ID };
+    static const Token ptr_word  = { NULL, "word", 4, TOK_ID };
+    static const Token ptr_dword = { NULL, "dword", 5, TOK_ID };
+    static const Token ptr_qword = { NULL, "qword", 5, TOK_ID };
 
     (void)s;
     (void)params;
