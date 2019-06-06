@@ -158,7 +158,7 @@ void nasm_write(const void *, size_t, FILE *);
     do {                                                                    \
         if (!if_constant(x, true)) {                                        \
             extern void __attribute__((error("assertion " #x " failed")))   \
-            _nasm_static_fail(void);                                        \
+                _nasm_static_fail(void);                                    \
             _nasm_static_fail();                                            \
         }                                                                   \
     } while (0)
