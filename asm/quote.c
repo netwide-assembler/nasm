@@ -484,7 +484,7 @@ size_t nasm_unquote_cstr(char *str, char **ep)
 /*
  * Find the end of a quoted string; returns the pointer to the terminating
  * character (either the ending quote or the null character, if unterminated.)
- * If the input is not a quoted string,
+ * If the input is not a quoted string, return NULL.
  */
 char *nasm_skip_string(const char *str)
 {
@@ -499,11 +499,15 @@ char *nasm_skip_string(const char *str)
 
     bq = str[0];
     p = str+1;
-    if (bq == '\'' || bq == '\"') {
+    switch (bq) {
+    case '\'':
+    case '\"':
 	/* '...' or "..." string */
         while ((c = *p++) && (c != bq))
             ;
-    } else if (bq == '`') {
+        break;
+
+    case '`':
 	/* `...` string */
 	state = st_start;
 	while (state != st_done) {
@@ -537,6 +541,11 @@ char *nasm_skip_string(const char *str)
                 panic();
 	    }
 	}
+        break;
+
+    default:
+        /* Not a string at all... */
+        return NULL;
     }
     return (char *)p - 1;
 }
