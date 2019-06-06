@@ -18,6 +18,14 @@ since 2007.
 \b Suppress nuisance "\c{label changed during code generation}" messages
 after a real error.
 
+\b Add support for the \c{merge} and \c{strings} attributes on ELF
+sections. See \k{elfsect}.
+
+\b Add support for the \c{note}, \c{preinit_array}, \c{init_array},
+and \c{fini_array} sections type in ELF. See \k{elfsect}.
+
+\b Handle more than 32,633 sections in ELF.
+
 \S{cl-2.14.02} Version 2.14.02
 
 \b Fix crash due to multiple errors or warnings during the code

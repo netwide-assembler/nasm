@@ -49,12 +49,6 @@ STD: nasm
 ; here, not all of them are: the user-level form of a format-specific
 ; directive should be defined in the module for that directive.
 
-; These three need to be defined, though the actual definitions will
-; be constantly updated during preprocessing.
-%define __FILE__
-%define __LINE__
-%define __BITS__
-
 %define __SECT__            ; it ought to be defined, even if as nothing
 
 %imacro section 1+.nolist
@@ -68,17 +62,13 @@ STD: nasm
 %endmacro
 
 %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 1
-%imacro sectalign 1.nolist
-    %ifnum %1
-        %if __SECTALIGN_ALIGN_UPDATES_SECTION__ = 1
-            [sectalign %1]
-        %endif
+%imacro sectalign 1+.nolist
+    %ifidni %1,off
+        %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 0
+    %elifidni %1,on
+        %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 1
     %else
-        %ifidni %1,off
-            %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 0
-        %elifidni %1,on
-            %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 1
-        %endif
+        [sectalign %1]
     %endif
 %endmacro
 
@@ -117,12 +107,16 @@ STD: nasm
 %endmacro
 
 %imacro align 1-2+.nolist nop
-    sectalign %1
+    %if __SECTALIGN_ALIGN_UPDATES_SECTION__
+        sectalign %1
+    %endif
     times (((%1) - (($-$$) % (%1))) % (%1)) %2
 %endmacro
 
 %imacro alignb 1-2+.nolist
-    sectalign %1
+    %if __SECTALIGN_ALIGN_UPDATES_SECTION__
+        sectalign %1
+    %endif
     %ifempty %2
         [warning push]
         [warning -zeroing]

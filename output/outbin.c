@@ -606,6 +606,7 @@ static void bin_cleanup(void)
             fprintf(rf, "\n\n");
             list_for_each(s, sections) {
                 fprintf(rf, "---- Section %s ", s->name);
+                if (strlen(s->name) < 65)
                 for (h = 65 - strlen(s->name); h; h--)
                     fputc('-', rf);
                 fprintf(rf, "\n\nclass:     ");

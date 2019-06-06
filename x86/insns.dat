@@ -1882,7 +1882,7 @@ HADDPS		xmmreg,xmmrm			[rm:	f2 0f 7c /r]				PRESCOTT,SSE3,SO
 HSUBPD		xmmreg,xmmrm			[rm:	66 0f 7d /r]				PRESCOTT,SSE3,SO
 HSUBPS		xmmreg,xmmrm			[rm:	f2 0f 7d /r]				PRESCOTT,SSE3,SO
 LDDQU		xmmreg,mem			[rm:	f2 0f f0 /r]				PRESCOTT,SSE3,SO
-MOVDDUP		xmmreg,xmmrm			[rm:	f2 0f 12 /r]				PRESCOTT,SSE3
+MOVDDUP		xmmreg,xmmrm			[rm:	f2 0f 12 /r]				PRESCOTT,SSE3,SQ
 MOVSHDUP	xmmreg,xmmrm			[rm:	f3 0f 16 /r]				PRESCOTT,SSE3
 MOVSLDUP	xmmreg,xmmrm			[rm:	f3 0f 12 /r]				PRESCOTT,SSE3
 

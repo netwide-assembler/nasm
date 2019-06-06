@@ -50,11 +50,6 @@ typedef union RAA_UNION RAA_UNION;
 typedef struct RAA_LEAF RAA_LEAF;
 typedef struct RAA_BRANCH RAA_BRANCH;
 
-union intorptr {
-    int64_t i;
-    void *p;
-};
-
 struct RAA {
     /* Last position in this RAA */
     raaindex endposn;
