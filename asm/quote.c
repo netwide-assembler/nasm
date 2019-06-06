@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -36,8 +36,6 @@
  */
 
 #include "compiler.h"
-
-
 #include "nasmlib.h"
 #include "quote.h"
 #include "nctype.h"
@@ -233,6 +231,28 @@ out1: *q++ = 0x80 + (v & 63);
 out0: return q;
 }
 
+static inline uint32_t ctlbit(uint32_t v)
+{
+    return unlikely(v < 32) ? UINT32_C(1) << v : 0;
+}
+
+#define CTL_ERR(c)						\
+    (badctl & (ctlmask |= ctlbit(c)))
+
+#define EMIT_UTF8(c)						\
+    do {							\
+        uint32_t ec = (c);                                      \
+        if (!CTL_ERR(ec))                                       \
+            q = emit_utf8(q, ec);                               \
+    } while (0)
+
+#define EMIT(c)                                                 \
+    do {                                                        \
+        unsigned char ec = (c);                                 \
+        if (!CTL_ERR(ec))                                       \
+            *q++ = ec;                                          \
+    } while (0)
+
 /*
  * Do an *in-place* dequoting of the specified string, returning the
  * resulting length (which may be containing embedded nulls.)
@@ -242,32 +262,28 @@ out0: return q;
  *
  * *ep points to the final quote, or to the null if improperly quoted.
  *
- * Issue an error if the string contains characters less than cerr; in
- * that case, the output string, but not *ep, is truncated before the
- * first invalid character.
+ * Issue an error if the string contains control characters
+ * corresponding to bits set in badctl; in that case, the output
+ * string, but not *ep, is truncated before the first invalid
+ * character.
  */
-#define EMIT(c)                                                 \
-    do {                                                        \
-        unsigned char ec = (c);                                 \
-        err |= ec < cerr;                                       \
-        if (!err)                                               \
-            *q++ = (c);                                         \
-    } while (0)
 
 static size_t nasm_unquote_common(char *str, char **ep,
-                                  const unsigned char cerr)
+                                  const uint32_t badctl)
 {
-    char bq;
-    unsigned char *p, *q;
-    unsigned char *escp = NULL;
+    unsigned char bq;
+    const unsigned char *p;
+    const unsigned char *escp = NULL;
+    unsigned char *q;
     unsigned char c;
-    bool err = false;
+    uint32_t ctlmask = 0;       /* Mask of control characters seen */
     enum unq_state {
 	st_start,
 	st_backslash,
 	st_hex,
 	st_oct,
-	st_ucs
+	st_ucs,
+        st_done
     } state;
     int ndig = 0;
     uint32_t nval = 0;
@@ -282,29 +298,16 @@ static size_t nasm_unquote_common(char *str, char **ep,
     case '\'':
     case '\"':
 	/* '...' or "..." string */
-        while (1) {
-            c = *p;
-            if (!c) {
-                break;
-            } else if (c == bq) {
-                /* Doubled quote = escaped quote */
-                c = p[1];
-                if (c != bq)
-                    break;
-                p++;
-            }
-            p++;
+        while ((c = *p++) && (c != bq))
             EMIT(c);
-        }
-        *q = '\0';
 	break;
 
     case '`':
 	/* `...` string */
 	state = st_start;
 
-	while ((c = *p)) {
-	    p++;
+	while (state != st_done) {
+	    c = *p++;
 	    switch (state) {
 	    case st_start:
 		switch (c) {
@@ -312,8 +315,9 @@ static size_t nasm_unquote_common(char *str, char **ep,
 		    state = st_backslash;
 		    break;
 		case '`':
-		    p--;
-		    goto out;
+                case '\0':
+                    state = st_done;
+                    break;
 		default:
                     EMIT(c);
 		    break;
@@ -374,6 +378,10 @@ static size_t nasm_unquote_common(char *str, char **ep,
 		    ndig = 2;	/* Up to two more digits */
 		    nval = c - '0';
 		    break;
+                case '\0':
+                    nval = '\\';
+                    p--;        /* Reprocess; terminates string */
+                    break;
 		default:
 		    nval = c;
 		    break;
@@ -385,94 +393,56 @@ static size_t nasm_unquote_common(char *str, char **ep,
 	    case st_oct:
 		if (c >= '0' && c <= '7') {
 		    nval = (nval << 3) + (c - '0');
-		    if (!--ndig) {
-			*q++ = nval;
-			state = st_start;
-		    }
-		} else {
+                    if (--ndig)
+                        break;  /* Might have more digits */
+                } else {
 		    p--;	/* Process this character again */
-		    EMIT(nval);
-		    state = st_start;
-		}
-		break;
+                }
+                EMIT(nval);
+                state = st_start;
+                break;
 
 	    case st_hex:
+            case st_ucs:
 		if (nasm_isxdigit(c)) {
 		    nval = (nval << 4) + numvalue(c);
-		    if (!--ndig) {
-			*q++ = nval;
-			state = st_start;
-		    }
-		} else {
+                    if (--ndig)
+                        break;  /* Might have more digits */
+                } else {
 		    p--;	/* Process this character again */
-		    EMIT((p > escp) ? nval : escp[-1]);
-		    state = st_start;
-		}
+                }
+
+                if (unlikely(p <= escp))
+                    EMIT(escp[-1]);
+                else if (state == st_ucs)
+                    EMIT_UTF8(nval);
+                else
+                    EMIT(nval);
+
+                state = st_start;
 		break;
 
-	    case st_ucs:
-		if (nasm_isxdigit(c)) {
-		    nval = (nval << 4) + numvalue(c);
-		    if (!--ndig) {
-                        err |= nval < cerr;
-                        if (!err)
-                            q = emit_utf8(q, nval);
-			state = st_start;
-		    }
-		} else {
-		    p--;	/* Process this character again */
-		    if (p > escp) {
-                        err |= nval < cerr;
-                        if (!err)
-                            q = emit_utf8(q, nval);
-                    } else {
-			EMIT(escp[-1]);
-                    }
-		    state = st_start;
-		}
-		break;
-	    }
-	}
-	switch (state) {
-	case st_start:
-	case st_backslash:
-	    break;
-	case st_oct:
-	    EMIT(nval);
-	    break;
-	case st_hex:
-	    EMIT((p > escp) ? nval : escp[-1]);
-	    break;
-	case st_ucs:
-	    if (p > escp) {
-                err |= nval < cerr;
-                if (!err)
-                    q = emit_utf8(q, nval);
-            } else {
-		EMIT(escp[-1]);
+            default:
+                panic();
             }
-	    break;
-	}
-    out:
-	break;
+    }
+    break;
 
     default:
 	/* Not a quoted string, just return the input... */
-        while ((c = *p++)) {
-            if (!c)
-                break;
+        while ((c = *p++))
             EMIT(c);
-        }
 	break;
     }
 
+    /* Zero-terminate the output */
     *q = '\0';
 
-    if (err)
+    if (ctlmask & badctl)
         nasm_nonfatal("control character in string not allowed here");
 
     if (ep)
-	*ep = (char *)p;
+	*ep = (char *)p - 1;
     return (char *)q - str;
 }
 #undef EMIT
@@ -483,39 +453,41 @@ size_t nasm_unquote(char *str, char **ep)
 }
 size_t nasm_unquote_cstr(char *str, char **ep)
 {
-    return nasm_unquote_common(str, ep, ' ');
+    /*
+     * These are the only control characters permitted: BEL BS TAB ESC
+     */
+    const uint32_t okctl = (1 << '\a') | (1 << '\b') | (1 << '\t') | (1 << 27);
+
+    return nasm_unquote_common(str, ep, ~okctl);
 }
 
 /*
  * Find the end of a quoted string; returns the pointer to the terminating
  * character (either the ending quote or the null character, if unterminated.)
+ * If the input is not a quoted string,
  */
-char *nasm_skip_string(char *str)
+char *nasm_skip_string(const char *str)
 {
     char bq;
-    char *p;
+    const char *p;
     char c;
     enum unq_state {
 	st_start,
-	st_backslash
+	st_backslash,
+        st_done
     } state;
 
     bq = str[0];
+    p = str+1;
     if (bq == '\'' || bq == '\"') {
 	/* '...' or "..." string */
-	for (p = str+1; *p; p++) {
-            if (p[0] == bq && p[1] != bq)
-                break;
-        }
-	return p;
+        while ((c = *p++) && (c != bq))
+            ;
     } else if (bq == '`') {
 	/* `...` string */
 	state = st_start;
-	p = str+1;
-	if (!*p)
-		return p;
-
-	while ((c = *p++)) {
+	while (state != st_done) {
+            c = *p++;
 	    switch (state) {
 	    case st_start:
 		switch (c) {
@@ -523,7 +495,9 @@ char *nasm_skip_string(char *str)
 		    state = st_backslash;
 		    break;
 		case '`':
-		    return p-1;	/* Found the end */
+                case '\0':
+                    state = st_done;
+                    break;
 		default:
 		    break;
 		}
@@ -536,12 +510,13 @@ char *nasm_skip_string(char *str)
 		 * equivalent to st_start, since either a backslash or
 		 * a backquote will force a return to the st_start state.
 		 */
-		state = st_start;
+		state = c ? st_start : st_done;
 		break;
+
+            default:
+                panic();
 	    }
 	}
-	return p-1;		/* Unterminated string... */
-    } else {
-	return str;		/* Not a string... */
     }
+    return (char *)p - 1;
 }
