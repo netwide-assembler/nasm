@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -144,20 +144,22 @@ found_it:
         switch (pragma->opcode) {
         case D_none:
             /*!
-             *!bad-pragma [off] empty or malformed %pragma
+             *!pragma-bad [off] empty or malformed %pragma
+             *!=bad-pragma
              *!  warns about a malformed or otherwise unparsable
              *!  \c{%pragma} directive.
              */
-            nasm_error(ERR_WARNING|ERR_PASS2|WARN_BAD_PRAGMA,
+            nasm_error(ERR_WARNING|ERR_PASS2|WARN_PRAGMA_BAD,
                        "empty %%pragma %s", pragma->facility_name);
             break;
         default:
             /*!
-             *!unknown-pragma [off] unknown %pragma facility or directive
+             *!pragma-unknown [off] unknown %pragma facility or directive
+             *!=unknown-pragma
              *!  warns about an unknown \c{%pragma} directive.
              *!  This is not yet implemented for most cases.
              */
-            nasm_error(ERR_WARNING|ERR_PASS2|WARN_UNKNOWN_PRAGMA,
+            nasm_error(ERR_WARNING|ERR_PASS2|WARN_PRAGMA_UNKNOWN,
                        "unknown %%pragma %s %s",
                        pragma->facility_name, pragma->opname);
             break;
@@ -185,7 +187,8 @@ found_it:
 
 /* This warning message is intended for future use */
 /*!
- *!not-my-pragma [off] %pragma not applicable to this compilation
+ *!pragma-na [off] %pragma not applicable to this compilation
+ *!=not-my-pragma
  *!  warns about a \c{%pragma} directive which is not applicable to
  *!  this particular assembly session.  This is not yet implemented.
  */
@@ -199,7 +202,7 @@ void process_pragma(char *str)
 
     pragma.facility_name = nasm_get_word(str, &p);
     if (!pragma.facility_name) {
-	nasm_error(ERR_WARNING|ERR_PASS2|WARN_BAD_PRAGMA,
+	nasm_error(ERR_WARNING|ERR_PASS2|WARN_PRAGMA_BAD,
 		   "empty pragma directive");
         return;                 /* Empty pragma */
     }

@@ -5,6 +5,8 @@ use File::Find;
 use File::Basename;
 
 my @warnings = ();
+my %aliases  = ();
+my %prefixes = ();
 my $err = 0;
 my $nwarn = 0;
 
@@ -13,6 +15,22 @@ sub quote_for_c($) {
 
     $s =~ s/([\"\'\\])/\\\1/g;
     return $s;
+}
+
+sub add_alias($$) {
+    my($a, $this) = @_;
+    my @comp = split(/-/, $a);
+
+    $aliases{$a} = $this;
+
+    # All names are prefixes in their own right, although we only
+    # list the ones that are either prefixes of "proper names" or
+    # the complete alias name.
+    for (my $i = ($a eq $this->{name}) ? 0 : $#comp; $i <= $#comp; $i++) {
+	my $prefix = join('-', @comp[0..$i]);
+	$prefixes{$prefix} = [] unless defined($prefixes{$prefix});
+	push(@{$prefixes{$prefix}}, $a);
+    }
 }
 
 sub find_warnings {
@@ -51,9 +69,9 @@ sub find_warnings {
 		my $str = $2;
 
 		next if ($str eq '');
-		
+
 		if (!defined($this) || ($ws eq '' && $str ne '')) {
-		    if ($str =~ /^([\w-]+)\s+\[(\w+)\]\s(.+)$/) {
+		    if ($str =~ /^([\w-]+)\s+\[(\w+)\]\s(.*\S)\s*$/) {
 			my $name = $1;
 			my $def = $2;
 			my $help = $3;
@@ -62,10 +80,17 @@ sub find_warnings {
 			$cname =~ s/[^A-Z0-9_]+/_/g;
 
 			$this = {name => $name, cname => $cname,
-				 def => $def, help => $help, doc => [],
-				 file => $infile, line => $nline};
+				 def => $def, help => $help,
+				 doc => [], file => $infile, line => $nline};
 			push(@warnings, $this);
+			# Every warning name is also a valid warning alias
+			add_alias($name, $this);
 			$nwarn++;
+		    } elsif (defined($this) && $str =~ /^\=([\w-,]+)\s*$/) {
+			# Alias names for warnings
+			for my $a (split(/,+/, $1)) {
+			    add_alias($a, $this);
+			}
 		    } else {
 			print STDERR "$infile:$nline: malformed warning definition\n";
 			print STDERR "    $l\n";
@@ -115,6 +140,16 @@ if ($what eq 'c') {
 	print $out ",\n\t\"", $warn->{name}, "\"";
     }
     print $out "\n};\n\n";
+    printf $out "const struct warning_alias warning_alias[NUM_WARNING_ALIAS] = {",
+	scalar(%aliases);
+    my $sep = '';
+    foreach my $alias (sort { $a cmp $b } keys(%aliases)) {
+	printf $out "%s\n\t{ %-27s WARN_IDX_%s }",
+	    $sep, "\"$alias\",", $aliases{$alias}->{cname};
+	$sep = ',';
+    }
+    print $out "\n};\n\n";
+
     printf $out "const char * const warning_help[%d] = {\n",
 	$#warnings + 2;
     print $out "\tNULL";
@@ -164,10 +199,17 @@ if ($what eq 'c') {
     }
     print $out "\n};\n\n";
 
+    print $out "struct warning_alias {\n";
+    print $out "\tconst char *name;\n";
+    print $out "\tenum warn_index warning;\n";
+    print $out "};\n\n";
+    printf $out "#define NUM_WARNING_ALIAS %d\n", scalar(%aliases);
+
     printf $out "extern const char * const warning_name[%d];\n",
 	$#warnings + 2;
     printf $out "extern const char * const warning_help[%d];\n",
 	$#warnings + 2;
+    print $out "extern const struct warning_alias warning_alias[NUM_WARNING_ALIAS];\n";
     printf $out "extern const uint8_t warning_default[%d];\n",
 	$#warn_noall + 2;
     printf $out "extern uint8_t warning_state[%d];\n",
@@ -177,20 +219,44 @@ if ($what eq 'c') {
     my %whatdef = ( 'on' => 'Enabled',
 		    'off' => 'Disabled',
 		    'err' => 'Enabled and promoted to error' );
-    foreach my $warn (@warnings) {
 
-	my @doc = @{$warn->{doc}};
-	shift @doc while ($doc[0] =~ /^\s*$/);
-	pop @doc while ($doc[$#doc] =~ /^\s*$/);
+    foreach my $pfx (sort { $a cmp $b } keys(%prefixes)) {
+	my $warn = $aliases{$pfx};
+	my @doc;
 
-	print $out "\\b \\i\\c{", $warn->{name}, "} ", @doc;
+	if (!defined($warn)) {
+	    my @plist = sort { $a cmp $b } @{$prefixes{$pfx}};
+	    next if ( $#plist < 1 );
 
-	my $docdef = $whatdef{$warn->{def}};
-	if (defined($docdef)) {
-	    print $out $docdef, " by default.\n";
+	    @doc = ("is a group alias for all warning classes prefixed by ".
+		    "\\c{".$pfx."-}; currently\n");
+	    for (my $i = 0; $i <= $#plist; $i++) {
+		if ($i > 0) {
+		    if ($i < $#plist) {
+			push(@doc, ", ");
+		    } else {
+			push(@doc, ($i == 1) ? " and " : ", and ");
+		    }
+		}
+		push(@doc, '\c{'.$plist[$i].'}');
+	    }
+	    push(@doc, ".\n");
+	} elsif ($pfx ne $warn->{name}) {
+	    @doc = ("is a backwards compatibility alias for \\c{",
+		    $warn->{name}, "}.\n");
+	} else {
+	    my $docdef = $whatdef{$warn->{def}};
+
+	    @doc = @{$warn->{doc}};
+	    shift @doc while ($doc[0] =~ /^\s*$/);
+	    pop @doc while ($doc[$#doc] =~ /^\s*$/);
+
+	    if (defined($docdef)) {
+		push(@doc, "$docdef by default.\n");
+	    }
 	}
 
-	print $out "\n";
+	print $out "\\b \\i\\c{", $pfx, "} ", @doc, "\n";
     }
 }
 close($out);

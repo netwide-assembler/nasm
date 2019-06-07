@@ -126,11 +126,11 @@ OPTIONS
 
 *-W[no-]foo'::
 	Causes *nasm* to enable or disable certain classes of warning messages,
-	in gcc-like style, for example *-Worphan-labels* or *-Wno-orphan-labels*.
+	in gcc-like style, for example *-Wlabel-orphan* or *-Wno-orphan-labels*.
 
 *-w*'[+-]foo'::
 	Causes *nasm* to enable or disable certain classes of warning messages,
-	for example *-w+orphan-labels* or *-w-macro-params*.
+	for example *-w+label-orphan* or *-w-macro-params*.
 
 *-X* 'format'::
 	Specifies error reporting format (gnu or vc).

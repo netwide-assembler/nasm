@@ -460,12 +460,13 @@ restart_parse:
             i = stdscan(NULL, &tokval);
         } else if (i == 0) {
             /*!
-             *!orphan-labels [on] labels alone on lines without trailing `:'
+             *!label-orphan [on] labels alone on lines without trailing `:'
+             *!=orphan-labels
              *!  warns about source lines which contain no instruction but define
              *!  a label without a trailing colon. This is most likely indicative
              *!  of a typo, but is technically correct NASM syntax (see \k{syntax}.)
              */
-            nasm_warn(WARN_ORPHAN_LABELS ,
+            nasm_warn(WARN_LABEL_ORPHAN ,
                        "label alone on a line without a colon might be in error");
         }
         if (i != TOKEN_INSN || tokval.t_integer != I_EQU) {

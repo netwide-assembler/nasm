@@ -17,7 +17,7 @@ _start:
 
 ; either of the following lines cause: Error in `nasm': double free or corruption ; Aborted (core dumped)
 foo
-; warning: label alone on a line without a colon might be in error [-w+orphan-labels]
+; warning: label alone on a line without a colon might be in error [-w+label-orphan]
 	mov	r8, r9, r10
 ; error: invalid combination of opcode and operands
 	add	r8d, byte 80h

@@ -172,18 +172,18 @@ void reset_warnings(void)
  *!  specifies any warning not included in any specific warning class.
  *
  *!all [all] all possible warnings
- *!  is an alias for \e{all} suppressible warning classes.
- *!  Thus, \c{-w+all} enables all available warnings, and \c{-w-all}
- *!  disables warnings entirely (since NASM 2.13).
+ *!  is an group alias for \e{all} warning classes.  Thus, \c{-w+all}
+ *!  enables all available warnings, and \c{-w-all} disables warnings
+ *!  entirely (since NASM 2.13).
  */
 bool set_warning_status(const char *value)
 {
 	enum warn_action { WID_OFF, WID_ON, WID_RESET };
 	enum warn_action action;
-        const char *name;
+        const struct warning_alias *wa;
+        size_t vlen;
 	bool ok = false;
 	uint8_t mask;
-	int i;
 
 	value = nasm_skip_spaces(value);
 
@@ -235,37 +235,48 @@ bool set_warning_status(const char *value)
 		}
 	}
 
-        name = value ? value : "<none>";
 	if (value && !nasm_stricmp(value, "all"))
 		value = NULL;
 
-	/* This is inefficient, but it shouldn't matter... */
-	for (i = 1; i < WARN_IDX_ALL; i++) {
-		if (!value || !nasm_stricmp(value, warning_name[i])) {
-			ok = true; /* At least one action taken */
-			switch (action) {
-			case WID_OFF:
-				warning_state[i] &= ~mask;
-				break;
-			case WID_ON:
-				warning_state[i] |= mask;
-				break;
-			case WID_RESET:
-				warning_state[i] &= ~mask;
-				warning_state[i] |=
-					warning_state_init->state[i] & mask;
-				break;
-			}
-		}
-	}
+        vlen = value ? strlen(value) : 0;
 
-        if (!ok) {
-		/*!
-		 *!unknown-warning [off] unknown warning in -W/-w or warning directive
-		 *!  warns about a \c{-w} or \c{-W} option or a \c{[WARNING]} directive
-		 *!  that contains an unknown warning name or is otherwise not possible to process.
-		 */
-		nasm_warn(WARN_UNKNOWN_WARNING, "unknown warning name: %s", name);
+	/* This is inefficient, but it shouldn't matter... */
+	for (wa = warning_alias; wa < &warning_alias[NUM_WARNING_ALIAS]; wa++) {
+            enum warn_index i = wa->warning;
+
+            if (value) {
+                char sep;
+
+                if (nasm_strnicmp(value, wa->name, vlen))
+                    continue;   /* Not a prefix */
+
+                sep = wa->name[vlen];
+                if (sep != '\0' && sep != '-')
+                    continue;   /* Not a valid prefix */
+            }
+
+            ok = true; /* At least one action taken */
+            switch (action) {
+            case WID_OFF:
+                warning_state[i] &= ~mask;
+                break;
+            case WID_ON:
+                warning_state[i] |= mask;
+                break;
+            case WID_RESET:
+                warning_state[i] &= ~mask;
+                warning_state[i] |= warning_state_init->state[i] & mask;
+                break;
+            }
+        }
+
+        if (!ok && value) {
+            /*!
+             *!unknown-warning [off] unknown warning in -W/-w or warning directive
+             *!  warns about a \c{-w} or \c{-W} option or a \c{[WARNING]} directive
+             *!  that contains an unknown warning name or is otherwise not possible to process.
+             */
+            nasm_warn(WARN_UNKNOWN_WARNING, "unknown warning name: %s", value);
 	}
 
 	return ok;

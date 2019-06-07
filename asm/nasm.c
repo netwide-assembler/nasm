@@ -201,7 +201,7 @@ nasm_set_limit(const char *limit, const char *valstr)
         if (not_started())
             errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
         else
-            errlevel = ERR_WARNING|WARN_UNKNOWN_PRAGMA;
+            errlevel = ERR_WARNING|WARN_PRAGMA_UNKNOWN;
         nasm_error(errlevel, "unknown limit: `%s'", limit);
         return DIRR_ERROR;
     }
@@ -214,7 +214,7 @@ nasm_set_limit(const char *limit, const char *valstr)
             if (not_started())
                 errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
             else
-                errlevel = ERR_WARNING|WARN_BAD_PRAGMA;
+                errlevel = ERR_WARNING|WARN_PRAGMA_BAD;
             nasm_error(errlevel, "invalid limit value: `%s'", limit);
             return DIRR_ERROR;
         }
