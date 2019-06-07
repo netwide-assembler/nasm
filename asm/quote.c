@@ -197,31 +197,31 @@ static unsigned char *emit_utf8(unsigned char *q, uint32_t v)
     }
 
     vb1 = v >> 6;
-    if (vb1 <= 0x3f) {
+    if (vb1 <= 0x1f) {
 	*q++ = 0xc0 + vb1;
         goto out1;
     }
 
     vb2 = vb1 >> 6;
-    if (vb2 <= 0x1f) {
+    if (vb2 <= 0x0f) {
         *q++ = 0xe0 + vb2;
         goto out2;
     }
 
     vb3 = vb2 >> 6;
-    if (vb3 <= 0x0f) {
+    if (vb3 <= 0x07) {
         *q++ = 0xf0 + vb3;
         goto out3;
     }
 
     vb4 = vb3 >> 6;
-    if (vb4 <= 0x07) {
+    if (vb4 <= 0x03) {
         *q++ = 0xf8 + vb4;
         goto out4;
     }
 
     vb5 = vb4 >> 6;
-    if (vb5 <= 0x03) {
+    if (vb5 <= 0x01) {
         *q++ = 0xfc + vb5;
         goto out5;
     }
