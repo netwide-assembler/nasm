@@ -810,9 +810,9 @@ Some conditions are even less severe than that: they are only
 sometimes worth mentioning to the user. Therefore NASM supports the
 \c{-w} command-line option, which enables or disables certain
 classes of assembly warning. Such warning classes are described by a
-name, for example \c{orphan-labels}; you can enable warnings of
-this class by the command-line option \c{-w+orphan-labels} and
-disable it by \c{-w-orphan-labels}.
+name, for example \c{label-orphan}; you can enable warnings of
+this class by the command-line option \c{-w+label-orphan} and
+disable it by \c{-w-label-orphan}.
 
 The current \i{warning classes} are:
 
@@ -1127,7 +1127,7 @@ optional. (Note that this means that if you intend to code \c{lodsb}
 alone on a line, and type \c{lodab} by accident, then that's still a
 valid source line which does nothing but define a label. Running
 NASM with the command-line option
-\I{orphan-labels}\c{-w+orphan-labels} will cause it to warn you if
+\I{label-orphan}\c{-w+orphan-labels} will cause it to warn you if
 you define a label alone on a line without a \i{trailing colon}.)
 
 \i{Valid characters} in labels are letters, numbers, \c{_}, \c{$},
@@ -6090,12 +6090,11 @@ requires that it be aligned on a 4-byte boundary.
 \S{elf16} 16-bit code and ELF
 \I{ELF, 16-bit code}
 
-The \c{ELF32} specification doesn't provide relocations for 8- and
-16-bit values, but the GNU \c{ld} linker adds these as an extension.
-NASM can generate GNU-compatible relocations, to allow 16-bit code to
-be linked as ELF using GNU \c{ld}. If NASM is used with the
-\c{-w+gnu-elf-extensions} option, a warning is issued when one of
-these relocations is generated.
+Older versions of the \c{ELF32} specification did not provide
+relocations for 8- and 16-bit values. It is now part of the formal
+specification, and any new enough linker should support them.
+
+ELF has currently no support for segmented programming.
 
 \S{elfdbg} Debug formats and ELF
 \I{ELF, debug formats}
