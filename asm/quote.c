@@ -220,14 +220,16 @@ static unsigned char *emit_utf8(unsigned char *q, uint32_t v)
         goto out4;
     }
 
+    /*
+     * Note: this is invalid even for "classic" (pre-UTF16) 31-bit
+     * UTF-8 if the value is >= 0x8000000. This at least tries to do
+     * something vaguely sensible with it. Caveat programmer.
+     * The __utf*__ string transform functions do reject these
+     * as invalid input.
+     */
     vb5 = vb4 >> 6;
-    if (vb5 <= 0x01) {
-        *q++ = 0xfc + vb5;
-        goto out5;
-    }
-
-    /* Otherwise invalid, even with 31-bit "extended Unicode" (pre-UTF-16) */
-    goto out0;
+    *q++ = 0xfc + vb5;
+    goto out5;
 
     /* Emit extension bytes as appropriate */
 out5: *q++ = 0x80 + (vb4 & 63);
