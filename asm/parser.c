@@ -612,14 +612,14 @@ restart_parse:
                 if (i != TOKEN_STR) {
                     nasm_nonfatal("%s must be followed by a string constant",
                                   funcname);
-                        eop->type = EOT_NOTHING;
+                    eop->type = EOT_NOTHING;
                 } else {
                     eop->type = EOT_DB_STRING_FREE;
                     eop->stringlen =
                         string_transform(tokval.t_charptr, tokval.t_inttwo,
                                          &eop->stringval, func);
                     if (eop->stringlen == (size_t)-1) {
-                        nasm_nonfatal("invalid string for transform");
+                        nasm_nonfatal("invalid input string to %s", funcname);
                         eop->type = EOT_NOTHING;
                     }
                 }

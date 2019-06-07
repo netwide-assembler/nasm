@@ -746,7 +746,7 @@ static expr *eval_floatize(enum floatize type)
     return finishtemp();
 }
 
-static expr *eval_strfunc(enum strfunc type)
+static expr *eval_strfunc(enum strfunc type, const char *name)
 {
     char *string;
     size_t string_len;
@@ -760,13 +760,13 @@ static expr *eval_strfunc(enum strfunc type)
         scan();
     }
     if (tt != TOKEN_STR) {
-        nasm_nonfatal("expecting string");
+        nasm_nonfatal("expecting string as argument to %s", name);
         return NULL;
     }
     string_len = string_transform(tokval->t_charptr, tokval->t_inttwo,
                                   &string, type);
     if (string_len == (size_t)-1) {
-        nasm_nonfatal("invalid string for transform");
+        nasm_nonfatal("invalid input string to %s", name);
         return NULL;
     }
 
@@ -908,7 +908,7 @@ static expr *expr6(void)
         return eval_floatize(tokval->t_integer);
 
     case TOKEN_STRFUNC:
-        return eval_strfunc(tokval->t_integer);
+        return eval_strfunc(tokval->t_integer, tokval->t_charptr);
 
     case '(':
         scan();
