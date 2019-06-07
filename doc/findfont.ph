@@ -70,6 +70,8 @@ sub add_file_to_font_hash($) {
 
     return unless (defined($fontdata));
 
+    $fontdata->{filename} = $filename;
+    
     my $oldinfo = $font_info_hash{$fontdata->{name}};
 
     if (!defined($oldinfo) ||
