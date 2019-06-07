@@ -226,6 +226,9 @@ static unsigned char *emit_utf8(unsigned char *q, uint32_t v)
      * something vaguely sensible with it. Caveat programmer.
      * The __utf*__ string transform functions do reject these
      * as invalid input.
+     *
+     * vb5 cannot be more than 3, as a 32-bit value has been shifted
+     * right by 5*6 = 30 bits already.
      */
     vb5 = vb4 >> 6;
     *q++ = 0xfc + vb5;
