@@ -574,10 +574,10 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
          *!  This should be extremely rare since the short \c{JMP} only
          *!  is applicable to jumps inside the same module, but if
          *!  it is legitimate, it may be necessary to use
-         *!  \c{BND JMP DWORD}...
+         *!  \c{bnd jmp dword}.
          */
         nasm_warn(WARN_BND | ERR_PASS2 ,
-                   "jmp short does not init bnd regs - bnd prefix dropped.");
+                   "jmp short does not init bnd regs - bnd prefix dropped");
     }
 
     return is_byte;
