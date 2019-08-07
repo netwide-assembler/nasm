@@ -210,8 +210,8 @@ enum match_result {
     /*
      * Matching success; the conditional ones first
      */
-    MOK_JUMP,   /* Matching OK but needs jmp_match() */
-    MOK_GOOD    /* Matching unconditionally OK */
+    MOK_JUMP,		/* Matching OK but needs jmp_match() */
+    MOK_GOOD		/* Matching unconditionally OK */
 };
 
 typedef struct {
@@ -764,8 +764,30 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
 
         if (m == MOK_GOOD) {
             /* Matches! */
-            int64_t insn_size = calcsize(data.segment, data.offset,
-                                         bits, instruction, temp);
+            int64_t insn_size;
+
+            if (unlikely(itemp_has(temp, IF_OBSOLETE))) {
+                /*
+                 * If IF_OBSOLETE is set, warn unless we have *exactly*
+                 * the correct CPU level set.
+                 *
+                 *!obsolete [on] instruction obsolete for the target CPU
+                 *!  warns if an instruction which has been removed
+                 *!  from the architecture, and is no longer included
+                 *!  in the CPU definition given in the \c{[CPU]}
+                 *!  directive, for example \c{POP CS}, the opcode for
+                 *!  which, \c{0Fh}, instead is an opcode prefix on
+                 *!  CPUs newer than the first generation 8086.
+                 */
+
+                if (iflag_cmp_cpu_level(&insns_flags[temp->iflag_idx], &cpu)) {
+                    nasm_warn(WARN_OBSOLETE,
+                              "obsolete instruction invalid on the target CPU");
+                }
+            }
+
+            insn_size = calcsize(data.segment, data.offset,
+                                 bits, instruction, temp);
             nasm_assert(insn_size >= 0);
 
             data.itemp = temp;

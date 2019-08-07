@@ -5,7 +5,8 @@
 		"format": "bin",
 		"source": "pushseg.asm",
 		"target": [
-			{ "output": "pushseg.bin" }
+			{ "output": "pushseg.bin" },
+			{ "stderr": "pushseg.stderr" }
 		]
 	}
 ]
