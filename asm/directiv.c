@@ -90,9 +90,13 @@ static iflag_t get_cpu(const char *value)
         { "itanium", IF_IA64 },
         { "itanic", IF_IA64 },
         { "merced", IF_IA64 },
-        { "any", IF_PLEVEL },
+        { "nehalem", IF_NEHALEM },
+        { "westmere", IF_WESTMERE },
+        { "sandybridge", IF_SANDYBRIDGE },
+        { "ivybridge", IF_FUTURE },
+        { "any", IF_ANY },
+        { "all", IF_ANY },
         { "default", IF_PLEVEL },
-        { "all", IF_PLEVEL },
         { NULL, IF_PLEVEL }     /* Error and final default entry */
     };
 

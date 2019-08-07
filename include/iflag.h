@@ -86,7 +86,7 @@ IF_GEN_HELPER(xor, ^)
  * IF_ANY is the highest CPU level by definition
  */
 #define IF_PLEVEL              IF_ANY /* Default CPU level */
-#define IF_CPU_LEVEL_MASK      (IFM_ANY - 1)
+#define IF_CPU_LEVEL_MASK      ((IFM_ANY << 1) - 1)
 
 static inline int iflag_cmp_cpu(const iflag_t *a, const iflag_t *b)
 {
@@ -106,7 +106,7 @@ static inline int iflag_cmp_cpu_level(const iflag_t *a, const iflag_t *b)
 /* Returns true if the CPU level is at least a certain value */
 static inline bool iflag_cpu_level_ok(const iflag_t *a, unsigned int bit)
 {
-    return _iflag_cpu_level(a) >= IF_GENBIT(bit & 31);
+    return _iflag_cpu_level(a) >= IF_GENBIT(bit);
 }
 
 static inline void iflag_set_all_features(iflag_t *a)
