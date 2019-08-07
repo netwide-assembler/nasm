@@ -7,21 +7,26 @@
 
 #include "iflaggen.h"
 
-#define IF_GENBIT(bit)          (UINT32_C(1) << (bit))
+#define IF_GENBIT(bit)          (UINT32_C(1) << ((bit) & 31))
+
+static inline int ifcomp(uint32_t a, uint32_t b)
+{
+    return (a > b) - (a < b);
+}
 
 static inline bool iflag_test(const iflag_t *f, unsigned int bit)
 {
-    return !!(f->field[bit >> 5] & IF_GENBIT(bit & 31));
+    return !!(f->field[bit >> 5] & IF_GENBIT(bit));
 }
 
 static inline void iflag_set(iflag_t *f, unsigned int bit)
 {
-    f->field[bit >> 5] |= IF_GENBIT(bit & 31);
+    f->field[bit >> 5] |= IF_GENBIT(bit);
 }
 
 static inline void iflag_clear(iflag_t *f, unsigned int bit)
 {
-    f->field[bit >> 5] &= ~IF_GENBIT(bit & 31);
+    f->field[bit >> 5] &= ~IF_GENBIT(bit);
 }
 
 static inline void iflag_clear_all(iflag_t *f)
@@ -45,7 +50,7 @@ static inline int iflag_cmp(const iflag_t *a, const iflag_t *b)
         if (a->field[i] == b->field[i])
             continue;
 
-        return (int)(a->field[i] - b->field[i]);
+        return ifcomp(a->field[i], b->field[i]);
     }
 
     return 0;
@@ -66,21 +71,8 @@ static inline int iflag_cmp(const iflag_t *a, const iflag_t *b)
 IF_GEN_HELPER(xor, ^)
 
 /* Some helpers which are to work with predefined masks */
-#define IF_SMASK        \
-    (IF_GENBIT(IF_SB)  |\
-     IF_GENBIT(IF_SW)  |\
-     IF_GENBIT(IF_SD)  |\
-     IF_GENBIT(IF_SQ)  |\
-     IF_GENBIT(IF_SO)  |\
-     IF_GENBIT(IF_SY)  |\
-     IF_GENBIT(IF_SZ)  |\
-     IF_GENBIT(IF_SIZE))
-#define IF_ARMASK       \
-    (IF_GENBIT(IF_AR0) |\
-     IF_GENBIT(IF_AR1) |\
-     IF_GENBIT(IF_AR2) |\
-     IF_GENBIT(IF_AR3) |\
-     IF_GENBIT(IF_AR4))
+#define IF_SMASK        (IFM_SB|IFM_SW|IFM_SD|IFM_SQ|IFM_SO|IFM_SY|IFM_SZ|IFM_SIZE)
+#define IF_ARMASK       (IFM_AR0|IFM_AR1|IFM_AR2|IFM_AR3|IFM_AR4)
 
 #define _itemp_smask(idx)      (insns_flags[(idx)].field[0] & IF_SMASK)
 #define _itemp_armask(idx)     (insns_flags[(idx)].field[0] & IF_ARMASK)
@@ -98,7 +90,7 @@ IF_GEN_HELPER(xor, ^)
 
 static inline int iflag_cmp_cpu(const iflag_t *a, const iflag_t *b)
 {
-    return (int)(a->field[IF_CPU_FIELD] - b->field[IF_CPU_FIELD]);
+    return ifcomp(a->field[IF_CPU_FIELD], b->field[IF_CPU_FIELD]);
 }
 
 static inline uint32_t _iflag_cpu_level(const iflag_t *a)
@@ -108,10 +100,7 @@ static inline uint32_t _iflag_cpu_level(const iflag_t *a)
 
 static inline int iflag_cmp_cpu_level(const iflag_t *a, const iflag_t *b)
 {
-    uint32_t aa = _iflag_cpu_level(a);
-    uint32_t bb = _iflag_cpu_level(b);
-
-    return (int)(aa - bb);
+    return ifcomp(_iflag_cpu_level(a), _iflag_cpu_level(b));
 }
 
 /* Returns true if the CPU level is at least a certain value */
