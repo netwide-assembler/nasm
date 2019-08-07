@@ -49,6 +49,9 @@
 #define HAVE_DECL_STRNCASECMP 1
 #define HAVE_DECL_STRNICMP 1
 #define HAVE_INTTYPES_H 1
+#ifndef __LINUX__
+#define HAVE_IO_H 1
+#endif
 #define HAVE_LIMITS_H 1
 #define HAVE_MEMORY_H 1
 #define HAVE_SNPRINTF 1
@@ -70,5 +73,17 @@
 #define HAVE_VSNPRINTF 1
 #define STDC_HEADERS 1
 #define inline __inline
+
+#define HAVE_ACCESS
+#define HAVE_STRUCT_STAT
+#define HAVE_STAT
+#define HAVE_FSTAT
+#define HAVE_FILENO
+#ifdef __LINUX__
+#define HAVE_FTRUNCATE
+#else
+#define HAVE_CHSIZE
+#define HAVE__CHSIZE
+#endif
 
 #endif /* NASM_CONFIG_WATCOM_H */

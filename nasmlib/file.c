@@ -224,6 +224,9 @@ static const os_fopenflag fopenflags_rb[3] = { 'r', 'b', 0 };
  */
 bool nasm_file_exists(const char *filename)
 {
+#ifndef os_access
+    FILE *f;
+#endif
     os_filename osfname;
     bool exists;
 
@@ -234,7 +237,6 @@ bool nasm_file_exists(const char *filename)
 #ifdef os_access
     exists = os_access(osfname, R_OK) == 0;
 #else
-    FILE *f;
     f = os_fopen(osfname, fopenflags_rb);
     exists = f != NULL;
     if (f)
