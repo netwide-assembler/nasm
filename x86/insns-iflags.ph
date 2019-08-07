@@ -115,12 +115,13 @@ if_end();
 
 my %insns_flag_hash = ();
 my @insns_flag_values = ();
+my @insns_flag_lists = ();
 
 sub insns_flag_index(@) {
     return undef if $_[0] eq "ignore";
 
     my @prekey = sort(@_);
-    my $key = join("", @prekey);
+    my $key = join(',', @prekey);
 
     if (not defined($insns_flag_hash{$key})) {
         my @newkey = (0) x $iflag_words;
@@ -134,6 +135,7 @@ sub insns_flag_index(@) {
 	my $str = join(',', map { sprintf("UINT32_C(0x%08x)",$_) } @newkey);
 
         push @insns_flag_values, $str;
+	push @insns_flag_lists, $key;
         $insns_flag_hash{$key} = $#insns_flag_values;
     }
 
@@ -227,9 +229,10 @@ sub write_iflag_c() {
     printf N "const iflag_t insns_flags[%d] = {\n",
         $#insns_flag_values + 1;
     foreach my $i (0 .. $#insns_flag_values) {
-        print N sprintf("    /* %4d */ {{ %s }},\n", $i, $insns_flag_values[$i]);
+        printf N "    {{%s}}, /* %3d : %s */\n",
+	    $insns_flag_values[$i], $i, $insns_flag_lists[$i];
     }
-    print N "};\n\n";
+    print N "};\n";
     close N;
 }
 
