@@ -84,10 +84,10 @@ sub find_warnings {
 				 doc => [], file => $infile, line => $nline};
 
 			if (defined(my $that = $aliases{$name})) {
+			    # Duplicate defintion?!
 			    printf STDERR "%s:%s: warning %s previously defined at %s:%s\n",
 				$infile, $nline, $name, $that->{file}, $that->{line};
 			} else {
-			    # Duplicate defintion?!
 			    push(@warnings, $this);
 			    # Every warning name is also a valid warning alias
 			    add_alias($name, $this);
