@@ -68,6 +68,7 @@ TAGS
 /doc/inslist.src
 /doc/version.src
 /doc/warnings.src
+/doc/fontpath
 /include/warnings.h
 /macros/macros.c
 /misc/omfdump
