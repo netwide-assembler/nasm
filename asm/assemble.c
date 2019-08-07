@@ -583,6 +583,22 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     return is_byte;
 }
 
+static inline int64_t merge_resb(insn *ins, int64_t isize)
+{
+    int nbytes = resb_bytes(ins->opcode);
+
+    if (likely(!nbytes))
+        return isize;
+
+    if (isize != nbytes * ins->oprs[0].offset)
+        return isize;           /* Has prefixes of some sort */
+
+    ins->oprs[0].offset *= ins->times;
+    isize *= ins->times;
+    ins->times = 1;
+    return isize;
+}
+
 /* This is totally just a wild guess what is reasonable... */
 #define INCBIN_MAX_BUF (ZERO_BUF_SIZE * 16)
 
@@ -682,7 +698,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
         }
 
         lfmt->set_offset(data.offset);
-        lfmt->uplevel(LIST_INCBIN);
+        lfmt->uplevel(LIST_INCBIN, len);
 
         if (!len)
             goto end_incbin;
@@ -738,7 +754,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     end_incbin:
         lfmt->downlevel(LIST_INCBIN);
         if (instruction->times > 1) {
-            lfmt->uplevel(LIST_TIMES);
+            lfmt->uplevel(LIST_TIMES, instruction->times);
             lfmt->downlevel(LIST_TIMES);
         }
         if (ferror(fp)) {
@@ -764,8 +780,6 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
 
         if (m == MOK_GOOD) {
             /* Matches! */
-            int64_t insn_size;
-
             if (unlikely(itemp_has(temp, IF_OBSOLETE))) {
                 /*
                  * If IF_OBSOLETE is set, warn unless we have *exactly*
@@ -793,6 +807,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
             data.inslen = calcsize(data.segment, data.offset,
                                    bits, instruction, temp);
             nasm_assert(data.inslen >= 0);
+            data.inslen = merge_resb(instruction, data.inslen);
 
             gencode(&data, instruction);
             nasm_assert(data.insoffs == data.inslen);
@@ -963,6 +978,7 @@ static void define_equ(insn * instruction)
     }
 }
 
+
 int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
 {
     const struct itemplate *temp;
@@ -1039,6 +1055,7 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
 
         isize = calcsize(segment, offset, bits, instruction, temp);
         debug_set_type(instruction);
+        isize = merge_resb(instruction, isize);
 
         return isize;
     }

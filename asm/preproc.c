@@ -2598,7 +2598,7 @@ static int do_directive(Token *tline, Token **output)
             inc->expansion = NULL;
             inc->mstk = NULL;
             istk = inc;
-            lfmt->uplevel(LIST_INCLUDE);
+            lfmt->uplevel(LIST_INCLUDE, 0);
         }
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -3066,7 +3066,7 @@ issue_error:
 
         istk->mstk = defining;
 
-        lfmt->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
+        lfmt->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO, 0);
         tmp_defining = defining;
         defining = defining->rep_nest;
         free_tlist(origline);
@@ -4921,7 +4921,7 @@ static int expand_mmacro(Token * tline)
         }
     }
 
-    lfmt->uplevel(m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO);
+    lfmt->uplevel(m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO, 0);
 
     return 1;
 }

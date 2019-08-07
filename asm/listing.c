@@ -45,7 +45,7 @@
 #include "strlist.h"
 #include "listing.h"
 
-#define LIST_MAX_LEN 256       /* something sensible */
+#define LIST_MAX_LEN 1024       /* something sensible */
 #define LIST_INDENT  40
 #define LIST_HEXBIT  18
 
@@ -57,7 +57,7 @@ static struct MacroInhibit {
     int inhibiting;
 } *mistack;
 
-static char xdigit[] = "0123456789ABCDEF";
+static const char xdigit[] = "0123456789ABCDEF";
 
 #define HEX(a,b) (*(a)=xdigit[((b)>>4)&15],(a)[1]=xdigit[(b)&15]);
 
@@ -245,7 +245,7 @@ static void list_output(const struct out_data *data)
 	break;
     case OUT_RESERVE:
     {
-        snprintf(q, sizeof(q), "<res %08"PRIX64">", size);
+        snprintf(q, sizeof(q), "<res %"PRIX64">", size);
         list_out(offset, q);
 	break;
     }
@@ -274,35 +274,54 @@ static void list_line(int type, char *line)
     list_emit();
     listlineno = src_get_linnum();
     listlinep = true;
-    strncpy(listline, line, LIST_MAX_LEN - 1);
-    listline[LIST_MAX_LEN - 1] = '\0';
+    strlcpy(listline, line, LIST_MAX_LEN-3);
+    memcpy(listline + LIST_MAX_LEN-4, "...", 4);
     listlevel_e = listlevel;
 }
 
-static void list_uplevel(int type)
+static void mistack_push(bool inhibiting)
 {
+    MacroInhibit *temp = nasm_malloc(sizeof(MacroInhibit));
+    temp->next = mistack;
+    temp->level = listlevel;
+    temp->inhibiting = inhibiting;
+    mistack = temp;
+}
+
+static void list_uplevel(int type, int64_t size)
+{
+    char str[64];
+
     if (!listp)
         return;
-    if (type == LIST_INCBIN || type == LIST_TIMES) {
-        suppress |= (type == LIST_INCBIN ? 1 : 2);
-        list_out(listoffset, type == LIST_INCBIN ? "<incbin>" : "<rept>");
-        return;
-    }
 
-    listlevel++;
+    switch (type) {
+    case LIST_INCBIN:
+        suppress |= 1;
+        snprintf(str, sizeof str, "<bin %"PRIX64">", size);
+        list_out(listoffset, str);
+        break;
 
-    if (mistack && mistack->inhibiting && type == LIST_INCLUDE) {
-        MacroInhibit *temp = nasm_malloc(sizeof(MacroInhibit));
-        temp->next = mistack;
-        temp->level = listlevel;
-        temp->inhibiting = false;
-        mistack = temp;
-    } else if (type == LIST_MACRO_NOLIST) {
-        MacroInhibit *temp = nasm_malloc(sizeof(MacroInhibit));
-        temp->next = mistack;
-        temp->level = listlevel;
-        temp->inhibiting = true;
-        mistack = temp;
+    case LIST_TIMES:
+        suppress |= 2;
+        snprintf(str, sizeof str, "<rep %"PRIX64">", size);
+        list_out(listoffset, str);
+        break;
+
+    case LIST_INCLUDE:
+        listlevel++;
+        if (mistack && mistack->inhibiting)
+            mistack_push(false);
+        break;
+
+    case LIST_MACRO_NOLIST:
+        listlevel++;
+        mistack_push(true);
+        break;
+
+    default:
+        listlevel++;
+        break;
     }
 }
 
@@ -311,16 +330,23 @@ static void list_downlevel(int type)
     if (!listp)
         return;
 
-    if (type == LIST_INCBIN || type == LIST_TIMES) {
-        suppress &= ~(type == LIST_INCBIN ? 1 : 2);
-        return;
-    }
+    switch (type) {
+    case LIST_INCBIN:
+        suppress &= ~1;
+        break;
 
-    listlevel--;
-    while (mistack && mistack->level > listlevel) {
-        MacroInhibit *temp = mistack;
-        mistack = temp->next;
-        nasm_free(temp);
+    case LIST_TIMES:
+        suppress &= ~2;
+        break;
+
+    default:
+        listlevel--;
+        while (mistack && mistack->level > listlevel) {
+            MacroInhibit *temp = mistack;
+            mistack = temp->next;
+            nasm_free(temp);
+        }
+        break;
     }
 }
 

@@ -74,19 +74,20 @@ struct lfmt {
     void (*line)(int type, char *line);
 
     /*
-     * Called to change one of the various levelled mechanisms in
-     * the listing generator. LIST_INCLUDE and LIST_MACRO can be
-     * used to increase the nesting level of include files and
-     * macro expansions; LIST_TIMES and LIST_INCBIN switch on the
-     * two binary-output-suppression mechanisms for large-scale
-     * pseudo-instructions.
+     * Called to change one of the various levelled mechanisms in the
+     * listing generator. LIST_INCLUDE and LIST_MACRO can be used to
+     * increase the nesting level of include files and macro
+     * expansions; LIST_TIMES and LIST_INCBIN switch on the two
+     * binary-output-suppression mechanisms for large-scale
+     * pseudo-instructions; the size argument prints the size or
+     * repetiiton count.
      *
      * LIST_MACRO_NOLIST is synonymous with LIST_MACRO except that
      * it indicates the beginning of the expansion of a `nolist'
      * macro, so anything under that level won't be expanded unless
      * it includes another file.
      */
-    void (*uplevel)(int type);
+    void (*uplevel)(int type, int64_t size);
 
     /*
      * Reverse the effects of uplevel.

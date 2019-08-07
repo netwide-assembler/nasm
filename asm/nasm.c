@@ -1465,7 +1465,7 @@ static void process_insn(insn *instruction)
         increment_offset(l);
 
         if (instruction->times > 1) {
-            lfmt->uplevel(LIST_TIMES);
+            lfmt->uplevel(LIST_TIMES, instruction->times);
             for (n = 2; n <= instruction->times; n++) {
                 l = assemble(location.segment, location.offset,
                              globalbits, instruction);
