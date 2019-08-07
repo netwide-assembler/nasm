@@ -71,135 +71,50 @@ sub dword_align($) {
     return $n;
 }
 
-my $f = 0;
-my %insns_flag_bit = (
-    #
-    # dword bound, index 0 - specific flags
-    #
-    "SM"                => [$f++, "Size match"],
-    "SM2"               => [$f++, "Size match first two operands"],
-    "SB"                => [$f++, "Unsized operands can't be non-byte"],
-    "SW"                => [$f++, "Unsized operands can't be non-word"],
-    "SD"                => [$f++, "Unsized operands can't be non-dword"],
-    "SQ"                => [$f++, "Unsized operands can't be non-qword"],
-    "SO"                => [$f++, "Unsized operands can't be non-oword"],
-    "SY"                => [$f++, "Unsized operands can't be non-yword"],
-    "SZ"                => [$f++, "Unsized operands can't be non-zword"],
-    "SIZE"              => [$f++, "Unsized operands must match the bitsize"],
-    "SX"                => [$f++, "Unsized operands not allowed"],
-    "AR0"               => [$f++, "SB, SW, SD applies to argument 0"],
-    "AR1"               => [$f++, "SB, SW, SD applies to argument 1"],
-    "AR2"               => [$f++, "SB, SW, SD applies to argument 2"],
-    "AR3"               => [$f++, "SB, SW, SD applies to argument 3"],
-    "AR4"               => [$f++, "SB, SW, SD applies to argument 4"],
-    "OPT"               => [$f++, "Optimizing assembly only"],
 
-    #
-    # dword bound - instruction filtering flags
-    #
-    "PRIV"              => [${dword_align(\$f)}++, "Privileged instruction"],
-    "SMM"               => [$f++, "Only valid in SMM"],
-    "PROT"              => [$f++, "Protected mode only"],
-    "LOCK"              => [$f++, "Lockable if operand 0 is memory"],
-    "NOLONG"            => [$f++, "Not available in long mode"],
-    "LONG"              => [$f++, "Long mode"],
-    "NOHLE"             => [$f++, "HLE prefixes forbidden"],
-    "MIB"               => [$f++, "disassemble with split EA"],
-    "BND"               => [$f++, "BND (0xF2) prefix available"],
-    "UNDOC"             => [$f++, "Undocumented"],
-    "HLE"               => [$f++, "HLE prefixed"],
-    "FPU"               => [$f++, "FPU"],
-    "MMX"               => [$f++, "MMX"],
-    "3DNOW"             => [$f++, "3DNow!"],
-    "SSE"               => [$f++, "SSE (KNI, MMX2)"],
-    "SSE2"              => [$f++, "SSE2"],
-    "SSE3"              => [$f++, "SSE3 (PNI)"],
-    "VMX"               => [$f++, "VMX"],
-    "SSSE3"             => [$f++, "SSSE3"],
-    "SSE4A"             => [$f++, "AMD SSE4a"],
-    "SSE41"             => [$f++, "SSE4.1"],
-    "SSE42"             => [$f++, "SSE4.2"],
-    "SSE5"              => [$f++, "SSE5"],
-    "AVX"               => [$f++, "AVX  (256-bit floating point)"],
-    "AVX2"              => [$f++, "AVX2 (256-bit integer)"],
-    "FMA"               => [$f++, ""],
-    "BMI1"              => [$f++, ""],
-    "BMI2"              => [$f++, ""],
-    "TBM"               => [$f++, ""],
-    "RTM"               => [$f++, ""],
-    "INVPCID"           => [$f++, ""],
-    "AVX512"            => [$f++, "AVX-512F (512-bit base architecture)"],
-    "AVX512CD"          => [$f++, "AVX-512 Conflict Detection"],
-    "AVX512ER"          => [$f++, "AVX-512 Exponential and Reciprocal"],
-    "AVX512PF"          => [$f++, "AVX-512 Prefetch"],
-    "MPX"               => [$f++, "MPX"],
-    "SHA"               => [$f++, "SHA"],
-    "PREFETCHWT1"       => [$f++, "PREFETCHWT1"],
-    "AVX512VL"          => [$f++, "AVX-512 Vector Length Orthogonality"],
-    "AVX512DQ"          => [$f++, "AVX-512 Dword and Qword"],
-    "AVX512BW"          => [$f++, "AVX-512 Byte and Word"],
-    "AVX512IFMA"        => [$f++, "AVX-512 IFMA instructions"],
-    "AVX512VBMI"        => [$f++, "AVX-512 VBMI instructions"],
-    "AES"               => [$f++, "AES instructions"],
-    "VAES"              => [$f++, "AES AVX instructions"],
-    "VPCLMULQDQ"        => [$f++, "AVX Carryless Multiplication"],
-    "GFNI"		=> [$f++, "Galois Field instructions"],
-    "AVX512VBMI2"       => [$f++, "AVX-512 VBMI2 instructions"],
-    "AVX512VNNI"        => [$f++, "AVX-512 VNNI instructions"],
-    "AVX512BITALG"	=> [$f++, "AVX-512 Bit Algorithm instructions"],
-    "AVX512VPOPCNTDQ"	=> [$f++, "AVX-512 VPOPCNTD/VPOPCNTQ"],
-    "AVX5124FMAPS"	=> [$f++, "AVX-512 4-iteration multiply-add"],
-    "AVX5124VNNIW"	=> [$f++, "AVX-512 4-iteration dot product"],
-    "SGX"		=> [$f++, "Intel Software Guard Extensions (SGX)"],
+my $n_iflags = 0;
+my %flag_byname;
+my @flag_bynum;
+my @flag_fields;
+my $iflag_words;
 
-    # Put these last
-    "OBSOLETE"          => [$f++, "Instruction removed from architecture"],
-    "VEX"               => [$f++, "VEX or XOP encoded instruction"],
-    "EVEX"              => [$f++, "EVEX encoded instruction"],
+sub if_($$) {
+    my($name, $def) = @_;
+    my $v = [$n_iflags++, $name, $def];
 
-    #
-    # dword bound - cpu type flags
-    #
-    # The CYRIX and AMD flags should have the highest bit values; the
-    # disassembler selection algorithm depends on it.
-    #
-    "8086"              => [${dword_align(\$f)}++, "8086"],
-    "186"               => [$f++, "186+"],
-    "286"               => [$f++, "286+"],
-    "386"               => [$f++, "386+"],
-    "486"               => [$f++, "486+"],
-    "PENT"              => [$f++, "Pentium"],
-    "P6"                => [$f++, "P6"],
-    "KATMAI"            => [$f++, "Katmai"],
-    "WILLAMETTE"        => [$f++, "Willamette"],
-    "PRESCOTT"          => [$f++, "Prescott"],
-    "X86_64"            => [$f++, "x86-64 (long or legacy mode)"],
-    "NEHALEM"           => [$f++, "Nehalem"],
-    "WESTMERE"          => [$f++, "Westmere"],
-    "SANDYBRIDGE"       => [$f++, "Sandy Bridge"],
-    "FUTURE"            => [$f++, "Future processor (not yet disclosed)"],
-    "IA64"              => [$f++, "IA64 (in x86 mode)"],
+    $flag_byname{$name}  = $v;
+    $flag_bynum[$v->[0]] = $v;
 
-    # Put these last
-    "CYRIX"             => [$f++, "Cyrix-specific"],
-    "AMD"               => [$f++, "AMD-specific"],
-);
+    return 1;
+}
+sub if_align($) {
+    my($name) = @_;
+
+    if ($#flag_fields >= 0) {
+	$flag_fields[$#flag_fields]->[2] = $n_iflags-1;
+    }
+    $n_iflags = ($n_iflags + 31) & ~31;
+
+    if (defined($name)) {
+	push(@flag_fields, [$name, $n_iflags, undef]);
+    }
+
+    return 1;
+}
+
+sub if_end() {
+    if_align(undef);
+    $iflag_words = $n_iflags >> 5;
+}
+
+# The actual flags defintions
+require 'x86/iflags.ph';
+if_end();
+
+# Compute the combinations of instruction flags actually used in templates
 
 my %insns_flag_hash = ();
 my @insns_flag_values = ();
-my $iflag_words;
-
-sub get_flag_words() {
-    my $max = -1;
-
-    foreach my $vp (values(%insns_flag_bit)) {
-	if ($vp->[0] > $max) {
-	    $max = $vp->[0];
-	}
-    }
-
-    return int($max/32)+1;
-}
 
 sub insns_flag_index(@) {
     return undef if $_[0] eq "ignore";
@@ -211,9 +126,9 @@ sub insns_flag_index(@) {
         my @newkey = (0) x $iflag_words;
 
         for my $i (@prekey) {
-            die "No key for $i\n" if not defined($insns_flag_bit{$i});
-	    $newkey[$insns_flag_bit{$i}[0]/32] |=
-		(1 << ($insns_flag_bit{$i}[0] % 32));
+            die "No key for $i\n" if not defined($flag_byname{$i});
+	    $newkey[$flag_byname{$i}->[0] >> 5] |=
+		(1 << ($flag_byname{$i}->[0] & 31));
         }
 
 	my $str = join(',', map { sprintf("UINT32_C(0x%08x)",$_) } @newkey);
@@ -234,31 +149,66 @@ sub write_iflaggen_h() {
     print N "#ifndef NASM_IFLAGGEN_H\n";
     print N "#define NASM_IFLAGGEN_H 1\n\n";
 
-    my @flagnames = keys(%insns_flag_bit);
-    @flagnames = sort {
-	$insns_flag_bit{$a}->[0] <=> $insns_flag_bit{$b}->[0]
-    } @flagnames;
-    my $next = 0;
-    foreach my $key (@flagnames) {
-	my $v = $insns_flag_bit{$key};
-	if ($v->[0] > $next) {
-	    printf N "%-31s /* %-64s */\n", '',
-		($next != $v->[0]-1) ?
-		sprintf("%d...%d unused", $next, $v->[0]-1) :
-		sprintf("%d unused", $next);
-	}
-        print N sprintf("#define IF_%-16s %3d /* %-64s */\n",
-			$key, $v->[0], $v->[1]);
-	$next = $v->[0] + 1;
-    }
+    # The flag numbers; the <= in the loop is intentional
 
+    my $next = 0;
+    for ($i = 0; $i <= $n_iflags; $i++) {
+	if ((defined($flag_bynum[$i]) || $i >= $n_iflags) &&
+	    $next != $i) {
+	    printf N "%-31s /* %-64s */\n", '',
+		($next < $i-1) ?
+		sprintf("%d...%d reserved", $next-1, $i-1) :
+		sprintf("%d reserved", $i-1);
+	}
+
+	if (defined($flag_bynum[$i])) {
+	    printf N "#define IF_%-16s %3d /* %-64s */\n",
+		$flag_bynum[$i]->[1], $i, $flag_bynum[$i]->[2];
+	    $next = $i+1;
+	}
+    }
     print N "\n";
+
+    # The flag masks for individual bits
+
+    $next = 0;
+    for ($i = 0; $i < $n_iflags; $i++) {
+	if (($i & 31) == 0) {
+	    printf N "/* Mask bits for field %d : %d...%d */\n",
+		$i >> 5, $i, $i+31;
+	}
+	if (defined(my $v = $flag_bynum[$i])) {
+	    printf N "#define IFM_%-15s UINT32_C(0x%08x)     /* %3d */\n",
+		$v->[1], 1 << ($i & 31), $i;
+	    $next = $i+1;
+	}
+    }
+    print N "\n";
+
+    # The names of fields
+
+    for ($i = 0; $i <= $#flag_fields; $i++) {
+	printf N "#define %-19s %3d /* %-64s */\n",
+	    'IF_'.$flag_fields[$i]->[0].'_FIELD',
+	    $flag_fields[$i]->[1] >> 5,
+	    sprintf("IF_%s (%d) ... IF_%s (%d)",
+		    $flag_bynum[$flag_fields[$i]->[1]]->[1],
+		    $flag_bynum[$flag_fields[$i]->[1]]->[0],
+		    $flag_bynum[$flag_fields[$i]->[2]]->[1],
+		    $flag_bynum[$flag_fields[$i]->[2]]->[0]);
+	printf N "#define %-19s %3d\n",
+	    'IF_'.$flag_fields[$i]->[0].'_NFIELDS',
+	    ($flag_fields[$i]->[2] - $flag_fields[$i]->[1] + 31) >> 5;
+    }
+    print N "\n";
+
     printf N "#define IF_FIELD_COUNT %d\n", $iflag_words;
     print N "typedef struct {\n";
     print N "    uint32_t field[IF_FIELD_COUNT];\n";
     print N "} iflag_t;\n";
 
     print N "\n";
+    print N "/* All combinations of instruction flags used in instruction patterns */\n";
     printf N "extern const iflag_t insns_flags[%d];\n\n",
 	$#insns_flag_values + 1;
 
@@ -273,7 +223,7 @@ sub write_iflag_c() {
 
     print N "/* This file is auto-generated. Don't edit. */\n";
     print N "#include \"iflag.h\"\n\n";
-    print N "/* Global flags referenced from instruction templates */\n";
+    print N "/* All combinations of instruction flags used in instruction patterns */\n";
     printf N "const iflag_t insns_flags[%d] = {\n",
         $#insns_flag_values + 1;
     foreach my $i (0 .. $#insns_flag_values) {
@@ -282,7 +232,5 @@ sub write_iflag_c() {
     print N "};\n\n";
     close N;
 }
-
-$iflag_words = get_flag_words();
 
 1;

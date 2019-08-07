@@ -91,22 +91,10 @@ IF_GEN_HELPER(xor, ^)
 #define itemp_armask(itemp)     _itemp_armask((itemp)->iflag_idx)
 
 /*
- * IF_8086 is the first CPU level flag and IF_PLEVEL the last
+ * IF_ANY is the highest CPU level by definition
  */
-#if IF_8086 & 31
-#error "IF_8086 must be on a uint32_t boundary"
-#endif
-#define IF_PLEVEL               IF_IA64
-#define IF_CPU_FIELD	       (IF_8086 >> 5)
-#define IF_CPU_LEVEL_MASK      ((IF_GENBIT(IF_PLEVEL & 31) << 1) - 1)
-
-/*
- * IF_PRIV is the firstr instruction filtering flag
- */
-#if IF_PRIV & 31
-#error "IF_PRIV must be on a uint32_t boundary"
-#endif
-#define IF_FEATURE_FIELD	(IF_PRIV >> 5)
+#define IF_PLEVEL              IF_ANY /* Default CPU level */
+#define IF_CPU_LEVEL_MASK      (IFM_ANY - 1)
 
 static inline int iflag_cmp_cpu(const iflag_t *a, const iflag_t *b)
 {
@@ -134,10 +122,9 @@ static inline bool iflag_cpu_level_ok(const iflag_t *a, unsigned int bit)
 
 static inline void iflag_set_all_features(iflag_t *a)
 {
-    size_t i;
+    uint32_t *p = &a->field[IF_FEATURE_FIELD];
 
-    for (i = IF_FEATURE_FIELD; i < IF_CPU_FIELD; i++)
-        a->field[i] = ~UINT32_C(0);
+    memset(p, -1, IF_FEATURE_NFIELDS * sizeof(uint32_t));
 }
 
 static inline void iflag_set_cpu(iflag_t *a, unsigned int cpu)
