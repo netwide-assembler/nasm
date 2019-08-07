@@ -592,7 +592,7 @@ static void macho_output(int32_t secto, const void *data,
     switch (type) {
     case OUT_RESERVE:
         if (!is_bss) {
-            nasm_warn(WARN_OTHER, "uninitialized space declared in"
+            nasm_warn(WARN_ZEROING, "uninitialized space declared in"
 		       " %s,%s section: zeroing", s->segname, s->sectname);
 
             sect_write(s, NULL, size);
