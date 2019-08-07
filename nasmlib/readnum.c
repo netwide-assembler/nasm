@@ -169,7 +169,7 @@ int64_t readnum(const char *str, bool *error)
          *!    covers warnings about numeric constants which
          *!    don't fit in 64 bits.
          */
-        nasm_error(ERR_WARNING  | WARN_NUMBER_OVERFLOW,
+        nasm_warn(WARN_NUMBER_OVERFLOW,
 		   "numeric constant %s does not fit in 64 bits",
 		   str);
     }

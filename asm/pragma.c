@@ -149,7 +149,7 @@ found_it:
              *!  warns about a malformed or otherwise unparsable
              *!  \c{%pragma} directive.
              */
-            nasm_error(ERR_WARNING|ERR_PASS2|WARN_PRAGMA_BAD,
+            nasm_warn(ERR_PASS2|WARN_PRAGMA_BAD,
                        "empty %%pragma %s", pragma->facility_name);
             break;
         default:
@@ -159,7 +159,7 @@ found_it:
              *!  warns about an unknown \c{%pragma} directive.
              *!  This is not yet implemented for most cases.
              */
-            nasm_error(ERR_WARNING|ERR_PASS2|WARN_PRAGMA_UNKNOWN,
+            nasm_warn(ERR_PASS2|WARN_PRAGMA_UNKNOWN,
                        "unknown %%pragma %s %s",
                        pragma->facility_name, pragma->opname);
             break;
@@ -202,7 +202,7 @@ void process_pragma(char *str)
 
     pragma.facility_name = nasm_get_word(str, &p);
     if (!pragma.facility_name) {
-	nasm_error(ERR_WARNING|ERR_PASS2|WARN_PRAGMA_BAD,
+	nasm_warn(ERR_PASS2|WARN_PRAGMA_BAD,
 		   "empty pragma directive");
         return;                 /* Empty pragma */
     }

@@ -371,7 +371,7 @@ dbg_pragma(const struct pragma *pragma)
                 errno = 0;
                 arg = strtoul(pragma->tail, &ep, 0);
                 if (errno || *nasm_skip_spaces(ep)) {
-                    nasm_error(ERR_WARNING | WARN_PRAGMA_BAD | ERR_PASS2,
+                    nasm_warn(WARN_PRAGMA_BAD | ERR_PASS2,
                                "invalid %%pragma dbg maxdump argument");
                     return DIRR_ERROR;
                 } else {
