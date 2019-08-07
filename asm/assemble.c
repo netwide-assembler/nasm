@@ -786,17 +786,16 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                 }
             }
 
-            insn_size = calcsize(data.segment, data.offset,
-                                 bits, instruction, temp);
-            nasm_assert(insn_size >= 0);
-
             data.itemp = temp;
             data.bits = bits;
             data.insoffs = 0;
-            data.inslen = insn_size;
+
+            data.inslen = calcsize(data.segment, data.offset,
+                                   bits, instruction, temp);
+            nasm_assert(data.inslen >= 0);
 
             gencode(&data, instruction);
-            nasm_assert(data.insoffs == insn_size);
+            nasm_assert(data.insoffs == data.inslen);
         } else {
             /* No match */
             switch (m) {
