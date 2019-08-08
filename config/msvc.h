@@ -93,7 +93,7 @@
 /* Define to 1 if you have the `snprintf' function. */
 #define HAVE_SNPRINTF 1
 #if _MSC_VER < 1900
-# define snprintf _snprinf
+# define snprintf _snprintf
 #endif
 
 /* Define to 1 if you have the `_chsize' function. */
@@ -187,6 +187,10 @@
 /* Define to the equivalent of the C99 'restrict' keyword, or to
    nothing if this is not supported.  Do not define if restrict is
    supported directly.  */
+#if _MSC_VER >= 1700
 #define restrict __restrict
+#else
+#define restrict
+#endif
 
 #endif /* NASM_CONFIG_MSVC_H */
