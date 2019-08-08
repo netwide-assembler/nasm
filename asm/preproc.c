@@ -4133,36 +4133,45 @@ static Token *expand_mmac_params(Token * tline)
 
 /*
  * Expand *one* single-line macro instance. If the first token is not
- * a macro at all, it is simply copied to the output. tpp should be
- * a pointer to a pointer (usually the next pointer of the previous token)
- * to the first token. **tpp is updated to point to the pointer to first token
- * of the expansion, which is also the return value, and then *tpp will point to
- * the pointer to the first input token after the expansion.
+ * a macro at all, it is simply copied to the output and the pointer
+ * advanced.  tpp should be a pointer to a pointer (usually the next
+ * pointer of the previous token) to the first token. **tpp is updated
+ * to point to the last token of the expansion, and *tpp updated to
+ * point to the next pointer of the first token of the expansion.
  *
- * If the expansion is empty, then these two values point to the same token.
+ * If the expansion is empty, *tpp will be unchanged but **tpp will
+ * be advanced past the macro call.
+ *
+ * The return value equals **tpp.
+ *
+ * Return false if no expansion took place; true if it did.
  *
  */
 static Token *expand_smacro_noreset(Token * tline);
+static int64_t smacro_deadman;
 
-static Token *expand_one_smacro(Token ***tpp)
+static bool expand_one_smacro(Token ***tpp)
 {
     Token **params = NULL;
     const char *mname;
-    Token *tline = **tpp;
-    Token **tnextp;
+    Token *tline  = **tpp;
+    Token *mstart = **tpp;
     SMacro *head, *m;
     unsigned int nparam, i;
     Token *expansion;
-    Token *t, *mstart, **ttail;
+    Token *t;
     bool free_expansion;
 
     if (!tline)
-        return NULL;
+        return false;           /* Empty line, nothing to do */
 
     mname = tline->text;
-    tnextp = &tline->next;      /* By default we shift out one token */
 
-    if (tline->type == TOK_ID) {
+    if (--smacro_deadman <= 0) {
+        if (smacro_deadman == 0)
+            nasm_nonfatal("interminable macro recursion");
+        goto not_a_macro;
+    } else if (tline->type == TOK_ID) {
         head = (SMacro *)hash_findix(&smacros, mname);
     } else if (tline->type == TOK_PREPROC_ID) {
         Context *ctx = get_ctx(mname, &mname);
@@ -4334,12 +4343,12 @@ static Token *expand_one_smacro(Token ***tpp)
                       "macro `%s' exists, "
                       "but not taking %d parameters",
                       mname, nparam);
-            goto not_a_macro_cleanup;
+            goto not_a_macro;
         }
     }
 
     if (m->in_progress)
-        goto not_a_macro_cleanup;
+        goto not_a_macro;
 
     /* Expand each parameter */
     m->in_progress = true;
@@ -4375,8 +4384,8 @@ static Token *expand_one_smacro(Token ***tpp)
     }
 
     t = tline;
-    tline = tline->next;
-    t->next = NULL;         /* Remove the macro call from the input */
+    tline = tline->next;    /* Remove the macro call from the input */
+    t->next = NULL;
 
     if (unlikely(m->magic)) {
         expansion = m->magic(m, params, nparam, &free_expansion);
@@ -4385,28 +4394,39 @@ static Token *expand_one_smacro(Token ***tpp)
         free_expansion = false;
     }
 
-    ttail = NULL;
-
     list_for_each(t, expansion) {
-        if (is_smac_param(t->type)) {
-            Token *ttt;
-            list_for_each(ttt, params[smac_nparam(t->type)]) {
-                tline = dup_Token(tline, ttt);
-                if (!ttail)
-                    ttail = &tline->next;
-            }
-        } else {
-            if (t->type == TOK_PREPROC_Q) {
-                tline = new_Token(tline, TOK_ID, mname, 0);
-            } else if (t->type == TOK_PREPROC_QQ) {
-                tline = new_Token(tline, TOK_ID, m->name, 0);
+        Token *ttt, **tlinep;
+        const char *qname;
+
+        switch (t->type) {
+        case TOK_ID:
+        case TOK_PREPROC_ID:
+            tline = dup_Token(tline, t);
+            tlinep = &tline;
+            expand_one_smacro(&tlinep);
+            break;
+        case TOK_PREPROC_Q:
+            qname = mname;
+            goto q_qq;
+        case TOK_PREPROC_QQ:
+            qname = m->name;
+            goto q_qq;
+        q_qq:
+            tline = new_Token(tline, TOK_ID, qname, 0);
+            break;
+        default:
+            if (is_smac_param(t->type)) {
+                list_for_each(ttt, params[smac_nparam(t->type)]) {
+                    tline = dup_Token(tline, ttt);
+                }
             } else {
                 tline = dup_Token(tline, t);
             }
-            if (!ttail)
-                ttail = &tline->next;
+            break;
         }
     }
+
+    **tpp = tline;
 
     if (free_expansion)
         free_tlist(expansion);
@@ -4414,22 +4434,19 @@ static Token *expand_one_smacro(Token ***tpp)
     m->in_progress = false;
 
     /* Don't do this until after expansion or we will clobber mname */
-    mstart = **tpp;
-    tnextp = ttail ? ttail : *tpp;
-    **tpp = tline;
     free_tlist(mstart);
+    nasm_free(params);
+    return true;
 
     /*
      * No macro expansion needed; roll back to mstart (if necessary)
      * and then advance to the next input token.
      */
-not_a_macro_cleanup:
-    nasm_free(params);
-
 not_a_macro:
-    t = **tpp;
-    *tpp = tnextp;
-    return t;
+    if (params)
+        nasm_free(params);
+    *tpp = &mstart->next;
+    return false;
 }
 
 /*
@@ -4439,7 +4456,6 @@ not_a_macro:
  * Tokens from input to output a lot of the time, rather than
  * actually bothering to destroy and replicate.)
  */
-static int64_t smacro_deadman;
 static Token *expand_smacro(Token *tline)
 {
     smacro_deadman = nasm_limit[LIMIT_MACROS];
@@ -4450,7 +4466,6 @@ static Token *expand_smacro_noreset(Token * tline)
 {
     Token *t, **tail, *thead;
     Token *org_tline = tline;
-    bool expanded;
 
     /*
      * Trick: we should avoid changing the start token pointer since it can
@@ -4465,34 +4480,10 @@ static Token *expand_smacro_noreset(Token * tline)
         org_tline->text = NULL;
     }
 
-    expanded = true;            /* Always expand %+ at least once */
-
-again:
     thead = tline;
-    tail = &thead;
 
-    while ((t = *tail)) {             /* main token loop */
-        if (!--smacro_deadman) {
-            nasm_nonfatal("interminable macro recursion");
-            goto err;
-        }
-
-        /*
-         * An expansion happened if and only if the first token of the
-         * expansion was the first token of the original simply moved over.
-         */
-        expanded |= (expand_one_smacro(&tail) != t);
-    }
-
-    /*
-     * Now scan the entire line and look for successive TOK_IDs that resulted
-     * after expansion (they can't be produced by tokenize()). The successive
-     * TOK_IDs should be concatenated.
-     * Also we look for %+ tokens and concatenate the tokens before and after
-     * them (without white spaces in between).
-     */
-    if (expanded) {
-        const struct tokseq_match t[] = {
+    while (1) {
+        static const struct tokseq_match tmatch[] = {
             {
                 PP_CONCAT_MASK(TOK_ID)          |
                 PP_CONCAT_MASK(TOK_PREPROC_ID),     /* head */
@@ -4501,18 +4492,30 @@ again:
                 PP_CONCAT_MASK(TOK_NUMBER)          /* tail */
             }
         };
-        if (paste_tokens(&thead, t, ARRAY_SIZE(t), true)) {
-            /*
-             * If we concatenated something, *and* we had previously expanded
-             * an actual macro, scan the lines again for macros...
-             */
-            tline = thead;
-            expanded = false;
-            goto again;
+        bool expanded = false;
+
+        tail = &thead;
+
+        while ((t = *tail)) {             /* main token loop */
+
+            expanded |= expand_one_smacro(&tail);
         }
+
+        if (!expanded) {
+            tline = thead;
+            break;              /* Done! */
+        }
+
+        /*
+         * Now scan the entire line and look for successive TOK_IDs
+         * that resulted after expansion (they can't be produced by
+         * tokenize()). The successive TOK_IDs should be concatenated.
+         * Also we look for %+ tokens and concatenate the tokens
+         * before and after them (without white spaces in between).
+         */
+        paste_tokens(&thead, tmatch, ARRAY_SIZE(tmatch), true);
     }
 
-err:
     if (org_tline) {
         if (thead) {
             *org_tline = *thead;
