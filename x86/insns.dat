@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2019 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -3614,6 +3614,7 @@ KANDW           kreg,kreg,kreg                      [rvm: vex.nds.l1.0f.w0 41 /r
 KMOVB           kreg,krm8                           [rm: vex.l0.66.0f.w0 90 /r ] FUTURE
 KMOVB           mem8,kreg                           [mr: vex.l0.66.0f.w0 91 /r ] FUTURE
 KMOVB           kreg,reg32                          [rm: vex.l0.66.0f.w0 92 /r ] FUTURE
+KMOVB           kreg,reg8                           [rm: vex.l0.66.0f.w0 92 nohi /r ] FUTURE,ND
 KMOVB           reg32,kreg                          [rm: vex.l0.66.0f.w0 93 /r ] FUTURE
 KMOVD           kreg,krm32                          [rm: vex.l0.66.0f.w1 90 /r ] FUTURE
 KMOVD           mem32,kreg                          [mr: vex.l0.66.0f.w1 91 /r ] FUTURE
@@ -3626,6 +3627,7 @@ KMOVQ           reg64,kreg                          [rm: vex.l0.f2.0f.w1 93 /r ]
 KMOVW           kreg,krm16                          [rm: vex.l0.0f.w0 90 /r ] FUTURE
 KMOVW           mem16,kreg                          [mr: vex.l0.0f.w0 91 /r ] FUTURE
 KMOVW           kreg,reg32                          [rm: vex.l0.0f.w0 92 /r ] FUTURE
+KMOVW           kreg,reg16                          [rm: vex.l0.0f.w0 92 /r ] FUTURE,ND
 KMOVW           reg32,kreg                          [rm: vex.l0.0f.w0 93 /r ] FUTURE
 KNOTB           kreg,kreg                           [rm: vex.l0.66.0f.w0 44 /r ] FUTURE
 KNOTD           kreg,kreg                           [rm: vex.l0.66.0f.w1 44 /r ] FUTURE
@@ -3634,11 +3636,11 @@ KNOTW           kreg,kreg                           [rm: vex.l0.0f.w0 44 /r ] FU
 KORB            kreg,kreg,kreg                      [rvm: vex.nds.l1.66.0f.w0 45 /r ] FUTURE
 KORD            kreg,kreg,kreg                      [rvm: vex.nds.l1.66.0f.w1 45 /r ] FUTURE
 KORQ            kreg,kreg,kreg                      [rvm: vex.nds.l1.0f.w1 45 /r ] FUTURE
+KORW            kreg,kreg,kreg                      [rvm: vex.nds.l1.0f.w0 45 /r ] FUTURE
 KORTESTB        kreg,kreg                           [rm: vex.l0.66.0f.w0 98 /r ] FUTURE
 KORTESTD        kreg,kreg                           [rm: vex.l0.66.0f.w1 98 /r ] FUTURE
 KORTESTQ        kreg,kreg                           [rm: vex.l0.0f.w1 98 /r ] FUTURE
 KORTESTW        kreg,kreg                           [rm: vex.l0.0f.w0 98 /r ] FUTURE
-KORW            kreg,kreg,kreg                      [rvm: vex.nds.l1.0f.w0 45 /r ] FUTURE
 KSHIFTLB        kreg,kreg,imm8                      [rmi: vex.l0.66.0f3a.w0 32 /r ib ] FUTURE
 KSHIFTLD        kreg,kreg,imm8                      [rmi: vex.l0.66.0f3a.w0 33 /r ib ] FUTURE
 KSHIFTLQ        kreg,kreg,imm8                      [rmi: vex.l0.66.0f3a.w1 33 /r ib ] FUTURE
@@ -3662,6 +3664,74 @@ KXORB           kreg,kreg,kreg                      [rvm: vex.nds.l1.66.0f.w0 47
 KXORD           kreg,kreg,kreg                      [rvm: vex.nds.l1.66.0f.w1 47 /r ] FUTURE
 KXORQ           kreg,kreg,kreg                      [rvm: vex.nds.l1.0f.w1 47 /r ] FUTURE
 KXORW           kreg,kreg,kreg                      [rvm: vex.nds.l1.0f.w0 47 /r ] FUTURE
+
+;# AVX-512 mask register instructions (aliases requiring explicit size support)
+KADD            kreg8,kreg,kreg                     [rvm: vex.nds.l1.66.0f.w0 4a /r ] FUTURE,ND,SM
+KADD            kreg32,kreg,kreg                    [rvm: vex.nds.l1.66.0f.w1 4a /r ] FUTURE,ND,SM
+KADD            kreg64,kreg,kreg                    [rvm: vex.nds.l1.0f.w1 4a /r ] FUTURE,ND,SM
+KADD            kreg16,kreg,kreg                    [rvm: vex.nds.l1.0f.w0 4a /r ] FUTURE,ND,SM
+KAND            kreg8,kreg,kreg                     [rvm: vex.nds.l1.66.0f.w0 41 /r ] FUTURE,ND,SM
+KAND            kreg32,kreg,kreg                    [rvm: vex.nds.l1.66.0f.w1 41 /r ] FUTURE,ND,SM
+KANDN           kreg64,kreg,kreg                    [rvm: vex.nds.l1.66.0f.w0 42 /r ] FUTURE,ND,SM
+KANDN           kreg16,kreg,kreg                    [rvm: vex.nds.l1.66.0f.w1 42 /r ] FUTURE,ND,SM
+KANDN           kreg8,kreg,kreg                     [rvm: vex.nds.l1.0f.w1 42 /r ] FUTURE,ND,SM
+KANDN           kreg32,kreg,kreg                    [rvm: vex.nds.l1.0f.w0 42 /r ] FUTURE,ND,SM
+KAND            kreg64,kreg,kreg                    [rvm: vex.nds.l1.0f.w1 41 /r ] FUTURE,ND,SM
+KAND            kreg16,kreg,kreg                    [rvm: vex.nds.l1.0f.w0 41 /r ] FUTURE,ND,SM
+KMOV            kreg8,krm8                          [rm: vex.l0.66.0f.w0 90 /r ] FUTURE,ND,SM
+KMOV            mem8,kreg8                          [mr: vex.l0.66.0f.w0 91 /r ] FUTURE,ND,SB,SM
+KMOV            kreg8,reg32                         [rm: vex.l0.66.0f.w0 92 /r ] FUTURE,ND,SX
+KMOV            kreg8,reg8                          [rm: vex.l0.66.0f.w0 92 /r ] FUTURE,ND,SM
+KMOV            reg32,kreg8                         [rm: vex.l0.66.0f.w0 93 /r ] FUTURE,ND,SX
+KMOV            kreg32,krm32                        [rm: vex.l0.66.0f.w1 90 /r ] FUTURE,ND,SM
+KMOV            mem32,kreg32                        [mr: vex.l0.66.0f.w1 91 /r ] FUTURE,ND,SM
+KMOV            kreg32,reg32                        [rm: vex.l0.f2.0f.w0 92 /r ] FUTURE,ND,SM
+KMOV            reg32,kreg32                        [rm: vex.l0.f2.0f.w0 93 /r ] FUTURE,ND,SM
+KMOV            kreg64,krm64                        [rm: vex.l0.0f.w1 90 /r ] FUTURE,ND,SM
+KMOV            mem64,kreg64                        [mr: vex.l0.0f.w1 91 /r ] FUTURE,ND,SM
+KMOV            kreg64,reg64                        [rm: vex.l0.f2.0f.w1 92 /r ] FUTURE,ND,SM
+KMOV            reg64,kreg64                        [rm: vex.l0.f2.0f.w1 93 /r ] FUTURE,ND,SM
+KMOV            kreg16,krm16                        [rm: vex.l0.0f.w0 90 /r ] FUTURE,ND,SM
+KMOV            mem16,kreg16                        [mr: vex.l0.0f.w0 91 /r ] FUTURE,ND,SM
+KMOV            kreg16,reg32                        [rm: vex.l0.0f.w0 92 /r ] FUTURE,ND,SX
+KMOV            reg32,kreg16                        [rm: vex.l0.0f.w0 93 /r ] FUTURE,ND,SX
+KMOV            kreg16,reg32                        [rm: vex.l0.0f.w0 92 /r ] FUTURE,ND,SX
+KMOV            kreg16,reg16                        [rm: vex.l0.0f.w0 92 /r ] FUTURE,ND,SM
+KNOT            kreg8,kreg8                         [rm: vex.l0.66.0f.w0 44 /r ] FUTURE,ND,SM
+KNOT            kreg32,kreg32                       [rm: vex.l0.66.0f.w1 44 /r ] FUTURE,ND,SM
+KNOT            kreg64,kreg64                       [rm: vex.l0.0f.w1 44 /r ] FUTURE,ND,SM
+KNOT            kreg16,kreg16                       [rm: vex.l0.0f.w0 44 /r ] FUTURE,ND,SM
+KOR             kreg8,kreg,kreg                     [rvm: vex.nds.l1.66.0f.w0 45 /r ] FUTURE,ND,SM
+KOR             kreg32,kreg,kreg                    [rvm: vex.nds.l1.66.0f.w1 45 /r ] FUTURE,ND,SM
+KOR             kreg64,kreg,kreg                    [rvm: vex.nds.l1.0f.w1 45 /r ] FUTURE,ND,SM
+KOR             kreg16,kreg,kreg                    [rvm: vex.nds.l1.0f.w0 45 /r ] FUTURE,ND,SM
+KORTEST         kreg8,kreg                          [rm: vex.l0.66.0f.w0 98 /r ] FUTURE,ND,SM
+KORTEST         kreg32,kreg                         [rm: vex.l0.66.0f.w1 98 /r ] FUTURE,ND,SM
+KORTEST         kreg64,kreg                         [rm: vex.l0.0f.w1 98 /r ] FUTURE,ND,SM
+KORTEST         kreg16,kreg                         [rm: vex.l0.0f.w0 98 /r ] FUTURE,ND,SM
+KSHIFTL         kreg8,kreg,imm8                     [rmi: vex.l0.66.0f3a.w0 32 /r ib ] FUTURE,ND,SM2
+KSHIFTL         kreg32,kreg,imm8                    [rmi: vex.l0.66.0f3a.w0 33 /r ib ] FUTURE,ND,SM2
+KSHIFTL         kreg64,kreg,imm8                    [rmi: vex.l0.66.0f3a.w1 33 /r ib ] FUTURE,ND,SM2
+KSHIFTL         kreg16,kreg,imm8                    [rmi: vex.l0.66.0f3a.w1 32 /r ib ] FUTURE,ND,SM2
+KSHIFTR         kreg8,kreg,imm8                     [rmi: vex.l0.66.0f3a.w0 30 /r ib ] FUTURE,ND,SM2
+KSHIFTR         kreg32,kreg,imm8                    [rmi: vex.l0.66.0f3a.w0 31 /r ib ] FUTURE,ND,SM2
+KSHIFTR         kreg64,kreg,imm8                    [rmi: vex.l0.66.0f3a.w1 31 /r ib ] FUTURE,ND,SM2
+KSHIFTR         kreg16,kreg,imm8                    [rmi: vex.l0.66.0f3a.w1 30 /r ib ] FUTURE,ND,SM2
+KTEST           kreg8,kreg                          [rm: vex.l0.66.0f.w0 99 /r ] FUTURE,ND,SM
+KTEST           kreg32,kreg                         [rm: vex.l0.66.0f.w1 99 /r ] FUTURE,ND,SM
+KTEST           kreg64,kreg                         [rm: vex.l0.0f.w1 99 /r ] FUTURE,ND,SM
+KTEST           kreg16,kreg                         [rm: vex.l0.0f.w0 99 /r ] FUTURE,ND,SM
+KUNPCK          kreg16,kreg8,kreg8                  [rvm: vex.nds.l1.66.0f.w0 4b /r ] FUTURE,ND
+KUNPCK          kreg64,kreg32,kreg32                [rvm: vex.nds.l1.0f.w1 4b /r ] FUTURE,ND
+KUNPCK          kreg32,kreg16,kreg16                [rvm: vex.nds.l1.0f.w0 4b /r ] FUTURE,ND
+KXNOR           kreg8,kreg,kreg                     [rvm: vex.nds.l1.66.0f.w0 46 /r ] FUTURE,ND,SM
+KXNOR           kreg32,kreg,kreg                    [rvm: vex.nds.l1.66.0f.w1 46 /r ] FUTURE,ND,SM
+KXNOR           kreg64,kreg,kreg                    [rvm: vex.nds.l1.0f.w1 46 /r ] FUTURE,ND,SM
+KXNOR           kreg16,kreg,kreg                    [rvm: vex.nds.l1.0f.w0 46 /r ] FUTURE,ND,SM
+KXOR            kreg8,kreg,kreg                     [rvm: vex.nds.l1.66.0f.w0 47 /r ] FUTURE,ND,SM
+KXOR            kreg32,kreg,kreg                    [rvm: vex.nds.l1.66.0f.w1 47 /r ] FUTURE,ND,SM
+KXOR            kreg64,kreg,kreg                    [rvm: vex.nds.l1.0f.w1 47 /r ] FUTURE,ND,SM
+KXOR            kreg16,kreg,kreg                    [rvm: vex.nds.l1.0f.w0 47 /r ] FUTURE,ND,SM
 
 ;# AVX-512 instructions
 VADDPD          xmmreg|mask|z,xmmreg*,xmmrm128|b64  [rvm:fv: evex.nds.128.66.0f.w1 58 /r ] AVX512VL,AVX512,FUTURE

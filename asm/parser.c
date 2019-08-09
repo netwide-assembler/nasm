@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -1125,8 +1125,29 @@ is_expression:
                 op->decoflags |= brace_flags;
                 op->basereg   = value->type;
 
-                if (rs && (op->type & SIZE_MASK) != rs)
-                    nasm_warn(WARN_OTHER, "register size specification ignored");
+                if (rs) {
+                    opflags_t opsize = nasm_reg_flags[value->type] & SIZE_MASK;
+                    if (!opsize) {
+                        op->type |= rs; /* For non-size-specific registers, permit size override */
+                    } else if (opsize != rs) {
+                        /*!
+                         *!regsize [on] register size specification ignored
+                         *!
+                         *!  warns about a register with implicit size (such as \c{EAX}, which is always 32 bits)
+                         *!  been given an explicit size specification which is inconsistent with the size
+                         *!  of the named register, e.g. \c{WORD EAX}. \c{DWORD EAX} or \c{WORD AX} are
+                         *!  permitted, and do not trigger this warning. Some registers which \e{do not} imply
+                         *!  a specific size, such as \c{K0}, may need this specification unless the instruction
+                         *!  itself implies the instruction size:
+                         *!
+                         *!  \c      KMOVW K0,[foo]          ; Permitted, KMOVW implies 16 bits
+                         *!  \c      KMOV  WORD K0,[foo]     ; Permitted, WORD K0 specifies instruction size
+                         *!  \c      KMOV  K0,WORD [foo]     ; Permitted, WORD [foo] specifies instruction size
+                         *!  \c      KMOV  K0,[foo]          ; Not permitted, instruction size ambiguous
+                         */
+                        nasm_warn(WARN_REGSIZE, "invalid register size specification ignored");
+                    }
+                }
             }
         }
 
