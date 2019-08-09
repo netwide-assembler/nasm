@@ -781,6 +781,11 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
         if (m == MOK_GOOD) {
             /* Matches! */
             if (unlikely(itemp_has(temp, IF_OBSOLETE))) {
+                errflags warning;
+                const char *whathappened;
+                const char *validity;
+                bool never = itemp_has(temp, IF_NEVER);
+
                 /*
                  * If IF_OBSOLETE is set, warn the user. Different
                  * warning classes for "obsolete but valid for this
@@ -794,20 +799,34 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                  *!  which, \c{0Fh}, instead is an opcode prefix on
                  *!  CPUs newer than the first generation 8086.
                  *
+                 *!obsolete-nop [on] instruction obsolete and is a noop on the target CPU
+                 *!  warns for an instruction which has been removed
+                 *!  from the architecture, but has been architecturally
+                 *!  defined to be a noop for future CPUs.
+                 *
                  *!obsolete-valid [on] instruction obsolete but valid on the target CPU
                  *!  warns for an instruction which has been removed
                  *!  from the architecture, but is still valid on the
                  *!  specific CPU given in the \c{CPU} directive. Code
-                 *!  using these instructions is not forward compatible.
+                 *!  using these instructions is most likely not
+                 *!  forward compatible.
                  */
 
-                if (iflag_cmp_cpu_level(&insns_flags[temp->iflag_idx], &cpu)) {
-                    nasm_warn(WARN_OBSOLETE_REMOVED,
-                              "instruction obsolete and removed on the target CPU");
+                whathappened = never ? "never implemented" : "obsolete";
+
+                if (!never && !iflag_cmp_cpu_level(&insns_flags[temp->iflag_idx], &cpu)) {
+                    warning = WARN_OBSOLETE_VALID;
+                    validity = "but valid on";
+                } else if (itemp_has(temp, IF_NOP)) {
+                    warning = WARN_OBSOLETE_NOP;
+                    validity = "and is a noop on";
                 } else {
-                    nasm_warn(WARN_OBSOLETE_VALID,
-                              "instruction obsolete but valid on the target CPU");
+                    warning = WARN_OBSOLETE_REMOVED;
+                    validity = "and removed from";
                 }
+
+                nasm_warn(warning, "instruction %s %s the target CPU",
+                          whathappened, validity);
             }
 
             data.itemp = temp;

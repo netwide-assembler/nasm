@@ -7,3 +7,6 @@
 	cpu 386
 	pop cs
 	mov cs,ax
+
+	cpu any
+	pcommit

@@ -83,8 +83,10 @@ if_("AVX5124FMAPS",      "AVX-512 4-iteration multiply-add");
 if_("AVX5124VNNIW",      "AVX-512 4-iteration dot product");
 if_("SGX",               "Intel Software Guard Extensions (SGX)");
 
-# Put these last
+# Put these last [hpa: why?]
 if_("OBSOLETE",          "Instruction removed from architecture");
+if_("NEVER",             "Instruction never implemented");
+if_("NOP",               "Instruction is always a (nonintentional) NOP");
 if_("VEX",               "VEX or XOP encoded instruction");
 if_("EVEX",              "EVEX encoded instruction");
 

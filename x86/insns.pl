@@ -499,25 +499,32 @@ sub format_insn($$$$$) {
     }
     $decorators =~ tr/a-z/A-Z/;
 
-    # expand the flags
-    my @flags;
+    # expand and uniqify the flags
+    my %flags;
     foreach my $flag (split(',', $flags)) {
 	if ($flag eq 'ND') {
 	    $nd = 1;
 	} elsif ($flag eq 'X64') {
-	    push(@flags, 'LONG', 'X86_64');
+	    # X64 is shorthand for "LONG,X86_64"
+	    $flags{'LONG'}++;
+	    $flags{'X86_64'}++;
 	} elsif ($flag ne '') {
-	    push(@flags, $flag);
+	    $flags{$flag}++;
+	}
+
+	if ($flag eq 'NEVER' || $flag eq 'NOP') {
+	    # These flags imply OBSOLETE
+	    $flags{'OBSOLETE'}++;
 	}
     }
 
     if ($codes =~ /evex\./) {
-	push(@flags, 'EVEX');
+	$flags{'EVEX'}++;
     } elsif ($codes =~ /(vex|xop)\./) {
-	push(@flags, 'VEX');
+	$flags{'VEX'}++;
     }
 
-    $flagsindex = insns_flag_index(@flags);
+    $flagsindex = insns_flag_index(keys %flags);
     die "$fname:$line: error in flags $flags" unless (defined($flagsindex));
 
     @bytecode = (decodify($codes, $relax), 0);

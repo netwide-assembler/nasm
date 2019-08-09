@@ -5262,7 +5262,7 @@ RDPID		reg32				[m:	f3 0f c7 /7]				X64,UNDOC,FUTURE
 CLFLUSHOPT	mem				[m:	66 0f ae /7]				FUTURE
 CLWB            mem                             [m:     66 0f ae /6]                            FUTURE
 ; This one was killed before it saw the light of day
-PCOMMIT         void                            [       66 0f ae f8]                            FUTURE,UNDOC,OBSOLETE
+PCOMMIT         void                            [       66 0f ae f8]                            FUTURE,NEVER,NOP
 
 ; AMD Zen v1
 CLZERO		void				[	0f 01 fc]				FUTURE,AMD
