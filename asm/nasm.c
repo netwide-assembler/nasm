@@ -840,31 +840,37 @@ enum text_options {
     OPT_NO_LINE,
     OPT_DEBUG
 };
+enum need_arg {
+    ARG_NO,
+    ARG_YES,
+    ARG_MAYBE
+};
+
 struct textargs {
     const char *label;
     enum text_options opt;
-    bool need_arg;
+    enum need_arg need_arg;
     int pvt;
 };
 static const struct textargs textopts[] = {
-    {"v", OPT_VERSION, false, 0},
-    {"version", OPT_VERSION, false, 0},
-    {"help",     OPT_HELP,  false, 0},
-    {"abort-on-panic", OPT_ABORT_ON_PANIC, false, 0},
-    {"prefix",   OPT_MANGLE, true, LM_GPREFIX},
-    {"postfix",  OPT_MANGLE, true, LM_GSUFFIX},
-    {"gprefix",  OPT_MANGLE, true, LM_GPREFIX},
-    {"gpostfix", OPT_MANGLE, true, LM_GSUFFIX},
-    {"lprefix",  OPT_MANGLE, true, LM_LPREFIX},
-    {"lpostfix", OPT_MANGLE, true, LM_LSUFFIX},
-    {"include",  OPT_INCLUDE, true, 0},
-    {"pragma",   OPT_PRAGMA,  true, 0},
-    {"before",   OPT_BEFORE,  true, 0},
-    {"limit-",   OPT_LIMIT,   true, 0},
-    {"keep-all", OPT_KEEP_ALL, false, 0},
-    {"no-line",  OPT_NO_LINE, false, 0},
-    {"debug",    OPT_DEBUG, false, 0},
-    {NULL, OPT_BOGUS, false, 0}
+    {"v", OPT_VERSION, ARG_NO, 0},
+    {"version", OPT_VERSION, ARG_NO, 0},
+    {"help",     OPT_HELP,  ARG_NO, 0},
+    {"abort-on-panic", OPT_ABORT_ON_PANIC, ARG_NO, 0},
+    {"prefix",   OPT_MANGLE, ARG_YES, LM_GPREFIX},
+    {"postfix",  OPT_MANGLE, ARG_YES, LM_GSUFFIX},
+    {"gprefix",  OPT_MANGLE, ARG_YES, LM_GPREFIX},
+    {"gpostfix", OPT_MANGLE, ARG_YES, LM_GSUFFIX},
+    {"lprefix",  OPT_MANGLE, ARG_YES, LM_LPREFIX},
+    {"lpostfix", OPT_MANGLE, ARG_YES, LM_LSUFFIX},
+    {"include",  OPT_INCLUDE, ARG_YES, 0},
+    {"pragma",   OPT_PRAGMA,  ARG_YES, 0},
+    {"before",   OPT_BEFORE,  ARG_YES, 0},
+    {"limit-",   OPT_LIMIT,   ARG_YES, 0},
+    {"keep-all", OPT_KEEP_ALL, ARG_NO, 0},
+    {"no-line",  OPT_NO_LINE, ARG_NO, 0},
+    {"debug",    OPT_DEBUG, ARG_MAYBE, 0},
+    {NULL, OPT_BOGUS, ARG_NO, 0}
 };
 
 static void show_version(void)
@@ -1131,6 +1137,7 @@ static bool process_arg(char *p, char *q, int pass)
                 const struct textargs *tx;
                 size_t olen, plen;
                 char *eqsave;
+                enum text_options opt;
 
                 p += 2;
 
@@ -1161,11 +1168,14 @@ static bool process_arg(char *p, char *q, int pass)
                     nasm_nonfatalf(ERR_USAGE, "unrecognized option `--%s'", p);
                 }
 
+                opt = tx->opt;
+
                 eqsave = param = strchr(p+olen, '=');
                 if (param)
                     *param++ = '\0';
 
-                if (tx->need_arg) {
+                switch (tx->need_arg) {
+                case ARG_YES:   /* Argument required, and may be standalone */
                     if (!param) {
                         param = q;
                         advance = true;
@@ -1174,15 +1184,24 @@ static bool process_arg(char *p, char *q, int pass)
                     /* Note: a null string is a valid parameter */
                     if (!param) {
                         nasm_nonfatalf(ERR_USAGE, "option `--%s' requires an argument", p);
-                        break;
+                        opt = OPT_BOGUS;
                     }
-                } else {
+                    break;
+
+                case ARG_NO:    /* Argument prohibited */
                     if (param) {
                         nasm_nonfatalf(ERR_USAGE, "option `--%s' does not take an argument", p);
+                        opt = OPT_BOGUS;
                     }
+                    break;
+
+                case ARG_MAYBE: /* Argument permitted, but must be attached with = */
+                    break;
                 }
 
-                switch (tx->opt) {
+                switch (opt) {
+                case OPT_BOGUS:
+                    break;      /* We have already errored out */
                 case OPT_VERSION:
                     show_version();
                     break;
@@ -1216,7 +1235,7 @@ static bool process_arg(char *p, char *q, int pass)
                     pp_noline = true;
                     break;
                 case OPT_DEBUG:
-                    debug_nasm = param ? strtoul(param, NULL, 10) : 1;
+                    debug_nasm = param ? strtoul(param, NULL, 10) : debug_nasm+1;
                     break;
                 case OPT_HELP:
                     help(0);
