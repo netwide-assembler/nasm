@@ -501,7 +501,7 @@ void define_label(const char *label, int32_t segment,
          */
         if (changed) {
             nasm_nonfatal("label `%s' inconsistently redefined", lptr->defn.label);
-            noteflags = ERR_NOTE|ERR_HERE;
+            noteflags = ERR_NONFATAL|ERR_HERE|ERR_NO_SEVERITY;
         } else {
             /*!
              *!label-redef [off] label redefined to an identical value
@@ -510,14 +510,13 @@ void define_label(const char *label, int32_t segment,
              *!  define the same label more than once to \e{different} values.
              */
             nasm_warn(WARN_LABEL_REDEF,
-                       "label `%s' redefined to an identical value", lptr->defn.label);
-            noteflags = ERR_NOTE|ERR_HERE|WARN_LABEL_REDEF;
+                       "info: label `%s' redefined to an identical value", lptr->defn.label);
+            noteflags = ERR_WARNING|ERR_HERE|ERR_NO_SEVERITY|WARN_LABEL_REDEF;
         }
 
         src_get(&saved_line, &saved_fname);
         src_set(lptr->defn.def_line, lptr->defn.def_file);
-        nasm_error(noteflags, "label `%s' originally defined",
-                   lptr->defn.label);
+        nasm_error(noteflags, "info: label `%s' originally defined", lptr->defn.label);
         src_set(saved_line, saved_fname);
     } else if (changed && pass_final() && lptr->defn.type != LBL_SPECIAL) {
         /*!
