@@ -210,7 +210,7 @@ if ($what eq 'c') {
     print $out "\tconst char *name;\n";
     print $out "\tenum warn_index warning;\n";
     print $out "};\n\n";
-    printf $out "#define NUM_WARNING_ALIAS %d\n", scalar(%aliases);
+    printf $out "#define NUM_WARNING_ALIAS %d\n", scalar(keys %aliases);
 
     printf $out "extern const char * const warning_name[%d];\n",
 	$#warnings + 2;
