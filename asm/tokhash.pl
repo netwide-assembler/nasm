@@ -100,7 +100,8 @@ while (defined($line = <RD>)) {
 	    $reg_suffix = $4;
 	} else {
 	    $nregs = 1;
-	    undef $reg_prefix, $reg_suffix;
+	    undef $reg_prefix;
+	    undef $reg_suffix;
 	}
 
 	while ($nregs--) {
@@ -196,8 +197,6 @@ if ($output eq 'h') {
     verify_hash_table(\%tokens, \@hashinfo);
 
     ($n, $sv, $g) = @hashinfo;
-    $sv2 = $sv+2;
-
     die if ($n & ($n-1));
 
     print "/*\n";

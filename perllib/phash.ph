@@ -62,9 +62,9 @@ sub walk_graph($$$$) {
 sub gen_hash_n($$$$) {
     my($n, $sv, $href, $run) = @_;
     my @keys = keys(%{$href});
-    my $i, $sv;
+    my $i;
     my $gr;
-    my $k, $v;
+    my ($k, $v);
     my $gsize = 2*$n;
     my @nodeval;
     my @nodeneigh;
@@ -140,7 +140,7 @@ sub gen_perfect_hash($) {
     my($href) = @_;
     my @keys = keys(%{$href});
     my @hashinfo;
-    my $n, $i, $j, $sv, $maxj;
+    my ($n, $i, $j, $sv, $maxj);
     my $run = 1;
 
     # Minimal power of 2 value for N with enough wiggle room.

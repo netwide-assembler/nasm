@@ -70,7 +70,11 @@
 $line = <STDIN>;
 chomp $line;
 
-undef $man, $min, $smin, $plvl, $tail;
+undef $maj;
+undef $min;
+undef $smin;
+undef $plvl;
+undef $tail;
 $is_rc = 0;
 
 if ( $line =~ /^([0-9]+)\.([0-9]+)(.*)$/ ) {

@@ -13,7 +13,7 @@ my $nwarn = 0;
 sub quote_for_c($) {
     my $s = join('', @_);
 
-    $s =~ s/([\"\'\\])/\\\1/g;
+    $s =~ s/([\"\'\\])/\\$1/g;
     return $s;
 }
 
@@ -93,7 +93,7 @@ sub find_warnings {
 			    add_alias($name, $this);
 			    $nwarn++;
 			}
-		    } elsif (defined($this) && $str =~ /^\=([\w-,]+)\s*$/) {
+		    } elsif (defined($this) && $str =~ /^\=([-\w,]+)\s*$/) {
 			# Alias names for warnings
 			for my $a (split(/,+/, $1)) {
 			    add_alias($a, $this);
@@ -147,7 +147,7 @@ if ($what eq 'c') {
 	print $out ",\n\t\"", $warn->{name}, "\"";
     }
     print $out "\n};\n\n";
-    printf $out "const struct warning_alias warning_alias[NUM_WARNING_ALIAS] = {",
+    printf $out "const struct warning_alias warning_alias[%d] = {",
 	scalar(%aliases);
     my $sep = '';
     foreach my $alias (sort { $a cmp $b } keys(%aliases)) {
@@ -200,7 +200,7 @@ if ($what eq 'c') {
 
     print $out "enum warn_const {\n";
     printf $out "\tWARN_%-27s = %3d << WARN_SHR", 'NONE', 0;
-    my $n = 1;
+    $n = 1;
     foreach my $warn (@warn_noall) {
 	printf $out ",\n\tWARN_%-27s = %3d << WARN_SHR", $warn->{cname}, $n++;
     }

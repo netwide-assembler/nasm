@@ -51,7 +51,7 @@ my $tasm_count = 0;
 #
 sub charcify(@) {
     my $l = '';
-    my $c, $o;
+    my ($c, $o);
     my $space = 1;
     my $quote = 0;
 
@@ -109,6 +109,7 @@ my @pkg_list   = ();
 my %pkg_number = ();
 my $pkg;
 my @out_list   = ();
+my @std_list   = ();
 my $outfmt;
 my $lastname;
 my $z;
@@ -145,8 +146,6 @@ foreach $args ( @ARGV ) {
 		print OUT "\nconst unsigned char ${name}[] = {\n";
 		print OUT "    /* From $fname */\n";
 		$lastname = $fname;
-		push(@out_list, $out_alias[0]);
-		$out_index{$out_alias[0]} = $index;
 	    } elsif (m/^STD:\s*(.*\S)\s*$/) {
 		undef $pkg;
 		my @out_alias = split(/\s+/, $1);
@@ -161,8 +160,6 @@ foreach $args ( @ARGV ) {
 		print OUT "\nconst unsigned char ${name}[] = {\n";
 		print OUT "    /* From $fname */\n";
 		$lastname = $fname;
-		push(@std_list, $out_alias[0]);
-		$std_index{$std_alias[0]} = $index;
 	    } elsif (m/^USE:\s*(\S+)\s*$/) {
 		$pkg = $1;
 		if (defined($pkg_number{$pkg})) {
@@ -185,7 +182,7 @@ foreach $args ( @ARGV ) {
 		printf OUT "        /* %4d */ %s0,\n", $index, charcify($z);
 		$index += length($z)+1;
 	    } elsif (m/^\s*((\s*([^\"\';\s]+|\"[^\"]*\"|\'[^\']*\'))*)\s*(;.*)?$/) {
-		my $s1, $s2, $pd, $ws;
+		my($s1, $s2, $pd, $ws);
 
 		if (!defined($name)) {
 		    die "$0: $fname: macro declarations outside a known block\n";
@@ -216,7 +213,7 @@ foreach $args ( @ARGV ) {
 		    $index += length($s2)+1;
 		}
 	    } else {
-		die "$fname:$line:  error unterminated quote";
+		die "$fname:$line: error: unterminated quote\n";
 	    }
 	}
         close(INPUT);

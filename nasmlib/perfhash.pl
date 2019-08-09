@@ -211,9 +211,9 @@ foreach my $s (keys(%strings)) {
     } else {
 	$enumvals{$v} = $es;
     }
-    $max_enum = $v if ($v > $max_enum || !defined($max_enum));
-    $tbloffs = $v if ($v < $tbloffs || !defined($tbloffs));
-    $tbllen = $v+1 if ($v >= $tbllen || !defined($tbllen));
+    $max_enum = $v if (!defined($max_enum) || $v > $max_enum);
+    $tbloffs = $v if (!defined($tbloffs) || $v < $tbloffs);
+    $tbllen = $v+1 if (!defined($tbllen) || $v >= $tbllen);
 }
 foreach my $s (keys(%specials)) {
     my $es = $prefix . $s;	# No string mangling here

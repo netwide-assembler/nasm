@@ -441,9 +441,10 @@ sub count_bytecodes(@) {
 
 sub format_insn($$$$$) {
     my ($opcode, $operands, $codes, $flags, $relax) = @_;
-    my $num, $nd = 0, $rawflags, $flagsindex;
+    my $nd = 0;
+    my ($num, $flagsindex);
     my @bytecode;
-    my $op, @ops, $opp, @opx, @oppx, @decos, @opevex;
+    my ($op, @ops, $opp, @opx, @oppx, @decos, @opevex);
 
     return (undef, undef) if $operands eq "ignore";
 
@@ -615,20 +616,20 @@ sub hexstr(@) {
 # \24x \250    skip EVEX control bytes
 sub startseq($$) {
     my ($codestr, $relax) = @_;
-    my $word, @range;
+    my $word;
     my @codes = ();
     my $c = $codestr;
-    my $c0, $c1, $i;
+    my($c0, $c1, $i);
     my $prefix = '';
 
     @codes = decodify($codestr, $relax);
 
-    while ($c0 = shift(@codes)) {
+    while (defined($c0 = shift(@codes))) {
         $c1 = $codes[0];
         if ($c0 >= 01 && $c0 <= 04) {
             # Fixed byte string
             my $fbs = $prefix;
-            while (1) {
+            while (defined($c0)) {
                 if ($c0 >= 01 && $c0 <= 04) {
                     while ($c0--) {
                         $fbs .= sprintf("%02X", shift(@codes));
@@ -662,7 +663,7 @@ sub startseq($$) {
             return $prefix;
         } elsif (($c0 & ~3) == 0260 || $c0 == 0270 ||
                  ($c0 & ~3) == 0240 || $c0 == 0250) {
-            my $c,$m,$wlp;
+            my($c,$m,$wlp);
             $m   = shift(@codes);
             $wlp = shift(@codes);
             $c = ($m >> 6);
@@ -740,7 +741,7 @@ sub byte_code_compile($$) {
     my $litix = undef;
     my %oppos = ();
     my $i;
-    my $op, $oq;
+    my ($op, $oq);
     my $opex;
 
     my %imm_codes = (
@@ -813,11 +814,11 @@ sub byte_code_compile($$) {
     unless ($str =~ /^(([^\s:]*)\:*([^\s:]*)\:|)\s*(.*\S)\s*$/) {
         die "$fname:$line: cannot parse: [$str]\n";
     }
-    $opr = "\L$2";
-    $tuple = "\L$3";    # Tuple type for AVX512
-    $opc = "\L$4";
+    $opr = lc($2);
+    $tuple = lc($3);    # Tuple type for AVX512
+    $opc = lc($4);
 
-    my $op = 0;
+    $op = 0;
     for ($i = 0; $i < length($opr); $i++) {
         my $c = substr($opr,$i,1);
         if ($c eq '+') {

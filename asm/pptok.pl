@@ -174,8 +174,6 @@ if ($what eq 'c') {
     verify_hash_table(\%tokens, \@hashinfo);
 
     ($n, $sv, $g) = @hashinfo;
-    $sv2 = $sv+2;
-
     die if ($n & ($n-1));
 
     print OUT "#include \"compiler.h\"\n";
