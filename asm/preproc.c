@@ -937,13 +937,15 @@ static char *read_line(void)
  */
 static Token *tokenize(char *line)
 {
-    char c, *p = line;
+    char c;
     enum pp_token_type type;
     Token *list = NULL;
     Token *t, **tail = &list;
 
     while (*line) {
-        p = line;
+        char *p = line;
+        char *ep = NULL;      /* End of token, for trimming the end */
+
         if (*p == '%') {
             p++;
             if (*p == '+' && !nasm_isdigit(p[1])) {
@@ -966,7 +968,7 @@ static Token *tokenize(char *line)
                 }
                 if (*p != '}')
                     nasm_warn(WARN_OTHER, "unterminated %%{ construct");
-                p[-1] = '\0';
+                ep = &p[-1];
                 if (*p)
                     p++;
                 type = TOK_PREPROC_ID;
@@ -995,8 +997,9 @@ static Token *tokenize(char *line)
                     }
                 }
                 p--;
+                ep = p;
                 if (*p)
-                    *p++ = '\0';
+                    p++;
                 if (lvl)
                     nasm_nonfatalf(ERR_PASS1, "unterminated %%[ construct");
                 type = TOK_INDIRECT;
@@ -1183,7 +1186,9 @@ static Token *tokenize(char *line)
           }
           else */
         if (type != TOK_COMMENT) {
-            *tail = t = new_Token(NULL, type, line, p - line);
+            if (!ep)
+                ep = p;
+            *tail = t = new_Token(NULL, type, line, ep - line);
             tail = &t->next;
         }
         line = p;
@@ -1295,32 +1300,32 @@ static char *detoken(Token * tlist, bool expand_locals)
 
     list_for_each(t, tlist) {
         if (t->type == TOK_PREPROC_ID && t->text &&
-            t->text[0] && t->text[1] == '!') {
+            t->text[0] == '%' && t->text[1] == '!') {
             char *v;
             char *q = t->text;
 
             v = t->text + 2;
-            if (nasm_isquote(*v)) {
-                size_t len = nasm_unquote(v, NULL);
-                size_t clen = strlen(v);
-
-                if (len != clen) {
-                    nasm_nonfatalf(ERR_PASS1, "NUL character in %%! string");
-                    v = NULL;
-                }
-            }
+            if (nasm_isquote(*v))
+                 nasm_unquote_cstr(v, NULL);
 
             if (v) {
                 char *p = getenv(v);
                 if (!p) {
-                    nasm_nonfatalf(ERR_PASS1, "nonexistent environment variable `%s'", v);
-                    /*
-                     * FIXME We better should investigate if accessing
-                     * ->text[1] without ->text[0] is safe enough.
+                    /*!
+                     *!environment [on] nonexistent environment variable
+                     *!  warns if a nonexistent environment variable
+                     *!  is accessed using the \c{%!} preprocessor
+                     *!  construct (see \k{getenv}.)  Such environment
+                     *!  variables are treated as empty (with this
+                     *!  warning issued) starting in NASM 2.15;
+                     *!  earlier versions of NASM would treat this as
+                     *!  an error.
                      */
-                    t->text = nasm_zalloc(2);
-                } else
-                    t->text = nasm_strdup(p);
+                    nasm_warn(WARN_ENVIRONMENT, "nonexistent environment variable `%s'", v);
+                    p = "";
+                }
+                t->text = nasm_strdup(p);
+                t->len = nasm_last_string_len();
 		nasm_free(q);
             }
         }
@@ -1339,20 +1344,30 @@ static char *detoken(Token * tlist, bool expand_locals)
                 t->text = p;
             }
         }
-        if (t->type == TOK_WHITESPACE)
+        if (t->text) {
+            if (debug_level(2)) {
+                unsigned long t_len = t->len;
+                unsigned long s_len = strlen(t->text);
+                if (t_len != s_len) {
+                    nasm_panic("assertion failed: token \"%s\" type %u len %lu has t->len %lu\n",
+                               t->text, t->type, s_len, t_len);
+                    t->len = s_len;
+                }
+            }
+            len += t->len;
+        } else if (t->type == TOK_WHITESPACE) {
             len++;
-        else if (t->text)
-            len += strlen(t->text);
+        }
     }
 
     p = line = nasm_malloc(len + 1);
 
     list_for_each(t, tlist) {
-        if (t->type == TOK_WHITESPACE) {
-            *p++ = ' ';
-        } else if (t->text) {
+        if (t->text) {
             memcpy(p, t->text, t->len);
             p += t->len;
+        } else if (t->type == TOK_WHITESPACE) {
+            *p++ = ' ';
         }
     }
     *p = '\0';
@@ -5157,10 +5172,6 @@ static int expand_mmacro(Token * tline)
  */
 static void pp_verror(errflags severity, const char *fmt, va_list arg)
 {
-    char buff[BUFSIZ];
-    MMacro *mmac = NULL;
-    int delta = 0;
-
     /*
      * If we're in a dead branch of IF or something like it, ignore the error.
      * However, because %else etc are evaluated in the state context
@@ -5175,24 +5186,31 @@ static void pp_verror(errflags severity, const char *fmt, va_list arg)
 	 !emitting(istk->conds->state)))
 	return;
 
-    /* get %macro name */
-    if (!(severity & ERR_NOFILE) && istk && istk->mstk) {
-        mmac = istk->mstk;
-        /* but %rep blocks should be skipped */
-        while (mmac && !mmac->name)
-            mmac = mmac->next_active, delta++;
-    }
+    /* This doesn't make sense with the macro stack unwinding */
+    if (0) {
+        MMacro *mmac = NULL;
+        int32_t delta = 0;
 
-    if (mmac) {
-	vsnprintf(buff, sizeof(buff), fmt, arg);
+        /* get %macro name */
+        if (!(severity & ERR_NOFILE) && istk && istk->mstk) {
+            mmac = istk->mstk;
+            /* but %rep blocks should be skipped */
+            while (mmac && !mmac->name)
+                mmac = mmac->next_active, delta++;
+        }
 
-	nasm_set_verror(real_verror);
-	nasm_error(severity, "(%s:%d) %s",
-		   mmac->name, mmac->lineno - delta, buff);
-	nasm_set_verror(pp_verror);
-    } else {
-        real_verror(severity, fmt, arg);
+        if (mmac) {
+            char *buf;
+            nasm_set_verror(real_verror);
+            buf = nasm_vasprintf(fmt, arg);
+            nasm_error(severity, "(%s:%"PRId32") %s",
+                       mmac->name, mmac->lineno - delta, buf);
+            nasm_set_verror(pp_verror);
+            nasm_free(buf);
+            return;
+        }
     }
+    real_verror(severity, fmt, arg);
 }
 
 static Token *
