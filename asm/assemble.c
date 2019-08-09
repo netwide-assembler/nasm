@@ -782,21 +782,31 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
             /* Matches! */
             if (unlikely(itemp_has(temp, IF_OBSOLETE))) {
                 /*
-                 * If IF_OBSOLETE is set, warn unless we have *exactly*
-                 * the correct CPU level set.
+                 * If IF_OBSOLETE is set, warn the user. Different
+                 * warning classes for "obsolete but valid for this
+                 * specific CPU" and "obsolete and gone."
                  *
-                 *!obsolete [on] instruction obsolete for the target CPU
-                 *!  warns if an instruction which has been removed
+                 *!obsolete-removed [on] instruction obsolete and removed on the target CPU
+                 *!  warns for an instruction which has been removed
                  *!  from the architecture, and is no longer included
                  *!  in the CPU definition given in the \c{[CPU]}
                  *!  directive, for example \c{POP CS}, the opcode for
                  *!  which, \c{0Fh}, instead is an opcode prefix on
                  *!  CPUs newer than the first generation 8086.
+                 *
+                 *!obsolete-valid [on] instruction obsolete but valid on the target CPU
+                 *!  warns for an instruction which has been removed
+                 *!  from the architecture, but is still valid on the
+                 *!  specific CPU given in the \c{CPU} directive. Code
+                 *!  using these instructions is not forward compatible.
                  */
 
                 if (iflag_cmp_cpu_level(&insns_flags[temp->iflag_idx], &cpu)) {
-                    nasm_warn(WARN_OBSOLETE,
-                              "obsolete instruction invalid on the target CPU");
+                    nasm_warn(WARN_OBSOLETE_REMOVED,
+                              "instruction obsolete and removed on the target CPU");
+                } else {
+                    nasm_warn(WARN_OBSOLETE_VALID,
+                              "instruction obsolete but valid on the target CPU");
                 }
             }
 
