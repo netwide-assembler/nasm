@@ -184,7 +184,8 @@ struct Context {
     Context *next;
     char *name;
     struct hash_table localmac;
-    uint32_t number;
+    uint64_t number;
+    unsigned int depth;
 };
 
 /*
@@ -1290,7 +1291,6 @@ static char *detoken(Token * tlist, bool expand_locals)
 {
     Token *t;
     char *line, *p;
-    const char *q;
     int len = 0;
 
     list_for_each(t, tlist) {
@@ -1333,9 +1333,8 @@ static char *detoken(Token * tlist, bool expand_locals)
             char *p;
             Context *ctx = get_ctx(t->text, &q);
             if (ctx) {
-                char buffer[40];
-                snprintf(buffer, sizeof(buffer), "..@%"PRIu32".", ctx->number);
-                p = nasm_strcat(buffer, q);
+                p = nasm_asprintf("..@%"PRIu64".%s", ctx->number, q);
+                t->len = nasm_last_string_len();
                 nasm_free(t->text);
                 t->text = p;
             }
@@ -1352,9 +1351,8 @@ static char *detoken(Token * tlist, bool expand_locals)
         if (t->type == TOK_WHITESPACE) {
             *p++ = ' ';
         } else if (t->text) {
-            q = t->text;
-            while (*q)
-                *p++ = *q++;
+            memcpy(p, t->text, t->len);
+            p += t->len;
         }
     }
     *p = '\0';
@@ -2075,10 +2073,105 @@ smacro_expand_default(const SMacro *s, Token **params, unsigned int nparams)
 }
 
 /*
+ * Emit a macro defintion or undef to the listing file, if
+ * desired. This is similar to detoken(), but it handles the reverse
+ * expansion list, does not expand %! or local variable tokens, and
+ * does some special handling for macro parameters.
+ */
+static void
+list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
+{
+    static const Token unused_arg_name = { NULL, "", 0, TOK_OTHER };
+    const Token **param_names;
+    Token *junk_names = NULL;
+    Token *t;
+    size_t namelen, size;
+    unsigned int i;
+    char *def, *p;
+    unsigned int context_depth = 0;
+
+    nasm_newn(param_names, m->nparam);
+
+    namelen = strlen(m->name);
+    size = namelen + 2;  /* Include room for space after name + NUL */
+
+    if (ctx) {
+        context_depth = cstk->depth - ctx->depth + 1;
+        size += context_depth + 1; /* % + some number of $ */
+    }
+
+    list_for_each(t, m->expansion) {
+        if (!t->text) {
+            size++;              /* Whitespace, presumably */
+        } else {
+            size += t->len;
+            if (is_smac_param(t->type))
+                param_names[smac_nparam(t->type)] = t;
+        }
+    }
+
+    if (m->nparam) {
+        /*
+         * Space for ( and either , or ) around each
+         * parameter, plus an optional =.
+         */
+        size += 1 + 2 * m->nparam;
+        for (i = 0; i < m->nparam; i++) {
+            if (!param_names[i])
+                param_names[i] = &unused_arg_name;
+            size += param_names[i]->len;
+        }
+    }
+
+    def = nasm_malloc(size);
+    p = def+size;
+    *--p = '\0';
+
+    list_for_each(t, m->expansion) {
+        if (!t->text) {
+            *--p = ' ';
+        } else {
+            p -= t->len;
+            memcpy(p, t->text, t->len);
+        }
+    }
+
+    *--p = ' ';
+
+    if (m->nparam) {
+        *--p = ')';
+        for (i = m->nparam; i--;) {
+            p -= param_names[i]->len;
+            memcpy(p, param_names[i]->text, param_names[i]->len);
+            if (m->eval_param && m->eval_param[i])
+                *--p = '=';
+            *--p = ',';
+        }
+        *p = '(';               /* First parameter starts with ( not , */
+
+        free_tlist(junk_names);
+    }
+
+    p -= namelen;
+    memcpy(p, m->name, namelen);
+
+    if (context_depth) {
+        for (i = 0; i < context_depth; i++)
+            *--p = '$';
+        *--p = '%';
+    }
+
+    nasm_listmsg("%s %s", pp_directives[op], p);
+
+    nasm_free(def);
+    }
+
+/*
  * Common code for defining an smacro
  */
 static SMacro *define_smacro(Context *ctx, const char *mname,
-                             bool casesense, int nparam, Token *expansion)
+                             bool casesense, int nparam,
+                             bool *eval_param, Token *expansion)
 {
     SMacro *smac, **smhead;
     struct hash_table *smtbl;
@@ -2111,8 +2204,13 @@ static SMacro *define_smacro(Context *ctx, const char *mname,
     smac->name = nasm_strdup(mname);
     smac->casesense = casesense;
     smac->nparam = nparam;
+    smac->eval_param = eval_param;
     smac->expansion = expansion;
     smac->expand = smacro_expand_default;
+
+    if (list_option('m'))
+        list_smacro_def(casesense ? PP_DEFINE : PP_IDEFINE, ctx, smac);
+
     return smac;
 }
 
@@ -2134,6 +2232,8 @@ static void undef_smacro(Context *ctx, const char *mname)
         sp = smhead;
         while ((s = *sp) != NULL) {
             if (!mstrcmp(s->name, mname, s->casesense)) {
+                if (list_option('m'))
+                    list_smacro_def(PP_UNDEF, ctx, s);
                 *sp = s->next;
                 free_smacro(s);
             } else {
@@ -2711,6 +2811,7 @@ static int do_directive(Token *tline, Token **output)
 
         if (i == PP_PUSH) {
             nasm_new(ctx);
+            ctx->depth = cstk ? cstk->depth + 1 : 1;
             ctx->next = cstk;
             ctx->name = p;
             ctx->number = unique++;
@@ -3149,8 +3250,8 @@ issue_error:
     case PP_DEFINE:
     case PP_XDEFINE:
     {
-        SMacro *s;
         bool have_eval_params = false;
+        bool *eval_params = NULL;
 
         tline = tline->next;
         skip_white_(tline);
@@ -3184,12 +3285,30 @@ issue_error:
                 if (tok_is_(tline, "=")) {
                     have_eval_params = true;
                     tline = tline->next;
+                    skip_white_(tline);
                 }
+
+                /*
+                 * "*" means an unnamed, ignored argument; it can never
+                 * match anything because "*" is not TOK_ID, and so
+                 * none of the expansion entries will be converted
+                 * to parameters.
+                 */
                 if (tline->type != TOK_ID) {
-                    nasm_nonfatal("`%s': parameter identifier expected",
-                                  tline->text);
-                    free_tlist(origline);
-                    return DIRECTIVE_FOUND;
+                    if (tok_is_(tline, ",") || tok_is_(tline, ")")) {
+                        /*
+                         * Empty name; duplicate the termination
+                         * token and use the first copy as a placeholder.
+                         * It will never match anything, since the
+                         * associated text doesn't correspond to a TOK_ID.
+                         */
+                        tline = dup_Token(tline, tline);
+                    } else {
+                        nasm_nonfatal("`%s': parameter identifier expected",
+                                      tline->text);
+                        free_tlist(origline);
+                        return DIRECTIVE_FOUND;
+                    }
                 }
                 tline->type = tok_smac_param(nparam++);
                 tline = tline->next;
@@ -3207,7 +3326,20 @@ issue_error:
             }
             last = tline;
             tline = tline->next;
+
+            if (have_eval_params) {
+                /* Create evaluated parameters table */
+                bool is_eval = false;
+
+                nasm_newn(eval_params, nparam);
+                list_for_each(tt, param_start) {
+                    if (is_smac_param(tt->type))
+                        eval_params[smac_nparam(tt->type)] = is_eval;
+                    is_eval = tok_is_(tt, "=");
+                }
+            }
         }
+
         if (tok_type_(tline, TOK_WHITESPACE))
             last = tline, tline = tline->next;
         last->next = NULL;
@@ -3239,20 +3371,7 @@ issue_error:
          * carefully re-terminated after chopping off the expansion
          * from the end).
          */
-        s = define_smacro(ctx, mname, casesense, nparam, macro_start);
-
-        if (have_eval_params) {
-	    /* Create evaluated parameters table */
-            bool is_eval = false;
-
-            nasm_newn(s->eval_param, nparam);
-            list_for_each(tt, param_start) {
-                if (is_smac_param(tt->type))
-                    s->eval_param[smac_nparam(tt->type)] = is_eval;
-                is_eval = tok_is_(tt, "=");
-            }
-        }
-
+        define_smacro(ctx, mname, casesense, nparam, eval_params, macro_start);
 
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -3310,7 +3429,7 @@ issue_error:
          * zero, and a string token to use as an expansion. Create
          * and store an SMacro.
          */
-        define_smacro(ctx, mname, casesense, 0, macro_start);
+        define_smacro(ctx, mname, casesense, 0, NULL, macro_start);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -3357,7 +3476,7 @@ issue_error:
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
-        define_smacro(ctx, mname, casesense, 0, macro_start);
+        define_smacro(ctx, mname, casesense, 0, NULL, macro_start);
         free_tlist(tline);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -3411,7 +3530,7 @@ issue_error:
          * zero, and a string token to use as an expansion. Create
          * and store an SMacro.
          */
-        define_smacro(ctx, mname, casesense, 0, macro_start);
+        define_smacro(ctx, mname, casesense, 0, NULL, macro_start);
         free_tlist(tline);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -3454,7 +3573,7 @@ issue_error:
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
-        define_smacro(ctx, mname, casesense, 0, macro_start);
+        define_smacro(ctx, mname, casesense, 0, NULL, macro_start);
         free_tlist(tline);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -3513,7 +3632,7 @@ issue_error:
          */
         macro_start = make_tok_qstr(pp);
         nasm_free(pp);
-        define_smacro(ctx, mname, casesense, 0, macro_start);
+        define_smacro(ctx, mname, casesense, 0, NULL, macro_start);
         free_tlist(tline);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -3612,7 +3731,7 @@ issue_error:
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
-        define_smacro(ctx, mname, casesense, 0, macro_start);
+        define_smacro(ctx, mname, casesense, 0, NULL, macro_start);
         free_tlist(tline);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -3663,7 +3782,7 @@ issue_error:
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
-        define_smacro(ctx, mname, casesense, 0, macro_start);
+        define_smacro(ctx, mname, casesense, 0, NULL, macro_start);
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
@@ -4362,10 +4481,8 @@ static bool expand_one_smacro(Token ***tpp)
                     paren--;
                     if (!paren) {
                         skip = true;
-                        if (nparam > 0 || *phead) {
-                            /* Count the final argument unless just () */
-                            nparam++;
-                        }
+                        /* Count the final argument */
+                        nparam++;
                     }
                 }
                 break;
@@ -5158,7 +5275,7 @@ static void pp_add_magic_stdmac(void)
     SMacro *s;
 
     for (m = magic_macros; m->name; m++) {
-        s = define_smacro(NULL, m->name, true, m->nparams, NULL);
+        s = define_smacro(NULL, m->name, true, m->nparams, NULL, NULL);
         s->expand = m->func;
     }
 }
@@ -5226,7 +5343,7 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
         panic();
     }
 
-    define_smacro(NULL, "__PASS__", true, 0, make_tok_num(apass));
+    define_smacro(NULL, "__PASS__", true, 0, NULL, make_tok_num(apass));
 }
 
 static void pp_init(void)
@@ -5463,6 +5580,12 @@ static char *pp_getline(void)
             free_tlist(tline);
             break;
         }
+    }
+
+    if (list_option('e') && line && line[0]) {
+        char *buf = nasm_strcat(" ;;; ", line);
+        lfmt->line(LIST_MACRO, buf);
+        nasm_free(buf);
     }
 
     nasm_set_verror(real_verror);

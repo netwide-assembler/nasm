@@ -108,10 +108,14 @@ static void list_emit(void)
     }
 
     if (list_errors) {
+        static const char fillchars[] = " --***XX";
+        char fillchar;
+
         strlist_for_each(e, list_errors) {
             fprintf(listfp, "%6"PRId32"          ", listlineno);
+            fillchar = fillchars[e->pvt.u & ERR_MASK];
             for (i = 0; i < LIST_HEXBIT; i++)
-                putc('*', listfp);
+                putc(fillchar, listfp);
 
             if (listlevel_e)
                 fprintf(listfp, " %s<%d>", (listlevel < 10 ? " " : ""),
@@ -363,6 +367,7 @@ static void list_error(errflags severity, const char *fmt, ...)
     va_start(ap, fmt);
     strlist_vprintf(list_errors, fmt, ap);
     va_end(ap);
+    strlist_tail(list_errors)->pvt.u = severity;
 
     if ((severity & ERR_MASK) >= ERR_FATAL)
 	list_emit();

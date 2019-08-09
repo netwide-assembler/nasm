@@ -46,6 +46,7 @@ struct strlist_entry {
 	struct strlist_entry	*next;
 	size_t			offset;
 	size_t			size;
+	intorptr		pvt;
 	char			str[1];
 };
 
@@ -60,6 +61,12 @@ static inline const struct strlist_entry *
 strlist_head(const struct strlist *list)
 {
 	return list ? list->head : NULL;
+}
+static inline struct strlist_entry *strlist_tail(struct strlist *list)
+{
+	if (!list || !list->head)
+		return NULL;
+	return container_of(list->tailp, struct strlist_entry, next);
 }
 static inline size_t strlist_count(const struct strlist *list)
 {

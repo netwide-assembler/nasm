@@ -115,6 +115,9 @@ const char *outname;
 static const char *listname;
 static const char *errname;
 
+static uint64_t list_options;
+uint64_t active_list_options;   /* Set during the final pass only */
+
 static int64_t globallineno;    /* for forward-reference tracking */
 
 const struct ofmt *ofmt = &OF_DEFAULT;
@@ -881,7 +884,7 @@ static bool process_arg(char *p, char *q, int pass)
         return false;
 
     if (p[0] == '-' && !stopoptions) {
-        if (strchr("oOfpPdDiIlFXuUZwW", p[1])) {
+        if (strchr("oOfpPdDiIlLFXuUZwW", p[1])) {
             /* These parameters take values */
             if (!(param = get_param(p, q, &advance)))
                 return advance;
@@ -979,6 +982,17 @@ static bool process_arg(char *p, char *q, int pass)
         case 'l':       /* listing file */
             if (pass == 2)
                 copy_filename(&listname, param, "listing");
+            break;
+
+        case 'L':        /* listing options */
+            if (pass == 2) {
+                while (*param) {
+                    unsigned int p = *param - '@';
+                    if (p <= 63)
+                        list_options |= (UINT64_C(1) << p);
+                    param++;
+                }
+            }
             break;
 
         case 'Z':       /* error messages file */
@@ -1533,8 +1547,10 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
         globalbits = cmd_sb;  /* set 'bits' to command line default */
         cpu = cmd_cpu;
-        if (pass_final())
+        if (pass_final()) {
+            active_list_options = list_options;
 	    lfmt->init(listname);
+        }
 
         in_absolute = false;
         if (!pass_first()) {
@@ -1929,7 +1945,10 @@ static void help(const char xopt)
          "    -gformat      same as -g -F format\n\n"
          "    -o outfile    write output to an outfile\n\n"
          "    -f format     select an output format\n\n"
-         "    -l listfile   write listing to a listfile\n\n"
+         "    -l listfile   write listing to a list file\n"
+         "    -Lflags...    add optional information to the list file\n"
+         "       -Le        show the preprocessed output\n\n"
+         "       -Lm        show all single-line macro definitions\n\n"
          "    -Ipath        add a pathname to the include file path\n");
     printf
         ("    -Oflags...    optimize opcodes, immediates and branch offsets\n"

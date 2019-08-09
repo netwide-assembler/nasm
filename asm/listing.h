@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -110,5 +110,14 @@ struct lfmt {
 
 extern const struct lfmt *lfmt;
 extern bool user_nolist;
+extern uint64_t active_list_options;   /* Simply a bitmask of ASCII-64 */
+
+static inline bool list_option(char x)
+{
+    unsigned int p = x - '@';
+    if (p > 63)
+        return false;
+    return unlikely(active_list_options & (UINT64_C(1) << p));
+}
 
 #endif
