@@ -80,10 +80,11 @@ my $iflag_words;
 
 sub if_($$) {
     my($name, $def) = @_;
-    my $v = [$n_iflags++, $name, $def];
+    my $num = $n_iflags++;
+    my $v = [$num, $name, $def];
 
     $flag_byname{$name}  = $v;
-    $flag_bynum[$v->[0]] = $v;
+    $flag_bynum[$num] = $v;
 
     return 1;
 }
@@ -122,24 +123,25 @@ sub insns_flag_index(@) {
 
     my @prekey = sort(@_);
     my $key = join(',', @prekey);
+    my $flag_index = $insns_flag_hash{$key};
 
-    if (not defined($insns_flag_hash{$key})) {
+    unless (defined($flag_index)) {
         my @newkey = (0) x $iflag_words;
 
-        for my $i (@prekey) {
-            die "No key for $i\n" if not defined($flag_byname{$i});
-	    $newkey[$flag_byname{$i}->[0] >> 5] |=
-		(1 << ($flag_byname{$i}->[0] & 31));
+        foreach my $i (@prekey) {
+	    my $flag = $flag_byname{$i};
+            die "No key for $i (in $key)\n" if not defined($flag);
+	    $newkey[$flag->[0] >> 5] |= (1 << ($flag->[0] & 31));
         }
 
 	my $str = join(',', map { sprintf("UINT32_C(0x%08x)",$_) } @newkey);
 
         push @insns_flag_values, $str;
 	push @insns_flag_lists, $key;
-        $insns_flag_hash{$key} = $#insns_flag_values;
+        $insns_flag_hash{$key} = $flag_index = $#insns_flag_values;
     }
 
-    return $insns_flag_hash{$key};
+    return $flag_index;
 }
 
 sub write_iflaggen_h() {
