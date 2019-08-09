@@ -168,7 +168,7 @@ char *strrchrnul(const char *, int);
 # ifdef HAVE_STDBOOL_H
 #  include <stdbool.h>
 # elif defined(HAVE__BOOL)
-#  typedef _Bool bool
+   typedef _Bool bool;
 #  define false 0
 #  define true 1
 # else
