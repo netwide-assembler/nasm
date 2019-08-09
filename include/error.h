@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -54,10 +54,12 @@ typedef uint32_t errflags;
  * An error reporting function should look like this.
  */
 void printf_func(2, 3) nasm_error(errflags severity, const char *fmt, ...);
+void printf_func(1, 2) nasm_listmsg(const char *fmt, ...);
+void printf_func(2, 3) nasm_listmsgf(errflags flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_debug(const char *fmt, ...);
 void printf_func(2, 3) nasm_debugf(errflags flags, const char *fmt, ...);
-void printf_func(1, 2) nasm_note(const char *fmt, ...);
-void printf_func(2, 3) nasm_notef(errflags flags, const char *fmt, ...);
+void printf_func(1, 2) nasm_info(const char *fmt, ...);
+void printf_func(2, 3) nasm_intof(errflags flags, const char *fmt, ...);
 void printf_func(2, 3) nasm_warn(errflags flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_nonfatal(const char *fmt, ...);
 void printf_func(2, 3) nasm_nonfatalf(errflags flags, const char *fmt, ...);
@@ -82,10 +84,11 @@ static inline vefunc nasm_set_verror(vefunc ve)
  * These are the error severity codes which get passed as the first
  * argument to an efunc.
  */
-#define ERR_DEBUG		0x00000000	/* put out debugging message */
-#define ERR_NOTE		0x00000001	/* additional error information */
-#define ERR_WARNING		0x00000002	/* warn only: no further action */
-#define ERR_NONFATAL		0x00000003	/* terminate assembly after phase */
+#define ERR_LISTMSG		0x00000000      /* for the listing file only */
+#define ERR_DEBUG		0x00000001	/* debugging message */
+#define ERR_INFO		0x00000002	/* information for the list file */
+#define ERR_WARNING		0x00000003	/* warn only: no further action */
+#define ERR_NONFATAL		0x00000004	/* terminate assembly after phase */
 #define ERR_FATAL		0x00000006	/* instantly fatal: exit with error */
 #define ERR_PANIC		0x00000007	/* internal error: panic instantly
 						 * and dump core for reference */
@@ -130,5 +133,19 @@ void reset_warnings(void);
 
 /* Should be included from within error.h only */
 #include "warnings.h"
+
+/* By defining MAX_DEBUG, we can compile out messages entirely */
+#ifndef MAX_DEBUG
+# define MAX_DEBUG (~0U)
+#endif
+
+/* Debug level checks */
+static inline bool debug_level(unsigned int level)
+{
+    extern unsigned int debug_nasm;
+    if (is_constant(level) && level > MAX_DEBUG)
+        return false;
+    return unlikely(level <= debug_nasm);
+}
 
 #endif /* NASM_ERROR_H */

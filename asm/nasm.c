@@ -87,6 +87,8 @@ static const struct error_format errfmt_msvc = { "(", ")", " : " };
 static const struct error_format *errfmt = &errfmt_gnu;
 static struct strlist *warn_list;
 
+unsigned int debug_nasm;        /* Debugging messages? */
+
 static bool using_debug_info, opt_verbose_info;
 static const char *debug_format;
 
@@ -832,7 +834,8 @@ enum text_options {
     OPT_BEFORE,
     OPT_LIMIT,
     OPT_KEEP_ALL,
-    OPT_NO_LINE
+    OPT_NO_LINE,
+    OPT_DEBUG
 };
 struct textargs {
     const char *label;
@@ -857,6 +860,7 @@ static const struct textargs textopts[] = {
     {"limit-",   OPT_LIMIT,   true, 0},
     {"keep-all", OPT_KEEP_ALL, false, 0},
     {"no-line",  OPT_NO_LINE, false, 0},
+    {"debug",    OPT_DEBUG, false, 0},
     {NULL, OPT_BOGUS, false, 0}
 };
 
@@ -1196,6 +1200,9 @@ static bool process_arg(char *p, char *q, int pass)
                     break;
                 case OPT_NO_LINE:
                     pp_noline = true;
+                    break;
+                case OPT_DEBUG:
+                    debug_nasm = param ? strtoul(param, NULL, 10) : 1;
                     break;
                 case OPT_HELP:
                     help(0);
@@ -1592,7 +1599,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                                    "after %"PRId64" passes; "
                                    "stalled for %"PRId64", giving up.",
                                    pass_count(), stall_count);
-                    nasm_notef(ERR_UNDEAD,
+                    nasm_nonfatalf(ERR_UNDEAD,
                                "Possible causes: recursive EQUs, macro abuse.");
                 }
                 break;
@@ -1625,8 +1632,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
     if (opt_verbose_info && pass_final()) {
         /*  -On and -Ov switches */
-        nasm_note("info: assembly required 1+%"PRId64"+2 passes\n",
-                  pass_count()-3);
+        nasm_info("assembly required 1+%"PRId64"+2 passes\n", pass_count()-3);
     }
 
     strlist_free(&warn_list);
@@ -1654,13 +1660,23 @@ static size_t warn_index(errflags severity)
 
 static bool skip_this_pass(errflags severity)
 {
+    errflags type = severity & ERR_MASK;
+
     /*
      * See if it's a pass-specific error or warning which should be skipped.
      * We can never skip fatal errors as by definition they cannot be
      * resumed from.
      */
-    if ((severity & ERR_MASK) >= ERR_FATAL)
+    if (type >= ERR_FATAL)
         return false;
+
+    /*
+     * ERR_LISTMSG messages are always skipped; the list file
+     * receives them anyway as this function is not consulted
+     * for sending to the list file.
+     */
+    if (type == ERR_LISTMSG)
+        return true;
 
     /* This message not applicable unless pass_final */
     return (severity & ERR_PASS2) && !pass_final();
@@ -1726,13 +1742,12 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
     char warnsuf[64];
     char linestr[64];
     const char *pfx;
-    errflags spec_type = severity & ERR_MASK; /* type originally specified */
     errflags true_type = true_error_type(severity);
     const char *currentfile = NULL;
     int32_t lineno = 0;
     static const char * const pfx_table[ERR_MASK+1] = {
-        "debug: ", "note: ", "warning: ", "error: ",
-        "", "", "fatal: ", "panic: "
+        ";;; ", "debug: ", "info: ", "warning: ",
+        "error: ", "", "fatal: ", "panic: "
     };
 
     if (is_suppressed(severity))
@@ -1749,13 +1764,6 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
         }
     }
 
-    /*
-     * For a debug/warning/note event, if ERR_HERE is set don't
-     * output anything if there is no current filename available
-     */
-    if (!currentfile && (severity & ERR_HERE) && true_type <= ERR_WARNING)
-        return;
-
     if (severity & ERR_NO_SEVERITY)
         pfx = "";
     else
@@ -1763,7 +1771,11 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
 
     vsnprintf(msg, sizeof msg, fmt, args);
     *warnsuf = 0;
-    if (spec_type == ERR_WARNING) {
+    if ((severity & (ERR_MASK|ERR_HERE|ERR_PP_LISTMACRO)) == ERR_WARNING) {
+        /*
+         * It's a warning without ERR_HERE defined, and we are not already
+         * unwinding the macros that led us here.
+         */
         snprintf(warnsuf, sizeof warnsuf, " [-w+%s%s]",
                  (true_type >= ERR_NONFATAL) ? "error=" : "",
                  warning_name[warn_index(severity)]);
@@ -1777,7 +1789,10 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
 
     if (!skip_this_pass(severity)) {
         const char *file = currentfile ? currentfile : "nasm";
-        const char *here = (severity & ERR_HERE) ? " here" : "";
+        const char *here = "";
+
+        if (severity & ERR_HERE)
+            here = currentfile ? " here" : " in an unknown location";
 
         if (warn_list && true_type < ERR_NONFATAL &&
             !(pass_first() && (severity & ERR_PASS1)))
@@ -1822,7 +1837,7 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
             lfmt->error(severity, "%s%s in file %s%s",
                         pfx, msg, currentfile, warnsuf);
         else
-            lfmt->error(severity, "%s%s in unknown location%s",
+            lfmt->error(severity, "%s%s in an unknown location%s",
                         pfx, msg, warnsuf);
     } else {
         lfmt->error(severity, "%s%s%s", pfx, msg, warnsuf);
@@ -1834,11 +1849,14 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
     if (severity & ERR_USAGE)
         want_usage = true;
 
-    preproc->error_list_macros(severity);
+    /* error_list_macros can for obvious reasons not work with ERR_HERE */
+    if (!(severity & ERR_HERE))
+        preproc->error_list_macros(severity);
 
     switch (true_type) {
-    case ERR_NOTE:
+    case ERR_LISTMSG:
     case ERR_DEBUG:
+    case ERR_INFO:
     case ERR_WARNING:
         /* no further action, by definition */
         break;

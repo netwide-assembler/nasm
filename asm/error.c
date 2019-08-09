@@ -70,8 +70,9 @@ _type nasm_ ## _name (const char *fmt, ...)				\
 		abort();						\
 }
 
+nasm_err_helpers(void,       listmsg,  ERR_LISTMSG)
 nasm_err_helpers(void,       debug,    ERR_DEBUG)
-nasm_err_helpers(void,       note,     ERR_NOTE)
+nasm_err_helpers(void,       info,     ERR_INFO)
 nasm_err_helpers(void,       nonfatal, ERR_NONFATAL)
 nasm_err_helpers(fatal_func, fatal,    ERR_FATAL)
 nasm_err_helpers(fatal_func, panic,    ERR_PANIC)

@@ -734,10 +734,11 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
     struct elf_symbol *sym;
     bool special_used = false;
 
-#if defined(DEBUG) && DEBUG>2
-    nasm_debug(" elf_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
-               name, segment, offset, is_global, special);
-#endif
+    if (debug_level(2)) {
+        nasm_debug(" elf_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
+                   name, segment, offset, is_global, special);
+    }
+
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
         /*
          * This is a NASM special symbol. We never allow it into

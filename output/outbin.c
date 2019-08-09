@@ -228,11 +228,11 @@ static void bin_cleanup(void)
     uint64_t pend;
     int h;
 
-#ifdef DEBUG
-    nasm_debug("bin_cleanup: Sections were initially referenced in this order:\n");
-    for (h = 0, s = sections; s; h++, s = s->next)
-        fprintf(stdout, "%i. %s\n", h, s->name);
-#endif
+    if (debug_level(1)) {
+        nasm_debug("bin_cleanup: Sections were initially referenced in this order:\n");
+        for (h = 0, s = sections; s; h++, s = s->next)
+            nasm_debug("%i. %s\n", h, s->name);
+    }
 
     /* Assembly has completed, so now we need to generate the output file.
      * Step 1: Separate progbits and nobits sections into separate lists.
@@ -511,12 +511,12 @@ static void bin_cleanup(void)
     if (h)
         nasm_fatal("circular vfollows path detected");
 
-#ifdef DEBUG
-    nasm_debug("bin_cleanup: Confirm final section order for output file:\n");
-    for (h = 0, s = sections; s && (s->flags & TYPE_PROGBITS);
-         h++, s = s->next)
-        fprintf(stdout, "%i. %s\n", h, s->name);
-#endif
+    if (debug_level(1)) {
+        nasm_debug("bin_cleanup: Confirm final section order for output file:\n");
+        for (h = 0, s = sections; s && (s->flags & TYPE_PROGBITS);
+             h++, s = s->next)
+            nasm_debug("%i. %s\n", h, s->name);
+    }
 
     /* Step 5: Apply relocations. */
 

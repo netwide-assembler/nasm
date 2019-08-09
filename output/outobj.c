@@ -771,10 +771,9 @@ static void obj_deflabel(char *name, int32_t segment,
     int i;
     bool used_special = false;   /* have we used the special text? */
 
-#if defined(DEBUG) && DEBUG>2
-    nasm_debug(" obj_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
-            name, segment, offset, is_global, special);
-#endif
+    if (debug_level(2))
+        nasm_debug(" obj_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
+                   name, segment, offset, is_global, special);
 
     /*
      * If it's a special-retry from pass two, discard it.
@@ -1330,10 +1329,9 @@ static int32_t obj_segment(char *name, int *bits)
      * using the pointer it gets passed. That way we save memory,
      * by sponging off the label manager.
      */
-#if defined(DEBUG) && DEBUG>=3
-    nasm_debug(" obj_segment: < %s >, pass=%d, *bits=%d\n",
-               name, pass, *bits);
-#endif
+    if (debug_level(3))
+        nasm_debug(" obj_segment: < %s >, *bits=%d\n", name, *bits);
+
     if (!name) {
         *bits = 16;
         current_seg = NULL;
