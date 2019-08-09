@@ -109,7 +109,7 @@ strlist_vprintf(struct strlist *list, const char *fmt, va_list ap)
 		return NULL;
 
 	e = nasm_vaxprintf(offsetin(*e, str), fmt, ap);
-	e->size = nasm_aprintf_size();
+	e->size = nasm_last_string_size();
 
 	if (list->uniq) {
 		void **dp = hash_findb(&list->hash, e->str, e->size, &hi);

@@ -87,10 +87,22 @@ char * safe_alloc nasm_vasprintf(const char *fmt, va_list ap);
 void * safe_alloc printf_func(2, 3) nasm_axprintf(size_t extra, const char *fmt, ...);
 void * safe_alloc nasm_vaxprintf(size_t extra, const char *fmt, va_list ap);
 
-extern size_t _nasm_aprintf_size;
-static inline size_t nasm_aprintf_size(void)
+/*
+ * nasm_last_string_len() returns the length of the last string allocated
+ * by [v]asprintf, nasm_strdup, nasm_strcat, or nasm_strcatn.
+ *
+ * nasm_last_string_size() returns the equivalent size including the
+ * final NUL.
+ */
+static inline size_t nasm_last_string_len(void)
 {
-    return _nasm_aprintf_size;
+    extern size_t _nasm_last_string_size;
+    return _nasm_last_string_size - 1;
+}
+static inline size_t nasm_last_string_size(void)
+{
+    extern size_t _nasm_last_string_size;
+    return _nasm_last_string_size;
 }
 
 /* Assert the argument is a pointer without evaluating it */

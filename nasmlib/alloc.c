@@ -40,6 +40,8 @@
 #include "error.h"
 #include "alloc.h"
 
+size_t _nasm_last_string_size;
+
 no_return nasm_alloc_failed(void)
 {
     /* If nasm_fatal() gets us back here, then croak hard */
@@ -90,8 +92,9 @@ void nasm_free(void *q)
 char *nasm_strdup(const char *s)
 {
     char *p;
-    size_t size = strlen(s) + 1;
+    const size_t size = strlen(s) + 1;
 
+    _nasm_last_string_size = size;
     p = nasm_malloc(size);
     return memcpy(p, s, size);
 }
@@ -101,6 +104,7 @@ char *nasm_strndup(const char *s, size_t len)
     char *p;
 
     len = strnlen(s, len);
+    _nasm_last_string_size = len + 1;
     p = nasm_malloc(len+1);
     p[len] = '\0';
     return memcpy(p, s, len);
@@ -109,11 +113,13 @@ char *nasm_strndup(const char *s, size_t len)
 char *nasm_strcat(const char *one, const char *two)
 {
     char *rslt;
-    size_t l1 = strlen(one);
-    size_t l2 = strlen(two);
-    rslt = nasm_malloc(l1 + l2 + 1);
+    const size_t l1 = strlen(one);
+    const size_t s2 = strlen(two) + 1;
+
+    _nasm_last_string_size = l1 + s2;
+    rslt = nasm_malloc(l1 + s2);
     memcpy(rslt, one, l1);
-    memcpy(rslt + l1, two, l2+1);
+    memcpy(rslt + l1, two, s2);
     return rslt;
 }
 
@@ -149,6 +155,8 @@ char *nasm_strcatn(const char *str1, ...)
         p = va_arg(ap, const char *);
     }
     va_end(ap);
+
+    _nasm_last_string_size = s;
 
     q = rslt = nasm_malloc(s);
 

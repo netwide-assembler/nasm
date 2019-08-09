@@ -45,4 +45,6 @@ static inline void *validate_ptr(void *p)
     return p;
 }
 
+extern size_t _nasm_last_string_size;
+
 #endif /* NASMLIB_ALLOC_H */

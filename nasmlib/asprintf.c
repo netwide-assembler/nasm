@@ -38,15 +38,14 @@
 /*
  * nasm_[v]asprintf() are variants of the semi-standard [v]asprintf()
  * functions, except that we return the pointer instead of a count.
- * The size of the string (including the final NUL!) is available
- * by calling nasm_aprintf_size() afterwards.
+ * The length of the string (with or without the final NUL) is available
+ * by calling nasm_last_string_{len,size}() afterwards.
  *
  * nasm_[v]axprintf() are similar, but allocates a user-defined amount
  * of storage before the string, and returns a pointer to the
- * allocated buffer.
+ * allocated buffer. The size of that area is not included in the value
+ * returned by nasm_last_string_size().
  */
-
-size_t _nasm_aprintf_size;
 
 void *nasm_vaxprintf(size_t extra, const char *fmt, va_list ap)
 {
@@ -55,9 +54,12 @@ void *nasm_vaxprintf(size_t extra, const char *fmt, va_list ap)
     size_t bytes;
 
     va_copy(xap, ap);
-    _nasm_aprintf_size = bytes = vsnprintf(NULL, 0, fmt, xap) + 1;
+    bytes = vsnprintf(NULL, 0, fmt, xap) + 1;
+    _nasm_last_string_size = bytes;
     va_end(xap);
+
     strp = nasm_malloc(extra+bytes);
+    memset(strp, 0, extra);
     vsnprintf(strp+extra, bytes, fmt, ap);
     return strp;
 }
