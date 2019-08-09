@@ -822,7 +822,7 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                     validity = "and is a noop on";
                 } else {
                     warning = WARN_OBSOLETE_REMOVED;
-                    validity = "and removed from";
+                    validity = never ? "and invalid on" : "and removed from";
                 }
 
                 nasm_warn(warning, "instruction %s %s the target CPU",
