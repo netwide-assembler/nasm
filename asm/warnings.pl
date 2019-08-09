@@ -148,7 +148,7 @@ if ($what eq 'c') {
     }
     print $out "\n};\n\n";
     printf $out "const struct warning_alias warning_alias[%d] = {",
-	scalar(%aliases);
+	scalar(keys %aliases);
     my $sep = '';
     foreach my $alias (sort { $a cmp $b } keys(%aliases)) {
 	printf $out "%s\n\t{ %-27s WARN_IDX_%s }",
