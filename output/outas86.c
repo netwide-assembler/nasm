@@ -586,7 +586,7 @@ static void as86_sect_write(struct Section *sect,
 extern macros_t as86_stdmac[];
 
 const struct ofmt of_as86 = {
-    "Linux as86 (bin86 version 0.3) object files",
+    "as86 (bin86/dev86 toolchain)",
     "as86",
     ".o",
     0,

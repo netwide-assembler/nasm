@@ -2357,7 +2357,7 @@ static const struct pragma_facility elf_pragma_list[] =
 
 
 static const struct dfmt elf32_df_dwarf = {
-    "ELF32 (i386) dwarf debug format for Linux/Unix",
+    "ELF32 (i386) dwarf (newer)",
     "dwarf",
     dwarf_init,
     dwarf_linenum,
@@ -2370,7 +2370,7 @@ static const struct dfmt elf32_df_dwarf = {
 };
 
 static const struct dfmt elf32_df_stabs = {
-    "ELF32 (i386) stabs debug format for Linux/Unix",
+    "ELF32 (i386) stabs (older)",
     "stabs",
     null_debug_init,
     stabs_linenum,
@@ -2386,7 +2386,7 @@ static const struct dfmt * const elf32_debugs_arr[3] =
   { &elf32_df_dwarf, &elf32_df_stabs, NULL };
 
 const struct ofmt of_elf32 = {
-    "ELF32 (i386) object files (e.g. Linux)",
+    "ELF32 (i386) (Linux, most Unix variants)",
     "elf32",
     ".o",
     0,
@@ -2409,7 +2409,7 @@ const struct ofmt of_elf32 = {
 };
 
 static const struct dfmt elf64_df_dwarf = {
-    "ELF64 (x86-64) dwarf debug format for Linux/Unix",
+    "ELF64 (x86-64) dwarf (newer)",
     "dwarf",
     dwarf_init,
     dwarf_linenum,
@@ -2422,7 +2422,7 @@ static const struct dfmt elf64_df_dwarf = {
 };
 
 static const struct dfmt elf64_df_stabs = {
-    "ELF64 (x86-64) stabs debug format for Linux/Unix",
+    "ELF64 (x86-64) stabs (older)",
     "stabs",
     null_debug_init,
     stabs_linenum,
@@ -2438,7 +2438,7 @@ static const struct dfmt * const elf64_debugs_arr[3] =
   { &elf64_df_dwarf, &elf64_df_stabs, NULL };
 
 const struct ofmt of_elf64 = {
-    "ELF64 (x86_64) object files (e.g. Linux)",
+    "ELF64 (x86-64) (Linux, most Unix variants)",
     "elf64",
     ".o",
     0,
@@ -2461,7 +2461,7 @@ const struct ofmt of_elf64 = {
 };
 
 static const struct dfmt elfx32_df_dwarf = {
-    "ELFX32 (x86-64) dwarf debug format for Linux/Unix",
+    "ELFx32 (x86-64) dwarf (newer)",
     "dwarf",
     dwarf_init,
     dwarf_linenum,
@@ -2474,7 +2474,7 @@ static const struct dfmt elfx32_df_dwarf = {
 };
 
 static const struct dfmt elfx32_df_stabs = {
-    "ELFX32 (x86-64) stabs debug format for Linux/Unix",
+    "ELFx32 (x86-64) stabs (older)",
     "stabs",
     null_debug_init,
     stabs_linenum,
@@ -2490,7 +2490,7 @@ static const struct dfmt * const elfx32_debugs_arr[3] =
   { &elfx32_df_dwarf, &elfx32_df_stabs, NULL };
 
 const struct ofmt of_elfx32 = {
-    "ELFX32 (x86_64) object files (e.g. Linux)",
+    "ELFx32 (ELF32 for x86-64) (Linux)",
     "elfx32",
     ".o",
     0,

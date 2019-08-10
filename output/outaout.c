@@ -871,7 +871,7 @@ extern macros_t aout_stdmac[];
 #ifdef OF_AOUT
 
 const struct ofmt of_aout = {
-    "Linux a.out object files",
+    "Linux a.out",
     "aout",
     ".o",
     0,
@@ -898,7 +898,7 @@ const struct ofmt of_aout = {
 #ifdef OF_AOUTB
 
 const struct ofmt of_aoutb = {
-    "NetBSD/FreeBSD a.out object files",
+    "NetBSD/FreeBSD a.out",
     "aoutb",
     ".o",
     0,

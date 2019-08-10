@@ -2668,7 +2668,7 @@ static const struct pragma_facility obj_pragma_list[] = {
 };
 
 const struct ofmt of_obj = {
-    "MS-DOS 16-bit/32-bit OMF object files",
+    "Intel/Microsoft OMF (MS-DOS, OS/2, Win16)",
     "obj",
     ".obj",
     0,

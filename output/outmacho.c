@@ -2284,7 +2284,7 @@ static void macho32_init(void)
 }
 
 static const struct dfmt macho32_df_dwarf = {
-    "MachO32 (i386) dwarf debug format for Darwin/MacOS",
+    "Mach-O i386 dwarf for Darwin/MacOS",
     "dwarf",
     macho_dbg_init,
     macho_dbg_linenum,
@@ -2300,7 +2300,7 @@ static const struct dfmt * const macho32_df_arr[2] =
  { &macho32_df_dwarf, NULL };
 
 const struct ofmt of_macho32 = {
-    "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (i386) object files",
+    "Mach-O i386 (Mach, including MacOS X and variants)",
     "macho32",
     ".o",
     0,
@@ -2351,7 +2351,7 @@ static void macho64_init(void)
 }
 
 static const struct dfmt macho64_df_dwarf = {
-    "MachO64 (x86-64) dwarf debug format for Darwin/MacOS",
+    "Mach-O x86-64 dwarf for Darwin/MacOS",
     "dwarf",
     macho_dbg_init,
     macho_dbg_linenum,
@@ -2367,7 +2367,7 @@ static const struct dfmt * const macho64_df_arr[2] =
  { &macho64_df_dwarf, NULL };
 
 const struct ofmt of_macho64 = {
-    "NeXTstep/OpenStep/Rhapsody/Darwin/MacOS X (x86_64) object files",
+    "Mach-O x86-64 (Mach, including MacOS X and variants)",
     "macho64",
     ".o",
     0,

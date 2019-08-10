@@ -1134,7 +1134,7 @@ extern macros_t coff_stdmac[];
 #ifdef OF_COFF
 
 const struct ofmt of_coff = {
-    "COFF (i386) object files (e.g. DJGPP for DOS)",
+    "COFF (i386) (DJGPP, some Unix variants)",
     "coff",
     ".o",
     0,
@@ -1165,7 +1165,7 @@ extern const struct dfmt df_cv8;
 static const struct dfmt * const win32_debug_arr[2] = { &df_cv8, NULL };
 
 const struct ofmt of_win32 = {
-    "Microsoft Win32 (i386) object files",
+    "Microsoft extended COFF for Win32 (i386)",
     "win32",
     ".obj",
     0,
@@ -1194,7 +1194,7 @@ const struct ofmt of_win32 = {
 static const struct dfmt * const win64_debug_arr[2] = { &df_cv8, NULL };
 
 const struct ofmt of_win64 = {
-    "Microsoft Win64 (x86-64) object files",
+    "Microsoft extended COFF for Win64 (x86-64)",
     "win64",
     ".obj",
     0,

@@ -974,7 +974,6 @@ struct ofmt {
  */
 struct ofmt_alias {
     const char  *shortname;
-    const char  *fullname;
     const struct ofmt *ofmt;
 };
 

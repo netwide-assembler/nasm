@@ -345,27 +345,15 @@ static const struct ofmt * const drivers[] = {
 
 static const struct ofmt_alias ofmt_aliases[] = {
 #ifdef OF_ELF32
-    {
-        "elf",
-        "ELF (short name for ELF32)",
-        &of_elf32,
-    },
+    { "elf",  &of_elf32 },
 #endif
 #ifdef OF_MACHO32
-    {
-        "macho",
-        "MACHO (short name for MACHO32)",
-        &of_macho32,
-    },
+    { "macho", &of_macho32 },
 #endif
 #ifdef OF_WIN32
-    {
-        "win",
-        "WIN (short name for WIN32)",
-        &of_win32,
-    },
+    { "win",   &of_win32 },
 #endif
-    { NULL, NULL, NULL }
+    { NULL, NULL }
 };
 
 #endif /* BUILD_DRIVERS_ARRAY */

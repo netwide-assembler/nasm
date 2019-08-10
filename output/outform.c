@@ -101,9 +101,9 @@ void ofmt_list(const struct ofmt *deffmt, FILE * fp)
     for (i = 0; i < ARRAY_SIZE(ofmt_aliases); i++) {
         if (!ofmt_aliases[i].shortname)
             continue;
-        fprintf(fp, "       %-20s %s\n",
+        fprintf(fp, "       %-20s Legacy alias for \"%s\"\n",
                 ofmt_aliases[i].shortname,
-                ofmt_aliases[i].fullname);
+                ofmt_aliases[i].ofmt->shortname);
     }
 }
 

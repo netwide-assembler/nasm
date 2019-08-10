@@ -1596,7 +1596,7 @@ static void do_output_srec(void)
 
 
 const struct ofmt of_bin = {
-    "flat-form binary files (e.g. DOS .COM, .SYS)",
+    "Flat raw binary (MS-DOS, embedded, ...)",
     "bin",
     "",
     0,
@@ -1619,7 +1619,7 @@ const struct ofmt of_bin = {
 };
 
 const struct ofmt of_ith = {
-    "Intel hex",
+    "Intel Hex encoded flat binary",
     "ith",
     ".ith",                     /* really should have been ".hex"... */
     OFMT_TEXT,
@@ -1642,7 +1642,7 @@ const struct ofmt of_ith = {
 };
 
 const struct ofmt of_srec = {
-    "Motorola S-records",
+    "Motorola S-records encoded flat binary",
     "srec",
     ".srec",
     OFMT_TEXT,
