@@ -342,9 +342,6 @@ enum {
 #define NO_DIRECTIVE_FOUND  0
 #define DIRECTIVE_FOUND     1
 
-/* max reps */
-#define REP_LIMIT ((INT64_C(1) << 62))
-
 /*
  * Condition codes. Note that we use c_ prefix not C_ because C_ is
  * used in nasm.h for the "real" condition codes. At _this_ level,
@@ -3000,8 +2997,7 @@ issue_error:
             return DIRECTIVE_FOUND;
         }
         defining = nasm_zalloc(sizeof(MMacro));
-        defining->max_depth = ((i == PP_RMACRO) || (i == PP_IRMACRO))
-            ? nasm_limit[LIMIT_MACROS] : 0;
+        defining->max_depth = nasm_limit[LIMIT_MACRO_LEVELS];
         defining->casesense = casesense;
         if (!parse_mmacro_spec(tline, defining, dname)) {
             nasm_free(defining);
@@ -4312,6 +4308,13 @@ static Token *expand_mmac_params(Token * tline)
     return thead;
 }
 
+static Token *expand_smacro_noreset(Token * tline);
+static struct {
+    int64_t tokens;
+    int64_t levels;
+    bool triggered;
+} smacro_deadman;
+
 /*
  * Expand *one* single-line macro instance. If the first token is not
  * a macro at all, it is simply copied to the output and the pointer
@@ -4323,15 +4326,9 @@ static Token *expand_mmac_params(Token * tline)
  * If the expansion is empty, *tpp will be unchanged but **tpp will
  * be advanced past the macro call.
  *
- * The return value equals **tpp.
- *
- * Return false if no expansion took place; true if it did.
- *
+ * Return the macro expanded, or NULL if no expansion took place.
  */
-static Token *expand_smacro_noreset(Token * tline);
-static int64_t smacro_deadman;
-
-static bool expand_one_smacro(Token ***tpp)
+static SMacro *expand_one_smacro(Token ***tpp)
 {
     Token **params = NULL;
     const char *mname;
@@ -4347,9 +4344,14 @@ static bool expand_one_smacro(Token ***tpp)
 
     mname = tline->text;
 
-    if (--smacro_deadman <= 0) {
-        if (smacro_deadman == 0)
+    smacro_deadman.tokens--;
+    smacro_deadman.levels--;
+
+    if (unlikely(smacro_deadman.tokens < 0 || smacro_deadman.levels < 0)) {
+        if (unlikely(!smacro_deadman.triggered)) {
             nasm_nonfatal("interminable macro recursion");
+            smacro_deadman.triggered = true;
+        }
         goto not_a_macro;
     } else if (tline->type == TOK_ID) {
         head = (SMacro *)hash_findix(&smacros, mname);
@@ -4652,17 +4654,21 @@ static bool expand_one_smacro(Token ***tpp)
 
     /* Don't do this until after expansion or we will clobber mname */
     free_tlist(mstart);
-    free_tlist_array(params, nparam);
-    return true;
+    goto done;
 
     /*
      * No macro expansion needed; roll back to mstart (if necessary)
-     * and then advance to the next input token.
+     * and then advance to the next input token. Note that this is
+     * by far the common case!
      */
 not_a_macro:
     *tpp = &mstart->next;
-    free_tlist_array(params, nparam);
-    return false;
+    m = NULL;
+done:
+    smacro_deadman.levels++;
+    if (unlikely(params))
+        free_tlist_array(params, nparam);
+    return m;
 }
 
 /*
@@ -4674,7 +4680,9 @@ not_a_macro:
  */
 static Token *expand_smacro(Token *tline)
 {
-    smacro_deadman = nasm_limit[LIMIT_MACROS];
+    smacro_deadman.tokens = nasm_limit[LIMIT_MACRO_TOKENS];
+    smacro_deadman.levels = nasm_limit[LIMIT_MACRO_LEVELS];
+    smacro_deadman.triggered = false;
     return expand_smacro_noreset(tline);
 }
 
@@ -4718,10 +4726,8 @@ static Token *expand_smacro_noreset(Token * tline)
         };
 
         tail = &thead;
-        while ((t = *tail)) {             /* main token loop */
-
-            expanded |= expand_one_smacro(&tail);
-        }
+        while ((t = *tail))     /* main token loop */
+            expanded |= !!expand_one_smacro(&tail);
 
         if (!expanded) {
             tline = thead;

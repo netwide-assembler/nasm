@@ -43,6 +43,7 @@
 
 #define BUILD_DRIVERS_ARRAY
 #include "outform.h"
+#include "outlib.h"
 
 const struct ofmt *ofmt_find(const char *name,
 			     const struct ofmt_alias **ofmt_alias)
@@ -90,29 +91,45 @@ void ofmt_list(const struct ofmt *deffmt, FILE * fp)
 
     /* primary targets first */
     for (ofp = drivers; (of = *ofp); ofp++) {
-        fprintf(fp, "  %c %-10s%s\n",
-                of == deffmt ? '*' : ' ',
-                of->shortname, of->fullname);
+        fprintf(fp, "       %-20s %s%s\n",
+                of->shortname,
+                of->fullname,
+                of == deffmt ? " [default]" : "");
     }
 
     /* lets walk through aliases then */
     for (i = 0; i < ARRAY_SIZE(ofmt_aliases); i++) {
         if (!ofmt_aliases[i].shortname)
             continue;
-        fprintf(fp, "    %-10s%s\n",
+        fprintf(fp, "       %-20s %s\n",
                 ofmt_aliases[i].shortname,
                 ofmt_aliases[i].fullname);
     }
 }
 
-void dfmt_list(const struct ofmt *ofmt, FILE *fp)
+void dfmt_list(FILE *fp)
 {
+    const struct ofmt * const *ofp;
+    const struct ofmt *of;
     const struct dfmt * const *dfp;
     const struct dfmt *df;
+    char prefixbuf[32];
+    const char *prefix;
 
-    for (dfp = ofmt->debug_formats; (df = *dfp); dfp++) {
-        fprintf(fp, "  %c %-10s%s\n",
-                df == dfmt ? '*' : ' ',
-                df->shortname, df->fullname);
+    for (ofp = drivers; (of = *ofp); ofp++) {
+        if (of->debug_formats && of->debug_formats != null_debug_arr) {
+            snprintf(prefixbuf, sizeof prefixbuf, "%s:",
+                     of->shortname);
+            prefix = prefixbuf;
+
+            for (dfp = of->debug_formats; (df = *dfp); dfp++) {
+                if (df != &null_debug_form)
+                    fprintf(fp, "       %-10s %-9s %s%s\n",
+                            prefix,
+                            df->shortname, df->fullname,
+                            df == of->default_dfmt ? " [default]" : "");
+                prefix = "";
+            }
+        }
     }
 }

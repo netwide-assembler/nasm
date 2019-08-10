@@ -59,7 +59,7 @@ static void cv8_output(int type, void *param);
 static void cv8_cleanup(void);
 
 const struct dfmt df_cv8 = {
-    "Codeview 8",               /* .fullname */
+    "Codeview 8+",              /* .fullname */
     "cv8",                      /* .shortname */
     cv8_init,                   /* .init */
     cv8_linenum,                /* .linenum */

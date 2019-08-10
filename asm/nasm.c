@@ -69,12 +69,14 @@ struct forwrefinfo {            /* info held on forward refs. */
     int operand;
 };
 
+const char *_progname;
+
 static void parse_cmdline(int, char **, int);
 static void assemble_file(const char *, struct strlist *);
 static bool skip_this_pass(errflags severity);
 static void nasm_verror_asm(errflags severity, const char *fmt, va_list args);
 static void usage(void);
-static void help(char xopt);
+static void help(FILE *);
 
 struct error_format {
     const char *beforeline;     /* Before line number, if present */
@@ -172,23 +174,37 @@ static char *(*quote_for_make)(const char *) = quote_for_pmake;
  * Execution limits that can be set via a command-line option or %pragma
  */
 
-#define LIMIT_MAX_VAL	(INT64_MAX >> 1) /* Effectively unlimited */
+/*
+ * This is really unlimited; it would take far longer than the
+ * current age of the universe for this limit to be reached even on
+ * much faster CPUs than currently exist.
+*/
+#define LIMIT_MAX_VAL	(INT64_MAX >> 1)
 
-int64_t nasm_limit[LIMIT_MAX+1] =
-{ LIMIT_MAX_VAL, 1000, 1000000, 1000000, 1000000, 2000000000 };
+int64_t nasm_limit[LIMIT_MAX+1];
 
 struct limit_info {
     const char *name;
     const char *help;
+    int64_t default_val;
 };
+/* The order here must match enum nasm_limit in nasm.h */
 static const struct limit_info limit_info[LIMIT_MAX+1] = {
-    { "passes", "total number of passes" },
-    { "stalled-passes", "number of passes without forward progress" },
-    { "macro-levels", "levels of macro expansion"},
-    { "rep", "%rep count" },
-    { "eval", "expression evaluation descent"},
-    { "lines", "total source lines processed"}
+    { "passes", "total number of passes", LIMIT_MAX_VAL },
+    { "stalled-passes", "number of passes without forward progress", 1000 },
+    { "macro-levels", "levels of macro expansion", 10000 },
+    { "macro-tokens", "tokens processed during macro expansion", 10000000 },
+    { "rep", "%rep count", 1000000 },
+    { "eval", "expression evaluation descent", 1000000},
+    { "lines", "total source lines processed", 2000000000 }
 };
+
+static void set_default_limits(void)
+{
+    int i;
+    for (i = 0; i <= LIMIT_MAX; i++)
+        nasm_limit[i] = limit_info[i].default_val;
+}
 
 enum directive_result
 nasm_set_limit(const char *limit, const char *valstr)
@@ -382,7 +398,7 @@ static void emit_dependencies(struct strlist *list)
         linepos += len+1;
         nasm_free(file);
     }
-    fprintf(deps, "\n\n");
+    fputs("\n\n", deps);
 
     strlist_for_each(l, list) {
         if (depend_emit_phony) {
@@ -453,12 +469,18 @@ static void timestamp(void)
 
 int main(int argc, char **argv)
 {
+    _progname = argv[0];
+    if (!_progname || !_progname[0])
+        _progname = "nasm";
+
     timestamp();
 
     error_file = stderr;
 
     iflag_set_default_cpu(&cpu);
     iflag_set_default_cpu(&cmd_cpu);
+
+    set_default_limits();
 
     include_path = strlist_alloc(true);
 
@@ -998,6 +1020,10 @@ static bool process_arg(char *p, char *q, int pass)
                         list_options |= (UINT64_C(1) << p);
                     param++;
                 }
+                if (list_options & (UINT64_C(1) << ('p' - '@'))) {
+                    /* Do listings for every pass */
+                    active_list_options = list_options;
+                }
             }
             break;
 
@@ -1033,14 +1059,13 @@ static bool process_arg(char *p, char *q, int pass)
             break;
 
         case 'h':
-            help(p[2]);
+            help(stdout);
             exit(0);    /* never need usage message here */
             break;
 
         case 'y':
-            printf("\nvalid debug formats for '%s' output format are"
-                   " ('*' denotes default):\n", ofmt->shortname);
-            dfmt_list(ofmt, stdout);
+            /* legacy option */
+            dfmt_list(stdout);
             exit(0);
             break;
 
@@ -1238,7 +1263,7 @@ static bool process_arg(char *p, char *q, int pass)
                     debug_nasm = param ? strtoul(param, NULL, 10) : debug_nasm+1;
                     break;
                 case OPT_HELP:
-                    help(0);
+                    help(stdout);
                     exit(0);
                 default:
                     panic();
@@ -1495,7 +1520,20 @@ static void process_insn(insn *instruction)
         for (n = 1; n <= instruction->times; n++) {
             l = insn_size(location.segment, location.offset,
                           globalbits, instruction);
-            if (l != -1) /* l == -1 -> invalid instruction */
+
+            if (list_option('p')) {
+                if (l > 0) {
+                    struct out_data dummy;
+                    memset(&dummy, 0, sizeof dummy);
+                    dummy.type   = OUT_RESERVE;
+                    dummy.offset = location.offset;
+                    dummy.size   = l;
+                    lfmt->output(&dummy);
+                }
+            }
+
+            /* l == -1 -> invalid instruction */
+            if (l != -1)
                 increment_offset(l);
         }
     } else {
@@ -1566,7 +1604,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
         globalbits = cmd_sb;  /* set 'bits' to command line default */
         cpu = cmd_cpu;
-        if (pass_final()) {
+        if (pass_final() || list_option('p')) {
             active_list_options = list_options;
 	    lfmt->init(listname);
         }
@@ -1933,95 +1971,136 @@ static void usage(void)
     fputs("type `nasm -h' for help\n", error_file);
 }
 
-static void help(const char xopt)
+static void help(FILE *out)
 {
     int i;
 
-    printf
-        ("usage: nasm [-@ response file] [-o outfile] [-f format] "
-         "[-l listfile]\n"
-         "            [options...] [--] filename\n"
-         "    or nasm -v (or --v) for version info\n\n"
-         "\n"
-         "Response files should contain command line parameters,\n"
-         "one per line.\n"
-         "\n"
-         "    -t            assemble in SciTech TASM compatible mode\n");
-    printf
-        ("    -E (or -e)    preprocess only (writes output to stdout by default)\n"
-         "    -a            don't preprocess (assemble only)\n"
-         "    -M            generate Makefile dependencies on stdout\n"
-         "    -MG           d:o, missing files assumed generated\n"
-         "    -MF file      set Makefile dependency file\n"
-         "    -MD file      assemble and generate dependencies\n"
-         "    -MT file      dependency target name\n"
-         "    -MQ file      dependency target name (quoted)\n"
-         "    -MP           emit phony target\n\n"
-         "    -Zfile        redirect error messages to file\n"
-         "    -s            redirect error messages to stdout\n\n"
-         "    -g            generate debugging information\n\n"
-         "    -F format     select a debugging format\n\n"
-         "    -gformat      same as -g -F format\n\n"
-         "    -o outfile    write output to an outfile\n\n"
-         "    -f format     select an output format\n\n"
-         "    -l listfile   write listing to a list file\n"
-         "    -Lflags...    add optional information to the list file\n"
-         "       -Le        show the preprocessed output\n\n"
-         "       -Lm        show all single-line macro definitions\n\n"
-         "    -Ipath        add a pathname to the include file path\n");
-    printf
-        ("    -Oflags...    optimize opcodes, immediates and branch offsets\n"
-         "       -O0        no optimization\n"
-         "       -O1        minimal optimization\n"
-         "       -Ox        multipass optimization (default)\n"
-         "       -Ov        display the number of passes executed at the end\n"
-         "    -Pfile        pre-include a file (also --include)\n"
-         "    -Dmacro[=str] pre-define a macro\n"
-         "    -Umacro       undefine a macro\n"
-         "    -Xformat      specifiy error reporting format (gnu or vc)\n"
-         "    -w+foo        enable warning foo (equiv. -Wfoo)\n"
-         "    -w-foo        disable warning foo (equiv. -Wno-foo)\n"
-         "    -w[+-]error[=foo]\n"
-         "                  promote [specific] warnings to errors\n"
-         "    -h            show invocation summary and exit (also --help)\n\n"
-         "   --pragma str   pre-executes a specific %%pragma\n"
-         "   --before str   add line (usually a preprocessor statement) before the input\n"
-         "   --prefix str   prepend the given string to all the given string\n"
-         "                  to all extern, common and global symbols (also --gprefix)\n"
-         "   --postfix str  append the given string to all the given string\n"
-         "                  to all extern, common and global symbols (also --gpostfix)\n"
-         "   --lprefix str  prepend the given string to all other symbols\n"
-         "   --lpostfix str append the given string to all other symbols\n"
-         "   --keep-all     output files will not be removed even if an error happens\n"
-         "   --no-line      ignore %%line directives in input\n"
-         "   --limit-X val  set execution limit X\n");
+    fprintf(out,
+            "Usage: %s [-@ response file] [options...] [--] filename\n"
+            "       %s -v (or --v)\n"
+            "\n",
+            _progname, _progname);
+    fputs(
+        "\n"
+        "Response files should contain command line parameters,\n"
+        "one per line.\n"
+        "\n"
+        "Values in brackets indicate defaults\n"
+        "\n"
+        "    -h            show this text and exit (also --help)\n"
+        "    -v            print the NASM version number and exit\n"
+        "\n"
+        "    -o outfile    write output to outfile\n"
+        "    --keep-all    output files will not be removed even if an error happens\n"
+        "\n"
+        "    -Xformat      specifiy error reporting format (gnu or vc)\n"
+        "    -s            redirect error messages to stdout\n"
+        "    -Zfile        redirect error messages to file\n"
+        "\n"
+        "    -M            generate Makefile dependencies on stdout\n"
+        "    -MG           d:o, missing files assumed generated\n"
+        "    -MF file      set Makefile dependency file\n"
+        "    -MD file      assemble and generate dependencies\n"
+        "    -MT file      dependency target name\n"
+        "    -MQ file      dependency target name (quoted)\n"
+        "    -MP           emit phony targets\n"
+        "\n"
+        "    -f format     select output file format\n"
+        , out);
+    ofmt_list(ofmt, out);
+    fputs(
+        "\n"
+        "    -g            generate debugging information\n"
+        "    -F format     select a debugging format (output format dependent)\n"
+        "    -gformat      same as -g -F format\n"
+        , out);
+    dfmt_list(out);
+    fputs(
+        "\n"
+        "    -l listfile   write listing to a list file\n"
+        "    -Lflags...    add optional information to the list file\n"
+        "       -Ld        show byte and repeat counts in decimal, not hex\n"
+        "       -Le        show the preprocessed output\n"
+        "       -Lm        show all single-line macro definitions\n"
+        "       -Lp        output a list file every pass, in case of errors\n"
+        "\n"
+        "    -Oflags...    optimize opcodes, immediates and branch offsets\n"
+        "       -O0        no optimization\n"
+        "       -O1        minimal optimization\n"
+        "       -Ox        multipass optimization (default)\n"
+        "       -Ov        display the number of passes executed at the end\n"
+        "    -t            assemble in limited SciTech TASM compatible mode\n"
+        "\n"
+        "    -E (or -e)    preprocess only (writes output to stdout by default)\n"
+        "    -a            don't preprocess (assemble only)\n"
+        "    -Ipath        add a pathname to the include file path\n"
+        "    -Pfile        pre-include a file (also --include)\n"
+        "    -Dmacro[=str] pre-define a macro\n"
+        "    -Umacro       undefine a macro\n"
+        "   --pragma str   pre-executes a specific %%pragma\n"
+        "   --before str   add line (usually a preprocessor statement) before the input\n"
+        "   --no-line      ignore %line directives in input\n"
+        "\n"
+        "   --prefix str   prepend the given string to the names of all extern,\n"
+        "                  common and global symbols (also --gprefix)\n"
+        "   --suffix str   append the given string to the names of all extern,\n"
+        "                  common and global symbols (also --gprefix)\n"
+        "   --lprefix str  prepend the given string to local symbols\n"
+        "   --lpostfix str append the given string to local symbols\n"
+        "\n"
+        "    -w+x          enable warning x (also -Wx)\n"
+        "    -w-x          disable warning x (also -Wno-x)\n"
+        "    -w[+-]error   promote all warnings to errors (also -Werror)\n"
+        "    -w[+-]error=x promote warning x to errors (also -Werror=x)\n"
+        , out);
+
+    fprintf(out, "       %-20s %s\n",
+            warning_name[WARN_IDX_ALL], warning_help[WARN_IDX_ALL]);
+
+    for (i = 1; i < WARN_IDX_ALL; i++) {
+        const char *me   = warning_name[i];
+        const char *prev = warning_name[i-1];
+        const char *next = warning_name[i+1];
+
+        if (prev) {
+            int prev_len = strlen(prev);
+            const char *dash = me;
+
+            while ((dash = strchr(dash+1, '-'))) {
+                int prefix_len = dash - me; /* Not including final dash */
+                if (strncmp(next, me, prefix_len+1)) {
+                    /* Only one or last option with this prefix */
+                    break;
+                }
+                if (prefix_len >= prev_len ||
+                    strncmp(prev, me, prefix_len) ||
+                    (prev[prefix_len] != '-' && prev[prefix_len] != '\0')) {
+                    /* This prefix is different from the previous option */
+                    fprintf(out, "       %-20.*s all warnings prefixed with \"%.*s\"\n",
+                            prefix_len, me, prefix_len+1, me);
+                }
+            }
+        }
+
+        fprintf(out, "       %-20s %s%s\n",
+                warning_name[i], warning_help[i],
+                (warning_default[i] & WARN_ST_ERROR) ? " [error]" :
+                (warning_default[i] & WARN_ST_ENABLED) ? " [on]" : " [off]");
+    }
+
+    fputs(
+        "\n"
+        "   --limit-X val  set execution limit X\n"
+        , out);
+
 
     for (i = 0; i <= LIMIT_MAX; i++) {
-        printf("                     %-15s %s (default ",
-               limit_info[i].name, limit_info[i].help);
+        fprintf(out, "       %-20s %s [",
+                limit_info[i].name, limit_info[i].help);
         if (nasm_limit[i] < LIMIT_MAX_VAL) {
-            printf("%"PRId64")\n", nasm_limit[i]);
+            fprintf(out, "%"PRId64"]\n", nasm_limit[i]);
         } else {
-            printf("unlimited)\n");
+            fputs("unlimited]\n", out);
         }
-    }
-
-    printf("\nWarnings for the -W/-w options: (defaults in brackets)\n");
-
-    for (i = 1; i <= WARN_IDX_ALL; i++) {
-        printf("    %-23s %s%s\n",
-               warning_name[i], warning_help[i],
-               i == WARN_IDX_ALL ? "\n" :
-               (warning_default[i] & WARN_ST_ERROR) ? " [error]" :
-               (warning_default[i] & WARN_ST_ENABLED) ? " [on]" : " [off]");
-    }
-
-    if (xopt == 'f') {
-        printf("valid output formats for -f are"
-               " (`*' denotes default):\n");
-        ofmt_list(ofmt, stdout);
-    } else {
-        printf("For a list of valid output formats, use -hf.\n");
-        printf("For a list of debug formats, use -f <format> -y.\n");
     }
 }

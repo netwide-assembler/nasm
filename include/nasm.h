@@ -54,6 +54,9 @@
 #include "srcfile.h"
 #include "error.h"
 
+/* Program name for error messages etc. */
+extern const char *_progname;
+
 /* Time stamp for the official start of compilation */
 struct compile_time {
     time_t t;
@@ -748,7 +751,8 @@ struct pragma {
 enum nasm_limit {
     LIMIT_PASSES,
     LIMIT_STALLED,
-    LIMIT_MACROS,
+    LIMIT_MACRO_LEVELS,
+    LIMIT_MACRO_TOKENS,
     LIMIT_REP,
     LIMIT_EVAL,
     LIMIT_LINES

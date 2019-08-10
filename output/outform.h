@@ -373,7 +373,7 @@ static const struct ofmt_alias ofmt_aliases[] = {
 const struct ofmt *ofmt_find(const char *name, const struct ofmt_alias **ofmt_alias);
 const struct dfmt *dfmt_find(const struct ofmt *, const char *);
 void ofmt_list(const struct ofmt *, FILE *);
-void dfmt_list(const struct ofmt *ofmt, FILE * fp);
+void dfmt_list(FILE *);
 extern const struct dfmt null_debug_form;
 
 #endif /* NASM_OUTFORM_H */

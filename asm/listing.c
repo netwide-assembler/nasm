@@ -200,6 +200,20 @@ static void list_address(int64_t offset, const char *brackets,
     list_out(offset, q);
 }
 
+static void list_size(int64_t offset, const char *tag, uint64_t size)
+{
+    char buf[64];
+    const char *fmt;
+
+    if (list_option('d'))
+        fmt = "<%s %"PRIu64">";
+    else
+        fmt = "<%s %"PRIX64">";
+
+    snprintf(buf, sizeof buf, fmt, tag, size);
+    list_out(offset, buf);
+}
+
 static void list_output(const struct out_data *data)
 {
     char q[24];
@@ -214,8 +228,7 @@ static void list_output(const struct out_data *data)
     switch (data->type) {
     case OUT_ZERODATA:
         if (size > 16) {
-            snprintf(q, sizeof(q), "<zero %08"PRIX64">", size);
-            list_out(offset, q);
+            list_size(offset, "zero", size);
             break;
         } else {
             p = zero_buffer;
@@ -223,13 +236,19 @@ static void list_output(const struct out_data *data)
         /* fall through */
     case OUT_RAWDATA:
     {
-	if (size == 0 && !listdata[0])
-	    listoffset = data->offset;
-        while (size--) {
-            HEX(q, *p);
-            q[2] = '\0';
-            list_out(offset++, q);
-            p++;
+	if (size == 0) {
+            if (!listdata[0])
+                listoffset = data->offset;
+        } else if (p) {
+            while (size--) {
+                HEX(q, *p);
+                q[2] = '\0';
+                list_out(offset++, q);
+                p++;
+            }
+        } else {
+            /* Used for listing on non-code generation passes with -Lp */
+            list_size(offset, "len", size);
         }
 	break;
     }
@@ -249,8 +268,8 @@ static void list_output(const struct out_data *data)
 	break;
     case OUT_RESERVE:
     {
-        snprintf(q, sizeof(q), "<res %"PRIX64">", size);
-        list_out(offset, q);
+        if (size)
+            list_size(offset, "res", size);
 	break;
     }
     default:
@@ -295,22 +314,18 @@ static void mistack_push(bool inhibiting)
 
 static void list_uplevel(int type, int64_t size)
 {
-    char str[64];
-
     if (!listp)
         return;
 
     switch (type) {
     case LIST_INCBIN:
         suppress |= 1;
-        snprintf(str, sizeof str, "<bin %"PRIX64">", size);
-        list_out(listoffset, str);
+        list_size(listoffset, "bin", size);
         break;
 
     case LIST_TIMES:
         suppress |= 2;
-        snprintf(str, sizeof str, "<rep %"PRIX64">", size);
-        list_out(listoffset, str);
+        list_size(listoffset, "rep", size);
         break;
 
     case LIST_INCLUDE:
