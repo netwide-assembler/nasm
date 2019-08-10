@@ -2521,6 +2521,9 @@ static int do_directive(Token *tline, Token **output)
          */
         tline = tline->next;
         skip_white_(tline);
+        t = tline;
+        tline = tline->next;
+        t->next = NULL;
         tline = expand_smacro(tline);
         if (tok_type_(tline, TOK_ID)) {
             if (!nasm_stricmp(tline->text, "preproc")) {
