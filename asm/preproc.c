@@ -285,8 +285,9 @@ struct Include {
     Cond *conds;
     Line *expansion;
     const char *fname;
-    int lineno, lineinc;
     MMacro *mstk;       /* stack of active macros/reps */
+    int lineno, lineinc;
+    bool nolist;
 };
 
 /*
@@ -833,7 +834,7 @@ static char *line_from_stdmac(void)
              * features.
              */
             list_for_each(pd, predef) {
-                l           = nasm_malloc(sizeof(Line));
+                nasm_new(l);
                 l->next     = istk->expansion;
                 l->first    = dup_tlist(pd->first, NULL);
                 l->finishes = NULL;
@@ -847,7 +848,10 @@ static char *line_from_stdmac(void)
     return line;
 }
 
-static char *read_line(void)
+/*
+ * Read a line from a file. Return NULL on end of file.
+ */
+static char *line_from_file(void)
 {
     int c;
     unsigned int size, next;
@@ -857,11 +861,6 @@ static char *read_line(void)
     bool cont = false;
     char *buffer, *p;
     int32_t lineno;
-
-    /* Standart macros set (predefined) goes first */
-    p = line_from_stdmac();
-    if (p)
-        return p;
 
     size = delta;
     p = buffer = nasm_malloc(size);
@@ -924,9 +923,29 @@ static char *read_line(void)
     lineno = src_get_linnum() + istk->lineinc +
         (nr_cont * istk->lineinc);
     src_set_linnum(lineno);
-    lfmt->line(LIST_READ, lineno, buffer);
 
     return buffer;
+}
+
+/*
+ * Common read routine regardless of source
+ */
+static char *read_line(void)
+{
+    char *line;
+
+    if (istk->fp)
+        line = line_from_file();
+    else
+        line = line_from_stdmac();
+
+    if (!line)
+        return NULL;
+
+   if (!istk->nolist)
+       lfmt->line(LIST_READ, src_get_linnum(), line);
+
+    return line;
 }
 
 /*
@@ -2102,7 +2121,8 @@ list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
     size_t namelen, size;
     unsigned int i;
     char *def, *p;
-    unsigned int context_depth = 0;
+    char *context_prefix = NULL;
+    size_t context_len;
 
     nasm_newn(param_names, m->nparam);
 
@@ -2110,8 +2130,16 @@ list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
     size = namelen + 2;  /* Include room for space after name + NUL */
 
     if (ctx) {
-        context_depth = cstk->depth - ctx->depth + 1;
-        size += context_depth + 1; /* % + some number of $ */
+        int context_depth = cstk->depth - ctx->depth + 1;
+        context_prefix =
+            nasm_asprintf("[%s::%"PRIu64"] %%%-*s",
+                          ctx->name ? ctx->name : "",
+                          ctx->number, context_depth, "");
+
+        context_len = nasm_last_string_len();
+        memset(context_prefix + context_len - context_depth,
+               '$', context_depth);
+        size += context_len;
     }
 
     list_for_each(t, m->expansion) {
@@ -2169,16 +2197,15 @@ list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
     p -= namelen;
     memcpy(p, m->name, namelen);
 
-    if (context_depth) {
-        for (i = 0; i < context_depth; i++)
-            *--p = '$';
-        *--p = '%';
+    if (context_prefix) {
+        p -= context_len;
+        memcpy(p, context_prefix, context_len);
+        nasm_free(context_prefix);
     }
 
     nasm_listmsg("%s %s", pp_directives[op], p);
-
     nasm_free(def);
-    }
+}
 
 /*
  * Common code for defining an smacro
@@ -2306,7 +2333,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
     if (tline && tok_type_(tline->next, TOK_ID) &&
         !nasm_stricmp(tline->next->text, ".nolist")) {
         tline = tline->next;
-        def->nolist = true;
+        def->nolist = !list_option('f') || istk->nolist;
     }
 
     /*
@@ -2748,7 +2775,7 @@ static int do_directive(Token *tline, Token **output)
         p = t->text;
         if (t->type != TOK_INTERNAL_STRING)
             nasm_unquote_cstr(p, NULL);
-        inc = nasm_malloc(sizeof(Include));
+        nasm_new(inc);
         inc->next = istk;
         inc->conds = NULL;
         found_path = NULL;
@@ -2764,6 +2791,7 @@ static int do_directive(Token *tline, Token **output)
             inc->lineinc = 1;
             inc->expansion = NULL;
             inc->mstk = NULL;
+            inc->nolist = istk->nolist;
             istk = inc;
             lfmt->uplevel(LIST_INCLUDE, 0);
         }
@@ -2796,8 +2824,22 @@ static int do_directive(Token *tline, Token **output)
         else
             pkg_macro = (char *)use_pkg + 1; /* The first string will be <%define>__USE_*__ */
         if (use_pkg && ! smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
-            /* Not already included, go ahead and include it */
+            /*
+             * Not already included, go ahead and include it.
+             * Treat it as an include file for the purpose of
+             * producing a listing.
+             */
             stdmacpos = use_pkg;
+            nasm_new(inc);
+            inc->next = istk;
+            inc->fname = src_set_fname(NULL);
+            inc->lineno = src_set_linnum(0);
+            inc->lineinc = 0;
+            inc->expansion = NULL;
+            inc->mstk = NULL;
+            inc->nolist = !list_option('b') || istk->nolist;
+            istk = inc;
+            lfmt->uplevel(LIST_INCLUDE, 0);
         }
         free_tlist(origline);
         return DIRECTIVE_FOUND;
@@ -3145,7 +3187,7 @@ issue_error:
 
         if (tok_type_(tline, TOK_ID) &&
             nasm_stricmp(tline->text, ".nolist") == 0) {
-            nolist = true;
+            nolist = !list_option('f') || istk->nolist;
             do {
                 tline = tline->next;
             } while (tok_type_(tline, TOK_WHITESPACE));
@@ -3217,7 +3259,7 @@ issue_error:
          * continues) until the whole expansion is forcibly removed
          * from istk->expansion by a %exitrep.
          */
-        l = nasm_malloc(sizeof(Line));
+        nasm_new(l);
         l->next = istk->expansion;
         l->finishes = defining;
         l->first = NULL;
@@ -5302,14 +5344,9 @@ static void
 pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
 {
     int apass;
+    struct Include *inc;
 
     cstk = NULL;
-    nasm_new(istk);
-    istk->fp = nasm_open_read(file, NF_TEXT);
-    src_set(0, file);
-    istk->lineinc = 1;
-    if (!istk->fp)
-	nasm_fatalf(ERR_NOFILE, "unable to open input file `%s'", file);
     defining = NULL;
     nested_mac_count = 0;
     nested_rep_count = 0;
@@ -5317,6 +5354,27 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
     unique = 0;
     deplist = dep_list;
     pp_mode = mode;
+
+    /* First set up the top level input file */
+    nasm_new(istk);
+    istk->fp = nasm_open_read(file, NF_TEXT);
+    src_set(0, file);
+    istk->lineinc = 1;
+    if (!istk->fp)
+	nasm_fatalf(ERR_NOFILE, "unable to open input file `%s'", file);
+
+    strlist_add(deplist, file);
+
+    /*
+     * Set up the stdmac packages as a virtual include file,
+     * indicated by a null file pointer.
+     */
+    nasm_new(inc);
+    inc->next = istk;
+    inc->fname = src_set_fname(NULL);
+    inc->nolist = !list_option('b');
+    istk = inc;
+    lfmt->uplevel(LIST_INCLUDE, 0);
 
     pp_add_magic_stdmac();
 
@@ -5333,8 +5391,6 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
     stdmacnext = &stdmacros[1];
 
     do_predef = true;
-
-    strlist_add(deplist, file);
 
     /*
      * Define the __PASS__ macro.  This is defined here unlike all the
@@ -5486,17 +5542,23 @@ static Token *pp_tokline(void)
                 Line *l = istk->expansion;
                 int32_t lineno;
 
-                if (istk->mstk)
-                    lineno = ++istk->mstk->lineno + istk->mstk->xline;
-                else
+                if (istk->mstk) {
+                    istk->mstk->lineno++;
+                    if (istk->mstk->fname)
+                        lineno = istk->mstk->lineno + istk->mstk->xline;
+                    else
+                        lineno = 0; /* Defined at init time or builtin */
+                } else {
                     lineno = src_get_linnum();
+                }
 
                 tline = l->first;
                 istk->expansion = l->next;
                 nasm_free(l);
 
                 line = detoken(tline, false);
-                lfmt->line(LIST_MACRO, lineno, line);
+                if (!istk->nolist)
+                    lfmt->line(LIST_MACRO, lineno, line);
                 nasm_free(line);
             } else if ((line = read_line())) {
                 line = prepreproc(line);
@@ -5507,7 +5569,8 @@ static Token *pp_tokline(void)
                  * The current file has ended; work down the istk
                  */
                 Include *i = istk;
-                fclose(i->fp);
+                if (i->fp)
+                    fclose(i->fp);
                 if (i->conds) {
                     /* nasm_error can't be conditionally suppressed */
                     nasm_fatal("expected `%%endif' before end of file");
@@ -5606,7 +5669,7 @@ static char *pp_getline(void)
         }
     }
 
-    if (list_option('e') && line && line[0]) {
+    if (list_option('e') && !istk->nolist && line && line[0]) {
         char *buf = nasm_strcat(" ;;; ", line);
         lfmt->line(LIST_MACRO, -1, buf);
         nasm_free(buf);
