@@ -70,8 +70,11 @@ struct lfmt {
      * `int' parameter is LIST_READ or LIST_MACRO depending on
      * whether the line came directly from an input file or is the
      * result of a multi-line macro expansion.
+     *
+     * If a line number is provided, print it; if the line number is
+     * -1 then use the same line number as the previous call.
      */
-    void (*line)(int type, char *line);
+    void (*line)(int type, int32_t lineno, const char *line);
 
     /*
      * Called to change one of the various levelled mechanisms in the

@@ -128,7 +128,7 @@ static char *nop_getline(void)
         break;
     }
 
-    lfmt->line(LIST_READ, buffer);
+    lfmt->line(LIST_READ, src_get_linnum(), buffer);
 
     return buffer;
 }

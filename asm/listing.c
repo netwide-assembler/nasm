@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -258,7 +258,7 @@ static void list_output(const struct out_data *data)
     }
 }
 
-static void list_line(int type, char *line)
+static void list_line(int type, int32_t lineno, const char *line)
 {
     if (!listp)
         return;
@@ -276,7 +276,8 @@ static void list_line(int type, char *line)
         }
     }
     list_emit();
-    listlineno = src_get_linnum();
+    if (lineno >= 0)
+        listlineno = lineno;
     listlinep = true;
     strlcpy(listline, line, LIST_MAX_LEN-3);
     memcpy(listline + LIST_MAX_LEN-4, "...", 4);

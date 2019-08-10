@@ -859,6 +859,7 @@ static char *read_line(void)
     unsigned int nr_cont = 0;
     bool cont = false;
     char *buffer, *p;
+    int32_t lineno;
 
     /* Standart macros set (predefined) goes first */
     p = line_from_stdmac();
@@ -923,9 +924,10 @@ static char *read_line(void)
         *p++ = c;
     } while (c);
 
-    src_set_linnum(src_get_linnum() + istk->lineinc +
-                   (nr_cont * istk->lineinc));
-    lfmt->line(LIST_READ, buffer);
+    lineno = src_get_linnum() + istk->lineinc +
+        (nr_cont * istk->lineinc);
+    src_set_linnum(lineno);
+    lfmt->line(LIST_READ, lineno, buffer);
 
     return buffer;
 }
@@ -3194,20 +3196,12 @@ issue_error:
         free_tlist(origline);
 
         tmp_defining = defining;
-        defining = nasm_malloc(sizeof(MMacro));
-        defining->prev = NULL;
-        defining->name = NULL;  /* flags this macro as a %rep block */
-        defining->casesense = false;
-        defining->plus = false;
+        nasm_new(defining);
         defining->nolist = nolist;
         defining->in_progress = count;
-        defining->max_depth = 0;
-        defining->nparam_min = defining->nparam_max = 0;
-        defining->defaults = NULL;
-        defining->dlist = NULL;
-        defining->expansion = NULL;
         defining->next_active = istk->mstk;
         defining->rep_nest = tmp_defining;
+	src_get(&defining->xline, &defining->fname);
         return DIRECTIVE_FOUND;
 
     case PP_ENDREP:
@@ -5484,13 +5478,19 @@ static Token *pp_tokline(void)
 
             if (istk->expansion) {      /* from a macro expansion */
                 Line *l = istk->expansion;
+                int32_t lineno;
+
                 if (istk->mstk)
-                    istk->mstk->lineno++;
+                    lineno = ++istk->mstk->lineno + istk->mstk->xline;
+                else
+                    lineno = src_get_linnum();
+
                 tline = l->first;
                 istk->expansion = l->next;
                 nasm_free(l);
+
                 line = detoken(tline, false);
-                lfmt->line(LIST_MACRO, line);
+                lfmt->line(LIST_MACRO, lineno, line);
                 nasm_free(line);
             } else if ((line = read_line())) {
                 line = prepreproc(line);
@@ -5602,7 +5602,7 @@ static char *pp_getline(void)
 
     if (list_option('e') && line && line[0]) {
         char *buf = nasm_strcat(" ;;; ", line);
-        lfmt->line(LIST_MACRO, buf);
+        lfmt->line(LIST_MACRO, -1, buf);
         nasm_free(buf);
     }
 
