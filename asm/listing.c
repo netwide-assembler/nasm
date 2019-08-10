@@ -71,8 +71,6 @@ static int32_t listoffset;
 
 static int32_t listlineno;
 
-static int32_t listp;
-
 static int suppress;            /* for INCBIN & TIMES special cases */
 
 static int listlevel, listlevel_e;
@@ -130,8 +128,27 @@ static void list_emit(void)
     }
 }
 
+static void list_cleanup(void)
+{
+    if (!listfp)
+        return;
+
+    while (mistack) {
+        MacroInhibit *temp = mistack;
+        mistack = temp->next;
+        nasm_free(temp);
+    }
+
+    list_emit();
+    fclose(listfp);
+    listfp = NULL;
+}
+
 static void list_init(const char *fname)
 {
+    if (listfp)
+        list_cleanup();
+
     if (!fname || fname[0] == '\0') {
 	listfp = NULL;
 	return;
@@ -146,28 +163,12 @@ static void list_init(const char *fname)
     *listline = '\0';
     listlineno = 0;
     list_errors = NULL;
-    listp = true;
     listlevel = 0;
     suppress = 0;
-    mistack = nasm_malloc(sizeof(MacroInhibit));
+    nasm_new(mistack);
     mistack->next = NULL;
     mistack->level = 0;
     mistack->inhibiting = true;
-}
-
-static void list_cleanup(void)
-{
-    if (!listp)
-        return;
-
-    while (mistack) {
-        MacroInhibit *temp = mistack;
-        mistack = temp->next;
-        nasm_free(temp);
-    }
-
-    list_emit();
-    fclose(listfp);
 }
 
 static void list_out(int64_t offset, char *str)
@@ -222,7 +223,7 @@ static void list_output(const struct out_data *data)
     const uint8_t *p = data->data;
 
 
-    if (!listp || suppress || user_nolist)
+    if (!listfp || suppress || user_nolist)
         return;
 
     switch (data->type) {
@@ -279,7 +280,7 @@ static void list_output(const struct out_data *data)
 
 static void list_line(int type, int32_t lineno, const char *line)
 {
-    if (!listp)
+    if (!listfp)
         return;
 
     if (user_nolist)
@@ -314,7 +315,7 @@ static void mistack_push(bool inhibiting)
 
 static void list_uplevel(int type, int64_t size)
 {
-    if (!listp)
+    if (!listfp)
         return;
 
     switch (type) {
@@ -347,7 +348,7 @@ static void list_uplevel(int type, int64_t size)
 
 static void list_downlevel(int type)
 {
-    if (!listp)
+    if (!listfp)
         return;
 
     switch (type) {
