@@ -1517,24 +1517,21 @@ static void process_insn(insn *instruction)
      * (usually to 1) when called.
      */
     if (!pass_final()) {
+        int64_t start = location.offset;
         for (n = 1; n <= instruction->times; n++) {
             l = insn_size(location.segment, location.offset,
                           globalbits, instruction);
-
-            if (list_option('p')) {
-                if (l > 0) {
-                    struct out_data dummy;
-                    memset(&dummy, 0, sizeof dummy);
-                    dummy.type   = OUT_RESERVE;
-                    dummy.offset = location.offset;
-                    dummy.size   = l;
-                    lfmt->output(&dummy);
-                }
-            }
-
             /* l == -1 -> invalid instruction */
             if (l != -1)
                 increment_offset(l);
+        }
+        if (list_option('p')) {
+            struct out_data dummy;
+            memset(&dummy, 0, sizeof dummy);
+            dummy.type   = OUT_RAWDATA; /* Handled specially with .data NULL */
+            dummy.offset = start;
+            dummy.size   = location.offset - start;
+            lfmt->output(&dummy);
         }
     } else {
         l = assemble(location.segment, location.offset,

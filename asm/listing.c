@@ -208,7 +208,7 @@ static void list_size(int64_t offset, const char *tag, uint64_t size)
     if (list_option('d'))
         fmt = "<%s %"PRIu64">";
     else
-        fmt = "<%s %"PRIX64">";
+        fmt = "<%s %"PRIX64"h>";
 
     snprintf(buf, sizeof buf, fmt, tag, size);
     list_out(offset, buf);
