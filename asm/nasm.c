@@ -117,9 +117,6 @@ const char *outname;
 static const char *listname;
 static const char *errname;
 
-static uint64_t list_options;
-uint64_t active_list_options;   /* Set during the final pass only */
-
 static int64_t globallineno;    /* for forward-reference tracking */
 
 const struct ofmt *ofmt = &OF_DEFAULT;
@@ -1020,10 +1017,6 @@ static bool process_arg(char *p, char *q, int pass)
                         list_options |= (UINT64_C(1) << p);
                     param++;
                 }
-                if (list_options & (UINT64_C(1) << ('p' - '@'))) {
-                    /* Do listings for every pass */
-                    active_list_options = list_options;
-                }
             }
             break;
 
@@ -1601,9 +1594,20 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
         globalbits = cmd_sb;  /* set 'bits' to command line default */
         cpu = cmd_cpu;
-        if (pass_final() || list_option('p')) {
-            active_list_options = list_options;
-	    lfmt->init(listname);
+        if (listname) {
+            if (pass_final() || list_on_every_pass()) {
+                active_list_options = list_options;
+                lfmt->init(listname);
+            } else if (active_list_options) {
+                /*
+                 * Looks like we used the list engine on a previous pass,
+                 * but now it is turned off, presumably via %pragma -p
+                 */
+                lfmt->cleanup();
+                if (!keep_all)
+                    remove(listname);
+                active_list_options = 0;
+            }
         }
 
         in_absolute = false;
@@ -1705,8 +1709,8 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         nasm_info("assembly required 1+%"PRId64"+2 passes\n", pass_count()-3);
     }
 
-    strlist_free(&warn_list);
     lfmt->cleanup();
+    strlist_free(&warn_list);
 }
 
 /**

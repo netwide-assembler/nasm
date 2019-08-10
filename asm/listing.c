@@ -61,10 +61,12 @@ static const char xdigit[] = "0123456789ABCDEF";
 
 #define HEX(a,b) (*(a)=xdigit[((b)>>4)&15],(a)[1]=xdigit[(b)&15]);
 
+uint64_t list_options, active_list_options;
+
 static char listline[LIST_MAX_LEN];
 static bool listlinep;
 
-struct strlist *list_errors;
+static struct strlist *list_errors;
 
 static char listdata[2 * LIST_INDENT];  /* we need less than that actually */
 static int32_t listoffset;
@@ -393,6 +395,46 @@ static void list_error(errflags severity, const char *fmt, ...)
 static void list_set_offset(uint64_t offset)
 {
     listoffset = offset;
+}
+
+static void list_update_options(const char *str)
+{
+    bool state = true;
+    unsigned char c;
+    uint64_t mask;
+
+    while ((c = *str++)) {
+        switch (c) {
+        case '+':
+            state = true;
+            break;
+        case '-':
+            state = false;
+            break;
+        default:
+            c -= '@';
+            if (c > 63)
+                break;
+            mask = UINT64_C(1) << c;
+            if (state)
+                list_options |= mask;
+            else
+                list_options &= ~mask;
+            break;
+        }
+    }
+}
+
+enum directive_result list_pragma(const struct pragma *pragma)
+{
+    switch (pragma->opcode) {
+    case D_OPTIONS:
+        list_update_options(pragma->tail);
+        return DIRR_OK;
+
+    default:
+        return DIRR_UNKNOWN;
+    }
 }
 
 static const struct lfmt nasm_list = {

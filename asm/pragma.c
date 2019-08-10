@@ -45,6 +45,7 @@
 #include "nasmlib.h"
 #include "assemble.h"
 #include "error.h"
+#include "listing.h"
 
 static enum directive_result output_pragma(const struct pragma *pragma);
 static enum directive_result limit_pragma(const struct pragma *pragma);
@@ -86,7 +87,7 @@ static struct pragma_facility global_pragmas[] =
 {
     { "asm",		NULL },
     { "limit",          limit_pragma },
-    { "list",		NULL },
+    { "list",		list_pragma },
     { "file",		NULL },
     { "input",		NULL },
 

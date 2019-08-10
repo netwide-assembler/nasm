@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,12 +31,14 @@
  *
  * ----------------------------------------------------------------------- */
 
-/* 
+/*
  * listing.h   header file for listing.c
  */
 
 #ifndef NASM_LISTING_H
 #define NASM_LISTING_H
+
+#include "nasm.h"
 
 /*
  * List-file generators should look like this:
@@ -113,7 +115,15 @@ struct lfmt {
 
 extern const struct lfmt *lfmt;
 extern bool user_nolist;
-extern uint64_t active_list_options;   /* Simply a bitmask of ASCII-64 */
+
+/*
+ * list_options are the requested options; active_list_options gets
+ * set when a pass starts.
+ *
+ * These are simple bitmasks of ASCII-64 mapping directly to option
+ * letters.
+ */
+extern uint64_t list_options, active_list_options;
 
 static inline bool list_option(char x)
 {
@@ -122,5 +132,15 @@ static inline bool list_option(char x)
         return false;
     return unlikely(active_list_options & (UINT64_C(1) << p));
 }
+
+/* We can't test this using active_list_options for obvious reasons... */
+static inline bool list_on_every_pass(void)
+{
+    const unsigned int p = 'p' - '@';
+    return unlikely(list_options & (UINT64_C(1) << p));
+}
+
+/* Pragma handler */
+enum directive_result list_pragma(const struct pragma *);
 
 #endif

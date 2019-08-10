@@ -95,7 +95,10 @@ lprefix
 lsuffix
 limit
 
-; --- Pragma operations
+; --- Listing pragmas
+options
+
+; --- Backend pragmas
 subsections_via_symbols		; macho
 no_dead_strip			; macho
 maxdump				; dbg
