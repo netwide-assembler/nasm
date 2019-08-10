@@ -2519,25 +2519,33 @@ static int do_directive(Token *tline, Token **output)
          * Invalid %pragmas are ignored and may have different
          * meaning in future versions of NASM.
          */
-        tline = tline->next;
-        skip_white_(tline);
         t = tline;
         tline = tline->next;
         t->next = NULL;
         tline = expand_smacro(tline);
+        while (tok_type_(tline, TOK_WHITESPACE)) {
+            t = tline;
+            tline = tline->next;
+            delete_Token(t);
+        }
         if (tok_type_(tline, TOK_ID)) {
             if (!nasm_stricmp(tline->text, "preproc")) {
                 /* Preprocessor pragma */
                 do_pragma_preproc(tline);
+                free_tlist(tline);
             } else {
                 /* Build the assembler directive */
-                t = new_Token(NULL, TOK_OTHER, "[", 1);
-                t->next = new_Token(NULL, TOK_ID, "pragma", 6);
-                t->next->next = new_Token(tline, TOK_WHITESPACE, NULL, 0);
-                tline = t;
+
+                /* Append bracket to the end of the output */
                 for (t = tline; t->next; t = t->next)
                     ;
                 t->next = new_Token(NULL, TOK_OTHER, "]", 1);
+
+                /* Prepend "[pragma " */
+                t = new_Token(tline, TOK_WHITESPACE, NULL, 0);
+                t = new_Token(t, TOK_ID, "pragma", 6);
+                t = new_Token(t, TOK_OTHER, "[", 1);
+                tline = t;
                 *output = tline;
             }
         }
