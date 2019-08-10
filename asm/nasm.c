@@ -1968,7 +1968,7 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
 
 static void usage(void)
 {
-    fputs("type `nasm -h' for help\n", error_file);
+    fprintf(error_file, "Type %s -h for help.\n", _progname);
 }
 
 static void help(FILE *out)
@@ -1976,19 +1976,16 @@ static void help(FILE *out)
     int i;
 
     fprintf(out,
-            "Usage: %s [-@ response file] [options...] [--] filename\n"
-            "       %s -v (or --v)\n"
-            "\n",
+            "Usage: %s [-@ response_file] [options...] [--] filename\n"
+            "       %s -v (or --v)\n",
             _progname, _progname);
     fputs(
         "\n"
-        "Response files should contain command line parameters,\n"
-        "one per line.\n"
-        "\n"
-        "Values in brackets indicate defaults\n"
+        "Options (values in brackets indicate defaults):\n"
         "\n"
         "    -h            show this text and exit (also --help)\n"
-        "    -v            print the NASM version number and exit\n"
+        "    -v (or --v)   print the NASM version number and exit\n"
+        "    -@ file       response file; one command line option per line\n"
         "\n"
         "    -o outfile    write output to outfile\n"
         "    --keep-all    output files will not be removed even if an error happens\n"
