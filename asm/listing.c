@@ -412,10 +412,7 @@ static void list_update_options(const char *str)
             state = false;
             break;
         default:
-            c -= '@';
-            if (c > 63)
-                break;
-            mask = UINT64_C(1) << c;
+            mask = list_option_mask(c);
             if (state)
                 list_options |= mask;
             else

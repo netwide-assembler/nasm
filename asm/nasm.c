@@ -1011,12 +1011,8 @@ static bool process_arg(char *p, char *q, int pass)
 
         case 'L':        /* listing options */
             if (pass == 2) {
-                while (*param) {
-                    unsigned int p = *param - '@';
-                    if (p <= 63)
-                        list_options |= (UINT64_C(1) << p);
-                    param++;
-                }
+                while (*param)
+                    list_options |= list_option_mask(*param++);
             }
             break;
 

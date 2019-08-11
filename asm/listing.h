@@ -125,19 +125,44 @@ extern bool user_nolist;
  */
 extern uint64_t list_options, active_list_options;
 
-static inline bool list_option(char x)
+/*
+ * This maps the characters a-z, A-Z and 0-9 onto a 64-bit bitmask
+ * (with two bits left over for future use! This isn't particularly
+ * efficient code, but just about every instance of it should be
+ * fed a constant, so the entire function can be precomputed at
+ * compile time.
+ *
+ * This returns 0 for invalid values, so that no bit is accessed
+ * for unsupported characters.
+ */
+static inline const_func uint64_t list_option_mask(unsigned char x)
 {
-    unsigned int p = x - '@';
-    if (p > 63)
-        return false;
-    return unlikely(active_list_options & (UINT64_C(1) << p));
+    if (x >= 'a') {
+        if (x > 'z')
+            return 0;
+        x = x - 'a';
+    } else if (x >= 'A') {
+        if (x > 'Z')
+            return 0;
+        x = x - 'A' + 26;
+    } else if (x >= '0') {
+        if (x > '9')
+            return 0;
+        x = x - '0' + 26*2;
+    }
+
+    return UINT64_C(1) << x;
+}
+
+static inline pure_func bool list_option(unsigned char x)
+{
+    return unlikely(active_list_options & list_option_mask(x));
 }
 
 /* We can't test this using active_list_options for obvious reasons... */
-static inline bool list_on_every_pass(void)
+static inline pure_func bool list_on_every_pass(void)
 {
-    const unsigned int p = 'p' - '@';
-    return unlikely(list_options & (UINT64_C(1) << p));
+    return unlikely(list_options & list_option_mask('p'));
 }
 
 /* Pragma handler */
