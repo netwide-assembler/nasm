@@ -149,6 +149,8 @@ static inline const_func uint64_t list_option_mask(unsigned char x)
         if (x > '9')
             return 0;
         x = x - '0' + 26*2;
+    } else {
+        return 0;
     }
 
     return UINT64_C(1) << x;
