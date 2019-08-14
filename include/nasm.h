@@ -190,6 +190,8 @@ enum token_type { /* token types, other than chars */
     TOKEN_STRFUNC,      /* __utf16*__, __utf32*__ */
     TOKEN_IFUNC,        /* __ilog2*__ */
     TOKEN_DECORATOR,    /* decorators such as {...} */
+    TOKEN_MASM_PTR,     /* __masm_ptr__ for the masm package */
+    TOKEN_MASM_FLAT,    /* __masm_flat__ for the masm package */
     TOKEN_OPMASK        /* translated token for opmask registers */
 };
 

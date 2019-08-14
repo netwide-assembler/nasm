@@ -234,96 +234,91 @@ static bool parse_braces(decoflags_t *decoflags)
     }
 }
 
+static inline const expr *next_expr(const expr *e, const expr **next_list)
+{
+    e++;
+    if (!e->type) {
+        if (next_list) {
+            e = *next_list;
+            *next_list = NULL;
+        } else {
+            e = NULL;
+        }
+    }
+    return e;
+}
+
+static inline void init_operand(operand *op)
+{
+    memset(op, 0, sizeof *op);
+
+    op->basereg  = -1;
+    op->indexreg = -1;
+    op->segment  = NO_SEG;
+    op->wrt      = NO_SEG;
+}
+
 static int parse_mref(operand *op, const expr *e)
 {
     int b, i, s;        /* basereg, indexreg, scale */
     int64_t o;          /* offset */
 
-    b = i = -1;
-    o = s = 0;
-    op->segment = op->wrt = NO_SEG;
+    b = op->basereg;
+    i = op->indexreg;
+    s = op->scale;
+    o = op->offset;
 
-    if (e->type && e->type <= EXPR_REG_END) {   /* this bit's a register */
-        bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
+    for (; e->type; e++) {
+        if (e->type <= EXPR_REG_END) {
+            bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
 
-        if (is_gpr && e->value == 1)
-            b = e->type;	/* It can be basereg */
-        else			/* No, it has to be indexreg */
-            i = e->type, s = e->value;
-        e++;
-    }
-    if (e->type && e->type <= EXPR_REG_END) {   /* it's a 2nd register */
-        bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
-
-        if (b != -1)    /* If the first was the base, ... */
-            i = e->type, s = e->value;  /* second has to be indexreg */
-
-        else if (!is_gpr || e->value != 1) {
-            /* If both want to be index */
-            nasm_nonfatal("invalid effective address: two index registers");
-            return -1;
-        } else
-            b = e->type;
-        e++;
-    }
-
-    if (e->type) {                     /* is there an offset? */
-        if (e->type <= EXPR_REG_END) {  /* in fact, is there an error? */
-            nasm_nonfatal("invalid effective address: impossible register");
-            return -1;
-        } else {
-            if (e->type == EXPR_UNKNOWN) {
-                op->opflags |= OPFLAG_UNKNOWN;
-                o = 0;  /* doesn't matter what */
-                while (e->type)
-                    e++;        /* go to the end of the line */
+            if (is_gpr && e->value == 1 && b == -1) {
+                /* It can be basereg */
+                b = e->type;
+            } else if (i == -1) {
+                /* Must be index register */
+                i = e->type;
+                s = e->value;
             } else {
-                if (e->type == EXPR_SIMPLE) {
-                    o = e->value;
-                    e++;
-                }
-                if (e->type == EXPR_WRT) {
-                    op->wrt = e->value;
-                    e++;
-                }
-                /*
-                 * Look for a segment base type.
-                 */
-                for (; e->type; e++) {
-                    if (!e->value)
-                        continue;
-
-                    if (e->type <= EXPR_REG_END) {
-                        nasm_nonfatal("invalid effective address: too many registers");
-                        return -1;
-                    } else if (e->type < EXPR_SEGBASE) {
-                        nasm_nonfatal("invalid effective address: bad subexpression type");
-                        return -1;
-                    } else if (e->value == 1) {
-                        if (op->segment != NO_SEG) {
-                            nasm_nonfatal("invalid effective address: multiple base segments");
-                            return -1;
-                        }
-                        op->segment = e->type - EXPR_SEGBASE;
-                    } else if (e->value == -1 &&
-                               e->type == location.segment + EXPR_SEGBASE &&
-                               !(op->opflags & OPFLAG_RELATIVE)) {
-                        op->opflags |= OPFLAG_RELATIVE;
-                    } else {
-                        nasm_nonfatal("invalid effective address: impossible segment base multiplier");
-                        return -1;
-                    }
-                }
+                if (b == -1)
+                    nasm_nonfatal("invalid effective address: two index registers");
+                else if (!is_gpr)
+                    nasm_nonfatal("invalid effective address: impossible register");
+                else
+                    nasm_nonfatal("invalid effective address: too many registers");
+                return -1;
             }
+        } else if (e->type == EXPR_UNKNOWN) {
+            op->opflags |= OPFLAG_UNKNOWN;
+        } else if (e->type == EXPR_SIMPLE) {
+            o += e->value;
+        } else if  (e->type == EXPR_WRT) {
+            op->wrt = e->value;
+        } else if (e->type >= EXPR_SEGBASE) {
+            if (e->value == 1) {
+                if (op->segment != NO_SEG) {
+                    nasm_nonfatal("invalid effective address: multiple base segments");
+                    return -1;
+                }
+                op->segment = e->type - EXPR_SEGBASE;
+            } else if (e->value == -1 &&
+                       e->type == location.segment + EXPR_SEGBASE &&
+                       !(op->opflags & OPFLAG_RELATIVE)) {
+                op->opflags |= OPFLAG_RELATIVE;
+            } else {
+                nasm_nonfatal("invalid effective address: impossible segment base multiplier");
+                return -1;
+            }
+        } else {
+            nasm_nonfatal("invalid effective address: bad subexpression type");
+            return -1;
         }
-    }
+   }
 
-    nasm_assert(!e->type);      /* We should be at the end */
-
-    op->basereg = b;
+    op->basereg  = b;
     op->indexreg = i;
-    op->scale = s;
-    op->offset = o;
+    op->scale    = s;
+    op->offset   = o;
     return 0;
 }
 
@@ -419,6 +414,7 @@ insn *parse_line(char *buffer, insn *result)
     bool critical;
     bool first;
     bool recover;
+    bool far_jmp_ok;
     int i;
 
     nasm_static_assert(P_none == 0);
@@ -740,20 +736,18 @@ is_expression:
      * Now we begin to parse the operands. There may be up to four
      * of these, separated by commas, and terminated by a zero token.
      */
+    far_jmp_ok = result->opcode == I_JMP || result->opcode == I_CALL;
 
     for (opnum = 0; opnum < MAX_OPERANDS; opnum++) {
         operand *op = &result->oprs[opnum];
         expr *value;            /* used most of the time */
-        bool mref;              /* is this going to be a memory ref? */
-        bool bracket;           /* is it a [] mref, or a & mref? */
+        bool mref = false;      /* is this going to be a memory ref? */
+        int bracket = 0;        /* is it a [] mref, or a "naked" mref? */
         bool mib;               /* compound (mib) mref? */
         int setsize = 0;
         decoflags_t brace_flags = 0;    /* flags for decorators in braces */
 
-        op->disp_size = 0;    /* have to zero this whatever */
-        op->eaflags   = 0;    /* and this */
-        op->opflags   = 0;
-        op->decoflags = 0;
+        init_operand(op);
 
         i = stdscan(NULL, &tokval);
         if (i == TOKEN_EOS)
@@ -829,30 +823,55 @@ is_expression:
             i = stdscan(NULL, &tokval);
         }
 
-        if (i == '[' || i == '&') {     /* memory reference */
+        if (i == '[' || i == TOKEN_MASM_PTR || i == '&') {
+            /* memory reference */
             mref = true;
-            bracket = (i == '[');
-            i = stdscan(NULL, &tokval); /* then skip the colon */
-            while (i == TOKEN_SPECIAL || i == TOKEN_SIZE ||
-                   i == TOKEN_PREFIX) {
-                process_size_override(result, op);
-                i = stdscan(NULL, &tokval);
-            }
-            /* when a comma follows an opening bracket - [ , eax*4] */
-            if (i == ',') {
-                /* treat as if there is a zero displacement virtually */
-                tokval.t_type = TOKEN_NUM;
-                tokval.t_integer = 0;
-                stdscan_set(stdscan_get() - 1);     /* rewind the comma */
-            }
-        } else {                /* immediate operand, or register */
-            mref = false;
-            bracket = false;    /* placate optimisers */
+            bracket += (i == '[');
+            i = stdscan(NULL, &tokval);
         }
 
-        if ((op->type & FAR) && !mref &&
-            result->opcode != I_JMP && result->opcode != I_CALL)
-            nasm_nonfatal("invalid use of FAR operand specifier");
+    mref_more:
+        if (mref) {
+            bool done = false;
+            bool nofw = false;
+
+            while (!done) {
+                switch (i) {
+                case TOKEN_SPECIAL:
+                case TOKEN_SIZE:
+                case TOKEN_PREFIX:
+                    process_size_override(result, op);
+                    break;
+
+                case '[':
+                    bracket++;
+                    break;
+
+                case ',':
+                    tokval.t_type = TOKEN_NUM;
+                    tokval.t_integer = 0;
+                    stdscan_set(stdscan_get() - 1);     /* rewind the comma */
+                    done = nofw = true;
+                    break;
+
+                case TOKEN_MASM_FLAT:
+                    i = stdscan(NULL, &tokval);
+                    if (i != ':') {
+                        nasm_nonfatal("unknown use of FLAT in MASM emulation");
+                        nofw = true;
+                    }
+                    done = true;
+                    break;
+
+                default:
+                    done = nofw = true;
+                    break;
+                }
+
+                if (!nofw)
+                    i = stdscan(NULL, &tokval);
+            }
+        }
 
         value = evaluate(stdscan, NULL, &tokval,
                          &op->opflags, critical, &hints);
@@ -862,7 +881,18 @@ is_expression:
         }
         if (!value)                  /* Error in evaluator */
             goto fail;
-        if (i == ':' && mref) { /* it was seg:offset */
+
+        if (i == '[' && !bracket) {
+            /* displacement[regs] syntax */
+            mref = true;
+            parse_mref(op, value); /* Process what we have so far */
+            goto mref_more;
+        }
+
+        if (i == ':' && (mref || !far_jmp_ok)) {
+            /* segment override? */
+            mref = true;
+
             /*
              * Process the segment override.
              */
@@ -879,29 +909,15 @@ is_expression:
             }
 
             i = stdscan(NULL, &tokval); /* then skip the colon */
-            while (i == TOKEN_SPECIAL || i == TOKEN_SIZE ||
-                   i == TOKEN_PREFIX) {
-                process_size_override(result, op);
-                i = stdscan(NULL, &tokval);
-            }
-            value = evaluate(stdscan, NULL, &tokval,
-                             &op->opflags, critical, &hints);
-            i = tokval.t_type;
-            if (op->opflags & OPFLAG_FORWARD) {
-                result->forw_ref = true;
-            }
-            /* and get the offset */
-            if (!value)                  /* Error in evaluator */
-                goto fail;
+            goto mref_more;
         }
 
         mib = false;
         if (mref && bracket && i == ',') {
             /* [seg:base+offset,index*scale] syntax (mib) */
+            operand o2;         /* Index operand */
 
-            operand o1, o2;     /* Partial operands */
-
-            if (parse_mref(&o1, value))
+            if (parse_mref(op, value))
                 goto fail;
 
             i = stdscan(NULL, &tokval); /* Eat comma */
@@ -911,6 +927,7 @@ is_expression:
             if (!value)
                 goto fail;
 
+            init_operand(&o2);
             if (parse_mref(&o2, value))
                 goto fail;
 
@@ -920,18 +937,14 @@ is_expression:
                 o2.basereg = -1;
             }
 
-            if (o1.indexreg != -1 || o2.basereg != -1 || o2.offset != 0 ||
+            if (op->indexreg != -1 || o2.basereg != -1 || o2.offset != 0 ||
                 o2.segment != NO_SEG || o2.wrt != NO_SEG) {
                 nasm_nonfatal("invalid mib expression");
                 goto fail;
             }
 
-            op->basereg = o1.basereg;
             op->indexreg = o2.indexreg;
             op->scale = o2.scale;
-            op->offset = o1.offset;
-            op->segment = o1.segment;
-            op->wrt = o1.wrt;
 
             if (op->basereg != -1) {
                 op->hintbase = op->basereg;
@@ -948,21 +961,33 @@ is_expression:
         }
 
         recover = false;
-        if (mref && bracket) {  /* find ] at the end */
-            if (i != ']') {
-                nasm_nonfatal("parser: expecting ]");
-                recover = true;
-            } else {            /* we got the required ] */
-                i = stdscan(NULL, &tokval);
-                if (i == TOKEN_DECORATOR || i == TOKEN_OPMASK) {
-                    /* parse opmask (and zeroing) after an operand */
-                    recover = parse_braces(&brace_flags);
-                    i = tokval.t_type;
-                }
-                if (i != 0 && i != ',') {
-                    nasm_nonfatal("comma or end of line expected");
+        if (mref) {
+            if (bracket == 1) {
+                if (i == ']') {
+                    bracket--;
+                    i = stdscan(NULL, &tokval);
+                } else {
+                    nasm_nonfatal("expecting ] at end of memory operand");
                     recover = true;
                 }
+            } else if (bracket == 0) {
+                /* Do nothing */
+            } else if (bracket > 0) {
+                nasm_nonfatal("excess brackets in memory operand");
+                recover = true;
+            } else if (bracket < 0) {
+                nasm_nonfatal("unmatched ] in memory operand");
+                recover = true;
+            }
+
+            if (i == TOKEN_DECORATOR || i == TOKEN_OPMASK) {
+                /* parse opmask (and zeroing) after an operand */
+                recover = parse_braces(&brace_flags);
+                i = tokval.t_type;
+            }
+            if (!recover && i != 0 && i != ',') {
+                nasm_nonfatal("comma, decorator or end of line expected, got %d", i);
+                recover = true;
             }
         } else {                /* immediate operand */
             if (i != 0 && i != ',' && i != ':' &&
@@ -998,6 +1023,9 @@ is_expression:
                 op->hinttype = hints.type;
             }
             mref_set_optype(op);
+        } else if ((op->type & FAR) && !far_jmp_ok) {
+                nasm_nonfatal("invalid use of FAR operand specifier");
+                recover = true;
         } else {                /* it's not a memory reference */
             if (is_just_unknown(value)) {       /* it's immediate but unknown */
                 op->type      |= IMMEDIATE;

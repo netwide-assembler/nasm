@@ -125,6 +125,10 @@ __ilog2c__
 seg
 wrt
 
+% TOKEN_{__*__}, 0, 0, 0
+__masm_ptr__
+__masm_flat__
+
 % TOKEN_DECORATOR, 0, TFLAG_BRC | TFLAG_BRDCAST , BRC_1TO{1to*}
 1to2
 1to4
