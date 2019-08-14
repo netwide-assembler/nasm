@@ -732,9 +732,12 @@ LAR		reg64,reg32			[rm:	o64 0f 02 /r]				X64,PROT
 LAR		reg64,reg64			[rm:	o64 0f 02 /r]				X64,PROT
 LDS		reg16,mem			[rm:	o16 c5 /r]				8086,NOLONG
 LDS		reg32,mem			[rm:	o32 c5 /r]				386,NOLONG
-LEA		reg16,mem			[rm:	o16 8d /r]				8086
-LEA		reg32,mem			[rm:	o32 8d /r]				386
-LEA		reg64,mem			[rm:	o64 8d /r]				X64
+LEA		reg16,mem			[rm:	o16 8d /r]				8086,ANYSIZE
+LEA		reg32,mem			[rm:	o32 8d /r]				386,ANYSIZE
+LEA		reg64,mem			[rm:	o64 8d /r]				X64,ANYSIZE
+LEA		reg16,imm			[rm:	o16 8d /r]				8086,ND,ANYSIZE
+LEA		reg32,imm			[rm:	o32 8d /r]				386,ND,ANYSIZE
+LEA		reg64,imm			[rm:	o64 8d /r]				X64,ND,ANYSIZE
 LEAVE		void				[	c9]					186
 LES		reg16,mem			[rm:	o16 c4 /r]				8086,NOLONG
 LES		reg32,mem			[rm:	o32 c4 /r]				386,NOLONG

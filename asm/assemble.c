@@ -2440,6 +2440,9 @@ static enum match_result matches(const struct itemplate *itemp,
     case IF_GENBIT(IF_SZ):
         asize = BITS512;
         break;
+    case IF_GENBIT(IF_ANYSIZE):
+        asize = SIZE_MASK;
+        break;
     case IF_GENBIT(IF_SIZE):
         switch (bits) {
         case 16:

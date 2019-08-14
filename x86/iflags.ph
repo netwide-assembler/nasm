@@ -16,6 +16,7 @@ if_("SY",                "Unsized operands can't be non-yword");
 if_("SZ",                "Unsized operands can't be non-zword");
 if_("SIZE",              "Unsized operands must match the bitsize");
 if_("SX",                "Unsized operands not allowed");
+if_("ANYSIZE",           "Ignore operand size even if explicit");
 if_("AR0",               "SB, SW, SD applies to argument 0");
 if_("AR1",               "SB, SW, SD applies to argument 1");
 if_("AR2",               "SB, SW, SD applies to argument 2");
