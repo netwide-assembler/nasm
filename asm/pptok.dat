@@ -50,6 +50,7 @@
 %arg
 %assign
 %clear
+%defalias
 %define
 %defstr
 %deftok
@@ -65,6 +66,7 @@
 %exitrep
 %fatal
 %iassign
+%idefalias
 %idefine
 %idefstr
 %ideftok
@@ -93,6 +95,7 @@
 %strlen
 %substr
 %undef
+%undefalias
 %unimacro
 %unmacro
 %use
