@@ -154,8 +154,6 @@ foreach $args ( @ARGV ) {
 	    s/\s+/ /g;
 	    next if ($_ eq '');
 
-	    print "\"", $_, "\"\n";
-
 	    if (m/^OUT:\s*(\S.*)$/) {
 		undef $pkg;
 		my @out_alias = split(/\s+/, $1);
