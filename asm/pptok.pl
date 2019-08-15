@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
-##   
-##   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+##
+##   Copyright 1996-2019 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -15,7 +15,7 @@
 ##     copyright notice, this list of conditions and the following
 ##     disclaimer in the documentation and/or other materials provided
 ##     with the distribution.
-##     
+##
 ##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -51,40 +51,62 @@ while (defined($line = <IN>)) {
     next if ($line eq '');
 
     if ($line =~ /^\%(.*)\*$/) {
+	# Condition stem
 	push(@cctok, $1);
+    } elsif ($line =~ /^\%(.*\!.*)$/) {
+	# Directive with case insensitity "i" option
+	# Mnemonic: ! is "upside down i"
+	push(@ppitok, $1);
     } elsif ($line =~ /^\%(.*)$/) {
+	# Other directive
 	push(@pptok, $1);
     } elsif ($line =~ /^\*(.*)$/) {
+	# Condition tail
 	push(@cond, $1);
     }
 }
 close(IN);
 
-@cctok = sort @cctok;
+# Always sort %if first
+@cctok = sort { $a eq 'if' ? -1 : $b eq 'if' ? 1 : $a cmp $b } @cctok;
 @cond = sort @cond;
 @pptok = sort @pptok;
+@ppitok = sort @ppitok;
 
 # Generate the expanded list including conditionals.  The conditionals
 # are at the beginning, padded to a power of 2, with the inverses
-# interspersed; this allows a simple mask to pick out the condition.
+# following each group; this allows a simple mask to pick out the condition,
+# polarity, and directive type.
 
 while ((scalar @cond) & (scalar @cond)-1) {
-    push(@cond, undef);
+    push(@cond, sprintf("_COND_%d", scalar @cond));
 }
 
 @cptok = ();
 foreach $ct (@cctok) {
     foreach $cc (@cond) {
-	if (defined($cc)) {
-	    push(@cptok, $ct.$cc);
-	    push(@cptok, $ct.'n'.$cc);
-	} else {
-	    push(@cptok, undef, undef);
-	}
+	push(@cptok, $ct.$cc);
+    }
+    foreach $cc (@cond) {
+	push(@cptok, $ct.'n'.$cc);
     }
 }
-$first_uncond = $pptok[0];
+$first_uncond = scalar @cptok;
 @pptok = (@cptok, @pptok);
+
+# Generate the list of case-specific tokens; these are in pairs
+# with the -i- variant following the plain variant
+if (scalar(@pptok) & 1) {
+    push(@pptok, 'CASE_PAD');
+}
+
+$first_itoken = scalar @pptok;
+foreach $it (@ppitok) {
+    (my $at = $it) =~ s/\!//;
+    (my $bt = $it) =~ s/\!/i/;
+
+    push(@pptok, $at, $bt);
+}
 
 open(OUT, '>', $out) or die "$0: cannot open: $out\n";
 
@@ -100,41 +122,35 @@ if ($what eq 'h') {
     $n = 0;
     foreach $pt (@pptok) {
 	if (defined($pt)) {
-	    printf OUT "    %-16s = %3d,\n", "PP_\U$pt\E", $n;
+	    printf OUT "    %-24s = %3d,\n", "PP_\U$pt\E", $n;
 	}
 	$n++;
     }
-    printf OUT "    %-16s = %3d\n", 'PP_INVALID', -1;
+    printf OUT "    %-24s = %3d\n", 'PP_INVALID', -1;
     print OUT "};\n";
     print OUT "\n";
 
-    print  OUT "enum pp_conditional {\n";
-    $n = 0;
-    $c = '';
-    foreach $cc (@cond) {
-	if (defined($cc)) {
-	    printf OUT "$c    %-16s = %3d", "PPC_IF\U$cc\E", $n;
-	    $c = ',';
-	}
-	$n += 2;
-    }
-    print  OUT "\n};\n\n";
-
-    printf OUT "#define PP_COND(x)     ((enum pp_conditional)((x) & 0x%x))\n",
-	(scalar(@cond)-1) << 1;
-    print  OUT "#define PP_IS_COND(x)  ((unsigned int)(x) < PP_\U$first_uncond\E)\n";
-    print  OUT "#define PP_NEGATIVE(x) ((x) & 1)\n";
+    printf OUT "#define PP_COND(x)     ((x) & 0x%x)\n",
+	(scalar(@cond)-1);
+    printf OUT "#define PP_IS_COND(x)  ((unsigned int)(x) < PP_%s)\n",
+	uc($pptok[$first_uncond]);
+    printf OUT "#define PP_COND_NEGATIVE(x) (!!((x) & 0x%x))\n", scalar(@cond);
+    print  OUT "\n";
+    printf OUT "#define PP_HAS_CASE(x) ((x) >= PP_%s)\n",
+	uc($pptok[$first_itoken]);
+    print  OUT "#define PP_INSENSITIVE(x) ((x) & 1)\n";
     print  OUT "\n";
 
     foreach $ct (@cctok) {
 	print OUT "#define CASE_PP_\U$ct\E";
 	$pref = " \\\n";
 	foreach $cc (@cond) {
-	    if (defined($cc)) {
-		print OUT "$pref\tcase PP_\U${ct}${cc}\E: \\\n";
-		print OUT "\tcase PP_\U${ct}N${cc}\E";
-		$pref = ":\\\n";
-	    }
+	    print OUT "$pref\tcase PP_\U${ct}${cc}\E";
+	    $pref = ":\\\n";
+	}
+	foreach $cc (@cond) {
+	    print OUT "$pref\tcase PP_\U${ct}N${cc}\E";
+	    $pref = ":\\\n";
 	}
 	print OUT "\n";		# No colon or newline on the last one
     }
@@ -153,7 +169,8 @@ if ($what eq 'c') {
 
     my $n = 0;
     foreach $pt (@pptok) {
-	if (defined($pt)) {
+	# Upper case characters signify internal use tokens only
+	if (defined($pt) && $pt !~ /[A-Z]/) {
 	    $tokens{'%'.$pt} = $n;
 	    if ($pt =~ /[\@\[\]\\_]/) {
 		# Fail on characters which look like upper-case letters
@@ -253,7 +270,7 @@ if ($what eq 'ph') {
     print OUT "# Automatically generated from $in by $0\n";
     print OUT "# Do not edit\n";
     print OUT "\n";
-    
+
     print OUT "%pptok_hash = (\n";
     $n = 0;
     foreach $tok (@pptok) {
@@ -265,5 +282,3 @@ if ($what eq 'ph') {
     print OUT ");\n";
     print OUT "1;\n";
 }
-
-    

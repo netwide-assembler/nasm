@@ -305,11 +305,7 @@ struct hash_table FileHash;
  * included from within the true branch of a `%if' won't terminate
  * it and cause confusion: instead, rightly, it'll cause an error.)
  */
-struct Cond {
-    Cond *next;
-    int state;
-};
-enum {
+enum cond_state {
     /*
      * These states are for use just after %if or %elif: IF_TRUE
      * means the condition has evaluated to truth so we are
@@ -335,6 +331,10 @@ enum {
      * or if there is an error.
      */
     COND_DONE, COND_NEVER
+};
+struct Cond {
+    Cond *next;
+    enum cond_state state;
 };
 #define emitting(x) ( (x) == COND_IF_TRUE || (x) == COND_ELSE_TRUE )
 
@@ -1820,9 +1820,8 @@ static void count_mmac_params(Token * t, int *nparam, Token *** params)
  *
  * We must free the tline we get passed.
  */
-static bool if_condition(Token * tline, enum preproc_token ct)
+static enum cond_state if_condition(Token * tline, enum preproc_token ct)
 {
-    enum pp_conditional i = PP_COND(ct);
     bool j;
     Token *t, *tt, *origline;
     struct ppscan pps;
@@ -1830,11 +1829,13 @@ static bool if_condition(Token * tline, enum preproc_token ct)
     expr *evalresult;
     enum pp_token_type needtype;
     char *p;
+    const char *dname = pp_directives[ct];
+    bool casesense = true;
 
     origline = tline;
 
-    switch (i) {
-    case PPC_IFCTX:
+    switch (PP_COND(ct)) {
+    case PP_IFCTX:
         j = false;              /* have we matched yet? */
         while (true) {
             skip_white_(tline);
@@ -1842,9 +1843,8 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                 break;
             if (tline->type != TOK_ID) {
                 nasm_nonfatal("`%s' expects context identifiers",
-                              pp_directives[ct]);
-                free_tlist(origline);
-                return -1;
+                              dname);
+                goto fail;
             }
             if (cstk && cstk->name && !nasm_stricmp(tline->text, cstk->name))
                 j = true;
@@ -1852,7 +1852,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         }
         break;
 
-    case PPC_IFDEF:
+    case PP_IFDEF:
         j = false;              /* have we matched yet? */
         while (tline) {
             skip_white_(tline);
@@ -1860,7 +1860,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                            (tline->type != TOK_PREPROC_ID ||
                             tline->text[1] != '$'))) {
                 nasm_nonfatal("`%s' expects macro identifiers",
-                              pp_directives[ct]);
+                              dname);
                 goto fail;
             }
             if (smacro_defined(NULL, tline->text, 0, NULL, true))
@@ -1869,7 +1869,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         }
         break;
 
-    case PPC_IFENV:
+    case PP_IFENV:
         tline = expand_smacro(tline);
         j = false;              /* have we matched yet? */
         while (tline) {
@@ -1879,7 +1879,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                            (tline->type != TOK_PREPROC_ID ||
                             tline->text[1] != '!'))) {
                 nasm_nonfatal("`%s' expects environment variable names",
-                              pp_directives[ct]);
+                              dname);
                 goto fail;
             }
             p = tline->text;
@@ -1893,15 +1893,17 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         }
         break;
 
-    case PPC_IFIDN:
-    case PPC_IFIDNI:
+    case PP_IFIDNI:
+        casesense = false;
+        /* fall through */
+    case PP_IFIDN:
         tline = expand_smacro(tline);
         t = tt = tline;
         while (tok_isnt_(tt, ","))
             tt = tt->next;
         if (!tt) {
             nasm_nonfatal("`%s' expects two comma-separated arguments",
-                          pp_directives[ct]);
+                          dname);
             goto fail;
         }
         tt = tt->next;
@@ -1909,7 +1911,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         while ((t->type != TOK_OTHER || strcmp(t->text, ",")) && tt) {
             if (tt->type == TOK_OTHER && !strcmp(tt->text, ",")) {
                 nasm_nonfatal("`%s': more than one comma on line",
-                              pp_directives[ct]);
+                              dname);
                 goto fail;
             }
             if (t->type == TOK_WHITESPACE) {
@@ -1933,11 +1935,11 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                     j = false;
                     break;
                 }
-                if (mmemcmp(t->text, tt->text, l1, i == PPC_IFIDN)) {
+                if (mmemcmp(t->text, tt->text, l1, casesense)) {
                     j = false;
                     break;
                 }
-            } else if (mstrcmp(tt->text, t->text, i == PPC_IFIDN) != 0) {
+            } else if (mstrcmp(tt->text, t->text, casesense) != 0) {
                 j = false;      /* found mismatching tokens */
                 break;
             }
@@ -1949,7 +1951,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
             j = false;          /* trailing gunk on one end or other */
         break;
 
-    case PPC_IFMACRO:
+    case PP_IFMACRO:
     {
         bool found = false;
         MMacro searching, *mmac;
@@ -1957,7 +1959,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         skip_white_(tline);
         tline = expand_id(tline);
         if (!tok_type_(tline, TOK_ID)) {
-            nasm_nonfatal("`%s' expects a macro name", pp_directives[ct]);
+            nasm_nonfatal("`%s' expects a macro name", dname);
             goto fail;
         }
         searching.name = nasm_strdup(tline->text);
@@ -1974,7 +1976,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         if (!tline) {
         } else if (!tok_type_(tline, TOK_NUMBER)) {
             nasm_nonfatal("`%s' expects a parameter count or nothing",
-                          pp_directives[ct]);
+                          dname);
         } else {
             searching.nparam_min = searching.nparam_max =
                 read_param_count(tline->text);
@@ -1985,7 +1987,7 @@ static bool if_condition(Token * tline, enum preproc_token ct)
                 searching.nparam_max = INT_MAX;
             else if (!tok_type_(tline, TOK_NUMBER))
                 nasm_nonfatal("`%s' expects a parameter count after `-'",
-                              pp_directives[ct]);
+                              dname);
             else {
                 searching.nparam_max = read_param_count(tline->text);
                 if (searching.nparam_min > searching.nparam_max) {
@@ -2017,13 +2019,13 @@ static bool if_condition(Token * tline, enum preproc_token ct)
         break;
     }
 
-    case PPC_IFID:
+    case PP_IFID:
         needtype = TOK_ID;
         goto iftype;
-    case PPC_IFNUM:
+    case PP_IFNUM:
         needtype = TOK_NUMBER;
         goto iftype;
-    case PPC_IFSTR:
+    case PP_IFSTR:
         needtype = TOK_STRING;
         goto iftype;
 
@@ -2040,7 +2042,7 @@ iftype:
         j = tok_type_(t, needtype);
         break;
 
-    case PPC_IFTOKEN:
+    case PP_IFTOKEN:
         t = tline = expand_smacro(tline);
         while (tok_type_(t, TOK_WHITESPACE))
             t = t->next;
@@ -2054,7 +2056,7 @@ iftype:
         }
         break;
 
-    case PPC_IFEMPTY:
+    case PP_IFEMPTY:
         t = tline = expand_smacro(tline);
         while (tok_type_(t, TOK_WHITESPACE))
             t = t->next;
@@ -2062,7 +2064,7 @@ iftype:
         j = !t;                 /* Should be empty */
         break;
 
-    case PPC_IF:
+    case PP_IF:
         pps.tptr = tline = expand_smacro(tline);
 	pps.ntokens = -1;
         tokval.t_type = TOKEN_INVALID;
@@ -2073,24 +2075,23 @@ iftype:
             nasm_warn(WARN_OTHER, "trailing garbage after expression ignored");
         if (!is_simple(evalresult)) {
             nasm_nonfatal("non-constant value given to `%s'",
-                          pp_directives[ct]);
+                          dname);
             goto fail;
         }
         j = reloc_value(evalresult) != 0;
         break;
 
     default:
-        nasm_fatal("preprocessor directive `%s' not yet implemented",
-                   pp_directives[ct]);
+        nasm_nonfatal("unknown preprocessor directive `%s'", dname);
         goto fail;
     }
 
     free_tlist(origline);
-    return j ^ PP_NEGATIVE(ct);
+    return (j ^ PP_COND_NEGATIVE(ct)) ? COND_IF_TRUE : COND_IF_FALSE;
 
 fail:
     free_tlist(origline);
-    return -1;
+    return COND_NEVER;
 }
 
 /*
@@ -2451,7 +2452,7 @@ static bool is_macro_id(const Token *t)
                  (t->type == TOK_PREPROC_ID && t->text[1] == '$'));
 }
 
-static char *get_id(Token **tp, enum preproc_token pp, const char *err)
+static char *get_id(Token **tp, const char *dname, const char *err)
 {
     char *id;
     Token *t = *tp;
@@ -2461,7 +2462,7 @@ static char *get_id(Token **tp, enum preproc_token pp, const char *err)
     t = expand_id(t);
 
     if (!is_macro_id(t)) {
-        nasm_nonfatal("`%s' expects a %s", pp_directives[pp],
+        nasm_nonfatal("`%s' expects a %s", dname,
                       err ? err : "macro identifier");
         return NULL;
     }
@@ -2523,16 +2524,13 @@ static int do_directive(Token *tline, Token **output)
 			    tline->text[1] == '!')))
         return NO_DIRECTIVE_FOUND;
 
+    dname = tline->text;
     i = pp_token_hash(tline->text);
 
-    /*
-     * FIXME: We zap execution of PP_RMACRO, PP_IRMACRO, PP_EXITMACRO
-     * since they are known to be buggy at moment, we need to fix them
-     * in future release (2.09-2.10)
-     */
-    if (i == PP_RMACRO || i == PP_IRMACRO || i == PP_EXITMACRO) {
-        nasm_nonfatal("unknown preprocessor directive `%s'", tline->text);
-        return NO_DIRECTIVE_FOUND;
+    casesense = true;
+    if (PP_HAS_CASE(i) & PP_INSENSITIVE(i)) {
+        casesense = false;
+        i--;
     }
 
     /*
@@ -2552,16 +2550,14 @@ static int do_directive(Token *tline, Token **output)
      * %endm/%endmacro, and (only if we're in a %rep block) %endrep.
      * If we're in a %rep block, another %rep nests, so should be let through.
      */
-    if (defining && i != PP_MACRO && i != PP_IMACRO &&
-        i != PP_RMACRO &&  i != PP_IRMACRO &&
+    if (defining && i != PP_MACRO && i != PP_RMACRO &&
         i != PP_ENDMACRO && i != PP_ENDM &&
         (defining->name || (i != PP_ENDREP && i != PP_REP))) {
         return NO_DIRECTIVE_FOUND;
     }
 
     if (defining) {
-        if (i == PP_MACRO || i == PP_IMACRO ||
-            i == PP_RMACRO || i == PP_IRMACRO) {
+        if (i == PP_MACRO || i == PP_RMACRO) {
             nested_mac_count++;
             return NO_DIRECTIVE_FOUND;
         } else if (nested_mac_count > 0) {
@@ -2583,11 +2579,9 @@ static int do_directive(Token *tline, Token **output)
         }
     }
 
-    dname = pp_directives[i];   /* Directive name, for error messages */
-    casesense = true;           /* Default to case sensitive */
     switch (i) {
     default:
-        nasm_nonfatal("unknown preprocessor directive `%s'", tline->text);
+        nasm_nonfatal("unknown preprocessor directive `%s'", dname);
         return NO_DIRECTIVE_FOUND;      /* didn't get it */
 
     case PP_PRAGMA:
@@ -2874,7 +2868,7 @@ static int do_directive(Token *tline, Token **output)
         static macros_t *use_pkg;
         const char *pkg_macro = NULL;
 
-        if (!(mname = get_id(&tline, i, "package name")))
+        if (!(mname = get_id(&tline, dname, "package name")))
             goto done;
         if (tline->next)
             nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored", dname);
@@ -2995,7 +2989,6 @@ issue_error:
         else {
             j = if_condition(tline->next, i);
             tline->next = NULL; /* it got freed */
-            j = j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
         }
         cond = nasm_malloc(sizeof(Cond));
         cond->next = istk->conds;
@@ -3035,12 +3028,10 @@ issue_error:
              */
             j = if_condition(expand_mmac_params(tline->next), i);
             tline->next = NULL; /* it got freed */
-            istk->conds->state =
-                j < 0 ? COND_NEVER : j ? COND_IF_TRUE : COND_IF_FALSE;
+            istk->conds->state = j;
             break;
         }
-        free_tlist(origline);
-        return DIRECTIVE_FOUND;
+        break;
 
     case PP_ELSE:
         if (tline->next)
@@ -3083,10 +3074,6 @@ issue_error:
             istk->mstk->condcnt--;
         break;
 
-    case PP_IRMACRO:
-    case PP_IMACRO:
-        casesense = false;
-        /* fall through */
     case PP_RMACRO:
     case PP_MACRO:
         if (defining)
@@ -3332,11 +3319,6 @@ issue_error:
             nasm_nonfatal("`%%exitrep' not within `%%rep' block");
         break;
 
-    case PP_IDEFINE:
-    case PP_IXDEFINE:
-    case PP_IDEFALIAS:
-        casesense = false;
-        /* fall through */
     case PP_DEFINE:
     case PP_XDEFINE:
     case PP_DEFALIAS:
@@ -3345,7 +3327,7 @@ issue_error:
         bool *eval_params = NULL;
         SMacro tmpl;
 
-        if (!(mname = get_id(&tline, i, NULL)))
+        if (!(mname = get_id(&tline, dname, NULL)))
             goto done;
 
         nasm_zero(tmpl);
@@ -3425,7 +3407,7 @@ issue_error:
             last = tline, tline = tline->next;
         last->next = NULL;
 
-        if (unlikely(i == PP_DEFALIAS || i == PP_IDEFALIAS)) {
+        if (unlikely(i == PP_DEFALIAS)) {
             macro_start = tline;
             if (!is_macro_id(macro_start)) {
                 nasm_nonfatal("`%s' expects a macro identifier to alias",
@@ -3444,7 +3426,7 @@ issue_error:
             tmpl.alias = true;
         } else {
             /* Expand the macro definition now for %xdefine and %ixdefine */
-            if (i == PP_XDEFINE || i == PP_IXDEFINE)
+            if (i == PP_XDEFINE)
                 tline = expand_smacro(tline);
 
             macro_start = NULL;
@@ -3480,7 +3462,7 @@ issue_error:
 
     case PP_UNDEF:
     case PP_UNDEFALIAS:
-        if (!(mname = get_id(&tline, i, NULL)))
+        if (!(mname = get_id(&tline, dname, NULL)))
             goto done;
         if (tline->next)
             nasm_warn(WARN_OTHER, "trailing garbage after macro name ignored");
@@ -3488,11 +3470,8 @@ issue_error:
         undef_smacro(mname, i == PP_UNDEFALIAS);
         break;
 
-    case PP_IDEFSTR:
-        casesense = false;
-        /* fall through */
     case PP_DEFSTR:
-        if (!(mname = get_id(&tline, i, NULL)))
+        if (!(mname = get_id(&tline, dname, NULL)))
             goto done;
 
         last = tline;
@@ -3514,11 +3493,8 @@ issue_error:
         define_smacro(mname, casesense, macro_start, NULL);
         break;
 
-    case PP_IDEFTOK:
-        casesense = false;
-        /* fall through */
     case PP_DEFTOK:
-        if (!(mname = get_id(&tline, i, NULL)))
+        if (!(mname = get_id(&tline, dname, NULL)))
             goto done;
 
         last = tline;
@@ -3552,14 +3528,11 @@ issue_error:
         free_tlist(tline);
         break;
 
-    case PP_IPATHSEARCH:
-        casesense = false;
-        /* fall through */
     case PP_PATHSEARCH:
     {
         const char *found_path;
 
-        if (!(mname = get_id(&tline, i, NULL)))
+        if (!(mname = get_id(&tline, dname, NULL)))
             goto done;
 
         last = tline;
@@ -3597,11 +3570,8 @@ issue_error:
         break;
     }
 
-    case PP_ISTRLEN:
-        casesense = false;
-        /* fall through */
     case PP_STRLEN:
-        if (!(mname = get_id(&tline, i, NULL)))
+        if (!(mname = get_id(&tline, dname, NULL)))
             goto done;
 
         last = tline;
@@ -3631,11 +3601,8 @@ issue_error:
         free_tlist(origline);
         return DIRECTIVE_FOUND;
 
-    case PP_ISTRCAT:
-        casesense = false;
-        /* fall through */
     case PP_STRCAT:
-        if (!(mname = get_id(&tline, i, NULL)))
+        if (!(mname = get_id(&tline, dname, NULL)))
             goto done;
 
         last = tline;
@@ -3680,15 +3647,12 @@ issue_error:
         free_tlist(tline);
         break;
 
-    case PP_ISUBSTR:
-        casesense = false;
-        /* fall through */
     case PP_SUBSTR:
     {
         int64_t start, count;
         size_t len;
 
-        if (!(mname = get_id(&tline, i, NULL)))
+        if (!(mname = get_id(&tline, dname, NULL)))
             goto done;
 
         last = tline;
@@ -3766,11 +3730,8 @@ issue_error:
         break;
     }
 
-    case PP_IASSIGN:
-        casesense = false;
-        /* fall through */
     case PP_ASSIGN:
-        if (!(mname = get_id(&tline, i, NULL)))
+        if (!(mname = get_id(&tline, dname, NULL)))
             goto done;
 
         last = tline;

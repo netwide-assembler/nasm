@@ -35,6 +35,12 @@
 # A * at the end indicates a condition; the list of conditions are
 # on lines starting with *; the negatives are auto-generated
 #
+
+# Condition stems. %if MUST BE FIRST in this list.
+%if*
+%elif*
+
+# Condition tests
 *
 *ctx
 *def
@@ -47,15 +53,26 @@
 *num
 *str
 *token
+
+# Directives with -i- versions for case insensitive
+%!assign
+%!defalias
+%!define
+%!defstr
+%!deftok
+%!macro
+%!pathsearch
+%!rmacro
+%!strcat
+%!strlen
+%!substr
+%!xdefine
+%un!macro
+
+# Other directives
 %arg
-%assign
 %clear
-%defalias
-%define
-%defstr
-%deftok
 %depend
-%elif*
 %else
 %endif
 %endm
@@ -65,39 +82,17 @@
 %exitmacro
 %exitrep
 %fatal
-%iassign
-%idefalias
-%idefine
-%idefstr
-%ideftok
-%if*
-%imacro
 %include
-%ipathsearch
-%irmacro
-%istrcat
-%istrlen
-%isubstr
-%ixdefine
 %line
 %local
-%macro
-%pathsearch
 %pop
 %pragma
 %push
 %rep
 %repl
-%rmacro
 %rotate
 %stacksize
-%strcat
-%strlen
-%substr
 %undef
 %undefalias
-%unimacro
-%unmacro
 %use
 %warning
-%xdefine
