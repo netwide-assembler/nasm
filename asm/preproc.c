@@ -444,6 +444,11 @@ static macros_t *stdmacros[8];
 static macros_t *extrastdmac;
 
 /*
+ * Map of which %use packages have been loaded
+ */
+static bool *use_loaded;
+
+/*
  * Tokens are allocated in blocks to improve speed
  */
 #define TOKEN_BLOCKSIZE 4096
@@ -2872,8 +2877,7 @@ static int do_directive(Token *tline, Token **output)
 
     case PP_USE:
     {
-        static macros_t *use_pkg;
-        const char *pkg_macro = NULL;
+        const struct use_package *pkg;
 
         if (!(mname = get_id(&tline, dname, "package name")))
             goto done;
@@ -2881,18 +2885,17 @@ static int do_directive(Token *tline, Token **output)
             nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored", dname);
         if (tline->type == TOK_STRING)
             nasm_unquote_cstr(tline->text, NULL);
-        use_pkg = nasm_stdmac_find_package(tline->text);
-        if (!use_pkg)
+        pkg = nasm_find_use_package(tline->text);
+        if (!pkg) {
             nasm_nonfatal("unknown `%s' package: %s", dname, tline->text);
-        else
-            pkg_macro = (char *)use_pkg + 1; /* The first string will be <%define>__USE_*__ */
-        if (use_pkg && ! smacro_defined(NULL, pkg_macro, 0, NULL, true)) {
+        } else if (!use_loaded[pkg->index]) {
             /*
              * Not already included, go ahead and include it.
              * Treat it as an include file for the purpose of
              * producing a listing.
              */
-            stdmacpos = use_pkg;
+            use_loaded[pkg->index] = true;
+            stdmacpos = pkg->macros;
             nasm_new(inc);
             inc->next = istk;
             inc->fname = src_set_fname(NULL);
@@ -5293,6 +5296,10 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
     deplist = dep_list;
     pp_mode = mode;
 
+    if (!use_loaded)
+        use_loaded = nasm_malloc(use_package_count * sizeof(bool));
+    memset(use_loaded, 0, use_package_count * sizeof(bool));
+
     /* First set up the top level input file */
     nasm_new(istk);
     istk->fp = nasm_open_read(file, NF_TEXT);
@@ -5651,6 +5658,7 @@ static void pp_cleanup_pass(void)
 
 static void pp_cleanup_session(void)
 {
+    nasm_free(use_loaded);
     free_llist(predef);
     predef = NULL;
     delete_Blocks();

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
-##   
+##
 ##   Copyright 1996-2009 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
@@ -15,7 +15,7 @@
 ##     copyright notice, this list of conditions and the following
 ##     disclaimer in the documentation and/or other materials provided
 ##     with the distribution.
-##     
+##
 ##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -150,10 +150,11 @@ foreach $args ( @ARGV ) {
 		chomp;
 		$line++;
 	    }
-	    s/^\s*(|\S|\S.*\S|)\s*(\;([^\"\']|\"[^\"]*\"|\'[^\']*\')*|)$/$1/;
+	    s/^\s*(([^\'\"\;]|\"[^\"]*\"|\'[^\']*\')*?)\s*(\;.*)?$/$1/;
 	    s/\s+/ /g;
 	    next if ($_ eq '');
-	    print '"',$_, "\"\n";
+
+	    print "\"", $_, "\"\n";
 
 	    if (m/^OUT:\s*(\S.*)$/) {
 		undef $pkg;
@@ -215,7 +216,7 @@ foreach $args ( @ARGV ) {
 		if (!defined($name)) {
 		    die "$0: $fname: macro declarations outside a known block\n";
 		}
-		
+
 		$s1 = $_;
 		$s2 = '';
 		while ($s1 =~ /(\%[a-zA-Z_][a-zA-Z0-9_]*)((\s+)(.*)|)$/) {
@@ -234,7 +235,7 @@ foreach $args ( @ARGV ) {
 		    if ($lastname ne $fname) {
 			print OUT "\n    /* From $fname */\n";
 			$lastname = $fname;
-		    }	
+		    }
 		    printf OUT "        /* %4d */ %sEOL,\n",
 			$index, charcify($s2);
 		    $index += length($s2)+1;
@@ -260,15 +261,15 @@ verify_hash_table(\%pkg_number, \@hashinfo);
 my ($n, $sv, $g) = @hashinfo;
 die if ($n & ($n-1));
 
-print OUT "const unsigned char *nasm_stdmac_find_package(const char *package)\n";
+printf OUT "const int use_package_count = %d;\n\n", $npkg;
+
+print OUT "const struct use_package *nasm_find_use_package(const char *name)\n";
 print OUT "{\n";
-print OUT "    static const struct {\n";
-print OUT "         const char *package;\n";
-print OUT "         const unsigned char *macros;\n";
-print OUT "    } packages[$npkg] = {\n";
+print OUT "    static const struct use_package packages[$npkg] = {\n";
+my $ix = 0;
 foreach $pkg (@pkg_list) {
-    printf OUT "        { \"%s\", nasm_usemac_%s },\n",
-	$pkg, $pkg;
+    printf OUT "        { \"%s\", nasm_usemac_%s, %d },\n",
+	$pkg, $pkg, $ix++;
 }
 print OUT "    };\n";
 
@@ -298,7 +299,7 @@ print OUT  "    uint64_t crc;\n";
 print OUT  "    uint16_t ix;\n";
 print OUT  "\n";
 
-printf OUT "    crc = crc64i(UINT64_C(0x%08x%08x), package);\n",
+printf OUT "    crc = crc64i(UINT64_C(0x%08x%08x), name);\n",
     $$sv[0], $$sv[1];
 print  OUT "    k1 = (uint32_t)crc;\n";
 print  OUT "    k2 = (uint32_t)(crc >> 32);\n";
@@ -307,10 +308,10 @@ printf OUT "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
 printf OUT "    if (ix >= %d)\n", scalar(@pkg_list);
 print OUT  "        return NULL;\n";
 print OUT  "\n";
-print OUT  "    if (nasm_stricmp(packages[ix].package, package))\n";
+print OUT  "    if (nasm_stricmp(packages[ix].package, name))\n";
 print OUT  "        return NULL;\n";
 print OUT  "\n";
-print OUT  "    return packages[ix].macros;\n";
+print OUT  "    return &packages[ix];\n";
 print OUT  "}\n";
 
 close(OUT);
