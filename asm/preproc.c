@@ -798,19 +798,26 @@ static char *line_from_stdmac(void)
     if (!stdmacpos)
         return NULL;
 
-    while ((c = *p++)) {
-        if (c >= 0x80)
-            len += pp_directives_len[c - 0x80] + 1;
+    /*
+     * 32-126 is ASCII, 127 is end of line, 128-31 are directives
+     * (allowed to wrap around) corresponding to PP_* tokens 0-159.
+     */
+    while ((c = *p++) != 127) {
+        uint8_t ndir = c - 128;
+        if (ndir < 256-96)
+            len += pp_directives_len[ndir] + 1;
         else
             len++;
     }
 
     line = nasm_malloc(len + 1);
     q = line;
-    while ((c = *stdmacpos++)) {
-        if (c >= 0x80) {
-            memcpy(q, pp_directives[c - 0x80], pp_directives_len[c - 0x80]);
-            q += pp_directives_len[c - 0x80];
+
+    while ((c = *stdmacpos++) != 127) {
+        uint8_t ndir = c - 128;
+        if (ndir < 256-96) {
+            memcpy(q, pp_directives[ndir], pp_directives_len[ndir]);
+            q += pp_directives_len[ndir];
             *q++ = ' ';
         } else {
             *q++ = c;
@@ -819,7 +826,7 @@ static char *line_from_stdmac(void)
     stdmacpos = p;
     *q = '\0';
 
-    if (!*stdmacpos) {
+    if (*stdmacpos == 127) {
         /* This was the last of this particular macro set */
         stdmacpos = NULL;
         if (*stdmacnext) {

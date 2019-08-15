@@ -45,6 +45,19 @@ my $fname;
 my $line = 0;
 my $index      = 0;
 my $tasm_count = 0;
+my @pname;
+
+# Default names for various bytes
+for (my $o = 0; $o < 256; $o++) {
+    my $c = chr($o);
+    if ($o < 32 || $o > 126) {
+	$pname[$o] = sprintf("%d", $o);
+    } elsif ($c =~ /^[\'\"\\]$/) {
+	$pname[$o] = "\'\\".$c."\'";
+    } else {
+	$pname[$o] = "\'".$c."\'";
+    }
+}
 
 #
 # Print out a string as a character array
@@ -64,24 +77,19 @@ sub charcify(@) {
 	} elsif ($c =~ /^[\'\"\`]$/) {
 	    $quote = $o;
 	} else {
-	    if ($c =~ /\s/) {
+	    if ($c eq ' ') {
 		next if ($space);
 		$o = 32;
 		$c = ' ';
 		$space = 1;
-	    } elsif ($o > 126) {
+	    } elsif ($o < 32 || $o > 126) {
 		$space = 1;	# Implicit space after compacted directive
 	    } else {
 		$space = 0;
 	    }
 	}
-
-	if ($o < 32 || $o > 126 || $c eq '"' || $c eq "\\") {
-	    $l .= sprintf("%3d,", $o);
-	} else {
-	    $c =~ s/\'/\\'/;	# << sanitize single quote. 
-	    $l .= "\'".$c."\',";
-	}
+	$l .= $pname[$o];
+	$l .= ',';
     }
     return $l;
 }
@@ -114,6 +122,21 @@ my $outfmt;
 my $lastname;
 my $z;
 
+my @pptok_list = sort { $pptok_hash{$a} <=> $pptok_hash{$b} } keys %pptok_hash;
+my %pnum;
+
+foreach my $pt (@pptok_list) {
+    my $n = $pptok_hash{$pt};
+    if ($pt !~ /[A-Z]/ && $n < 256-96) {
+	$n = ($n+128) & 255;
+	(my $et = $pt) =~ s/^\%/p_/;
+	printf OUT "#define %-24s %3d\n", $et, $n;
+	$pnum{$pt} = $n;
+	$pname[$n] = $et;
+    }
+}
+printf OUT "#define %-24s %3d\n\n", 'EOL', 127;
+
 foreach $args ( @ARGV ) {
     my @file_list = glob ( $args );
     foreach $fname ( @file_list ) {
@@ -127,11 +150,16 @@ foreach $args ( @ARGV ) {
 		chomp;
 		$line++;
 	    }
-	    if (m/^OUT:\s*(.*\S)\s*$/) {
+	    s/^\s*(|\S|\S.*\S|)\s*(\;([^\"\']|\"[^\"]*\"|\'[^\']*\')*|)$/$1/;
+	    s/\s+/ /g;
+	    next if ($_ eq '');
+	    print '"',$_, "\"\n";
+
+	    if (m/^OUT:\s*(\S.*)$/) {
 		undef $pkg;
 		my @out_alias = split(/\s+/, $1);
 		if (defined($name)) {
-		    printf OUT "        /* %4d */ 0\n", $index++;
+		    printf OUT "        /* %4d */ EOL\n", $index++;
 		    print OUT "};\n#endif\n";
 		    undef $name;
 		}
@@ -146,27 +174,27 @@ foreach $args ( @ARGV ) {
 		print OUT "\nconst unsigned char ${name}[] = {\n";
 		print OUT "    /* From $fname */\n";
 		$lastname = $fname;
-	    } elsif (m/^STD:\s*(.*\S)\s*$/) {
+	    } elsif (m/^STD:\s*(\S+)$/) {
 		undef $pkg;
-		my @out_alias = split(/\s+/, $1);
+		my $std = $1;
 		if (defined($name)) {
-		    printf OUT "        /* %4d */ 0\n", $index++;
+		    printf OUT "        /* %4d */ EOL\n", $index++;
 		    print OUT "};\n#endif\n";
 		    undef $name;
 		}
 		$index = 0;
 		print OUT "\n#if 1";
-		$name = 'nasm_stdmac_' . $out_alias[0];
+		$name = 'nasm_stdmac_' . $std;
 		print OUT "\nconst unsigned char ${name}[] = {\n";
 		print OUT "    /* From $fname */\n";
 		$lastname = $fname;
-	    } elsif (m/^USE:\s*(\S+)\s*$/) {
+	    } elsif (m/^USE:\s*(\S+)$/) {
 		$pkg = $1;
 		if (defined($pkg_number{$pkg})) {
 		    die "$0: $fname: duplicate package: $pkg\n";
 		}
 		if (defined($name)) {
-		    printf OUT "        /* %4d */ 0\n", $index++;
+		    printf OUT "        /* %4d */ EOL\n", $index++;
 		    print OUT "};\n#endif\n";
 		    undef $name;
 		}
@@ -178,26 +206,25 @@ foreach $args ( @ARGV ) {
 		$lastname = $fname;
 		push(@pkg_list, $pkg);
 		$pkg_number{$pkg} = $npkg++;
-		$z = pack("C", $pptok_hash{'%define'}+128)."__USE_\U$pkg\E__";
-		printf OUT "        /* %4d */ %s0,\n", $index, charcify($z);
+		$z = pack("C", $pnum{'%define'})."__USE_\U$pkg\E__";
+		printf OUT "        /* %4d */ %sEOL,\n", $index, charcify($z);
 		$index += length($z)+1;
-	    } elsif (m/^\s*((\s*([^\"\';\s]+|\"[^\"]*\"|\'[^\']*\'))*)\s*(;.*)?$/) {
+	    } else {
 		my($s1, $s2, $pd, $ws);
 
 		if (!defined($name)) {
 		    die "$0: $fname: macro declarations outside a known block\n";
 		}
 		
-		$s1 = $1;
+		$s1 = $_;
 		$s2 = '';
 		while ($s1 =~ /(\%[a-zA-Z_][a-zA-Z0-9_]*)((\s+)(.*)|)$/) {
 		    $s2 .= "$'";
 		    $pd = $1;
 		    $ws = $3;
 		    $s1 = $4;
-		    if (defined($pptok_hash{$pd}) &&
-			$pptok_hash{$pd} <= 127) {
-			$s2 .= pack("C", $pptok_hash{$pd}+128);
+		    if (defined($pnum{$pd})) {
+			$s2 .= pack("C", $pnum{$pd});
 		    } else {
 			$s2 .= $pd.$ws;
 		    }
@@ -208,12 +235,10 @@ foreach $args ( @ARGV ) {
 			print OUT "\n    /* From $fname */\n";
 			$lastname = $fname;
 		    }	
-		    printf OUT "        /* %4d */ %s0,\n",
+		    printf OUT "        /* %4d */ %sEOL,\n",
 			$index, charcify($s2);
 		    $index += length($s2)+1;
 		}
-	    } else {
-		die "$fname:$line: error: unterminated quote\n";
 	    }
 	}
         close(INPUT);
@@ -221,7 +246,7 @@ foreach $args ( @ARGV ) {
 }
 
 if (defined($name)) {
-    printf OUT "        /* %4d */ 0\n", $index++;
+    printf OUT "        /* %4d */ EOL\n", $index++;
     print OUT "};\n#endif\n";
     undef $name;
 }
