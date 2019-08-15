@@ -203,7 +203,7 @@ if ($what eq 'c') {
     # Note that this is global.
     printf OUT "const char * const pp_directives[%d] = {\n", scalar(@pptok);
     foreach $d (@pptok) {
-	if (defined($d)) {
+	if (defined($d) && $d !~ /[A-Z]/) {
 	    print OUT "    \"%$d\",\n";
 	} else {
 	    print OUT "    NULL,\n";
