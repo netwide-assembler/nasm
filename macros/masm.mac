@@ -77,4 +77,6 @@ USE: masm
 	; Nothing
 %endmacro
 
+%idefine tbyte tword
+
 	default rel
