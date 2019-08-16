@@ -212,6 +212,11 @@ nasm_set_limit(const char *limit, const char *valstr)
     bool rn_error;
     int errlevel;
 
+    if (!limit)
+        limit = "";
+    if (!valstr)
+        valstr = "";
+
     for (i = 0; i <= LIMIT_MAX; i++) {
         if (!nasm_stricmp(limit, limit_info[i].name))
             break;
@@ -234,7 +239,7 @@ nasm_set_limit(const char *limit, const char *valstr)
                 errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
             else
                 errlevel = ERR_WARNING|WARN_PRAGMA_BAD;
-            nasm_error(errlevel, "invalid limit value: `%s'", limit);
+            nasm_error(errlevel, "invalid limit value: `%s'", valstr);
             return DIRR_ERROR;
         }
         if (val > LIMIT_MAX_VAL)
