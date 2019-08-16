@@ -277,16 +277,19 @@ dnl
 PA_ADD_CFLAGS([-fvisibility=hidden])
 
 dnl If we have gcc, add appropriate code cleanliness options
-PA_ADD_CFLAGS([-W])
 PA_ADD_CFLAGS([-Wall])
-PA_ADD_CFLAGS([-pedantic])
+PA_ARG_DISABLED([pedantic],
+[disable some extra paranoid compiler warnings],
+[],
+[PA_ADD_CFLAGS([-W])
+ PA_ADD_CFLAGS([-pedantic])
+ PA_ADD_CFLAGS([-Wc90-c99-compat])])
 dnl LLVM doesn't error out on invalid -W options unless this option is
 dnl specified first.  Enable this so this script can actually discover
 dnl which -W options are possible for this compiler.
 PA_ADD_CFLAGS([-Werror=unknown-warning-option])
 dnl Suppress format warning on Windows targets due to their <inttypes.h>
 PA_ADD_CFLAGS([-Wpedantic-ms-format],[-Wno-pedantic-ms-format])
-PA_ADD_CFLAGS([-Wc90-c99-compat])
 PA_ADD_CFLAGS([-Wlong-long],[-Wno-long-long])
 dnl This is needed because we intentionally expect strncpy() to fill
 dnl in a zero-padded (not zero-terminated) buffer in several backends
