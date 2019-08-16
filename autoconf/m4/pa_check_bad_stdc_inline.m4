@@ -10,7 +10,7 @@ AC_DEFUN([PA_CHECK_BAD_STDC_INLINE],
 AC_INCLUDES_DEFAULT
 
 /* Don't mistake GNU inlines for c99 */
-#ifdef __GNUC_GNU_INLINE__
+#if defined(__GNUC__) && !defined(__GNUC_STDC_INLINE__)
 # error "Using gnu inline standard"
 #endif
 
