@@ -190,7 +190,8 @@ static const struct limit_info limit_info[LIMIT_MAX+1] = {
     { "passes", "total number of passes", LIMIT_MAX_VAL },
     { "stalled-passes", "number of passes without forward progress", 1000 },
     { "macro-levels", "levels of macro expansion", 10000 },
-    { "macro-tokens", "tokens processed during macro expansion", 10000000 },
+    { "macro-tokens", "tokens processed during single-lime macro expansion", 10000000 },
+    { "mmacros", "multi-line macros before final return", 100000 },
     { "rep", "%rep count", 1000000 },
     { "eval", "expression evaluation descent", 1000000},
     { "lines", "total source lines processed", 2000000000 }

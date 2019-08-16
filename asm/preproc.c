@@ -299,6 +299,18 @@ struct Include {
 struct hash_table FileHash;
 
 /*
+ * Counters to trap on insane macro recursion or processing.
+ * Note: for smacros these count *down*, for mmacros they count *up*.
+ */
+struct deadman {
+    int64_t total;              /* Total number of macros/tokens */
+    int64_t levels;             /* Descent depth across all macros */
+    bool triggered;             /* Already triggered, no need for error msg */
+};
+
+static struct deadman smacro_deadman, mmacro_deadman;
+
+/*
  * Conditional assembly: we maintain a separate stack of these for
  * each level of file inclusion. (The only reason we keep the
  * stacks separate is to ensure that a stray `%endif' in a file
@@ -3089,9 +3101,10 @@ issue_error:
         if (defining)
             nasm_fatal("`%s': already defining a macro", dname);
 
-        defining = nasm_zalloc(sizeof(MMacro));
-        defining->max_depth = nasm_limit[LIMIT_MACRO_LEVELS];
+        nasm_new(defining);
         defining->casesense = casesense;
+        if (i == PP_RMACRO)
+            defining->max_depth = nasm_limit[LIMIT_MACRO_LEVELS];
         if (!parse_mmacro_spec(tline, defining, dname)) {
             nasm_free(defining);
             goto done;
@@ -4289,11 +4302,6 @@ static Token *expand_mmac_params(Token * tline)
 }
 
 static Token *expand_smacro_noreset(Token * tline);
-static struct {
-    int64_t tokens;
-    int64_t levels;
-    bool triggered;
-} smacro_deadman;
 
 /*
  * Expand *one* single-line macro instance. If the first token is not
@@ -4324,10 +4332,10 @@ static SMacro *expand_one_smacro(Token ***tpp)
 
     mname = tline->text;
 
-    smacro_deadman.tokens--;
+    smacro_deadman.total--;
     smacro_deadman.levels--;
 
-    if (unlikely(smacro_deadman.tokens < 0 || smacro_deadman.levels < 0)) {
+    if (unlikely(smacro_deadman.total < 0 || smacro_deadman.levels < 0)) {
         if (unlikely(!smacro_deadman.triggered)) {
             nasm_nonfatal("interminable macro recursion");
             smacro_deadman.triggered = true;
@@ -4660,7 +4668,7 @@ done:
  */
 static Token *expand_smacro(Token *tline)
 {
-    smacro_deadman.tokens = nasm_limit[LIMIT_MACRO_TOKENS];
+    smacro_deadman.total  = nasm_limit[LIMIT_MACRO_TOKENS];
     smacro_deadman.levels = nasm_limit[LIMIT_MACRO_LEVELS];
     smacro_deadman.triggered = false;
     return expand_smacro_noreset(tline);
@@ -5008,6 +5016,18 @@ static int expand_mmacro(Token * tline)
         tline = t;
     }
 
+    if (unlikely(mmacro_deadman.total >= nasm_limit[LIMIT_MMACROS] ||
+                 mmacro_deadman.levels >= nasm_limit[LIMIT_MACRO_LEVELS])) {
+        if (!mmacro_deadman.triggered) {
+            nasm_nonfatal("interminable multiline macro recursion");
+            mmacro_deadman.triggered = true;
+        }
+        return 0;
+    }
+
+    mmacro_deadman.total++;
+    mmacro_deadman.levels++;
+
     /*
      * Fix up the parameters: this involves stripping leading and
      * trailing whitespace, then stripping braces if they are
@@ -5059,10 +5079,9 @@ static int expand_mmacro(Token * tline)
      * macro as in progress, and set up its invocation-specific
      * variables.
      */
-    ll = nasm_malloc(sizeof(Line));
+    nasm_new(ll);
     ll->next = istk->expansion;
     ll->finishes = m;
-    ll->first = NULL;
     istk->expansion = ll;
 
     /*
@@ -5088,8 +5107,7 @@ static int expand_mmacro(Token * tline)
     list_for_each(l, m->expansion) {
         Token **tail;
 
-        ll = nasm_malloc(sizeof(Line));
-        ll->finishes = NULL;
+        nasm_new(ll);
         ll->next = istk->expansion;
         istk->expansion = ll;
         tail = &ll->first;
@@ -5450,8 +5468,19 @@ static Token *pp_tokline(void)
                         /*
                          * This was a real macro call, not a %rep, and
                          * therefore the parameter information needs to
-                         * be freed.
+                         * be freed and the iteration count/nesting
+                         * depth adjusted.
                          */
+
+                        if (!--mmacro_deadman.levels) {
+                            /*
+                             * If all mmacro processing done,
+                             * clear all counters and the deadman
+                             * message trigger.
+                             */
+                            nasm_zero(mmacro_deadman); /* Clear all counters */
+                        }
+
                         if (m->prev) {
                             pop_mmacro(m);
                             l->finishes->in_progress --;
