@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -65,22 +65,57 @@ no_return nasm_alloc_failed(void)
 
 void *nasm_malloc(size_t size)
 {
-    return validate_ptr(malloc(size));
+    void *p;
+
+again:
+    p = malloc(size);
+
+    if (unlikely(!p)) {
+        if (!size) {
+            size = 1;
+            goto again;
+        }
+        nasm_alloc_failed();
+    }
+    return p;
 }
 
-void *nasm_calloc(size_t size, size_t nelem)
+void *nasm_calloc(size_t nelem, size_t size)
 {
-    return validate_ptr(calloc(size, nelem));
+    void *p;
+
+again:
+    p = calloc(nelem, size);
+
+    if (unlikely(!p)) {
+        if (!nelem || !size) {
+            nelem = size = 1;
+            goto again;
+        }
+        nasm_alloc_failed();
+    }
+
+    return p;
 }
 
 void *nasm_zalloc(size_t size)
 {
-    return validate_ptr(calloc(1, size));
+    return nasm_calloc(size, 1);
 }
 
+/*
+ * Unlike the system realloc, we do *not* allow size == 0 to be
+ * the equivalent to free(); we guarantee returning a non-NULL pointer.
+ *
+ * The check for calling malloc() is theoretically redundant, but be
+ * paranoid about the system library...
+ */
 void *nasm_realloc(void *q, size_t size)
 {
-    return validate_ptr(q ? realloc(q, size) : malloc(size));
+    if (unlikely(!size))
+        size = 1;
+    q = q ? realloc(q, size) : malloc(size);
+    return validate_ptr(q);
 }
 
 void nasm_free(void *q)
