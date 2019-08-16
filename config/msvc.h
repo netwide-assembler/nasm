@@ -35,7 +35,7 @@
  * config/msvc.h
  *
  * Compiler definitions for Microsoft Visual C++;
- * instead of config.h.in.  See config.h.in for the
+ * instead of unconfig.h.  See config.h.in for the
  * variables which can be defined here.
  *
  * MSDN seems to have information back to Visual Studio 2003, so aim

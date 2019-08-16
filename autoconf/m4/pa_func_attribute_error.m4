@@ -4,6 +4,9 @@ dnl
 dnl See if this compiler supports __attribute__((error("foo")))
 dnl The generic version of this doesn't work as it makes the compiler
 dnl throw an error by design.
+dnl
+dnl This doesn't use a function pointer because there is no need:
+dnl the error function will never be a function pointer.
 dnl --------------------------------------------------------------------------
 AC_DEFUN([PA_FUNC_ATTRIBUTE_ERROR],
 [AC_MSG_CHECKING([if $CC supports the error function attribute])

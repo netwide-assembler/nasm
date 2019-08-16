@@ -56,12 +56,16 @@
 
 #ifdef HAVE_CONFIG_H
 # include "config/config.h"
-#elif defined(_MSC_VER) && (_MSC_VER >= 1310)
-# include "config/msvc.h"
-#elif defined(__WATCOMC__)
-# include "config/watcom.h"
 #else
-# include "config/unknown.h"
+# if defined(_MSC_VER) && (_MSC_VER >= 1310)
+#  include "config/msvc.h"
+# elif defined(__WATCOMC__)
+#  include "config/watcom.h"
+# else
+#  include "config/unknown.h"
+# endif
+/* This unconditionally defines some macros we really want */
+# include "config/unconfig.h"
 #endif /* Configuration file */
 
 /* This is required to get the standard <inttypes.h> macros when compiling
@@ -271,36 +275,15 @@ static inline void *mempcpy(void *dst, const void *src, size_t n)
 # define unlikely(x)	(!!(x))
 #endif
 
-/*
- * Hints about malloc-like functions that never return NULL
- */
-#ifdef HAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL
-# define never_null __attribute__((returns_nonnull))
-#else
-# define never_null
-#endif
+#define safe_alloc     never_null     malloc_func
+#define safe_alloc_ptr never_null_ptr malloc_func_ptr
 
-#ifdef HAVE_FUNC_ATTRIBUTE_MALLOC
-# define safe_alloc never_null __attribute__((malloc))
-#else
-# define safe_alloc never_null
-#endif
-
-#ifdef HAVE_FUNC_ATTRIBUTE_ALLOC_SIZE
-# define safe_malloc(s) safe_alloc __attribute__((alloc_size(s)))
-# define safe_malloc2(s1,s2) safe_alloc __attribute__((alloc_size(s1,s2)))
-# define safe_realloc(s) never_null __attribute__((alloc_size(s)))
-#else
-# define safe_malloc(s) safe_alloc
-# define safe_malloc2(s1,s2) safe_alloc
-# define safe_realloc(s) never_null
-#endif
-
-#ifdef HAVE_FUNC_ATTRIBUTE_SENTINEL
-# define end_with_null __attribute__((sentinel))
-#else
-# define end_with_null
-#endif
+#define safe_malloc(s)          safe_alloc     alloc_size_func1(s)
+#define safe_malloc2(s1,s2)     safe_alloc     alloc_size_func2(s1,s2)
+#define safe_realloc(s)         never_null     alloc_size_func1(s)
+#define safe_malloc_ptr(s)      safe_alloc_ptr alloc_size_func1_ptr(s)
+#define safe_malloc2_ptr(s1,s2) safe_alloc_ptr alloc_size_func2_ptr(s1,s2)
+#define safe_realloc_ptr(s)     never_null_ptr alloc_size_func1_ptr(s)
 
 /*
  * How to tell the compiler that a function doesn't return
@@ -308,59 +291,23 @@ static inline void *mempcpy(void *dst, const void *src, size_t n)
 #ifdef HAVE_STDNORETURN_H
 # include <stdnoreturn.h>
 # define no_return noreturn void
-#elif defined(HAVE_FUNC_ATTRIBUTE_NORETURN)
-# define no_return void __attribute__((noreturn))
 #elif defined(_MSC_VER)
 # define no_return __declspec(noreturn) void
 #else
-# define no_return void
-#endif
-
-/*
- * How to tell the compiler that a function is unlikely to be executed.
- * This differs from unlikely() in that it is applied to a function call,
- * not a boolean condition.
- */
-#ifdef HAVE_FUNC_ATTRIBUTE_COLD
-# define unlikely_func __attribute__((cold))
-#else
-# define unlikely_func
+# define no_return void noreturn_func
 #endif
 
 /*
  * A fatal function is both unlikely and no_return
  */
-#define fatal_func no_return unlikely_func
+#define fatal_func     no_return unlikely_func
+#define fatal_func_ptr no_return unlikely_func_ptr
 
 /*
  * How to tell the compiler that a function takes a printf-like string
  */
-#ifdef HAVE_FUNC_ATTRIBUTE_FORMAT
-# define printf_func(fmt, list) __attribute__((format(printf, fmt, list)))
-#else
-# define printf_func(fmt, list)
-#endif
-
-/*
- * How to tell the compiler that a function is pure arithmetic
- */
-#ifdef HAVE_FUNC_ATTRIBUTE_CONST
-# define const_func __attribute__((const))
-#else
-# define const_func
-#endif
-
-/*
- * This function has no side effects, but depends on its arguments,
- * memory pointed to by its arguments, or global variables.
- * NOTE: functions that return a value by modifying memory pointed to
- * by a pointer argument are *NOT* considered pure.
- */
-#ifdef HAVE_FUNC_ATTRIBUTE_PURE
-# define pure_func __attribute__((pure))
-#else
-# define pure_func
-#endif
+#define printf_func(fmt, list)     format_func3(printf,fmt,list)
+#define printf_func_ptr(fmt, list) format_func3_ptr(printf,fmt,list)
 
 /* Determine probabilistically if something is a compile-time constant */
 #ifdef HAVE___BUILTIN_CONSTANT_P

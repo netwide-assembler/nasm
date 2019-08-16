@@ -50,7 +50,7 @@ TAGS
 /asm/tokhash.c
 /asm/warnings.c
 /config/config.h
-/config/config.h.in
+/config/unconfig.h
 /config.log
 /config.status
 /configure

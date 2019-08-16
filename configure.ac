@@ -1,8 +1,8 @@
 dnl Process this file with autoconf 2.69 or later to produce
 dnl a configure script.
 AC_PREREQ(2.69)
-AC_INIT(config/config.h.in)
-AC_CONFIG_HEADERS(config/config.h)
+AC_INIT([config/undef.h])
+AC_CONFIG_HEADERS([config/config.h:config/unconfig.h])
 AC_PREFIX_PROGRAM(nasm)
 AC_CONFIG_AUX_DIR(autoconf/helpers)
 
@@ -225,14 +225,15 @@ dnl some other features of gcc.
 dnl
 PA_ADD_CFLAGS([-Werror=attributes])
 PA_FUNC_ATTRIBUTE(noreturn)
-PA_FUNC_ATTRIBUTE(returns_nonnull)
+PA_FUNC_ATTRIBUTE(returns_nonnull,,,,,never_null)
 PA_FUNC_ATTRIBUTE(malloc)
-PA_FUNC_ATTRIBUTE(alloc_size, (1))
-PA_FUNC_ATTRIBUTE(sentinel,,, [const char *, ...], ["a","b",NULL])
-PA_FUNC_ATTRIBUTE(format, [(printf,1,2)], int, [const char *, ...], ["%d",1])
+PA_FUNC_ATTRIBUTE(alloc_size,[1])
+PA_FUNC_ATTRIBUTE(alloc_size,[1,2])
+PA_FUNC_ATTRIBUTE(sentinel,,, [const char *, ...], ["a","b",NULL],end_with_null)
+PA_FUNC_ATTRIBUTE(format, [printf,1,2], int, [const char *, ...], ["%d",1])
 PA_FUNC_ATTRIBUTE(const)
 PA_FUNC_ATTRIBUTE(pure)
-PA_FUNC_ATTRIBUTE(cold)
+PA_FUNC_ATTRIBUTE(cold,,,,,unlikely_func)
 PA_FUNC_ATTRIBUTE_ERROR
 
 dnl

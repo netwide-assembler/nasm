@@ -102,7 +102,7 @@ struct lfmt {
     /*
      * Called on a warning or error, with the error message.
      */
-    void printf_func(2, 3) (*error)(errflags severity, const char *fmt, ...);
+    void printf_func_ptr(2, 3) (*error)(errflags severity, const char *fmt, ...);
 
     /*
      * Update the current offset.  Used to give the listing generator
