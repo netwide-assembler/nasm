@@ -130,7 +130,11 @@ extern uint64_t list_options, active_list_options;
  * (with two bits left over for future use! This isn't particularly
  * efficient code, but just about every instance of it should be
  * fed a constant, so the entire function can be precomputed at
- * compile time.
+ * compile time. The only cases where the full computation is needed
+ * is when parsing the -L option or %pragma list options, neither of
+ * which is in any way performance critical.
+ *
+ * The character + represents ALL listing options.
  *
  * This returns 0 for invalid values, so that no bit is accessed
  * for unsupported characters.
@@ -149,6 +153,8 @@ static inline const_func uint64_t list_option_mask(unsigned char x)
         if (x > '9')
             return 0;
         x = x - '0' + 26*2;
+    } else if (x == '+') {
+        return ~UINT64_C(0);
     } else {
         return 0;
     }

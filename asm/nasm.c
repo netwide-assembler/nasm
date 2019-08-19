@@ -2025,6 +2025,7 @@ static void help(FILE *out)
         "       -Lf        ignore .nolist (force output)\n"
         "       -Lm        show all single-line macro definitions\n"
         "       -Lp        output a list file every pass, in case of errors\n"
+        "       -L+        enable all listing options (very verbose!)\n"
         "\n"
         "    -Oflags...    optimize opcodes, immediates and branch offsets\n"
         "       -O0        no optimization\n"
