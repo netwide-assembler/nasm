@@ -5223,7 +5223,7 @@ static void pop_mmacro(MMacro *m)
 #endif
 
 /*
- * List an mmacro call with arguments (-La option)
+ * List an mmacro call with arguments (-Lm option)
  */
 static void list_mmacro_call(const MMacro *m)
 {
