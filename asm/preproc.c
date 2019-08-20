@@ -2320,10 +2320,14 @@ static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
     Token *t = *tn;
     Token *name;
 
-    while (t && t->type == TOK_WHITESPACE) {
-        tn = &t->next;
-        t = *tn;
-    }
+    /*
+     * DO NOT skip whitespace here, or we won't be able to distinguish:
+     *
+     * %define foo (a,b)		; no arguments, (a,b) is the expansion
+     * %define bar(a,b)			; two arguments, empty expansion
+     *
+     * This ambiguity was inherited from C.
+     */
 
     if (!tok_is_(t, "("))
         goto finish;
