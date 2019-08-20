@@ -2315,7 +2315,8 @@ static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
     int nparam = 0;
     enum sparmflags flags;
     struct smac_param *params = NULL;
-    bool err, done, greedy;
+    bool err, done;
+    bool greedy = false;
     Token **tn = *tpp;
     Token *t = *tn;
     Token *name;
@@ -2346,7 +2347,7 @@ static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
 
     name = NULL;
     flags = 0;
-    err = done = greedy = false;
+    err = done = false;
 
     while (!done) {
         if (!t || !t->type) {
@@ -4399,6 +4400,8 @@ static Token *expand_mmac_params(Token * tline)
                 type = TOK_ID;
                 text = nasm_strdup(mac->iname);
                 change = true;
+            } else {
+                change = false;
             }
             break;
 
@@ -4407,6 +4410,8 @@ static Token *expand_mmac_params(Token * tline)
                 type = TOK_ID;
                 text = nasm_strdup(mac->name);
                 change = true;
+            } else {
+                change = false;
             }
             break;
 
