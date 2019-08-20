@@ -134,26 +134,40 @@ struct SMacro {
  * When a MMacro is being expanded, `params', `iline', `nparam',
  * `paramlen', `rotate' and `unique' are local to the invocation.
  */
+
+/*
+ * Expansion stack. Note that .mmac can point back to the macro itself,
+ * whereas .mstk cannot.
+ */
+struct mstk {
+    MMacro *mstk;               /* Any expansion, real macro or not */
+    MMacro *mmac;               /* Highest level actual mmacro */
+};
+
 struct MMacro {
     MMacro *next;
+#if 0
     MMacroInvocation *prev;     /* previous invocation */
+#endif
     char *name;
     int nparam_min, nparam_max;
     bool casesense;
     bool plus;                  /* is the last parameter greedy? */
     bool nolist;                /* is this macro listing-inhibited? */
-    int64_t in_progress;        /* is this macro currently being expanded? */
+    bool capture_label;         /* macro definition has %00; capture label */
+    int32_t in_progress;        /* is this macro currently being expanded? */
     int32_t max_depth;          /* maximum number of recursive expansions allowed */
     Token *dlist;               /* All defaults as one list */
     Token **defaults;           /* Parameter default pointers */
     int ndefs;                  /* number of default parameters */
     Line *expansion;
 
-    MMacro *next_active;
-    MMacro *rep_nest;           /* used for nesting %rep */
+    struct mstk mstk;           /* Macro expansion stack */
+    struct mstk dstk;           /* Macro definitions stack */
     Token **params;             /* actual parameters */
     Token *iline;               /* invocation line */
     unsigned int nparam, rotate;
+    char *iname;                /* name invoked as */
     int *paramlen;
     uint64_t unique;
     int lineno;                 /* Current line number on expansion */
@@ -167,6 +181,8 @@ struct MMacro {
 /* Store the definition of a multi-line macro, as defined in a
  * previous recursive macro expansion.
  */
+#if 0
+
 struct MMacroInvocation {
     MMacroInvocation *prev;     /* previous invocation */
     Token **params;             /* actual parameters */
@@ -177,6 +193,7 @@ struct MMacroInvocation {
     uint64_t condcnt;
 };
 
+#endif
 
 /*
  * The context stack is composed of a linked list of these.
@@ -286,7 +303,7 @@ struct Include {
     Cond *conds;
     Line *expansion;
     const char *fname;
-    MMacro *mstk;       /* stack of active macros/reps */
+    struct mstk mstk;
     int lineno, lineinc;
     bool nolist;
 };
@@ -650,8 +667,35 @@ static Token *dup_tlist(const Token *list, Token ***tailp)
         tailpp = &nt->next;
     }
 
-    if (tailp)
+    if (tailp) {
+        **tailp = newlist;
         *tailp = tailpp;
+    }
+
+    return newlist;
+}
+
+/*
+ * Duplicate a linked list of tokens with a maximum count
+ */
+static Token *dup_tlistn(const Token *list, size_t cnt, Token ***tailp)
+{
+    Token *newlist = NULL;
+    Token **tailpp = &newlist;
+    const Token *t;
+
+    list_for_each(t, list) {
+        Token *nt;
+        if (!cnt--)
+            break;
+        *tailpp = nt = dup_Token(NULL, t);
+        tailpp = &nt->next;
+    }
+
+    if (tailp) {
+        **tailp = newlist;
+        *tailp = tailpp;
+    }
 
     return newlist;
 }
@@ -876,7 +920,7 @@ static char *line_from_stdmac(void)
 /*
  * Read a line from a file. Return NULL on end of file.
  */
-static char *line_from_file(void)
+static char *line_from_file(FILE *f)
 {
     int c;
     unsigned int size, next;
@@ -891,7 +935,7 @@ static char *line_from_file(void)
     p = buffer = nasm_malloc(size);
 
     do {
-        c = fgetc(istk->fp);
+        c = fgetc(f);
 
         switch (c) {
         case EOF:
@@ -903,9 +947,9 @@ static char *line_from_file(void)
             break;
 
         case '\r':
-            next = fgetc(istk->fp);
+            next = fgetc(f);
             if (next != '\n')
-                ungetc(next, istk->fp);
+                ungetc(next, f);
             if (cont) {
                 cont = false;
                 continue;
@@ -926,8 +970,8 @@ static char *line_from_file(void)
             break;
 
         case '\\':
-            next = fgetc(istk->fp);
-            ungetc(next, istk->fp);
+            next = fgetc(f);
+            ungetc(next, f);
             if (next == '\r' || next == '\n') {
                 cont = true;
                 nr_cont++;
@@ -958,9 +1002,10 @@ static char *line_from_file(void)
 static char *read_line(void)
 {
     char *line;
+    FILE *f = istk->fp;
 
-    if (istk->fp)
-        line = line_from_file();
+    if (f)
+        line = line_from_file(f);
     else
         line = line_from_stdmac();
 
@@ -1789,24 +1834,31 @@ static int read_param_count(const char *str)
  * This is called both from within the multi-line macro expansion
  * code, and also to mark off the default parameters when provided
  * in a %macro definition line.
+ *
+ * Note that we need space in the params array for parameter 0 being
+ * a possible captured label as well as the final NULL.
  */
-static void count_mmac_params(Token * t, int *nparam, Token *** params)
+static void count_mmac_params(Token * t, int *nparamp, Token ***paramsp)
 {
     int paramsize, brace;
+    int nparam = 0;
+    Token **params;
 
-    *nparam = paramsize = 0;
-    *params = NULL;
+    paramsize = PARAM_DELTA;
+    params = nasm_malloc(paramsize * sizeof(*params));
+    params[0] = NULL;
+
     while (t) {
-        /* +1: we need space for the final NULL */
-        if (*nparam+1 >= paramsize) {
+        /* 2 slots for captured label and NULL */
+        if (nparam+2 >= paramsize) {
             paramsize += PARAM_DELTA;
-            *params = nasm_realloc(*params, sizeof(**params) * paramsize);
+            params = nasm_realloc(params, sizeof(*params) * paramsize);
         }
         skip_white_(t);
         brace = 0;
         if (tok_is_(t, "{"))
             brace++;
-        (*params)[(*nparam)++] = t;
+        params[++nparam] = t;
         if (brace) {
             while (brace && (t = t->next) != NULL) {
                 if (tok_is_(t, "{"))
@@ -1836,6 +1888,10 @@ static void count_mmac_params(Token * t, int *nparam, Token *** params)
             t = t->next;        /* eat the comma */
         }
     }
+
+    params[nparam+1] = NULL;
+    *paramsp = params;
+    *nparamp = nparam;
 }
 
 /*
@@ -1986,13 +2042,9 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
             nasm_nonfatal("`%s' expects a macro name", dname);
             goto fail;
         }
+        nasm_zero(searching);
         searching.name = nasm_strdup(tline->text);
         searching.casesense = true;
-        searching.plus = false;
-        searching.nolist = false;
-        searching.in_progress = 0;
-        searching.max_depth = 0;
-        searching.rep_nest = NULL;
         searching.nparam_min = 0;
         searching.nparam_max = INT_MAX;
         tline = expand_smacro(tline->next);
@@ -2376,12 +2428,12 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
         return false;
     }
 
+#if 0
     def->prev = NULL;
+#endif
     def->name = nasm_strdup(tline->text);
     def->plus = false;
     def->nolist = false;
-    def->in_progress = 0;
-    def->rep_nest = NULL;
     def->nparam_min = 0;
     def->nparam_max = 0;
 
@@ -2532,7 +2584,6 @@ static int do_directive(Token *tline, Token **output)
     Line *l;
     struct tokenval tokval;
     expr *evalresult;
-    MMacro *tmp_defining;       /* Used when manipulating rep_nest */
     int64_t count;
     size_t len;
     errflags severity;
@@ -2564,7 +2615,8 @@ static int do_directive(Token *tline, Token **output)
      * directives.
      */
     if (((istk->conds && !emitting(istk->conds->state)) ||
-         (istk->mstk && !istk->mstk->in_progress)) && !is_condition(i)) {
+         (istk->mstk.mstk && !istk->mstk.mstk->in_progress)) &&
+        !is_condition(i)) {
         return NO_DIRECTIVE_FOUND;
     }
 
@@ -2867,7 +2919,6 @@ static int do_directive(Token *tline, Token **output)
             nasm_unquote_cstr(p, NULL);
         nasm_new(inc);
         inc->next = istk;
-        inc->conds = NULL;
         found_path = NULL;
         inc->fp = inc_fopen(p, deplist, &found_path,
                             (pp_mode == PP_DEPS)
@@ -2879,8 +2930,6 @@ static int do_directive(Token *tline, Token **output)
             inc->fname = src_set_fname(found_path ? found_path : p);
             inc->lineno = src_set_linnum(0);
             inc->lineinc = 1;
-            inc->expansion = NULL;
-            inc->mstk = NULL;
             inc->nolist = istk->nolist;
             istk = inc;
             lfmt->uplevel(LIST_INCLUDE, 0);
@@ -2912,9 +2961,6 @@ static int do_directive(Token *tline, Token **output)
             inc->next = istk;
             inc->fname = src_set_fname(NULL);
             inc->lineno = src_set_linnum(0);
-            inc->lineinc = 0;
-            inc->expansion = NULL;
-            inc->mstk = NULL;
             inc->nolist = !list_option('b') || istk->nolist;
             istk = inc;
             lfmt->uplevel(LIST_INCLUDE, 0);
@@ -3016,8 +3062,8 @@ issue_error:
         cond->next = istk->conds;
         cond->state = j;
         istk->conds = cond;
-        if(istk->mstk)
-            istk->mstk->condcnt++;
+        if(istk->mstk.mstk)
+            istk->mstk.mstk->condcnt++;
         break;
 
     CASE_PP_ELIF:
@@ -3092,17 +3138,16 @@ issue_error:
         cond = istk->conds;
         istk->conds = cond->next;
         nasm_free(cond);
-        if(istk->mstk)
-            istk->mstk->condcnt--;
+        if(istk->mstk.mstk)
+            istk->mstk.mstk->condcnt--;
         break;
 
     case PP_RMACRO:
     case PP_MACRO:
-        if (defining)
-            nasm_fatal("`%s': already defining a macro", dname);
-
+        nasm_assert(!defining);
         nasm_new(defining);
         defining->casesense = casesense;
+        defining->dstk.mmac = defining;
         if (i == PP_RMACRO)
             defining->max_depth = nasm_limit[LIMIT_MACRO_LEVELS];
         if (!parse_mmacro_spec(tline, defining, dname)) {
@@ -3173,6 +3218,7 @@ issue_error:
         MMacro **mmac_p;
         MMacro spec;
 
+        nasm_zero(spec);
         spec.casesense = casesense;
         if (!parse_mmacro_spec(tline, &spec, dname)) {
             goto done;
@@ -3219,9 +3265,7 @@ issue_error:
             nasm_nonfatal("non-constant value given to `%%rotate'");
             return DIRECTIVE_FOUND;
         }
-        mmac = istk->mstk;
-        while (mmac && !mmac->name)     /* avoid mistaking %reps for macros */
-            mmac = mmac->next_active;
+        mmac = istk->mstk.mmac;
         if (!mmac) {
             nasm_nonfatal("`%%rotate' invoked outside a macro call");
         } else if (mmac->nparam == 0) {
@@ -3238,6 +3282,9 @@ issue_error:
         break;
 
     case PP_REP:
+    {
+        MMacro *tmp_defining;
+
         nolist = false;
         do {
             tline = tline->next;
@@ -3291,10 +3338,12 @@ issue_error:
         nasm_new(defining);
         defining->nolist = nolist;
         defining->in_progress = count;
-        defining->next_active = istk->mstk;
-        defining->rep_nest = tmp_defining;
+        defining->mstk = istk->mstk;
+        defining->dstk.mstk = tmp_defining;
+        defining->dstk.mmac = tmp_defining ? tmp_defining->dstk.mmac : NULL;
 	src_get(&defining->xline, &defining->fname);
         break;
+    }
 
     case PP_ENDREP:
         if (!defining || defining->name) {
@@ -3319,11 +3368,10 @@ issue_error:
         l->first = NULL;
         istk->expansion = l;
 
-        istk->mstk = defining;
+        istk->mstk.mstk = defining;
 
         lfmt->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO, 0);
-        tmp_defining = defining;
-        defining = defining->rep_nest;
+        defining = defining->dstk.mstk;
         break;
 
     case PP_EXITREP:
@@ -4037,6 +4085,17 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
 }
 
 /*
+ * Computes the proper rotation of mmacro parameters
+ */
+static int mmac_rotate(const MMacro *mac, unsigned int n)
+{
+    if (--n < mac->nparam)
+        n = (n + mac->rotate) % mac->nparam;
+
+    return n+1;
+}
+
+/*
  * expands to a list of tokens from %{x:y}
  */
 static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
@@ -4067,7 +4126,7 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
     fst = fst < 0 ? fst + (int)mac->nparam + 1: fst;
     lst = lst < 0 ? lst + (int)mac->nparam + 1: lst;
 
-    /* counted from zero */
+    /* count from zero */
     fst--, lst--;
 
     /*
@@ -4075,7 +4134,8 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
      * need to scan params until separator, otherwise
      * only first token will be passed.
      */
-    tm = mac->params[(fst + mac->rotate) % mac->nparam];
+    j = (fst + mac->rotate) % mac->nparam;
+    tm = mac->params[j+1];
     if (!tm)
         goto err;
     head = dup_Token(NULL, tm);
@@ -4090,7 +4150,7 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
             t = new_Token(NULL, TOK_OTHER, ",", 0);
             *tt = t, tt = &t->next;
             j = (i + mac->rotate) % mac->nparam;
-            tm = mac->params[j];
+            tm = mac->params[j+1];
             while (tok_isnt_(tm, ",")) {
                 t = dup_Token(NULL, tm);
                 *tt = t, tt = &t->next, tm = tm->next;
@@ -4101,7 +4161,7 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
             t = new_Token(NULL, TOK_OTHER, ",", 0);
             *tt = t, tt = &t->next;
             j = (i + mac->rotate) % mac->nparam;
-            tm = mac->params[j];
+            tm = mac->params[j+1];
             while (tok_isnt_(tm, ",")) {
                 t = dup_Token(NULL, tm);
                 *tt = t, tt = &t->next, tm = tm->next;
@@ -4115,7 +4175,7 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
 err:
     nasm_nonfatal("`%%{%s}': macro parameters out of range",
           &tline->text[1]);
-    return tline;
+    return NULL;
 }
 
 /*
@@ -4125,159 +4185,192 @@ err:
  */
 static Token *expand_mmac_params(Token * tline)
 {
-    Token *t, *tt, **tail, *thead;
+    Token **tail, *thead;
     bool changed = false;
-    char *pos;
+    MMacro *mac = istk->mstk.mmac;
 
     tail = &thead;
     thead = NULL;
 
     while (tline) {
-        if (tline->type == TOK_PREPROC_ID && tline->text && tline->text[0] &&
-            (((tline->text[1] == '+' || tline->text[1] == '-') && tline->text[2])   ||
-              (tline->text[1] >= '0' && tline->text[1] <= '9')                      ||
-               tline->text[1] == '%')) {
-            char *text = NULL;
-            int type = 0, cc;   /* type = 0 to placate optimisers */
-            char tmpbuf[30];
-            unsigned int n;
-            int i;
-            MMacro *mac;
+        bool change;
+        Token *t = tline;
+        char *text = t->text;
+        int type = t->type;
 
-            t = tline;
-            tline = tline->next;
+        tline = tline->next;
+        t->next = NULL;
 
-            mac = istk->mstk;
-            while (mac && !mac->name)   /* avoid mistaking %reps for macros */
-                mac = mac->next_active;
+        switch (type) {
+        case TOK_PREPROC_ID:
+        {
+            Token *tt = NULL;
+
+            change = false;
+
+            if (!text || !text[0])
+                break;
+            if (!(nasm_isdigit(text[1]) || text[1] == '%' ||
+                  ((text[1] == '+' || text[1] == '-') && text[2])))
+                break;
+
+            change = true;
+
             if (!mac) {
-                nasm_nonfatal("`%s': not in a macro call", t->text);
-            } else {
-                pos = strchr(t->text, ':');
-                if (!pos) {
-                    switch (t->text[1]) {
-                        /*
-                         * We have to make a substitution of one of the
-                         * forms %1, %-1, %+1, %%foo, %0.
-                         */
-                    case '0':
-                        type = TOK_NUMBER;
-                        snprintf(tmpbuf, sizeof(tmpbuf), "%d", mac->nparam);
-                        text = nasm_strdup(tmpbuf);
-                        break;
-                    case '%':
-                        type = TOK_ID;
-                        snprintf(tmpbuf, sizeof(tmpbuf), "..@%"PRIu64".",
-                                 mac->unique);
-                        text = nasm_strcat(tmpbuf, t->text + 2);
-                        break;
-                    case '-':
-                        n = atoi(t->text + 2) - 1;
-                        if (n >= mac->nparam)
-                            tt = NULL;
-                        else {
-                            if (mac->nparam > 1)
-                                n = (n + mac->rotate) % mac->nparam;
-                            tt = mac->params[n];
-                        }
-                        cc = find_cc(tt);
-                        if (cc == -1) {
-                            nasm_nonfatal("macro parameter %d is not a condition code",
-                                          n + 1);
-                            text = NULL;
-                        } else {
-                            type = TOK_ID;
-                            if (inverse_ccs[cc] == -1) {
-                                nasm_nonfatal("condition code `%s' is not invertible",
-                                              conditions[cc]);
-                                text = NULL;
-                            } else
-                                text = nasm_strdup(conditions[inverse_ccs[cc]]);
-                        }
-                        break;
-                    case '+':
-                        n = atoi(t->text + 2) - 1;
-                        if (n >= mac->nparam)
-                            tt = NULL;
-                        else {
-                            if (mac->nparam > 1)
-                                n = (n + mac->rotate) % mac->nparam;
-                            tt = mac->params[n];
-                        }
-                        cc = find_cc(tt);
-                        if (cc == -1) {
-                            nasm_nonfatal("macro parameter %d is not a condition code",
-                                          n + 1);
-                            text = NULL;
-                        } else {
-                            type = TOK_ID;
-                            text = nasm_strdup(conditions[cc]);
-                        }
-                        break;
-                    default:
-                        n = atoi(t->text + 1) - 1;
-                        if (n >= mac->nparam)
-                            tt = NULL;
-                        else {
-                            if (mac->nparam > 1)
-                                n = (n + mac->rotate) % mac->nparam;
-                            tt = mac->params[n];
-                        }
-                        if (tt) {
-                            for (i = 0; i < mac->paramlen[n]; i++) {
-                                *tail = dup_Token(NULL, tt);
-                                tail = &(*tail)->next;
-                                tt = tt->next;
-                            }
-                        }
-                        text = NULL;        /* we've done it here */
-                        break;
-                    }
-                } else {
-                    /*
-                     * seems we have a parameters range here
-                     */
-                    Token *head, **last;
-                    head = expand_mmac_params_range(mac, t, &last);
-                    if (head != t) {
-                        *tail = head;
-                        *last = tline;
-                        tline = head;
-                        text = NULL;
-                    }
-                }
+                nasm_nonfatal("`%s': not in a macro call", text);
+                text = NULL;
+                break;
             }
+
+            if (strchr(text, ':')) {
+                /*
+                 * seems we have a parameters range here
+                 */
+                Token *head, **last;
+                head = expand_mmac_params_range(mac, t, &last);
+                if (head) {
+                    *tail = head;
+                    *last = tline;
+                    text = NULL;
+                }
+                break;
+            }
+
+            switch (text[1]) {
+                /*
+                 * We have to make a substitution of one of the
+                 * forms %1, %-1, %+1, %%foo, %0, %00.
+                 */
+            case '0':
+                if (!text[2]) {
+                    type = TOK_NUMBER;
+                    text = nasm_asprintf("%d", mac->nparam);
+                    break;
+                }
+                if (text[2] != '0' || text[3])
+                    goto invalid;
+                /* a possible captured label == mac->params[0] */
+                /* fall through */
+            default:
+            {
+                unsigned long n;
+                char *ep;
+
+                n = strtoul(text + 1, &ep, 10);
+                if (unlikely(*ep))
+                    goto invalid;
+
+                if (n <= mac->nparam) {
+                    n = mmac_rotate(mac, n);
+                    dup_tlistn(mac->params[n], mac->paramlen[n], &tail);
+                }
+                text = NULL;
+                break;
+            }
+            case '%':
+                type = TOK_ID;
+                text = nasm_asprintf("..@%"PRIu64".%s", mac->unique, text+2);
+                break;
+            case '-':
+            case '+':
+            {
+                int cc;
+                unsigned long n;
+                char *ep;
+
+                text = NULL;
+
+                n = strtoul(t->text + 2, &ep, 10);
+                if (unlikely(*ep))
+                    goto invalid;
+
+                if (n && n < mac->nparam) {
+                    n = mmac_rotate(mac, n);
+                    tt = mac->params[n];
+                }
+                cc = find_cc(tt);
+                if (cc == -1) {
+                    nasm_nonfatal("macro parameter `%s' is not a condition code",
+                                  text);
+                    text = NULL;
+                    break;
+                }
+
+                type = TOK_ID;
+                if (text[1] == '-') {
+                    int ncc = inverse_ccs[cc];
+                    if (unlikely(ncc == -1)) {
+                        nasm_nonfatal("condition code `%s' is not invertible",
+                                      conditions[cc]);
+                        break;
+                    }
+                    cc = ncc;
+                }
+                text = nasm_strdup(conditions[cc]);
+                break;
+            }
+
+            invalid:
+                nasm_nonfatal("invalid macro parameter: `%s'", text);
+                text = NULL;
+                break;
+            }
+            break;
+        }
+
+        case TOK_PREPROC_Q:
+            if (mac) {
+                type = TOK_ID;
+                text = nasm_strdup(mac->iname);
+                change = true;
+            }
+            break;
+
+        case TOK_PREPROC_QQ:
+            if (mac) {
+                type = TOK_ID;
+                text = nasm_strdup(mac->name);
+                change = true;
+            }
+            break;
+
+        case TOK_INDIRECT:
+        {
+            Token *tt;
+
+            tt = tokenize(t->text);
+            tt = expand_mmac_params(tt);
+            tt = expand_smacro(tt);
+            /* Why dup_tlist() here? We should own tt... */
+            dup_tlist(tt, &tail);
+            text = NULL;
+            change = true;
+            break;
+        }
+
+        default:
+            change = false;
+            break;
+        }
+
+        if (change) {
             if (!text) {
                 delete_Token(t);
             } else {
                 *tail = t;
                 tail = &t->next;
-                t->type = type;
                 nasm_free(t->text);
-                t->text = text;
                 t->len = strlen(text);
+                t->type = type;
+                t->text = text;
             }
-            changed = true;
-            continue;
-        } else if (tline->type == TOK_INDIRECT) {
-            t = tline;
-            tline = tline->next;
-            tt = tokenize(t->text);
-            tt = expand_mmac_params(tt);
-            tt = expand_smacro(tt);
-            *tail = tt;
-            while (tt) {
-                tail = &tt->next;
-                tt = tt->next;
-            }
-            delete_Token(t);
             changed = true;
         } else {
-            t = *tail = tline;
-            tline = tline->next;
+            *tail = t;
             tail = &t->next;
         }
     }
+
     *tail = NULL;
 
     if (changed) {
@@ -4820,7 +4913,7 @@ static Token *expand_id(Token * tline)
  * to be called with tline->type == TOK_ID, so the putative macro
  * name is easy to find.
  */
-static MMacro *is_mmacro(Token * tline, Token *** params_array)
+static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***params_array)
 {
     MMacro *head, *m;
     Token **params;
@@ -4871,12 +4964,11 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
              */
             if (m->defaults && nparam < m->nparam_min + m->ndefs) {
                 params =
-                    nasm_realloc(params,
-                                 ((m->nparam_min + m->ndefs +
-                                   1) * sizeof(*params)));
+                    nasm_realloc(params, sizeof(*params) *
+                                 (m->nparam_min + m->ndefs + 2));
                 while (nparam < m->nparam_min + m->ndefs) {
-                    params[nparam] = m->defaults[nparam - m->nparam_min];
                     nparam++;
+                    params[nparam] = m->defaults[nparam - m->nparam_min];
                 }
             }
             /*
@@ -4886,15 +4978,10 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
              */
             if (m->plus && nparam > m->nparam_max)
                 nparam = m->nparam_max;
-            /*
-             * Then terminate the parameter list, and leave.
-             */
-            if (!params) {      /* need this special case */
-                params = nasm_malloc(sizeof(*params));
-                nparam = 0;
-            }
-            params[nparam] = NULL;
+
+            /* Done! */
             *params_array = params;
+            *nparamp = nparam;
             return m;
         }
         /*
@@ -4922,6 +5009,8 @@ static MMacro *is_mmacro(Token * tline, Token *** params_array)
     return NULL;
 }
 
+
+#if 0
 
 /*
  * Save MMacro invocation specific fields in
@@ -4966,6 +5055,7 @@ static void pop_mmacro(MMacro *m)
     }
 }
 
+#endif
 
 /*
  * Expand the multi-line macro call made by the given line, if
@@ -4976,19 +5066,20 @@ static int expand_mmacro(Token * tline)
 {
     Token *startline = tline;
     Token *label = NULL;
-    int dont_prepend = 0;
+    bool dont_prepend = false;
     Token **params, *t, *tt;
     MMacro *m;
     Line *l, *ll;
-    int i, nparam, *paramlen;
+    int i, *paramlen;
     const char *mname;
+    int nparam = 0;
 
     t = tline;
     skip_white_(t);
     /*    if (!tok_type_(t, TOK_ID))  Lino 02/25/02 */
     if (!tok_type_(t, TOK_ID) && !tok_type_(t, TOK_PREPROC_ID))
         return 0;
-    m = is_mmacro(t, &params);
+    m = is_mmacro(t, &nparam, &params);
     if (m) {
         mname = t->text;
     } else {
@@ -5004,12 +5095,12 @@ static int expand_mmacro(Token * tline)
         if (tok_type_(t, TOK_WHITESPACE))
             last = t, t = t->next;
         if (tok_is_(t, ":")) {
-            dont_prepend = 1;
+            dont_prepend = true;
             last = t, t = t->next;
             if (tok_type_(t, TOK_WHITESPACE))
                 last = t, t = t->next;
         }
-        if (!tok_type_(t, TOK_ID) || !(m = is_mmacro(t, &params)))
+        if (!tok_type_(t, TOK_ID) || !(m = is_mmacro(t, &nparam, &params)))
             return 0;
         last->next = NULL;
         mname = t->text;
@@ -5033,19 +5124,16 @@ static int expand_mmacro(Token * tline)
      * trailing whitespace, then stripping braces if they are
      * present.
      */
-    for (nparam = 0; params[nparam]; nparam++) ;
-    paramlen = nparam ? nasm_malloc(nparam * sizeof(*paramlen)) : NULL;
+    nasm_newn(paramlen, nparam+1);
 
-    for (i = 0; params[i]; i++) {
+    for (i = 1; (t = params[i]); i++) {
         int brace = 0;
-        int comma = (!m->plus || i < nparam - 1);
+        int comma = !m->plus || i < nparam;
 
-        t = params[i];
         skip_white_(t);
         if (tok_is_(t, "{"))
             t = t->next, brace++, comma = false;
         params[i] = t;
-        paramlen[i] = 0;
         while (t) {
             if (comma && t->type == TOK_OTHER && !strcmp(t->text, ","))
                 break;          /* ... because we have hit a comma */
@@ -5073,7 +5161,8 @@ static int expand_mmacro(Token * tline)
      * parameter tokens and macro-local tokens doesn't get done
      * until the single-line macro substitution process; this is
      * because delaying them allows us to change the semantics
-     * later through %rotate.
+     * later through %rotate and give the right semantics for
+     * nested mmacros.
      *
      * First, push an end marker on to istk->expansion, mark this
      * macro as in progress, and set up its invocation-specific
@@ -5088,12 +5177,15 @@ static int expand_mmacro(Token * tline)
      * Save the previous MMacro expansion in the case of
      * macro recursion
      */
+#if 0
     if (m->max_depth && m->in_progress)
         push_mmacro(m);
+#endif
 
     m->in_progress ++;
     m->params = params;
     m->iline = tline;
+    m->iname = nasm_strdup(mname);
     m->nparam = nparam;
     m->rotate = 0;
     m->paramlen = paramlen;
@@ -5101,51 +5193,33 @@ static int expand_mmacro(Token * tline)
     m->lineno = 0;
     m->condcnt = 0;
 
-    m->next_active = istk->mstk;
-    istk->mstk = m;
+    m->mstk = istk->mstk;
+    istk->mstk.mstk = istk->mstk.mmac = m;
 
     list_for_each(l, m->expansion) {
-        Token **tail;
-
         nasm_new(ll);
         ll->next = istk->expansion;
         istk->expansion = ll;
-        tail = &ll->first;
-
-        list_for_each(t, l->first) {
-            Token *x = t;
-            switch (t->type) {
-            case TOK_PREPROC_Q:
-                tt = *tail = new_Token(NULL, TOK_ID, mname, 0);
-                break;
-            case TOK_PREPROC_QQ:
-                tt = *tail = new_Token(NULL, TOK_ID, m->name, 0);
-                break;
-            case TOK_PREPROC_ID:
-                if (t->text[1] == '0' && t->text[2] == '0') {
-                    dont_prepend = -1;
-                    x = label;
-                    if (!x)
-                        continue;
-                }
-                /* fall through */
-            default:
-                tt = *tail = dup_Token(NULL, x);
-                break;
-            }
-            tail = &tt->next;
-        }
-        *tail = NULL;
+        ll->first = dup_tlist(l->first, NULL);
     }
 
     /*
-     * If we had a label, push it on as the first line of
+     * If we had a label, and this macro definition does not include
+     * a %00, push it on as the first line of, ot
      * the macro expansion.
      */
     if (label) {
-        if (dont_prepend < 0)
+        /*
+         * We had a label. If this macro contains an %00 parameter,
+         * save the value as a special parameter (which is what it
+         * is), otherwise push it as the first line of the macro
+         * expansion.
+         */
+        if (m->capture_label) {
+            params[0] = dup_Token(NULL, label);
+            paramlen[0] = 1;
             free_tlist(startline);
-        else {
+       } else {
             nasm_new(ll);
             ll->finishes = NULL;
             ll->next = istk->expansion;
@@ -5186,19 +5260,13 @@ static void pp_verror(errflags severity, const char *fmt, va_list arg)
 
     /* This doesn't make sense with the macro stack unwinding */
     if (0) {
-        MMacro *mmac = NULL;
         int32_t delta = 0;
 
         /* get %macro name */
-        if (!(severity & ERR_NOFILE) && istk && istk->mstk) {
-            mmac = istk->mstk;
-            /* but %rep blocks should be skipped */
-            while (mmac && !mmac->name)
-                mmac = mmac->next_active, delta++;
-        }
-
-        if (mmac) {
+        if (!(severity & ERR_NOFILE) && istk && istk->mstk.mmac) {
+            MMacro *mmac = istk->mstk.mmac;
             char *buf;
+
             nasm_set_verror(real_verror);
             buf = nasm_vasprintf(fmt, arg);
             nasm_error(severity, "(%s:%"PRId32") %s",
@@ -5396,19 +5464,20 @@ static Token tok_pop;           /* Dummy token placeholder */
 
 static Token *pp_tokline(void)
 {
-    Token *tline, *dtline;
-
     while (true) {
+        Line *l = istk->expansion;
+        Token *tline = NULL;
+        Token *dtline;
+
         /*
          * Fetch a tokenized line, either from the macro-expansion
          * buffer or from the input file.
          */
         tline = NULL;
-        while (istk->expansion && istk->expansion->finishes) {
-            Line *l = istk->expansion;
-            if (!l->finishes->name && l->finishes->in_progress > 1) {
-                Line *ll;
+        while (l && l->finishes) {
+            MMacro *fm = l->finishes;
 
+            if (!fm->name && fm->in_progress > 1) {
                 /*
                  * This is a macro-end marker for a macro with no
                  * name, which means it's not really a macro at all
@@ -5422,14 +5491,13 @@ static Token *pp_tokline(void)
                  * marker: we'd only have to generate another one
                  * if we did.
                  */
-                l->finishes->in_progress--;
-                list_for_each(l, l->finishes->expansion) {
+                fm->in_progress--;
+                list_for_each(l, fm->expansion) {
                     Token *t, *tt, **tail;
+                    Line *ll;
 
-                    ll = nasm_malloc(sizeof(Line));
+                    nasm_new(ll);
                     ll->next = istk->expansion;
-                    ll->finishes = NULL;
-                    ll->first = NULL;
                     tail = &ll->first;
 
                     list_for_each(t, l->first) {
@@ -5440,7 +5508,10 @@ static Token *pp_tokline(void)
                     }
                     istk->expansion = ll;
                 }
+                break;
             } else {
+                MMacro *m = istk->mstk.mstk;
+
                 /*
                  * Check whether a `%rep' was started and not ended
                  * within this macro expansion. This can happen and
@@ -5451,64 +5522,64 @@ static Token *pp_tokline(void)
                 if (defining) {
                     if (defining->name)
                         nasm_panic("defining with name in expansion");
-                    else if (istk->mstk->name)
+                    else if (m->name)
                         nasm_fatal("`%%rep' without `%%endrep' within"
-				   " expansion of macro `%s'",
-				   istk->mstk->name);
+				   " expansion of macro `%s'", m->name);
                 }
 
                 /*
                  * FIXME:  investigate the relationship at this point between
-                 * istk->mstk and l->finishes
+                 * istk->mstk.mstk and fm
                  */
-                {
-                    MMacro *m = istk->mstk;
-                    istk->mstk = m->next_active;
-                    if (m->name) {
+                istk->mstk = m->mstk;
+                if (m->name) {
+                    /*
+                     * This was a real macro call, not a %rep, and
+                     * therefore the parameter information needs to
+                     * be freed and the iteration count/nesting
+                     * depth adjusted.
+                     */
+
+                    if (!--mmacro_deadman.levels) {
                         /*
-                         * This was a real macro call, not a %rep, and
-                         * therefore the parameter information needs to
-                         * be freed and the iteration count/nesting
-                         * depth adjusted.
+                         * If all mmacro processing done,
+                         * clear all counters and the deadman
+                         * message trigger.
                          */
-
-                        if (!--mmacro_deadman.levels) {
-                            /*
-                             * If all mmacro processing done,
-                             * clear all counters and the deadman
-                             * message trigger.
-                             */
-                            nasm_zero(mmacro_deadman); /* Clear all counters */
-                        }
-
-                        if (m->prev) {
-                            pop_mmacro(m);
-                            l->finishes->in_progress --;
-                        } else {
-                            nasm_free(m->params);
-                            free_tlist(m->iline);
-                            nasm_free(m->paramlen);
-                            l->finishes->in_progress = 0;
-                        }
+                        nasm_zero(mmacro_deadman); /* Clear all counters */
                     }
 
-                    /*
-                     * FIXME It is incorrect to always free_mmacro here.
-                     * It leads to usage-after-free.
-                     *
-                     * https://bugzilla.nasm.us/show_bug.cgi?id=3392414
-                     */
 #if 0
-                    else
-                        free_mmacro(m);
+                    if (m->prev) {
+                        pop_mmacro(m);
+                        fm->in_progress --;
+                    } else
 #endif
+                    {
+                        nasm_free(m->params);
+                        free_tlist(m->iline);
+                        nasm_free(m->paramlen);
+                        fm->in_progress = 0;
+                    }
                 }
-                istk->expansion = l->next;
-                nasm_free(l);
-                lfmt->downlevel(LIST_MACRO);
-                return &tok_pop;
+
+                /*
+                 * FIXME It is incorrect to always free_mmacro here.
+                 * It leads to usage-after-free.
+                 *
+                 * https://bugzilla.nasm.us/show_bug.cgi?id=3392414
+                 */
+#if 0
+                else
+                    free_mmacro(m);
+#endif
             }
+            istk->expansion = l->next;
+            nasm_free(l);
+            lfmt->downlevel(LIST_MACRO);
+            return &tok_pop;
         }
+
         do {                    /* until we get a line we can use */
             char *line;
 
@@ -5516,10 +5587,11 @@ static Token *pp_tokline(void)
                 Line *l = istk->expansion;
                 int32_t lineno;
 
-                if (istk->mstk) {
-                    istk->mstk->lineno++;
-                    if (istk->mstk->fname)
-                        lineno = istk->mstk->lineno + istk->mstk->xline;
+                if (istk->mstk.mstk) {
+                    istk->mstk.mstk->lineno++;
+                    if (istk->mstk.mstk->fname)
+                        lineno = istk->mstk.mstk->lineno +
+                            istk->mstk.mstk->xline;
                     else
                         lineno = 0; /* Defined at init time or builtin */
                 } else {
@@ -5570,7 +5642,7 @@ static Token *pp_tokline(void)
          * anything.
          */
         if (!defining && !(istk->conds && !emitting(istk->conds->state))
-            && !(istk->mstk && !istk->mstk->in_progress)) {
+            && !(istk->mstk.mstk && !istk->mstk.mstk->in_progress)) {
             tline = expand_mmac_params(tline);
         }
 
@@ -5586,11 +5658,26 @@ static Token *pp_tokline(void)
              * at all, and just
              * shove the tokenized line on to the macro definition.
              */
+            MMacro *mmac = defining->dstk.mmac;
+
             Line *l = nasm_malloc(sizeof(Line));
             l->next = defining->expansion;
             l->first = tline;
             l->finishes = NULL;
             defining->expansion = l;
+
+            /*
+             * Remember if this mmacro expansion contains %00:
+             * if it does, we will have to handle leading labels
+             * specially.
+             */
+            if (mmac) {
+                const Token *t;
+                list_for_each(t, tline) {
+                    if (t->type == TOK_PREPROC_ID && !strcmp(t->text, "%00"))
+                        mmac->capture_label = true;
+                }
+            }
         } else if (istk->conds && !emitting(istk->conds->state)) {
             /*
              * We're in a non-emitting branch of a condition block.
@@ -5599,7 +5686,7 @@ static Token *pp_tokline(void)
              * directive so we keep our place correctly.
              */
             free_tlist(tline);
-        } else if (istk->mstk && !istk->mstk->in_progress) {
+        } else if (istk->mstk.mstk && !istk->mstk.mstk->in_progress) {
             /*
              * We're in a %rep block which has been terminated, so
              * we're walking through to the %endrep without
@@ -5643,7 +5730,7 @@ static char *pp_getline(void)
         }
     }
 
-    if (list_option('e') && !istk->nolist && line && line[0]) {
+    if (list_option('e') && istk && !istk->nolist && line && line[0]) {
         char *buf = nasm_strcat(" ;;; ", line);
         lfmt->line(LIST_MACRO, -1, buf);
         nasm_free(buf);
@@ -5822,8 +5909,8 @@ static void pp_list_one_macro(MMacro *m, errflags severity)
     if (!m)
 	return;
 
-    /* We need to print the next_active list in reverse order */
-    pp_list_one_macro(m->next_active, severity);
+    /* We need to print the mstk.mmac list in reverse order */
+    pp_list_one_macro(m->mstk.mmac, severity);
 
     if (m->name && !m->nolist) {
 	src_set(m->xline + m->lineno, m->fname);
@@ -5839,7 +5926,7 @@ static void pp_error_list_macros(errflags severity)
     saved = src_where();
 
     if (istk)
-        pp_list_one_macro(istk->mstk, severity);
+        pp_list_one_macro(istk->mstk.mmac, severity);
 
     src_update(saved);
 }
