@@ -5138,7 +5138,6 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***params_array)
                 memcpy(&params[nparam+1], &m->defaults[nparam+1-m->nparam_min],
                        (newnparam - nparam) * sizeof(*params));
                 nparam = newnparam;
-                params[nparam+1] = NULL;
             }
             /*
              * If we've gone over the maximum parameter count (and
@@ -5147,6 +5146,12 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***params_array)
              */
             if (m->plus && nparam > m->nparam_max)
                 nparam = m->nparam_max;
+
+            /*
+             * If nparam was adjusted above, make sure the list is still
+             * NULL-terminated.
+             */
+            params[nparam+1] = NULL;
 
             /* Done! */
             *params_array = params;
