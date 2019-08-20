@@ -527,7 +527,7 @@ static Token *delete_Token(Token * t);
  * Macros for safe checking of token pointers, avoid *(NULL)
  */
 #define tok_type_(x,t)  ((x) && (x)->type == (t))
-#define skip_white_(x)  if (tok_type_((x), TOK_WHITESPACE)) (x)=(x)->next
+#define skip_white_(x)  ((x) = (tok_type_((x), TOK_WHITESPACE) ? (x)->next : (x)))
 #define tok_is_(x,v)    (tok_type_((x), TOK_OTHER) && !strcmp((x)->text,(v)))
 #define tok_isnt_(x,v)  ((x) && ((x)->type!=TOK_OTHER || strcmp((x)->text,(v))))
 
@@ -1869,13 +1869,12 @@ static void count_mmac_params(Token * t, int *nparamp, Token ***paramsp)
     params = nasm_malloc(paramsize * sizeof(*params));
     params[0] = NULL;
 
-    while (t) {
+    while (skip_white_(t)) {
         /* 2 slots for captured label and NULL */
         if (nparam+2 >= paramsize) {
             paramsize += PARAM_DELTA;
             params = nasm_realloc(params, sizeof(*params) * paramsize);
         }
-        skip_white_(t);
         brace = 0;
         if (tok_is_(t, "{"))
             brace++;
@@ -2508,7 +2507,7 @@ static SMacro *define_smacro(const char *mname, bool casesense,
         if (tmpl->expand)
             smac->expand = tmpl->expand;
     }
-    if (list_option('m')) {
+    if (list_option('s')) {
         list_smacro_def((smac->alias ? PP_DEFALIAS : PP_DEFINE)
                         + !casesense, ctx, smac);
     }
@@ -2550,7 +2549,7 @@ static void undef_smacro(const char *mname, bool undefalias)
                         s->in_progress = false;
                     }
                 } else {
-                    if (list_option('m'))
+                    if (list_option('d'))
                         list_smacro_def(s->alias ? PP_UNDEFALIAS : PP_UNDEF,
                                         ctx, s);
                     *sp = s->next;
@@ -5084,13 +5083,19 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***params_array)
 
     /*
      * Efficiency: first we see if any macro exists with the given
-     * name. If not, we can return NULL immediately. _Then_ we
+     * name which isn't already excluded by macro cycle removal.
+     * (The cycle removal test here helps optimize the case of wrapping
+     * instructions, and is cheap to do here.)
+     *
+     * If not, we can return NULL immediately. _Then_ we
      * count the parameters, and then we look further along the
      * list if necessary to find the proper MMacro.
      */
-    list_for_each(m, head)
-        if (!mstrcmp(m->name, tline->text, m->casesense))
-            break;
+    list_for_each(m, head) {
+        if (!mstrcmp(m->name, tline->text, m->casesense) &&
+            (m->in_progress != 1 || m->max_depth > 0))
+            break;              /* Found something that needs consideration */
+    }
     if (!m)
         return NULL;
 
@@ -5124,13 +5129,12 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***params_array)
              * parameters to the end of our list if necessary.
              */
             if (m->defaults && nparam < m->nparam_min + m->ndefs) {
-                params =
-                    nasm_realloc(params, sizeof(*params) *
-                                 (m->nparam_min + m->ndefs + 2));
-                while (nparam < m->nparam_min + m->ndefs) {
-                    nparam++;
-                    params[nparam] = m->defaults[nparam - m->nparam_min];
-                }
+                int newnparam = m->nparam_min + m->ndefs;
+                params = nasm_realloc(params, sizeof(*params) * (newnparam+2));
+                memcpy(&params[nparam+1], &m->defaults[nparam+1-m->nparam_min],
+                       (newnparam - nparam) * sizeof(*params));
+                nparam = newnparam;
+                params[nparam+1] = NULL;
             }
             /*
              * If we've gone over the maximum parameter count (and
@@ -5219,6 +5223,57 @@ static void pop_mmacro(MMacro *m)
 #endif
 
 /*
+ * List an mmacro call with arguments (-La option)
+ */
+static void list_mmacro_call(const MMacro *m)
+{
+    const char prefix[] = " ;;; [macro] ";
+    size_t namelen, size;
+    char *buf, *p;
+    unsigned int i;
+    const Token *t;
+
+    namelen = strlen(m->iname);
+    size = namelen + sizeof(prefix); /* Includes final null (from prefix) */
+
+    for (i = 1; i <= m->nparam; i++) {
+        int j = 0;
+        size += 3;              /* Braces and space/comma */
+        list_for_each(t, m->params[i]) {
+            if (j++ >= m->paramlen[i])
+                break;
+            size += (t->type == TOK_WHITESPACE) ? 1 : t->len;
+        }
+    }
+
+    buf = p = nasm_malloc(size);
+    p = mempcpy(p, prefix, sizeof(prefix) - 1);
+    p = mempcpy(p, m->iname, namelen);
+    *p++ = ' ';
+
+    for (i = 1; i <= m->nparam; i++) {
+        int j = 0;
+        *p++ = '{';
+        list_for_each(t, m->params[i]) {
+            if (j++ >= m->paramlen[i])
+                break;
+            if (!t->text) {
+                if (t->type == TOK_WHITESPACE)
+                    *p++ = ' ';
+            } else {
+                p = mempcpy(p, t->text, t->len);
+            }
+        }
+        *p++ = '}';
+        *p++ = ',';
+    }
+
+    *--p = '\0';                /* Replace last delimeter with null */
+    lfmt->line(LIST_MACRO, -1, buf);
+    nasm_free(buf);
+}
+
+/*
  * Expand the multi-line macro call made by the given line, if
  * there is one to be expanded. If there is, push the expansion on
  * istk->expansion and return 1. Otherwise return 0.
@@ -5287,20 +5342,24 @@ static int expand_mmacro(Token * tline)
      */
     nasm_newn(paramlen, nparam+1);
 
+    nasm_assert(params[nparam+1] == NULL);
+
     for (i = 1; (t = params[i]); i++) {
         int brace = 0;
-        int comma = !m->plus || i < nparam;
+        bool comma = !m->plus || i < nparam;
 
         skip_white_(t);
         if (tok_is_(t, "{"))
             t = t->next, brace++, comma = false;
         params[i] = t;
         while (t) {
-            if (comma && t->type == TOK_OTHER && !strcmp(t->text, ","))
-                break;          /* ... because we have hit a comma */
-            if (comma && t->type == TOK_WHITESPACE
-                && tok_is_(t->next, ","))
-                break;          /* ... or a space then a comma */
+            if (comma) {
+                /* Check if we hit a comma that ends this argument */
+                if (tok_is_(t, ","))
+                    break;
+                else if (t->type == TOK_WHITESPACE && tok_is_(t->next, ","))
+                    break;
+            }
             if (brace && t->type == TOK_OTHER) {
                 if (t->text[0] == '{')
                     brace++;            /* ... or a nested opening brace */
@@ -5395,6 +5454,9 @@ static int expand_mmacro(Token * tline)
     }
 
     lfmt->uplevel(m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO, 0);
+
+    if (list_option('m') && !m->nolist)
+        list_mmacro_call(m);
 
     return 1;
 }
