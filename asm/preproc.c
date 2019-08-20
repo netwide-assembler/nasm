@@ -104,6 +104,7 @@ typedef Token *(*ExpandSMacro)(const SMacro *s, Token **params, int nparams);
  * Store the definition of a single-line macro.
  */
 enum sparmflags {
+    SPARM_PLAIN   = 0,
     SPARM_EVAL    = 1,      /* Evaluate as a numeric expression (=) */
     SPARM_STR     = 2,      /* Convert to quoted string ($) */
     SPARM_NOSTRIP = 4,      /* Don't strip braces (!) */
@@ -245,6 +246,7 @@ enum pp_token_type {
     TOK_INTERNAL_STRING,
     TOK_PREPROC_Q, TOK_PREPROC_QQ,
     TOK_PASTE,              /* %+ */
+    TOK_COND_COMMA,         /* %, */
     TOK_INDIRECT,           /* %[...] */
     TOK_SMAC_START_PARAMS,  /* MUST BE LAST IN THE LIST!!! */
     TOK_MAX = INT_MAX       /* Keep compiler from reducing the range */
@@ -745,7 +747,7 @@ static void free_smacro_members(SMacro *s)
 {
     if (s->params) {
         int i;
-        for (i = 0; s->nparam; i++)
+        for (i = 0; i < s->nparam; i++)
             nasm_free(s->params[i].name);
         nasm_free(s->params);
     }
@@ -1134,6 +1136,9 @@ static Token *tokenize(char *line)
                     /* %! without string or identifier */
                     type = TOK_OTHER; /* Legacy behavior... */
                 }
+            } else if (*p == ',') {
+                p++;
+                type = TOK_COND_COMMA;
             } else if (nasm_isidchar(*p) ||
                        ((*p == '!' || *p == '%' || *p == '$') &&
                         nasm_isidchar(p[1]))) {
@@ -1817,7 +1822,7 @@ smacro_defined(Context * ctx, const char *name, int nparam, SMacro ** defn,
     while (m) {
         if (!mstrcmp(m->name, name, m->casesense && nocase) &&
             (nparam <= 0 || m->nparam == 0 || nparam == m->nparam ||
-             (m->greedy && nparam > m->nparam))) {
+             (m->greedy && nparam >= m->nparam-1))) {
             if (defn) {
                 *defn = (nparam == m->nparam || nparam == -1) ? m : NULL;
             }
@@ -2230,6 +2235,9 @@ list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
         size += context_len;
     }
 
+    list_for_each(t, m->expansion)
+        size += t->text ? t->len : 1;
+
     if (m->nparam) {
         /*
          * Space for ( and either , or ) around each
@@ -2238,9 +2246,8 @@ list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
         int i;
 
         size += 1 + 4 * m->nparam;
-        for (i = 0; i < m->nparam; i++) {
+        for (i = 0; i < m->nparam; i++)
             size += m->params[i].namelen;
-        }
     }
 
     def = nasm_malloc(size);
@@ -2297,9 +2304,8 @@ list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
 /*
  * Parse smacro arguments, return argument count. If the tmpl argument
  * is set, set the nparam, greedy and params field in the template.
- * **tpp is updated to point to the first token after the
- * prototype after any whitespace and *tpp to the pointer to it, if
- * advanced.
+ * *tpp is updated to point to the pointer to the first token after the
+ * prototype.
  *
  * The text values from any argument tokens are "stolen" and the
  * corresponding text fields set to NULL.
@@ -2316,8 +2322,9 @@ static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
 
     while (t && t->type == TOK_WHITESPACE) {
         tn = &t->next;
-        t = t->next;
+        t = *tn;
     }
+
     if (!tok_is_(t, "("))
         goto finish;
 
@@ -2333,18 +2340,22 @@ static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
         nasm_newn(params, sparam);
     }
 
+    /* Skip leading paren */
+    tn = &t->next;
+    t = *tn;
+
     name = NULL;
     flags = 0;
     err = done = greedy = false;
 
     while (!done) {
         if (!t || !t->type) {
-            nasm_nonfatal("parameter identifier expected");
+            if (name || flags)
+                nasm_nonfatal("`)' expected to terminate macro template");
+            else
+                nasm_nonfatal("parameter identifier expected");
             break;
         }
-
-        tn = &t->next;
-        t = t->next;
 
         switch (t->type) {
         case TOK_ID:
@@ -2382,11 +2393,11 @@ static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
                         name->text = NULL;
                     }
                     params[nparam].flags = flags;
-                    nparam++;
                 }
+                nparam++;
                 name = NULL;
                 flags = 0;
-                done = t->text[1] == ')';
+                done = t->text[0] == ')';
                 break;
             default:
                 goto bad;
@@ -2404,10 +2415,10 @@ static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
             }
             break;
         }
-    }
 
-    if (!done)
-        nasm_nonfatal("`)' expected to terminate macro template");
+        tn = &t->next;
+        t = *tn;
+    }
 
 finish:
     while (t && t->type == TOK_WHITESPACE) {
@@ -2497,11 +2508,8 @@ static SMacro *define_smacro(const char *mname, bool casesense,
             smac->expand = tmpl->expand;
     }
     if (list_option('m')) {
-        static const enum preproc_token op[2][2] = {
-            { PP_DEFINE,   PP_IDEFINE },
-            { PP_DEFALIAS, PP_IDEFALIAS }
-        };
-        list_smacro_def(op[!!smac->alias][casesense], ctx, smac);
+        list_smacro_def((smac->alias ? PP_DEFALIAS : PP_DEFINE)
+                        + !casesense, ctx, smac);
     }
     return smac;
 
@@ -4487,6 +4495,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
     int i;
     Token *t, *tup, *ttail;
     int nparam = 0;
+    bool cond_comma;
 
     if (!tline)
         return false;           /* Empty line, nothing to do */
@@ -4560,6 +4569,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
 
         paren = 1;
         nparam = 1;
+        brackets = 0;
         t = tline;              /* tline points to leading ( */
 
         while (paren) {
@@ -4570,10 +4580,10 @@ static SMacro *expand_one_smacro(Token ***tpp)
                 goto not_a_macro;
             }
 
-            if (tline->type != TOK_OTHER || tline->len != 1)
+            if (t->type != TOK_OTHER || t->len != 1)
                 continue;
 
-            switch (tline->text[0]) {
+            switch (t->text[0]) {
             case ',':
                 if (!brackets)
                     nparam++;
@@ -4624,9 +4634,9 @@ static SMacro *expand_one_smacro(Token ***tpp)
             }
 
             if (!mstrcmp(m->name, mname, m->casesense)) {
-                if (m->nparam == nparam)
+                if (nparam == m->nparam)
                     break;      /* It's good */
-                if (m->greedy && m->nparam < nparam)
+                if (m->greedy && nparam >= m->nparam-1)
                     break;      /* Also good */
             }
             m = m->next;
@@ -4639,8 +4649,6 @@ static SMacro *expand_one_smacro(Token ***tpp)
     /* Expand the macro */
     m->in_progress = true;
 
-    nparam = m->nparam;         /* If greedy, some parameters might be joint */
-
     if (nparam) {
         /* Extract parameters */
         Token **phead, **pep;
@@ -4652,7 +4660,6 @@ static SMacro *expand_one_smacro(Token ***tpp)
         enum sparmflags flags;
 
         nparam = m->nparam;
-
         paren = 1;
         nasm_newn(params, nparam);
         i = 0;
@@ -4754,8 +4761,6 @@ static SMacro *expand_one_smacro(Token ***tpp)
             }
         }
 
-        nasm_assert(i == nparam);
-
         /*
          * Possible further processing of parameters. Note that the
          * ordering matters here.
@@ -4812,6 +4817,8 @@ static SMacro *expand_one_smacro(Token ***tpp)
 
     tup = NULL;
     ttail = NULL;     /* Pointer to the last token of the expansion */
+    cond_comma = false;
+
     while (t) {
         enum pp_token_type type = t->type;
         Token *tnext = t->next;
@@ -4825,6 +4832,11 @@ static SMacro *expand_one_smacro(Token ***tpp)
             t->text = nasm_strdup(type == TOK_PREPROC_QQ ? m->name : mname);
             t->len = nasm_last_string_len();
             t->next = tline;
+            break;
+
+        case TOK_COND_COMMA:
+            delete_Token(t);
+            t = cond_comma ? new_Token(tline, TOK_OTHER, ",", 1) : NULL;
             break;
 
         case TOK_ID:
@@ -4849,12 +4861,15 @@ static SMacro *expand_one_smacro(Token ***tpp)
                 t = NULL;
                 tup = tnext;
                 tnext = dup_tlist_reverse(params[param], NULL);
+                cond_comma = false;
             } else {
                 t->next = tline;
             }
         }
 
         if (t) {
+            if (t->type != TOK_WHITESPACE)
+                cond_comma = true;
             tline = t;
             if (!ttail)
                 ttail = t;
