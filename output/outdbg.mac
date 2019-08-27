@@ -36,7 +36,7 @@
 ; for the .obj format.
 ;
 OUT: dbg
-%define __SECT__ [section .text]
+%define __?SECT?__ [section .text]
 %imacro group 1+.nolist
 [group %1]
 %endmacro
@@ -49,5 +49,5 @@ OUT: dbg
 %imacro import 1+.nolist
  %pragma dbg import %1
 %endmacro
-%macro __NASM_CDecl__ 1
+%macro __?NASM_CDecl?__ 1
 %endmacro

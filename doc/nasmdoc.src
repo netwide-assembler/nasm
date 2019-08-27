@@ -1558,17 +1558,17 @@ operands to \c{DW}, and so forth.
 
 \S{unicode} \I{UTF-16}\I{UTF-32}\i{Unicode} Strings
 
-The special operators \i\c{__utf16__}, \i\c{__utf16le__},
-\i\c{__utf16be__}, \i\c{__utf32__}, \i\c{__utf32le__} and
-\i\c{__utf32be__} allows definition of Unicode strings.  They take a
+The special operators \i\c{__?utf16?__}, \i\c{__?utf16le?__},
+\i\c{__?utf16be?__}, \i\c{__?utf32?__}, \i\c{__?utf32le?__} and
+\i\c{__?utf32be?__} allows definition of Unicode strings.  They take a
 string in UTF-8 format and converts it to UTF-16 or UTF-32,
 respectively.  Unless the \c{be} forms are specified, the output is
 littleendian.
 
 For example:
 
-\c %define u(x) __utf16__(x)
-\c %define w(x) __utf32__(x)
+\c %define u(x) __?utf16?__(x)
+\c %define w(x) __?utf32?__(x)
 \c
 \c       dw u('C:\WINDOWS'), 0       ; Pathname in UTF-16
 \c       dd w(`A + B = \u206a`), 0   ; String in UTF-32
@@ -1581,10 +1581,10 @@ context.
 
 \i{Floating-point} constants are acceptable only as arguments to
 \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, and \i\c{DO}, or as
-arguments to the special operators \i\c{__float8__},
-\i\c{__float16__}, \i\c{__float32__}, \i\c{__float64__},
-\i\c{__float80m__}, \i\c{__float80e__}, \i\c{__float128l__}, and
-\i\c{__float128h__}.
+arguments to the special operators \i\c{__?float8?__},
+\i\c{__?float16?__}, \i\c{__?float32?__}, \i\c{__?float64?__},
+\i\c{__?float80m?__}, \i\c{__?float80e?__}, \i\c{__?float128l?__}, and
+\i\c{__?float128h?__}.
 
 Floating-point constants are expressed in the traditional form:
 digits, then a period, then optionally more digits, then optionally an
@@ -1626,15 +1626,15 @@ called a "\i{minifloat}."
 The special operators are used to produce floating-point numbers in
 other contexts.  They produce the binary representation of a specific
 floating-point number as an integer, and can use anywhere integer
-constants are used in an expression.  \c{__float80m__} and
-\c{__float80e__} produce the 64-bit mantissa and 16-bit exponent of an
-80-bit floating-point number, and \c{__float128l__} and
-\c{__float128h__} produce the lower and upper 64-bit halves of a 128-bit
+constants are used in an expression.  \c{__?float80m?__} and
+\c{__?float80e?__} produce the 64-bit mantissa and 16-bit exponent of an
+80-bit floating-point number, and \c{__?float128l?__} and
+\c{__?float128h?__} produce the lower and upper 64-bit halves of a 128-bit
 floating-point number, respectively.
 
 For example:
 
-\c       mov    rax,__float64__(3.141592653589793238462)
+\c       mov    rax,__?float64?__(3.141592653589793238462)
 
 ... would assign the binary representation of pi as a 64-bit floating
 point number into \c{RAX}.  This is exactly equivalent to:
@@ -1651,13 +1651,13 @@ do floating arithmetic it would have to include its own complete set
 of floating-point routines, which would significantly increase the
 size of the assembler for very little benefit.
 
-The special tokens \i\c{__Infinity__}, \i\c{__QNaN__} (or
-\i\c{__NaN__}) and \i\c{__SNaN__} can be used to generate
+The special tokens \i\c{__?Infinity?__}, \i\c{__?QNaN?__} (or
+\i\c{__?NaN?__}) and \i\c{__?SNaN?__} can be used to generate
 \I{infinity}infinities, quiet \i{NaN}s, and signalling NaNs,
 respectively.  These are normally used as macros:
 
-\c %define Inf __Infinity__
-\c %define NaN __QNaN__
+\c %define Inf __?Infinity?__
+\c %define NaN __?QNaN?__
 \c
 \c       dq    +1.5, -Inf, NaN         ; Double-precision constants
 
@@ -2104,9 +2104,9 @@ where macro expansion would otherwise not occur, including in the
 names other macros.  For example, if you have a set of macros named
 \c{Foo16}, \c{Foo32} and \c{Foo64}, you could write:
 
-\c	mov ax,Foo%[__BITS__]	; The Foo value
+\c	mov ax,Foo%[__?BITS?__]	; The Foo value
 
-to use the builtin macro \c{__BITS__} (see \k{bitsm}) to automatically
+to use the builtin macro \c{__?BITS?__} (see \k{bitsm}) to automatically
 select between them.  Similarly, the two statements:
 
 \c %xdefine Bar		Quux	; Expands due to %xdefine
@@ -3756,24 +3756,24 @@ described here.
 
 \S{stdmacver} \i{NASM Version} Macros
 
-The single-line macros \i\c{__NASM_MAJOR__}, \i\c{__NASM_MINOR__},
-\i\c{__NASM_SUBMINOR__} and \i\c{___NASM_PATCHLEVEL__} expand to the
+The single-line macros \i\c{__?NASM_MAJOR?__}, \i\c{__?NASM_MINOR?__},
+\i\c{__?NASM_SUBMINOR?__} and \i\c{__?_NASM_PATCHLEVEL?__} expand to the
 major, minor, subminor and patch level parts of the \i{version
 number of NASM} being used. So, under NASM 0.98.32p1 for
-example, \c{__NASM_MAJOR__} would be defined to be 0, \c{__NASM_MINOR__}
-would be defined as 98, \c{__NASM_SUBMINOR__} would be defined to 32,
-and \c{___NASM_PATCHLEVEL__} would be defined as 1.
+example, \c{__?NASM_MAJOR?__} would be defined to be 0, \c{__?NASM_MINOR?__}
+would be defined as 98, \c{__?NASM_SUBMINOR?__} would be defined to 32,
+and \c{__?_NASM_PATCHLEVEL?__} would be defined as 1.
 
-Additionally, the macro \i\c{__NASM_SNAPSHOT__} is defined for
+Additionally, the macro \i\c{__?NASM_SNAPSHOT?__} is defined for
 automatically generated snapshot releases \e{only}.
 
 
-\S{stdmacverid} \i\c{__NASM_VERSION_ID__}: \i{NASM Version ID}
+\S{stdmacverid} \i\c{__?NASM_VERSION_ID?__}: \i{NASM Version ID}
 
-The single-line macro \c{__NASM_VERSION_ID__} expands to a dword integer
+The single-line macro \c{__?NASM_VERSION_ID?__} expands to a dword integer
 representing the full version number of the version of nasm being used.
-The value is the equivalent to \c{__NASM_MAJOR__}, \c{__NASM_MINOR__},
-\c{__NASM_SUBMINOR__} and \c{___NASM_PATCHLEVEL__} concatenated to
+The value is the equivalent to \c{__?NASM_MAJOR?__}, \c{__?NASM_MINOR?__},
+\c{__?NASM_SUBMINOR?__} and \c{__?_NASM_PATCHLEVEL?__} concatenated to
 produce a single doubleword. Hence, for 0.98.32p1, the returned number
 would be equivalent to:
 
@@ -3788,29 +3788,29 @@ line is used just to give an indication of the order that the separate
 values will be present in memory.
 
 
-\S{stdmacverstr} \i\c{__NASM_VER__}: \i{NASM Version string}
+\S{stdmacverstr} \i\c{__?NASM_VER?__}: \i{NASM Version string}
 
-The single-line macro \c{__NASM_VER__} expands to a string which defines
+The single-line macro \c{__?NASM_VER?__} expands to a string which defines
 the version number of nasm being used. So, under NASM 0.98.32 for example,
 
-\c         db      __NASM_VER__
+\c         db      __?NASM_VER?__
 
 would expand to
 
 \c         db      "0.98.32"
 
 
-\S{fileline} \i\c{__FILE__} and \i\c{__LINE__}: File Name and Line Number
+\S{fileline} \i\c{__?FILE?__} and \i\c{__?LINE?__}: File Name and Line Number
 
 Like the C preprocessor, NASM allows the user to find out the file
 name and line number containing the current instruction. The macro
-\c{__FILE__} expands to a string constant giving the name of the
+\c{__?FILE?__} expands to a string constant giving the name of the
 current input file (which may change through the course of assembly
-if \c{%include} directives are used), and \c{__LINE__} expands to a
+if \c{%include} directives are used), and \c{__?LINE?__} expands to a
 numeric constant giving the current line number in the input file.
 
 These macros could be used, for example, to communicate debugging
-information to a macro, since invoking \c{__LINE__} inside a macro
+information to a macro, since invoking \c{__?LINE?__} inside a macro
 definition (either single-line or multi-line) will return the line
 number of the macro \e{call}, rather than \e{definition}. So to
 determine where in a piece of code a crash is occurring, for
@@ -3821,7 +3821,7 @@ here'. You could then write a macro
 \c %macro  notdeadyet 0
 \c
 \c         push    eax
-\c         mov     eax,__LINE__
+\c         mov     eax,__?LINE?__
 \c         call    stillhere
 \c         pop     eax
 \c
@@ -3831,34 +3831,34 @@ and then pepper your code with calls to \c{notdeadyet} until you
 find the crash point.
 
 
-\S{bitsm} \i\c{__BITS__}: Current BITS Mode
+\S{bitsm} \i\c{__?BITS?__}: Current BITS Mode
 
-The \c{__BITS__} standard macro is updated every time that the BITS mode is
+The \c{__?BITS?__} standard macro is updated every time that the BITS mode is
 set using the \c{BITS XX} or \c{[BITS XX]} directive, where XX is a valid mode
-number of 16, 32 or 64. \c{__BITS__} receives the specified mode number and
+number of 16, 32 or 64. \c{__?BITS?__} receives the specified mode number and
 makes it globally available. This can be very useful for those who utilize
 mode-dependent macros.
 
-\S{ofmtm} \i\c{__OUTPUT_FORMAT__}: Current Output Format
+\S{ofmtm} \i\c{__?OUTPUT_FORMAT?__}: Current Output Format
 
-The \c{__OUTPUT_FORMAT__} standard macro holds the current output
+The \c{__?OUTPUT_FORMAT?__} standard macro holds the current output
 format name, as given by the \c{-f} option or NASM's default. Type
 \c{nasm -hf} for a list.
 
-\c %ifidn __OUTPUT_FORMAT__, win32
+\c %ifidn __?OUTPUT_FORMAT?__, win32
 \c  %define NEWLINE 13, 10
-\c %elifidn __OUTPUT_FORMAT__, elf32
+\c %elifidn __?OUTPUT_FORMAT?__, elf32
 \c  %define NEWLINE 10
 \c %endif
 
-\S{dfmtm} \i\c{__DEBUG_FORMAT__}: Current Debug Format
+\S{dfmtm} \i\c{__?DEBUG_FORMAT?__}: Current Debug Format
 
 If debugging information generation is enabled, The
-\c{__DEBUG_FORMAT__} standard macro holds the current debug format
+\c{__?DEBUG_FORMAT?__} standard macro holds the current debug format
 name as specified by the \c{-F} or \c{-g} option or the output format
 default. Type \c{nasm -f} \e{output} \c{y} for a list.
 
-\c{__DEBUG_FORMAT__} is not defined if debugging is not enabled, or if
+\c{__?DEBUG_FORMAT?__} is not defined if debugging is not enabled, or if
 the debug format specified is \c{null}.
 
 \S{datetime} Assembly Date and Time Macros
@@ -3866,26 +3866,26 @@ the debug format specified is \c{null}.
 NASM provides a variety of macros that represent the timestamp of the
 assembly session.
 
-\b The \i\c{__DATE__} and \i\c{__TIME__} macros give the assembly date and
+\b The \i\c{__?DATE?__} and \i\c{__?TIME?__} macros give the assembly date and
 time as strings, in ISO 8601 format (\c{"YYYY-MM-DD"} and \c{"HH:MM:SS"},
 respectively.)
 
-\b The \i\c{__DATE_NUM__} and \i\c{__TIME_NUM__} macros give the assembly
+\b The \i\c{__?DATE_NUM?__} and \i\c{__?TIME_NUM?__} macros give the assembly
 date and time in numeric form; in the format \c{YYYYMMDD} and
 \c{HHMMSS} respectively.
 
-\b The \i\c{__UTC_DATE__} and \i\c{__UTC_TIME__} macros give the assembly
+\b The \i\c{__?UTC_DATE?__} and \i\c{__?UTC_TIME?__} macros give the assembly
 date and time in universal time (UTC) as strings, in ISO 8601 format
 (\c{"YYYY-MM-DD"} and \c{"HH:MM:SS"}, respectively.)  If the host
 platform doesn't provide UTC time, these macros are undefined.
 
-\b The \i\c{__UTC_DATE_NUM__} and \i\c{__UTC_TIME_NUM__} macros give the
+\b The \i\c{__?UTC_DATE_NUM?__} and \i\c{__?UTC_TIME_NUM?__} macros give the
 assembly date and time universal time (UTC) in numeric form; in the
 format \c{YYYYMMDD} and \c{HHMMSS} respectively.  If the
 host platform doesn't provide UTC time, these macros are
 undefined.
 
-\b The \c{__POSIX_TIME__} macro is defined as a number containing the
+\b The \c{__?POSIX_TIME?__} macro is defined as a number containing the
 number of seconds since the POSIX epoch, 1 January 1970 00:00:00 UTC;
 excluding any leap seconds.  This is computed using UTC time if
 available on the host platform, otherwise it is computed using the
@@ -3898,15 +3898,15 @@ started at 42 seconds after midnight on January 1, 2010 in Moscow
 assuming, of course, a properly configured environment with a correct
 clock:
 
-\c       __DATE__             "2010-01-01"
-\c       __TIME__             "00:00:42"
-\c       __DATE_NUM__         20100101
-\c       __TIME_NUM__         000042
-\c       __UTC_DATE__         "2009-12-31"
-\c       __UTC_TIME__         "21:00:42"
-\c       __UTC_DATE_NUM__     20091231
-\c       __UTC_TIME_NUM__     210042
-\c       __POSIX_TIME__       1262293242
+\c       __?DATE?__             "2010-01-01"
+\c       __?TIME?__             "00:00:42"
+\c       __?DATE_NUM?__         20100101
+\c       __?TIME_NUM?__         000042
+\c       __?UTC_DATE?__         "2009-12-31"
+\c       __?UTC_TIME?__         "21:00:42"
+\c       __?UTC_DATE_NUM?__     20091231
+\c       __?UTC_TIME_NUM?__     210042
+\c       __?POSIX_TIME?__       1262293242
 
 
 \S{use_def} \I\c{__USE_*__}\c{__USE_}\e{package}\c{__}: Package
@@ -3918,12 +3918,12 @@ When a standard macro package (see \k{macropkg}) is included with the
 testing if a particular package is invoked or not.
 
 For example, if the \c{altreg} package is included (see
-\k{pkg_altreg}), then the macro \c{__USE_ALTREG__} is defined.
+\k{pkg_altreg}), then the macro \c{__?USE_ALTREG?__} is defined.
 
 
-\S{pass_macro} \i\c{__PASS__}: Assembly Pass
+\S{pass_macro} \i\c{__?PASS?__}: Assembly Pass
 
-The macro \c{__PASS__} is defined to be \c{1} on preparatory passes,
+The macro \c{__?PASS?__} is defined to be \c{1} on preparatory passes,
 and \c{2} on the final pass.  In preprocess-only mode, it is set to
 \c{3}, and when running only to generate dependencies (due to the
 \c{-M} or \c{-MG} option, see \k{opt-M}) it is set to \c{0}.
@@ -4215,7 +4215,7 @@ instructions first introduced in Pentium Pro.  This is incompatible
 with all CPUs of family 5 or lower, as well as some VIA CPUs and
 several virtualization solutions.  The default jump threshold is 16.
 
-The macro \i\c{__ALIGNMODE__} is defined to contain the current
+The macro \i\c{__?ALIGNMODE?__} is defined to contain the current
 alignment mode.  A number of other macros beginning with \c{__ALIGN_}
 are used internally by this macro package.
 
@@ -4224,19 +4224,19 @@ are used internally by this macro package.
 
 This packages contains the following floating-point convenience macros:
 
-\c %define Inf             __Infinity__
-\c %define NaN             __QNaN__
-\c %define QNaN            __QNaN__
-\c %define SNaN            __SNaN__
+\c %define Inf             __?Infinity?__
+\c %define NaN             __?QNaN?__
+\c %define QNaN            __?QNaN?__
+\c %define SNaN            __?SNaN?__
 \c
-\c %define float8(x)       __float8__(x)
-\c %define float16(x)      __float16__(x)
-\c %define float32(x)      __float32__(x)
-\c %define float64(x)      __float64__(x)
-\c %define float80m(x)     __float80m__(x)
-\c %define float80e(x)     __float80e__(x)
-\c %define float128l(x)    __float128l__(x)
-\c %define float128h(x)    __float128h__(x)
+\c %define float8(x)       __?float8?__(x)
+\c %define float16(x)      __?float16?__(x)
+\c %define float32(x)      __?float32?__(x)
+\c %define float64(x)      __?float64?__(x)
+\c %define float80m(x)     __?float80m?__(x)
+\c %define float80e(x)     __?float80e?__(x)
+\c %define float128l(x)    __?float128l?__(x)
+\c %define float128h(x)    __?float128h?__(x)
 
 
 \H{pkg_ifunc} \i\c{ifunc}: \i{Integer functions}
@@ -4420,13 +4420,13 @@ special, and indeed will strip off the leading period of any section
 name that has one.
 
 
-\S{sectmac} The \i\c{__SECT__} Macro
+\S{sectmac} The \i\c{__?SECT?__} Macro
 
 The \c{SECTION} directive is unusual in that its user-level form
 functions differently from its primitive form. The primitive form,
 \c{[SECTION xyz]}, simply switches the current target section to the
 one given. The user-level form, \c{SECTION xyz}, however, first
-defines the single-line macro \c{__SECT__} to be the primitive
+defines the single-line macro \c{__?SECT?__} to be the primitive
 \c{[SECTION]} directive which it is about to issue, and then issues
 it. So the user-level directive
 
@@ -4434,7 +4434,7 @@ it. So the user-level directive
 
 expands to the two lines
 
-\c %define __SECT__        [SECTION .text]
+\c %define __?SECT?__        [SECTION .text]
 \c         [SECTION .text]
 
 Users may find it useful to make use of this in their own macros.
@@ -4448,7 +4448,7 @@ usefully rewritten in the following more sophisticated form:
 \c   %%str:        db      %2
 \c   %%endstr:
 \c
-\c         __SECT__
+\c         __?SECT?__
 \c
 \c         mov     dx,%%str
 \c         mov     cx,%%endstr-%%str
@@ -4461,8 +4461,8 @@ usefully rewritten in the following more sophisticated form:
 This form of the macro, once passed a string to output, first
 switches temporarily to the data section of the file, using the
 primitive form of the \c{SECTION} directive so as not to modify
-\c{__SECT__}. It then declares its string in the data section, and
-then invokes \c{__SECT__} to switch back to \e{whichever} section
+\c{__?SECT?__}. It then declares its string in the data section, and
+then invokes \c{__?SECT?__} to switch back to \e{whichever} section
 the user was previously working in. It thus avoids the need, in the
 previous version of the macro, to include a \c{JMP} instruction to
 jump over the data, and also does not fail if, in a complicated
@@ -4491,10 +4491,10 @@ segment address 0x40: the above code defines \c{kbuf_chr} to be
 0x1A, \c{kbuf_free} to be 0x1C, and \c{kbuf} to be 0x1E.
 
 The user-level form of \c{ABSOLUTE}, like that of \c{SECTION},
-redefines the \i\c{__SECT__} macro when it is invoked.
+redefines the \i\c{__?SECT?__} macro when it is invoked.
 
 \i\c{STRUC} and \i\c{ENDSTRUC} are defined as macros which use
-\c{ABSOLUTE} (and also \c{__SECT__}).
+\c{ABSOLUTE} (and also \c{__?SECT?__}).
 
 \c{ABSOLUTE} doesn't have to take an absolute constant as an
 argument: it can take an expression (actually, a \i{critical
@@ -4753,11 +4753,11 @@ this behaviour:
 
 \b\c{FLOAT DEFAULT}     Restore default settings
 
-The standard macros \i\c{__FLOAT_DAZ__}, \i\c{__FLOAT_ROUND__}, and
-\i\c{__FLOAT__} contain the current state, as long as the programmer
+The standard macros \i\c{__?FLOAT_DAZ?__}, \i\c{__?FLOAT_ROUND?__}, and
+\i\c{__?FLOAT?__} contain the current state, as long as the programmer
 has avoided the use of the brackeded primitive form, (\c{[FLOAT]}).
 
-\c{__FLOAT__} contains the full set of floating-point settings; this
+\c{__?FLOAT?__} contains the full set of floating-point settings; this
 value can be saved away and invoked later to restore the setting.
 
 
@@ -5403,7 +5403,7 @@ table." Its typical use would be:
 
 \c section .text
 \c extern  _MessageBoxA@16
-\c %if     __NASM_VERSION_ID__ >= 0x02030000
+\c %if     __?NASM_VERSION_ID?__ >= 0x02030000
 \c safeseh handler         ; register handler as "safe handler"
 \c %endif
 \c handler:

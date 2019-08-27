@@ -32,12 +32,12 @@
 ;; --------------------------------------------------------------------------
 
 OUT: rdf2
-%define __SECT__ [section .text]
+%define __?SECT?__ [section .text]
 %imacro library 1+.nolist
 [library %1]
 %endmacro
 %imacro module 1+.nolist
 [module %1]
 %endmacro
-%macro __NASM_CDecl__ 1
+%macro __?NASM_CDecl?__ 1
 %endmacro

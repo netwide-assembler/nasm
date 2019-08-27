@@ -444,6 +444,7 @@ static int LocalOffset = 0;
 static Context *cstk;
 static Include *istk;
 static const struct strlist *ipath_list;
+static bool do_aliases;
 
 static struct strlist *deplist;
 
@@ -1603,6 +1604,55 @@ static int ppscan(void *private_data, struct tokenval *tokval)
 }
 
 /*
+ * 1. An expression (true if nonzero 0)
+ * 2. The keywords true, on, yes for true
+ * 3. The keywords false, off, no for false
+ * 4. An empty line, for true
+ *
+ * On error, return defval (usually the previous value)
+ */
+static bool pp_get_boolean_option(Token *tline, bool defval)
+{
+    static const char * const noyes[] = {
+        "no", "yes",
+        "false", "true",
+        "off", "on"
+    };
+    struct ppscan pps;
+    struct tokenval tokval;
+    expr *evalresult;
+
+    skip_white_(tline);
+    if (!tline || !tline->type)
+        return true;
+
+    if (tline->type == TOK_ID) {
+        size_t i;
+        for (i = 0; i < ARRAY_SIZE(noyes); i++)
+            if (!nasm_stricmp(tline->text, noyes[i]))
+                return i & 1;
+    }
+
+    pps.tptr = NULL;
+    pps.tptr = tline;
+    pps.ntokens = -1;
+    tokval.t_type = TOKEN_INVALID;
+    evalresult = evaluate(ppscan, &pps, &tokval, NULL, true, NULL);
+
+    if (!evalresult)
+        return true;
+
+    if (tokval.t_type)
+        nasm_warn(WARN_OTHER, "trailing garbage after expression ignored");
+    if (!is_really_simple(evalresult)) {
+        nasm_nonfatal("boolean flag expression must be a constant");
+        return defval;
+    }
+
+    return reloc_value(evalresult) != 0;
+}
+
+/*
  * Compare a string to the name of an existing macro; this is a
  * simple wrapper which calls either strcmp or nasm_stricmp
  * depending on the value of the `casesense' parameter.
@@ -1801,7 +1851,7 @@ FILE *pp_input_fopen(const char *filename, enum file_flags mode)
  */
 static bool
 smacro_defined(Context * ctx, const char *name, int nparam, SMacro ** defn,
-               bool nocase)
+               bool nocase, bool find_alias)
 {
     struct hash_table *smtbl;
     SMacro *m;
@@ -1817,12 +1867,22 @@ smacro_defined(Context * ctx, const char *name, int nparam, SMacro ** defn,
     } else {
         smtbl = &smacros;
     }
+
+restart:
     m = (SMacro *) hash_findix(smtbl, name);
 
     while (m) {
         if (!mstrcmp(m->name, name, m->casesense && nocase) &&
             (nparam <= 0 || m->nparam == 0 || nparam == m->nparam ||
              (m->greedy && nparam >= m->nparam-1))) {
+            if (m->alias && !find_alias) {
+                if (do_aliases) {
+                    name = m->name;
+                    goto restart;
+                } else {
+                    continue;
+                }
+            }
             if (defn) {
                 *defn = (nparam == m->nparam || nparam == -1) ? m : NULL;
             }
@@ -1963,7 +2023,7 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
                               dname);
                 goto fail;
             }
-            if (smacro_defined(NULL, tline->text, 0, NULL, true))
+            if (smacro_defined(NULL, tline->text, 0, NULL, true, false))
                 j = true;
             tline = tline->next;
         }
@@ -2460,7 +2520,7 @@ static SMacro *define_smacro(const char *mname, bool casesense,
     while (1) {
         ctx = get_ctx(mname, &mname);
 
-        if (!smacro_defined(ctx, mname, nparam, &smac, casesense)) {
+        if (!smacro_defined(ctx, mname, nparam, &smac, casesense, true)) {
             /* Create a new macro */
             smtbl  = ctx ? &ctx->localmac : &smacros;
             smhead = (SMacro **) hash_findi_add(smtbl, mname);
@@ -2476,7 +2536,7 @@ static SMacro *define_smacro(const char *mname, bool casesense,
              * some others didn't.  What is the right thing to do here?
              */
             goto fail;
-        } else if (!smac->alias || defining_alias) {
+        } else if (!smac->alias || !do_aliases || defining_alias) {
             /*
              * We're redefining, so we have to take over an
              * existing SMacro structure. This means freeing
@@ -2545,6 +2605,8 @@ static void undef_smacro(const char *mname, bool undefalias)
         while ((s = *sp) != NULL) {
             if (!mstrcmp(s->name, mname, s->casesense)) {
                 if (s->alias && !undefalias) {
+                    if (!do_aliases)
+                        continue;
                     if (s->in_progress) {
                         nasm_nonfatal("macro alias loop");
                     } else {
@@ -3916,6 +3978,12 @@ issue_error:
         define_smacro(mname, casesense, macro_start, NULL);
         break;
 
+    case PP_ALIASES:
+        tline = tline->next;
+        tline = expand_smacro(tline);
+        do_aliases = pp_get_boolean_option(tline, do_aliases);
+        break;
+
     case PP_LINE:
         /*
          * Syntax is `%line nnn[+mmm] [filename]'
@@ -4371,7 +4439,7 @@ static Token *expand_mmac_params(Token * tline)
                 cc = find_cc(tt);
                 if (cc == -1) {
                     nasm_nonfatal("macro parameter `%s' is not a condition code",
-                                  text);
+                                  t->text);
                     text = NULL;
                     break;
                 }
@@ -4534,6 +4602,8 @@ static SMacro *expand_one_smacro(Token ***tpp)
      * checking for parameters if necessary.
      */
     list_for_each(m, head) {
+        if (unlikely(m->alias && !do_aliases))
+            continue;
         if (!mstrcmp(m->name, mname, m->casesense))
             break;
     }
@@ -4986,8 +5056,10 @@ static Token *expand_smacro_noreset(Token * tline)
          * Also we look for %+ tokens and concatenate the tokens
          * before and after them (without white spaces in between).
          */
-        paste_tokens(&thead, tmatch, ARRAY_SIZE(tmatch), true);
-
+        if (!paste_tokens(&thead, tmatch, ARRAY_SIZE(tmatch), true)) {
+            tline = thead;
+            break;
+        }
         expanded = false;
     }
 
@@ -5578,10 +5650,10 @@ struct magic_macros {
 };
 static const struct magic_macros magic_macros[] =
 {
-    { "__FILE__", 0, stdmac_file },
-    { "__LINE__", 0, stdmac_line },
-    { "__BITS__", 0, stdmac_bits },
-    { "__PTR__",  0, stdmac_ptr },
+    { "__?FILE?__", 0, stdmac_file },
+    { "__?LINE?__", 0, stdmac_line },
+    { "__?BITS?__", 0, stdmac_bits },
+    { "__?PTR?__",  0, stdmac_ptr },
     { NULL, 0, NULL }
 };
 
@@ -5613,6 +5685,7 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
     unique = 0;
     deplist = dep_list;
     pp_mode = mode;
+    do_aliases = true;
 
     if (!use_loaded)
         use_loaded = nasm_malloc(use_package_count * sizeof(bool));
@@ -5656,7 +5729,7 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
     do_predef = true;
 
     /*
-     * Define the __PASS__ macro.  This is defined here unlike all the
+     * Define the __?PASS?__ macro.  This is defined here unlike all the
      * other builtins, because it is special -- it varies between
      * passes -- but there is really no particular reason to make it
      * magic.
@@ -5680,7 +5753,7 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
         panic();
     }
 
-    define_smacro("__PASS__", true, make_tok_num(apass), NULL);
+    define_smacro("__?PASS?__", true, make_tok_num(apass), NULL);
 }
 
 static void pp_init(void)

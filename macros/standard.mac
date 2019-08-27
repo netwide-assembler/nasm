@@ -49,32 +49,34 @@ STD: nasm
 ; here, not all of them are: the user-level form of a format-specific
 ; directive should be defined in the module for that directive.
 
-%define __SECT__            ; it ought to be defined, even if as nothing
+%define __?SECT?__            ; it ought to be defined, even if as nothing
+%defalias __SECT__ __?SECT?__
 
 %imacro section 1+.nolist
-    %define __SECT__ [section %1]
-    __SECT__
+    %define __?SECT?__ [section %1]
+    __?SECT?__
 %endmacro
 
 %imacro segment 1+.nolist
-    %define __SECT__ [segment %1]
-    __SECT__
+    %define __?SECT?__ [segment %1]
+    __?SECT?__
 %endmacro
 
-%define __SECTALIGN_ALIGN_UPDATES_SECTION__ 1
+%define __?SECTALIGN_ALIGN_UPDATES_SECTION?__ 1
 %imacro sectalign 1+.nolist
     %ifidni %1,off
-        %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 0
+        %define __?SECTALIGN_ALIGN_UPDATES_SECTION?__ 0
     %elifidni %1,on
-        %define __SECTALIGN_ALIGN_UPDATES_SECTION__ 1
+        %define __?SECTALIGN_ALIGN_UPDATES_SECTION?__ 1
     %else
         [sectalign %1]
     %endif
 %endmacro
+%defalias __SECTALIGN_ALIGN_UPDATES_SECTION__ __?SECTALIGN_ALIGN_UPDATES_SECTION?__
 
 %imacro absolute 1+.nolist
-    %define __SECT__ [absolute %1]
-    __SECT__
+    %define __?SECT?__ [absolute %1]
+    __?SECT?__
 %endmacro
 
 %imacro struc 1-2.nolist 0
@@ -87,7 +89,7 @@ STD: nasm
 %imacro endstruc 0.nolist
         %{$strucname}_size equ ($-%$strucname)
     %pop
-    __SECT__
+    __?SECT?__
 %endmacro
 
 %imacro istruc 1.nolist
@@ -107,14 +109,14 @@ STD: nasm
 %endmacro
 
 %imacro align 1-2+.nolist nop
-    %if __SECTALIGN_ALIGN_UPDATES_SECTION__
+    %if __?SECTALIGN_ALIGN_UPDATES_SECTION?__
         sectalign %1
     %endif
     times (((%1) - (($-$$) % (%1))) % (%1)) %2
 %endmacro
 
 %imacro alignb 1-2+.nolist
-    %if __SECTALIGN_ALIGN_UPDATES_SECTION__
+    %if __?SECTALIGN_ALIGN_UPDATES_SECTION?__
         sectalign %1
     %endif
     %ifempty %2
@@ -175,30 +177,34 @@ STD: nasm
     [cpu %1]
 %endmacro
 
-%define __FLOAT_DAZ__ nodaz
-%define __FLOAT_ROUND__ near
-; __FLOAT__ contains the whole floating-point configuration so it can
+%define __?FLOAT_DAZ?__ nodaz
+%define __?FLOAT_ROUND?__ near
+; __?FLOAT?__ contains the whole floating-point configuration so it can
 ; be saved and restored
-%define __FLOAT__ __FLOAT_DAZ__,__FLOAT_ROUND__
+%define __?FLOAT?__ __?FLOAT_DAZ?__,__?FLOAT_ROUND?__
+
+%defalias __FLOAT_DAZ__ __?FLOAT_DAZ?__
+%defalias __FLOAT_ROUND__ __?FLOAT_ROUND?__
+%defalias __FLOAT__ __?FLOAT?__
 
 %imacro float 1-*.nolist
     %rep %0
         [float %1]
         %ifidni %1,daz
-            %define __FLOAT_DAZ__ daz
+            %define __?FLOAT_DAZ?__ daz
         %elifidni %1,nodaz
-            %define __FLOAT_DAZ__ nodaz
+            %define __?FLOAT_DAZ?__ nodaz
         %elifidni %1,near
-            %define __FLOAT_ROUND__ near
+            %define __?FLOAT_ROUND?__ near
         %elifidni %1,up
-            %define __FLOAT_ROUND__ up
+            %define __?FLOAT_ROUND?__ up
         %elifidni %1,down
-            %define __FLOAT_ROUND__ down
+            %define __?FLOAT_ROUND?__ down
         %elifidni %1,zero
-            %define __FLOAT_ROUND__ zero
+            %define __?FLOAT_ROUND?__ zero
         %elifidni %1,default
-            %define __FLOAT_DAZ__ nodaz
-            %define __FLOAT_ROUND__ near
+            %define __?FLOAT_DAZ?__ nodaz
+            %define __?FLOAT_ROUND?__ near
         %endif
         %rotate 1
     %endrep
@@ -228,3 +234,85 @@ STD: nasm
         %? %$dep,%2
     %pop
 %endmacro
+
+; Compatibility macro aliases
+%defalias __NASM_MAJOR__      __?NASM_MAJOR?__
+%defalias __NASM_MINOR__      __?NASM_MINOR?__
+%defalias __NASM_SUBMINOR__   __?NASM_SUBMINOR?__
+%defalias __NASM_PATCHLEVEL__ __?NASM_PATCHLEVEL?__
+%defalias __NASM_SNAPSHOT__   __?NASM_SNAPSHOT?__
+%defalias __NASM_VERSION_ID__ __?NASM_VERSION_ID?__
+%defalias __NASM_VER__        __?NASM_VER?__
+
+%defalias __OUTPUT_FORMAT__   __?OUTPUT_FORMAT?__
+%defalias __DEBUG_FORMAT__    __?DEBUG_FORMAT?__
+
+%defalias __DATE__            __?DATE?__
+%defalias __DATE_NUM__        __?DATE_NUM?__
+%defalias __TIME__            __?TIME?__
+%defalias __TIME_NUM__        __?TIME_NUM?__
+%defalias __UTC_DATE__        __?UTC_DATE?__
+%defalias __UTC_DATE_NUM__    __?UTC_DATE_NUM?__
+%defalias __UTC_TIME__        __?UTC_TIME?__
+%defalias __UTC_TIME_NUM__    __?UTC_TIME_NUM?__
+%defalias __POSIX_TIME__      __?POSIX_TIME?__
+
+%defalias __FILE__            __?FILE?__
+%defalias __LINE__            __?LINE?__
+%defalias __BITS__            __?BITS?__
+%defalias __PTR__             __?PTR?__
+%defalias __PASS__            __?PASS?__
+
+; Backwards compatiblity aliases for tokens. The extra level of indirection here
+; means %aliases on|off will do the right thing for these as well.
+%idefine __?infinity?__ %?
+%idefine __?nan?__ %?
+%idefine __?qnan?__ %?
+%idefine __?snan?__ %?
+
+%idefine __?float8?__ %?
+%idefine __?float16?__ %?
+%idefine __?float32?__ %?
+%idefine __?float64?__ %?
+%idefine __?float80m?__ %?
+%idefine __?float80e?__ %?
+%idefine __?float128l?__ %?
+%idefine __?float128h?__ %?
+
+%idefine __?utf16?__ %?
+%idefine __?utf16le?__ %?
+%idefine __?utf16be?__ %?
+%idefine __?utf32?__ %?
+%idefine __?utf32le?__ %?
+%idefine __?utf32be?__ %?
+
+%idefine __?ilog2e?__ %?
+%idefine __?ilog2w?__ %?
+%idefine __?ilog2f?__ %?
+%idefine __?ilog2c?__ %?
+
+%idefalias __infinity__ __?infinity?__
+%idefalias __nan__ __?nan?__
+%idefalias __qnan__ __?qnan?__
+%idefalias __snan__ __?snan?__
+
+%idefalias __float8__ __?float8?__
+%idefalias __float16__ __?float16?__
+%idefalias __float32__ __?float32?__
+%idefalias __float64__ __?float64?__
+%idefalias __float80m__ __?float80m?__
+%idefalias __float80e__ __?float80e?__
+%idefalias __float128l__ __?float128l?__
+%idefalias __float128h__ __?float128h?__
+
+%idefalias __utf16__ __?utf16?__
+%idefalias __utf16le__ __?utf16le?__
+%idefalias __utf16be__ __?utf16be?__
+%idefalias __utf32__ __?utf32?__
+%idefalias __utf32le__ __?utf32le?__
+%idefalias __utf32be__ __?utf32be?__
+
+%idefalias __ilog2e__ __?ilog2e?__
+%idefalias __ilog2w__ __?ilog2w?__
+%idefalias __ilog2f__ __?ilog2f?__
+%idefalias __ilog2c__ __?ilog2c?__

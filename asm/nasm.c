@@ -299,29 +299,29 @@ static void define_macros(void)
     char temp[128];
 
     if (oct->have_local) {
-        strftime(temp, sizeof temp, "__DATE__=\"%Y-%m-%d\"", &oct->local);
+        strftime(temp, sizeof temp, "__?DATE?__=\"%Y-%m-%d\"", &oct->local);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__DATE_NUM__=%Y%m%d", &oct->local);
+        strftime(temp, sizeof temp, "__?DATE_NUM?__=%Y%m%d", &oct->local);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__TIME__=\"%H:%M:%S\"", &oct->local);
+        strftime(temp, sizeof temp, "__?TIME?__=\"%H:%M:%S\"", &oct->local);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__TIME_NUM__=%H%M%S", &oct->local);
+        strftime(temp, sizeof temp, "__?TIME_NUM?__=%H%M%S", &oct->local);
         preproc->pre_define(temp);
     }
 
     if (oct->have_gm) {
-        strftime(temp, sizeof temp, "__UTC_DATE__=\"%Y-%m-%d\"", &oct->gm);
+        strftime(temp, sizeof temp, "__?UTC_DATE?__=\"%Y-%m-%d\"", &oct->gm);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__UTC_DATE_NUM__=%Y%m%d", &oct->gm);
+        strftime(temp, sizeof temp, "__?UTC_DATE_NUM?__=%Y%m%d", &oct->gm);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__UTC_TIME__=\"%H:%M:%S\"", &oct->gm);
+        strftime(temp, sizeof temp, "__?UTC_TIME?__=\"%H:%M:%S\"", &oct->gm);
         preproc->pre_define(temp);
-        strftime(temp, sizeof temp, "__UTC_TIME_NUM__=%H%M%S", &oct->gm);
+        strftime(temp, sizeof temp, "__?UTC_TIME_NUM?__=%H%M%S", &oct->gm);
         preproc->pre_define(temp);
     }
 
     if (oct->have_posix) {
-        snprintf(temp, sizeof temp, "__POSIX_TIME__=%"PRId64, oct->posix);
+        snprintf(temp, sizeof temp, "__?POSIX_TIME?__=%"PRId64, oct->posix);
         preproc->pre_define(temp);
     }
 
@@ -330,7 +330,7 @@ static void define_macros(void)
      * we have to put shortname of the alias itself here
      * otherwise ABI backward compatibility gets broken.
      */
-    snprintf(temp, sizeof(temp), "__OUTPUT_FORMAT__=%s",
+    snprintf(temp, sizeof(temp), "__?OUTPUT_FORMAT?__=%s",
              ofmt_alias ? ofmt_alias->shortname : ofmt->shortname);
     preproc->pre_define(temp);
 
@@ -344,7 +344,7 @@ static void define_macros(void)
      * Debug format, if any
      */
     if (dfmt != &null_debug_form) {
-        snprintf(temp, sizeof(temp), "__DEBUG_FORMAT__=%s", dfmt->shortname);
+        snprintf(temp, sizeof(temp), "__?DEBUG_FORMAT?__=%s", dfmt->shortname);
         preproc->pre_define(temp);
     }
 }

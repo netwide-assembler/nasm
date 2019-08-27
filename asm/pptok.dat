@@ -70,6 +70,7 @@
 %un!macro
 
 # Other directives
+%aliases
 %arg
 %clear
 %depend

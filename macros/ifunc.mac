@@ -39,10 +39,10 @@
 
 USE: ifunc
 
-%idefine ilog2(x)	(__ilog2e__(x))
-%idefine ilog2e(x)	(__ilog2e__(x))
-%idefine ilog2w(x)	(__ilog2w__(x))
-%idefine ilog2fw(x)	(__ilog2w__(x))
-%idefine ilog2f(x)	(__ilog2f__(x))
-%idefine ilog2cw(x)	(__ilog2w__(x) * 0 + __ilog2c__(x))
-%idefine ilog2c(x)	(__ilog2c__(x))
+%idefine ilog2(x)	(__?ilog2e?__(x))
+%idefine ilog2e(x)	(__?ilog2e?__(x))
+%idefine ilog2w(x)	(__?ilog2w?__(x))
+%idefine ilog2fw(x)	(__?ilog2w?__(x))
+%idefine ilog2f(x)	(__?ilog2f?__(x))
+%idefine ilog2cw(x)	(__?ilog2w?__(x) * 0 + __?ilog2c?__(x))
+%idefine ilog2c(x)	(__?ilog2c?__(x))

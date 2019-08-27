@@ -57,7 +57,7 @@ my($output, $insns_dat, $regs_dat, $tokens_dat) = @ARGV;
 #
 open(ID, '<', $insns_dat) or die "$0: cannot open $insns_dat: $!\n";
 while (defined($line = <ID>)) {
-    if ($line =~ /^([A-Z0-9_]+)(|cc)\s/) {
+    if ($line =~ /^([\?\@A-Z0-9_]+)(|cc)\s/) {
 	$insn = $1.$2;
 	($token = $1) =~ tr/A-Z/a-z/;
 
@@ -88,7 +88,7 @@ close(ID);
 #
 open(RD, '<', $regs_dat) or die "$0: cannot open $regs_dat: $!\n";
 while (defined($line = <RD>)) {
-    if ($line =~ /^([a-z0-9_-]+)\s*\S+\s*\S+\s*[0-9]+\s*(\S*)/) {
+    if ($line =~ /^([\?\@a-z0-9_-]+)\s*\S+\s*\S+\s*[0-9]+\s*(\S*)/) {
 	$reg = $1;
 	$reg_flag = $2;
 
@@ -144,6 +144,7 @@ while (defined($line = <TD>)) {
 	    my $head = $1, $tail = $3;
 	    my $px = $2;
 
+	    $px =~ s/\?/\\?/g;
 	    $px =~ s/\*/(.*)/g;
 	    if ($token =~ /$px/i) {
 		$data = $head."\U$1".$tail;
@@ -153,6 +154,7 @@ while (defined($line = <TD>)) {
 	}
 
 	$data =~ s/\*/\U$token/g;
+	$data =~ s/\?//g;
 
 	push(@tokendata, "\"$token\", ".length($token).", $data");
     }

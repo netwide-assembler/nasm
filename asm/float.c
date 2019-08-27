@@ -737,18 +737,18 @@ static int to_float(const char *str, int s, uint8_t *result,
     if (str[0] == '_') {
         /* Special tokens */
 
-        switch (str[2]) {
-        case 'n':              /* __nan__ */
+        switch (str[3]) {
+        case 'n':              /* __?nan?__ */
         case 'N':
-        case 'q':              /* __qnan__ */
+        case 'q':              /* __?qnan?__ */
         case 'Q':
             type = FL_QNAN;
             break;
-        case 's':              /* __snan__ */
+        case 's':              /* __?snan?__ */
         case 'S':
             type = FL_SNAN;
             break;
-        case 'i':              /* __infinity__ */
+        case 'i':              /* __?infinity?__ */
         case 'I':
             type = FL_INFINITY;
             break;

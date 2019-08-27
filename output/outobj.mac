@@ -32,7 +32,7 @@
 ;; --------------------------------------------------------------------------
 
 OUT: obj
-%define __SECT__ [section .text]
+%define __?SECT?__ [section .text]
 %imacro group 1+.nolist
 [group %1]
 %endmacro
@@ -45,5 +45,5 @@ OUT: obj
 %imacro import 1+.nolist
 [import %1]
 %endmacro
-%macro __NASM_CDecl__ 1
+%macro __?NASM_CDecl?__ 1
 %endmacro

@@ -186,12 +186,12 @@ enum token_type { /* token types, other than chars */
     TOKEN_DBL_XOR,      /* ^^ */
     TOKEN_SEG,          /* SEG */
     TOKEN_WRT,          /* WRT */
-    TOKEN_FLOATIZE,     /* __floatX__ */
+    TOKEN_FLOATIZE,     /* __?floatX?__ */
     TOKEN_STRFUNC,      /* __utf16*__, __utf32*__ */
     TOKEN_IFUNC,        /* __ilog2*__ */
     TOKEN_DECORATOR,    /* decorators such as {...} */
-    TOKEN_MASM_PTR,     /* __masm_ptr__ for the masm package */
-    TOKEN_MASM_FLAT,    /* __masm_flat__ for the masm package */
+    TOKEN_MASM_PTR,     /* __?masm_ptr?__ for the masm package */
+    TOKEN_MASM_FLAT,    /* __?masm_flat?__ for the masm package */
     TOKEN_OPMASK        /* translated token for opmask registers */
 };
 
@@ -808,7 +808,7 @@ struct ofmt {
     /*
      * This, if non-NULL, is a NULL-terminated list of `char *'s
      * pointing to extra standard macros supplied by the object
-     * format (e.g. a sensible initial default value of __SECT__,
+     * format (e.g. a sensible initial default value of __?SECT?__,
      * and user-level equivalents for any format-specific
      * directives).
      */

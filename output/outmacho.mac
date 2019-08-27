@@ -32,18 +32,18 @@
 ;; --------------------------------------------------------------------------
 
 OUT: macho macho32 macho64
-%define __SECT__ [section .text]
-%macro __NASM_CDecl__ 1
+%define __?SECT?__ [section .text]
+%macro __?NASM_CDecl?__ 1
 %endmacro
 
 ; This directive sets the MH_SUBSECTIONS_VIA_SYMBOLS header flag
 %imacro subsections_via_symbols 0.nolist
-    %pragma __OUTPUT_FORMAT__ %?
+    %pragma __?OUTPUT_FORMAT?__ %?
 %endmacro
 
 %imacro no_dead_strip 1-*.nolist
     %rep %0
-        %pragma __OUTPUT_FORMAT__ %? %1
+        %pragma __?OUTPUT_FORMAT?__ %? %1
         %rotate 1
     %endrep
 %endmacro

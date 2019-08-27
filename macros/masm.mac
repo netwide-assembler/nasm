@@ -45,8 +45,8 @@ USE: masm
 %unimacro segment 1+
 
 %imacro segment 0-1+.nolist
-  %define __SECT__ [segment %00 %1]
-	__SECT__
+  %define __?SECT?__ [segment %00 %1]
+	__?SECT?__
 %endmacro
 
 %imacro ends 0+.nolist
@@ -69,8 +69,8 @@ USE: masm
   %undef ret
 %endmacro
 
-%idefine ptr __masm_ptr__
-%idefine flat __masm_flat__	; is %idefine really correct here?
+%idefine ptr __?masm_ptr?__
+%idefine flat __?masm_flat?__	; is %idefine really correct here?
 %idefine offset
 
 %imacro end 0+.nolist

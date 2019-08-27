@@ -205,7 +205,9 @@ foreach $args ( @ARGV ) {
 		$lastname = $fname;
 		push(@pkg_list, $pkg);
 		$pkg_number{$pkg} = $npkg++;
-		$z = pack("C", $pnum{'%define'})."__USE_\U$pkg\E__";
+		$z = pack("C", $pnum{'%define'})."__?USE_\U$pkg\E?__";
+		printf OUT "        /* %4d */ %sEOL,\n", $index, charcify($z);
+		$z = pack("C", $pnum{'%defalias'})."__USE_\U$pkg\E__ __?USE\U$pkg\E?__";
 		printf OUT "        /* %4d */ %sEOL,\n", $index, charcify($z);
 		$index += length($z)+1;
 	    } else {

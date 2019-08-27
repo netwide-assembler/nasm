@@ -39,16 +39,16 @@
 
 USE: fp
 
-%define	Inf		__Infinity__
-%define NaN		__QNaN__
-%define QNaN		__QNaN__
-%define SNaN		__SNaN__
+%define	Inf		__?Infinity?__
+%define NaN		__?QNaN?__
+%define QNaN		__?QNaN?__
+%define SNaN		__?SNaN?__
 
-%define float8(x)	__float8__(x)
-%define float16(x)	__float16__(x)
-%define float32(x)	__float32__(x)
-%define float64(x)	__float64__(x)
-%define float80m(x)	__float80m__(x)
-%define float80e(x)	__float80e__(x)
-%define float128l(x)	__float128l__(x)
-%define float128h(x)	__float128h__(x)
+%define float8(x)	__?float8?__(x)
+%define float16(x)	__?float16?__(x)
+%define float32(x)	__?float32?__(x)
+%define float64(x)	__?float64?__(x)
+%define float80m(x)	__?float80m?__(x)
+%define float80e(x)	__?float80e?__(x)
+%define float128l(x)	__?float128l?__(x)
+%define float128h(x)	__?float128h?__(x)

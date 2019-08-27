@@ -32,6 +32,6 @@
 ;; --------------------------------------------------------------------------
 
 OUT: as86
-%define __SECT__ [section .text]
-%macro __NASM_CDecl__ 1
+%define __?SECT?__ [section .text]
+%macro __?NASM_CDecl?__ 1
 %endmacro

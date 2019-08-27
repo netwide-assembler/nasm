@@ -56,13 +56,13 @@
 # NASM_VER		-- whole version number as a string
 #
 # version.mac:
-# __NASM_MAJOR__
-# __NASM_MINOR__
-# __NASM_SUBMINOR__
-# __NASM_PATCHLEVEL__
-# __NASM_SNAPSHOT__
-# __NASM_VERSION_ID__
-# __NASM_VER__
+# __?NASM_MAJOR?__
+# __?NASM_MINOR?__
+# __?NASM_SUBMINOR?__
+# __?NASM_PATCHLEVEL?__
+# __?NASM_SNAPSHOT?__
+# __?NASM_VERSION_ID?__
+# __?NASM_VER?__
 #
 
 ($what) = @ARGV;
@@ -148,15 +148,15 @@ if ( $what eq 'h' ) {
     print  "#endif /* NASM_VERSION_H */\n";
 } elsif ( $what eq 'mac' ) {
     print  "STD: version\n";
-    printf "%%define __NASM_MAJOR__ %d\n", $nmaj;
-    printf "%%define __NASM_MINOR__ %d\n", $nmin;
-    printf "%%define __NASM_SUBMINOR__ %d\n", $nsmin;
-    printf "%%define __NASM_PATCHLEVEL__ %d\n", $nplvl;
+    printf "%%define __?NASM_MAJOR?__ %d\n", $nmaj;
+    printf "%%define __?NASM_MINOR?__ %d\n", $nmin;
+    printf "%%define __?NASM_SUBMINOR?__ %d\n", $nsmin;
+    printf "%%define __?NASM_PATCHLEVEL?__ %d\n", $nplvl;
     if (defined($snapshot)) {
-	printf "%%define __NASM_SNAPSHOT__ %d\n", $snapshot;
+	printf "%%define __?NASM_SNAPSHOT?__ %d\n", $snapshot;
     }
-    printf "%%define __NASM_VERSION_ID__ 0%08Xh\n", $nasm_id;
-    printf "%%define __NASM_VER__ \"%s\"\n", $line;
+    printf "%%define __?NASM_VERSION_ID?__ 0%08Xh\n", $nasm_id;
+    printf "%%define __?NASM_VER?__ \"%s\"\n", $line;
 } elsif ( $what eq 'sed' ) {
     printf "s/\@\@NASM_MAJOR\@\@/%d/g\n", $nmaj;
     printf "s/\@\@NASM_MINOR\@\@/%d/g\n", $nmin;

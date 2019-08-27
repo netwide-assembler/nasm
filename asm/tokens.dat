@@ -92,42 +92,42 @@ to
 ptr
 
 % TOKEN_FLOAT, 0, 0, 0
-__infinity__
-__nan__
-__qnan__
-__snan__
+__?infinity?__
+__?nan?__
+__?qnan?__
+__?snan?__
 
-% TOKEN_FLOATIZE, 0, 0, FLOAT_{__float*__}
-__float8__
-__float16__
-__float32__
-__float64__
-__float80m__
-__float80e__
-__float128l__
-__float128h__
+% TOKEN_FLOATIZE, 0, 0, FLOAT_{__?float*?__}
+__?float8?__
+__?float16?__
+__?float32?__
+__?float64?__
+__?float80m?__
+__?float80e?__
+__?float128l?__
+__?float128h?__
 
-% TOKEN_STRFUNC, 0, 0, STRFUNC_{__*__}
-__utf16__
-__utf16le__
-__utf16be__
-__utf32__
-__utf32le__
-__utf32be__
+% TOKEN_STRFUNC, 0, 0, STRFUNC_{__?*?__}
+__?utf16?__
+__?utf16le?__
+__?utf16be?__
+__?utf32?__
+__?utf32le?__
+__?utf32be?__
 
-% TOKEN_IFUNC, 0, 0, IFUNC_{__*__}
-__ilog2e__
-__ilog2w__
-__ilog2f__
-__ilog2c__
+% TOKEN_IFUNC, 0, 0, IFUNC_{__?*?__}
+__?ilog2e?__
+__?ilog2w?__
+__?ilog2f?__
+__?ilog2c?__
 
 % TOKEN_*, 0, 0, 0
 seg
 wrt
 
-% TOKEN_{__*__}, 0, 0, 0
-__masm_ptr__
-__masm_flat__
+% TOKEN_{__?*?__}, 0, 0, 0
+__?masm_ptr?__
+__?masm_flat?__
 
 % TOKEN_DECORATOR, 0, TFLAG_BRC | TFLAG_BRDCAST , BRC_1TO{1to*}
 1to2

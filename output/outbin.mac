@@ -32,9 +32,9 @@
 ;; --------------------------------------------------------------------------
 
 OUT: bin
-%define __SECT__ [section .text]
+%define __?SECT?__ [section .text]
 %imacro org 1+.nolist
 [org %1]
 %endmacro
-%macro __NASM_CDecl__ 1
+%macro __?NASM_CDecl?__ 1
 %endmacro
