@@ -1927,7 +1927,8 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
 
     /* error_list_macros can for obvious reasons not work with ERR_HERE */
     if (!(severity & ERR_HERE))
-        preproc->error_list_macros(severity);
+        if (preproc)
+            preproc->error_list_macros(severity);
 
     switch (true_type) {
     case ERR_LISTMSG:
