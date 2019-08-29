@@ -65,12 +65,18 @@ static const char *help =
 static void output_ins(uint64_t, uint8_t *, int, char *);
 static void skip(uint32_t dist, FILE * fp);
 
-static void ndisasm_verror(errflags severity, const char *fmt, va_list va)
+fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list val)
 {
-    vfprintf(stderr, fmt, va);
+    vfprintf(stderr, fmt, val);
+    exit((severity & ERR_MASK) - ERR_FATAL + 2);
+}
 
-    if (severity & ERR_FATAL)
-	exit(1);
+static void ndisasm_verror(errflags severity, const char *fmt, va_list val)
+{
+    if ((severity & ERR_MASK) >= ERR_FATAL)
+        nasm_verror_critical(severity, fmt, val);
+    else
+        vfprintf(stderr, fmt, val);
 }
 
 int main(int argc, char **argv)

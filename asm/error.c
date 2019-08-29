@@ -41,33 +41,38 @@
 #include "nasmlib.h"
 #include "error.h"
 
-/* Global error handling function */
-vefunc nasm_verror;
+/*
+ * Global error handling function. If we call this before it is
+ * initialized, it is a fatal error!
+ */
+vefunc nasm_verror = (vefunc)nasm_verror_critical;
 
 /* Common function body */
-#define nasm_do_error(s)			\
-	va_list ap;				\
-        va_start(ap, fmt);                      \
-	nasm_verror((s), fmt, ap);		\
-	va_end(ap);
+#define nasm_do_error(_sev,_flags)				\
+	va_list ap;						\
+        va_start(ap, fmt);					\
+	if ((_sev) >= ERR_CRITICAL)				\
+		nasm_verror_critical((_sev)|(_flags), fmt, ap);	\
+	else							\
+		nasm_verror((_sev)|(_flags), fmt, ap);		\
+	va_end(ap);						\
+	if ((_sev) >= ERR_FATAL)                                \
+		abort();
+
 
 void nasm_error(errflags severity, const char *fmt, ...)
 {
-	nasm_do_error(severity);
+	nasm_do_error(severity & ERR_MASK, severity & ~ERR_MASK);
 }
 
 #define nasm_err_helpers(_type, _name, _sev)				\
 _type nasm_ ## _name ## f (errflags flags, const char *fmt, ...)	\
 {									\
-	nasm_do_error((_sev)|flags);					\
-	if (_sev >= ERR_FATAL)						\
-		abort();						\
+	nasm_do_error(_sev, flags);					\
 }									\
 _type nasm_ ## _name (const char *fmt, ...)				\
 {									\
-	nasm_do_error(_sev);						\
-	if (_sev >= ERR_FATAL)						\
-		abort();						\
+	nasm_do_error(_sev, 0);						\
 }
 
 nasm_err_helpers(void,       listmsg,  ERR_LISTMSG)
@@ -75,6 +80,7 @@ nasm_err_helpers(void,       debug,    ERR_DEBUG)
 nasm_err_helpers(void,       info,     ERR_INFO)
 nasm_err_helpers(void,       nonfatal, ERR_NONFATAL)
 nasm_err_helpers(fatal_func, fatal,    ERR_FATAL)
+nasm_err_helpers(fatal_func, critical, ERR_CRITICAL)
 nasm_err_helpers(fatal_func, panic,    ERR_PANIC)
 
 /*
@@ -82,9 +88,9 @@ nasm_err_helpers(fatal_func, panic,    ERR_PANIC)
  * This means nasm_warn() is the equivalent of the -f variants of the
  * other ones.
  */
-void nasm_warn(errflags severity, const char *fmt, ...)
+void nasm_warn(errflags flags, const char *fmt, ...)
 {
-	nasm_do_error(ERR_WARNING|severity);
+	nasm_do_error(ERR_WARNING, flags);
 }
 
 fatal_func nasm_panic_from_macro(const char *file, int line)

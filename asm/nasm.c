@@ -472,13 +472,14 @@ static void timestamp(void)
 
 int main(int argc, char **argv)
 {
+    /* Do these as early as possible */
+    error_file = stderr;
+    nasm_set_verror(nasm_verror_asm);
     _progname = argv[0];
     if (!_progname || !_progname[0])
         _progname = "nasm";
 
     timestamp();
-
-    error_file = stderr;
 
     iflag_set_default_cpu(&cpu);
     iflag_set_default_cpu(&cmd_cpu);
@@ -491,7 +492,6 @@ int main(int argc, char **argv)
     _passn = 0;
 
     want_usage = terminate_after_phase = false;
-    nasm_set_verror(nasm_verror_asm);
 
     nasm_ctype_init();
     src_init();
@@ -1802,6 +1802,80 @@ static errflags true_error_type(errflags severity)
     return type;
 }
 
+/*
+ * The various error type prefixes
+ */
+static const char * const error_pfx_table[ERR_MASK+1] = {
+    ";;; ", "debug: ", "info: ", "warning: ",
+        "error: ", "fatal: ", "critical: ", "panic: "
+};
+static const char no_file_name[] = "nasm"; /* What to print if no file name */
+
+/*
+ * For fatal/critical/panic errors, kill this process.
+ */
+static fatal_func die_hard(errflags true_type, errflags severity)
+{
+    fflush(NULL);
+
+    if (true_type == ERR_PANIC && abort_on_panic)
+        abort();
+
+    if (ofile) {
+        fclose(ofile);
+        if (!keep_all)
+            remove(outname);
+        ofile = NULL;
+    }
+
+    if (severity & ERR_USAGE)
+        usage();
+
+    /* Terminate immediately */
+    exit(true_type - ERR_FATAL + 1);
+}
+
+/*
+ * error reporting for critical and panic errors: minimize
+ * the amount of system dependencies for getting a message out,
+ * and in particular try to avoid memory allocations.
+ */
+fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args)
+{
+    const char *currentfile = no_file_name;
+    int32_t lineno = 0;
+    errflags true_type = severity & ERR_MASK;
+    static bool been_here = false;
+
+    if (unlikely(been_here))
+        abort();                /* Recursive error... just die */
+
+    been_here = true;
+
+    if (!(severity & ERR_NOFILE)) {
+        src_get(&lineno, &currentfile);
+        if (!currentfile) {
+            currentfile =
+                inname && inname[0] ? inname :
+                outname && outname[0] ? outname :
+                no_file_name;
+                lineno = 0;
+        }
+    }
+
+    fputs(error_pfx_table[severity], error_file);
+    fputs(currentfile, error_file);
+    if (lineno) {
+        fprintf(error_file, "%s%"PRId32"%s",
+                errfmt->beforeline, lineno, errfmt->afterline);
+    }
+    fputs(errfmt->beforemsg, error_file);
+    vfprintf(error_file, fmt, args);
+    fputc('\n', error_file);
+
+    die_hard(true_type, severity);
+}
+
 /**
  * common error reporting
  * This is the common back end of the error reporting schemes currently
@@ -1821,10 +1895,9 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
     errflags true_type = true_error_type(severity);
     const char *currentfile = NULL;
     int32_t lineno = 0;
-    static const char * const pfx_table[ERR_MASK+1] = {
-        ";;; ", "debug: ", "info: ", "warning: ",
-        "error: ", "", "fatal: ", "panic: "
-    };
+
+    if (true_type >= ERR_CRITICAL)
+        nasm_verror_critical(severity, fmt, args);
 
     if (is_suppressed(severity))
         return;
@@ -1832,18 +1905,18 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
     if (!(severity & ERR_NOFILE)) {
         src_get(&lineno, &currentfile);
         if (!currentfile) {
-            currentfile = currentfile ? currentfile :
+            currentfile =
                 inname && inname[0] ? inname :
                 outname && outname[0] ? outname :
                 NULL;
-            lineno = 0;
+                lineno = 0;
         }
     }
 
     if (severity & ERR_NO_SEVERITY)
         pfx = "";
     else
-        pfx = pfx_table[true_type];
+        pfx = error_pfx_table[true_type];
 
     vsnprintf(msg, sizeof msg, fmt, args);
     *warnsuf = 0;
@@ -1864,7 +1937,7 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
     }
 
     if (!skip_this_pass(severity)) {
-        const char *file = currentfile ? currentfile : "nasm";
+        const char *file = currentfile ? currentfile : no_file_name;
         const char *here = "";
 
         if (severity & ERR_HERE)
@@ -1922,52 +1995,15 @@ static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
     if (skip_this_pass(severity))
         return;
 
-    if (severity & ERR_USAGE)
-        want_usage = true;
-
     /* error_list_macros can for obvious reasons not work with ERR_HERE */
     if (!(severity & ERR_HERE))
         if (preproc)
             preproc->error_list_macros(severity);
 
-    switch (true_type) {
-    case ERR_LISTMSG:
-    case ERR_DEBUG:
-    case ERR_INFO:
-    case ERR_WARNING:
-        /* no further action, by definition */
-        break;
-    case ERR_NONFATAL:
+    if (true_type >= ERR_FATAL)
+        die_hard(true_type, severity);
+    else if (true_type >= ERR_NONFATAL)
         terminate_after_phase = true;
-        break;
-    case ERR_FATAL:
-        if (ofile) {
-            fclose(ofile);
-            if (!keep_all)
-                remove(outname);
-            ofile = NULL;
-        }
-        if (want_usage)
-            usage();
-        exit(1);                /* instantly die */
-        break;                  /* placate silly compilers */
-    case ERR_PANIC:
-        fflush(NULL);
-
-        if (abort_on_panic)
-            abort();            /* halt, catch fire, dump core/stop debugger */
-
-        if (ofile) {
-            fclose(ofile);
-            if (!keep_all)
-                remove(outname);
-            ofile = NULL;
-        }
-        exit(3);
-        break;
-    default:
-        break;                  /* ??? */
-    }
 }
 
 static void usage(void)

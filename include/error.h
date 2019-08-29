@@ -65,6 +65,8 @@ void printf_func(1, 2) nasm_nonfatal(const char *fmt, ...);
 void printf_func(2, 3) nasm_nonfatalf(errflags flags, const char *fmt, ...);
 fatal_func printf_func(1, 2) nasm_fatal(const char *fmt, ...);
 fatal_func printf_func(2, 3) nasm_fatalf(errflags flags, const char *fmt, ...);
+fatal_func printf_func(1, 2) nasm_critical(const char *fmt, ...);
+fatal_func printf_func(2, 3) nasm_criticalf(errflags flags, const char *fmt, ...);
 fatal_func printf_func(1, 2) nasm_panic(const char *fmt, ...);
 fatal_func printf_func(2, 3) nasm_panicf(errflags flags, const char *fmt, ...);
 fatal_func nasm_panic_from_macro(const char *file, int line);
@@ -72,6 +74,7 @@ fatal_func nasm_panic_from_macro(const char *file, int line);
 
 typedef void (*vefunc) (errflags severity, const char *fmt, va_list ap);
 extern vefunc nasm_verror;
+fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list ap);
 
 static inline vefunc nasm_set_verror(vefunc ve)
 {
@@ -89,7 +92,8 @@ static inline vefunc nasm_set_verror(vefunc ve)
 #define ERR_INFO		0x00000002	/* information for the list file */
 #define ERR_WARNING		0x00000003	/* warn only: no further action */
 #define ERR_NONFATAL		0x00000004	/* terminate assembly after phase */
-#define ERR_FATAL		0x00000006	/* instantly fatal: exit with error */
+#define ERR_FATAL		0x00000005	/* instantly fatal: exit with error */
+#define ERR_CRITICAL		0x00000006      /* fatal, but minimize code before exit */
 #define ERR_PANIC		0x00000007	/* internal error: panic instantly
 						 * and dump core for reference */
 #define ERR_MASK		0x00000007	/* mask off the above codes */
@@ -110,7 +114,7 @@ static inline vefunc nasm_set_verror(vefunc ve)
  * severity code.
  */
 #define WARN_SHR		12              /* how far to shift right */
-#define WARN_IDX(x)     	(((errflags)(x)) >> WARN_SHR)
+#define WARN_IDX(x)		(((errflags)(x)) >> WARN_SHR)
 #define WARN_MASK		((~(errflags)0) << WARN_SHR)
 
 /* This is a bitmask */

@@ -42,25 +42,9 @@
 
 size_t _nasm_last_string_size;
 
-no_return nasm_alloc_failed(void)
+fatal_func nasm_alloc_failed(void)
 {
-    /* If nasm_fatal() gets us back here, then croak hard */
-    static bool already_here = false;
-    FILE *errfile;
-
-    if (likely(!already_here)) {
-        already_here = true;
-        nasm_fatal("out of memory!");
-    }
-
-    errfile = error_file;
-    if (!errfile)
-        error_file = stderr;
-
-    fprintf(error_file, "nasm: out of memory!\n");
-    fflush(error_file);
-    fflush(NULL);
-    abort();
+    nasm_critical("out of memory!");
 }
 
 void *nasm_malloc(size_t size)

@@ -36,7 +36,7 @@
 
 #include "compiler.h"
 
-no_return nasm_alloc_failed(void);
+fatal_func nasm_alloc_failed(void);
 
 static inline void *validate_ptr(void *p)
 {
