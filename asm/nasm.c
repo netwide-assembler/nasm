@@ -74,7 +74,6 @@ const char *_progname;
 static void parse_cmdline(int, char **, int);
 static void assemble_file(const char *, struct strlist *);
 static bool skip_this_pass(errflags severity);
-static void nasm_verror_asm(errflags severity, const char *fmt, va_list args);
 static void usage(void);
 static void help(FILE *);
 
@@ -474,7 +473,6 @@ int main(int argc, char **argv)
 {
     /* Do these as early as possible */
     error_file = stderr;
-    nasm_set_verror(nasm_verror_asm);
     _progname = argv[0];
     if (!_progname || !_progname[0])
         _progname = "nasm";
@@ -1774,7 +1772,13 @@ static bool is_suppressed(errflags severity)
     if ((severity & ERR_UNDEAD) && terminate_after_phase)
         return true;
 
-    return !(warning_state[warn_index(severity)] & WARN_ST_ENABLED);
+    if (!(warning_state[warn_index(severity)] & WARN_ST_ENABLED))
+        return true;
+
+    if (preproc && !(severity & ERR_PP_LISTMACRO))
+        return preproc->suppress_error(severity);
+
+    return false;
 }
 
 /**
@@ -1886,7 +1890,7 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args
  * @param severity the severity of the warning or error
  * @param fmt the printf style format string
  */
-static void nasm_verror_asm(errflags severity, const char *fmt, va_list args)
+void nasm_verror(errflags severity, const char *fmt, va_list args)
 {
     char msg[1024];
     char warnsuf[64];

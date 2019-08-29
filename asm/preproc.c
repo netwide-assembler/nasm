@@ -515,8 +515,6 @@ static Token *expand_id(Token * tline);
 static Context *get_ctx(const char *name, const char **namep);
 static Token *make_tok_num(int64_t val);
 static Token *make_tok_qstr(const char *str);
-static void pp_verror(errflags severity, const char *fmt, va_list ap);
-static vefunc real_verror;
 static void *new_Block(size_t size);
 static void delete_Blocks(void);
 static Token *new_Token(Token * next, enum pp_token_type type,
@@ -5543,10 +5541,11 @@ static int expand_mmacro(Token * tline)
 }
 
 /*
- * This function adds macro names to error messages, and suppresses
- * them if necessary.
+ * This function decides if an error message should be suppressed.
+ * It will never be called with a severity level of ERR_FATAL or
+ * higher.
  */
-static void pp_verror(errflags severity, const char *fmt, va_list arg)
+static bool pp_suppress_error(errflags severity)
 {
     /*
      * If we're in a dead branch of IF or something like it, ignore the error.
@@ -5555,32 +5554,13 @@ static void pp_verror(errflags severity, const char *fmt, va_list arg)
      *   %if 0 ... %else trailing garbage ... %endif
      * So %else etc should set the ERR_PP_PRECOND flag.
      */
-    if ((severity & ERR_MASK) < ERR_FATAL &&
-	istk && istk->conds &&
+    if (istk && istk->conds &&
 	((severity & ERR_PP_PRECOND) ?
 	 istk->conds->state == COND_NEVER :
 	 !emitting(istk->conds->state)))
-	return;
+        return true;
 
-    /* This doesn't make sense with the macro stack unwinding */
-    if (0) {
-        int32_t delta = 0;
-
-        /* get %macro name */
-        if (!(severity & ERR_NOFILE) && istk && istk->mstk.mmac) {
-            MMacro *mmac = istk->mstk.mmac;
-            char *buf;
-
-            nasm_set_verror(real_verror);
-            buf = nasm_vasprintf(fmt, arg);
-            nasm_error(severity, "(%s:%"PRId32") %s",
-                       mmac->name, mmac->lineno - delta, buf);
-            nasm_set_verror(pp_verror);
-            nasm_free(buf);
-            return;
-        }
-    }
-    real_verror(severity, fmt, arg);
+    return false;
 }
 
 static Token *
@@ -6014,8 +5994,6 @@ static char *pp_getline(void)
     char *line = NULL;
     Token *tline;
 
-    real_verror = nasm_set_verror(pp_verror);
-
     while (true) {
         tline = pp_tokline();
         if (tline == &tok_pop) {
@@ -6041,14 +6019,11 @@ static char *pp_getline(void)
         nasm_free(buf);
     }
 
-    nasm_set_verror(real_verror);
     return line;
 }
 
 static void pp_cleanup_pass(void)
 {
-    real_verror = nasm_set_verror(pp_verror);
-
     if (defining) {
         if (defining->name) {
             nasm_nonfatal("end of file while still defining macro `%s'",
@@ -6060,8 +6035,6 @@ static void pp_cleanup_pass(void)
         free_mmacro(defining);
         defining = NULL;
     }
-
-    nasm_set_verror(real_verror);
 
     while (cstk)
         ctx_pop();
@@ -6114,8 +6087,6 @@ static void pp_pre_define(char *definition)
     Line *l;
     char *equals;
 
-    real_verror = nasm_set_verror(pp_verror);
-
     equals = strchr(definition, '=');
     space = new_Token(NULL, TOK_WHITESPACE, NULL, 0);
     def = new_Token(space, TOK_PREPROC_ID, "%define", 0);
@@ -6134,8 +6105,6 @@ static void pp_pre_define(char *definition)
     l->first = def;
     l->finishes = NULL;
     predef = l;
-
-    nasm_set_verror(real_verror);
 }
 
 static void pp_pre_undefine(char *definition)
@@ -6249,4 +6218,5 @@ const struct preproc_ops nasmpp = {
     pp_pre_command,
     pp_include_path,
     pp_error_list_macros,
+    pp_suppress_error
 };

@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -65,18 +65,19 @@ static const char *help =
 static void output_ins(uint64_t, uint8_t *, int, char *);
 static void skip(uint32_t dist, FILE * fp);
 
-fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list val)
+void nasm_verror(errflags severity, const char *fmt, va_list val)
 {
+    severity &= ERR_MASK;
+
     vfprintf(stderr, fmt, val);
-    exit((severity & ERR_MASK) - ERR_FATAL + 2);
+    if (severity >= ERR_FATAL)
+        exit(severity - ERR_FATAL + 1);
 }
 
-static void ndisasm_verror(errflags severity, const char *fmt, va_list val)
+fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list val)
 {
-    if ((severity & ERR_MASK) >= ERR_FATAL)
-        nasm_verror_critical(severity, fmt, val);
-    else
-        vfprintf(stderr, fmt, val);
+    nasm_verror(severity, fmt, val);
+    abort();
 }
 
 int main(int argc, char **argv)
@@ -97,7 +98,6 @@ int main(int argc, char **argv)
     FILE *fp;
 
     nasm_ctype_init();
-    nasm_set_verror(ndisasm_verror);
     iflag_clear_all(&prefer);
 
     offset = 0;

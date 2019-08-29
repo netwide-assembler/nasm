@@ -41,12 +41,6 @@
 #include "nasmlib.h"
 #include "error.h"
 
-/*
- * Global error handling function. If we call this before it is
- * initialized, it is a fatal error!
- */
-vefunc nasm_verror = (vefunc)nasm_verror_critical;
-
 /* Common function body */
 #define nasm_do_error(_sev,_flags)				\
 	va_list ap;						\

@@ -391,6 +391,9 @@ struct preproc_ops {
 
     /* Unwind the macro stack when printing an error message */
     void (*error_list_macros)(errflags severity);
+
+    /* Return true if an error message should be suppressed */
+    bool (*suppress_error)(errflags severity);
 };
 
 extern const struct preproc_ops nasmpp;

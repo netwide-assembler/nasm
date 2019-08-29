@@ -228,23 +228,24 @@ int rdf_errno = 0;
 /* ========================================================================
  * Hook for nasm_error() to work
  * ======================================================================== */
-fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list val)
+void nasm_verror(errflags severity, const char *fmt, va_list val)
 {
+    severity &= ERR_MASK;
+
     vfprintf(stderr, fmt, val);
-    exit((severity & ERR_MASK) - ERR_FATAL + 2);
+    if (severity >= ERR_FATAL)
+        exit(severity - ERR_FATAL + 1);
 }
 
-static void rdoff_verror(errflags severity, const char *fmt, va_list val)
+fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list val)
 {
-    if ((severity & ERR_MASK) >= ERR_FATAL)
-        nasm_verror_critical(severity, fmt, val);
-    else
-        vfprintf(stderr, fmt, val);
+    nasm_verror(severity, fmt, val);
+    abort();
 }
 
 void rdoff_init(void)
 {
-    nasm_set_verror(rdoff_verror);
+
 }
 
 /* ========================================================================

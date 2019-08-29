@@ -182,6 +182,12 @@ static void nop_error_list_macros(errflags severity)
     (void)severity;
 }
 
+static bool nop_suppress_error(errflags severity)
+{
+    (void)severity;
+    return false;
+}
+
 const struct preproc_ops preproc_nop = {
     nop_init,
     nop_reset,
@@ -195,4 +201,5 @@ const struct preproc_ops preproc_nop = {
     nop_pre_command,
     nop_include_path,
     nop_error_list_macros,
+    nop_suppress_error
 };
