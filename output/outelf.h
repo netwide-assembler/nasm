@@ -41,10 +41,6 @@
 #include "rbtree.h"
 #include "saa.h"
 
-/* symbol binding */
-#define SYM_GLOBAL      ELF32_ST_MKBIND(STB_GLOBAL)
-#define SYM_LOCAL       ELF32_ST_MKBIND(STB_LOCAL)
-
 #define GLOBAL_TEMP_BASE  0x40000000 /* bigger than any sane symbol index */
 
 /* alignment of sections in file */

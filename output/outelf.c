@@ -727,12 +727,19 @@ static int32_t elf_section_names(char *name, int *bits)
     return s->index;
 }
 
+static inline bool sym_type_local(int type)
+{
+    return ELF32_ST_BIND(type) == STB_LOCAL;
+}
+
 static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                          int is_global, char *special)
 {
     int pos = strslen;
     struct elf_symbol *sym;
-    bool special_used = false;
+    const char *spcword = nasm_skip_spaces(special);
+    int bind, type;             /* st_info components */
+    const struct elf_section *sec = NULL;
 
     if (debug_level(2)) {
         nasm_debug(" elf_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
@@ -797,13 +804,13 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
     memset(&sym->symv, 0, sizeof(struct rbtree));
 
     sym->strpos = pos;
-    sym->type = is_global ? SYM_GLOBAL : SYM_LOCAL;
+    bind = is_global ? STB_GLOBAL : STB_LOCAL;
+    type = STT_NOTYPE;
     sym->other = STV_DEFAULT;
     sym->size = 0;
-    if (segment == NO_SEG)
+    if (segment == NO_SEG) {
         sym->section = XSHN_ABS;
-    else {
-        const struct elf_section *s;
+    } else {
         sym->section = XSHN_UNDEF;
         if (segment == def_seg) {
             /* we have to be sure at least text section is there */
@@ -811,9 +818,9 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             if (segment != elf_section_names(".text", &tempint))
                 nasm_panic("strange segment conditions in ELF driver");
         }
-        s = raa_read_ptr(section_by_index, segment >> 1);
-        if (s)
-            sym->section = s->shndx;
+        sec = raa_read_ptr(section_by_index, segment >> 1);
+        if (sec)
+            sym->section = sec->shndx;
     }
 
     if (is_global == 2) {
@@ -824,22 +831,133 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
          * We have a common variable. Check the special text to see
          * if it's a valid number and power of two; if so, store it
          * as the alignment for the common variable.
+         *
+         * XXX: this should allow an expression.
          */
-        if (special) {
+        if (spcword) {
             bool err;
-            sym->symv.key = readnum(special, &err);
+            sym->symv.key = readnum(spcword, &err);
             if (err)
                 nasm_nonfatal("alignment constraint `%s' is not a"
                               " valid number", special);
-            else if ((sym->symv.key | (sym->symv.key - 1)) != 2 * sym->symv.key - 1)
+            else if (!is_power2(sym->symv.key))
                 nasm_nonfatal("alignment constraint `%s' is not a"
                               " power of two", special);
+            spcword = nasm_skip_spaces(nasm_skip_word(spcword));
         }
-        special_used = true;
-    } else
+    } else {
         sym->symv.key = (sym->section == XSHN_UNDEF ? 0 : offset);
+    }
 
-    if (sym->type == SYM_GLOBAL) {
+    if (spcword && *spcword) {
+        const char *wend;
+        bool ok = true;
+
+        while (ok) {
+            size_t wlen;
+            wend = nasm_skip_word(spcword);
+            wlen = wend - spcword;
+
+            switch (wlen) {
+            case 4:
+                if (!nasm_strnicmp(spcword, "data", wlen))
+                    type = STT_OBJECT;
+                else if (!nasm_strnicmp(spcword, "weak", wlen))
+                    bind = STB_WEAK;
+                else
+                    ok = false;
+                break;
+
+            case 6:
+                if (!nasm_strnicmp(spcword, "notype", wlen))
+                    type = STT_NOTYPE;
+                else if (!nasm_strnicmp(spcword, "object", wlen))
+                    type = STT_NOTYPE;
+                else if (!nasm_strnicmp(spcword, "hidden", wlen))
+                    sym->other = STV_HIDDEN;
+                else if (!nasm_strnicmp(spcword, "strong", wlen))
+                    bind = STB_GLOBAL;
+                else
+                    ok = false;
+                break;
+
+            case 7:
+                if (!nasm_strnicmp(spcword, "default", wlen))
+                    sym->other = STV_DEFAULT;
+                else
+                    ok = false;
+                break;
+
+            case 8:
+                if (!nasm_strnicmp(spcword, "function", wlen))
+                    type = STT_FUNC;
+                else if (!nasm_stricmp(spcword, "internal"))
+                    sym->other = STV_INTERNAL;
+                else
+                    ok = false;
+                break;
+
+            case 9:
+                if (!nasm_strnicmp(spcword, "protected", wlen))
+                    sym->other = STV_PROTECTED;
+                else
+                    ok = false;
+                break;
+
+            default:
+                ok = false;
+                break;
+            }
+
+            if (ok)
+                spcword = nasm_skip_spaces(wend);
+        }
+        if (!is_global && bind != STB_LOCAL) {
+            nasm_nonfatal("weak and strong only applies to global variables");
+            bind = STB_LOCAL;
+        }
+
+        if (spcword && *spcword) {
+            struct tokenval tokval;
+            expr *e;
+            int fwd = 0;
+            char *saveme = stdscan_get();
+
+            /*
+             * We have a size expression; attempt to
+             * evaluate it.
+             */
+            stdscan_reset();
+            stdscan_set((char *)spcword);
+            tokval.t_type = TOKEN_INVALID;
+            e = evaluate(stdscan, NULL, &tokval, &fwd, 0, NULL);
+            if (fwd) {
+                sym->nextfwd = fwds;
+                fwds = sym;
+                sym->name = nasm_strdup(name);
+            } else if (e) {
+                if (!is_simple(e))
+                    nasm_nonfatal("cannot use relocatable"
+                                  " expression as symbol size");
+                else
+                    sym->size = reloc_value(e);
+            }
+            stdscan_set(saveme);
+        }
+    }
+
+    /*
+     * If it is in a TLS segment, mark symbol accordingly.
+     */
+    if (sec && (sec->flags & SHF_TLS))
+        type = STT_TLS;
+
+    /* Note: ELF32_ST_INFO() and ELF64_ST_INFO() are identical */
+    sym->type = ELF32_ST_INFO(bind, type);
+
+    if (sym_type_local(sym->type)) {
+        nlocals++;
+    } else {
         /*
          * If sym->section == SHN_ABS, then the first line of the
          * else section would cause a core dump, because its a reference
@@ -863,83 +981,10 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             sects[sym->section-1]->gsyms =
                 rb_insert(sects[sym->section-1]->gsyms, &sym->symv);
 
-            if (special) {
-                int n = strcspn(special, " \t");
-
-                if (!nasm_strnicmp(special, "function", n))
-                    sym->type |= STT_FUNC;
-                else if (!nasm_strnicmp(special, "data", n) ||
-                         !nasm_strnicmp(special, "object", n))
-                    sym->type |= STT_OBJECT;
-                else if (!nasm_strnicmp(special, "notype", n))
-                    sym->type |= STT_NOTYPE;
-                else
-                    nasm_nonfatal("unrecognised symbol type `%.*s'",
-                                  n, special);
-                special += n;
-
-                special = nasm_skip_spaces(special);
-                if (*special) {
-                    n = strcspn(special, " \t");
-                    if (!nasm_strnicmp(special, "default", n))
-                        sym->other = STV_DEFAULT;
-                    else if (!nasm_strnicmp(special, "internal", n))
-                        sym->other = STV_INTERNAL;
-                    else if (!nasm_strnicmp(special, "hidden", n))
-                        sym->other = STV_HIDDEN;
-                    else if (!nasm_strnicmp(special, "protected", n))
-                        sym->other = STV_PROTECTED;
-                    else
-                        n = 0;
-                    special += n;
-                }
-
-                if (*special) {
-                    struct tokenval tokval;
-                    expr *e;
-                    int fwd = 0;
-                    char *saveme = stdscan_get();
-
-                    while (special[n] && nasm_isspace(special[n]))
-                        n++;
-                    /*
-                     * We have a size expression; attempt to
-                     * evaluate it.
-                     */
-                    stdscan_reset();
-                    stdscan_set(special + n);
-                    tokval.t_type = TOKEN_INVALID;
-                    e = evaluate(stdscan, NULL, &tokval, &fwd, 0, NULL);
-                    if (fwd) {
-                        sym->nextfwd = fwds;
-                        fwds = sym;
-                        sym->name = nasm_strdup(name);
-                    } else if (e) {
-                        if (!is_simple(e))
-                            nasm_nonfatal("cannot use relocatable"
-                                          " expression as symbol size");
-                        else
-                            sym->size = reloc_value(e);
-                    }
-                    stdscan_set(saveme);
-                }
-                special_used = true;
-            }
-            /*
-             * If TLS segment, mark symbol accordingly.
-             */
-            if (sects[sym->section - 1]->flags & SHF_TLS) {
-                sym->type &= 0xf0;
-                sym->type |= STT_TLS;
-            }
         }
         sym->globnum = nglobs;
         nglobs++;
-    } else
-        nlocals++;
-
-    if (special && !special_used)
-        nasm_nonfatal("no special symbol features supported here");
+    }
 }
 
 static void elf_add_reloc(struct elf_section *sect, int32_t segment,
@@ -2133,7 +2178,7 @@ static size_t elf_build_symtab(void)
      */
     saa_rewind(syms);
     while ((sym = saa_rstruct(syms))) {
-        if (sym->type & SYM_GLOBAL)
+        if (!sym_type_local(sym->type))
             continue;
 
         elf_sym(sym);
@@ -2146,7 +2191,7 @@ static size_t elf_build_symtab(void)
      */
     saa_rewind(syms);
     while ((sym = saa_rstruct(syms))) {
-        if (!(sym->type & SYM_GLOBAL))
+        if (sym_type_local(sym->type))
             continue;
 
         elf_sym(sym);
