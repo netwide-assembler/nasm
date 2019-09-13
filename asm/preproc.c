@@ -2739,7 +2739,7 @@ static bool is_macro_id(const Token *t)
                  (t->type == TOK_PREPROC_ID && t->text[1] == '$'));
 }
 
-static char *get_id(Token **tp, const char *dname, const char *err)
+static char *get_id(Token **tp, const char *dname)
 {
     char *id;
     Token *t = *tp;
@@ -2749,8 +2749,7 @@ static char *get_id(Token **tp, const char *dname, const char *err)
     t = expand_id(t);
 
     if (!is_macro_id(t)) {
-        nasm_nonfatal("`%s' expects a %s", dname,
-                      err ? err : "macro identifier");
+        nasm_nonfatal("`%s' expects a macro identifier", dname);
         return NULL;
     }
 
@@ -2758,6 +2757,43 @@ static char *get_id(Token **tp, const char *dname, const char *err)
     skip_white_(t);
     *tp = t;
     return id;
+}
+
+/* Parse a %use package name and find the package. Set *err on syntax error. */
+static const struct use_package *
+get_use_pkg(Token *t, const char *dname, bool *err)
+{
+    char *id;
+
+    *err = false;
+
+    t = t->next;                /* Skip directive */
+    skip_white_(t);
+
+    t = expand_smacro(t);
+
+    id = NULL;
+    if (t) {
+        if (t->type == TOK_ID) {
+            id = t->text;
+        } else if (t->type == TOK_STRING) {
+            nasm_unquote_cstr(t->text, NULL);
+            id = t->text;
+        }
+    }
+
+    if (!id) {
+        nasm_nonfatal("`%s' expects a package name", dname);
+        *err = true;
+        return NULL;
+    }
+
+    t = t->next;
+    skip_white_(t);
+    if (t)
+        nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored", dname);
+
+    return nasm_find_use_package(id);
 }
 
 /**
@@ -3150,14 +3186,12 @@ static int do_directive(Token *tline, Token **output)
     case PP_USE:
     {
         const struct use_package *pkg;
+        bool err;
 
-        if (!(mname = get_id(&tline, dname, "package name")))
+        pkg = get_use_pkg(tline, dname, &err);
+        if (err)
             goto done;
-        if (tline->next)
-            nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored", dname);
-        if (tline->type == TOK_STRING)
-            nasm_unquote_cstr(tline->text, NULL);
-        pkg = nasm_find_use_package(tline->text);
+
         if (!pkg) {
             nasm_nonfatal("unknown `%s' package: %s", dname, tline->text);
         } else if (!use_loaded[pkg->index]) {
@@ -3608,7 +3642,7 @@ issue_error:
         SMacro tmpl;
         Token **lastp;
 
-        if (!(mname = get_id(&tline, dname, NULL)))
+        if (!(mname = get_id(&tline, dname)))
             goto done;
 
         nasm_zero(tmpl);
@@ -3673,7 +3707,7 @@ issue_error:
 
     case PP_UNDEF:
     case PP_UNDEFALIAS:
-        if (!(mname = get_id(&tline, dname, NULL)))
+        if (!(mname = get_id(&tline, dname)))
             goto done;
         if (tline->next)
             nasm_warn(WARN_OTHER, "trailing garbage after macro name ignored");
@@ -3682,7 +3716,7 @@ issue_error:
         break;
 
     case PP_DEFSTR:
-        if (!(mname = get_id(&tline, dname, NULL)))
+        if (!(mname = get_id(&tline, dname)))
             goto done;
 
         last = tline;
@@ -3705,7 +3739,7 @@ issue_error:
         break;
 
     case PP_DEFTOK:
-        if (!(mname = get_id(&tline, dname, NULL)))
+        if (!(mname = get_id(&tline, dname)))
             goto done;
 
         last = tline;
@@ -3743,7 +3777,7 @@ issue_error:
     {
         const char *found_path;
 
-        if (!(mname = get_id(&tline, dname, NULL)))
+        if (!(mname = get_id(&tline, dname)))
             goto done;
 
         last = tline;
@@ -3782,7 +3816,7 @@ issue_error:
     }
 
     case PP_STRLEN:
-        if (!(mname = get_id(&tline, dname, NULL)))
+        if (!(mname = get_id(&tline, dname)))
             goto done;
 
         last = tline;
@@ -3813,7 +3847,7 @@ issue_error:
         return DIRECTIVE_FOUND;
 
     case PP_STRCAT:
-        if (!(mname = get_id(&tline, dname, NULL)))
+        if (!(mname = get_id(&tline, dname)))
             goto done;
 
         last = tline;
@@ -3863,7 +3897,7 @@ issue_error:
         int64_t start, count;
         size_t len;
 
-        if (!(mname = get_id(&tline, dname, NULL)))
+        if (!(mname = get_id(&tline, dname)))
             goto done;
 
         last = tline;
@@ -3942,7 +3976,7 @@ issue_error:
     }
 
     case PP_ASSIGN:
-        if (!(mname = get_id(&tline, dname, NULL)))
+        if (!(mname = get_id(&tline, dname)))
             goto done;
 
         last = tline;
