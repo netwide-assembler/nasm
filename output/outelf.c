@@ -872,7 +872,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                 if (!nasm_strnicmp(spcword, "notype", wlen))
                     type = STT_NOTYPE;
                 else if (!nasm_strnicmp(spcword, "object", wlen))
-                    type = STT_NOTYPE;
+                    type = STT_OBJECT;
                 else if (!nasm_strnicmp(spcword, "hidden", wlen))
                     sym->other = STV_HIDDEN;
                 else if (!nasm_strnicmp(spcword, "strong", wlen))
