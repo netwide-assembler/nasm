@@ -913,7 +913,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                 spcword = nasm_skip_spaces(wend);
         }
         if (!is_global && bind != STB_LOCAL) {
-            nasm_nonfatal("weak and strong only applies to global variables");
+            nasm_nonfatal("weak and strong only applies to global symbols");
             bind = STB_LOCAL;
         }
 
