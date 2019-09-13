@@ -1875,7 +1875,7 @@ restart:
              (m->greedy && nparam >= m->nparam-1))) {
             if (m->alias && !find_alias) {
                 if (do_aliases) {
-                    name = m->name;
+                    name = m->expansion->text;
                     goto restart;
                 } else {
                     continue;
