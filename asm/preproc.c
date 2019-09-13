@@ -521,6 +521,8 @@ static Token *new_Token(Token * next, enum pp_token_type type,
                         const char *text, size_t txtlen);
 static Token *dup_Token(Token *next, const Token *src);
 static Token *delete_Token(Token * t);
+static const struct use_package *
+get_use_pkg(Token *t, const char *dname, bool *err);
 
 /*
  * Macros for safe checking of token pointers, avoid *(NULL)
@@ -1989,10 +1991,11 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
     char *p;
     const char *dname = pp_directives[ct];
     bool casesense = true;
+    enum preproc_token cond = PP_COND(ct);
 
     origline = tline;
 
-    switch (PP_COND(ct)) {
+    switch (cond) {
     case PP_IFCTX:
         j = false;              /* have we matched yet? */
         while (true) {
@@ -2234,6 +2237,20 @@ iftype:
         }
         j = reloc_value(evalresult) != 0;
         break;
+
+    case PP_IFUSING:
+    case PP_IFUSABLE:
+    {
+        const struct use_package *pkg;
+        bool err;
+
+        pkg = get_use_pkg(tline, dname, &err);
+        if (err)
+            goto fail;
+
+        j = pkg && ((cond == PP_IFUSABLE) | use_loaded[pkg->index]);
+        break;
+    }
 
     default:
         nasm_nonfatal("unknown preprocessor directive `%s'", dname);
@@ -2767,7 +2784,6 @@ get_use_pkg(Token *t, const char *dname, bool *err)
 
     *err = false;
 
-    t = t->next;                /* Skip directive */
     skip_white_(t);
 
     t = expand_smacro(t);
@@ -3188,7 +3204,7 @@ static int do_directive(Token *tline, Token **output)
         const struct use_package *pkg;
         bool err;
 
-        pkg = get_use_pkg(tline, dname, &err);
+        pkg = get_use_pkg(tline->next, dname, &err);
         if (err)
             goto done;
 

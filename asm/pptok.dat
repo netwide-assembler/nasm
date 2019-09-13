@@ -53,6 +53,8 @@
 *num
 *str
 *token
+*usable
+*using
 
 # Directives with -i- versions for case insensitive
 %!assign
