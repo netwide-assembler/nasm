@@ -972,7 +972,9 @@ static expr *expr6(void)
                 label_seg = in_absolute ? absolute.segment : location.segment;
                 label_ofs = in_absolute ? absolute.offset : location.offset;
             } else {
-                if (!lookup_label(tokval->t_charptr, &label_seg, &label_ofs)) {
+                enum label_type ltype;
+                ltype = lookup_label(tokval->t_charptr, &label_seg, &label_ofs);
+                if (ltype == LBL_NONE) {
                     scope = local_scope(tokval->t_charptr);
                     if (critical) {
                         nasm_nonfatal("symbol `%s%s' not defined%s",
@@ -985,9 +987,9 @@ static expr *expr6(void)
                     type = EXPR_UNKNOWN;
                     label_seg = NO_SEG;
                     label_ofs = 1;
-                }
-                if (opflags && is_extern(tokval->t_charptr))
+                } else if (is_extern(ltype)) {
                     *opflags |= OPFLAG_EXTERN;
+                }
             }
             addtotemp(type, label_ofs);
             if (label_seg != NO_SEG)

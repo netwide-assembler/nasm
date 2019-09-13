@@ -297,6 +297,9 @@ bool process_directives(char *directive)
     case D_EXTERN:
         type = LBL_EXTERN;
         goto symdef;
+    case D_REQUIRED:
+        type = LBL_REQUIRED;
+        goto symdef;
     case D_COMMON:
         type = LBL_COMMON;
         goto symdef;
@@ -356,7 +359,7 @@ bool process_directives(char *directive)
         if (!declare_label(value, type, special))
             break;
         
-        if (type == LBL_COMMON || type == LBL_EXTERN)
+        if (type == LBL_COMMON || type == LBL_EXTERN || type == LBL_REQUIRED)
             define_label(value, 0, size, false);
 
     	break;

@@ -44,6 +44,9 @@
 ;; same D_ constant will be used for both, and this is perfectly
 ;; acceptable.
 ;;
+;; In the future, this will be turned into a general list of keywords
+;; to be parsed in special contexts.
+;;
 
 ; --- General configuration
 #name directive
@@ -73,6 +76,7 @@ segment
 warning
 sectalign
 pragma
+required
 
 ; --- Format-specific directives
 export				; outcoff, outobj

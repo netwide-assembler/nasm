@@ -96,9 +96,10 @@ static bool set_prevlabel(const char *l)
 #endif
 
 /* string values for enum label_type */
-static const char * const types[] =
-{"local", "global", "static", "extern", "common", "special",
- "output format special"};
+static const char * const types[] = {
+    "local", "static", "global", "extern", "required", "common",
+    "special", "output format special"
+};
 
 union label {                   /* actual label structures */
     struct {
@@ -107,6 +108,7 @@ union label {                   /* actual label structures */
         int64_t offset;
         int64_t size;
         int64_t defined;        /* 0 if undefined, passn+1 for when defn seen */
+        int64_t lastref;        /* Last pass where we saw a reference */
         char *label, *mangled, *special;
         const char *def_file;   /* Where defined */
         int32_t def_line;
@@ -157,7 +159,7 @@ static void out_symdef(union label *lptr)
         /* Emit special fixups for globals and commons */
         switch (lptr->defn.type) {
         case LBL_GLOBAL:
-        case LBL_EXTERN:
+        case LBL_REQUIRED:
         case LBL_COMMON:
             if (lptr->defn.special)
                 ofmt->symdef(lptr->defn.mangled, 0, 0, 3, lptr->defn.special);
@@ -173,8 +175,17 @@ static void out_symdef(union label *lptr)
 
     /* Clean up this hack... */
     switch(lptr->defn.type) {
-    case LBL_GLOBAL:
     case LBL_EXTERN:
+        /* If not seen in the previous or this pass, drop it */
+        if (lptr->defn.lastref < pass_count())
+            return;
+
+        /* Otherwise, promote to LBL_REQUIRED at this time */
+        lptr->defn.type = LBL_REQUIRED;
+
+        /* fall through */
+    case LBL_GLOBAL:
+    case LBL_REQUIRED:
         backend_type = 1;
         backend_offset = lptr->defn.offset;
         break;
@@ -255,32 +266,30 @@ static union label *find_label(const char *label, bool create, bool *created)
     return lfree++;
 }
 
-bool lookup_label(const char *label, int32_t *segment, int64_t *offset)
+enum label_type lookup_label(const char *label,
+                             int32_t *segment, int64_t *offset)
 {
     union label *lptr;
 
     if (!initialized)
-        return false;
+        return LBL_NONE;
 
     lptr = find_label(label, false, NULL);
     if (lptr && lptr->defn.defined) {
+        int64_t lpass = pass_count() + 1;
+
+        lptr->defn.lastref = lpass;
         *segment = lptr->defn.segment;
         *offset = lptr->defn.offset;
-        return true;
+        return lptr->defn.type;
     }
 
-    return false;
+    return LBL_NONE;
 }
 
-bool is_extern(const char *label)
+static inline bool is_global(enum label_type type)
 {
-    union label *lptr;
-
-    if (!initialized)
-        return false;
-
-    lptr = find_label(label, false, NULL);
-    return lptr && lptr->defn.type == LBL_EXTERN;
+    return type == LBL_GLOBAL || type == LBL_COMMON;
 }
 
 static const char *mangle_strings[] = {"", "", "", ""};
@@ -314,6 +323,7 @@ static const char *mangle_label_name(union label *lptr)
     case LBL_GLOBAL:
     case LBL_STATIC:
     case LBL_EXTERN:
+    case LBL_REQUIRED:
         prefix = mangle_strings[LM_GPREFIX];
         suffix = mangle_strings[LM_GSUFFIX];
         break;
@@ -376,12 +386,15 @@ handle_herelabel(union label *lptr, int32_t *segment, int64_t *offset)
 static bool declare_label_lptr(union label *lptr,
                                enum label_type type, const char *special)
 {
+    enum label_type oldtype = lptr->defn.type;
+
     if (special && !special[0])
         special = NULL;
 
-    if (lptr->defn.type == type ||
-        (!pass_stable() && lptr->defn.type == LBL_LOCAL)) {
+    if (oldtype == type || (!pass_stable() && oldtype == LBL_LOCAL) ||
+        (oldtype == LBL_EXTERN && type == LBL_REQUIRED)) {
         lptr->defn.type = type;
+
         if (special) {
             if (!lptr->defn.special)
                 lptr->defn.special = perm_copy(special);
@@ -390,29 +403,29 @@ static bool declare_label_lptr(union label *lptr,
                               lptr->defn.label, lptr->defn.special, special);
         }
         return true;
-    }
-
-    /* EXTERN can be replaced with GLOBAL or COMMON */
-    if (lptr->defn.type == LBL_EXTERN &&
-        (type == LBL_GLOBAL || type == LBL_COMMON)) {
+    } else if (is_extern(oldtype) && is_global(type)) {
+        /* EXTERN or REQUIRED can be replaced with GLOBAL or COMMON */
         lptr->defn.type = type;
+
         /* Override special unconditionally */
         if (special)
             lptr->defn.special = perm_copy(special);
         return true;
-    }
+    } else if (is_extern(type) && (is_global(oldtype) || is_extern(oldtype))) {
+        /*
+         * GLOBAL or COMMON ignore subsequent EXTERN or REQUIRED;
+         * REQUIRED ignores subsequent EXTERN.
+         */
 
-    /* GLOBAL or COMMON ignore subsequent EXTERN */
-    if ((lptr->defn.type == LBL_GLOBAL || lptr->defn.type == LBL_COMMON) &&
-        type == LBL_EXTERN) {
+        /* Ignore special unless we don't already have one */
         if (!lptr->defn.special)
             lptr->defn.special = perm_copy(special);
-        return false;           /* Don't call define_label() after this! */
+
+        return false; /* Don't call define_label() after this! */
     }
 
     nasm_nonfatal("symbol `%s' declared both as %s and %s",
                   lptr->defn.label, types[lptr->defn.type], types[type]);
-
     return false;
 }
 
@@ -452,13 +465,13 @@ void define_label(const char *label, int32_t segment,
 
     if (segment) {
         /* We are actually defining this label */
-        if (lptr->defn.type == LBL_EXTERN) {
-            /* auto-promote EXTERN to GLOBAL */
+        if (is_extern(lptr->defn.type)) {
+            /* auto-promote EXTERN/REQUIRED to GLOBAL */
             lptr->defn.type = LBL_GLOBAL;
             lastdef = 0; /* We are "re-creating" this label */
         }
     } else {
-        /* It's a pseudo-segment (extern, common) */
+        /* It's a pseudo-segment (extern, required, common) */
         segment = lptr->defn.segment ? lptr->defn.segment : seg_alloc();
     }
 

@@ -166,6 +166,13 @@ STD: nasm
     %endrep
 %endmacro
 
+%imacro required 1-*.nolist
+    %rep %0
+        [required %1]
+        %rotate 1
+    %endrep
+%endmacro
+
 %imacro common 1-*.nolist
     %rep %0
         [common %1]
