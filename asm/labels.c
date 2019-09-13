@@ -272,7 +272,7 @@ enum label_type lookup_label(const char *label,
     union label *lptr;
 
     if (!initialized)
-        return LBL_NONE;
+        return LBL_none;
 
     lptr = find_label(label, false, NULL);
     if (lptr && lptr->defn.defined) {
@@ -284,7 +284,7 @@ enum label_type lookup_label(const char *label,
         return lptr->defn.type;
     }
 
-    return LBL_NONE;
+    return LBL_none;
 }
 
 static inline bool is_global(enum label_type type)

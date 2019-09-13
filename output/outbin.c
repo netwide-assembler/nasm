@@ -655,7 +655,7 @@ static void bin_cleanup(void)
                 fprintf(rf, "\n\nValue     Name\n");
                 list_for_each(l, no_seg_labels) {
                     found_label = lookup_label(l->name, &segment, &offset);
-                    nasm_assert(found_label != LBL_NONE);
+                    nasm_assert(found_label != LBL_none);
                     fprintf(rf, "%08"PRIX64"  %s\n", offset, l->name);
                 }
                 fprintf(rf, "\n\n");
@@ -668,7 +668,7 @@ static void bin_cleanup(void)
                     fprintf(rf, "\n\nReal              Virtual           Name\n");
                     list_for_each(l, s->labels) {
                         found_label = lookup_label(l->name, &segment, &offset);
-                        nasm_assert(found_label != LBL_NONE);
+                        nasm_assert(found_label != LBL_none);
                         fprintf(rf, "%16"PRIX64"  %16"PRIX64"  %s\n",
                                 s->start + offset, s->vstart + offset,
                                 l->name);

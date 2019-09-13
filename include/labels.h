@@ -48,7 +48,7 @@ enum mangle_index {
 };
 
 enum label_type {
-    LBL_NONE = -1,              /* No label */
+    LBL_none = -1,              /* No label */
     LBL_LOCAL = 0,              /* Must be zero */
     LBL_STATIC,
     LBL_GLOBAL,

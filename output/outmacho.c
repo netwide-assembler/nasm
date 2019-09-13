@@ -1740,7 +1740,7 @@ static bool macho_set_section_attribute_by_symbol(const char *label, uint32_t fl
     int32_t nasm_seg;
     int64_t offset;
 
-    if (lookup_label(label, &nasm_seg, &offset) == LBL_NONE) {
+    if (lookup_label(label, &nasm_seg, &offset) == LBL_none) {
 	nasm_error(ERR_NONFATAL, "unknown symbol `%s' in no_dead_strip", label);
 	return false;
     }
