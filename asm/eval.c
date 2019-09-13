@@ -988,7 +988,8 @@ static expr *expr6(void)
                     label_seg = NO_SEG;
                     label_ofs = 1;
                 } else if (is_extern(ltype)) {
-                    *opflags |= OPFLAG_EXTERN;
+                    if (opflags)
+                        *opflags |= OPFLAG_EXTERN;
                 }
             }
             addtotemp(type, label_ofs);
