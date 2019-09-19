@@ -81,7 +81,6 @@ typedef struct MMacro MMacro;
 typedef struct MMacroInvocation MMacroInvocation;
 typedef struct Context Context;
 typedef struct Token Token;
-typedef struct Blocks Blocks;
 typedef struct Line Line;
 typedef struct Include Include;
 typedef struct Cond Cond;
@@ -494,16 +493,20 @@ static macros_t *extrastdmac;
 static bool *use_loaded;
 
 /*
- * Tokens are allocated in blocks to improve speed
+ * Tokens are allocated in blocks to improve speed. Set the blocksize
+ * to 0 to use regular nasm_malloc(); this is useful for debugging.
  */
 #define TOKEN_BLOCKSIZE 4096
-static Token *freeTokens = NULL;
+
+#if TOKEN_BLOCKSIZE
+typedef struct Blocks Blocks;
 struct Blocks {
     Blocks *next;
     void *chunk;
 };
-
 static Blocks blocks = { NULL, NULL };
+static Token *freeTokens = NULL;
+#endif
 
 /*
  * Forward declarations.
@@ -515,22 +518,55 @@ static Token *expand_id(Token * tline);
 static Context *get_ctx(const char *name, const char **namep);
 static Token *make_tok_num(int64_t val);
 static Token *make_tok_qstr(const char *str);
-static void *new_Block(size_t size);
-static void delete_Blocks(void);
 static Token *new_Token(Token * next, enum pp_token_type type,
                         const char *text, size_t txtlen);
 static Token *dup_Token(Token *next, const Token *src);
+static Token *new_White(Token *next);
 static Token *delete_Token(Token * t);
 static const struct use_package *
 get_use_pkg(Token *t, const char *dname, bool *err);
 
-/*
- * Macros for safe checking of token pointers, avoid *(NULL)
- */
-#define tok_type_(x,t)  ((x) && (x)->type == (t))
-#define skip_white_(x)  ((x) = (tok_type_((x), TOK_WHITESPACE) ? (x)->next : (x)))
-#define tok_is_(x,v)    (tok_type_((x), TOK_OTHER) && !strcmp((x)->text,(v)))
-#define tok_isnt_(x,v)  ((x) && ((x)->type!=TOK_OTHER || strcmp((x)->text,(v))))
+/* Safe test for token type, false on x == NULL */
+static inline bool tok_type(const Token *x, enum pp_token_type t)
+{
+    return x && x->type == t;
+}
+
+/* Whitespace token? */
+static inline bool tok_white(const Token *x)
+{
+    return tok_type(x, TOK_WHITESPACE);
+}
+
+/* Skip past any whitespace */
+static inline Token *skip_white(Token *x)
+{
+    while (tok_white(x))
+        x = x->next;
+
+    return x;
+}
+
+/* Delete any whitespace */
+static Token *zap_white(Token *x)
+{
+    while (tok_white(x))
+        x = delete_Token(x);
+
+    return x;
+}
+
+/* Single special character tests */
+static inline bool tok_is(const Token *x, char c)
+{
+    return x && x->type == TOK_OTHER && x->len == 1 && x->text[0] == c;
+}
+
+/* True if any other kind of token that "c", but not NULL */
+static inline bool tok_isnt(const Token *x, char c)
+{
+    return x && (x->type != TOK_OTHER || x->len != 1 || x->text[0] != c);
+}
 
 /*
  * In-place reverse a list of tokens.
@@ -1155,10 +1191,9 @@ static Token *tokenize(char *line)
             }
         } else if (nasm_isidstart(*p) || (*p == '$' && nasm_isidstart(p[1]))) {
             type = TOK_ID;
-            p++;
-            while (*p && nasm_isidchar(*p))
-                p++;
-        } else if (nasm_isquote(*p)) {
+            while (nasm_isidchar(*++p))
+                ;
+         } else if (nasm_isquote(*p)) {
             /*
              * A string token.
              */
@@ -1308,31 +1343,40 @@ static Token *tokenize(char *line)
     return list;
 }
 
+#if TOKEN_BLOCKSIZE
 /*
  * this function allocates a new managed block of memory and
  * returns a pointer to the block.  The managed blocks are
  * deleted only all at once by the delete_Blocks function.
  */
-static void *new_Block(size_t size)
+static void new_Block(void)
 {
     Blocks *b = &blocks;
+    int i;
 
     /* first, get to the end of the linked list */
     while (b->next)
         b = b->next;
     /* now allocate the requested chunk */
-    b->chunk = nasm_malloc(size);
+    b->chunk = nasm_malloc(TOKEN_BLOCKSIZE * sizeof(Token));
 
     /* now allocate a new block for the next request */
     b->next = nasm_zalloc(sizeof(Blocks));
-    return b->chunk;
+
+    freeTokens = b->chunk;
+    for (i = 0; i < TOKEN_BLOCKSIZE - 1; i++)
+        freeTokens[i].next = &freeTokens[i + 1];
+
+    freeTokens[i].next = NULL;
 }
+#endif
 
 /*
  * this function deletes all managed blocks of memory
  */
 static void delete_Blocks(void)
 {
+#if TOKEN_BLOCKSIZE
     Blocks *a, *b = &blocks;
 
     /*
@@ -1349,6 +1393,9 @@ static void delete_Blocks(void)
             nasm_free(a);
     }
     memset(&blocks, 0, sizeof(blocks));
+
+    freeTokens = NULL;
+#endif
 }
 
 /*
@@ -1359,16 +1406,15 @@ static Token *new_Token(Token * next, enum pp_token_type type,
                         const char *text, size_t txtlen)
 {
     Token *t;
-    int i;
 
-    if (!freeTokens) {
-        freeTokens = (Token *) new_Block(TOKEN_BLOCKSIZE * sizeof(Token));
-        for (i = 0; i < TOKEN_BLOCKSIZE - 1; i++)
-            freeTokens[i].next = &freeTokens[i + 1];
-        freeTokens[i].next = NULL;
-    }
+#if TOKEN_BLOCKSIZE
+    if (!freeTokens)
+        new_Block();
     t = freeTokens;
     freeTokens = t->next;
+#else
+    t = nasm_malloc(sizeof *t);
+#endif
     t->next = next;
     t->type = type;
     if (type == TOK_WHITESPACE || !text) {
@@ -1390,12 +1436,22 @@ static Token *dup_Token(Token *next, const Token *src)
     return new_Token(next, src->type, src->text, src->len);
 }
 
+static Token *new_White(Token *next)
+{
+    return new_Token(next, TOK_WHITESPACE, NULL, 0);
+}
+
 static Token *delete_Token(Token * t)
 {
     Token *next = t->next;
+
     nasm_free(t->text);
+#if TOKEN_BLOCKSIZE
     t->next = freeTokens;
     freeTokens = t;
+#else
+    nasm_free(t);
+#endif
     return next;
 }
 
@@ -1622,8 +1678,8 @@ static bool pp_get_boolean_option(Token *tline, bool defval)
     struct tokenval tokval;
     expr *evalresult;
 
-    skip_white_(tline);
-    if (!tline || !tline->type)
+    tline = skip_white(tline);
+    if (!tline)
         return true;
 
     if (tline->type == TOK_ID) {
@@ -1929,21 +1985,21 @@ static void count_mmac_params(Token * t, int *nparamp, Token ***paramsp)
     params = nasm_malloc(paramsize * sizeof(*params));
     params[0] = NULL;
 
-    while (skip_white_(t)) {
+    while ((t = skip_white(t))) {
         /* 2 slots for captured label and NULL */
         if (nparam+2 >= paramsize) {
             paramsize += PARAM_DELTA;
             params = nasm_realloc(params, sizeof(*params) * paramsize);
         }
         brace = 0;
-        if (tok_is_(t, "{"))
+        if (tok_is(t, '{'))
             brace++;
         params[++nparam] = t;
         if (brace) {
-            while (brace && (t = t->next) != NULL) {
-                if (tok_is_(t, "{"))
+            while (brace && (t = t->next)) {
+                if (tok_is(t, '{'))
                     brace++;
-                else if (tok_is_(t, "}"))
+                else if (tok_is(t, '}'))
                     brace--;
             }
 
@@ -1952,21 +2008,17 @@ static void count_mmac_params(Token * t, int *nparamp, Token ***paramsp)
                  * Now we've found the closing brace, look further
                  * for the comma.
                  */
-                t = t->next;
-                skip_white_(t);
-                if (tok_isnt_(t, ",")) {
+                t = skip_white(t->next);
+                if (!tok_is(t, ','))
                     nasm_nonfatal("braces do not enclose all of macro parameter");
-                    while (tok_isnt_(t, ","))
-                        t = t->next;
-                }
             }
-        } else {
-            while (tok_isnt_(t, ","))
-                t = t->next;
         }
-        if (t) {                /* got a comma/brace */
-            t = t->next;        /* eat the comma */
-        }
+
+        while (tok_isnt(t, ','))
+            t = t->next;
+
+        if (t)                /* got a comma */
+            t = t->next;      /* eat the comma */
     }
 
     params[nparam+1] = NULL;
@@ -1999,7 +2051,7 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
     case PP_IFCTX:
         j = false;              /* have we matched yet? */
         while (true) {
-            skip_white_(tline);
+            tline = skip_white(tline);
             if (!tline)
                 break;
             if (tline->type != TOK_ID) {
@@ -2016,7 +2068,7 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
     case PP_IFDEF:
         j = false;              /* have we matched yet? */
         while (tline) {
-            skip_white_(tline);
+            tline = skip_white(tline);
             if (!tline || (tline->type != TOK_ID &&
                            (tline->type != TOK_PREPROC_ID ||
                             tline->text[1] != '$'))) {
@@ -2034,7 +2086,7 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
         tline = expand_smacro(tline);
         j = false;              /* have we matched yet? */
         while (tline) {
-            skip_white_(tline);
+            tline = skip_white(tline);
             if (!tline || (tline->type != TOK_ID &&
                            tline->type != TOK_STRING &&
                            (tline->type != TOK_PREPROC_ID ||
@@ -2060,7 +2112,7 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
     case PP_IFIDN:
         tline = expand_smacro(tline);
         t = tt = tline;
-        while (tok_isnt_(tt, ","))
+        while (tok_isnt(tt, ','))
             tt = tt->next;
         if (!tt) {
             nasm_nonfatal("`%s' expects two comma-separated arguments",
@@ -2117,9 +2169,9 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
         bool found = false;
         MMacro searching, *mmac;
 
-        skip_white_(tline);
+        tline = skip_white(tline);
         tline = expand_id(tline);
-        if (!tok_type_(tline, TOK_ID)) {
+        if (!tok_type(tline, TOK_ID)) {
             nasm_nonfatal("`%s' expects a macro name", dname);
             goto fail;
         }
@@ -2129,20 +2181,20 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
         searching.nparam_min = 0;
         searching.nparam_max = INT_MAX;
         tline = expand_smacro(tline->next);
-        skip_white_(tline);
+        tline = skip_white(tline);
         if (!tline) {
-        } else if (!tok_type_(tline, TOK_NUMBER)) {
+        } else if (!tok_type(tline, TOK_NUMBER)) {
             nasm_nonfatal("`%s' expects a parameter count or nothing",
                           dname);
         } else {
             searching.nparam_min = searching.nparam_max =
                 read_param_count(tline->text);
         }
-        if (tline && tok_is_(tline->next, "-")) {
+        if (tline && tok_is(tline->next, '-')) {
             tline = tline->next->next;
-            if (tok_is_(tline, "*"))
+            if (tok_is(tline, '*'))
                 searching.nparam_max = INT_MAX;
-            else if (!tok_type_(tline, TOK_NUMBER))
+            else if (!tok_type(tline, TOK_NUMBER))
                 nasm_nonfatal("`%s' expects a parameter count after `-'",
                               dname);
             else {
@@ -2153,7 +2205,7 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
                 }
             }
         }
-        if (tline && tok_is_(tline->next, "+")) {
+        if (tline && tok_is(tline->next, '+')) {
             tline = tline->next;
             searching.plus = true;
         }
@@ -2189,35 +2241,27 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
 iftype:
         t = tline = expand_smacro(tline);
 
-        while (tok_type_(t, TOK_WHITESPACE) ||
-               (needtype == TOK_NUMBER &&
-                tok_type_(t, TOK_OTHER) &&
-                (t->text[0] == '-' || t->text[0] == '+') &&
-                !t->text[1]))
+        while (tok_white(t) ||
+               (needtype == TOK_NUMBER && (tok_is(t, '-') | tok_is(t, '+'))))
             t = t->next;
 
-        j = tok_type_(t, needtype);
+        j = tok_type(t, needtype);
         break;
 
     case PP_IFTOKEN:
-        t = tline = expand_smacro(tline);
-        while (tok_type_(t, TOK_WHITESPACE))
-            t = t->next;
+        tline = expand_smacro(tline);
+        t = skip_white(tline);
 
         j = false;
         if (t) {
-            t = t->next;        /* Skip the actual token */
-            while (tok_type_(t, TOK_WHITESPACE))
-                t = t->next;
-            j = !t;             /* Should be nothing left */
+            t = skip_white(t->next); /* Skip the actual token + whitespace */
+            j = !t;
         }
         break;
 
     case PP_IFEMPTY:
-        t = tline = expand_smacro(tline);
-        while (tok_type_(t, TOK_WHITESPACE))
-            t = t->next;
-
+        tline = expand_smacro(tline);
+        t = skip_white(tline);
         j = !t;                 /* Should be empty */
         break;
 
@@ -2404,7 +2448,7 @@ static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
      * This ambiguity was inherited from C.
      */
 
-    if (!tok_is_(t, "("))
+    if (!tok_is(t, '('))
         goto finish;
 
     if (tmpl) {
@@ -2649,9 +2693,9 @@ static void undef_smacro(const char *mname, bool undefalias)
 static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 {
     tline = tline->next;
-    skip_white_(tline);
+    tline = skip_white(tline);
     tline = expand_id(tline);
-    if (!tok_type_(tline, TOK_ID)) {
+    if (!tok_type(tline, TOK_ID)) {
         nasm_nonfatal("`%s' expects a macro name", directive);
         return false;
     }
@@ -2666,16 +2710,16 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
     def->nparam_max = 0;
 
     tline = expand_smacro(tline->next);
-    skip_white_(tline);
-    if (!tok_type_(tline, TOK_NUMBER))
+    tline = skip_white(tline);
+    if (!tok_type(tline, TOK_NUMBER))
         nasm_nonfatal("`%s' expects a parameter count", directive);
     else
         def->nparam_min = def->nparam_max = read_param_count(tline->text);
-    if (tline && tok_is_(tline->next, "-")) {
+    if (tline && tok_is(tline->next, '-')) {
         tline = tline->next->next;
-        if (tok_is_(tline, "*")) {
+        if (tok_is(tline, '*')) {
             def->nparam_max = INT_MAX;
-        } else if (!tok_type_(tline, TOK_NUMBER)) {
+        } else if (!tok_type(tline, TOK_NUMBER)) {
             nasm_nonfatal("`%s' expects a parameter count after `-'", directive);
         } else {
             def->nparam_max = read_param_count(tline->text);
@@ -2685,11 +2729,11 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
             }
         }
     }
-    if (tline && tok_is_(tline->next, "+")) {
+    if (tline && tok_is(tline->next, '+')) {
         tline = tline->next;
         def->plus = true;
     }
-    if (tline && tok_type_(tline->next, TOK_ID) &&
+    if (tline && tok_type(tline->next, TOK_ID) &&
         !nasm_stricmp(tline->next->text, ".nolist")) {
         tline = tline->next;
         def->nolist = !list_option('f') || istk->nolist;
@@ -2743,7 +2787,7 @@ static void do_pragma_preproc(Token *tline)
 {
     /* Skip to the real stuff */
     tline = tline->next;
-    skip_white_(tline);
+    tline = skip_white(tline);
     if (!tline)
         return;
 
@@ -2762,7 +2806,7 @@ static char *get_id(Token **tp, const char *dname)
     Token *t = *tp;
 
     t = t->next;                /* Skip directive */
-    skip_white_(t);
+    t = skip_white(t);
     t = expand_id(t);
 
     if (!is_macro_id(t)) {
@@ -2771,7 +2815,7 @@ static char *get_id(Token **tp, const char *dname)
     }
 
     id = t->text;
-    skip_white_(t);
+    t = skip_white(t);
     *tp = t;
     return id;
 }
@@ -2784,7 +2828,7 @@ get_use_pkg(Token *t, const char *dname, bool *err)
 
     *err = false;
 
-    skip_white_(t);
+    t = skip_white(t);
 
     t = expand_smacro(t);
 
@@ -2805,7 +2849,7 @@ get_use_pkg(Token *t, const char *dname, bool *err)
     }
 
     t = t->next;
-    skip_white_(t);
+    t = skip_white(t);
     if (t)
         nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored", dname);
 
@@ -2855,8 +2899,8 @@ static int do_directive(Token *tline, Token **output)
     *output = NULL;             /* No output generated */
     origline = tline;
 
-    skip_white_(tline);
-    if (!tline || !tok_type_(tline, TOK_PREPROC_ID) ||
+    tline = skip_white(tline);
+    if (!tline || !tok_type(tline, TOK_PREPROC_ID) ||
         (tline->text[0] && (tline->text[1] == '%' ||
 			    tline->text[1] == '$' ||
 			    tline->text[1] == '!')))
@@ -2936,13 +2980,8 @@ static int do_directive(Token *tline, Token **output)
         t = tline;
         tline = tline->next;
         t->next = NULL;
-        tline = expand_smacro(tline);
-        while (tok_type_(tline, TOK_WHITESPACE)) {
-            t = tline;
-            tline = tline->next;
-            delete_Token(t);
-        }
-        if (tok_type_(tline, TOK_ID)) {
+        tline = zap_white(expand_smacro(tline));
+        if (tok_type(tline, TOK_ID)) {
             if (!nasm_stricmp(tline->text, "preproc")) {
                 /* Preprocessor pragma */
                 do_pragma_preproc(tline);
@@ -2956,7 +2995,7 @@ static int do_directive(Token *tline, Token **output)
                 t->next = new_Token(NULL, TOK_OTHER, "]", 1);
 
                 /* Prepend "[pragma " */
-                t = new_Token(tline, TOK_WHITESPACE, NULL, 0);
+                t = new_White(tline);
                 t = new_Token(t, TOK_ID, "pragma", 6);
                 t = new_Token(t, TOK_OTHER, "[", 1);
                 tline = t;
@@ -2970,9 +3009,7 @@ static int do_directive(Token *tline, Token **output)
          * default is for a 16-bit stack, and this can be overriden with
          * %stacksize large.
          */
-        tline = tline->next;
-        if (tline && tline->type == TOK_WHITESPACE)
-            tline = tline->next;
+        tline = skip_white(tline->next);
         if (!tline || tline->type != TOK_ID) {
             nasm_nonfatal("`%s' missing size parameter", dname);
         }
@@ -3021,9 +3058,7 @@ static int do_directive(Token *tline, Token **output)
             int size = StackSize;
 
             /* Find the argument name */
-            tline = tline->next;
-            if (tline && tline->type == TOK_WHITESPACE)
-                tline = tline->next;
+            tline = skip_white(tline->next);
             if (!tline || tline->type != TOK_ID) {
                 nasm_nonfatal("`%s' missing argument parameter", dname);
                 goto done;
@@ -3064,10 +3099,8 @@ static int do_directive(Token *tline, Token **output)
             offset += size;
 
             /* Move to the next argument in the list */
-            tline = tline->next;
-            if (tline && tline->type == TOK_WHITESPACE)
-                tline = tline->next;
-        } while (tline && tline->type == TOK_OTHER && tline->text[0] == ',');
+            tline = skip_white(tline->next);
+        } while (tok_is(tline, ','));
         ArgOffset = offset;
         break;
 
@@ -3087,9 +3120,7 @@ static int do_directive(Token *tline, Token **output)
             int size = StackSize;
 
             /* Find the argument name */
-            tline = tline->next;
-            if (tline && tline->type == TOK_WHITESPACE)
-                tline = tline->next;
+            tline = skip_white(tline->next);
             if (!tline || tline->type != TOK_ID) {
                 nasm_nonfatal("`%s' missing argument parameter", dname);
                 goto done;
@@ -3136,10 +3167,8 @@ static int do_directive(Token *tline, Token **output)
             do_directive(tokenize(directive), output);
 
             /* Move to the next argument in the list */
-            tline = tline->next;
-            if (tline && tline->type == TOK_WHITESPACE)
-                tline = tline->next;
-        } while (tline && tline->type == TOK_OTHER && tline->text[0] == ',');
+            tline = skip_white(tline->next);
+        } while (tok_is(tline, ','));
         LocalOffset = offset;
         break;
 
@@ -3152,7 +3181,7 @@ static int do_directive(Token *tline, Token **output)
 
     case PP_DEPEND:
         t = tline->next = expand_smacro(tline->next);
-        skip_white_(t);
+        t = skip_white(t);
         if (!t || (t->type != TOK_STRING &&
                    t->type != TOK_INTERNAL_STRING)) {
             nasm_nonfatal("`%s' expects a file name", dname);
@@ -3168,7 +3197,7 @@ static int do_directive(Token *tline, Token **output)
 
     case PP_INCLUDE:
         t = tline->next = expand_smacro(tline->next);
-        skip_white_(t);
+        t = skip_white(t);
 
         if (!t || (t->type != TOK_STRING &&
                    t->type != TOK_INTERNAL_STRING)) {
@@ -3232,10 +3261,10 @@ static int do_directive(Token *tline, Token **output)
     case PP_REPL:
     case PP_POP:
         tline = tline->next;
-        skip_white_(tline);
+        tline = skip_white(tline);
         tline = expand_id(tline);
         if (tline) {
-            if (!tok_type_(tline, TOK_ID)) {
+            if (!tok_type(tline, TOK_ID)) {
                 nasm_nonfatal("`%s' expects a context identifier",
                               pp_directives[i]);
                 goto done;
@@ -3295,10 +3324,10 @@ issue_error:
         /* Only error out if this is the final pass */
         tline->next = expand_smacro(tline->next);
         tline = tline->next;
-        skip_white_(tline);
+        tline = skip_white(tline);
         t = tline ? tline->next : NULL;
-        skip_white_(t);
-        if (tok_type_(tline, TOK_STRING) && !t) {
+        t = skip_white(t);
+        if (tok_type(tline, TOK_STRING) && !t) {
             /* The line contains only a quoted string */
             p = tline->text;
             nasm_unquote(p, NULL); /* Ignore NUL character truncation */
@@ -3503,7 +3532,7 @@ issue_error:
     }
 
     case PP_ROTATE:
-        if (tline->next && tline->next->type == TOK_WHITESPACE)
+        while (tok_white(tline->next))
             tline = tline->next;
         if (!tline->next) {
             free_tlist(origline);
@@ -3547,16 +3576,11 @@ issue_error:
         MMacro *tmp_defining;
 
         nolist = false;
-        do {
-            tline = tline->next;
-        } while (tok_type_(tline, TOK_WHITESPACE));
-
-        if (tok_type_(tline, TOK_ID) &&
+        tline = skip_white(tline->next);
+        if (tok_type(tline, TOK_ID) &&
             nasm_stricmp(tline->text, ".nolist") == 0) {
             nolist = !list_option('f') || istk->nolist;
-            do {
-                tline = tline->next;
-            } while (tok_type_(tline, TOK_WHITESPACE));
+            tline = skip_white(tline->next);
         }
 
         if (tline) {
@@ -3677,7 +3701,7 @@ issue_error:
             tt = macro_start->next;
             macro_start->next = NULL;
             tline = tline->next;
-            skip_white_(tline);
+            tline = skip_white(tline);
             if (tline && tline->type) {
                 nasm_warn(WARN_OTHER,
                           "trailing garbage after aliasing identifier ignored");
@@ -3739,9 +3763,7 @@ issue_error:
         tline = expand_smacro(tline->next);
         last->next = NULL;
 
-        while (tok_type_(tline, TOK_WHITESPACE))
-            tline = delete_Token(tline);
-
+        tline = zap_white(tline);
         p = detoken(tline, false);
         macro_start = make_tok_qstr(p);
         nasm_free(p);
@@ -3762,11 +3784,9 @@ issue_error:
         tline = expand_smacro(tline->next);
         last->next = NULL;
 
-        t = tline;
-        while (tok_type_(t, TOK_WHITESPACE))
-            t = t->next;
+        t = skip_white(tline);
         /* t should now point to the string */
-        if (!tok_type_(t, TOK_STRING)) {
+        if (!tok_type(t, TOK_STRING)) {
             nasm_nonfatal("`%s' requires string as second parameter", dname);
             free_tlist(tline);
             goto done;
@@ -3800,10 +3820,7 @@ issue_error:
         tline = expand_smacro(tline->next);
         last->next = NULL;
 
-        t = tline;
-        while (tok_type_(t, TOK_WHITESPACE))
-            t = t->next;
-
+        t = skip_white(tline);
         if (!t || (t->type != TOK_STRING &&
                    t->type != TOK_INTERNAL_STRING)) {
             nasm_nonfatal("`%s' expects a file name", dname);
@@ -3839,11 +3856,9 @@ issue_error:
         tline = expand_smacro(tline->next);
         last->next = NULL;
 
-        t = tline;
-        while (tok_type_(t, TOK_WHITESPACE))
-            t = t->next;
+        t = skip_white(tline);
         /* t should now point to the string */
-        if (!tok_type_(t, TOK_STRING)) {
+        if (!tok_type(t, TOK_STRING)) {
             nasm_nonfatal("`%s' requires string as second parameter", dname);
             free_tlist(tline);
             free_tlist(origline);
@@ -3922,11 +3937,11 @@ issue_error:
 
         if (tline) /* skip expanded id */
             t = tline->next;
-        while (tok_type_(t, TOK_WHITESPACE))
-            t = t->next;
+
+        t = skip_white(t);
 
         /* t should now point to the string */
-        if (!tok_type_(t, TOK_STRING)) {
+        if (!tok_type(t, TOK_STRING)) {
             nasm_nonfatal("`%s' requires string as second parameter", dname);
             free_tlist(tline);
             goto done;
@@ -3946,8 +3961,7 @@ issue_error:
         }
         start = evalresult->value - 1;
 
-        while (tok_type_(pps.tptr, TOK_WHITESPACE))
-            pps.tptr = pps.tptr->next;
+        pps.tptr = skip_white(pps.tptr);
         if (!pps.tptr) {
             count = 1;  /* Backwards compatibility: one character */
         } else {
@@ -4040,24 +4054,24 @@ issue_error:
             goto done;
 
         tline = tline->next;
-        skip_white_(tline);
-        if (!tok_type_(tline, TOK_NUMBER)) {
+        tline = skip_white(tline);
+        if (!tok_type(tline, TOK_NUMBER)) {
             nasm_nonfatal("`%s' expects line number", dname);
             goto done;
         }
         k = readnum(tline->text, &err);
         m = 1;
         tline = tline->next;
-        if (tok_is_(tline, "+")) {
+        if (tok_is(tline, '+')) {
             tline = tline->next;
-            if (!tok_type_(tline, TOK_NUMBER)) {
+            if (!tok_type(tline, TOK_NUMBER)) {
                 nasm_nonfatal("`%s' expects line increment", dname);
                 goto done;
             }
             m = readnum(tline->text, &err);
             tline = tline->next;
         }
-        skip_white_(tline);
+        tline = skip_white(tline);
         src_set_linnum(k);
         istk->lineinc = m;
         if (tline) {
@@ -4085,13 +4099,13 @@ static int find_cc(Token * t)
     if (!t)
         return -1;              /* Probably a %+ without a space */
 
-    skip_white_(t);
+    t = skip_white(t);
     if (!t)
         return -1;
     if (t->type != TOK_ID)
         return -1;
     tt = t->next;
-    skip_white_(tt);
+    tt = skip_white(tt);
     if (tt && (tt->type != TOK_OTHER || strcmp(tt->text, ",")))
         return -1;
 
@@ -4108,7 +4122,7 @@ static int find_cc(Token * t)
 static bool paste_tokens(Token **head, const struct tokseq_match *m,
                          size_t mnum, bool handle_explicit)
 {
-    Token *tok, *next, **prev_next, **prev_nonspace;
+    Token *tok, *t, *next, **prev_next, **prev_nonspace;
     bool pasted = false;
     char *buf, *p;
     size_t len, i;
@@ -4128,7 +4142,7 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
     tok = *head;
     prev_next = NULL;
 
-    if (!tok_type_(tok, TOK_WHITESPACE) && !tok_type_(tok, TOK_PASTE))
+    if (!tok_white(tok) && !tok_type(tok, TOK_PASTE))
         prev_nonspace = head;
     else
         prev_nonspace = NULL;
@@ -4138,26 +4152,33 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
         switch (tok->type) {
         case TOK_WHITESPACE:
             /* Zap redundant whitespaces */
-            while (tok_type_(next, TOK_WHITESPACE))
-                next = delete_Token(next);
-            tok->next = next;
+            next = zap_white(next);
             break;
 
         case TOK_PASTE:
             /* Explicit pasting */
             if (!handle_explicit)
                 break;
-            next = delete_Token(tok);
-
-            while (tok_type_(next, TOK_WHITESPACE))
-                next = delete_Token(next);
-
-            if (!pasted)
-                pasted = true;
 
             /* Left pasting token is start of line */
-            if (!prev_nonspace)
-                nasm_fatal("No lvalue found on pasting");
+            if (!prev_nonspace) {
+                nasm_nonfatal("No lvalue found on pasting");
+                tok = delete_Token(tok);
+                break;
+            }
+
+            pasted = true;
+            t = *prev_nonspace;
+
+            /* Delete leading whitespace */
+            next = zap_white(t->next);
+
+            /* Delete the %+ token itself */
+            nasm_assert(next == tok);
+            next = delete_Token(next);
+
+            /* Delete trailing whitespace */
+            next = zap_white(next);
 
             /*
              * No ending token, this might happen in two
@@ -4173,41 +4194,33 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
              * whitespace after paste token.
              */
             if (!next) {
-                /*
-                 * Zap ending space tokens and that's all.
-                 */
-                tok = (*prev_nonspace)->next;
-                while (tok_type_(tok, TOK_WHITESPACE))
-                    tok = delete_Token(tok);
-                tok = *prev_nonspace;
-                tok->next = NULL;
+                tok = NULL;     /* End of line */
                 break;
             }
 
-            tok = *prev_nonspace;
-            while (tok_type_(tok, TOK_WHITESPACE))
-                tok = delete_Token(tok);
-            len  = strlen(tok->text);
-            len += strlen(next->text);
-
-            p = buf = nasm_malloc(len + 1);
-            strcpy(p, tok->text);
-            p = strchr(p, '\0');
-            strcpy(p, next->text);
-
-            delete_Token(tok);
-
-            tok = tokenize(buf);
+            p = buf = nasm_malloc(t->len + next->len + 1);
+            p = mempcpy(p, t->text, t->len);
+            p = mempcpy(p, next->text, next->len);
+            *p = '\0';
+            delete_Token(t);
+            t = tokenize(buf);
             nasm_free(buf);
 
-            *prev_nonspace = tok;
-            while (tok && tok->next)
-                tok = tok->next;
+            if (unlikely(!t)) {
+                /*
+                 * No output at all? Replace with a single whitespace.
+                 * This should never happen.
+                 */
+                t = new_White(NULL);
+            }
 
-            tok->next = delete_Token(next);
+            /* We want to restart from the head of the pasted token */
+            *prev_nonspace = tok = t;
+            while (t->next)
+                t = t->next;    /* Find the last token produced */
 
-            /* Restart from pasted tokens head */
-            tok = *prev_nonspace;
+            /* Delete the second token and attach to the end of the list */
+            t->next = delete_Token(next);
             break;
 
         default:
@@ -4218,7 +4231,7 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
 
                 len = 0;
                 while (next && PP_CONCAT_MATCH(next, m[i].mask_tail)) {
-                    len += strlen(next->text);
+                    len += next->len;
                     next = next->next;
                 }
 
@@ -4226,17 +4239,16 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
                 if (tok == next || len == 0)
                     break;
 
-                len += strlen(tok->text);
+                len += tok->len;
                 p = buf = nasm_malloc(len + 1);
 
-                strcpy(p, tok->text);
-                p = strchr(p, '\0');
+                p = mempcpy(p, tok->text, tok->len);
                 tok = delete_Token(tok);
 
                 while (tok != next) {
                     if (PP_CONCAT_MATCH(tok, m[i].mask_tail)) {
-                        strcpy(p, tok->text);
-                        p = strchr(p, '\0');
+                        p = mempcpy(p, tok->text, tok->len);
+                        tok = delete_Token(tok);
                     }
                     tok = delete_Token(tok);
                 }
@@ -4257,8 +4269,7 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
                     tok = tok->next;
                 tok->next = next;
 
-                if (!pasted)
-                    pasted = true;
+                pasted = true;
 
                 /* Restart from pasted tokens head */
                 tok = prev_next ? *prev_next : *head;
@@ -4269,9 +4280,8 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
 
         prev_next = &tok->next;
 
-        if (tok->next &&
-            !tok_type_(tok->next, TOK_WHITESPACE) &&
-            !tok_type_(tok->next, TOK_PASTE))
+        if (tok->next && !tok_white(tok->next) &&
+            !tok_type(tok->next, TOK_PASTE))
             prev_nonspace = prev_next;
 
         tok = tok->next;
@@ -4336,7 +4346,7 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
         goto err;
     head = dup_Token(NULL, tm);
     tt = &head->next, tm = tm->next;
-    while (tok_isnt_(tm, ",")) {
+    while (tok_isnt(tm, ',')) {
         t = dup_Token(NULL, tm);
         *tt = t, tt = &t->next, tm = tm->next;
     }
@@ -4347,7 +4357,7 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
             *tt = t, tt = &t->next;
             j = (i + mac->rotate) % mac->nparam;
             tm = mac->params[j+1];
-            while (tok_isnt_(tm, ",")) {
+            while (tok_isnt(tm, ',')) {
                 t = dup_Token(NULL, tm);
                 *tt = t, tt = &t->next, tm = tm->next;
             }
@@ -4358,7 +4368,7 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
             *tt = t, tt = &t->next;
             j = (i + mac->rotate) % mac->nparam;
             tm = mac->params[j+1];
-            while (tok_isnt_(tm, ",")) {
+            while (!tok_isnt(tm, ',')) {
                 t = dup_Token(NULL, tm);
                 *tt = t, tt = &t->next, tm = tm->next;
             }
@@ -4601,8 +4611,8 @@ static Token *expand_smacro_noreset(Token * tline);
  * a macro at all, it is simply copied to the output and the pointer
  * advanced.  tpp should be a pointer to a pointer (usually the next
  * pointer of the previous token) to the first token. **tpp is updated
- * to point to the last token of the expansion, and *tpp updated to
- * point to the next pointer of the first token of the expansion.
+ * to point to the first token of the expansion, and *tpp updated to
+ * point to the next pointer of the last token of the expansion.
  *
  * If the expansion is empty, *tpp will be unchanged but **tpp will
  * be advanced past the macro call.
@@ -4613,18 +4623,18 @@ static SMacro *expand_one_smacro(Token ***tpp)
 {
     Token **params = NULL;
     const char *mname;
-    Token *tline  = **tpp;
     Token *mstart = **tpp;
+    Token *tline  = mstart;
     SMacro *head, *m;
     int i;
-    Token *t, *tup, *ttail;
+    Token *t, *tup, *tafter;
     int nparam = 0;
     bool cond_comma;
 
     if (!tline)
         return false;           /* Empty line, nothing to do */
 
-    mname = tline->text;
+    mname = mstart->text;
 
     smacro_deadman.total--;
     smacro_deadman.levels--;
@@ -4684,8 +4694,8 @@ static SMacro *expand_one_smacro(Token ***tpp)
         int paren, brackets;
 
         tline = tline->next;
-        skip_white_(tline);
-        if (!tok_is_(tline, "(")) {
+        tline = skip_white(tline);
+        if (!tok_is(tline, '(')) {
             /*
              * This macro wasn't called with parameters: ignore
              * the call. (Behaviour borrowed from gnu cpp.)
@@ -4877,13 +4887,12 @@ static SMacro *expand_one_smacro(Token ***tpp)
                 bad_bracket |= bracketed && !brackets;
 
                 if (white) {
-                    *pep = t = new_Token(NULL, TOK_WHITESPACE, NULL, 0);
+                    *pep = t = new_White(NULL);
                     pep = &t->next;
                     white = 0;
                 }
                 *pep = t = dup_Token(NULL, tline);
                 pep = &t->next;
-                white = 0;
             }
         }
 
@@ -4934,31 +4943,52 @@ static SMacro *expand_one_smacro(Token ***tpp)
         }
     }
 
-    t = tline;
-    tline = tline->next;    /* Remove the macro call from the input */
-    t->next = NULL;
-
     /* Note: we own the expansion this returns. */
     t = m->expand(m, params, nparam);
 
+    tafter = tline->next;       /* Skip past the macro call */
+    tline->next = NULL; 	/* Truncate list at the macro call end */
+    tline = tafter;
+
     tup = NULL;
-    ttail = NULL;     /* Pointer to the last token of the expansion */
     cond_comma = false;
 
     while (t) {
         enum pp_token_type type = t->type;
         Token *tnext = t->next;
-        Token **tp;
 
         switch (type) {
         case TOK_PREPROC_Q:
+            delete_Token(t);
+            t = dup_Token(tline, mstart);
+            break;
+
         case TOK_PREPROC_QQ:
-            t->type = TOK_ID;
+        {
+            size_t len = strlen(m->name);
+            char *p;
+
             nasm_free(t->text);
-            t->text = nasm_strdup(type == TOK_PREPROC_QQ ? m->name : mname);
-            t->len = nasm_last_string_len();
+            t->type = mstart->type;
+            if (t->type == TOK_PREPROC_ID) {
+                const char *pep; /* prefix end pointer */
+                size_t plen;     /* prefix length */
+
+                get_ctx(mstart->text, &pep);
+                plen = pep - mstart->text;
+
+                t->len = len + plen;
+                t->text = p = nasm_malloc(t->len + 1);
+                p = mempcpy(p, mstart->text, plen);
+            } else {
+                t->len = len;
+                t->text = p = nasm_malloc(len + 1);
+            }
+            p = mempcpy(p, m->name, len);
+            *p = '\0';
             t->next = tline;
             break;
+        }
 
         case TOK_COND_COMMA:
             delete_Token(t);
@@ -4967,18 +4997,18 @@ static SMacro *expand_one_smacro(Token ***tpp)
 
         case TOK_ID:
         case TOK_PREPROC_ID:
+        {
             /*
              * Chain this into the target line *before* expanding,
              * that way we pick up any arguments to the new macro call,
              * if applicable.
              */
+            Token **tp = &t;
             t->next = tline;
-            tp = &t;
             expand_one_smacro(&tp);
-            if (t == tline)
-                t = NULL;       /* Null expansion */
+            tline = *tp;        /* First token left after any macro call */
             break;
-
+        }
         default:
             if (is_smac_param(t->type)) {
                 int param = smac_nparam(t->type);
@@ -4994,11 +5024,11 @@ static SMacro *expand_one_smacro(Token ***tpp)
         }
 
         if (t) {
-            if (t->type != TOK_WHITESPACE)
-                cond_comma = true;
+            Token *endt = tline;
+
             tline = t;
-            if (!ttail)
-                ttail = t;
+            while (!cond_comma && t && t != endt)
+                cond_comma = t->type != TOK_WHITESPACE;
         }
 
         if (tnext) {
@@ -5010,8 +5040,8 @@ static SMacro *expand_one_smacro(Token ***tpp)
     }
 
     **tpp = tline;
-    if (ttail)
-        *tpp = &ttail->next;
+    for (t = tline; t != tafter; t = t->next)
+        *tpp = &t->next;
 
     m->in_progress = false;
 
@@ -5049,11 +5079,13 @@ static Token *expand_smacro(Token *tline)
     return expand_smacro_noreset(tline);
 }
 
-static Token *expand_smacro_noreset(Token * tline)
+static Token *expand_smacro_noreset(Token *org_tline)
 {
-    Token *t, **tail, *thead;
-    Token *org_tline = tline;
+    Token *tline;
     bool expanded;
+
+    if (!org_tline)
+        return NULL;            /* Empty input */
 
     /*
      * Trick: we should avoid changing the start token pointer since it can
@@ -5061,13 +5093,7 @@ static Token *expand_smacro_noreset(Token * tline)
      * we allocate a copy of first token and work with it; at the end of
      * routine we copy it back
      */
-    if (org_tline) {
-        tline = new_Token(org_tline->next, org_tline->type,
-                          org_tline->text, 0);
-        nasm_free(org_tline->text);
-        org_tline->text = NULL;
-    }
-
+    tline = dup_Token(org_tline->next, org_tline);
 
     /*
      * Pretend that we always end up doing expansion on the first pass;
@@ -5076,7 +5102,6 @@ static Token *expand_smacro_noreset(Token * tline)
      * look up the macro "MACROTAIL", which we don't want.
      */
     expanded = true;
-    thead = tline;
     while (true) {
         static const struct tokseq_match tmatch[] = {
             {
@@ -5087,15 +5112,13 @@ static Token *expand_smacro_noreset(Token * tline)
                 PP_CONCAT_MASK(TOK_NUMBER)          /* tail */
             }
         };
+        Token **tail = &tline;
 
-        tail = &thead;
-        while ((t = *tail))     /* main token loop */
+        while (*tail)           /* main token loop */
             expanded |= !!expand_one_smacro(&tail);
 
-        if (!expanded) {
-            tline = thead;
+        if (!expanded)
             break;              /* Done! */
-        }
 
         /*
          * Now scan the entire line and look for successive TOK_IDs
@@ -5104,33 +5127,28 @@ static Token *expand_smacro_noreset(Token * tline)
          * Also we look for %+ tokens and concatenate the tokens
          * before and after them (without white spaces in between).
          */
-        if (!paste_tokens(&thead, tmatch, ARRAY_SIZE(tmatch), true)) {
-            tline = thead;
-            break;
-        }
+        if (!paste_tokens(&tline, tmatch, ARRAY_SIZE(tmatch), true))
+            break;              /* Done again! */
+
         expanded = false;
     }
 
-    if (org_tline) {
-        if (thead) {
-            *org_tline = *thead;
-            /* since we just gave text to org_line, don't free it */
-            thead->text = NULL;
-            delete_Token(thead);
-        } else {
-            /*
-             * The expression expanded to empty line;
-             * we can't return NULL because of the "trick" above.
-             * Just set the line to a single WHITESPACE token.
-             */
-            memset(org_tline, 0, sizeof(*org_tline));
-            org_tline->text = NULL;
-            org_tline->type = TOK_WHITESPACE;
-        }
-        thead = org_tline;
+    if (tline) {
+        *org_tline = *tline;
+        /* since we just gave text to org_tline, don't free it */
+        tline->text = NULL;
+        delete_Token(tline);
+    } else {
+        /*
+         * The expression expanded to empty line;
+         * we can't return NULL because of the "trick" above.
+         * Just set the line to a single WHITESPACE token.
+         */
+        nasm_zero(*org_tline);
+        org_tline->type = TOK_WHITESPACE;
     }
 
-    return thead;
+    return org_tline;
 }
 
 /*
@@ -5420,9 +5438,9 @@ static int expand_mmacro(Token * tline)
     int nparam = 0;
 
     t = tline;
-    skip_white_(t);
-    /*    if (!tok_type_(t, TOK_ID))  Lino 02/25/02 */
-    if (!tok_type_(t, TOK_ID) && !tok_type_(t, TOK_PREPROC_ID))
+    t = skip_white(t);
+    /*    if (!tok_type(t, TOK_ID))  Lino 02/25/02 */
+    if (!tok_type(t, TOK_ID) && !tok_type(t, TOK_PREPROC_ID))
         return 0;
     m = is_mmacro(t, &nparam, &params);
     if (m) {
@@ -5437,15 +5455,15 @@ static int expand_mmacro(Token * tline)
          */
         label = last = t;
         t = t->next;
-        if (tok_type_(t, TOK_WHITESPACE))
+        if (tok_white(t))
             last = t, t = t->next;
-        if (tok_is_(t, ":")) {
+        if (tok_is(t, ':')) {
             dont_prepend = true;
             last = t, t = t->next;
-            if (tok_type_(t, TOK_WHITESPACE))
+            if (tok_white(t))
                 last = t, t = t->next;
         }
-        if (!tok_type_(t, TOK_ID) || !(m = is_mmacro(t, &nparam, &params)))
+        if (!tok_type(t, TOK_ID) || !(m = is_mmacro(t, &nparam, &params)))
             return 0;
         last->next = NULL;
         mname = t->text;
@@ -5477,22 +5495,22 @@ static int expand_mmacro(Token * tline)
         int brace = 0;
         bool comma = !m->plus || i < nparam;
 
-        skip_white_(t);
-        if (tok_is_(t, "{"))
+        t = skip_white(t);
+        if (tok_is(t, '{'))
             t = t->next, brace++, comma = false;
         params[i] = t;
         while (t) {
             if (comma) {
                 /* Check if we hit a comma that ends this argument */
-                if (tok_is_(t, ","))
-                    break;
-                else if (t->type == TOK_WHITESPACE && tok_is_(t->next, ","))
+                Token *tns = skip_white(t);
+                if (tok_is(tns, ','))
                     break;
             }
-            if (brace && t->type == TOK_OTHER) {
-                if (t->text[0] == '{')
+            if (brace && t->type == TOK_OTHER && t->len == 1) {
+                const char c = t->text[0];
+                if (c == '{')
                     brace++;            /* ... or a nested opening brace */
-                else if (t->text[0] == '}')
+                else if (c == '}')
                     if (!--brace)
                         break;          /* ... or a brace */
             }
@@ -6106,7 +6124,6 @@ static void pp_cleanup_session(void)
     free_llist(predef);
     predef = NULL;
     delete_Blocks();
-    freeTokens = NULL;
     ipath_list = NULL;
 }
 
@@ -6121,7 +6138,7 @@ static void pp_pre_include(char *fname)
     Line *l;
 
     name = new_Token(NULL, TOK_INTERNAL_STRING, fname, 0);
-    space = new_Token(name, TOK_WHITESPACE, NULL, 0);
+    space = new_White(name);
     inc = new_Token(space, TOK_PREPROC_ID, "%include", 0);
 
     l = nasm_malloc(sizeof(Line));
@@ -6138,7 +6155,7 @@ static void pp_pre_define(char *definition)
     char *equals;
 
     equals = strchr(definition, '=');
-    space = new_Token(NULL, TOK_WHITESPACE, NULL, 0);
+    space = new_White(NULL);
     def = new_Token(space, TOK_PREPROC_ID, "%define", 0);
     if (equals)
         *equals = ' ';
@@ -6162,7 +6179,7 @@ static void pp_pre_undefine(char *definition)
     Token *def, *space;
     Line *l;
 
-    space = new_Token(NULL, TOK_WHITESPACE, NULL, 0);
+    space = new_White(NULL);
     def = new_Token(space, TOK_PREPROC_ID, "%undef", 0);
     space->next = tokenize(definition);
 
@@ -6183,7 +6200,7 @@ static void pp_pre_command(const char *what, char *string)
     def = tokenize(string);
     if (what) {
         cmd = nasm_strcat(what[0] == '%' ? "" : "%", what);
-        space = new_Token(def, TOK_WHITESPACE, NULL, 0);
+        space = new_White(def);
         def = new_Token(space, TOK_PREPROC_ID, cmd, 0);
     }
 
