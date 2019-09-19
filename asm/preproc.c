@@ -264,8 +264,7 @@ static bool is_smac_param(enum pp_token_type toktype)
     return toktype >= TOK_SMAC_START_PARAMS;
 }
 
-#define PP_CONCAT_MASK(x) (1 << (x))
-#define PP_CONCAT_MATCH(t, mask) (PP_CONCAT_MASK((t)->type) & mask)
+#define PP_CONCAT_MASK(x) (1U << (x))
 
 struct tokseq_match {
     int mask_head;
@@ -746,7 +745,8 @@ static Token *dup_tlistn(const Token *list, size_t cnt, Token ***tailp)
 
     if (tailp) {
         **tailp = newlist;
-        *tailp = tailpp;
+        if (newlist)
+            *tailp = tailpp;
     }
 
     return newlist;
@@ -1977,7 +1977,7 @@ static int read_param_count(const char *str)
  */
 static void count_mmac_params(Token * t, int *nparamp, Token ***paramsp)
 {
-    int paramsize, brace;
+    int paramsize;
     int nparam = 0;
     Token **params;
 
@@ -1991,16 +1991,12 @@ static void count_mmac_params(Token * t, int *nparamp, Token ***paramsp)
             paramsize += PARAM_DELTA;
             params = nasm_realloc(params, sizeof(*params) * paramsize);
         }
-        brace = 0;
-        if (tok_is(t, '{'))
-            brace++;
         params[++nparam] = t;
-        if (brace) {
+        if (tok_is(t, '{')) {
+            int brace = 1;
             while (brace && (t = t->next)) {
-                if (tok_is(t, '{'))
-                    brace++;
-                else if (tok_is(t, '}'))
-                    brace--;
+                brace += tok_is(t, '{');
+                brace -= tok_is(t, '}');
             }
 
             if (t) {
@@ -2009,8 +2005,10 @@ static void count_mmac_params(Token * t, int *nparamp, Token ***paramsp)
                  * for the comma.
                  */
                 t = skip_white(t->next);
-                if (!tok_is(t, ','))
+                if (tok_isnt(t, ','))
                     nasm_nonfatal("braces do not enclose all of macro parameter");
+            } else {
+                nasm_nonfatal("expecting closing brace in macro parameter");
             }
         }
 
@@ -4112,6 +4110,11 @@ static int find_cc(Token * t)
     return bsii(t->text, (const char **)conditions,  ARRAY_SIZE(conditions));
 }
 
+static inline bool pp_concat_match(const Token *t, unsigned int mask)
+{
+    return t && (PP_CONCAT_MASK(t->type) & mask);
+}
+
 /*
  * This routines walks over tokens strem and handles tokens
  * pasting, if @handle_explicit passed then explicit pasting
@@ -4140,19 +4143,18 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
      * A -> BC -> D
      */
     tok = *head;
-    prev_next = NULL;
+    prev_next = prev_nonspace = head;
 
-    if (!tok_white(tok) && !tok_type(tok, TOK_PASTE))
-        prev_nonspace = head;
-    else
+    if (tok_white(tok) || tok_type(tok, TOK_PASTE))
         prev_nonspace = NULL;
 
     while (tok && (next = tok->next)) {
+        bool did_paste = false;
 
         switch (tok->type) {
         case TOK_WHITESPACE:
             /* Zap redundant whitespaces */
-            next = zap_white(next);
+            tok->next = next = zap_white(next);
             break;
 
         case TOK_PASTE:
@@ -4167,7 +4169,9 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
                 break;
             }
 
-            pasted = true;
+            did_paste = true;
+
+            prev_next = prev_nonspace;
             t = *prev_nonspace;
 
             /* Delete leading whitespace */
@@ -4194,7 +4198,7 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
              * whitespace after paste token.
              */
             if (!next) {
-                tok = NULL;     /* End of line */
+                *prev_nonspace = tok = NULL; /* End of line */
                 break;
             }
 
@@ -4214,77 +4218,67 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
                 t = new_White(NULL);
             }
 
-            /* We want to restart from the head of the pasted token */
             *prev_nonspace = tok = t;
             while (t->next)
                 t = t->next;    /* Find the last token produced */
 
             /* Delete the second token and attach to the end of the list */
             t->next = delete_Token(next);
+
+            /* We want to restart from the head of the pasted token */
+            next = tok;
             break;
 
         default:
             /* implicit pasting */
             for (i = 0; i < mnum; i++) {
-                if (!(PP_CONCAT_MATCH(tok, m[i].mask_head)))
-                    continue;
-
-                len = 0;
-                while (next && PP_CONCAT_MATCH(next, m[i].mask_tail)) {
-                    len += next->len;
-                    next = next->next;
-                }
-
-                /* No match or no text to process */
-                if (tok == next || len == 0)
+                if (pp_concat_match(tok, m[i].mask_head))
                     break;
-
-                len += tok->len;
-                p = buf = nasm_malloc(len + 1);
-
-                p = mempcpy(p, tok->text, tok->len);
-                tok = delete_Token(tok);
-
-                while (tok != next) {
-                    if (PP_CONCAT_MATCH(tok, m[i].mask_tail)) {
-                        p = mempcpy(p, tok->text, tok->len);
-                        tok = delete_Token(tok);
-                    }
-                    tok = delete_Token(tok);
-                }
-
-                tok = tokenize(buf);
-                nasm_free(buf);
-
-                if (prev_next)
-                    *prev_next = tok;
-                else
-                    *head = tok;
-
-                /*
-                 * Connect pasted into original stream,
-                 * ie A -> new-tokens -> B
-                 */
-                while (tok && tok->next)
-                    tok = tok->next;
-                tok->next = next;
-
-                pasted = true;
-
-                /* Restart from pasted tokens head */
-                tok = prev_next ? *prev_next : *head;
             }
 
+            if (i >= mnum)
+                break;
+
+            len =  tok->len;
+            while (pp_concat_match(next, m[i].mask_tail)) {
+                len += next->len;
+                next = next->next;
+            }
+
+            /* No match or no text to process */
+            if (len == tok->len)
+                break;
+
+            p = buf = nasm_malloc(len + 1);
+            while (tok != next) {
+                p = mempcpy(p, tok->text, tok->len);
+                tok = delete_Token(tok);
+            }
+            *p = '\0';
+            *prev_next = tok = t = tokenize(buf);
+            nasm_free(buf);
+
+            /*
+             * Connect pasted into original stream,
+             * ie A -> new-tokens -> B
+             */
+            while (t->next)
+                t = t->next;
+            t->next = next;
+            prev_next = prev_nonspace = &t->next;
+            did_paste = true;
             break;
         }
 
-        prev_next = &tok->next;
+        if (did_paste) {
+            pasted = true;
+        } else {
+            prev_next = &tok->next;
+            if (next && next->type != TOK_WHITESPACE && next->type != TOK_PASTE)
+                prev_nonspace = prev_next;
+        }
 
-        if (tok->next && !tok_white(tok->next) &&
-            !tok_type(tok->next, TOK_PASTE))
-            prev_nonspace = prev_next;
-
-        tok = tok->next;
+        tok = next;
     }
 
     return pasted;
@@ -4947,7 +4941,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
     t = m->expand(m, params, nparam);
 
     tafter = tline->next;       /* Skip past the macro call */
-    tline->next = NULL; 	/* Truncate list at the macro call end */
+    tline->next = NULL;		/* Truncate list at the macro call end */
     tline = tafter;
 
     tup = NULL;
@@ -5492,33 +5486,55 @@ static int expand_mmacro(Token * tline)
     nasm_assert(params[nparam+1] == NULL);
 
     for (i = 1; (t = params[i]); i++) {
+        bool braced = false;
         int brace = 0;
+        int white = 0;
         bool comma = !m->plus || i < nparam;
 
         t = skip_white(t);
-        if (tok_is(t, '{'))
-            t = t->next, brace++, comma = false;
-        params[i] = t;
-        while (t) {
-            if (comma) {
-                /* Check if we hit a comma that ends this argument */
-                Token *tns = skip_white(t);
-                if (tok_is(tns, ','))
-                    break;
-            }
-            if (brace && t->type == TOK_OTHER && t->len == 1) {
-                const char c = t->text[0];
-                if (c == '{')
-                    brace++;            /* ... or a nested opening brace */
-                else if (c == '}')
-                    if (!--brace)
-                        break;          /* ... or a brace */
-            }
+        if (tok_is(t, '{')) {
             t = t->next;
-            paramlen[i]++;
+            brace = 1;
+            braced = true;
+            comma = false;
         }
-        if (brace)
-            nasm_nonfatal("macro params should be enclosed in braces");
+
+        params[i] = t;
+        for (; t; t = t->next) {
+            if (tok_white(t)) {
+                white++;
+                continue;
+            }
+
+            if (t->type == TOK_OTHER && t->len == 1) {
+                switch (t->text[0]) {
+                case ',':
+                    if (comma && !brace)
+                        goto endparam;
+                    break;
+
+                case '{':
+                    brace++;
+                    break;
+
+                case '}':
+                    brace--;
+                    if (braced && !brace) {
+                        paramlen[i] += white;
+                        goto endparam;
+                    }
+                    break;
+
+                default:
+                    break;
+                }
+            }
+
+            paramlen[i] += white + 1;
+            white = 0;
+        }
+    endparam:
+        ;
     }
 
     /*
