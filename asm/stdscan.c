@@ -83,7 +83,7 @@ void stdscan_cleanup(void)
     nasm_free(stdscan_tempstorage);
 }
 
-static char *stdscan_copy(char *p, int len)
+static char *stdscan_copy(const char *p, int len)
 {
     char *text;
 
@@ -124,7 +124,7 @@ static int stdscan_handle_brace(struct tokenval *tv)
 
 int stdscan(void *private_data, struct tokenval *tv)
 {
-    char ourcopy[MAX_KEYWORD + 1], *r, *s;
+    const char *r;
 
     (void)private_data;         /* Don't warn that this parameter is unused */
 
@@ -156,13 +156,7 @@ int stdscan(void *private_data, struct tokenval *tv)
         if (is_sym || stdscan_bufptr - r > MAX_KEYWORD)
             return tv->t_type = TOKEN_ID;       /* bypass all other checks */
 
-        for (s = tv->t_charptr, r = ourcopy; *s; s++)
-            *r++ = nasm_tolower(*s);
-        *r = '\0';
-        /* right, so we have an identifier sitting in temp storage. now,
-         * is it actually a register or instruction name, or what? */
-        token_type = nasm_token_hash(ourcopy, tv);
-
+        token_type = nasm_token_hash(tv->t_charptr, tv);
         if (unlikely(tv->t_flag & TFLAG_WARN)) {
             /*!
              *!ptr [on] non-NASM keyword used in other assemblers
@@ -293,14 +287,8 @@ int stdscan(void *private_data, struct tokenval *tv)
 
         stdscan_bufptr++;       /* skip closing brace */
 
-        for (s = tv->t_charptr, r = ourcopy; *s; s++)
-            *r++ = nasm_tolower(*s);
-        *r = '\0';
-
-        /* right, so we have a decorator sitting in temp storage. */
-        nasm_token_hash(ourcopy, tv);
-
         /* handle tokens inside braces */
+        nasm_token_hash(tv->t_charptr, tv);
         return stdscan_handle_brace(tv);
     } else if (*stdscan_bufptr == ';') {
         /* a comment has happened - stay */
@@ -332,8 +320,13 @@ int stdscan(void *private_data, struct tokenval *tv)
         stdscan_bufptr += 2;
         return tv->t_type = TOKEN_NE;
     } else if (stdscan_bufptr[0] == '<' && stdscan_bufptr[1] == '=') {
-        stdscan_bufptr += 2;
-        return tv->t_type = TOKEN_LE;
+        if (stdscan_bufptr[2] == '>') {
+            stdscan_bufptr += 3;
+            return tv->t_type = TOKEN_LEG;
+        } else {
+            stdscan_bufptr += 2;
+            return tv->t_type = TOKEN_LE;
+        }
     } else if (stdscan_bufptr[0] == '>' && stdscan_bufptr[1] == '=') {
         stdscan_bufptr += 2;
         return tv->t_type = TOKEN_GE;
