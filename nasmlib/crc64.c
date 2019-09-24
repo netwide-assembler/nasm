@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2014 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -35,7 +35,7 @@
 #include "nctype.h"
 #include "hashtbl.h"
 
-static const uint64_t crc64_tab[256] = {
+const uint64_t crc64_tab[256] = {
     UINT64_C(0x0000000000000000), UINT64_C(0x7ad870c830358979),
     UINT64_C(0xf5b0e190606b12f2), UINT64_C(0x8f689158505e9b8b),
     UINT64_C(0xc038e5739841b68f), UINT64_C(0xbae095bba8743ff6),
@@ -170,9 +170,8 @@ uint64_t crc64(uint64_t crc, const char *str)
 {
     uint8_t c;
 
-    while ((c = *str++) != 0) {
-	crc = crc64_tab[(uint8_t)crc ^ c] ^ (crc >> 8);
-    }
+    while ((c = *str++) != 0)
+        crc = crc64_byte(crc, c);
 
     return crc;
 }
@@ -181,9 +180,8 @@ uint64_t crc64i(uint64_t crc, const char *str)
 {
     uint8_t c;
 
-    while ((c = *str++) != 0) {
-	crc = crc64_tab[(uint8_t)crc ^ nasm_tolower(c)] ^ (crc >> 8);
-    }
+    while ((c = *str++) != 0)
+	crc = crc64_byte(crc, nasm_tolower(c));
 
     return crc;
 }
@@ -192,9 +190,8 @@ uint64_t crc64b(uint64_t crc, const void *data, size_t len)
 {
     const uint8_t *str = data;
 
-    while (len--) {
-	crc = crc64_tab[(uint8_t)crc ^ *str++] ^ (crc >> 8);
-    }
+    while (len--)
+        crc = crc64_byte(crc, *str++);
 
     return crc;
 }
@@ -203,9 +200,8 @@ uint64_t crc64ib(uint64_t crc, const void *data, size_t len)
 {
     const uint8_t *str = data;
 
-    while (len--) {
-	crc = crc64_tab[(uint8_t)crc ^ nasm_tolower(*str++)] ^ (crc >> 8);
-    }
+    while (len--)
+        crc = crc64_byte(crc, nasm_tolower(*str++));
 
     return crc;
 }

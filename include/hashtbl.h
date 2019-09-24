@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -72,6 +72,12 @@ uint64_t crc64i(uint64_t crc, const char *string);
 uint64_t crc64b(uint64_t crc, const void *data, size_t len);
 uint64_t crc64ib(uint64_t crc, const void *data, size_t len);
 #define CRC64_INIT UINT64_C(0xffffffffffffffff)
+
+static inline uint64_t crc64_byte(uint64_t crc, uint8_t v)
+{
+    extern const uint64_t crc64_tab[256];
+    return crc64_tab[(uint8_t)(v ^ crc)] ^ (crc >> 8);
+}
 
 void **hash_find(struct hash_table *head, const char *string,
 		struct hash_insert *insert);

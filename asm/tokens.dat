@@ -1,5 +1,5 @@
 ## --------------------------------------------------------------------------
-##   
+##
 ##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
@@ -14,7 +14,7 @@
 ##     copyright notice, this list of conditions and the following
 ##     disclaimer in the documentation and/or other materials provided
 ##     with the distribution.
-##     
+##
 ##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -149,3 +149,45 @@ z
 evex
 vex3
 vex2
+
+# Multi-character operators. Used in ppscan().
+% TOKEN_SHR, 0, 0, 0
+>>
+
+% TOKEN_SAR, 0, 0, 0
+>>>
+
+% TOKEN_SHL, 0, 0, 0
+<<
+<<<
+
+% TOKEN_SDIV, 0, 0, 0
+//
+
+% TOKEN_SMOD, 0, 0, 0
+%%
+
+% TOKEN_EQ, 0, 0, 0
+==
+
+% TOKEN_NE, 0, 0, 0
+!=
+<>
+
+% TOKEN_LE, 0, 0, 0
+<=
+
+% TOKEN_GE, 0, 0, 0
+>=
+
+% TOKEN_LEG, 0, 0, 0
+<=>
+
+% TOKEN_DBL_AND, 0, 0, 0
+&&
+
+% TOKEN_DBL_OR, 0, 0, 0
+||
+
+% TOKEN_DBL_XOR, 0, 0, 0
+^^

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
-##   
+##
 ##   Copyright 1996-2018 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
@@ -15,7 +15,7 @@
 ##     copyright notice, this list of conditions and the following
 ##     disclaimer in the documentation and/or other materials provided
 ##     with the distribution.
-##     
+##
 ##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -129,9 +129,10 @@ close(RD);
 #
 open(TD, '<', $tokens_dat) or die "$0: cannot open $tokens_dat: $!\n";
 while (defined($line = <TD>)) {
+    $line =~ s/\s*(|\#.*)$//;
     if ($line =~ /^\%\s+(.*)$/) {
 	$pattern = $1;
-    } elsif ($line =~ /^([\?\@\.a-z0-9_-]+)/) {
+    } elsif ($line =~ /^(\S+)/) {
 	$token = $1;
 
 	if (defined($tokens{$token})) {
@@ -257,19 +258,23 @@ if ($output eq 'h') {
     print  "    };\n";
 
     print  "    uint32_t k1, k2;\n";
-    print  "    uint64_t crc;\n";
-    print  "    size_t len;\n";
     # For correct overflow behavior, "ix" should be unsigned of the same
     # width as the hash arrays.
     print  "    uint16_t ix;\n";
     print  "    const struct tokendata *data;\n";
+    printf "    char lcbuf[%d];\n", $max_len+1;
+    print  "    const char *p = token;\n";
+    print  "    char c, *q = lcbuf;\n";
+    print  "    size_t len = 0;\n";
+    printf "    uint64_t crc = UINT64_C(0x%08x%08x);\n", $$sv[0], $$sv[1];
     print  "\n";
-    print  "    len = strlen(token);\n";
-    print  "    if (unlikely(len > $max_len))\n";
-    print  "         goto notfound;\n";
+    print  "    while ((c = *p++)) {\n";
+    printf "        if (++len > %d)\n", $max_len;
+    print  "            goto notfound;\n";
+    print  "        *q++ = c = nasm_tolower(c);\n";
+    print  "        crc = crc64_byte(crc, c);\n";
+    print  "    };\n";
     print  "\n";
-    printf "    crc = crc64b(UINT64_C(0x%08x%08x), token, len);\n",
-	$$sv[0], $$sv[1];
     print  "    k1 = (uint32_t)crc;\n";
     print  "    k2 = (uint32_t)(crc >> 32);\n";
     print  "\n";
@@ -278,7 +283,9 @@ if ($output eq 'h') {
     print  "        goto notfound;\n";
     print  "\n";
     print  "    data = &tokendata[ix];\n";
-    print  "    if (data->len != len || memcmp(data->string, token, len))\n";
+    print  "    if (data->len != len)\n";
+    print  "        goto notfound;\n";
+    print  "    if (memcmp(data->string, lcbuf, len))\n";
     print  "        goto notfound;\n";
     print  "\n";
     print  "    tv->t_integer = data->num;\n";
