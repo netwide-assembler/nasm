@@ -18,7 +18,14 @@ mkdir -p autoconf autoconf/helpers config
 autolib="`"$AUTOMAKE" --print-libdir`"
 if test ! x"$autolib" = x; then
     for prg in install-sh compile config.guess config.sub; do
-	if test -f "$autolib"/"$prg"; then
+	# Update autoconf helpers if and only if newer ones are available
+	if test -f "$autolib"/"$prg" && \
+		( test -f "$autolib"/"$prg" && \
+		      sed -n -r -e \
+			  's/^(scriptver(|sion)|timestamp)=['\''"]?([^'\''"]+).*$/\3/p' \
+			  "$autolib"/"$prg" autoconf/helpers/"$prg" | \
+			  sort --check=quiet; test $? -ne 0 )
+	then
 	    cp -f "$autolib"/"$prg" autoconf/helpers
 	fi
     done
