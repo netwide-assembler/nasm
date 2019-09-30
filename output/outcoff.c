@@ -1133,6 +1133,11 @@ extern macros_t coff_stdmac[];
 
 #ifdef OF_COFF
 
+static const struct pragma_facility coff_pragma_list[] = {
+    { "coff", NULL },
+    { NULL,   NULL }
+};
+
 const struct ofmt of_coff = {
     "COFF (i386) (DJGPP, some Unix variants)",
     "coff",
@@ -1153,15 +1158,21 @@ const struct ofmt of_coff = {
     null_segbase,
     coff_directives,
     coff_cleanup,
-    NULL                        /* pragma list */
+    coff_pragma_list
 };
 
 #endif
 
-extern const struct dfmt df_cv8;
 
 #ifdef OF_WIN32
 
+static const struct pragma_facility coff_win_pragma_list[] = {
+    { "win",  NULL },
+    { "coff", NULL },
+    { NULL,   NULL }
+};
+
+extern const struct dfmt df_cv8;
 static const struct dfmt * const win32_debug_arr[2] = { &df_cv8, NULL };
 
 const struct ofmt of_win32 = {
@@ -1184,7 +1195,7 @@ const struct ofmt of_win32 = {
     null_segbase,
     coff_directives,
     coff_cleanup,
-    NULL                        /* pragma list */
+    coff_win_pragma_list
 };
 
 #endif
@@ -1213,7 +1224,7 @@ const struct ofmt of_win64 = {
     null_segbase,
     coff_directives,
     coff_cleanup,
-    NULL                        /* pragma list */
+    coff_win_pragma_list
 };
 
 #endif
