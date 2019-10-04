@@ -1172,7 +1172,6 @@ is_expression:
                          *!  \c      KMOV  WORD K0,[foo]     ; Permitted, WORD K0 specifies instruction size
                          *!  \c      KMOV  K0,WORD [foo]     ; Permitted, WORD [foo] specifies instruction size
                          *!  \c      KMOV  K0,[foo]          ; Not permitted, instruction size ambiguous
-                         *!-
                          */
                         nasm_warn(WARN_REGSIZE, "invalid register size specification ignored");
                     }

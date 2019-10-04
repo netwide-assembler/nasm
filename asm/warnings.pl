@@ -255,7 +255,7 @@ if ($what eq 'c') {
 
 	    @doc = @{$warn->{doc}};
 	    if (defined($docdef)) {
-		push(@doc, "$docdef by default.\n");
+		push(@doc, "\n", "\\> $docdef by default.\n");
 	    }
 	}
 
