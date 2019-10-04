@@ -49,6 +49,7 @@ TAGS
 /asm/tokens.h
 /asm/tokhash.c
 /asm/warnings.c
+/config/config.h.in
 /config/config.h
 /config.log
 /config.status

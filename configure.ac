@@ -1,8 +1,8 @@
 dnl Process this file with autoconf 2.69 or later to produce
 dnl a configure script.
 AC_PREREQ(2.69)
-AC_INIT([config/unconfig.h])
-AC_CONFIG_HEADERS([config/config.h:config/unconfig.h])
+AC_INIT([config/config.h.in])
+AC_CONFIG_HEADERS([config/config.h])
 AC_PREFIX_PROGRAM(nasm)
 AC_CONFIG_AUX_DIR(autoconf/helpers)
 
