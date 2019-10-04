@@ -14,13 +14,13 @@ mandir      = $(prefix)\man
 
 CC      = *wcl386
 DEBUG       =
-CFLAGS      = -zq -6 -ox -wx -ze -fpi $(DEBUG)
+CFLAGS      = -zq -6 -ox -wx -wcd=124 -ze -fpi $(DEBUG)
 BUILD_CFLAGS    = $(CFLAGS) $(%TARGET_CFLAGS)
 INTERNAL_CFLAGS = -I$(srcdir) -I. -I$(srcdir)\include -I$(srcdir)\x86 -Ix86 -I$(srcdir)\asm -Iasm -I$(srcdir)\disasm -I$(srcdir)\output
 ALL_CFLAGS  = $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LD      = *wlink
 LDEBUG      =
-LDFLAGS     = op quiet $(%TARGET_LFLAGS) $(LDEBUG)
+LDFLAGS     = op q $(%TARGET_LFLAGS) $(LDEBUG)
 LIBS        =
 STRIP       = wstrip
 
