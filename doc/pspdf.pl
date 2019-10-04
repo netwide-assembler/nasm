@@ -113,8 +113,9 @@ if (defined($fontpath)) {
     close($fp);
     $fpopt = "-sFONTPATH${o}" . join($p, @fplist);
 }
-    
-my $r = system($gs, "-dCompatibilityLevel${o}1.4", "-q",
+
+my $r = system($gs, "-dCompatibilityLevel${o}1.4",
+	       "-I".File::Spec->curdir(),
 	       "-P-", "-dNOPAUSE", "-dBATCH", "-sDEVICE${o}pdfwrite",
 	       "-sstdout${o}%stderr", "-sOutputFile${o}${out}",
 	       "-dOptimize${o}true", "-dEmbedAllFonts${o}true",

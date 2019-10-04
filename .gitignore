@@ -9,6 +9,7 @@
 *.i
 *.ith
 *.lst
+*.map
 *.mo32
 *.mo64
 *.o
@@ -69,6 +70,7 @@ TAGS
 /doc/version.src
 /doc/warnings.src
 /doc/fontpath
+/doc/Fontmap
 /include/warnings.h
 /macros/macros.c
 /misc/omfdump

@@ -99,7 +99,7 @@ $epsdir   = File::Spec->curdir();
 #
 # Parse the command line
 #
-undef $input, $fontpath;
+undef $input, $fontpath, $fontmap;
 while ( $arg = shift(@ARGV) ) {
     if ( $arg =~ /^\-(|no\-)(.*)$/ ) {
 	$parm = $2;
@@ -121,12 +121,33 @@ while ( $arg = shift(@ARGV) ) {
 	    $headps = shift(@ARGV);
 	} elsif ( $true && $parm eq 'fontpath' ) {
 	    $fontpath = shift(@ARGV);
+	} elsif ( $true && $parm eq 'fontmap' ) {
+	    $fontmap = shift(@ARGV);
 	} else {
 	    die "$0: Unknown option: $arg\n";
 	}
     } else {
 	$input = $arg;
     }
+}
+
+# Generate a PostScript string
+sub ps_string($) {
+    my ($s) = @_;
+    my ($i,$c);
+    my ($o) = '(';
+    my ($l) = length($s);
+    for ( $i = 0 ; $i < $l ; $i++ ) {
+	$c = substr($s,$i,1);
+	if ( ord($c) < 32 || ord($c) > 126 ) {
+	    $o .= sprintf("\\%03o", ord($c));
+	} elsif ( $c eq '(' || $c eq ')' || $c eq "\\" ) {
+	    $o .= "\\".$c;
+	} else {
+	    $o .= $c;
+	}
+    }
+    return $o.')';
 }
 
 # Configure post-paragraph skips for each kind of paragraph
@@ -184,6 +205,19 @@ if (defined($fontpath)) {
     open(my $fp, '>', $fontpath) or die "$0: $fontpath: $!\n";
     foreach $d (sort(keys(%fontdirs))) {
 	print $fp $d, "\n";
+    }
+    close($fp);
+}
+
+# Create a Fontmap. At least some versions of Ghostscript
+# don't seem to get it right any other way.
+if (defined($fontmap)) {
+    open(my $fm, '>', $fontmap) or die "$0: $fontmap: $!\n";
+    foreach my $fname (sort keys(%ps_all_fonts)) {
+	my $fdata = $ps_all_fonts{$fname};
+	if (defined($fdata->{filename})) {
+	    print $fm '/', $fname, ' ', ps_string($fdata->{filename}), " ;\n";
+	}
     }
     close($fp);
 }
@@ -1112,25 +1146,6 @@ while ( defined($line = <PSHEAD>) ) {
 }
 close(PSHEAD);
 print "%%EndProlog\n";
-
-# Generate a PostScript string
-sub ps_string($) {
-    my ($s) = @_;
-    my ($i,$c);
-    my ($o) = '(';
-    my ($l) = length($s);
-    for ( $i = 0 ; $i < $l ; $i++ ) {
-	$c = substr($s,$i,1);
-	if ( ord($c) < 32 || ord($c) > 126 ) {
-	    $o .= sprintf("\\%03o", ord($c));
-	} elsif ( $c eq '(' || $c eq ')' || $c eq "\\" ) {
-	    $o .= "\\".$c;
-	} else {
-	    $o .= $c;
-	}
-    }
-    return $o.')';
-}
 
 # Generate PDF bookmarks
 print "%%BeginSetup\n";
