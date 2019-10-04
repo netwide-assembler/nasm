@@ -234,7 +234,7 @@ int main(int argc, char **argv)
             fprintf(stderr, "rdflib: required parameter missing\n");
             exit(1);
         }
-        break;
+        /* fall through */
     case 't':
         fp = fopen(argv[2], "rb");
         if (!fp) {
