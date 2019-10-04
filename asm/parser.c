@@ -1167,11 +1167,12 @@ is_expression:
                          *!  permitted, and do not trigger this warning. Some registers which \e{do not} imply
                          *!  a specific size, such as \c{K0}, may need this specification unless the instruction
                          *!  itself implies the instruction size:
-                         *!
+                         *!-
                          *!  \c      KMOVW K0,[foo]          ; Permitted, KMOVW implies 16 bits
                          *!  \c      KMOV  WORD K0,[foo]     ; Permitted, WORD K0 specifies instruction size
                          *!  \c      KMOV  K0,WORD [foo]     ; Permitted, WORD [foo] specifies instruction size
                          *!  \c      KMOV  K0,[foo]          ; Not permitted, instruction size ambiguous
+                         *!-
                          */
                         nasm_warn(WARN_REGSIZE, "invalid register size specification ignored");
                     }

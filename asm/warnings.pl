@@ -64,47 +64,46 @@ sub find_warnings {
 		# End block comment
 		$in_comment = 0;
 		undef $this;
-	    } elsif ($l =~ /^\s*\/?\*\!(\s*)(.*?)\s*$/) {
-		my $ws = $1;
+	    } elsif ($l =~ /^\s*\/?\*\!(\-|\=|\s*)(.*?)\s*$/) {
+		my $opr = $1;
 		my $str = $2;
 
-		next if ($str eq '');
+		if ($opr eq '' && $str eq '') {
+		    next;
+		} elsif ((!defined($this) || ($opr eq '')) &&
+			 ($str =~ /^([\w\-]+)\s+\[(\w+)\]\s(.*\S)\s*$/)) {
+		    my $name = $1;
+		    my $def = $2;
+		    my $help = $3;
 
-		if (!defined($this) || ($ws eq '' && $str ne '')) {
-		    if ($str =~ /^([\w-]+)\s+\[(\w+)\]\s(.*\S)\s*$/) {
-			my $name = $1;
-			my $def = $2;
-			my $help = $3;
+		    my $cname = uc($name);
+		    $cname =~ s/[^A-Z0-9_]+/_/g;
 
-			my $cname = uc($name);
-			$cname =~ s/[^A-Z0-9_]+/_/g;
+		    $this = {name => $name, cname => $cname,
+			     def => $def, help => $help,
+			     doc => [], file => $infile, line => $nline};
 
-			$this = {name => $name, cname => $cname,
-				 def => $def, help => $help,
-				 doc => [], file => $infile, line => $nline};
-
-			if (defined(my $that = $aliases{$name})) {
-			    # Duplicate defintion?!
-			    printf STDERR "%s:%s: warning %s previously defined at %s:%s\n",
-				$infile, $nline, $name, $that->{file}, $that->{line};
-			} else {
-			    push(@warnings, $this);
-			    # Every warning name is also a valid warning alias
-			    add_alias($name, $this);
-			    $nwarn++;
-			}
-		    } elsif (defined($this) && $str =~ /^\=([-\w,]+)\s*$/) {
-			# Alias names for warnings
-			for my $a (split(/,+/, $1)) {
-			    add_alias($a, $this);
-			}
+		    if (defined(my $that = $aliases{$name})) {
+			# Duplicate defintion?!
+			printf STDERR "%s:%s: warning %s previously defined at %s:%s\n",
+			    $infile, $nline, $name, $that->{file}, $that->{line};
 		    } else {
-			print STDERR "$infile:$nline: malformed warning definition\n";
-			print STDERR "    $l\n";
-			$err++;
+			push(@warnings, $this);
+			# Every warning name is also a valid warning alias
+			add_alias($name, $this);
+			$nwarn++;
 		    }
-		} else {
+		} elsif ($opr eq '=') {
+		    # Alias names for warnings
+		    for my $a (split(/,+/, $1)) {
+			add_alias($a, $this);
+		    }
+		} elsif ($opr =~ /^[\-\s]/) {
 		    push(@{$this->{doc}}, "$str\n");
+		} else {
+		    print STDERR "$infile:$nline: malformed warning definition\n";
+		    print STDERR "    $l\n";
+		    $err++;
 		}
 	    } else {
 		undef $this;
@@ -255,9 +254,6 @@ if ($what eq 'c') {
 	    my $docdef = $whatdef{$warn->{def}};
 
 	    @doc = @{$warn->{doc}};
-	    shift @doc while ($doc[0] =~ /^\s*$/);
-	    pop @doc while ($doc[$#doc] =~ /^\s*$/);
-
 	    if (defined($docdef)) {
 		push(@doc, "$docdef by default.\n");
 	    }
