@@ -105,9 +105,14 @@ void fwritezero(off_t bytes, FILE *fp)
 
 /*
  * On Windows, we want to use _wfopen(), as fopen() has a much smaller limit
- * on the path length that it supports. Furthermore, we want to prefix the
- * path name with \\?\ in order to let the Windows kernel know that
- * we are not limited to PATH_MAX characters.
+ * on the path length that it supports.
+ *
+ * Previously we tried to prefix the path name with \\?\ in order to
+ * let the Windows kernel know that we are not limited to PATH_MAX
+ * characters, but it breaks relative paths among other things, and
+ * apparently Windows 10 contains a registry option to override this
+ * limit anyway. One day maybe they will even implement UTF-8 as byte
+ * characters so we can use the standard file API even on this OS.
  */
 
 os_filename os_mangle_filename(const char *filename)
@@ -116,13 +121,6 @@ os_filename os_mangle_filename(const char *filename)
     size_t wclen;
     wchar_t *buf;
     const char *p;
-
-    /* If the filename is already prefixed with \\?\, don't add it again */
-    if ((filename[0] == '\\' || filename[0] == '/') &&
-        (filename[1] == '\\' || filename[1] == '/') &&
-        filename[2] == '?' &&
-        (filename[3] == '\\' || filename[3] == '/'))
-        filename += 4;
 
     /*
      * Note: mbsrtowcs() return (size_t)-1 on error, otherwise
@@ -136,12 +134,11 @@ os_filename os_mangle_filename(const char *filename)
     if (!wclen)
         return NULL;
 
-    buf = nasm_malloc((wclen+4) * sizeof(wchar_t));
-    memcpy(buf, L"\\\\?\\", 4*sizeof(wchar_t));
+    buf = nasm_malloc(wclen * sizeof(wchar_t));
 
     memset(&ps, 0, sizeof ps);  /* Begin in the initial state */
     p = filename;
-    if (mbsrtowcs(buf+4, &p, wclen, &ps) + 1 != wclen || p) {
+    if (mbsrtowcs(buf, &p, wclen, &ps) + 1 != wclen || p) {
         nasm_free(buf);
         return NULL;
     }
