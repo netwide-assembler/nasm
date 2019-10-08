@@ -95,7 +95,7 @@ sub find_warnings {
 		    }
 		} elsif ($opr eq '=') {
 		    # Alias names for warnings
-		    for my $a (split(/,+/, $1)) {
+		    for my $a (split(/,+/, $str)) {
 			add_alias($a, $this);
 		    }
 		} elsif ($opr =~ /^[\-\s]/) {
