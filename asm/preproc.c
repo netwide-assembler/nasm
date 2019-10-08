@@ -271,7 +271,10 @@ struct MMacro {
     Line *expansion;
 
     mmcleanup_func cleanup;     /* Cleanup function/loop type */
-    uint64_t rep_cnt;           /* Loop iterations left (%rep) */
+    union {
+        uint64_t rep_cnt;
+        enum preproc_token cond;
+    } loop;
 
     struct mstk mstk;           /* Macro expansion stack */
     struct mstk dstk;           /* Macro definitions stack */
@@ -3225,11 +3228,18 @@ static bool mmacro_cleanup(MMacro *m, bool emitting)
 }
 
 /*
- * End conditions of various loop types; also function as loop type identifiers
+ * End conditions of various loop types; also function as loop type identifiers.
+ * Note that for loop operations, *unlike macro expansions*, these are also called
+ * before the first time the loop body is emitted.
  */
 static bool loop_end_rep(MMacro *m, bool emitting)
 {
-    return emitting && m->rep_cnt--;
+    return emitting && m->loop.rep_cnt--;
+}
+
+static bool loop_end_while(MMacro *m, bool emitting)
+{
+    return emitting && if_condition(dup_tlist(m->iline, NULL), m->loop.cond) == COND_IF_TRUE;
 }
 
 /**
@@ -3328,6 +3338,13 @@ static int do_directive(Token *tline, Token **output)
             closer = PP_ENDREP;
             goto is_opener;
 
+        CASE_PP_WHILE:
+            if (defining->name)
+                return NO_DIRECTIVE_FOUND;
+
+            closer = PP_ENDWHILE;
+            goto is_opener;
+
         is_opener:
             nasm_new(nd);
             nd->next = nested_def;
@@ -3336,6 +3353,7 @@ static int do_directive(Token *tline, Token **output)
             break;
 
         case PP_ENDREP:
+        case PP_ENDWHILE:
             if (defining->name)
                 return NO_DIRECTIVE_FOUND;
             goto is_closer;
@@ -3964,6 +3982,39 @@ issue_error:
         }
         break;
 
+    CASE_PP_WHILE:
+    {
+        MMacro *tmp_defining;
+
+        nolist = false;
+        tline = skip_white(tline->next);
+        if (tok_type(tline, TOK_ID) && tline->len == 7 &&
+	    !nasm_memicmp(tline->text.a, ".nolist", 7)) {
+            nolist = !list_option('f') || istk->nolist;
+            tline = skip_white(tline->next);
+        }
+
+        tmp_defining = defining;
+        nasm_new(defining);
+        defining->nolist = nolist;
+        defining->cleanup = loop_end_rep;
+        defining->loop.cond = i;
+        defining->iline = dup_tlist(tline, NULL);
+        defining->cleanup = loop_end_while;
+        defining->mstk = istk->mstk;
+        defining->dstk.mstk = tmp_defining;
+        defining->dstk.mmac = tmp_defining ? tmp_defining->dstk.mmac : NULL;
+	src_get(&defining->xline, &defining->fname);
+        break;
+    }
+
+    case PP_ENDWHILE:
+        if (!defining || defining->cleanup != loop_end_while) {
+            nasm_nonfatal("`%s': no matching `%%while'", dname);
+            goto done;
+        }
+        goto end_loop;
+
     case PP_REP:
     {
         MMacro *tmp_defining;
@@ -4016,7 +4067,7 @@ issue_error:
         nasm_new(defining);
         defining->nolist = nolist;
         defining->cleanup = loop_end_rep;
-        defining->rep_cnt = count;
+        defining->loop.rep_cnt = count;
         defining->mstk = istk->mstk;
         defining->dstk.mstk = tmp_defining;
         defining->dstk.mmac = tmp_defining ? tmp_defining->dstk.mmac : NULL;
@@ -4029,31 +4080,41 @@ issue_error:
             nasm_nonfatal("`%%endrep': no matching `%%rep'");
             goto done;
         }
+        goto end_loop;
 
-        /*
-         * Now we have a "macro" defined - although it has no name
-         * and we won't be entering it in the hash tables - we must
-         * push a macro-end marker for it on to istk->expansion.
-         * After that, it will take care of propagating itself (a
-         * macro-end marker line for a macro which is really a %rep
-         * block will cause the macro to be re-expanded, complete
-         * with another macro-end marker to ensure the process
-         * continues) until the whole expansion is forcibly removed
-         * from istk->expansion by a %exitrep.
-         */
-        nasm_new(l);
-        l->next = istk->expansion;
-        l->finishes = defining;
-        l->first = NULL;
-        istk->expansion = l;
+     end_loop:
+     {
+         MMacro *d = defining;
 
-        istk->mstk.mstk = defining;
-        if (defining->rep_cnt == 0)
-            istk->popping = defining; /* XXX: just skip this crap at this point */
+         /*
+          * Now we have a "macro" defined - although it has no name
+          * and we won't be entering it in the hash tables - we must
+          * push a macro-end marker for it on to istk->expansion.
+          * After that, it will take care of propagating itself (a
+          * macro-end marker line for a macro which is really a loop
+          * block will cause the macro to be re-expanded, complete
+          * with another macro-end marker to ensure the process
+          * continues) until the loop terminates.
+          */
 
-        lfmt->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO, 0);
-        defining = defining->dstk.mstk;
+         defining = d->dstk.mstk;
+         lfmt->uplevel(d->nolist ? LIST_MACRO_NOLIST : LIST_MACRO, 0);
+
+         /* Are we going to execute at least one iteration? */
+         if (d->cleanup(d, true)) {
+             /* Add to expansion */
+             nasm_new(l);
+             l->next = istk->expansion;
+             l->finishes = d;
+             l->first = NULL;
+             istk->expansion = l;
+             istk->mstk.mstk = d;
+         } else {
+             /* Zero iterations, just discard everything */
+             free_mmacro(d);
+         }
         break;
+     }
 
     case PP_EXITREP:
     {
@@ -6461,7 +6522,7 @@ static void pp_cleanup_pass(void)
             nasm_nonfatal("end of file while still defining macro `%s'",
                           defining->name);
         } else {
-            nasm_nonfatal("end of file while still in %%rep");
+            nasm_nonfatal("end of file while still in loop body");
         }
 
         free_mmacro(defining);

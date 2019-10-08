@@ -39,6 +39,7 @@
 # Condition stems. %if MUST BE FIRST in this list.
 %if*
 %elif*
+%while*
 
 # Condition tests
 *
@@ -99,3 +100,4 @@
 %undefalias
 %use
 %warning
+%endwhile
