@@ -592,8 +592,15 @@ static struct hash_table smacros;
  */
 static MMacro *defining;
 
-static uint64_t nested_mac_count;
-static uint64_t nested_rep_count;
+/*
+ * When skipping directives inside macro definitions and nesting blocks, keep track of what
+ * we expect on the other side...
+ */
+struct nested_def {
+    struct nested_def *next;
+    enum preproc_token closer;
+};
+static struct nested_def *nested_def;
 
 /*
  * The number of macro parameters to allocate space for at a time.
@@ -3238,6 +3245,7 @@ static bool loop_end_rep(MMacro *m, bool emitting)
  * @return DIRECTIVE_FOUND or NO_DIRECTIVE_FOUND
  *
  */
+
 static int do_directive(Token *tline, Token **output)
 {
     enum preproc_token i;
@@ -3298,36 +3306,58 @@ static int do_directive(Token *tline, Token **output)
 
     /*
      * If we're defining a macro or reading a %rep block, we should
-     * ignore all directives except for %macro/%imacro (which nest),
+     * ignore all directives except for ones %macro/%imacro (which nest),
      * %endm/%endmacro, and (only if we're in a %rep block) %endrep.
      * If we're in a %rep block, another %rep nests, so should be let through.
      */
-    if (defining && i != PP_MACRO && i != PP_RMACRO &&
-        i != PP_ENDMACRO && i != PP_ENDM &&
-        (defining->name || (i != PP_ENDREP && i != PP_REP))) {
-        return NO_DIRECTIVE_FOUND;
-    }
-
     if (defining) {
-        if (i == PP_MACRO || i == PP_RMACRO) {
-            nested_mac_count++;
+        struct nested_def *nd;
+        enum preproc_token ii = i;
+        enum preproc_token closer;
+
+        switch (i) {
+        case PP_MACRO:
+        case PP_RMACRO:
+            closer = PP_ENDMACRO;
+            goto is_opener;
+
+        case PP_REP:
+            if (defining->name)
+                return NO_DIRECTIVE_FOUND;
+
+            closer = PP_ENDREP;
+            goto is_opener;
+
+        is_opener:
+            nasm_new(nd);
+            nd->next = nested_def;
+            nd->closer = closer;
+            nested_def = nd;
+            break;
+
+        case PP_ENDREP:
+            if (defining->name)
+                return NO_DIRECTIVE_FOUND;
+            goto is_closer;
+
+        case PP_ENDM:
+            ii = PP_ENDMACRO;
+            goto is_closer;
+
+        case PP_ENDMACRO:
+            goto is_closer;
+
+        is_closer:
+            nd = nested_def;
+            if (!nd || nd->closer != ii)
+                break;
+
+            nested_def = nd->next;
+            nasm_free(nd);
+            break;
+
+        default:
             return NO_DIRECTIVE_FOUND;
-        } else if (nested_mac_count > 0) {
-            if (i == PP_ENDMACRO) {
-                nested_mac_count--;
-                return NO_DIRECTIVE_FOUND;
-            }
-        }
-        if (!defining->name) {
-            if (i == PP_REP) {
-                nested_rep_count++;
-                return NO_DIRECTIVE_FOUND;
-            } else if (nested_rep_count > 0) {
-                if (i == PP_ENDREP) {
-                    nested_rep_count--;
-                    return NO_DIRECTIVE_FOUND;
-                }
-            }
         }
     }
 
@@ -6101,8 +6131,7 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
 
     cstk = NULL;
     defining = NULL;
-    nested_mac_count = 0;
-    nested_rep_count = 0;
+    nested_def = NULL;
     init_macros();
     unique = 0;
     deplist = dep_list;
