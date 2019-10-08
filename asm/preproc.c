@@ -224,15 +224,12 @@ struct SMacro {
  * don't have a name or bother to appear in the hash tables. %rep
  * blocks are signified by having a NULL `name' field.
  *
- * In a MMacro describing a `%rep' block, the `in_progress' field
- * isn't merely boolean, but gives the number of repeats left to
- * run.
- *
  * The `next' field is used for storing MMacros in hash tables; the
  * `next_active' field is for stacking them on istk entries.
  *
  * When a MMacro is being expanded, `params', `iline', `nparam',
  * `paramlen', `rotate' and `unique' are local to the invocation.
+ *
  */
 
 /*
@@ -243,6 +240,17 @@ struct mstk {
     MMacro *mstk;               /* Any expansion, real macro or not */
     MMacro *mmac;               /* Highest level actual mmacro */
 };
+
+/*
+ * Called at the end of a macro or loop construct.
+ *
+ * Return true if a loop should be executed again, false we are
+ * finished and did cleanup.
+ *
+ * If "emitting" is false then we are unwinding the expansion stack,
+ * and this function should always finish.
+ */
+typedef bool (*mmcleanup_func)(MMacro *m, bool emitting);
 
 struct MMacro {
     MMacro *next;
@@ -255,12 +263,15 @@ struct MMacro {
     bool plus;                  /* is the last parameter greedy? */
     bool nolist;                /* is this macro listing-inhibited? */
     bool capture_label;         /* macro definition has %00; capture label */
-    int32_t in_progress;        /* is this macro currently being expanded? */
+    bool in_progress;		/* is this macro currently being expanded? */
     int32_t max_depth;          /* maximum number of recursive expansions allowed */
     Token *dlist;               /* All defaults as one list */
     Token **defaults;           /* Parameter default pointers */
     int ndefs;                  /* number of default parameters */
     Line *expansion;
+
+    mmcleanup_func cleanup;     /* Cleanup function/loop type */
+    uint64_t rep_cnt;           /* Loop iterations left (%rep) */
 
     struct mstk mstk;           /* Macro expansion stack */
     struct mstk dstk;           /* Macro definitions stack */
@@ -429,6 +440,7 @@ struct Include {
     Line *expansion;
     const char *fname;
     struct mstk mstk;
+    MMacro *popping;		/* Ignore all until this is popped from mstk.mstk */
     int lineno, lineinc;
     bool nolist;
 };
@@ -3180,6 +3192,39 @@ get_use_pkg(Token *t, const char *dname, const char **name)
     return nasm_find_use_package(id);
 }
 
+/*
+ * End condition of a real mmacro
+ *
+ * Free parameter infromation and adjust iteration count, nesting depth...
+ */
+static bool mmacro_cleanup(MMacro *m, bool emitting)
+{
+    (void)emitting;
+
+    if (!--mmacro_deadman.levels) {
+        /*
+         * If all mmacro processing done,
+         * clear all counters and the deadman
+         * message trigger.
+         */
+        nasm_zero(mmacro_deadman); /* Clear all counters */
+    }
+
+    nasm_free(m->params);
+    free_tlist(m->iline);
+    nasm_free(m->paramlen);
+
+    return false;
+}
+
+/*
+ * End conditions of various loop types; also function as loop type identifiers
+ */
+static bool loop_end_rep(MMacro *m, bool emitting)
+{
+    return emitting && m->rep_cnt--;
+}
+
 /**
  * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
@@ -3246,8 +3291,7 @@ static int do_directive(Token *tline, Token **output)
      * we should ignore all directives except for condition
      * directives.
      */
-    if (((istk->conds && !emitting(istk->conds->state)) ||
-         (istk->mstk.mstk && !istk->mstk.mstk->in_progress)) &&
+    if (((istk->conds && !emitting(istk->conds->state)) || istk->popping) &&
         !is_condition(i)) {
         return NO_DIRECTIVE_FOUND;
     }
@@ -3755,6 +3799,7 @@ issue_error:
         nasm_assert(!defining);
         nasm_new(defining);
         defining->casesense = casesense;
+        defining->cleanup = mmacro_cleanup;
         defining->dstk.mmac = defining;
         if (i == PP_RMACRO)
             defining->max_depth = nasm_limit[LIMIT_MACRO_LEVELS];
@@ -3940,7 +3985,8 @@ issue_error:
         tmp_defining = defining;
         nasm_new(defining);
         defining->nolist = nolist;
-        defining->in_progress = count;
+        defining->cleanup = loop_end_rep;
+        defining->rep_cnt = count;
         defining->mstk = istk->mstk;
         defining->dstk.mstk = tmp_defining;
         defining->dstk.mmac = tmp_defining ? tmp_defining->dstk.mmac : NULL;
@@ -3949,7 +3995,7 @@ issue_error:
     }
 
     case PP_ENDREP:
-        if (!defining || defining->name) {
+        if (!defining || defining->cleanup != loop_end_rep) {
             nasm_nonfatal("`%%endrep': no matching `%%rep'");
             goto done;
         }
@@ -3972,26 +4018,33 @@ issue_error:
         istk->expansion = l;
 
         istk->mstk.mstk = defining;
+        if (defining->rep_cnt == 0)
+            istk->popping = defining; /* XXX: just skip this crap at this point */
 
         lfmt->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO, 0);
         defining = defining->dstk.mstk;
         break;
 
     case PP_EXITREP:
+    {
         /*
-         * We must search along istk->expansion until we hit a
-         * macro-end marker for a macro with no name. Then we set
-         * its `in_progress' flag to 0.
+         * We must search along istk->mstk until we find the
+         * bottommost %rep (if any.) Then we set its count to
+         * zero and declare it as popping.
          */
-        list_for_each(l, istk->expansion)
-            if (l->finishes && !l->finishes->name)
+        MMacro *m;
+
+        list_for_each(m, istk->mstk.mstk)
+            if (m->cleanup == loop_end_rep)
                 break;
 
-        if (l)
-            l->finishes->in_progress = 0;
-        else
+        if (m) {
+            istk->popping = m;
+        } else {
             nasm_nonfatal("`%%exitrep' not within `%%rep' block");
+        }
         break;
+    }
 
     case PP_DEFINE:
     case PP_XDEFINE:
@@ -5880,7 +5933,7 @@ static int expand_mmacro(Token * tline)
         push_mmacro(m);
 #endif
 
-    m->in_progress ++;
+    m->in_progress = true;
     m->params = params;
     m->iline = tline;
     m->iname = nasm_strdup(mname);
@@ -6150,101 +6203,62 @@ static Token *pp_tokline(void)
         tline = NULL;
         while (l && l->finishes) {
             MMacro *fm = l->finishes;
+            bool again;
 
-            if (!fm->name && fm->in_progress > 1) {
+            /*
+             * Check whether a `%rep' was started and not ended
+             * within this macro expansion. This can happen and
+             * should be detected. It's a fatal error because
+             * I'm too confused to work out how to recover
+             * sensibly from it.
+             */
+            if (defining) {
+                if (defining->name)
+                    nasm_panic("defining with name in expansion");
+                else if (fm->name)
+                    nasm_fatal("underminated loop within"
+                               " expansion of macro `%s'", fm->name);
+            }
+
+            again = fm->cleanup(fm, !istk->popping);
+
+            if (again) {
                 /*
-                 * This is a macro-end marker for a macro with no
-                 * name, which means it's not really a macro at all
-                 * but a %rep block, and the `in_progress' field is
-                 * more than 1, meaning that we still need to
-                 * repeat. (1 means the natural last repetition; 0
-                 * means termination by %exitrep.) We have
-                 * therefore expanded up to the %endrep, and must
-                 * push the whole block on to the expansion buffer
-                 * again. We don't bother to remove the macro-end
-                 * marker: we'd only have to generate another one
-                 * if we did.
+                 * This is a macro-end marker for a loop which wants
+                 * to be executed again.  We must push the whole block
+                 * on to the expansion buffer again. We don't bother
+                 * to remove the macro-end marker: we'd only have to
+                 * generate another one if we did.
                  */
-                fm->in_progress--;
                 list_for_each(l, fm->expansion) {
-                    Token *t, *tt, **tail;
                     Line *ll;
 
                     nasm_new(ll);
                     ll->next = istk->expansion;
-                    tail = &ll->first;
-
-                    list_for_each(t, l->first) {
-                        if (t->len) {
-                            tt = *tail = dup_Token(NULL, t);
-                            tail = &tt->next;
-                        }
-                    }
+                    ll->first = dup_tlist(l->first, NULL);
                     istk->expansion = ll;
                 }
                 break;
             } else {
                 MMacro *m = istk->mstk.mstk;
 
-                /*
-                 * Check whether a `%rep' was started and not ended
-                 * within this macro expansion. This can happen and
-                 * should be detected. It's a fatal error because
-                 * I'm too confused to work out how to recover
-                 * sensibly from it.
-                 */
-                if (defining) {
-                    if (defining->name)
-                        nasm_panic("defining with name in expansion");
-                    else if (m->name)
-                        nasm_fatal("`%%rep' without `%%endrep' within"
-				   " expansion of macro `%s'", m->name);
-                }
+                if (istk->popping == fm) /* Resume normal expansion */
+                    istk->popping = NULL;
 
                 /*
                  * FIXME:  investigate the relationship at this point between
                  * istk->mstk.mstk and fm
                  */
                 istk->mstk = m->mstk;
-                if (m->name) {
-                    /*
-                     * This was a real macro call, not a %rep, and
-                     * therefore the parameter information needs to
-                     * be freed and the iteration count/nesting
-                     * depth adjusted.
-                     */
-
-                    if (!--mmacro_deadman.levels) {
-                        /*
-                         * If all mmacro processing done,
-                         * clear all counters and the deadman
-                         * message trigger.
-                         */
-                        nasm_zero(mmacro_deadman); /* Clear all counters */
-                    }
 
 #if 0
-                    if (m->prev) {
-                        pop_mmacro(m);
-                        fm->in_progress --;
-                    } else
-#endif
-                    {
-                        nasm_free(m->params);
-                        free_tlist(m->iline);
-                        nasm_free(m->paramlen);
-                        fm->in_progress = 0;
-                    }
-                }
-
                 /*
                  * FIXME It is incorrect to always free_mmacro here.
                  * It leads to usage-after-free.
                  *
                  * https://bugzilla.nasm.us/show_bug.cgi?id=3392414
                  */
-#if 0
-                else
+                if (!m->name)
                     free_mmacro(m);
 #endif
             }
@@ -6316,7 +6330,7 @@ static Token *pp_tokline(void)
          * anything.
          */
         if (!defining && !(istk->conds && !emitting(istk->conds->state))
-            && !(istk->mstk.mstk && !istk->mstk.mstk->in_progress)) {
+            && !istk->popping) {
             tline = expand_mmac_params(tline);
         }
 
@@ -6360,9 +6374,9 @@ static Token *pp_tokline(void)
              * directive so we keep our place correctly.
              */
             free_tlist(tline);
-        } else if (istk->mstk.mstk && !istk->mstk.mstk->in_progress) {
+        } else if (istk->popping) {
             /*
-             * We're in a %rep block which has been terminated, so
+             * We're in a loop block which has been terminated, so
              * we're walking through to the %endrep without
              * emitting anything. Emit nothing at all, not even a
              * blank line: when we emerge from the %rep block we'll
