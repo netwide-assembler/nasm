@@ -1615,7 +1615,9 @@ static Token *tokenize(const char *line)
 		    p++;
 		    if (*p == '>')
 			p++;
-		}
+		} else if (*p == '=') {
+                    p++;
+                }
 		break;
 
 	    case '<':

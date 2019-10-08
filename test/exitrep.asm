@@ -6,7 +6,7 @@
       %exitrep
     %endif
     mov ebx,i
-    %ifn i < 3
+    %if i >= 3
 	%error iteration i should not be seen
     %endif
     %assign i i+1
