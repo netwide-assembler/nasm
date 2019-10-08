@@ -3986,7 +3986,7 @@ issue_error:
                 break;
 
         if (l)
-            l->finishes->in_progress = 1;
+            l->finishes->in_progress = 0;
         else
             nasm_nonfatal("`%%exitrep' not within `%%rep' block");
         break;
