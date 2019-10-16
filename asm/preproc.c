@@ -613,6 +613,7 @@ static Token *expand_id(Token * tline);
 static Context *get_ctx(const char *name, const char **namep);
 static Token *make_tok_num(Token *next, int64_t val);
 static Token *make_tok_qstr(Token *next, const char *str);
+static Token *make_tok_qstr_len(Token *next, const char *str, size_t len);
 static Token *make_tok_char(Token *next, char op);
 static Token *new_Token(Token * next, enum pp_token_type type,
                         const char *text, size_t txtlen);
@@ -4238,13 +4239,14 @@ issue_error:
             if (t->type == TOK_INTERNAL_STRING)
                 q = mempcpy(q, tok_text(t), t->len);
         }
+        *q = '\0';
 
         /*
          * We now have a macro name, an implicit parameter count of
          * zero, and a numeric token to use as an expansion. Create
          * and store an SMacro.
          */
-        macro_start = make_tok_qstr(NULL, qbuf);
+        macro_start = make_tok_qstr_len(NULL, qbuf, len);
         nasm_free(qbuf);
         define_smacro(mname, casesense, macro_start, NULL);
         free_tlist(tline);
@@ -4321,7 +4323,7 @@ issue_error:
 
 	txt = (start < 0) ? "" : tok_text(t) + start;
 	len = count;
-        macro_start = make_tok_qstr(NULL, txt);
+        macro_start = make_tok_qstr_len(NULL, txt, len);
 
         /*
          * We now have a macro name, an implicit parameter count of
@@ -6571,11 +6573,14 @@ static Token *make_tok_num(Token *next, int64_t val)
 }
 
 /* Create a quoted string token */
-static Token *make_tok_qstr(Token *next, const char *str)
+static Token *make_tok_qstr_len(Token *next, const char *str, size_t len)
 {
-    size_t len = strlen(str);
     char *p = nasm_quote(str, &len);
     return new_Token_free(next, TOK_STRING, p, len);
+}
+static Token *make_tok_qstr(Token *next, const char *str)
+{
+    return make_tok_qstr_len(next, str, strlen(str));
 }
 
 /* Create a single-character operator token */
