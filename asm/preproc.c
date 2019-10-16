@@ -4027,10 +4027,6 @@ issue_error:
             free_tlist(tt);
             tmpl.alias = true;
         } else {
-            /* Expand the macro definition now for %xdefine and %ixdefine */
-            if (i == PP_XDEFINE)
-                tline = expand_smacro(tline);
-
             /* Reverse expansion list and mark parameter tokens */
             macro_start = NULL;
             t = tline;
@@ -4050,6 +4046,18 @@ issue_error:
                 t->next = macro_start;
                 macro_start = t;
                 t = tt;
+            }
+
+            /*
+             * Expand the macro definition now for %xdefine and %ixdefine.
+             * This is done AFTER marking of parameter tokens: this is the
+             * only way in which %xdefine(xxx) yyyy zzzz differs from
+             * %define(xxx) yyyy %[zzzz]
+             */
+            if (i == PP_XDEFINE) {
+                tline = reverse_tokens(tline);
+                tline = expand_smacro(tline);
+                tline = reverse_tokens(tline);
             }
         }
 
