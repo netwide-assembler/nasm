@@ -128,6 +128,8 @@ int stdscan(void *private_data, struct tokenval *tv)
 
     (void)private_data;         /* Don't warn that this parameter is unused */
 
+    nasm_zero(*tv);
+
     stdscan_bufptr = nasm_skip_spaces(stdscan_bufptr);
     if (!*stdscan_bufptr)
         return tv->t_type = TOKEN_EOS;
