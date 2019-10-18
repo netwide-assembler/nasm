@@ -4234,7 +4234,7 @@ issue_error:
             }
         }
 
-        q = qbuf = nasm_malloc(len);
+        q = qbuf = nasm_malloc(len+1);
         list_for_each(t, tline) {
             if (t->type == TOK_INTERNAL_STRING)
                 q = mempcpy(q, tok_text(t), t->len);
