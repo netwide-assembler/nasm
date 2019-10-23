@@ -99,10 +99,12 @@ typedef struct Cond Cond;
  * tok_smac_param(0) but the one representing `y' will be
  * tok_smac_param(1); see the accessor functions below.
  *
- * TOK_INTERNAL_STRING is a dirty hack: it's a single string token
- * which doesn't need quotes around it. Used in the pre-include
- * mechanism as an alternative to trying to find a sensible type of
- * quote to use on the filename we were passed.
+ * TOK_INTERNAL_STRING is a string which has been unquoted, but should
+ * be treated as if it was a quoted string. The code is free to change
+ * one into the other at will. TOK_NAKED_STRING is a text token which
+ * should be treated as a string, but which MUST NOT be turned into a
+ * quoted string. TOK_INTERNAL_STRINGs can contain any character,
+ * including NUL, but TOK_NAKED_STRING must be a valid C string.
  */
 enum pp_token_type {
     TOK_NONE = 0, TOK_WHITESPACE, TOK_COMMENT,
@@ -112,11 +114,12 @@ enum pp_token_type {
     TOK_PREPROC_ID, TOK_MMACRO_PARAM, TOK_LOCAL_SYMBOL,
     TOK_LOCAL_MACRO, TOK_ENVIRON, TOK_STRING,
     TOK_NUMBER, TOK_FLOAT, TOK_OTHER,
-    TOK_INTERNAL_STRING,
+    TOK_INTERNAL_STRING, TOK_NAKED_STRING,
     TOK_PREPROC_Q, TOK_PREPROC_QQ,
     TOK_PASTE,              /* %+ */
     TOK_COND_COMMA,         /* %, */
     TOK_INDIRECT,           /* %[...] */
+    TOK_XDEF_PARAM,         /* Used during %xdefine processing */
     TOK_SMAC_START_PARAMS,  /* MUST BE LAST IN THE LIST!!! */
     TOK_MAX = INT_MAX       /* Keep compiler from reducing the range */
 };
@@ -328,6 +331,16 @@ static inline unsigned int tok_check_len(size_t len)
 	nasm_fatal("impossibly large token");
 
     return len;
+}
+
+static inline bool tok_text_match(const struct Token *a, const struct Token *b)
+{
+    return a->len == b->len && !memcmp(tok_text(a), tok_text(b), a->len);
+}
+
+static inline bool tok_match(const struct Token *a, const struct Token *b)
+{
+    return a->type == b->type && tok_text_match(a, b);
 }
 
 /* strlen() variant useful for set_text() and its variants */
@@ -702,6 +715,10 @@ static const char *unquote_token(Token *t)
     }
 }
 
+/*
+ * Same as unquote_token(), but error out if the resulting string
+ * contains unacceptable control characters.
+ */
 static const char *unquote_token_cstr(Token *t)
 {
     if (t->type != TOK_STRING)
@@ -728,7 +745,24 @@ static const char *unquote_token_cstr(Token *t)
     }
 }
 
-static Token *quote_internal_string_token(Token *t)
+/*
+ * Convert a TOK_INTERNAL_STRING token to a quoted
+ * TOK_STRING tokens.
+ */
+static Token *quote_any_token(Token *t);
+static inline Token *quote_token(Token *t)
+{
+    if (likely(!tok_is(t, TOK_INTERNAL_STRING)))
+	return t;
+
+    return quote_any_token(t);
+}
+
+/*
+ * Convert *any* kind of token to a quoted
+ * TOK_STRING token.
+ */
+static Token *quote_any_token(Token *t)
 {
     size_t len;
     char *p;
@@ -736,14 +770,6 @@ static Token *quote_internal_string_token(Token *t)
     p = nasm_quote(tok_text(t), &len);
     t->type = TOK_STRING;
     return set_text_free(t, p, len);
-}
-
-static inline Token *quote_token(Token *t)
-{
-    if (likely(!tok_is(t, TOK_INTERNAL_STRING)))
-	return t;
-
-    return quote_internal_string_token(t);
 }
 
 /*
@@ -788,6 +814,7 @@ static const char *pp_getenv(const Token *t, bool warn)
 	break;
 
     case TOK_INTERNAL_STRING:
+    case TOK_NAKED_STRING:
     case TOK_ID:
 	is_string = false;
 	break;
@@ -1893,7 +1920,7 @@ static char *detoken(Token * tlist, bool expand_locals)
 	{
 	    const char *v = pp_getenv(t, true);
 	    set_text(t, v, tok_strlen(v));
-	    t->type = TOK_INTERNAL_STRING;
+	    t->type = TOK_NAKED_STRING;
 	    break;
         }
 
@@ -3181,6 +3208,34 @@ get_use_pkg(Token *t, const char *dname, const char **name)
     return nasm_find_use_package(id);
 }
 
+/*
+ * Mark parameter tokens in an smacro definition. If the type argument
+ * is 0, create smac param tokens, otherwise use the type specified;
+ * normally this is used for TOK_XDEF_PARAM, which is used to protect
+ * parameter tokens during expansion during %xdefine.
+ */
+static void mark_smac_params(Token *tline, const SMacro *tmpl,
+                             enum pp_token_type type)
+{
+    const struct smac_param *params = tmpl->params;
+    int nparam = tmpl->nparam;
+    Token *t;
+    int i;
+
+    if (!nparam)
+        return;
+
+    list_for_each(t, tline) {
+        if (t->type != TOK_ID && t->type != TOK_XDEF_PARAM)
+            continue;
+
+        for (i = 0; i < nparam; i++) {
+            if (tok_text_match(t, &params[i].name))
+                t->type = type ? type : tok_smac_param(i);
+        }
+    }
+}
+
 /**
  * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
@@ -3196,10 +3251,9 @@ get_use_pkg(Token *t, const char *dname, const char **name)
  */
 static int do_directive(Token *tline, Token **output)
 {
-    enum preproc_token i;
+    enum preproc_token op;
     int j;
     bool err;
-    int nparam;
     bool nolist;
     bool casesense;
     int k, m;
@@ -3233,12 +3287,12 @@ static int do_directive(Token *tline, Token **output)
     if (dname[1] == '%')
 	return NO_DIRECTIVE_FOUND;
 
-    i = pp_token_hash(dname);
+    op = pp_token_hash(dname);
 
     casesense = true;
-    if (PP_HAS_CASE(i) & PP_INSENSITIVE(i)) {
+    if (PP_HAS_CASE(op) & PP_INSENSITIVE(op)) {
         casesense = false;
-        i--;
+        op--;
     }
 
     /*
@@ -3249,7 +3303,7 @@ static int do_directive(Token *tline, Token **output)
      */
     if (((istk->conds && !emitting(istk->conds->state)) ||
          (istk->mstk.mstk && !istk->mstk.mstk->in_progress)) &&
-        !is_condition(i)) {
+        !is_condition(op)) {
         return NO_DIRECTIVE_FOUND;
     }
 
@@ -3259,28 +3313,28 @@ static int do_directive(Token *tline, Token **output)
      * %endm/%endmacro, and (only if we're in a %rep block) %endrep.
      * If we're in a %rep block, another %rep nests, so should be let through.
      */
-    if (defining && i != PP_MACRO && i != PP_RMACRO &&
-        i != PP_ENDMACRO && i != PP_ENDM &&
-        (defining->name || (i != PP_ENDREP && i != PP_REP))) {
+    if (defining && op != PP_MACRO && op != PP_RMACRO &&
+        op != PP_ENDMACRO && op != PP_ENDM &&
+        (defining->name || (op != PP_ENDREP && op != PP_REP))) {
         return NO_DIRECTIVE_FOUND;
     }
 
     if (defining) {
-        if (i == PP_MACRO || i == PP_RMACRO) {
+        if (op == PP_MACRO || op == PP_RMACRO) {
             nested_mac_count++;
             return NO_DIRECTIVE_FOUND;
         } else if (nested_mac_count > 0) {
-            if (i == PP_ENDMACRO) {
+            if (op == PP_ENDMACRO) {
                 nested_mac_count--;
                 return NO_DIRECTIVE_FOUND;
             }
         }
         if (!defining->name) {
-            if (i == PP_REP) {
+            if (op == PP_REP) {
                 nested_rep_count++;
                 return NO_DIRECTIVE_FOUND;
             } else if (nested_rep_count > 0) {
-                if (i == PP_ENDREP) {
+                if (op == PP_ENDREP) {
                     nested_rep_count--;
                     return NO_DIRECTIVE_FOUND;
                 }
@@ -3288,7 +3342,7 @@ static int do_directive(Token *tline, Token **output)
         }
     }
 
-    switch (i) {
+    switch (op) {
     default:
         nasm_nonfatal("unknown preprocessor directive `%s'", dname);
         return NO_DIRECTIVE_FOUND;      /* didn't get it */
@@ -3586,19 +3640,18 @@ static int do_directive(Token *tline, Token **output)
         tline = expand_id(tline);
         if (tline) {
             if (!tok_type(tline, TOK_ID)) {
-                nasm_nonfatal("`%s' expects a context identifier",
-                              pp_directives[i]);
+                nasm_nonfatal("`%s' expects a context identifier", dname);
                 goto done;
             }
             if (tline->next)
                 nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored",
-                           pp_directives[i]);
+                           dname);
             p = tok_text(tline);
         } else {
             p = NULL; /* Anonymous */
         }
 
-        if (i == PP_PUSH) {
+        if (op == PP_PUSH) {
             nasm_new(ctx);
             ctx->depth = cstk ? cstk->depth + 1 : 1;
             ctx->next = cstk;
@@ -3608,9 +3661,8 @@ static int do_directive(Token *tline, Token **output)
         } else {
             /* %pop or %repl */
             if (!cstk) {
-                nasm_nonfatal("`%s': context stack is empty",
-                              pp_directives[i]);
-            } else if (i == PP_POP) {
+                nasm_nonfatal("`%s': context stack is empty", dname);
+            } else if (op == PP_POP) {
                 if (p && (!cstk->name || nasm_stricmp(p, cstk->name)))
                     nasm_nonfatal("`%s' in wrong context: %s, "
                                "expected %s",
@@ -3618,7 +3670,7 @@ static int do_directive(Token *tline, Token **output)
                 else
                     ctx_pop();
             } else {
-                /* i == PP_REPL */
+                /* op == PP_REPL */
                 nasm_free((char *)cstk->name);
                 cstk->name = p ? nasm_strdup(p) : NULL;
                 p = NULL;
@@ -3664,7 +3716,7 @@ issue_error:
         if (istk->conds && !emitting(istk->conds->state))
             j = COND_NEVER;
         else {
-            j = if_condition(tline->next, i);
+            j = if_condition(tline->next, op);
             tline->next = NULL; /* it got freed */
         }
         cond = nasm_malloc(sizeof(Cond));
@@ -3703,7 +3755,7 @@ issue_error:
              * the normal invocation of expand_mmac_params().
              * Therefore, we have to do it explicitly here.
              */
-            j = if_condition(expand_mmac_params(tline->next), i);
+            j = if_condition(expand_mmac_params(tline->next), op);
             tline->next = NULL; /* it got freed */
             istk->conds->state = j;
             break;
@@ -3757,7 +3809,7 @@ issue_error:
         nasm_new(defining);
         defining->casesense = casesense;
         defining->dstk.mmac = defining;
-        if (i == PP_RMACRO)
+        if (op == PP_RMACRO)
             defining->max_depth = nasm_limit[LIMIT_MACRO_LEVELS];
         if (!parse_mmacro_spec(tline, defining, dname)) {
             nasm_free(defining);
@@ -4006,11 +4058,11 @@ issue_error:
 
         nasm_zero(tmpl);
         lastp = &tline->next;
-        nparam = parse_smacro_template(&lastp, &tmpl);
+        parse_smacro_template(&lastp, &tmpl);
         tline = *lastp;
         *lastp = NULL;
 
-        if (unlikely(i == PP_DEFALIAS)) {
+        if (unlikely(op == PP_DEFALIAS)) {
             macro_start = tline;
             if (!is_macro_id(macro_start)) {
                 nasm_nonfatal("`%s' expects a macro identifier to alias",
@@ -4028,38 +4080,15 @@ issue_error:
             free_tlist(tt);
             tmpl.alias = true;
         } else {
-            /* Reverse expansion list and mark parameter tokens */
-            macro_start = NULL;
-            t = tline;
-            while (t) {
-                if (t->type == TOK_ID) {
-		    const char *ttext = tok_text(t);
-		    size_t tlen = t->len;
-                    for (i = 0; i < nparam; i++) {
-                        if (tmpl.params[i].name.len == t->len &&
-                            !memcmp(ttext, tok_text(&tmpl.params[i].name), tlen)) {
-                            t->type = tok_smac_param(i);
-                            break;
-                        }
-                    }
-                }
-                tt = t->next;
-                t->next = macro_start;
-                macro_start = t;
-                t = tt;
+            if (op == PP_XDEFINE) {
+                /* Protect macro parameter tokens */
+                mark_smac_params(tline, &tmpl, TOK_XDEF_PARAM);
+                tline = expand_smacro(tline);
             }
 
-            /*
-             * Expand the macro definition now for %xdefine and %ixdefine.
-             * This is done AFTER marking of parameter tokens: this is the
-             * only way in which %xdefine(xxx) yyyy zzzz differs from
-             * %define(xxx) yyyy %[zzzz]
-             */
-            if (i == PP_XDEFINE) {
-                tline = reverse_tokens(tline);
-                tline = expand_smacro(tline);
-                tline = reverse_tokens(tline);
-            }
+            mark_smac_params(tline, &tmpl, 0);
+            /* NB: Does this still make sense? */
+            macro_start = reverse_tokens(tline);
         }
 
         /*
@@ -4081,7 +4110,7 @@ issue_error:
         if (tline->next)
             nasm_warn(WARN_OTHER, "trailing garbage after macro name ignored");
 
-        undef_smacro(mname, i == PP_UNDEFALIAS);
+        undef_smacro(mname, op == PP_UNDEFALIAS);
         break;
 
     case PP_DEFSTR:
