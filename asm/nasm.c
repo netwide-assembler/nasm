@@ -2067,6 +2067,7 @@ static void help(FILE *out)
         "       -Lm        show multi-line macro calls with expanded parmeters\n"
         "       -Lp        output a list file every pass, in case of errors\n"
         "       -Ls        show all single-line macro definitions\n"
+        "       -Lw        flush the output after every line\n"
         "       -L+        enable all listing options (very verbose!)\n"
         "\n"
         "    -Oflags...    optimize opcodes, immediates and branch offsets\n"

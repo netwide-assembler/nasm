@@ -148,6 +148,8 @@ static void list_cleanup(void)
 
 static void list_init(const char *fname)
 {
+    enum file_flags flags = NF_TEXT;
+
     if (listfp)
         list_cleanup();
 
@@ -156,7 +158,10 @@ static void list_init(const char *fname)
 	return;
     }
 
-    listfp = nasm_open_write(fname, NF_TEXT);
+    if (list_option('w'))
+        flags |= NF_IOLBF;
+
+    listfp = nasm_open_write(fname, flags);
     if (!listfp) {
         nasm_nonfatal("unable to open listing file `%s'", fname);
         return;
