@@ -638,6 +638,8 @@ static Token *delete_Token(Token *t);
 static Token *steal_Token(Token *dst, Token *src);
 static const struct use_package *
 get_use_pkg(Token *t, const char *dname, const char **name);
+static void mark_smac_params(Token *tline, const SMacro *tmpl,
+                             enum pp_token_type type);
 
 /* Safe test for token type, false on x == NULL */
 static inline bool tok_type(const Token *x, enum pp_token_type t)
@@ -2278,30 +2280,15 @@ FILE *pp_input_fopen(const char *filename, enum file_flags mode)
  *
  * Note that this is also called with nparam zero to resolve
  * `ifdef'.
- *
- * If you already know which context macro belongs to, you can pass
- * the context pointer as first parameter; if you won't but name begins
- * with %$ the context will be automatically computed. If all_contexts
- * is true, macro will be searched in outer contexts as well.
  */
 static bool
-smacro_defined(Context * ctx, const char *name, int nparam, SMacro ** defn,
+smacro_defined(Context *ctx, const char *name, int nparam, SMacro **defn,
                bool nocase, bool find_alias)
 {
     struct hash_table *smtbl;
     SMacro *m;
 
-    if (ctx) {
-        smtbl = &ctx->localmac;
-    } else if (name[0] == '%' && name[1] == '$') {
-        if (cstk)
-            ctx = get_ctx(name, &name);
-        if (!ctx)
-            return false;       /* got to return _something_ */
-        smtbl = &ctx->localmac;
-    } else {
-        smtbl = &smacros;
-    }
+    smtbl = ctx ? &ctx->localmac : &smacros;
 
 restart:
     m = (SMacro *) hash_findix(smtbl, name);
@@ -2442,6 +2429,13 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
         break;
 
     case PP_IFDEF:
+    case PP_IFDEFALIAS:
+    {
+        bool alias = cond == PP_IFDEFALIAS;
+        SMacro *smac;
+        Context *ctx;
+        const char *mname;
+
         j = false;              /* have we matched yet? */
         while (tline) {
             tline = skip_white(tline);
@@ -2451,11 +2445,18 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
                               dname);
                 goto fail;
             }
-            if (smacro_defined(NULL, tok_text(tline), 0, NULL, true, false))
+
+            mname = tok_text(tline);
+            ctx = get_ctx(mname, &mname);
+            if (smacro_defined(ctx, mname, 0, &smac, true, alias)
+                && smac->alias == alias) {
                 j = true;
+                break;
+            }
             tline = tline->next;
         }
         break;
+    }
 
     case PP_IFENV:
         tline = expand_smacro(tline);
@@ -2932,6 +2933,8 @@ static SMacro *define_smacro(const char *mname, bool casesense,
     if (tmpl) {
         defining_alias = tmpl->alias;
         nparam = tmpl->nparam;
+        if (nparam && !defining_alias)
+            mark_smac_params(expansion, tmpl, 0);
     }
 
     while (1) {
@@ -3022,14 +3025,14 @@ static void undef_smacro(const char *mname, bool undefalias)
         while ((s = *sp) != NULL) {
             if (!mstrcmp(s->name, mname, s->casesense)) {
                 if (s->alias && !undefalias) {
-                    if (!do_aliases)
-                        continue;
-                    if (s->in_progress) {
-                        nasm_nonfatal("macro alias loop");
-                    } else {
-                        s->in_progress = true;
-                        undef_smacro(tok_text(s->expansion), false);
-                        s->in_progress = false;
+                    if (do_aliases) {
+                        if (s->in_progress) {
+                            nasm_nonfatal("macro alias loop");
+                        } else {
+                            s->in_progress = true;
+                            undef_smacro(tok_text(s->expansion), false);
+                            s->in_progress = false;
+                        }
                     }
                 } else {
                     if (list_option('d'))
@@ -3037,10 +3040,10 @@ static void undef_smacro(const char *mname, bool undefalias)
                                         ctx, s);
                     *sp = s->next;
                     free_smacro(s);
+                    continue;
                 }
-            } else {
-                sp = &s->next;
             }
+            sp = &s->next;
         }
     }
 }
@@ -3213,6 +3216,8 @@ get_use_pkg(Token *t, const char *dname, const char **name)
  * is 0, create smac param tokens, otherwise use the type specified;
  * normally this is used for TOK_XDEF_PARAM, which is used to protect
  * parameter tokens during expansion during %xdefine.
+ *
+ * tmpl may not be NULL here.
  */
 static void mark_smac_params(Token *tline, const SMacro *tmpl,
                              enum pp_token_type type)
@@ -3221,9 +3226,6 @@ static void mark_smac_params(Token *tline, const SMacro *tmpl,
     int nparam = tmpl->nparam;
     Token *t;
     int i;
-
-    if (!nparam)
-        return;
 
     list_for_each(t, tline) {
         if (t->type != TOK_ID && t->type != TOK_XDEF_PARAM)
@@ -4052,13 +4054,14 @@ issue_error:
     {
         SMacro tmpl;
         Token **lastp;
+        int nparam;
 
         if (!(mname = get_id(&tline, dname)))
             goto done;
 
         nasm_zero(tmpl);
         lastp = &tline->next;
-        parse_smacro_template(&lastp, &tmpl);
+        nparam = parse_smacro_template(&lastp, &tmpl);
         tline = *lastp;
         *lastp = NULL;
 
@@ -4082,11 +4085,10 @@ issue_error:
         } else {
             if (op == PP_XDEFINE) {
                 /* Protect macro parameter tokens */
-                mark_smac_params(tline, &tmpl, TOK_XDEF_PARAM);
+                if (nparam)
+                    mark_smac_params(tline, &tmpl, TOK_XDEF_PARAM);
                 tline = expand_smacro(tline);
             }
-
-            mark_smac_params(tline, &tmpl, 0);
             /* NB: Does this still make sense? */
             macro_start = reverse_tokens(tline);
         }

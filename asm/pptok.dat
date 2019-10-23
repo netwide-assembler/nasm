@@ -44,6 +44,7 @@
 *
 *ctx
 *def
+*defalias
 *empty
 *env
 *id
