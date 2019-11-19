@@ -181,6 +181,10 @@ size_t strlcpy(char *, const char *, size_t);
 char * pure_func strrchrnul(const char *, int);
 #endif
 
+#if !defined(HAVE_STRLCAT) || !HAVE_DECL_STRLCAT
+size_t strlcat(char *, const char *, size_t);
+#endif
+
 /* C++ and C23 have bool, false, and true as proper keywords */
 #if !defined(__cplusplus) && (__STDC_VERSION__ < 202311L)
 # ifdef HAVE_STDBOOL_H

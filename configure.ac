@@ -230,6 +230,7 @@ PA_FUNC_SNPRINTF
 PA_FUNC_VSNPRINTF
 AC_CHECK_FUNCS([strlcpy])
 AC_CHECK_FUNCS([strrchrnul])
+AC_CHECK_FUNCS([strlcat])
 
 dnl These types are POSIX-specific, and Windows does it differently...
 AC_CHECK_TYPES([struct stat], [AC_CHECK_FUNCS([stat fstat])])
@@ -247,6 +248,7 @@ AC_CHECK_DECLS(strsep)
 AC_CHECK_DECLS(strlcpy)
 AC_CHECK_DECLS(strnlen)
 AC_CHECK_DECLS(strrchrnul)
+AC_CHECK_DECLS(strlcat)
 
 dnl Check for missing types
 AC_TYPE_UINTMAX_T
