@@ -179,7 +179,7 @@ static void ieee_unqualified_name(char *, char *);
  */
 static void ieee_init(void)
 {
-    strlcpy(ieee_infile, get_filename(FN_INFILE), sizeof(ieee_infile));
+    strlcpy(ieee_infile, get_filename(FN_MAPPED_INFILE), sizeof(ieee_infile));
     any_segs = false;
     fpubhead = NULL;
     fpubtail = &fpubhead;

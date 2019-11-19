@@ -325,7 +325,7 @@ static int32_t macho_gotpcrel_sect;
 
 static void macho_init(void)
 {
-    module_name = get_filename(FN_INFILE);
+    module_name = get_filename(FN_MAPPED_INFILE);
     sects = NULL;
     sectstail = &sects;
 

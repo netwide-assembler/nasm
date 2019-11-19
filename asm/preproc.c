@@ -8638,7 +8638,7 @@ static void pp_reset_stdmac(enum preproc_mode mode)
     define_smacro("__?PASS?__", true, make_tok_num(NULL, apass), NULL);
 }
 
-void pp_reset(const char *file, enum preproc_mode mode,
+void pp_reset(const char *file, char const* mapped_fname, enum preproc_mode mode,
               struct strlist *dep_list)
 {
     cstk = NULL;
@@ -8677,7 +8677,7 @@ void pp_reset(const char *file, enum preproc_mode mode,
 	nasm_fatalf(ERR_NOFILE, "unable to open input file `%s'%s%s",
                     file, errno ? " " : "", errno ? strerror(errno) : "");
     }
-    src_set(0, file);
+    src_set(0, mapped_fname);
     istk->where = src_where();
     istk->lineinc = 1;
 

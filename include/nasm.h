@@ -458,7 +458,7 @@ void pp_init(enum preproc_opt opt);
  * of the pass, an error reporting function, an evaluator
  * function, and a listing generator to talk to.
  */
-void pp_reset(const char *file, enum preproc_mode mode,
+void pp_reset(const char *file, const char* mapped_fname, enum preproc_mode mode,
               struct strlist *deplist);
 
 /*

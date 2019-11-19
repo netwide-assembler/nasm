@@ -7,6 +7,7 @@
 
 static const char * const filename_names[FN_NFILES] = {
     "input",
+    "mapped-input",
     "output",
     "error",
     "list",
@@ -44,7 +45,7 @@ void check_overwrite_files(void)
     if (!inname)
         return;
 
-    for (fn = FN_INFILE+1; fn < FN_NFILES; fn++) {
+    for (fn = FN_INFILE+2; fn < FN_NFILES; fn++) {
         const char *outname = get_filename(fn);
         if (outname && !strcmp(inname, outname)) {
             nasm_fatal("%s file would overwrite input file",

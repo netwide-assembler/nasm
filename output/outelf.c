@@ -511,7 +511,7 @@ static void elf64_init(void)
 
 static void elf_populate_dirs(void)
 {
-    const char * const infile = get_filename(FN_INFILE);
+    const char * const infile = get_filename(FN_MAPPED_INFILE);
     char *cur_path = nasm_realpath(infile);
     char *dir_name = nasm_dirname(cur_path);
 
