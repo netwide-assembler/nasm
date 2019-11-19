@@ -334,10 +334,19 @@ static inline const char *nasm_digit_chars(bool ucase)
  */
 int32_t seg_alloc(void);
 
+struct debug_prefix_list {
+    struct debug_prefix_list *next;
+    char *base;
+    char *dest;
+};
+
+extern struct debug_prefix_list *debug_prefixes;
+
 /*
  * Add/replace or remove an extension to the end of a filename
  */
 const char *filename_set_extension(const char *inname, const char *extension);
+char *filename_debug_remap(char *dest, char const *inname, size_t len);
 
 /*
  * Utility macros...

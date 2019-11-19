@@ -656,7 +656,7 @@ static const char *get_default_class(const char *segment)
 
 static void obj_init(void)
 {
-    strlcpy(obj_infile, inname, sizeof(obj_infile));
+    filename_debug_remap(obj_infile, inname, sizeof(obj_infile));
     first_seg = seg_alloc();
     any_segs = false;
     fpubhead = NULL;

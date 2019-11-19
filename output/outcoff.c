@@ -1239,10 +1239,10 @@ static void coff_write_symbols(void)
      */
     coff_symbol(".file", 0L, 0L, -2, 0, 0x67, 1);
     if (reproducible)
-        memset(filename, 0, 18);
+        memset(filename, 0, sizeof(filename));
     else
-        strncpy(filename, inname, 18);
-    nasm_write(filename, 18, ofile);
+        filename_debug_remap(filename, inname, sizeof(filename));
+    nasm_write(filename, sizeof(filename), ofile);
 
     /*
      * The section records, with their auxiliaries.

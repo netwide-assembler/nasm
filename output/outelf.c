@@ -516,8 +516,8 @@ static void elf_init(void)
     const char * const *p;
     const char * cur_path = nasm_realpath(inname);
 
-    strlcpy(elf_module, inname, sizeof(elf_module));
-    strlcpy(elf_dir, nasm_dirname(cur_path), sizeof(elf_dir));
+    filename_debug_remap(elf_module, inname, sizeof(elf_module));
+    filename_debug_remap(elf_dir, nasm_dirname(cur_path), sizeof(elf_dir));
     sects = NULL;
     nsects = sectlen = 0;
     syms = saa_init((int32_t)sizeof(struct elf_symbol));

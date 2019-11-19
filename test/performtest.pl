@@ -42,13 +42,21 @@ sub perform {
     TEST:
     while(<TESTFILE>) {
         #See if there is a test case
-        last unless /Testname=(.*);\s*Arguments=(.*);\s*Files=(.*)/;
-        my ($subname, $arguments, $files) = ($1, $2, $3);
+        last unless /Testname=(.*);\s*Arguments=(.*);\s*Files=([^;]*)(?:;\s*Validate=(.*))?/;
+        my ($subname, $arguments, $files, $validate) = ($1, $2, $3, $4);
+        chomp $files;
         debugprint("$subname | $arguments | $files");
 
         #Call nasm with this test case
         system("$nasm $arguments $testpath > $stdoutfile 2> $stderrfile");
         debugprint("$nasm $arguments $testpath > $stdoutfile 2> $stderrfile ----> $?");
+
+        if($validate) {
+            if(system("$validate >> $stdoutfile 2>> $stderrfile") != 0) {
+                print "Test $testname/$subname validation failed\n";
+                $globalresult = 1;
+            }
+        }
 
         #Move the output to the test dir
         mkpath("$outputdir/$testname/$subname");
