@@ -5349,15 +5349,15 @@ VPSHLDD		zmmreg|mask|z,zmmreg*,zmmrm512|b32,imm8	[rvmi:fv:  evex.nds.512.66.0f3a
 VPSHLDQ		xmmreg|mask|z,xmmreg*,xmmrm128|b64,imm8	[rvmi:fv:  evex.nds.128.66.0f3a.w1 71 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
 VPSHLDQ		ymmreg|mask|z,ymmreg*,ymmrm256|b64,imm8	[rvmi:fv:  evex.nds.256.66.0f3a.w1 71 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
 VPSHLDQ		zmmreg|mask|z,zmmreg*,zmmrm512|b64,imm8	[rvmi:fv:  evex.nds.512.66.0f3a.w1 71 /r ib]	AVX512VBMI2,FUTURE
-VPSHLDVW	xmmreg|mask|z,xmmreg*,xmmrm128		[rvmi:fvm: evex.dds.128.66.0f38.w1 70 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHLDVW	ymmreg|mask|z,ymmreg*,ymmrm256		[rvmi:fvm: evex.dds.256.66.0f38.w1 70 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHLDVW	zmmreg|mask|z,zmmreg*,zmmrm512		[rvmi:fvm: evex.dds.512.66.0f38.w1 70 /r ib]	AVX512VBMI2,FUTURE
-VPSHLDVD	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvmi:fv:  evex.dds.128.66.0f38.w0 71 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHLDVD	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvmi:fv:  evex.dds.256.66.0f38.w0 71 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHLDVD	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvmi:fv:  evex.dds.512.66.0f38.w0 71 /r ib]	AVX512VBMI2,FUTURE
-VPSHLDVQ	xmmreg|mask|z,xmmreg*,xmmrm128|b64	[rvmi:fv:  evex.dds.128.66.0f38.w1 71 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHLDVQ	ymmreg|mask|z,ymmreg*,ymmrm256|b64	[rvmi:fv:  evex.dds.256.66.0f38.w1 71 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHLDVQ	zmmreg|mask|z,zmmreg*,zmmrm512|b64	[rvmi:fv:  evex.dds.512.66.0f38.w1 71 /r ib]	AVX512VBMI2,FUTURE
+VPSHLDVW	xmmreg|mask|z,xmmreg*,xmmrm128		[rvmi:fvm: evex.dds.128.66.0f38.w1 70 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHLDVW	ymmreg|mask|z,ymmreg*,ymmrm256		[rvmi:fvm: evex.dds.256.66.0f38.w1 70 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHLDVW	zmmreg|mask|z,zmmreg*,zmmrm512		[rvmi:fvm: evex.dds.512.66.0f38.w1 70 /r]	AVX512VBMI2,FUTURE
+VPSHLDVD	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvmi:fv:  evex.dds.128.66.0f38.w0 71 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHLDVD	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvmi:fv:  evex.dds.256.66.0f38.w0 71 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHLDVD	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvmi:fv:  evex.dds.512.66.0f38.w0 71 /r]	AVX512VBMI2,FUTURE
+VPSHLDVQ	xmmreg|mask|z,xmmreg*,xmmrm128|b64	[rvmi:fv:  evex.dds.128.66.0f38.w1 71 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHLDVQ	ymmreg|mask|z,ymmreg*,ymmrm256|b64	[rvmi:fv:  evex.dds.256.66.0f38.w1 71 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHLDVQ	zmmreg|mask|z,zmmreg*,zmmrm512|b64	[rvmi:fv:  evex.dds.512.66.0f38.w1 71 /r]	AVX512VBMI2,FUTURE
 VPSHRDW		xmmreg|mask|z,xmmreg*,xmmrm128,imm8	[rvmi:fvm: evex.nds.128.66.0f3a.w1 72 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
 VPSHRDW		ymmreg|mask|z,ymmreg*,ymmrm256,imm8	[rvmi:fvm: evex.nds.256.66.0f3a.w1 72 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
 VPSHRDW		zmmreg|mask|z,zmmreg*,zmmrm512,imm8	[rvmi:fvm: evex.nds.512.66.0f3a.w1 72 /r ib]	AVX512VBMI2,FUTURE
@@ -5367,15 +5367,15 @@ VPSHRDD		zmmreg|mask|z,zmmreg*,zmmrm512|b32,imm8	[rvmi:fv:  evex.nds.512.66.0f3a
 VPSHRDQ		xmmreg|mask|z,xmmreg*,xmmrm128|b64,imm8	[rvmi:fv:  evex.nds.128.66.0f3a.w1 73 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
 VPSHRDQ		ymmreg|mask|z,ymmreg*,ymmrm256|b64,imm8	[rvmi:fv:  evex.nds.256.66.0f3a.w1 73 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
 VPSHRDQ		zmmreg|mask|z,zmmreg*,zmmrm512|b64,imm8	[rvmi:fv:  evex.nds.512.66.0f3a.w1 73 /r ib]	AVX512VBMI2,FUTURE
-VPSHRDVW	xmmreg|mask|z,xmmreg*,xmmrm128    	[rvmi:fvm: evex.dds.128.66.0f38.w1 72 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHRDVW	ymmreg|mask|z,ymmreg*,ymmrm256		[rvmi:fvm: evex.dds.256.66.0f38.w1 72 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHRDVW	zmmreg|mask|z,zmmreg*,zmmrm512		[rvmi:fvm: evex.dds.512.66.0f38.w1 72 /r ib]	AVX512VBMI2,FUTURE
-VPSHRDVD	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvmi:fv:  evex.dds.128.66.0f38.w0 73 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHRDVD	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvmi:fv:  evex.dds.256.66.0f38.w0 73 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHRDVD	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvmi:fv:  evex.dds.512.66.0f38.w0 73 /r ib]	AVX512VBMI2,FUTURE
-VPSHRDVQ	xmmreg|mask|z,xmmreg*,xmmrm128|b64	[rvmi:fv:  evex.dds.128.66.0f38.w1 73 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHRDVQ	ymmreg|mask|z,ymmreg*,ymmrm256|b64	[rvmi:fv:  evex.dds.256.66.0f38.w1 73 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
-VPSHRDVQ	zmmreg|mask|z,zmmreg*,zmmrm512|b64	[rvmi:fv:  evex.dds.512.66.0f38.w1 73 /r ib]	AVX512VBMI2,FUTURE
+VPSHRDVW	xmmreg|mask|z,xmmreg*,xmmrm128    	[rvmi:fvm: evex.dds.128.66.0f38.w1 72 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHRDVW	ymmreg|mask|z,ymmreg*,ymmrm256		[rvmi:fvm: evex.dds.256.66.0f38.w1 72 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHRDVW	zmmreg|mask|z,zmmreg*,zmmrm512		[rvmi:fvm: evex.dds.512.66.0f38.w1 72 /r]	AVX512VBMI2,FUTURE
+VPSHRDVD	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvmi:fv:  evex.dds.128.66.0f38.w0 73 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHRDVD	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvmi:fv:  evex.dds.256.66.0f38.w0 73 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHRDVD	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvmi:fv:  evex.dds.512.66.0f38.w0 73 /r]	AVX512VBMI2,FUTURE
+VPSHRDVQ	xmmreg|mask|z,xmmreg*,xmmrm128|b64	[rvmi:fv:  evex.dds.128.66.0f38.w1 73 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHRDVQ	ymmreg|mask|z,ymmreg*,ymmrm256|b64	[rvmi:fv:  evex.dds.256.66.0f38.w1 73 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHRDVQ	zmmreg|mask|z,zmmreg*,zmmrm512|b64	[rvmi:fv:  evex.dds.512.66.0f38.w1 73 /r]	AVX512VBMI2,FUTURE
 
 ;# AVX512 VNNI
 VPDPBUSD		xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:  evex.dds.128.66.0f38.w0 50 /r]	AVX512VNNI,AVX512VL,FUTURE
