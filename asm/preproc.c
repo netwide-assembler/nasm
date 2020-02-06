@@ -5379,8 +5379,10 @@ static SMacro *expand_one_smacro(Token ***tpp)
             Token *endt = tline;
 
             tline = t;
-            while (!cond_comma && t && t != endt)
+            while (!cond_comma && t && t != endt) {
                 cond_comma = t->type != TOK_WHITESPACE;
+                t = t->next;
+            }
         }
 
         if (tnext) {
