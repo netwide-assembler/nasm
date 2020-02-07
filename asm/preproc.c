@@ -6211,6 +6211,7 @@ static Token *pp_tokline(void)
                     Token *t, *tt, **tail;
                     Line *ll;
 
+                    istk->mstk.mstk->lineno = 0;
                     nasm_new(ll);
                     ll->next = istk->expansion;
                     tail = &ll->first;
