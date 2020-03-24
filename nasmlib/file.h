@@ -103,6 +103,24 @@ typedef struct _stati64 os_struct_stat;
 # define os_stat  _wstati64
 # define os_fstat _fstati64
 
+/*
+ * On Win32/64, freopen() and _wfreopen() fails when the mode string
+ * is with the letter 'b' that represents to set binary mode. On
+ * POSIX operating systems, the 'b' is ignored, without failure.
+ */
+
+#include <io.h>
+#include <fcntl.h>
+
+static inline void os_set_binary_mode(FILE *f) {
+    int ret = _setmode(_fileno(f), _O_BINARY);
+
+    if (ret == -1) {
+        nasm_fatalf(ERR_NOFILE, "unable to open file: %s",
+                    strerror(errno));
+    }
+}
+
 #else  /* not _WIN32 */
 
 typedef const char *os_filename;
@@ -115,6 +133,10 @@ static inline os_filename os_mangle_filename(const char *filename)
 static inline void os_free_filename(os_filename filename)
 {
     (void)filename;             /* Nothing to do */
+}
+
+static inline void os_set_binary_mode(FILE *f) {
+    (void)f;
 }
 
 # define os_fopen  fopen

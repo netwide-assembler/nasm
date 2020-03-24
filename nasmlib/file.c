@@ -148,6 +148,11 @@ os_filename os_mangle_filename(const char *filename)
 
 #endif
 
+void nasm_set_binary_mode(FILE *f)
+{
+	os_set_binary_mode(f);
+}
+
 FILE *nasm_open_read(const char *filename, enum file_flags flags)
 {
     FILE *f = NULL;

@@ -365,6 +365,8 @@ enum file_flags {
 FILE *nasm_open_read(const char *filename, enum file_flags flags);
 FILE *nasm_open_write(const char *filename, enum file_flags flags);
 
+void nasm_set_binary_mode(FILE *f);
+
 /* Probe for existence of a file */
 bool nasm_file_exists(const char *filename);
 

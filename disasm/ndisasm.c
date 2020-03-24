@@ -280,8 +280,10 @@ int main(int argc, char **argv)
                     pname, filename, strerror(errno));
             return 1;
         }
-    } else
+    } else {
+        nasm_set_binary_mode(stdin);
         fp = stdin;
+    }
 
     if (initskip > 0)
         skip(initskip, fp);
