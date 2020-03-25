@@ -4833,8 +4833,6 @@ static Token *expand_mmac_params(Token * tline)
                 unsigned long n;
                 char *ep;
 
-                text = NULL;
-
                 n = strtoul(tok_text(t) + 2, &ep, 10);
                 if (unlikely(*ep))
                     goto invalid;
