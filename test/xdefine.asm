@@ -8,4 +8,8 @@
 %xdefine ctr n
 %define n 0x22
 
-	db ctr, n		; Should be 0x21, 0x22
+	db ctr, n               ; Should be 0x21, 0x22
+
+%define MNSUFFIX
+%define MNCURRENT TEST%[MNSUFFIX]
+%xdefine var MNCURRENT
