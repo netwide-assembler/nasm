@@ -4837,7 +4837,7 @@ static Token *expand_mmac_params(Token * tline)
                 if (unlikely(*ep))
                     goto invalid;
 
-                if (n && n < mac->nparam) {
+                if (n && n <= mac->nparam) {
                     n = mmac_rotate(mac, n);
                     tt = mac->params[n];
                 }
