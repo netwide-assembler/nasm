@@ -1108,7 +1108,8 @@ static void elf32_out(int32_t segto, const void *data,
 
     /* again some stabs debugging stuff */
     sinfo.offset = s->len;
-    sinfo.section = s->shndx;
+    /* Adjust to an index of the section table. */
+    sinfo.section = s->shndx - 1;
     sinfo.segto = segto;
     sinfo.name = s->name;
     dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
@@ -1312,7 +1313,8 @@ static void elf64_out(int32_t segto, const void *data,
 
     /* again some stabs debugging stuff */
     sinfo.offset = s->len;
-    sinfo.section = s->shndx;
+    /* Adjust to an index of the section table. */
+    sinfo.section = s->shndx - 1;
     sinfo.segto = segto;
     sinfo.name = s->name;
     dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
@@ -1592,7 +1594,8 @@ static void elfx32_out(int32_t segto, const void *data,
 
     /* again some stabs debugging stuff */
     sinfo.offset = s->len;
-    sinfo.section = s->shndx;
+    /* Adjust to an index of the section table. */
+    sinfo.section = s->shndx - 1;
     sinfo.segto = segto;
     sinfo.name = s->name;
     dfmt->debug_output(TY_DEBUGSYMLIN, &sinfo);
