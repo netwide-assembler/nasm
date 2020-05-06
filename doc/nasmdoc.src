@@ -53,6 +53,7 @@
 \IR{-E} \c{-E} option
 \IR{-F} \c{-F} option
 \IR{-I} \c{-I} option
+\IR{-L} \c{-L} option
 \IR{-M} \c{-M} option
 \IR{-MD} \c{-MD} option
 \IR{-MF} \c{-MF} option
@@ -81,7 +82,6 @@
 \IR{-Werror} \c{-Werror} option
 \IR{-Wno-error} \c{-Wno-error} option
 \IR{-w} \c{-w} option
-\IR{-y} \c{-y} option
 \IR{-Z} \c{-Z} option
 \IR{!=} \c{!=} operator
 \IR{$, here} \c{$}, Here token
@@ -171,6 +171,7 @@ in ELF
 \IR{elf64} \c{elf64}
 \IR{elfx32} \c{elfx32}
 \IR{executable and linkable format} Executable and Linkable Format
+\IR{extern, elf extensions to} \c{EXTERN}, \c{elf} extensions to
 \IR{extern, obj extensions to} \c{EXTERN}, \c{obj} extensions to
 \IR{extern, rdf extensions to} \c{EXTERN}, \c{rdf} extensions to
 \IR{floating-point, constants} floating-point, constants
@@ -372,9 +373,6 @@ To get further usage instructions from NASM, try typing
 
 The option \c{--help} is an alias for the \c{-h} option.
 
-The option \c{-hf} will also list the available output file formats,
-and what they are.
-
 If you use Linux but aren't sure whether your system is \c{a.out}
 or ELF, type
 
@@ -442,7 +440,7 @@ Like \c{-o}, the intervening space between \c{-f} and the output
 file format is optional; so \c{-f elf} and \c{-felf} are both valid.
 
 A complete list of the available output file formats can be given by
-issuing the command \i\c{nasm -hf}.
+issuing the command \i\c{nasm -h}.
 
 
 \S{opt-l} The \i\c{-l} Option: Generating a \i{Listing File}
@@ -462,6 +460,30 @@ section of your source with \c{[list -]}, and turn it back on
 with \c{[list +]}, (the default, obviously). There is no "user
 form" (without the brackets). This can be used to list only
 sections of interest, avoiding excessively long listings.
+
+\S{opt-L} The \i\c{-L} Option: Additional Listing Info
+
+Use this option to specify listing output details.
+
+Supported options are:
+
+\c{-Le}      emit each line after processing through the preprocessor
+
+\c{-Ls}      show all single-line macro definitions
+
+\c{-Lm}      show multi-line macro calls with expanded parameters
+
+\c{-Lp}      output a list file in every pass
+
+\c{-Ld}      show byte and repeat counts in decimal, not hex
+
+\c{-Lb}      show builtin macro packages
+
+\c{-Lf}      ignore .nolist and force output
+
+\c{-Lw}      flush the output after every line
+
+\c{-L+}      enable all listing options
 
 
 \S{opt-M} The \i\c{-M} Option: Generate \i{Makefile Dependencies}
@@ -551,8 +573,8 @@ to enable output.  Versions 2.03.01 and later automatically enable \c{-g}
 if \c{-F} is specified.
 
 A complete list of the available debug file formats for an output
-format can be seen by issuing the command \c{nasm -f <format> -y}.  Not
-all output formats currently support debugging output.  See \k{opt-y}.
+format can be seen by issuing the command \c{nasm -h}.  Not
+all output formats currently support debugging output.
 
 This should not be confused with the \c{-f dbg} output format option,
 see \k{dbgfmt}.
@@ -818,6 +840,10 @@ The current \i{warning classes} are:
 
 \& warnings.src
 
+Since version 2.15, NASM has group aliases for all prefixed warnings,
+so they can be used to enable or disable all warnings in the group.
+For example, -w+float enables all warnings with names starting with float-*.
+
 Since version 2.00, NASM has also supported the \c{gcc}-like syntax
 \c{-Wwarning-class} and \c{-Wno-warning-class} instead of
 \c{-w+warning-class} and \c{-w-warning-class}, respectively; both
@@ -844,19 +870,6 @@ You will need the version number if you report a bug.
 
 For command-line compatibility with Yasm, the form \i\c{--v} is also
 accepted for this option starting in NASM version 2.11.05.
-
-\S{opt-y} The \i\c{-y} Option: Display Available Debug Info Formats
-
-Typing \c{nasm -f <option> -y} will display a list of the available
-debug info formats for the given output format. The default format
-is indicated by an asterisk. For example:
-
-\c nasm -f elf -y
-
-\c valid debug formats for 'elf32' output format are
-\c   ('*' denotes default):
-\c   * stabs     ELF32 (i386) stabs debug format for Linux
-\c     dwarf     elf32 (i386) dwarf debug format for Linux
 
 
 \S{opt-pfix} The \i\c{--(g|l)prefix}, \i\c{--(g|l)postfix} Options.
@@ -1099,6 +1112,10 @@ and then writing \c{dw ?} will at least do something vaguely useful.
 In addition to all of this, macros and directives work completely
 differently to MASM. See \k{preproc} and \k{directive} for further
 details.
+
+\S{masm-compat} MASM compatibility package
+
+See \k{pkg_masm}.
 
 
 \C{lang} The NASM Language
@@ -1995,6 +2012,13 @@ not at definition time. Thus the code
 will evaluate in the expected way to \c{mov ax,1+2*8}, even though
 the macro \c{b} wasn't defined at the time of definition of \c{a}.
 
+Note that single-line macro argument list cannot be preceded by whitespace.
+Otherwise it will be treated as an expansion. For example:
+
+\c    %define foo (a,b)               ; no arguments, (a,b) is the expansion
+\c    %define bar(a,b)                ; two arguments, empty expansion
+
+
 Macros defined with \c{%define} are \i{case sensitive}: after
 \c{%define foo bar}, only \c{foo} will expand to \c{bar}: \c{Foo} or
 \c{FOO} will not. By using \c{%idefine} instead of \c{%define} (the
@@ -2046,6 +2070,21 @@ and then re-define it later in the same source file with
 Then everywhere the macro \c{foo} is invoked, it will be expanded
 according to the most recent definition. This is particularly useful
 when defining single-line macros with \c{%assign} (see \k{assign}).
+
+It is possible to define an empty string in the arguments list to specify
+that the argument is unused explicitly. The construction like:
+
+\c    %define myreg() eax
+\c    	mov edx,myreg()
+
+is also perfectly valid, and it means that macro \c{myreg} has zero arguments -
+behavior similar to preprocessor in C.
+
+As of version 2.15, NASM supports special types of macros arguments:
+If an argument declared with an \c{&}, a macro parameter would be quoted as a
+string.
+If declared with a \c{+}, it is a greedy or variadic parameter.
+If declared with an \c{!}, NASM will not try to strip whitespace and braces (useful with \c{&}).
 
 You can \i{pre-define} single-line macros using the `-d' option on
 the NASM command line: see \k{opt-d}.
@@ -2271,6 +2310,39 @@ For example:
 is equivalent to
 
 \c %define test TEST
+
+
+\S{defalias} Defining Aliases: \I\c{%idefalias}\i\c{%defalias}
+
+\c{%defalias}, and its case-insensitive counterpart \c{%idefalias}, define an
+alias to a macro, i.e. equivalent of a symbolic link.
+
+When used with various macro defining and undefining directives, it affects the
+aliased macro. This functionality is intended for being able to rename macros while
+retaining the legacy names.
+
+When an alias is defined, but the aliased macro is then undefined, the
+aliases can legitimately point to nonexistent macros.
+
+The single alias can be undefined using \c{%undefalias} directive.
+
+To disable all the single-line macro aliases, use \c{%aliases off} directive.
+
+To check whether an alias is defined, use \c{%ifdefalias}.
+
+
+\S{cond-comma} \i{Conditional Comma Operator}: \i\c{%,}
+
+As of version 2.15, NASM has conditional comma operator \c{%,} that expands to a
+comma unless followed by a null expansion, which allows suppressing the comma before an
+empty argument. For example, all the expressions below are valid:
+
+\c %define greedy(a,b,c+) a + 66 %, b * 3 %, c
+\c
+\c        db greedy(1,2)
+\c        db greedy(1,2,3)
+\c        db greedy(1,2,3,4)
+\c        db greedy(1,2,3,4,5)
 
 
 \H{strlen} \i{String Manipulation in Macros}
@@ -3843,7 +3915,7 @@ mode-dependent macros.
 
 The \c{__?OUTPUT_FORMAT?__} standard macro holds the current output
 format name, as given by the \c{-f} option or NASM's default. Type
-\c{nasm -hf} for a list.
+\c{nasm -h} for a list.
 
 \c %ifidn __?OUTPUT_FORMAT?__, win32
 \c  %define NEWLINE 13, 10
@@ -4145,6 +4217,8 @@ It is still possible to turn in on again by
 
 \c SECTALIGN ON
 
+Note that \c{SECTALIGN <ON|OFF>} affects only the \c{ALIGN}/\c{ALIGNB} directives,
+not an explicit \c{SECTALIGN} directive.
 
 \C{macropkg} \i{Standard Macro Packages}
 
@@ -4153,8 +4227,12 @@ macro packages included with the NASM distribution and compiled into
 the NASM binary.  It operates like the \c{%include} directive (see
 \k{include}), but the included contents is provided by NASM itself.
 
-The names of standard macro packages are case insensitive, and can be
+The names of standard macro packages are case insensitive and can be
 quoted or not.
+
+As of version 2.15, NASM has \c{%ifusable} and \c{%ifusing} directives to help
+the user understand whether an individual package available in this version of
+NASM (\c{%ifusable}) or a particular package already loaded (\c{%ifusing}).
 
 
 \H{pkg_altreg} \i\c{altreg}: \i{Alternate Register Names}
@@ -4267,6 +4345,20 @@ The functions \i\c{ilog2fw()} (alias \i\c{ilog2w()}) and
 \i\c{ilog2cw()} generate a warning if the argument is not a power of
 two, but otherwise behaves like \c{ilog2f()} and \c{ilog2c()},
 respectively.
+
+\H{pkg_masm} \i\c{masm}: \i{MASM compatibility}
+
+Since version 2.15, NASM has a MASM compatibility package with minimal
+functionality, as intended to be used primarily with machine-generated code.
+It does not include any "programmer-friendly" shortcuts, nor does it in any way
+support ASSUME, symbol typing, or MASM-style structures.
+
+Currently, the MASM compatibility package emulates only the PTR keyword and
+recognize syntax displacement[index] for memory operations.
+
+To enable the package, use the directive:
+
+\c{%use masm}
 
 
 \C{directive} \i{Assembler Directives}
@@ -4558,6 +4650,17 @@ If a variable is declared both \c{GLOBAL} and \c{EXTERN}, or if it is
 declared as \c{EXTERN} and then defined, it will be treated as
 \c{GLOBAL}. If a variable is declared both as \c{COMMON} and
 \c{EXTERN}, it will be treated as \c{COMMON}.
+
+
+\H{required} \i\c{REQUIRED}: \i{Importing Symbols} from Other Modules
+
+The \c{REQUIRED} keyword is similar to \c{EXTERN} one. The difference is that
+the \c{EXTERN} keyword as of version 2.15 does not generate unknown symbols, as
+this behavior is highly undesirable when using common header files,
+because it might cause the linker to pull in a bunch of unnecessary modules,
+depending on how smart the linker is.
+
+If the old behavior is required, use \c{REQUIRED} keyword instead.
 
 
 \H{global} \i\c{GLOBAL}: \i{Exporting Symbols} to Other Modules
@@ -6053,6 +6156,9 @@ course.  For example, to make \c{hashlookup} hidden:
 
 \c global   hashlookup:function hidden
 
+Since version 2.15, it is possible to specify symbols binding. The keywords
+are: \i\c{weak} to generate weak symbol or \i\c{strong}. The default is \i\c{strong}.
+
 You can also specify the size of the data associated with the
 symbol, as a numeric expression (which may involve labels, and even
 forward references) after the type specifier. Like this:
@@ -6069,6 +6175,15 @@ place that information into the \c{ELF} symbol table.
 Declaring the type and size of global symbols is necessary when
 writing shared library code. For more information, see
 \k{picglobal}.
+
+
+\S{elfextrn} \c{elf} Extensions to the \c{EXTERN} Directive\I{EXTERN,
+elf extensions to}\I{EXTERN, elf extensions to}
+
+Since version 2.15 it is possible to specify keyword \i\c{weak} to generate weak external
+reference. Example:
+
+\c extern weak_ref:weak
 
 
 \S{elfcomm} \c{elf} Extensions to the \c{COMMON} Directive

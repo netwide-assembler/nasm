@@ -42,7 +42,7 @@ all: $(OUT)
 inslist.src: inslist.pl ../x86/insns.dat
 	$(PERL) $(srcdir)/inslist.pl $(srcdir)/../x86/insns.dat
 
-.PHONY: html
+.PHONY: html nasmdoc.ps
 html: $(HTMLAUX)
 	$(MKDIR) -p html
 	for f in $(HTMLAUX); do $(CP_UF) "$(srcdir)/$$f" html/; done

@@ -13,6 +13,74 @@ since 2007.
 \c{[WARNING PUSH]} and \c{[WARNING POP]} directives. See
 \k{asmdir-warning}.
 
+\b The "sectalign on|off" switch does not affect an explicit directive. See
+\k{sectalign}
+
+\b Added build option to enable building with profiling (--enable-profiling).
+
+\b Added support of long pathnames, up to 32767 of UTF-16 characters, on
+Windows.
+
+\b Fixed 'mismatch in operand sizes' error in MOVDDUP instruction.
+
+\b Improved error messages in the string transformation routine.
+
+\b Removed obsolete '-gnu-elf-extensions' option and a warning about 8- and 16-bit relocation
+generation. See \k{elf16}
+
+\b Added group aliases for all prefixed warnings. See \k{opt-w}
+
+\b Allowed building with MSVC versions older than 1700.
+
+\b Fixed to recognize a comma as a single-line macros argument
+separator.
+
+\b Added implicitly sized versions of the K instructions, which allows the K
+instructions to be specified without a size suffix as long as the operands are
+sized.
+
+\b Added -L option for additional listing information. See \k{opt-L}
+
+\b Made an empty string usable as an unused argument in macros. See
+\k{define}.
+
+\b Added warnings for obsolete instructions for a specified CPU.
+
+\b Deprecated \c{-hf} and \c{-y} options. Use \c{-h} instead.
+
+\b Made DWARF as the default debug format for ELF.
+
+\b Added a %pragma to set or clear listing options (%pragma list options +bempf).
+
+\b Allowed immediate syntax for LEA instruction (ignore operand size completely).
+
+\b Added limited functionality MASM compatibility package. See \k{pkg_masm}.
+
+\b Added support of macros aliases using %defalias, %idefalias. See \k{defalias}.
+
+\b Added support for stringify, nostrip, greedy single-line macro arguments. See \k{define}.
+
+\b Added conditional comma operator \c{%,}. See \k{cond-comma}.
+
+\b Changed private namespace from __foo__ to __?foo?__, so a user namespace starting from underscore
+is now clean from symbols.
+
+\b Added support of ELF weak symbols and external references. See \k{elfglob}.
+
+\b Changed the behavior of the EXTERN keyword and introduced REQUIRED keyword.
+See \k{required}.
+
+\b Added %ifusable and %ifusing directives. See \k{macropkg}.
+
+\b Made various performance improvements and stability fixes in macro
+preprocessor engine.
+
+\b Improved NASM error handling and cleaned up error messages.
+
+\b Bugzilla bugfixes: 3392472, 3392554, 3392560, 3392564, 3392570, 3392576, 3392585,
+3392590, 3392597, 3392599, 3392601, 3392602, 3392603, 3392607, 3392612, 3392614, 3392623,
+3392626, 3392630, 3392640, 3392649, 3392659, 3392660, 3392661.
+
 \S{cl-2.14.03} Version 2.14.03
 
 \b Suppress nuisance "\c{label changed during code generation}" messages
