@@ -15,6 +15,9 @@ dnl the best very slow and doesn't buy us a single thing at all.
 WINELOADER=/dev/null
 export WINELOADER
 
+dnl Get the canonical target system name
+AC_CANONICAL_HOST
+
 dnl Checks for programs and enable necessary CC extensions
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
@@ -23,6 +26,7 @@ AC_PROG_CC_STDC
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
+AC_PROG_MKDIR_P
 
 pa_no_optimize=false
 
@@ -87,14 +91,56 @@ dnl Look for programs...
 AC_CHECK_PROGS(NROFF,    nroff,    false)
 AC_CHECK_PROGS(ASCIIDOC, asciidoc, false)
 AC_CHECK_PROGS(XMLTO,    xmlto,    false)
+AC_CHECK_PROGS(XZ,       xz,       false)
 
 dnl Check for progs needed for manpage generation
-AS_IF([test $ASCIIDOC = false],
-  [AC_MSG_WARN([No asciidoc package found])]
+MANPAGES=manpages
+AS_IF([test x$ASCIIDOC = xfalse],
+  [AC_MSG_WARN([No asciidoc package found, cannot build man pages])
+   MANPAGES='']
 )
-AS_IF([test $XMLTO = false],
-  [AC_MSG_WARN([No xmlto package found])]
+AS_IF([test x"$XMLTO" = xfalse],
+  [AC_MSG_WARN([No xmlto package found, cannot build man pages])
+   MANPAGES='']
 )
+AC_SUBST([MANPAGES])
+
+dnl Don't create .pdf.xz if there is no xz
+AS_IF([test x"$XZ" = xfalse],
+  [],
+  [XZFILES=xzfiles])
+AC_SUBST([XZFILES])
+
+dnl Can't create NSIS package if there is no makensis
+dnl ... but it only applies to a Windows target ...
+dnl Note: AC_CHECK_TOOLS is supposed to check for the "plain"
+dnl version of the program name, but it doesn't seem to.
+AC_ARG_WITH([nsis],
+[AS_HELP_STRING([[--with-nsis[=makensis]]],
+ [build an install .exe using NSIS on Windows hosts])],
+ [], [with_nsis=yes])
+AS_IF([test x"$MAKENSIS" = x], [],
+      [AS_IF([test x"$with_nsis" = xno], []
+             [with_nsis="$MAKENSIS"])])
+
+MAKENSIS=false
+
+AS_CASE([$host],
+	[*-win* | *-mingw*],
+	[AS_IF([test x"$with_nsis" = xno], [],
+	 [NSIS=nsis
+	  AS_IF([test x"$with_nsis" = xyes],
+	  [AC_CHECK_TOOL(MAKENSIS_TOOL, makensis, false)
+	   MAKENSIS="$MAKENSIS_TOOL"
+	   AS_IF([test x"$MAKENSIS" = xfalse],
+	       [AC_CHECK_PROGS(MAKENSIS_PLAIN, makensis, false)
+	         MAKENSIS="$MAKENSIS_PLAIN"])
+	   AS_IF([test x"$MAKENSIS" = xfalse],
+	         [AC_MSG_WARN([no makensis found, cannot build installer])
+	          NSIS=''])],
+	  [MAKENSIS="$with_nsis"])])])
+AC_SUBST([MAKENSIS])
+AC_SUBST([NSIS])
 
 dnl Check for host compiler tools
 AC_CHECK_TOOL(AR, ar)
@@ -327,5 +373,5 @@ dnl support ccache
 dnl
 PA_ARG_ENABLED([ccache], [compile with ccache], [CC="ccache $CC"], [])
 
-AC_OUTPUT_COMMANDS([mkdir -p config nasmlib nsis output stdlib x86 asm disasm rdoff macros common])
-AC_OUTPUT(Makefile doc/Makefile)
+AC_CONFIG_FILES([Makefile doc/Makefile])
+AC_OUTPUT
