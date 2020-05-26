@@ -2162,10 +2162,11 @@ static Context *get_ctx(const char *name, const char **namep)
  * the end of the path.
  *
  * Note: for INC_PROBE the function returns NULL at all times;
- * instead look for the
+ * instead look for a filename in *slpath.
  */
 enum incopen_mode {
     INC_NEEDED,                 /* File must exist */
+    INC_REQUIRED,               /* File must exist, but only open once/pass */
     INC_OPTIONAL,               /* Missing is OK */
     INC_PROBE                   /* Only an existence probe */
 };
@@ -2210,47 +2211,97 @@ static FILE *inc_fopen_search(const char *file, char **slpath,
  * Open a file, or test for the presence of one (depending on omode),
  * considering the include path.
  */
+struct file_hash_entry {
+    const char *path;
+    struct file_hash_entry *full; /* Hash entry for the full path */
+    int64_t include_pass; /* Pass in which last included (for %require) */
+};
+
 static FILE *inc_fopen(const char *file,
                        struct strlist *dhead,
                        const char **found_path,
                        enum incopen_mode omode,
                        enum file_flags fmode)
 {
+    struct file_hash_entry **fhep;
+    struct file_hash_entry *fhe = NULL;
     struct hash_insert hi;
-    void **hp;
-    char *path;
+    const char *path = NULL;
     FILE *fp = NULL;
+    const int64_t pass = pass_count();
+    bool skip_open = (omode == INC_PROBE);
 
-    hp = hash_find(&FileHash, file, &hi);
-    if (hp) {
-        path = *hp;
-        if (path || omode != INC_NEEDED) {
-            strlist_add(dhead, path ? path : file);
+    fhep = (struct file_hash_entry **)hash_find(&FileHash, file, &hi);
+    if (fhep) {
+        fhe = *fhep;
+        if (fhe) {
+            path = fhe->path;
+            skip_open |= (omode == INC_REQUIRED) &&
+                (fhe->full->include_pass >= pass);
         }
     } else {
         /* Need to do the actual path search */
-        fp = inc_fopen_search(file, &path, omode, fmode);
+        char *pptr;
+        fp = inc_fopen_search(file, &pptr, omode, fmode);
+        path = pptr;
 
         /* Positive or negative result */
-        hash_add(&hi, nasm_strdup(file), path);
+        if (path) {
+            nasm_new(fhe);
+            fhe->path = path;
+            fhe->full = fhe;    /* It is *possible*... */
+        }
+        hash_add(&hi, nasm_strdup(file), fhe);
+
+        /*
+         * Add a hash entry for the canonical path if there isn't one
+         * already. Try to get the unique name from the OS best we can.
+         * Note that ->path and ->full->path can be different, and that
+         * is okay (we don't want to print out a full canonical path
+         * in messages, for example.)
+         */
+        if (path) {
+            char *fullpath = nasm_realpath(path);
+
+            if (!strcmp(file, fullpath)) {
+                nasm_free(fullpath);
+            } else {
+                struct file_hash_entry **fullp, *full;
+                fullp = (struct file_hash_entry **)
+                    hash_find(&FileHash, fullpath, &hi);
+
+                if (fullp) {
+                    full = *fullp;
+                    nasm_free(fullpath);
+                } else {
+                    nasm_new(full);
+                    full->path = fullpath;
+                    full->full = full;
+                    hash_add(&hi, path, full);
+                }
+                fhe->full = full;
+            }
+        }
 
         /*
          * Add file to dependency path.
          */
-        if (path || omode != INC_NEEDED)
-            strlist_add(dhead, file);
+        strlist_add(dhead, path ? path : file);
     }
 
     if (path && !fp && omode != INC_PROBE)
         fp = nasm_open_read(path, fmode);
 
-    if (omode == INC_NEEDED && !fp) {
+    if (omode < INC_OPTIONAL && !fp) {
         if (!path)
             errno = ENOENT;
 
         nasm_nonfatal("unable to open include file `%s': %s",
                       file, strerror(errno));
     }
+
+    if (fp)
+        fhe->full->include_pass = pass;
 
     if (found_path)
         *found_path = path;
@@ -3586,6 +3637,7 @@ static int do_directive(Token *tline, Token **output)
         goto done;
 
     case PP_INCLUDE:
+    case PP_REQUIRE:
         t = tline->next = expand_smacro(tline->next);
         t = skip_white(t);
 
@@ -3601,10 +3653,11 @@ static int do_directive(Token *tline, Token **output)
         inc->next = istk;
         found_path = NULL;
         inc->fp = inc_fopen(p, deplist, &found_path,
-                            (pp_mode == PP_DEPS)
-                            ? INC_OPTIONAL : INC_NEEDED, NF_TEXT);
+                            (pp_mode == PP_DEPS) ? INC_OPTIONAL :
+                            (op == PP_REQUIRE) ? INC_REQUIRED :
+                            INC_NEEDED, NF_TEXT);
         if (!inc->fp) {
-            /* -MG given but file not found */
+            /* -MG given but file not found, or repeated %require */
             nasm_free(inc);
         } else {
             inc->fname = src_set_fname(found_path ? found_path : p);

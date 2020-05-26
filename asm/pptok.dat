@@ -94,6 +94,7 @@
 %push
 %rep
 %repl
+%require
 %rotate
 %stacksize
 %undef
