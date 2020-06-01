@@ -159,6 +159,7 @@ AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(sys/types.h)
 AC_CHECK_HEADERS(sys/stat.h)
+AC_CHECK_HEADERS(sys/resource.h)
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(strcasecmp stricmp)
@@ -172,6 +173,7 @@ AC_CHECK_FUNCS(mempcpy)
 
 AC_CHECK_FUNCS(getuid)
 AC_CHECK_FUNCS(getgid)
+AC_CHECK_FUNCS(getrlimit)
 
 AC_CHECK_FUNCS(realpath)
 AC_CHECK_FUNCS(canonicalize_file_name)

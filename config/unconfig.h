@@ -271,6 +271,9 @@
 /* Define to 1 if you have the `getpagesize' function. */
 /* #undef HAVE_GETPAGESIZE */
 
+/* Define to 1 if you have the `getrlimit' function. */
+/* #undef HAVE_GETRLIMIT */
+
 /* Define to 1 if you have the `getuid' function. */
 /* #undef HAVE_GETUID */
 
@@ -384,6 +387,9 @@
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 /* #undef HAVE_SYS_PARAM_H */
+
+/* Define to 1 if you have the <sys/resource.h> header file. */
+/* #undef HAVE_SYS_RESOURCE_H */
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 /* #undef HAVE_SYS_STAT_H */

@@ -360,6 +360,13 @@ static inline void *mempcpy(void *dst, const void *src, size_t n)
 # endif
 #endif
 
+/*
+ * If SIZE_MAX is not defined, rely on size_t being unsigned
+ */
+#ifndef SIZE_MAX
+# define SIZE_MAX (((size_t)0) - 1)
+#endif
+
 /* Watcom doesn't handle switch statements with 64-bit types, hack around it */
 #ifdef __WATCOMC__
 # define BOGUS_CASE 0x76543210

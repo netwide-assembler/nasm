@@ -1,6 +1,6 @@
-/* ----------------------------------------------------------------------- *
+ /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -192,15 +192,27 @@ static const struct limit_info limit_info[LIMIT_MAX+1] = {
     { "macro-tokens", "tokens processed during single-lime macro expansion", 10000000 },
     { "mmacros", "multi-line macros before final return", 100000 },
     { "rep", "%rep count", 1000000 },
-    { "eval", "expression evaluation descent", 1000000},
+    { "eval", "expression evaluation descent", 8192 },
     { "lines", "total source lines processed", 2000000000 }
 };
 
 static void set_default_limits(void)
 {
     int i;
+    size_t rl;
+    int64_t new_limit;
+
     for (i = 0; i <= LIMIT_MAX; i++)
         nasm_limit[i] = limit_info[i].default_val;
+
+    /*
+     * Try to set a sensible default value for the eval depth based
+     * on the limit of the stack size, if knowable...
+     */
+    rl = nasm_get_stack_size_limit();
+    new_limit = rl / (128 * sizeof(void *)); /* Sensible heuristic */
+    if (new_limit < nasm_limit[LIMIT_EVAL])
+        nasm_limit[LIMIT_EVAL] = new_limit;
 }
 
 enum directive_result
