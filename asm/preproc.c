@@ -5409,7 +5409,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
     }
 
     **tpp = tline;
-    for (t = tline; t != tafter; t = t->next)
+    for (t = tline; t && t != tafter; t = t->next)
         *tpp = &t->next;
 
     m->in_progress = false;
