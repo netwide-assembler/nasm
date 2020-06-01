@@ -833,7 +833,7 @@ static void obj_deflabel(char *name, int32_t segment,
      * `first_seg'.
      */
     if (!any_segs && segment == first_seg) {
-        int tempint;            /* ignored */
+        int tempint = 0;
         if (segment != obj_segment("__NASMDEFSEG", &tempint))
             nasm_panic("strange segment conditions in OBJ driver");
     }
@@ -1025,7 +1025,7 @@ static void obj_out(int32_t segto, const void *data,
      * segment.
      */
     if (!any_segs) {
-        int tempint;            /* ignored */
+        int tempint = 0;
         if (segto != obj_segment("__NASMDEFSEG", &tempint))
             nasm_panic("strange segment conditions in OBJ driver");
     }
@@ -2498,7 +2498,7 @@ static void dbgbi_linnum(const char *lnfname, int32_t lineno, int32_t segto)
      * segment.
      */
     if (!any_segs) {
-        int tempint;            /* ignored */
+        int tempint = 0;
         if (segto != obj_segment("__NASMDEFSEG", &tempint))
             nasm_panic("strange segment conditions in OBJ driver");
     }
