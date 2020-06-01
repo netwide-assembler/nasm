@@ -2241,12 +2241,15 @@ static FILE *inc_fopen(const char *file,
             strlist_add(dhead, file);
     }
 
-    if (!path) {
-        if (omode == INC_NEEDED)
-            nasm_fatal("unable to open include file `%s'", file);
-    } else {
-        if (!fp && omode != INC_PROBE)
-            fp = nasm_open_read(path, fmode);
+    if (path && !fp && omode != INC_PROBE)
+        fp = nasm_open_read(path, fmode);
+
+    if (omode == INC_NEEDED && !fp) {
+        if (!path)
+            errno = ENOENT;
+
+        nasm_nonfatal("unable to open include file `%s': %s",
+                      file, strerror(errno));
     }
 
     if (found_path)
