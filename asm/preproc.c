@@ -4756,6 +4756,7 @@ static Token *expand_mmac_params(Token * tline)
 
     while (tline) {
         bool change;
+        bool err_not_mac = false;
         Token *t = tline;
         const char *text = tok_text(t);
         int type = t->type;
@@ -4765,9 +4766,15 @@ static Token *expand_mmac_params(Token * tline)
 
         switch (type) {
         case TOK_LOCAL_SYMBOL:
+            change = true;
+
+            if (!mac) {
+                err_not_mac = true;
+                break;
+            }
+
             type = TOK_ID;
             text = nasm_asprintf("..@%"PRIu64".%s", mac->unique, text+2);
-            change = true;
             break;
         case TOK_MMACRO_PARAM:
         {
@@ -4776,8 +4783,7 @@ static Token *expand_mmac_params(Token * tline)
             change = true;
 
             if (!mac) {
-                nasm_nonfatal("`%s': not in a macro call", text);
-                text = NULL;
+                err_not_mac = true;
                 break;
             }
 
@@ -4908,6 +4914,12 @@ static Token *expand_mmac_params(Token * tline)
         default:
             change = false;
             break;
+        }
+
+        if (err_not_mac) {
+            nasm_nonfatal("`%s': not in a macro call", text);
+            text = NULL;
+            change = true;
         }
 
         if (change) {
