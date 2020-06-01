@@ -3807,17 +3807,21 @@ issue_error:
 
     case PP_RMACRO:
     case PP_MACRO:
+    {
+        MMacro *def;
+
         nasm_assert(!defining);
-        nasm_new(defining);
-        defining->casesense = casesense;
-        defining->dstk.mmac = defining;
+        nasm_new(def);
+        def->casesense = casesense;
+        def->dstk.mmac = defining;
         if (op == PP_RMACRO)
-            defining->max_depth = nasm_limit[LIMIT_MACRO_LEVELS];
-        if (!parse_mmacro_spec(tline, defining, dname)) {
-            nasm_free(defining);
+            def->max_depth = nasm_limit[LIMIT_MACRO_LEVELS];
+        if (!parse_mmacro_spec(tline, def, dname)) {
+            nasm_free(def);
             goto done;
         }
 
+        defining = def;
 	src_get(&defining->xline, &defining->fname);
 
         mmac = (MMacro *) hash_findix(&mmacros, defining->name);
@@ -3834,6 +3838,7 @@ issue_error:
             mmac = mmac->next;
         }
         break;
+    }
 
     case PP_ENDM:
     case PP_ENDMACRO:
