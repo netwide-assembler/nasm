@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -99,13 +99,14 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list ap);
 #define ERR_NO_SEVERITY		0x00000200	/* suppress printing severity */
 #define ERR_PP_PRECOND		0x00000400	/* for preprocessor use */
 #define ERR_PP_LISTMACRO	0x00000800	/* from preproc->error_list_macros() */
+#define ERR_HOLD		0x00001000      /* this error/warning can be held */
 
 /*
  * These codes define specific types of suppressible warning.
  * They are assumed to occupy the most significant bits of the
  * severity code.
  */
-#define WARN_SHR		12              /* how far to shift right */
+#define WARN_SHR		16              /* how far to shift right */
 #define WARN_IDX(x)		(((errflags)(x)) >> WARN_SHR)
 #define WARN_MASK		((~(errflags)0) << WARN_SHR)
 
@@ -126,6 +127,21 @@ void push_warnings(void);
 void pop_warnings(void);
 void init_warnings(void);
 void reset_warnings(void);
+
+/*
+ * Tentative error hold for warnings/errors indicated with ERR_HOLD.
+ *
+ * This is a stack; the "hold" argument *must*
+ * match the value returned from nasm_error_hold_push().
+ * If "issue" is true the errors are committed (or promoted to the next
+ * higher stack level), if false then they are discarded.
+ *
+ * Errors stronger than ERR_NONFATAL cannot be held.
+ */
+struct nasm_errhold;
+typedef struct nasm_errhold *errhold;
+errhold nasm_error_hold_push(void);
+void nasm_error_hold_pop(errhold hold, bool issue);
 
 /* Should be included from within error.h only */
 #include "warnings.h"

@@ -1344,4 +1344,4 @@ extern const char *outname;     /* output filename */
  */
 int64_t switch_segment(int32_t segment);
 
-#endif
+#endif  /* NASM_NASM_H */

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -5127,7 +5127,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
                  *!  warns about \i{single-line macros} being invoked
                  *!  with the wrong number of parameters.
                  */
-                nasm_warn(WARN_MACRO_PARAMS_SINGLE,
+                nasm_warn(WARN_MACRO_PARAMS_SINGLE|ERR_HOLD,
                     "single-line macro `%s' exists, "
                     "but not taking %d parameter%s",
                     mname, nparam, (nparam == 1) ? "" : "s");
@@ -5455,6 +5455,7 @@ static Token *expand_smacro_noreset(Token *org_tline)
 {
     Token *tline;
     bool expanded;
+    errhold errhold;       /* Hold warning/errors during expansion */
 
     if (!org_tline)
         return NULL;            /* Empty input */
@@ -5474,6 +5475,7 @@ static Token *expand_smacro_noreset(Token *org_tline)
      * look up the macro "MACROTAIL", which we don't want.
      */
     expanded = true;
+
     while (true) {
         static const struct tokseq_match tmatch[] = {
             {
@@ -5489,7 +5491,14 @@ static Token *expand_smacro_noreset(Token *org_tline)
             }
         };
         Token **tail = &tline;
+        errhold = nasm_error_hold_push();
 
+        /*
+         * We hold warnings/errors until we are done this this loop. It is
+         * possible for nuisance warnings to appear that disappear on later
+         * passes.
+         */
+        errhold = nasm_error_hold_push();
         while (*tail)           /* main token loop */
             expanded |= !!expand_one_smacro(&tail);
 
@@ -5507,7 +5516,9 @@ static Token *expand_smacro_noreset(Token *org_tline)
             break;              /* Done again! */
 
         expanded = false;
+        nasm_error_hold_pop(errhold, false);
     }
+    nasm_error_hold_pop(errhold, true);
 
     if (!tline) {
         /*

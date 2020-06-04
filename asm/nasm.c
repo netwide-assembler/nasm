@@ -1893,6 +1893,76 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args
 }
 
 /**
+ * Stack of tentative error hold lists.
+ */
+struct nasm_errtext {
+    struct nasm_errtext *next;
+    const char *currentfile;    /* Owned by the filename system */
+    char *msg;                  /* Owned by this structure */
+    errflags severity;
+    errflags true_type;
+    int32_t lineno;
+};
+struct nasm_errhold {
+    struct nasm_errhold *up;
+    struct nasm_errtext *head, **tail;
+};
+static struct nasm_errhold *errhold_stack;
+
+static void nasm_free_error(struct nasm_errtext *et)
+{
+    nasm_free(et->msg);
+    nasm_free(et);
+}
+
+static void nasm_issue_error(struct nasm_errtext *et);
+
+struct nasm_errhold *nasm_error_hold_push(void)
+{
+    struct nasm_errhold *eh;
+
+    nasm_new(eh);
+    eh->up = errhold_stack;
+    eh->tail = &eh->head;
+    errhold_stack = eh;
+
+    return eh;
+}
+
+void nasm_error_hold_pop(struct nasm_errhold *eh, bool issue)
+{
+    struct nasm_errtext *et, *etmp;
+
+    /* Allow calling with a null argument saying no hold in the first place */
+    if (!eh)
+        return;
+
+    /* This *must* be the current top of the errhold stack */
+    nasm_assert(eh == errhold_stack);
+
+    if (eh->head) {
+        if (issue) {
+            if (eh->up) {
+                /* Commit the current hold list to the previous level */
+                *eh->up->tail = eh->head;
+                eh->up->tail = eh->tail;
+            } else {
+                /* Issue errors */
+                list_for_each_safe(et, etmp, eh->head)
+                    nasm_issue_error(et);
+            }
+        } else {
+            /* Free the list, drop errors */
+            list_for_each_safe(et, etmp, eh->head)
+                nasm_free_error(et);
+        }
+    }
+
+    errhold_stack = eh->up;
+    nasm_free(eh);
+}
+
+/**
  * common error reporting
  * This is the common back end of the error reporting schemes currently
  * implemented.  It prints the nature of the warning and then the
@@ -1904,13 +1974,8 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args
  */
 void nasm_verror(errflags severity, const char *fmt, va_list args)
 {
-    char msg[1024];
-    char warnsuf[64];
-    char linestr[64];
-    const char *pfx;
+    struct nasm_errtext *et;
     errflags true_type = true_error_type(severity);
-    const char *currentfile = NULL;
-    int32_t lineno = 0;
 
     if (true_type >= ERR_CRITICAL)
         nasm_verror_critical(severity, fmt, args);
@@ -1918,23 +1983,60 @@ void nasm_verror(errflags severity, const char *fmt, va_list args)
     if (is_suppressed(severity))
         return;
 
+    nasm_new(et);
+    et->severity = severity;
+    et->true_type = true_type;
+    et->msg = nasm_vasprintf(fmt, args);
     if (!(severity & ERR_NOFILE)) {
-        src_get(&lineno, &currentfile);
-        if (!currentfile) {
-            currentfile =
+        src_get(&et->lineno, &et->currentfile);
+
+        if (!et->currentfile) {
+            et->currentfile =
                 inname && inname[0] ? inname :
                 outname && outname[0] ? outname :
                 NULL;
-                lineno = 0;
+            et->lineno = 0;
         }
     }
+
+    if (errhold_stack && true_type <= ERR_NONFATAL) {
+        /* It is a tentative error */
+        *errhold_stack->tail = et;
+        errhold_stack->tail = &et->next;
+    } else {
+        nasm_issue_error(et);
+    }
+
+    /*
+     * Don't do this before then, if we do, we lose messages in the list
+     * file, as the list file is only generated in the last pass.
+     */
+    if (skip_this_pass(severity))
+        return;
+
+    if (!(severity & (ERR_HERE|ERR_PP_LISTMACRO)))
+        if (preproc)
+            preproc->error_list_macros(severity);
+}
+
+/*
+ * Actually print, list and take action on an error
+ */
+static void nasm_issue_error(struct nasm_errtext *et)
+{
+    const char *pfx;
+    char warnsuf[64];           /* Warning suffix */
+    char linestr[64];           /* Formatted line number if applicable */
+    const errflags severity  = et->severity;
+    const errflags true_type = et->true_type;
+    const char * const currentfile = et->currentfile;
+    const uint32_t lineno = et->lineno;
 
     if (severity & ERR_NO_SEVERITY)
         pfx = "";
     else
         pfx = error_pfx_table[true_type];
 
-    vsnprintf(msg, sizeof msg, fmt, args);
     *warnsuf = 0;
     if ((severity & (ERR_MASK|ERR_HERE|ERR_PP_LISTMACRO)) == ERR_WARNING) {
         /*
@@ -1956,19 +2058,15 @@ void nasm_verror(errflags severity, const char *fmt, va_list args)
         const char *file = currentfile ? currentfile : no_file_name;
         const char *here = "";
 
-        if (severity & ERR_HERE)
-            here = currentfile ? " here" : " in an unknown location";
-
         if (warn_list && true_type < ERR_NONFATAL &&
-            !(pass_first() && (severity & ERR_PASS1)))
-        {
+            !(pass_first() && (severity & ERR_PASS1))) {
             /*
              * Buffer up warnings until we either get an error
              * or we are on the code-generation pass.
              */
             strlist_printf(warn_list, "%s%s%s%s%s%s%s",
                            file, linestr, errfmt->beforemsg,
-                           pfx, msg, here, warnsuf);
+                           pfx, et->msg, here, warnsuf);
         } else {
             /*
              * If we have buffered warnings, and this is a non-warning,
@@ -1979,16 +2077,13 @@ void nasm_verror(errflags severity, const char *fmt, va_list args)
                 strlist_free(&warn_list);
             }
 
-            fprintf(error_file, "%s%s%s%s%s%s%s\n",
-                    file, linestr, errfmt->beforemsg,
-                    pfx, msg, here, warnsuf);
-
+            fprintf(error_file, "%s\n", et->msg);
         }
     }
 
     /* Are we recursing from error_list_macros? */
     if (severity & ERR_PP_LISTMACRO)
-        return;
+        goto done;
 
     /*
      * Don't suppress this with skip_this_pass(), or we don't get
@@ -1997,29 +2092,27 @@ void nasm_verror(errflags severity, const char *fmt, va_list args)
     if (severity & ERR_HERE) {
         if (lineno)
             lfmt->error(severity, "%s%s at %s:%"PRId32"%s",
-                        pfx, msg, currentfile, lineno, warnsuf);
+                        pfx, et->msg, currentfile, lineno, warnsuf);
         else if (currentfile)
             lfmt->error(severity, "%s%s in file %s%s",
-                        pfx, msg, currentfile, warnsuf);
+                        pfx, et->msg, currentfile, warnsuf);
         else
             lfmt->error(severity, "%s%s in an unknown location%s",
-                        pfx, msg, warnsuf);
+                        pfx, et->msg, warnsuf);
     } else {
-        lfmt->error(severity, "%s%s%s", pfx, msg, warnsuf);
+        lfmt->error(severity, "%s%s%s", pfx, et->msg, warnsuf);
     }
 
     if (skip_this_pass(severity))
-        return;
-
-    /* error_list_macros can for obvious reasons not work with ERR_HERE */
-    if (!(severity & ERR_HERE))
-        if (preproc)
-            preproc->error_list_macros(severity);
+        goto done;
 
     if (true_type >= ERR_FATAL)
         die_hard(true_type, severity);
     else if (true_type >= ERR_NONFATAL)
         terminate_after_phase = true;
+
+done:
+    nasm_free_error(et);
 }
 
 static void usage(void)
