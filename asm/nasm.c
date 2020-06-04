@@ -1,4 +1,4 @@
- /* ----------------------------------------------------------------------- *
+/* ----------------------------------------------------------------------- *
  *
  *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
@@ -87,6 +87,7 @@ static const struct error_format errfmt_gnu  = { ":", "",  ": "  };
 static const struct error_format errfmt_msvc = { "(", ")", " : " };
 static const struct error_format *errfmt = &errfmt_gnu;
 static struct strlist *warn_list;
+static struct nasm_errhold *errhold_stack;
 
 unsigned int debug_nasm;        /* Debugging messages? */
 
@@ -1663,6 +1664,9 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
         preproc->cleanup_pass();
 
+        /* We better not be having an error hold still... */
+        nasm_assert(!errhold_stack);
+
         if (global_offset_changed) {
             switch (pass_type()) {
             case PASS_OPT:
@@ -1907,7 +1911,6 @@ struct nasm_errhold {
     struct nasm_errhold *up;
     struct nasm_errtext *head, **tail;
 };
-static struct nasm_errhold *errhold_stack;
 
 static void nasm_free_error(struct nasm_errtext *et)
 {
@@ -2069,15 +2072,17 @@ static void nasm_issue_error(struct nasm_errtext *et)
                            pfx, et->msg, here, warnsuf);
         } else {
             /*
-             * If we have buffered warnings, and this is a non-warning,
-             * output them now.
+             * Actually output an error.  If we have buffered
+             * warnings, and this is a non-warning, output them now.
              */
             if (true_type >= ERR_NONFATAL && warn_list) {
                 strlist_write(warn_list, "\n", error_file);
                 strlist_free(&warn_list);
             }
 
-            fprintf(error_file, "%s\n", et->msg);
+            fprintf(error_file, "%s%s%s%s%s%s%s\n",
+                    file, linestr, errfmt->beforemsg,
+                    pfx, et->msg, here, warnsuf);
         }
     }
 
