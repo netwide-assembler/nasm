@@ -5491,7 +5491,6 @@ static Token *expand_smacro_noreset(Token *org_tline)
             }
         };
         Token **tail = &tline;
-        errhold = nasm_error_hold_push();
 
         /*
          * We hold warnings/errors until we are done this this loop. It is
