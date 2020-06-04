@@ -2354,7 +2354,11 @@ static void count_mmac_params(Token * t, int *nparamp, Token ***paramsp)
     params = nasm_malloc(paramsize * sizeof(*params));
     params[0] = NULL;
 
-    while ((t = skip_white(t))) {
+    while (true) {
+        t = skip_white(t);
+        if (!t && !nparam)
+            break;              /* No arguments */
+
         /* 2 slots for captured label and NULL */
         if (nparam+2 >= paramsize) {
             paramsize += PARAM_DELTA;
@@ -2381,11 +2385,14 @@ static void count_mmac_params(Token * t, int *nparamp, Token ***paramsp)
             }
         }
 
+        /* Advance to the next comma */
         while (tok_isnt(t, ','))
             t = t->next;
 
-        if (t)                /* got a comma */
-            t = t->next;      /* eat the comma */
+        if (!t)
+            break;              /* End of line */
+
+        t = t->next;            /* Eat the comma, start over */
     }
 
     params[nparam+1] = NULL;
