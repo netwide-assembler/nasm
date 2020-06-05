@@ -2458,7 +2458,7 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
 
             mname = tok_text(tline);
             ctx = get_ctx(mname, &mname);
-            if (smacro_defined(ctx, mname, 0, &smac, true, alias) && smac
+            if (smacro_defined(ctx, mname, -1, &smac, true, alias) && smac
                 && smac->alias == alias) {
                 j = true;
                 break;
