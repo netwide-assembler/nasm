@@ -93,7 +93,8 @@ cat main | xargs rm -f
 # Delete empty subdirectories
 find nasm-"$version"/doc -type d -exec rmdir '{}' \; 2>/dev/null || true
 
-# Create doc tarfile
+# Create doc tarfile (don't include nasmdoc.pdf.xz as it is redundant)
+rm -f nasm-"$version"/doc/*.pdf.xz
 tar cvvf nasm-"$version"-xdoc.tar nasm-"$version"/doc
 xz    -9ek nasm-"$version"-xdoc.tar
 bzip2 -9k  nasm-"$version"-xdoc.tar
