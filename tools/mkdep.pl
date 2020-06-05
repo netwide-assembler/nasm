@@ -109,8 +109,6 @@ sub alldeps($$) {
 sub convert_file($$) {
     my($file,$sep) = @_;
 
-    print STDERR "convert_file: $file\n";
-
     my @fspec = (basename($file));
     while ( ($file = dirname($file)) ne File::Spec->curdir() &&
 	    $file ne File::Spec->rootdir() ) {
