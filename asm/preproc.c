@@ -5093,7 +5093,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
 
             switch (t->text.a[0]) {
             case ',':
-                if (!brackets)
+                if (!brackets && paren == 1)
                     nparam++;
                 break;
 
@@ -5208,7 +5208,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
 
             switch (ch) {
             case ',':
-                if (!brackets && !(flags & SPARM_GREEDY)) {
+                if (!brackets && paren == 1 && !(flags & SPARM_GREEDY)) {
                     i++;
                     nasm_assert(i < nparam);
                     phead = pep = &params[i];
