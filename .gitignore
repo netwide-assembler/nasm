@@ -59,6 +59,7 @@ TAGS
 /doc/*.dip
 /doc/*.hpj
 /doc/*.pdf
+/doc/*.pdf.xz
 /doc/*.ps
 /doc/*.rtf
 /doc/*.texi
