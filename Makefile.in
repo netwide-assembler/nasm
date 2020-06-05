@@ -445,7 +445,8 @@ doc_install install_doc:
 # Dummy target to prevent accidental invocation of the default "all" target
 nothing:
 
-always_everything: all doc rdf
+always_everything: dirs
+	$(MAKE) all doc
 
 everything: always_everything
 	$(MAKE) $(MANPAGES) $(NSIS) nothing
