@@ -2061,6 +2061,10 @@ static void nasm_issue_error(struct nasm_errtext *et)
         const char *file = currentfile ? currentfile : no_file_name;
         const char *here = "";
 
+        if (severity & ERR_HERE) {
+            here = currentfile ? " here" : " in an unknown location";
+        }
+
         if (warn_list && true_type < ERR_NONFATAL &&
             !(pass_first() && (severity & ERR_PASS1))) {
             /*
