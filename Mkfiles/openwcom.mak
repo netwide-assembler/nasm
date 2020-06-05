@@ -62,7 +62,7 @@ LIBOBJ = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) &
 	nasmlib\string.$(O) nasmlib\nctype.$(O) &
 	nasmlib\file.$(O) nasmlib\mmap.$(O) nasmlib\ilog2.$(O) &
 	nasmlib\realpath.$(O) nasmlib\path.$(O) &
-	nasmlib\filename.$(O) &
+	nasmlib\filename.$(O) nasmlib\rlimit.$(O) &
 	nasmlib\zerobuf.$(O) nasmlib\readnum.$(O) nasmlib\bsi.$(O) &
 	nasmlib\rbtree.$(O) nasmlib\hashtbl.$(O) &
 	nasmlib\raa.$(O) nasmlib\saa.$(O) &
@@ -230,7 +230,7 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 WARNFILES = asm\warnings.c include\warnings.h doc\warnings.src
 
 warnings:
-	rm -f $(WARNFILES)
+	$(RM_F) $(WARNFILES)
 	$(MAKE) $(WARNFILES)
 
 asm\warnings.c: asm\warnings.pl
@@ -282,8 +282,6 @@ perlreq: $(PERLREQ) .SYMBOLIC
 #-- Begin NSIS Rules --#
 # Edit in Makefile.in, not here!
 
-# NSIS is not built except by explicit request, as it only applies to
-# Windows platforms
 nsis\arch.nsh: nsis\getpearch.pl nasm$(X)
 	$(PERL) $(srcdir)\nsis\getpearch.pl nasm$(X) > nsis\arch.nsh
 

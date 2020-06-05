@@ -546,9 +546,6 @@ alldeps: $(PERLREQ) tools/syncfiles.pl tools/mkdep.pl
 		$(DEPDIRS)
 	$(RM_F) *.dep
 	if [ -f config.status ]; then \
-		if [ $(EXTERNAL_DEPENDENCIES) -eq 1 ]; then \
-			sh config.status --recheck; \
-		fi; \
 		sh config.status; \
 	fi
 
@@ -560,9 +557,6 @@ cleandeps: $(PERLREQ) tools/syncfiles.pl tools/mkdep.pl
 		$(DEPDIRS)
 	$(RM_F) *.dep
 	if [ -f config.status ]; then \
-		if [ $(EXTERNAL_DEPENDENCIES) -eq 0 ]; then \
-			sh config.status --recheck; \
-		fi; \
 		sh config.status; \
 	fi
 
