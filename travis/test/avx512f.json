@@ -6,8 +6,7 @@
 		"source": "avx512f.asm",
 		"option": "-O0 -DSRC",
 		"target": [
-			{ "stderr": "avx512f.stderr" }
+			{ "output": "avx512f.bin" }
 		],
-		"error": "expected"
 	}
 ]
