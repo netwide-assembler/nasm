@@ -6394,8 +6394,9 @@ static Token *pp_tokline(void)
          * condition, in which case we don't want to meddle with
          * anything.
          */
-        if (!defining && !(istk->conds && !emitting(istk->conds->state))
-            && !(istk->mstk.mstk && !istk->mstk.mstk->in_progress)) {
+        if (!defining &&
+            !(istk->conds && !emitting(istk->conds->state)) &&
+            !(istk->mstk.mmac && !istk->mstk.mmac->in_progress)) {
             tline = expand_mmac_params(tline);
         }
 
