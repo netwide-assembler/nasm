@@ -277,8 +277,9 @@ void hash_free_all(struct hash_table *head, bool free_keys)
     const struct hash_node *np;
 
     hash_for_each(head, it, np) {
-        nasm_free(np->data);
-        if (free_keys)
+        if (np->data)
+            nasm_free(np->data);
+        if (free_keys && np->key)
             nasm_free((void *)np->key);
     }
 
