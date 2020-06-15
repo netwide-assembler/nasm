@@ -1,9 +1,4 @@
-%line 3+1 ./travis/test/weirdpaste.asm
-
-
-
-%line 10+1 ./travis/test/weirdpaste.asm
-
+%line 11+1 ./travis/test/weirdpaste.asm
  dw 25
 
 %line 18+1 ./travis/test/weirdpaste.asm

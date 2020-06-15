@@ -62,6 +62,7 @@ static inline int32_t src_get_linnum(void)
 {
     return _src_here.lineno;
 }
+
 /* Can be used when there is no need for the old information */
 void src_set(int32_t line, const char *filename);
 
@@ -91,12 +92,23 @@ static inline int32_t src_get(int32_t *xline, const char **xname)
 }
 
 /*
- * Returns and sets/returns the current information as a structure.
+ * Returns the current information as a structure.
  */
 static inline struct src_location src_where(void)
 {
     return _src_here;
 }
-struct src_location src_update(struct src_location);
+
+/*
+ * Sets the current information. The filename member of the structure
+ * *must* have been previously returned by src_get(), src_where(), or
+ * src_get_fname() and therefore be present in the hash.
+ */
+static inline struct src_location src_update(struct src_location whence)
+{
+    struct src_location old = _src_here;
+    _src_here = whence;
+    return old;
+}
 
 #endif /* ASM_SRCFILE_H */

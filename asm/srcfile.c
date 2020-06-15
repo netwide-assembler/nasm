@@ -85,13 +85,3 @@ void src_set(int32_t line, const char *fname)
     src_set_fname(fname);
     src_set_linnum(line);
 }
-
-struct src_location src_update(struct src_location whence)
-{
-    struct src_location oldhere = _src_here;
-
-    src_set_fname(whence.filename);
-    src_set_linnum(whence.lineno);
-
-    return oldhere;
-}

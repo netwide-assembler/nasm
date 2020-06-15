@@ -55,6 +55,7 @@
 #include "outform.h"
 #include "listing.h"
 #include "iflag.h"
+#include "quote.h"
 #include "ver.h"
 
 /*
@@ -292,15 +293,6 @@ static void increment_offset(int64_t delta)
     set_curr_offs(location.offset);
 }
 
-static void nasm_fputs(const char *line, FILE * outfile)
-{
-    if (outfile) {
-        fputs(line, outfile);
-        putc('\n', outfile);
-    } else
-        puts(line);
-}
-
 /*
  * Define system-defined macros that are not part of
  * macros/standard.mac.
@@ -449,6 +441,46 @@ static int64_t make_posix_time(const struct tm *tm)
     return t;
 }
 
+/*
+ * Quote a filename string if and only if it is necessary.
+ * It is considered necessary if any one of these is true:
+ * 1. The filename contains control characters;
+ * 2. The filename starts or ends with a space or quote mark;
+ * 3. The filename contains more than one space in a row;
+ * 4. The filename is empty.
+ *
+ * The filename is returned in a newly allocated buffer.
+ */
+static char *nasm_quote_filename(const char *fn)
+{
+    const unsigned char *p =
+        (const unsigned char *)fn;
+
+    if (!p || !*p)
+        return nasm_strdup("\"\"");
+
+    if (*p <= ' ' || nasm_isquote(*p)) {
+        goto quote;
+    } else {
+        unsigned char cutoff = ' ';
+
+        while (*p) {
+            if (*p < cutoff)
+                goto quote;
+            cutoff = ' ' + (*p == ' ');
+            p++;
+        }
+        if (p[-1] <= ' ' || nasm_isquote(p[-1]))
+            goto quote;
+    }
+
+    /* Quoting not necessary */
+    return nasm_strdup(fn);
+
+quote:
+    return nasm_quote(fn, NULL);
+}
+
 static void timestamp(void)
 {
     struct compile_time * const oct = &official_compile_time;
@@ -595,15 +627,20 @@ int main(int argc, char **argv)
     } else if (operating_mode & OP_PREPROCESS) {
             char *line;
             const char *file_name = NULL;
-            int32_t prior_linnum = 0;
-            int lineinc = 0;
+            char *quoted_file_name = nasm_quote_filename(file_name);
+            int32_t linnum  = 0;
+            int32_t lineinc = 0;
+            FILE *out;
 
             if (outname) {
                 ofile = nasm_open_write(outname, NF_TEXT);
                 if (!ofile)
                     nasm_fatal("unable to open output file `%s'", outname);
-            } else
+                out = ofile;
+            } else {
                 ofile = NULL;
+                out = stdout;
+            }
 
             location.known = false;
 
@@ -614,22 +651,47 @@ int main(int argc, char **argv)
                 /*
                  * We generate %line directives if needed for later programs
                  */
-                int32_t linnum = prior_linnum += lineinc;
-                int altline = src_get(&linnum, &file_name);
-                if (altline) {
-                    if (altline == 1 && lineinc == 1)
-                        nasm_fputs("", ofile);
-                    else {
-                        lineinc = (altline != -1 || lineinc != 1);
-                        fprintf(ofile ? ofile : stdout,
-                                "%%line %"PRId32"+%d %s\n", linnum, lineinc,
-                                file_name);
+                struct src_location where = src_where();
+                if (file_name != where.filename) {
+                    file_name = where.filename;
+                    linnum = -1; /* Force a new %line statement */
+                    lineinc = file_name ? 1 : 0;
+                    nasm_free(quoted_file_name);
+                    quoted_file_name = nasm_quote_filename(file_name);
+                } else if (lineinc) {
+                    if (linnum + lineinc == where.lineno) {
+                        /* Add one blank line to account for increment */
+                        fputc('\n', out);
+                        linnum += lineinc;
+                    } else if (linnum - lineinc == where.lineno) {
+                        /*
+                         * Standing still, probably a macro. Set increment
+                         * to zero.
+                         */
+                        lineinc = 0;
                     }
-                    prior_linnum = linnum;
+                } else {
+                    /* lineinc == 0 */
+                    if (linnum + 1 == where.lineno)
+                        lineinc = 1;
                 }
-                nasm_fputs(line, ofile);
-                nasm_free(line);
+
+                /* Skip blank lines if we will need a %line anyway */
+                if (linnum == -1 && !line[0])
+                    continue;
+
+                if (linnum != where.lineno) {
+                    fprintf(out, "%%line %"PRId32"%+"PRId32" %s\n",
+                            where.lineno, lineinc, quoted_file_name);
+                }
+                linnum = where.lineno + lineinc;
+
+                fputs(line, out);
+                fputc('\n', out);
             }
+
+            nasm_free(quoted_file_name);
+
             preproc->cleanup_pass();
             reset_warnings();
             if (ofile)
@@ -2060,6 +2122,10 @@ static void nasm_issue_error(struct nasm_errtext *et)
     if (!skip_this_pass(severity)) {
         const char *file = currentfile ? currentfile : no_file_name;
         const char *here = "";
+
+        if (severity & ERR_HERE) {
+            here = currentfile ? " here" : " in an unknown location";
+        }
 
         if (warn_list && true_type < ERR_NONFATAL &&
             !(pass_first() && (severity & ERR_PASS1))) {

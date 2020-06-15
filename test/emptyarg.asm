@@ -1,0 +1,1 @@
+../../nasm-2.14.xx/test/emptyarg.asm

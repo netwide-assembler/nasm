@@ -1,6 +1,6 @@
 \# --------------------------------------------------------------------------
 \#
-\#   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+\#   Copyright 1996-2020 The NASM Authors - All Rights Reserved
 \#   See the file AUTHORS included with the NASM distribution for
 \#   the specific copyright holders.
 \#
@@ -461,29 +461,34 @@ with \c{[list +]}, (the default, obviously). There is no "user
 form" (without the brackets). This can be used to list only
 sections of interest, avoiding excessively long listings.
 
-\S{opt-L} The \i\c{-L} Option: Additional Listing Info
+\S{opt-L} The \i\c{-L} Option: Additional or Modified Listing Info
 
 Use this option to specify listing output details.
 
 Supported options are:
 
-\c{-Le}      emit each line after processing through the preprocessor
-
-\c{-Ls}      show all single-line macro definitions
-
-\c{-Lm}      show multi-line macro calls with expanded parameters
-
-\c{-Lp}      output a list file in every pass
+\c{-Lb}      show builtin macro packages (standard and \c{%use})
 
 \c{-Ld}      show byte and repeat counts in decimal, not hex
 
-\c{-Lb}      show builtin macro packages
+\c{-Le}      show the preprocessed input
 
-\c{-Lf}      ignore .nolist and force output
+\c{-Lf}      ignore \c{.nolist} and force listing output
 
-\c{-Lw}      flush the output after every line
+\c{-Lm}      show multi-line macro calls with expanded parameters
 
-\c{-L+}      enable all listing options
+\c{-Lp}      output a list file in every pass, in case of errors
+
+\c{-Ls}      show all single-line macro definitions
+
+\c{-Lw}      flush the output after every line (very slow!)
+
+\c{-L+}      enable \e{all} listing options
+
+These options can be enabled or disabled at runtime using the
+\c{%pragma list options} directive:
+
+\c %pragma list options [+|-]flags...
 
 
 \S{opt-M} The \i\c{-M} Option: Generate \i{Makefile Dependencies}
@@ -919,13 +924,19 @@ effectively unlimited.
 passes. Default is 1000.
 
 \b\c{--limit-macro-levels}: Define maximum depth of macro expansion
-(in preprocess). Default is 1000000.
+(in preprocess). Default is 10000
+
+\b\c{--limit-macro-tokens}: Maximum number of tokens processed during
+single-line macro expansion. Default is 10000000.
+
+\b\c{--limit-mmacros}: Maximum number of multi-line macros processed
+before returning to the top-level input. Default is 100000.
 
 \b\c{--limit-rep}: Maximum number of allowed preprocessor loop, defined
 under \c{%rep}. Default is 1000000.
 
 \b\c{--limit-eval}: This number sets the boundary condition of allowed
-expression length. Default is 1000000.
+expression length. Default is 8192 on most systems.
 
 \b\c{--limit-lines}: Total number of source lines as allowed to be
 processed. Default is 2000000000.
@@ -2071,20 +2082,38 @@ Then everywhere the macro \c{foo} is invoked, it will be expanded
 according to the most recent definition. This is particularly useful
 when defining single-line macros with \c{%assign} (see \k{assign}).
 
-It is possible to define an empty string in the arguments list to specify
-that the argument is unused explicitly. The construction like:
+The following additional features were added in NASM 2.15:
+
+It is possible to define an empty string instead of an argument name
+if the argument is never used. For example:
+
+\c    %define ereg(foo,) e %+ foo
+\c      mov eax,ereg(dx,cx)
+
+A single pair of parentheses is a subcase of a single, unused argument:
 
 \c    %define myreg() eax
 \c    	mov edx,myreg()
 
-is also perfectly valid, and it means that macro \c{myreg} has zero arguments -
-behavior similar to preprocessor in C.
+This is similar to the behavior of the C preprocessor.
 
-As of version 2.15, NASM supports special types of macros arguments:
-If an argument declared with an \c{&}, a macro parameter would be quoted as a
-string.
-If declared with a \c{+}, it is a greedy or variadic parameter.
-If declared with an \c{!}, NASM will not try to strip whitespace and braces (useful with \c{&}).
+\b If declared with an \c{=}, NASM will evaluate the argument as an
+expression after expansion.
+
+\b If an argument declared with an \c{&}, a macro parameter will be
+turned into a quoted string after expansion.
+
+\b If declared with a \c{+}, it is a greedy or variadic parameter; it
+includes any subsequent commas and parameters.
+
+\b If declared with an \c{!}, NASM will not strip whitespace and
+braces (useful in conjunction with \c{&}).
+
+For example:
+
+\c     %define xyzzy(=expr,&val) expr, str
+\c     %define plugh(x) xyzzy(x,x)
+\c     db plugh(3+5), `\0` ; Expands to: db 8, "3+5", `\0`
 
 You can \i{pre-define} single-line macros using the `-d' option on
 the NASM command line: see \k{opt-d}.
@@ -2134,6 +2163,9 @@ you need to change the above code to use \c{%xdefine}.
 Now, each time that \c{isFalse} is called, it expands to 1,
 as that is what the embedded macro \c{isTrue} expanded to at
 the time that \c{isFalse} was defined.
+
+\c{%xdefine} and \c{%ixdefine} supports argument expansion exactly the
+same way that \c{%define} and \c{%idefine} does.
 
 
 \S{indmacro} \i{Macro Indirection}: \I\c{%[}\c{%[...]}
@@ -2317,18 +2349,23 @@ is equivalent to
 \c{%defalias}, and its case-insensitive counterpart \c{%idefalias}, define an
 alias to a macro, i.e. equivalent of a symbolic link.
 
-When used with various macro defining and undefining directives, it affects the
-aliased macro. This functionality is intended for being able to rename macros while
-retaining the legacy names.
+When used with various macro defining and undefining directives, it
+affects the aliased macro. This functionality is intended for being
+able to rename macros while retaining the legacy names.
 
 When an alias is defined, but the aliased macro is then undefined, the
 aliases can legitimately point to nonexistent macros.
 
-The single alias can be undefined using \c{%undefalias} directive.
+The alias can be undefined using the \c{%undefalias} directive.  \e{All}
+aliases can be undefined using the \c{%clear defalias} directive. This
+includes backwards compatibility aliases defined by NASM itself.
 
-To disable all the single-line macro aliases, use \c{%aliases off} directive.
+To disable aliases without undefining them, use the \c{%aliases off}
+directive.
 
 To check whether an alias is defined, use \c{%ifdefalias}.
+
+This 
 
 
 \S{cond-comma} \i{Conditional Comma Operator}: \i\c{%,}
@@ -2433,7 +2470,7 @@ this.
 \c %endmacro
 
 This defines a C-like function prologue as a macro: so you would
-invoke the macro with a call such as
+invoke the macro with a call such as:
 
 \c myfunc:   prologue 12
 
@@ -2456,7 +2493,7 @@ unless you define them using the alternative directive \c{%imacro}.
 If you need to pass a comma as \e{part} of a parameter to a
 multi-line macro, you can do that by enclosing the entire parameter
 in \I{braces, around macro parameters}braces. So you could code
-things like
+things like:
 
 \c %macro  silly 2
 \c
@@ -2467,6 +2504,15 @@ things like
 \c         silly 'a', letter_a             ; letter_a:  db 'a'
 \c         silly 'ab', string_ab           ; string_ab: db 'ab'
 \c         silly {13,10}, crlf             ; crlf:      db 13,10
+
+The behavior with regards to empty arguments at the end of multi-line
+macros before NASM 2.15 was often very strange. For backwards
+compatibility, NASM attempts to recognize cases where the legacy
+behavior would give unexpected results, and issues a warning, but
+largely tries to match the legacy behavior. This can be disabled with
+the \c{%pragma} (see \k{pragma-preproc}):
+
+\c %pragma preproc sane_empty_expansion
 
 
 \S{mlmacover} Overloading Multi-Line Macros\I{overloading, multi-line macros}
@@ -3337,7 +3383,7 @@ longer true.  Thus, the following lines are equivalent:
 
 Standard macro packages are protected from multiple inclusion.  When a
 standard macro package is used, a testable single-line macro of the
-form \c{__USE_}\e{package}\c{__} is also defined, see \k{use_def}.
+form \c{__?USE_}\e{package}\c{?__} is also defined, see \k{use_def}.
 
 \H{ctxstack} The \i{Context Stack}
 
@@ -3756,6 +3802,66 @@ the user.  For example:
 \c %endif
 
 
+\H{pragma} \i\c{%pragma}: Setting Options
+
+The \c{%pragma} directive controls a number of options in
+NASM. Pragmas are intended to remain backwards compatible, and
+therefore an unknown \c{%pragma} directive is not an error.
+
+The various pragmas are documented with the options they affect.
+
+The general structure of a NASM pragma is:
+
+\c{%pragma} \e{namespace} \e{directive} [\e{arguments...}]
+
+Currently defined namespaces are:
+
+\b \c{ignore}: this \c{%pragma} is unconditionally ignored.
+
+\b \c{preproc}: preprocessor, see \k{pragma-preproc}.
+
+\b \c{limit}: resource limits, see \k{opt-limit}.
+
+\b \c{asm}: the parser and assembler proper. Currently no such pragmas
+are defined.
+
+\b \c{list}: listing options, see \k{opt-L}.
+
+\b \c{file}: general file handling options. Currently no such pragmas
+are defined.
+
+\b \c{input}: input file handling options. Currently no such pragmas
+are defined.
+
+\b \c{output}: output format options.
+
+\b \c{debug}: debug format options.
+
+In addition, the name of any output or debug format, and sometimes
+groups thereof, also constitue \c{%pragma} namespaces. The namespaces
+\c{output} and \c{debug} simply refer to \e{any} output or debug
+format, respectively.
+
+For example, to prepend an underscore to global symbols regardless of
+the output format (see \k{mangling}):
+
+\c %pragma output gprefix _
+
+... whereas to prepend an underscore to global symbols only when the
+output is either \c{win32} or \c{win64}:
+
+\c %pragma win gprefix _
+
+
+\S{pragma-preproc} Preprocessor Pragmas
+
+The only preprocessor \c{%pragma} defined in NASM 2.15 is:
+
+\b \c{%pragma preproc sane_empty_expansion}: disables legacy
+compatibility handling of braceless empty arguments to multi-line
+macros. See \k{mlmacro} and \k{opt-w}.
+
+
 \H{otherpreproc} \i{Other Preprocessor Directives}
 
 \S{line} \i\c{%line} Directive
@@ -3779,7 +3885,8 @@ file which this line corresponds to.  \c{mmm} is an optional parameter
 which specifies a line increment value; each line of the input file
 read in is considered to correspond to \c{mmm} lines of the original
 source file.  Finally, \c{filename} is an optional parameter which
-specifies the file name of the original source file.
+specifies the file name of the original source file. It may be a
+quoted string.
 
 After reading a \c{%line} preprocessor directive, NASM will report
 all file name and line numbers relative to the values specified
@@ -3789,7 +3896,10 @@ If the command line option \i\c{--no-line} is given, all \c{%line}
 directives are ignored. This may be useful for debugging preprocessed
 code. See \k{opt-no-line}.
 
+Starting in NASM 2.15, \c{%line} directives are processed before any
+other processing takes place.
 
+\# This isn't a directive, it should be moved elsewhere...
 \S{getenv} \i\c{%!}\e{variable}: Read an Environment Variable.
 
 The \c{%!}\e{variable} directive makes it possible to read the value of an
@@ -3812,21 +3922,59 @@ variable, for example:
 \c %defstr C_colon      %!'C:'
 
 
-\H{stdmac} \i{Standard Macros}
+\S{clear} \i\c\{%clear}: Clear All Macro Definitions
 
-NASM defines a set of standard macros, which are already defined
-when it starts to process any source file. If you really need a
-program to be assembled with no pre-defined macros, you can use the
-\i\c{%clear} directive to empty the preprocessor of everything but
-context-local preprocessor variables and single-line macros.
+The directive \c{%clear} clears all definitions of a certain type,
+\e{including the ones defined by NASM itself.} This can be useful when
+preprocessing non-NASM code, or to drop backwards compatibility
+aliases.
+
+The syntax is:
+
+\c    %clear [global|context] type...
+
+... where \c{context} indicates that this applies to context-local
+macros only; the default is \c{global}.
+
+\c{type} can be one or more of:
+
+\b \c{define}   single-line macros
+
+\b \c{defalias} single-line macro aliases (useful to remove backwards
+compatibility aliases)
+
+\b \c{alldefine} same as \c{define defalias}
+
+\b \c{macro}     multi-line macros
+
+\b \c{all}       same as \c{alldefine macro} (default)
+
+In NASM 2.14 and earlier, only the single syntax \c{%clear} was
+supported, which is equivalent to \c{%clear global all}.
+
+
+
+
+\C{stdmac} \i{Standard Macros}
+
+NASM defines a set of standard macros, which are already defined when
+it starts to process any source file. If you really need a program to
+be assembled with no pre-defined macros, you can use the \i\c{%clear}
+directive to empty the preprocessor of everything but context-local
+preprocessor variables and single-line macros, see \k{clear}.
 
 Most \i{user-level assembler directives} (see \k{directive}) are
 implemented as macros which invoke primitive directives; these are
 described in \k{directive}. The rest of the standard macro set is
 described here.
 
+For compability with NASM versions before NASM 2.15, most standard
+macros of the form \c{__?foo?__} have aliases of form \c{__foo__} (see
+\k{defalias}). These can be removed with the directive \c{%clear
+defalias}.
 
-\S{stdmacver} \i{NASM Version} Macros
+
+\H{stdmacver} \i{NASM Version} Macros
 
 The single-line macros \i\c{__?NASM_MAJOR?__}, \i\c{__?NASM_MINOR?__},
 \i\c{__?NASM_SUBMINOR?__} and \i\c{__?_NASM_PATCHLEVEL?__} expand to the
@@ -3872,7 +4020,7 @@ would expand to
 \c         db      "0.98.32"
 
 
-\S{fileline} \i\c{__?FILE?__} and \i\c{__?LINE?__}: File Name and Line Number
+\H{fileline} \i\c{__?FILE?__} and \i\c{__?LINE?__}: File Name and Line Number
 
 Like the C preprocessor, NASM allows the user to find out the file
 name and line number containing the current instruction. The macro
@@ -3887,8 +4035,8 @@ definition (either single-line or multi-line) will return the line
 number of the macro \e{call}, rather than \e{definition}. So to
 determine where in a piece of code a crash is occurring, for
 example, one could write a routine \c{stillhere}, which is passed a
-line number in \c{EAX} and outputs something like `line 155: still
-here'. You could then write a macro
+line number in \c{EAX} and outputs something like \c{line 155: still
+here}. You could then write a macro:
 
 \c %macro  notdeadyet 0
 \c
@@ -3903,7 +4051,7 @@ and then pepper your code with calls to \c{notdeadyet} until you
 find the crash point.
 
 
-\S{bitsm} \i\c{__?BITS?__}: Current BITS Mode
+\H{bitsm} \i\c{__?BITS?__}: Current Code Generation Mode
 
 The \c{__?BITS?__} standard macro is updated every time that the BITS mode is
 set using the \c{BITS XX} or \c{[BITS XX]} directive, where XX is a valid mode
@@ -3911,7 +4059,7 @@ number of 16, 32 or 64. \c{__?BITS?__} receives the specified mode number and
 makes it globally available. This can be very useful for those who utilize
 mode-dependent macros.
 
-\S{ofmtm} \i\c{__?OUTPUT_FORMAT?__}: Current Output Format
+\H{ofmtm} \i\c{__?OUTPUT_FORMAT?__}: Current Output Format
 
 The \c{__?OUTPUT_FORMAT?__} standard macro holds the current output
 format name, as given by the \c{-f} option or NASM's default. Type
@@ -3923,7 +4071,7 @@ format name, as given by the \c{-f} option or NASM's default. Type
 \c  %define NEWLINE 10
 \c %endif
 
-\S{dfmtm} \i\c{__?DEBUG_FORMAT?__}: Current Debug Format
+\H{dfmtm} \i\c{__?DEBUG_FORMAT?__}: Current Debug Format
 
 If debugging information generation is enabled, The
 \c{__?DEBUG_FORMAT?__} standard macro holds the current debug format
@@ -3933,7 +4081,7 @@ default. Type \c{nasm -f} \e{output} \c{y} for a list.
 \c{__?DEBUG_FORMAT?__} is not defined if debugging is not enabled, or if
 the debug format specified is \c{null}.
 
-\S{datetime} Assembly Date and Time Macros
+\H{datetime} Assembly Date and Time Macros
 
 NASM provides a variety of macros that represent the timestamp of the
 assembly session.
@@ -3981,7 +4129,7 @@ clock:
 \c       __?POSIX_TIME?__       1262293242
 
 
-\S{use_def} \I\c{__USE_*__}\c{__USE_}\e{package}\c{__}: Package
+\H{use_def} \I\c{__?USE_*?__}\c{__?USE_}\e{package}\c{?__}: Package
 Include Test
 
 When a standard macro package (see \k{macropkg}) is included with the
@@ -3993,7 +4141,7 @@ For example, if the \c{altreg} package is included (see
 \k{pkg_altreg}), then the macro \c{__?USE_ALTREG?__} is defined.
 
 
-\S{pass_macro} \i\c{__?PASS?__}: Assembly Pass
+\H{pass_macro} \i\c{__?PASS?__}: Assembly Pass
 
 The macro \c{__?PASS?__} is defined to be \c{1} on preparatory passes,
 and \c{2} on the final pass.  In preprocess-only mode, it is set to
@@ -4004,6 +4152,8 @@ and \c{2} on the final pass.  In preprocess-only mode, it is set to
 to generate very strange errors by misusing it, and the semantics may
 change in future versions of NASM.}
 
+
+\H{strucs} \i{Structure Data Types}
 
 \S{struc} \i\c{STRUC} and \i\c{ENDSTRUC}: \i{Declaring Structure} Data Types
 
@@ -4125,8 +4275,9 @@ line:
 \c                 db      'hello, world'
 \c                 db      13,10,0
 
+\H{alignment} \i{Alignment} Control
 
-\S{align} \i\c{ALIGN} and \i\c{ALIGNB}: Data Alignment
+\S{align} \i\c{ALIGN} and \i\c{ALIGNB}: Code and Data Alignment
 
 The \c{ALIGN} and \c{ALIGNB} macros provides a convenient way to
 align code or data on a word, longword, paragraph or other boundary.
@@ -4739,27 +4890,36 @@ private extensions mentioned in \k{global}.
 \H{mangling} \i\c{(G|L)PREFIX}, \i\c{(G|L)POSTFIX}: Mangling Symbols
 
 \c{PREFIX}, \c{GPREFIX}, \c{LPREFIX}, \c{POSTFIX}, \c{GPOSTFIX}, and
-\c{LPOSTFIX} directives can prepend or append the given argument to
-a certain type of symbols. The directive should be as a preprocess
-statement. Each usage is:
+\c{LPOSTFIX} directives can prepend or append a string to a certain
+type of symbols, normally to fit specific ABI conventions
 
 \b\c{PREFIX}|\c{GPREFIX}: Prepend the argument to all \c{EXTERN}
-\c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols
+\c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols.
 
 \b\c{LPREFIX}: Prepend the argument to all other symbols
-such as Local Labels, and backend defined symbols
+such as local labels and backend defined symbols.
 
 \b\c{POSTFIX}|\c{GPOSTFIX}: Append the argument to all \c{EXTERN}
-\c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols
+\c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols.
 
 \b\c{LPOSTFIX}: Append the argument to all other symbols
-such as Local Labels, and backend defined symbols
+such as local labels and backend defined symbols.
 
-This is a macro implemented as a \c{%pragma}:
+These a macros implemented as pragmas, and using \c{%pragma} syntax
+can be restricted to specific backends (see \k{pragma}):
 
-\c      %pragma macho lprefix L_
+\c %pragma macho lprefix L_
 
-Commandline option is also possible. See also \k{opt-pfix}.
+Command line options are also available. See also \k{opt-pfix}.
+
+One example which supports many ABIs:
+
+\c ; The most common conventions
+\c %pragma output gprefix _
+\c %pragma output lprefix L_
+\c ; ELF uses a different convention
+\c %pragma elf    gprefix			; empty
+\c %pragma elf    lprefix .L
 
 Some toolchains is aware of a particular prefix for its own optimization
 options, such as code elimination. For instance, Mach-O backend has a
@@ -4772,22 +4932,6 @@ all local symbols with the 'L' prefix to be excluded to the meta section.
 It converts local symbols compatible with the particular toolchain.
 Note that local symbols declared with \c{STATIC} (\k{static})
 are excluded from the symbol mangling and also not marked as global.
-
-
-\H{gen-namespace} \i\c{OUTPUT}, \i\c{DEBUG}: Generic Namespaces
-
-\c{OUTPUT} and \c{DEBUG} are generic \c{%pragma} namespaces that are
-supposed to redirect to the current output and debug formats.
-For example, when mangling local symbols via the generic namespace:
-
-\c      %pragma output gprefix _
-
-This is useful when the directive is needed to be output format
-agnostic.
-
-The example is also euquivalent to this, when the output format is ELF:
-
-\c      %pragma elf gprefix _
 
 
 \H{CPU} \i\c{CPU}: Defining CPU Dependencies
@@ -7766,7 +7910,7 @@ You would then copy \c{library.so.1.2} into the library directory,
 and create \c{library.so.1} as a symbolic link to it.
 
 
-\C{mixsize} Mixing 16 and 32 Bit Code
+\C{mixsize} Mixing 16- and 32-bit Code
 
 This chapter tries to cover some of the issues, largely related to
 unusual forms of addressing and jump instructions, encountered when
