@@ -279,15 +279,12 @@ struct MMacro {
     struct mstk dstk;           /* Macro definitions stack */
     Token **params;             /* actual parameters */
     Token *iline;               /* invocation line */
+    struct src_location where;  /* location of definition */
     unsigned int nparam, rotate;
     char *iname;                /* name invoked as */
     int *paramlen;
     uint64_t unique;
-    int lineno;                 /* Current line number on expansion */
     uint64_t condcnt;           /* number of if blocks... */
-
-    const char *fname;		/* File where defined */
-    int32_t xline;		/* First line in macro */
 };
 
 
@@ -365,24 +362,18 @@ static size_t tok_strlen(const char *str)
  */
 static Token *set_text(struct Token *t, const char *text, size_t len)
 {
+    char *textp;
+
     if (t->len > INLINE_TEXT)
 	nasm_free(t->text.p.ptr);
 
     nasm_zero(t->text);
 
     t->len = len = tok_check_len(len);
-    if (len > INLINE_TEXT) {
-        char *textp;
-
-        t->text.p.ptr = textp = nasm_malloc(len+1);
-        memcpy(textp, text, len);
-        textp[len] = '\0';
-    } else {
-        /* Null-terminated due to nasm_zero() above */
-        t->len = len;
-	memcpy(t->text.a, text, len);
-    }
-
+    textp = (len > INLINE_TEXT)
+	? (t->text.p.ptr = nasm_malloc(len+1)) : t->text.a;
+    memcpy(textp, text, len);
+    textp[len] = '\0';
     return t;
 }
 
@@ -390,8 +381,10 @@ static Token *set_text(struct Token *t, const char *text, size_t len)
  * Set the text field to the existing pre-allocated string, either
  * taking over or freeing the allocation in the process.
  */
-static Token *set_text_free(struct Token *t, char *text, size_t len)
+static Token *set_text_free(struct Token *t, char *text, unsigned int len)
 {
+    char *textp;
+
     if (t->len > INLINE_TEXT)
 	nasm_free(t->text.p.ptr);
 
@@ -399,13 +392,12 @@ static Token *set_text_free(struct Token *t, char *text, size_t len)
 
     t->len = len = tok_check_len(len);
     if (len > INLINE_TEXT) {
-	t->text.p.ptr = text;
-        text[len] = '\0';
+	textp = t->text.p.ptr = text;
     } else {
-        /* Null-terminated due to nasm_zero() above */
-	memcpy(t->text.a, text, len);
+	textp = memcpy(t->text.a, text, len);
 	nasm_free(text);
     }
+    textp[len] = '\0';
 
     return t;
 }
@@ -448,6 +440,7 @@ struct Line {
     Line *next;
     MMacro *finishes;
     Token *first;
+    struct src_location where;      /* Where defined */
 };
 
 /*
@@ -459,9 +452,9 @@ struct Include {
     FILE *fp;
     Cond *conds;
     Line *expansion;
-    const char *fname;
     struct mstk mstk;
-    int lineno, lineinc;
+    struct src_location where;      /* Filename and current line number */
+    int32_t lineinc;            /* Increment given by %line */
     bool nolist;
 };
 
@@ -1306,7 +1299,6 @@ static char *line_from_file(FILE *f)
     unsigned int nr_cont = 0;
     bool cont = false;
     char *buffer, *p;
-    int32_t lineno;
 
     size = delta;
     p = buffer = nasm_malloc(size);
@@ -1366,9 +1358,8 @@ static char *line_from_file(FILE *f)
         *p++ = c;
     } while (c);
 
-    lineno = src_get_linnum() + istk->lineinc +
-        (nr_cont * istk->lineinc);
-    src_set_linnum(lineno);
+    istk->where.lineno += (nr_cont + 1) * istk->lineinc;
+    src_set_linnum(istk->where.lineno);
 
     return buffer;
 }
@@ -1390,7 +1381,7 @@ static char *read_line(void)
         return NULL;
 
    if (!istk->nolist)
-       lfmt->line(LIST_READ, src_get_linnum(), line);
+       lfmt->line(LIST_READ, istk->where.lineno, line);
 
     return line;
 }
@@ -3411,6 +3402,56 @@ static int do_directive(Token *tline, Token **output)
     }
 
     /*
+     * %line directives are always processed immediately and
+     * unconditionally, as they are intended to reflect position
+     * in externally preprocessed sources.
+     */
+    if (op == PP_LINE) {
+        /*
+         * Syntax is `%line nnn[+mmm] [filename]'
+         */
+        if (pp_noline || istk->mstk.mstk)
+            goto done;
+
+        tline = tline->next;
+        tline = skip_white(tline);
+        if (!tok_type(tline, TOK_NUMBER)) {
+            nasm_nonfatal("`%s' expects line number", dname);
+            goto done;
+        }
+        k = readnum(tok_text(tline), &err);
+        m = 1;
+        tline = tline->next;
+        if (tok_is(tline, '+') || tok_is(tline, '-')) {
+            bool minus = tok_is(tline, '-');
+            tline = tline->next;
+            if (!tok_type(tline, TOK_NUMBER)) {
+                nasm_nonfatal("`%s' expects line increment", dname);
+                goto done;
+            }
+            m = readnum(tok_text(tline), &err);
+            if (minus)
+                m = -m;
+            tline = tline->next;
+        }
+        tline = skip_white(tline);
+        if (tline) {
+            if (tline->type == TOK_STRING) {
+                src_set_fname(unquote_token(tline));
+            } else {
+                char *fname = detoken(tline, false);
+                src_set_fname(fname);
+                nasm_free(fname);
+            }
+        }
+        src_set_linnum(k);
+
+        istk->where = src_where();
+        istk->lineinc = m;
+        goto done;
+    }
+
+    /*
      * If we're in a non-emitting branch of a condition construct,
      * or walking to the end of an already terminated %rep block,
      * we should ignore all directives except for condition
@@ -3425,7 +3466,7 @@ static int do_directive(Token *tline, Token **output)
     /*
      * If we're defining a macro or reading a %rep block, we should
      * ignore all directives except for %macro/%imacro (which nest),
-     * %endm/%endmacro, and (only if we're in a %rep block) %endrep.
+     * %endm/%endmacro, %line and (only if we're in a %rep block) %endrep.
      * If we're in a %rep block, another %rep nests, so should be let through.
      */
     if (defining && op != PP_MACRO && op != PP_RMACRO &&
@@ -3755,8 +3796,8 @@ static int do_directive(Token *tline, Token **output)
             /* -MG given but file not found */
             nasm_free(inc);
         } else {
-            inc->fname = src_set_fname(found_path ? found_path : p);
-            inc->lineno = src_set_linnum(0);
+            src_set(0, found_path ? found_path : p);
+            inc->where = src_where();
             inc->lineinc = 1;
             inc->nolist = istk->nolist;
             istk = inc;
@@ -3784,8 +3825,7 @@ static int do_directive(Token *tline, Token **output)
             stdmacpos = pkg->macros;
             nasm_new(inc);
             inc->next = istk;
-            inc->fname = src_set_fname(NULL);
-            inc->lineno = src_set_linnum(0);
+            src_set(0, NULL);
             inc->nolist = !list_option('b') || istk->nolist;
             istk = inc;
             lfmt->uplevel(LIST_INCLUDE, 0);
@@ -3980,7 +4020,7 @@ issue_error:
         }
 
         defining = def;
-	src_get(&defining->xline, &defining->fname);
+        defining->where = istk->where;
 
         mmac = (MMacro *) hash_findix(&mmacros, defining->name);
         while (mmac) {
@@ -4162,7 +4202,7 @@ issue_error:
         defining->mstk = istk->mstk;
         defining->dstk.mstk = tmp_defining;
         defining->dstk.mmac = tmp_defining ? tmp_defining->dstk.mmac : NULL;
-	src_get(&defining->xline, &defining->fname);
+        defining->where = istk->where;
         break;
     }
 
@@ -4187,6 +4227,7 @@ issue_error:
         l->next = istk->expansion;
         l->finishes = defining;
         l->first = NULL;
+        l->where = src_where();
         istk->expansion = l;
 
         istk->mstk.mstk = defining;
@@ -4571,38 +4612,7 @@ issue_error:
         break;
 
     case PP_LINE:
-        /*
-         * Syntax is `%line nnn[+mmm] [filename]'
-         */
-        if (unlikely(pp_noline))
-            goto done;
-
-        tline = tline->next;
-        tline = skip_white(tline);
-        if (!tok_type(tline, TOK_NUMBER)) {
-            nasm_nonfatal("`%s' expects line number", dname);
-            goto done;
-        }
-        k = readnum(tok_text(tline), &err);
-        m = 1;
-        tline = tline->next;
-        if (tok_is(tline, '+')) {
-            tline = tline->next;
-            if (!tok_type(tline, TOK_NUMBER)) {
-                nasm_nonfatal("`%s' expects line increment", dname);
-                goto done;
-            }
-            m = readnum(tok_text(tline), &err);
-            tline = tline->next;
-        }
-        tline = skip_white(tline);
-        src_set_linnum(k);
-        istk->lineinc = m;
-        if (tline) {
-            char *fname = detoken(tline, false);
-            src_set_fname(fname);
-            nasm_free(fname);
-        }
+        nasm_panic("`%s' directive not preprocessed early", dname);
         break;
     }
 
@@ -6250,6 +6260,7 @@ static int expand_mmacro(Token * tline)
     nasm_new(ll);
     ll->next = istk->expansion;
     ll->finishes = m;
+    ll->where = istk->where;
     istk->expansion = ll;
 
     /*
@@ -6269,7 +6280,6 @@ static int expand_mmacro(Token * tline)
     m->rotate = 0;
     m->paramlen = paramlen;
     m->unique = unique++;
-    m->lineno = 0;
     m->condcnt = 0;
 
     m->mstk = istk->mstk;
@@ -6280,6 +6290,7 @@ static int expand_mmacro(Token * tline)
         ll->next = istk->expansion;
         istk->expansion = ll;
         ll->first = dup_tlist(l->first, NULL);
+        ll->where = l->where;
     }
 
     /*
@@ -6304,6 +6315,7 @@ static int expand_mmacro(Token * tline)
             ll->next = istk->expansion;
             istk->expansion = ll;
             ll->first = startline;
+            ll->where = istk->where;
             if (!dont_prepend) {
                 while (label->next)
                     label = label->next;
@@ -6446,10 +6458,13 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
     /* First set up the top level input file */
     nasm_new(istk);
     istk->fp = nasm_open_read(file, NF_TEXT);
+    if (!istk->fp) {
+	nasm_fatalf(ERR_NOFILE, "unable to open input file `%s'%s%s",
+                    file, errno ? " " : "", errno ? strerror(errno) : "");
+    }
     src_set(0, file);
+    istk->where = src_where();
     istk->lineinc = 1;
-    if (!istk->fp)
-	nasm_fatalf(ERR_NOFILE, "unable to open input file `%s'", file);
 
     strlist_add(deplist, file);
 
@@ -6459,7 +6474,8 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
      */
     nasm_new(inc);
     inc->next = istk;
-    inc->fname = src_set_fname(NULL);
+    src_set(0, NULL);
+    inc->where = src_where();
     inc->nolist = !list_option('b');
     istk = inc;
     lfmt->uplevel(LIST_INCLUDE, 0);
@@ -6550,20 +6566,12 @@ static Token *pp_tokline(void)
                  */
                 fm->in_progress--;
                 list_for_each(l, fm->expansion) {
-                    Token *t, *tt, **tail;
                     Line *ll;
 
-                    istk->mstk.mstk->lineno = 0;
                     nasm_new(ll);
-                    ll->next = istk->expansion;
-                    tail = &ll->first;
-
-                    list_for_each(t, l->first) {
-                        if (t->len) {
-                            tt = *tail = dup_Token(NULL, t);
-                            tail = &tt->next;
-                        }
-                    }
+                    ll->next  = istk->expansion;
+                    ll->first = dup_tlist(l->first, NULL);
+                    ll->where = l->where;
                     istk->expansion = ll;
                 }
                 break;
@@ -6632,6 +6640,7 @@ static Token *pp_tokline(void)
                     free_mmacro(m);
 #endif
             }
+            istk->where = l->where;
             istk->expansion = l->next;
             nasm_free(l);
             lfmt->downlevel(LIST_MACRO);
@@ -6643,27 +6652,17 @@ static Token *pp_tokline(void)
 
             if (istk->expansion) {      /* from a macro expansion */
                 Line *l = istk->expansion;
-                int32_t lineno;
 
-                if (istk->mstk.mstk) {
-                    istk->mstk.mstk->lineno++;
-                    if (istk->mstk.mstk->fname)
-                        lineno = istk->mstk.mstk->lineno +
-                            istk->mstk.mstk->xline;
-                    else
-                        lineno = 0; /* Defined at init time or builtin */
-                } else {
-                    lineno = src_get_linnum();
-                }
-
-                tline = l->first;
                 istk->expansion = l->next;
+                istk->where = l->where;
+                tline = l->first;
                 nasm_free(l);
 
-                line = detoken(tline, false);
-                if (!istk->nolist)
-                    lfmt->line(LIST_MACRO, lineno, line);
-                nasm_free(line);
+                if (!istk->nolist) {
+                    line = detoken(tline, false);
+                    lfmt->line(LIST_MACRO, istk->where.lineno, line);
+                    nasm_free(line);
+                }
             } else if ((line = read_line())) {
                 line = prepreproc(line);
                 tline = tokenize(line);
@@ -6673,17 +6672,23 @@ static Token *pp_tokline(void)
                  * The current file has ended; work down the istk
                  */
                 Include *i = istk;
+                Include *is;
+
                 if (i->fp)
                     fclose(i->fp);
                 if (i->conds) {
-                    /* nasm_error can't be conditionally suppressed */
+                    /* nasm_fatal can't be conditionally suppressed */
                     nasm_fatal("expected `%%endif' before end of file");
                 }
-                /* only set line and file name if there's a next node */
-                if (i->next)
-                    src_set(i->lineno, i->fname);
+
+                list_for_each(is, i->next) {
+                    if (is->fp) {
+                        lfmt->downlevel(LIST_INCLUDE);
+                        src_update(is->where);
+                        break;
+                    }
+                }
                 istk = i->next;
-                lfmt->downlevel(LIST_INCLUDE);
                 nasm_free(i);
                 return &tok_pop;
             }
@@ -6718,11 +6723,13 @@ static Token *pp_tokline(void)
              * shove the tokenized line on to the macro definition.
              */
             MMacro *mmac = defining->dstk.mmac;
+            Line *l;
 
-            Line *l = nasm_malloc(sizeof(Line));
+            nasm_new(l);
             l->next = defining->expansion;
             l->first = tline;
             l->finishes = NULL;
+            l->where = istk->where;
             defining->expansion = l;
 
             /*
@@ -6966,16 +6973,30 @@ static Token *make_tok_char(Token *next, char op)
     return t;
 }
 
-static void pp_list_one_macro(MMacro *m, errflags severity)
+/*
+ * Descend the istk looking for macro definitions; we have to
+ * recurse because we want to show the messages in top-down order.
+ */
+static void pp_list_macro_istk(Include *inc, errflags severity)
 {
-    if (!m)
-	return;
+    MMacro *m;
+    Include *inext;
 
-    /* We need to print the mstk.mmac list in reverse order */
-    pp_list_one_macro(m->mstk.mmac, severity);
+    /* Find the next higher level true macro invocation if any */
+    inext = inc->next;
+    if (inext && inext->mstk.mmac) {
+        while (inext) {
+            if (inext->mstk.mstk->name) {
+                pp_list_macro_istk(inext, severity);
+                break;
+            }
+            inext = inext->next;
+        }
+    }
 
-    if (m->name && !m->nolist) {
-	src_set(m->xline + m->lineno, m->fname);
+    m = inc->mstk.mstk;
+    if (m && m->name && !m->nolist) {
+        src_update(inc->where);
 	nasm_error(severity, "... from macro `%s' defined", m->name);
     }
 }
@@ -6984,12 +7005,12 @@ static void pp_error_list_macros(errflags severity)
 {
     struct src_location saved;
 
+    if (!istk)
+        return;
+
     severity |= ERR_PP_LISTMACRO | ERR_NO_SEVERITY | ERR_HERE;
     saved = src_where();
-
-    if (istk)
-        pp_list_one_macro(istk->mstk.mmac, severity);
-
+    pp_list_macro_istk(istk, severity);
     src_update(saved);
 }
 
