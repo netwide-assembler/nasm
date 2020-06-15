@@ -43,7 +43,7 @@
 #include "nasmlib.h"
 #include "ilog2.h"
 #include "error.h"
-#include "float.h"
+#include "floats.h"
 #include "stdscan.h"
 #include "preproc.h"
 #include "eval.h"

@@ -32,12 +32,12 @@
  * ----------------------------------------------------------------------- */
 
 /* 
- * float.h   header file for the floating-point constant module of
- *	     the Netwide Assembler
+ * floats.h   header file for the floating-point constant module of
+ *	      the Netwide Assembler
  */
 
-#ifndef NASM_FLOAT_H
-#define NASM_FLOAT_H
+#ifndef NASM_FLOATS_H
+#define NASM_FLOATS_H
 
 #include "nasm.h"
 
@@ -51,4 +51,4 @@ enum float_round {
 int float_const(const char *string, int sign, uint8_t *result, int bytes);
 int float_option(const char *option);
 
-#endif
+#endif /* NASM_FLOATS_H */

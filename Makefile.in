@@ -123,7 +123,7 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	x86/disp8.$(O) x86/iflag.$(O) \
 	\
 	asm/error.$(O) asm/warnings.$(O) \
-	asm/float.$(O) \
+	asm/floats.$(O) \
 	asm/directiv.$(O) asm/directbl.$(O) \
 	asm/pragma.$(O) \
 	asm/assemble.$(O) asm/labels.$(O) asm/parser.$(O) \

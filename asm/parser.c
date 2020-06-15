@@ -46,7 +46,7 @@
 #include "stdscan.h"
 #include "eval.h"
 #include "parser.h"
-#include "float.h"
+#include "floats.h"
 #include "assemble.h"
 #include "tables.h"
 

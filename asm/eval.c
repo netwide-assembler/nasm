@@ -45,7 +45,7 @@
 #include "error.h"
 #include "eval.h"
 #include "labels.h"
-#include "float.h"
+#include "floats.h"
 #include "assemble.h"
 
 #define TEMPEXPRS_DELTA 128
