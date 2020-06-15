@@ -2384,12 +2384,16 @@ static int read_param_count(const char *str)
  *
  * Note that we need space in the params array for parameter 0 being
  * a possible captured label as well as the final NULL.
+ *
+ * Returns a pointer to the pointer to a terminal comma if present;
+ * used to drop an empty terminal argument for legacy reasons.
  */
-static void count_mmac_params(Token *tline, int *nparamp, Token ***paramsp)
+static Token **count_mmac_params(Token *tline, int *nparamp, Token ***paramsp)
 {
     int paramsize;
     int nparam = 0;
     Token *t;
+    Token **comma = NULL, **maybe_comma = NULL;
     Token **params;
 
     paramsize = PARAM_DELTA;
@@ -2406,6 +2410,9 @@ static void count_mmac_params(Token *tline, int *nparamp, Token ***paramsp)
             params[++nparam] = t;
             if (tok_is(t, '{')) {
                 int brace = 1;
+
+                comma = NULL;   /* Non-empty parameter */
+
                 while (brace && (t = t->next)) {
                     brace += tok_is(t, '{');
                     brace -= tok_is(t, '}');
@@ -2425,12 +2432,18 @@ static void count_mmac_params(Token *tline, int *nparamp, Token ***paramsp)
             }
 
             /* Advance to the next comma */
-            while (tok_isnt(t, ','))
+            maybe_comma = &t->next;
+            while (tok_isnt(t, ',')) {
+                if (!tok_white(t))
+                    comma = NULL; /* Non-empty parameter */
+                maybe_comma = &t->next;
                 t = t->next;
+            }
 
             if (!t)
-                break;              /* End of string */
+                break;              /* End of string, no comma */
 
+            comma = maybe_comma;     /* Point to comma pointer */
             t = skip_white(t->next); /* Eat the comma and whitespace */
         }
     }
@@ -2438,6 +2451,8 @@ static void count_mmac_params(Token *tline, int *nparamp, Token ***paramsp)
     params[nparam+1] = NULL;
     *paramsp = params;
     *nparamp = nparam;
+
+    return comma;
 }
 
 /*
@@ -3154,10 +3169,19 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
     /*
      * Handle default parameters.
      */
+    def->ndefs = 0;
     if (tline && tline->next) {
+        Token **comma;
         def->dlist = tline->next;
         tline->next = NULL;
-        count_mmac_params(def->dlist, &def->ndefs, &def->defaults);
+        comma = count_mmac_params(def->dlist, &def->ndefs, &def->defaults);
+        if (!ppopt.sane_empty_expansion && comma) {
+            *comma = NULL;
+            def->ndefs--;
+            nasm_warn(WARN_MACRO_PARAMS_LEGACY,
+                      "dropping trailing empty default parameter in defintion of multi-line macro `%s'",
+                      def->name);
+        }
     } else {
         def->dlist = NULL;
         def->defaults = NULL;
@@ -5086,39 +5110,6 @@ static Token *expand_mmac_params(Token * tline)
             }
         };
         paste_tokens(&thead, t, ARRAY_SIZE(t), false);
-
-        /*
-         * For backwards compatibility reasons, if we expanded
-         * anything, we cannot return an empty token list. Legacy
-         * NASM behavior is that:
-         *
-         * foobar %1
-         *
-         * ... where foobar is a macro is treated as a one-
-         * parameter macro call with an empty argument, instead
-         * of the far more sensible zero-argument call... except
-         * that %0 is set to zero, which is illegal according to the
-         * macro definition!
-         *
-         * This applies ONLY to the case of zero arguments, which
-         * is what makes it completely brain damaged. If this is
-         * the actual desired behavior, the correct way to code it
-         * is:
-         *
-         * foobar {%1}
-         *
-         * This rather brain damaged backwards compatibility hack can
-         * be disabled with:
-         *
-         * %pragma preproc sane_empty_expansion true
-         */
-        if (!ppopt.sane_empty_expansion) {
-            for (tail = &thead; tok_white(*tail); tail = &((*tail)->next)) {
-                /* See if we can find anything not whitespace... */
-            }
-            if (!*tail)
-                *tail = new_White(NULL);
-        }
     }
 
     return thead;
@@ -5653,10 +5644,11 @@ static Token *expand_smacro_noreset(Token *org_tline)
          * passes.
          */
         errhold = nasm_error_hold_push();
+
         while (*tail)           /* main token loop */
             expanded |= !!expand_one_smacro(&tail);
 
-        if (!expanded)
+         if (!expanded)
             break;              /* Done! */
 
         /*
@@ -5669,8 +5661,8 @@ static Token *expand_smacro_noreset(Token *org_tline)
         if (!paste_tokens(&tline, tmatch, ARRAY_SIZE(tmatch), true))
             break;              /* Done again! */
 
-        expanded = false;
         nasm_error_hold_pop(errhold, false);
+        expanded = false;
     }
     nasm_error_hold_pop(errhold, true);
 
@@ -5747,7 +5739,7 @@ static Token *expand_id(Token * tline)
 }
 
 /*
- * This is called from is_mmacro() after finding a suitable macro.
+ * This is called from find_mmacro_in_list() after finding a suitable macro.
  */
 static MMacro *use_mmacro(MMacro *m, int *nparamp, Token ***paramsp)
 {
@@ -5800,7 +5792,37 @@ static MMacro *use_mmacro(MMacro *m, int *nparamp, Token ***paramsp)
     return m;
 }
 
+/*
+ * Search a macro list and try to find a match. If matching, call
+ * use_mmacro() to set up the macro call. m points to the list of
+ * search, which is_mmacro() sets to the first *possible* match.
+ */
+static MMacro *
+find_mmacro_in_list(MMacro *m, const char *finding,
+                    int *nparamp, Token ***paramsp)
+{
+    int nparam = *nparamp;
 
+    while (m) {
+        if (m->nparam_min <= nparam
+            && (m->plus || nparam <= m->nparam_max)) {
+            /*
+             * This one matches, use it.
+             */
+            return use_mmacro(m, nparamp, paramsp);
+        }
+
+        /*
+         * Otherwise search for the next one with a name match.
+         */
+        list_for_each(m, m->next) {
+            if (!mstrcmp(m->name, finding, m->casesense))
+                break;
+        }
+    }
+
+    return NULL;
+}
 
 /*
  * Determine whether the given line constitutes a multi-line macro
@@ -5812,10 +5834,11 @@ static MMacro *use_mmacro(MMacro *m, int *nparamp, Token ***paramsp)
  */
 static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
 {
-    MMacro *head, *m, *mone;
-    Token **params;
-    int nparam;
+    MMacro *head, *m, *found;
+    Token **params, **comma;
+    int raw_nparam, nparam;
     const char *finding = tok_text(tline);
+    bool empty_args = !tline->next;
 
     *nparamp = 0;
     *paramsp = NULL;
@@ -5844,39 +5867,23 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
      * OK, we have a potential macro. Count and demarcate the
      * parameters.
      */
-    count_mmac_params(tline->next, nparamp, paramsp);
-    nparam = *nparamp;
-    params = *paramsp;
-
-    /*
-     * If we find a macro which doesn't match, but accepts one argument
-     * but not zero, remember it for the special handling below.
-     */
-    mone = NULL;
+    comma = count_mmac_params(tline->next, nparamp, paramsp);
+    raw_nparam = *nparamp;
 
     /*
      * Search for an exact match. This cannot come *before* the m
-     * found in the list search before.
+     * found in the list search before, so we can start there.
+     *
+     * If found is NULL and *paramsp has been cleared, then we
+     * encountered an error for which we have already issued a
+     * diagnostic, so we should not proceed.
      */
-    while (m) {
-        if (m->nparam_min <= nparam
-            && (m->plus || nparam <= m->nparam_max)) {
-            /*
-             * This one matches, use it.
-             */
-            return use_mmacro(m, nparamp, paramsp);
-        } else if (m->nparam_min == 1 && !mone) {
-            mone = m;
-        }
+    found = find_mmacro_in_list(m, finding, nparamp, paramsp);
+    if (!*paramsp)
+        return NULL;
 
-        /*
-         * Otherwise search for the next one with a name match.
-         */
-        list_for_each(m, m->next) {
-            if (!mstrcmp(m->name, finding, m->casesense))
-                break;
-        }
-    }
+    nparam = *nparamp;
+    params = *paramsp;
 
     /*
      * Special weirdness: in NASM < 2.15, an expansion of
@@ -5901,15 +5908,87 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
      * match a zero-argument macro first, but if that fails, try
      * for a one-argument macro with the above behavior.
      *
-     * To disable this insane legacy behavior, use:
+     * Furthermore, NASM < 2.15 will match stripping a tailing empty
+     * argument, but in that case %0 *does* reflect that this argument
+     * have been stripped; this is handled in count_mmac_params().
+     *
+     * To disable these insane legacy behaviors, use:
      *
      * %pragma preproc sane_empty_expansion yes
+     *
+     *!macro-params-legacy [on] improperly calling multi-line macro for legacy support
+     *!  warns about \i{multi-line macros} being invoked
+     *!  with the wrong number of parameters, but for bug-compatibility
+     *!  with NASM versions older than 2.15, NASM tried to fix up the
+     *!  parameters to match the legacy behavior and call the macro anyway.
+     *!  This can happen in certain cases where there are empty arguments
+     *!  without braces, sometimes as a result of macro expansion.
+     *!-
+     *!  The legacy behavior is quite strange and highly context-dependent,
+     *!  and can be disabled with:
+     *!-
+     *!  \c %pragma preproc sane_empty_expansion true
+     *!-
+     *!  It is highly recommended to use this option in new code.
      */
-    if (!nparam && tline->next && !ppopt.sane_empty_expansion && mone) {
-        nasm_warn(WARN_MACRO_PARAMS_MULTI,
-                  "improperly calling multi-line macro `%s' with 0 parameters (legacy hack)",
-                  finding);
-        return use_mmacro(mone, nparamp, paramsp);
+    if (!ppopt.sane_empty_expansion) {
+        if (!found) {
+            if (raw_nparam == 0 && !empty_args) {
+                /*
+                 * A single all-whitespace parameter as the only thing?
+                 * Look for a one-argument macro, but don't adjust
+                 * *nparamp.
+                 */
+                int bogus_nparam = 1;
+                params[2] = NULL;
+                found = find_mmacro_in_list(m, finding, &bogus_nparam, paramsp);
+            } else if (raw_nparam > 1 && comma) {
+                Token *comma_tail = *comma;
+
+                /*
+                 * Drop the terminal argument and try again.
+                 * If we fail, we need to restore the comma to
+                 * preserve tlist.
+                 */
+                *comma = NULL;
+                *nparamp = raw_nparam - 1;
+                found = find_mmacro_in_list(m, finding, nparamp, paramsp);
+                if (found)
+                    free_tlist(comma_tail);
+                else
+                    *comma = comma_tail;
+            }
+
+            if (!*paramsp)
+                return NULL;
+        } else if (comma) {
+            free_tlist(*comma);
+            *comma = NULL;
+            if (raw_nparam > found->nparam_min &&
+                raw_nparam <= found->nparam_min + found->ndefs) {
+                /* Replace empty argument with default parameter */
+                params[raw_nparam] =
+                    found->defaults[raw_nparam - found->nparam_min];
+            } else if (raw_nparam > found->nparam_max && found->plus) {
+                /* Just drop the comma, don't adjust argument count */
+            } else {
+                /* Drop argument. This may cause nparam < nparam_min. */
+                params[raw_nparam] = NULL;
+                *nparamp = nparam = raw_nparam - 1;
+            }
+        }
+
+        if (found) {
+            if (raw_nparam < found->nparam_min ||
+                (raw_nparam > found->nparam_max && !found->plus)) {
+                nasm_warn(WARN_MACRO_PARAMS_LEGACY,
+                          "improperly calling multi-line macro `%s' with %d parameters",
+                          found->name, raw_nparam);
+            } else if (comma) {
+                nasm_warn(WARN_MACRO_PARAMS_LEGACY,
+                          "dropping trailing empty parameter in call to multi-line macro `%s'", found->name);
+            }
+        }
     }
 
     /*
@@ -5921,10 +6000,13 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
      *!  with the wrong number of parameters. See \k{mlmacover} for an
      *!  example of why you might want to disable this warning.
      */
+    if (found)
+        return found;
+
     nasm_warn(WARN_MACRO_PARAMS_MULTI,
                "multi-line macro `%s' exists, but not taking %d parameter%s",
               finding, nparam, (nparam == 1) ? "" : "s");
-    nasm_free(params);
+    nasm_free(*paramsp);
     return NULL;
 }
 
@@ -6035,7 +6117,7 @@ static int expand_mmacro(Token * tline)
     Token **params, *t, *tt;
     MMacro *m;
     Line *l, *ll;
-    int i, last_nonempty, *paramlen;
+    int i, *paramlen;
     const char *mname;
     int nparam = 0;
 
@@ -6089,10 +6171,6 @@ static int expand_mmacro(Token * tline)
      * trailing whitespace and stripping braces if they are present.
      */
     nasm_newn(paramlen, nparam+1);
-    nasm_assert(params[nparam+1] == NULL);
-
-    /* Last nonempty *unbraced* parameter */
-    last_nonempty = 0;
 
     for (i = 1; (t = params[i]); i++) {
         bool braced = false;
@@ -6130,7 +6208,6 @@ static int expand_mmacro(Token * tline)
                     brace--;
                     if (braced && !brace) {
                         paramlen[i] += white;
-                        last_nonempty = i;
                         goto endparam;
                     }
                     break;
@@ -6141,26 +6218,11 @@ static int expand_mmacro(Token * tline)
             }
 
             paramlen[i] += white + 1;
-            last_nonempty = i;
             white = 0;
         }
     endparam:
         ;
     }
-
-    /*
-     * NASM < 2.15 would not count terminal empty arguemnts
-     * in %0, even though it counted for matching.
-     * This implements this legacy behavior.
-     *
-     * Use:
-     *
-     * %pragma preproc sane_empty_expansion true
-     *
-     * ... to disable this rather crazy legacy behavior.
-     */
-    if (!ppopt.sane_empty_expansion)
-        nparam = last_nonempty;
 
     /*
      * OK, we have a MMacro structure together with a set of
