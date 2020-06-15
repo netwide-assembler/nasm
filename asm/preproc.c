@@ -370,12 +370,13 @@ static Token *set_text(struct Token *t, const char *text, size_t len)
     if (t->len > INLINE_TEXT)
 	nasm_free(t->text.p.ptr);
 
-    nasm_zero(t->text.a);
+    nasm_zero(t->text);
 
-    t->len = tok_check_len(len);
+    t->len = len = tok_check_len(len);
     textp = (len > INLINE_TEXT)
 	? (t->text.p.ptr = nasm_malloc(len+1)) : t->text.a;
-    memcpy(textp, text, len+1);
+    memcpy(textp, text, len);
+    textp[len] = '\0';
     return t;
 }
 
@@ -383,18 +384,20 @@ static Token *set_text(struct Token *t, const char *text, size_t len)
  * Set the text field to the existing pre-allocated string, either
  * taking over or freeing the allocation in the process.
  */
-static Token *set_text_free(struct Token *t, char *text, unsigned int len)
+static Token *set_text_free(struct Token *t, char *text, size_t len)
 {
     if (t->len > INLINE_TEXT)
 	nasm_free(t->text.p.ptr);
 
-    nasm_zero(t->text.a);
+    nasm_zero(t->text);
 
-    t->len = tok_check_len(len);
+    t->len = len = tok_check_len(len);
     if (len > INLINE_TEXT) {
 	t->text.p.ptr = text;
+        text[len] = '\0';
     } else {
-	memcpy(t->text.a, text, len+1);
+	memcpy(t->text.a, text, len);
+        t->text.a[len] = '\0';
 	nasm_free(text);
     }
 
