@@ -446,13 +446,15 @@ static int64_t make_posix_time(const struct tm *tm)
  * It is considered necessary if any one of these is true:
  * 1. The filename contains control characters;
  * 2. The filename starts or ends with a space or quote mark;
- * 3. The filename is empty.
+ * 3. The filename contains more than one space in a row;
+ * 4. The filename is empty.
  *
  * The filename is returned in a newly allocated buffer.
  */
 static char *nasm_quote_filename(const char *fn)
 {
-    const char *p = fn;
+    const unsigned char *p =
+        (const unsigned char *)fn;
 
     if (!p || !*p)
         return nasm_strdup("\"\"");
@@ -460,9 +462,12 @@ static char *nasm_quote_filename(const char *fn)
     if (*p <= ' ' || nasm_isquote(*p)) {
         goto quote;
     } else {
+        unsigned char cutoff = ' ';
+
         while (*p) {
-            if (*p < ' ')
+            if (*p < cutoff)
                 goto quote;
+            cutoff = ' ' + (*p == ' ');
             p++;
         }
         if (p[-1] <= ' ' || nasm_isquote(p[-1]))
