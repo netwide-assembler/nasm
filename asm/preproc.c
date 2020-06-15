@@ -365,18 +365,24 @@ static size_t tok_strlen(const char *str)
  */
 static Token *set_text(struct Token *t, const char *text, size_t len)
 {
-    char *textp;
-
     if (t->len > INLINE_TEXT)
 	nasm_free(t->text.p.ptr);
 
     nasm_zero(t->text);
 
     t->len = len = tok_check_len(len);
-    textp = (len > INLINE_TEXT)
-	? (t->text.p.ptr = nasm_malloc(len+1)) : t->text.a;
-    memcpy(textp, text, len);
-    textp[len] = '\0';
+    if (len > INLINE_TEXT) {
+        char *textp;
+
+        t->text.p.ptr = textp = nasm_malloc(len+1);
+        memcpy(textp, text, len);
+        textp[len] = '\0';
+    } else {
+        /* Null-terminated due to nasm_zero() above */
+        t->len = len;
+	memcpy(t->text.a, text, len);
+    }
+
     return t;
 }
 
@@ -396,8 +402,8 @@ static Token *set_text_free(struct Token *t, char *text, size_t len)
 	t->text.p.ptr = text;
         text[len] = '\0';
     } else {
+        /* Null-terminated due to nasm_zero() above */
 	memcpy(t->text.a, text, len);
-        t->text.a[len] = '\0';
 	nasm_free(text);
     }
 
