@@ -2083,7 +2083,6 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         case 0313:
-            ins->rex = 0;
             break;
 
         case4(0314):

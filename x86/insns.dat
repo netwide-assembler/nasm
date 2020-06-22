@@ -678,7 +678,7 @@ IRETQ		void				[	o64 cf]					X64
 IRETW		void				[	o16 cf]					8086
 JCXZ		imm				[i:	a16 e3 rel8]				8086,NOLONG
 JECXZ		imm				[i:	a32 e3 rel8]				386
-JRCXZ		imm				[i:	a64 e3 rel8]				X64
+JRCXZ		imm				[i:	o64nw a64 e3 rel8]			X64
 JMP		imm|short			[i:	eb rel8]				8086
 JMP		imm				[i:	jmp8 eb rel8]				8086,ND
 JMP		imm				[i:	odf e9 rel]				8086,BND
@@ -5844,13 +5844,13 @@ MOVDIRI		mem32,reg32			[mr:	np 0f 38 f9 /r]				FUTURE,SD
 MOVDIRI		mem64,reg64			[mr:	o64 0f 38 f9 /r]			FUTURE,X64,SQ
 MOVDIR64B	reg16,mem512			[rm:	a16 66 0f 38 f8 /r]			FUTURE,NOLONG
 MOVDIR64B	reg32,mem512			[rm:	a32 66 0f 38 f8 /r]			FUTURE
-MOVDIR64B	reg64,mem512			[rm:	a64 66 0f 38 f8 /r]			FUTURE,X64
+MOVDIR64B	reg64,mem512			[rm:	o64nw a64 66 0f 38 f8 /r]		FUTURE,X64
 PCONFIG		void				[	np 0f 01 c5]				FUTURE
 TPAUSE		reg32				[m:	66 0f ae /6]				FUTURE
 TPAUSE		reg32,reg_edx,reg_eax		[m--:	66 0f ae /6]				FUTURE,ND
 UMONITOR	reg16				[m:	a16 f3 0f ae /6]			FUTURE,NOLONG
 UMONITOR	reg32				[m:	a32 f3 0f ae /6]			FUTURE
-UMONITOR	reg64				[m:	a64 f3 0f ae /6]			FUTURE,X64
+UMONITOR	reg64				[m:	o64nw a64 f3 0f ae /6]			FUTURE,X64
 UMWAIT		reg32				[m:	f2 0f ae /6]				FUTURE
 UMWAIT		reg32,reg_edx,reg_eax		[m--:	f2 0f ae /6]				FUTURE,ND
 WBNOINVD	void				[	f3 0f 09]				FUTURE
