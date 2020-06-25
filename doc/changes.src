@@ -9,6 +9,16 @@ since 2007.
 
 \S{cl-2.15} Version 2.15
 
+\b The comparison and booleanizing operators can now be used in any
+expression context, not just \c{%if}. See \k{expr}.
+
+\b New operator \c{?} ... \c{:}.  See \k{exptri}.
+
+\b Signed shift operators \c{<<<} and \c{>>>}.  See \k{expshift}.
+
+\b The MASM \c{DUP} syntax for data definitions is now supported, in a
+somewhat enhanced form. See \k{db}.
+
 \b Warn for strange legacy behavior regarding empty arguments in
 multi-line macro expansion, but try to match legacy behavior in most
 cases. Legacy behavior can be disabled with the directive \c{%pragma

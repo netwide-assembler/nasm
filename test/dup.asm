@@ -12,10 +12,10 @@
 	db 6 dup (33, 34)
 	db 6 dup (33, 34), 35
 	db 7 dup (99)
-	db 7 dup (?,?)
+	db 7 dup dword (?, word ?,?)
 	dw byte (?,44)
 
-	dw 0xcc, 4 dup byte ('PQR'), ?, 0xabcd
+	dw 3 dup (0xcc, 4 dup byte ('PQR'), ?), 0xabcd
 
 	dd 16 dup (0xaaaa, ?, 0xbbbbbb)
 	dd 64 dup (?)
