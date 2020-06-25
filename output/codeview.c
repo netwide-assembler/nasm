@@ -792,31 +792,27 @@ static void build_symbol_table(struct coff_Section *const sect)
 static void build_type_table(struct coff_Section *const sect)
 {
     uint16_t field_len;
-    struct cv8_symbol *sym;
+    uint32_t typeindex = 0x1000;
+    uint32_t idx_arglist;
 
     section_write32(sect, 0x00000004);
 
-    saa_rewind(cv8_state.symbols);
-    while ((sym = saa_rstruct(cv8_state.symbols))) {
-        if (sym->type != SYMTYPE_PROC)
-            continue;
+    /* empty argument list type */
+    field_len = 2 + 4;
+    section_write16(sect, field_len);
+    section_write16(sect, 0x1201); /* ARGLIST */
+    section_write32(sect, 0); /* num params */
+    idx_arglist = typeindex++;
 
-        /* proc leaf */
+    /* procedure type: void proc(void) */
+    field_len = 2 + 4 + 1 + 1 + 2 + 4;
+    section_write16(sect, field_len);
+    section_write16(sect, 0x1008); /* PROC type */
 
-        field_len = 2 + 4 + 4 + 4 + 2;
-        section_write16(sect, field_len);
-        section_write16(sect, 0x1008); /* PROC type */
-
-        section_write32(sect, 0x00000003); /* return type */
-        section_write32(sect, 0); /* calling convention (default) */
-        section_write32(sect, sym->typeindex);
-        section_write16(sect, 0); /* # params */
-
-        /* arglist */
-
-        field_len = 2 + 4;
-        section_write16(sect, field_len);
-        section_write16(sect, 0x1201); /* ARGLIST */
-        section_write32(sect, 0); /*num params */
-    }
+    section_write32(sect, 0x00000003); /* return type VOID */
+    section_write8(sect, 0);  /* calling convention (default) */
+    section_write8(sect, 0);  /* function attributes */
+    section_write16(sect, 0); /* # params */
+    section_write32(sect, idx_arglist); /* argument list type */
+    /* idx_voidfunc = typeindex++; */
 }
