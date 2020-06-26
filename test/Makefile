@@ -23,6 +23,9 @@ $(NASM):
 %.o: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f elf32 -gdwarf -o $@ -MD $@.dep -l $@.lst $<
 
+%.ox: %.asm $(NASMDEP)
+	$(NASM) $(NASMOPT) -f elfx32 -gdwarf -o $@ -MD $@.dep -l $@.lst $<
+
 %.o64: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f elf64 -gdwarf -o $@ -MD $@.dep -l $@.lst $<
 
