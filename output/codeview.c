@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -609,9 +609,9 @@ static void write_linenumber_table(struct coff_Section *const sect)
     }
 }
 
-static uint16_t write_symbolinfo_obj(struct coff_Section *sect)
+static uint32_t write_symbolinfo_obj(struct coff_Section *sect)
 {
-    uint16_t obj_len;
+    uint32_t obj_len;
 
     obj_len = 2 + 4 + cv8_state.outfile.namebytes;
 
@@ -623,11 +623,11 @@ static uint16_t write_symbolinfo_obj(struct coff_Section *sect)
     return obj_len;
 }
 
-static uint16_t write_symbolinfo_properties(struct coff_Section *sect,
+static uint32_t write_symbolinfo_properties(struct coff_Section *sect,
         const char *const creator_str)
 {
     /* https://github.com/Microsoft/microsoft-pdb/blob/1d60e041/include/cvinfo.h#L3313 */
-    uint16_t creator_len;
+    uint32_t creator_len;
 
     creator_len = 2 + 4 + 2 + 3*2 + 3*2 + strlen(creator_str)+1 + 2;
 
@@ -671,9 +671,9 @@ static uint16_t write_symbolinfo_properties(struct coff_Section *sect,
     return creator_len;
 }
 
-static uint16_t write_symbolinfo_symbols(struct coff_Section *sect)
+static uint32_t write_symbolinfo_symbols(struct coff_Section *sect)
 {
-    uint16_t len = 0, field_len;
+    uint32_t len = 0, field_len;
     uint32_t field_base;
     struct cv8_symbol *sym;
 
@@ -727,7 +727,7 @@ static uint16_t write_symbolinfo_symbols(struct coff_Section *sect)
 static void write_symbolinfo_table(struct coff_Section *const sect)
 {
     static const char creator_str[] = "The Netwide Assembler " NASM_VER;
-    uint16_t obj_length, creator_length, sym_length;
+    uint32_t obj_length, creator_length, sym_length;
     uint32_t field_length = 0, out_len;
 
     nasm_assert(cv8_state.outfile.namebytes);
@@ -791,7 +791,7 @@ static void build_symbol_table(struct coff_Section *const sect)
 
 static void build_type_table(struct coff_Section *const sect)
 {
-    uint16_t field_len;
+    uint32_t field_len;
     uint32_t typeindex = 0x1000;
     uint32_t idx_arglist;
 
