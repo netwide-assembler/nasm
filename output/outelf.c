@@ -3438,29 +3438,31 @@ static void dwarf_generate(void)
     saa_rnbytes(plinesrel, pbuf, saalen);
     saa_free(plinesrel);
 
-    /* build frame section */
+    /* build .debug_frame section */
     if (0) {
-        /* This only applies if there is at least one frame defined */
         framelen = 4;
         framebuf = pbuf = nasm_malloc(framelen);
         WRITELONG(pbuf,framelen-4); /* initial length */
     } else {
+        /* Leave .debug_frame empty if not used! */
         framelen = 0;
     }
 
-    /* build loc section */
-    loclen = 16;
-    locbuf = pbuf = nasm_malloc(loclen);
-    if (is_elf32()) {
-        WRITELONG(pbuf,0);  /* null  beginning offset */
-        WRITELONG(pbuf,0);  /* null  ending offset */
-    } else if (is_elfx32()) {
-        WRITELONG(pbuf,0);  /* null  beginning offset */
-        WRITELONG(pbuf,0);  /* null  ending offset */
+    /* build .debug_loc section */
+    if (0) {
+        loclen = 16;
+        locbuf = pbuf = nasm_malloc(loclen);
+        if (is_elf32() || is_elfx32()) {
+            WRITELONG(pbuf,0);  /* null  beginning offset */
+            WRITELONG(pbuf,0);  /* null  ending offset */
+        } else {
+            nasm_assert(is_elf64());
+            WRITEDLONG(pbuf,0);  /* null  beginning offset */
+            WRITEDLONG(pbuf,0);  /* null  ending offset */
+        }
     } else {
-        nasm_assert(is_elf64());
-        WRITEDLONG(pbuf,0);  /* null  beginning offset */
-        WRITEDLONG(pbuf,0);  /* null  ending offset */
+        /* Leave .debug_frame empty if not used! */
+        loclen = 0;
     }
 }
 
