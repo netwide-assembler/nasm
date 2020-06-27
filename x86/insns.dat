@@ -5983,6 +5983,22 @@ ENCLS			void					[         np 0f 01 cf]				SGX,FUTURE
 ENCLU			void					[ 	  np 0f 01 d7]				SGX,FUTURE
 ENCLV			void					[	  np 0f 01 c0]				SGX,FUTURE
 
+;# Intel Control-Flow Enforcement Technology (CET)
+CLRSSBSY	mem64				[m:	f3 0f ae /6]				CET,FUTURE
+ENDBR32		void				[	f3 0f 1e fb]				CET,FUTURE
+ENDBR64		void				[	f3 0f 1e fa]				CET,FUTURE
+INCSSPD		reg32				[m:	o32 f3 0f ae /5]			CET,FUTURE
+INCSSPQ		reg64				[m:	o64 f3 0f ae /5]			CET,FUTURE,X64
+RDSSPD		reg32				[m:	o32 f3 0f 1e /1]			CET,FUTURE
+RDSSPQ		reg64				[m:	o64 f3 0f 1e /1]			CET,FUTURE,X64
+RSTORSSP	mem64				[m:	f3 0f 01 /5]				CET,FUTURE
+SAVEPREVSSP	void				[	f3 0f 01 ea]				CET,FUTURE
+SETSSBSY	void				[	f3 0f 01 e8]				CET,FUTURE
+WRUSSD		mem,reg32			[mr:	o32 66 0f 38 f5 /r]			CET,FUTURE
+WRUSSQ		mem,reg64			[mr:	o64 66 0f 38 f5 /r]			CET,FUTURE,X64
+WRSSD		mem,reg32			[mr:	o32 0f 38 f6 /r]			CET,FUTURE
+WRSSQ		mem,reg64			[mr:	o64 0f 38 f6 /r]			CET,FUTURE,X64
+
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
 HINT_NOP0	rm16				[m:	o16 0f 18 /0]				P6,UNDOC

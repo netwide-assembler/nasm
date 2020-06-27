@@ -143,7 +143,7 @@ PERLREQ = x86\insnsb.c x86\insnsa.c x86\insnsd.c x86\insnsi.h x86\insnsn.c \
 	  x86\iflag.c x86\iflaggen.h \
 	  macros\macros.c \
 	  asm\pptok.ph asm\directbl.c asm\directiv.h \
-	  asm\warnings.c include\warnings.h \
+	  asm\warnings.c include\warnings.h doc\warnings.src \
 	  version.h version.mac version.mak nsis\version.nsh
 
 INSDEP = x86\insns.dat x86\insns.pl x86\insns-iflags.ph x86\iflags.ph

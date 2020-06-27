@@ -7,6 +7,15 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.15.01} Version 2.15.01
+
+\b Fix building the documentation from the release archive. For 2.15,
+the user has to do \c{make warnings} manually in the main directory in
+order to be able to build the documentation, which means Perl needs to
+be installed on the system.
+
+\b Add instructions for Intel Control Flow Enforcement Technology (CET).
+
 \S{cl-2.15} Version 2.15
 
 \b The comparison and booleanizing operators can now be used in any
