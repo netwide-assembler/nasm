@@ -40,7 +40,7 @@
 #include "nctype.h"
 
 #include "nasm.h"
-#include "float.h"
+#include "floats.h"
 #include "error.h"
 
 /*

@@ -88,6 +88,7 @@
 \IR{$, prefix} \c{$}, prefix
 \IR{$$} \c{$$} token
 \IR{%} \c{%} operator
+\IR{%db} \c{%} prefix to \c{DB} lists
 \IR{%%} \c{%%} operator
 \IR{%+1} \c{%+1} and \c{%-1} syntax
 \IA{%-1}{%+1}
@@ -100,14 +101,19 @@
 \IR{//} \c{//} operator
 \IR{<} \c{<} operator
 \IR{<<} \c{<<} operator
+\IR{<<<} \c{<<<} operator
+\IR{<=>} \c{<=>} operator
 \IR{<=} \c{<=} operator
 \IR{<>} \c{<>} operator
+\IR{<=>} \c{<=>} operator
 \IR{=} \c{=} operator
 \IR{==} \c{==} operator
 \IR{>} \c{>} operator
 \IR{>=} \c{>=} operator
 \IR{>>} \c{>>} operator
-\IR{?} \c{?} MASM syntax
+\IR{>>>} \c{>>>} operator
+\IR{?db} \c{?}, data syntax
+\IR{?op} \c{?}, operator
 \IR{^} \c{^} operator
 \IR{^^} \c{^^} operator
 \IR{|} \c{|} operator
@@ -161,6 +167,7 @@ in ELF
 \IR{dos} DOS
 \IR{dos archive} DOS archive
 \IR{dos source archive} DOS source archive
+\IR{dup} \c{DUP}
 \IA{effective address}{effective addresses}
 \IA{effective-address}{effective addresses}
 \IR{elf} ELF
@@ -202,6 +209,7 @@ convention
 \IR{macho64} \c{macho64}
 \IR{macos x} MacOS X
 \IR{masm} MASM
+\IR{masmdb} MASM, \c{DB} syntax
 \IA{memory reference}{memory references}
 \IR{minix} Minix
 \IA{misc directory}{misc subdirectory}
@@ -1112,13 +1120,14 @@ on a misunderstanding by the authors.
 For historical reasons, NASM uses the keyword \i\c{TWORD} where MASM
 and compatible assemblers use \i\c{TBYTE}.
 
-NASM does not declare \i{uninitialized storage} in the same way as
-MASM: where a MASM programmer might use \c{stack db 64 dup (?)},
-NASM requires \c{stack resb 64}, intended to be read as `reserve 64
-bytes'. For a limited amount of compatibility, since NASM treats
+Historically, NASM does not declare \i{uninitialized storage} in the
+same way as MASM: where a MASM programmer might use \c{stack db 64 dup
+(?)}, NASM requires \c{stack resb 64}, intended to be read as `reserve
+64 bytes'. For a limited amount of compatibility, since NASM treats
 \c{?} as a valid character in symbol names, you can code \c{? equ 0}
 and then writing \c{dw ?} will at least do something vaguely useful.
-\I\c{RESB}\i\c{DUP} is still not a supported syntax, however.
+
+As of NASM 2.15, the MASM syntax is also supported.
 
 In addition to all of this, macros and directives work completely
 differently to MASM. See \k{preproc} and \k{directive} for further
@@ -1254,6 +1263,49 @@ the output file. They can be invoked in a wide range of ways:
 \c{DT}, \c{DO}, \c{DY} and \c{DZ} do not accept \i{numeric constants}
 as operands.
 
+\I{masmdb} Starting in NASM 2.15, a the following MASM-like features
+have been implemented:
+
+\b A \I{?db}\c{?} argument to declare uninitialized data:
+
+\c       db    ?                   ; uninitialized data
+
+\b A superset of the \i\c{DUP} syntax. The NASM version of this has
+the following syntax specification; capital letters indicate literal
+keywords:
+
+\c      dx      := DB | DW | DD | DQ | DT | DO | DY | DZ
+\c      type    := BYTE | WORD | DWORD | QWORD | TWORD | OWORD | YWORD | ZWORD
+\c      atom    := expression | string | float | '?'
+\c      parlist := '(' value [, value ...] ')'
+\c      duplist := expression DUP [type] ['%'] parlist
+\c      list    := duplist | '%' parlist | type ['%'] parlist
+\c      value   := atom | type value | list
+\c
+\c      stmt    := dx value [, value...]
+
+\> Note that a \e{list} needs to be prefixed with a \I{%db}\c{%} sign unless
+prefixed by either \c{DUP} or a \e{type} in order to avoid confusing it with
+a parentesis starting an expression. The following expressions are all
+valid:
+
+\c        db 33
+\c        db (44)		; Integer expression
+\c ;      db (44,55)      	; Invalid - error
+\c        db %(44,55)
+\c        db %('XX','YY')
+\c        db ('AA')		; Integer expression - outputs single byte
+\c        db %('BB')		; List, containing a string
+\c        db ?
+\c        db 6 dup (33)
+\c        db 6 dup (33, 34)
+\c        db 6 dup (33, 34), 35
+\c        db 7 dup (99)
+\c        db 7 dup dword (?, word ?, ?)
+\c        dw byte (?,44)
+\c        dw 3 dup (0xcc, 4 dup byte ('PQR'), ?), 0xabcd
+\c        dd 16 dup (0xaaaa, ?, 0xbbbbbb)
+\c        dd 64 dup (?)
 
 \S{resb} \c{RESB} and Friends: Declaring \i{Uninitialized} Data
 
@@ -1261,11 +1313,9 @@ as operands.
 \i\c{RESO}, \i\c{RESY} and \i\c\{RESZ} are designed to be used in the
 BSS section of a module: they declare \e{uninitialized} storage
 space. Each takes a single operand, which is the number of bytes,
-words, doublewords or whatever to reserve.  As stated in \k{qsother},
-NASM does not support the MASM/TASM syntax of reserving uninitialized
-space by writing \I\c{?}\c{DW ?} or similar things: this is what it
-does instead. The operand to a \c{RESB}-type pseudo-instruction is a
-\i\e{critical expression}: see \k{crit}.
+words, doublewords or whatever to reserve. The operand to a
+\c{RESB}-type pseudo-instruction is a \i\e{critical expression}: see
+\k{crit}.
 
 For example:
 
@@ -1274,6 +1324,17 @@ For example:
 \c realarray       resq    10              ; array of ten reals
 \c ymmval:         resy    1               ; one YMM register
 \c zmmvals:        resz    32              ; 32 ZMM registers
+
+\I{masmdb} Since NASM 2.15, the MASM syntax of using \I{?db}\c{?}
+and \i\c{DUP} in the \c{D}\e{x} directives is also supported. Thus,
+the above example could also be written:
+
+\c buffer:         db      64 dup (?)      ; reserve 64 bytes
+\c wordvar:        dw      ?               ; reserve a word
+\c realarray       dq      10 dup (?)      ; array of ten reals
+\c ymmval:         dy      ?               ; one YMM register
+\c zmmvals:        dz      32 dup (?)      ; 32 ZMM registers
+
 
 \S{incbin} \i\c{INCBIN}: Including External \i{Binary Files}
 
@@ -1726,12 +1787,71 @@ into the section you are by using \c{($-$$)}.
 The arithmetic \i{operators} provided by NASM are listed here, in
 increasing order of \i{precedence}.
 
+A \e{boolean} value is true if nonzero and false if zero. The
+operators which return a boolean value always return 1 for true and 0
+for false.
+
+
+\S{exptri} \I{?op}\c{?} ... \c{:}: Conditional Operator
+
+The syntax of this operator, similar to the C conditional operator, is:
+
+\e{boolean} \c{?} \e{trueval} \c{:} \e{falseval}
+
+This operator evaluates to \e{trueval} if \e{boolean} is true,
+otherwise to \e{falseval}.
+
+Note that NASM allows \c{?} characters in symbol names. Therefore, it
+is highly advisable to always put spaces around the \c{?} and \c{:}
+characters.
+
+
+\S{expbor}: \i\c{||}: \i{Boolean OR} Operator
+
+The \c{||} operator gives a boolean OR: it evaluates to 1 if both sides of
+the expression are nonzero, otherwise 0.
+
+
+\S{expbxor}: \i\c{^^}: \i{Boolean XOR} Operator
+
+The \c{^^} operator gives a boolean XOR: it evaluates to 1 if any one side of
+the expression is nonzero, otherwise 0.
+
+
+\S{expband}: \i\c{&&}: \i{Boolean AND} Operator
+
+The \c{&&} operator gives a boolean AND: it evaluates to 1 if both sides of
+the expression is nonzero, otherwise 0.
+
+
+\S{exprel}: \i{Comparison Operators}
+
+NASM supports the following comparison operators:
+
+\b \i\c{=} or \i\c{==} compare for equality.
+
+\b \i\c{!=} or \i\c{<>} compare for inequality.
+
+\b \i\c{<} compares signed less than.
+
+\b \i\c{<=} compares signed less than or equal.
+
+\b \i\c{>} compares signed greater than.
+
+\b \i\c{>=} compares signed greather than or equal.
+
+These operators evaluate to 0 for false or 1 for true.
+
+\b \i{<=>} does a signed comparison, and evaluates to -1 for less
+than, 0 for equal, and 1 for greater than.
+
+At this time, NASM does not provide unsigned comparison operators.
+
 
 \S{expor} \i\c{|}: \i{Bitwise OR} Operator
 
 The \c{|} operator gives a bitwise OR, exactly as performed by the
-\c{OR} machine instruction. Bitwise OR is the lowest-priority
-arithmetic operator supported by NASM.
+\c{OR} machine instruction.
 
 
 \S{expxor} \i\c{^}: \i{Bitwise XOR} Operator
@@ -1744,13 +1864,18 @@ arithmetic operator supported by NASM.
 \c{&} provides the bitwise AND operation.
 
 
-\S{expshift} \i\c{<<} and \i\c{>>}: \i{Bit Shift} Operators
+\S{expshift} \i{Bit Shift} Operators
 
-\c{<<} gives a bit-shift to the left, just as it does in C. So \c{5<<3}
-evaluates to 5 times 8, or 40. \c{>>} gives a bit-shift to the
-right; in NASM, such a shift is \e{always} unsigned, so that
-the bits shifted in from the left-hand end are filled with zero
-rather than a sign-extension of the previous highest bit.
+\i\c{<<} gives a bit-shift to the left, just as it does in C. So
+\c{5<<3} evaluates to 5 times 8, or 40. \i\c{>>} gives an \e{unsigned}
+(logical) bit-shift to the right; the bits shifted in from the left
+are set to zero.
+
+\i\c{<<<} gives a bit-shift to the left, exactly equivalent to the
+\c{<<} operator; it is included for completeness. \i\c{>>>} gives an
+\e{signed} (arithmetic) bit-shift to the right; the bits shifted in
+from the left are filled with copies of the most significant (sign)
+bit.
 
 
 \S{expplmi} \I{+ opaddition}\c{+} and \I{- opsubtraction}\c{-}:
@@ -1760,21 +1885,25 @@ The \c{+} and \c{-} operators do perfectly ordinary addition and
 subtraction.
 
 
-\S{expmul} \i\c{*}, \i\c{/}, \i\c{//}, \i\c{%} and \i\c{%%}:
-\i{Multiplication} and \i{Division}
+\S{expmul} \i{Multiplication}, \i{Division} and \i{Modulo}
 
-\c{*} is the multiplication operator. \c{/} and \c{//} are both
-division operators: \c{/} is \i{unsigned division} and \c{//} is
-\i{signed division}. Similarly, \c{%} and \c{%%} provide \I{unsigned
-modulo}\I{modulo operators}unsigned and
-\i{signed modulo} operators respectively.
+\i\c{*} is the multiplication operator.
 
-NASM, like ANSI C, provides no guarantees about the sensible
-operation of the signed modulo operator.
+\i\c{/} and \i\c{//} are both division operators: \c{/} is \i{unsigned
+division} and \c{//} is \i{signed division}.
+
+Similarly, \i\c{%} and \i\c{%%} provide \I{unsigned modulo}\I{modulo
+operators} unsigned and \i{signed modulo} operators respectively.
 
 Since the \c{%} character is used extensively by the macro
 \i{preprocessor}, you should ensure that both the signed and unsigned
 modulo operators are followed by white space wherever they appear.
+
+NASM, like ANSI C, provides no guarantees about the sensible
+operation of the signed modulo operator. On most systems it will match
+the signed division operator, such that:
+
+\c      b * (a // b) + (a %% b) = a       (b != 0)
 
 
 \S{expmul} \i{Unary Operators}
@@ -1803,7 +1932,7 @@ multiple \i{segments}, it is often necessary to be able to refer to
 the \I{segment address}segment part of the address of a symbol. NASM
 supports the \c{SEG} operator to perform this function.
 
-The \c{SEG} operator returns the \i\e{preferred} segment base of a
+The \c{SEG} operator evaluates to the \i\e{preferred} segment base of a
 symbol, defined as the segment base relative to which the offset of
 the symbol makes sense. So the code
 
@@ -3085,20 +3214,6 @@ preprocessor loop: see \k{rep} for a detailed example.
 The expression given to \c{%if}, and its counterpart \i\c{%elif}, is
 a critical expression (see \k{crit}).
 
-\c{%if} extends the normal NASM expression syntax, by providing a
-set of \i{relational operators} which are not normally available in
-expressions. The operators \i\c{=}, \i\c{<}, \i\c{>}, \i\c{<=},
-\i\c{>=} and \i\c{<>} test equality, less-than, greater-than,
-less-or-equal, greater-or-equal and not-equal respectively. The
-C-like forms \i\c{==} and \i\c{!=} are supported as alternative
-forms of \c{=} and \c{<>}. In addition, low-priority logical
-operators \i\c{&&}, \i\c{^^} and \i\c{||} are provided, supplying
-\i{logical AND}, \i{logical XOR} and \i{logical OR}. These work like
-the C logical operators (although C has no logical XOR), in that
-they always return either 0 or 1, and treat any non-zero input as 1
-(so that \c{^^}, for example, returns 1 if exactly one of its inputs
-is zero, and 0 otherwise). The relational operators also return 1
-for true and 0 for false.
 
 Like other \c{%if} constructs, \c{%if} has a counterpart
 \i\c{%elif}, and negative forms \i\c{%ifn} and \i\c{%elifn}.

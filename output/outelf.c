@@ -176,7 +176,32 @@ static void stabs_generate(void);
 static void stabs_cleanup(void);
 
 /* dwarf debugging routines */
-static void dwarf_init(void);
+
+/* This should match the order in elf_write() */
+enum dwarf_sect {
+    DWARF_ARANGES,
+    DWARF_RELA_ARANGES,
+    DWARF_PUBNAMES,
+    DWARF_INFO,
+    DWARF_RELA_INFO,
+    DWARF_ABBREV,
+    DWARF_LINE,
+    DWARF_RELA_LINE,
+    DWARF_FRAME,
+    DWARF_LOC,
+    DWARF_NSECT
+};
+
+struct dwarf_format {
+    uint16_t dwarf_version;
+    uint16_t sect_version[DWARF_NSECT];
+    /* ... add more here to generalize further */
+};
+const struct dwarf_format *dwfmt;
+
+static void dwarf32_init(void);
+static void dwarfx32_init(void);
+static void dwarf64_init(void);
 static void dwarf_linenum(const char *filename, int32_t linenumber, int32_t);
 static void dwarf_output(int, void *);
 static void dwarf_generate(void);
@@ -2407,7 +2432,7 @@ static const struct pragma_facility elf_pragma_list[] =
 static const struct dfmt elf32_df_dwarf = {
     "ELF32 (i386) dwarf (newer)",
     "dwarf",
-    dwarf_init,
+    dwarf32_init,
     dwarf_linenum,
     null_debug_deflabel,
     null_debug_directive,
@@ -2459,7 +2484,7 @@ const struct ofmt of_elf32 = {
 static const struct dfmt elf64_df_dwarf = {
     "ELF64 (x86-64) dwarf (newer)",
     "dwarf",
-    dwarf_init,
+    dwarf64_init,
     dwarf_linenum,
     null_debug_deflabel,
     null_debug_directive,
@@ -2511,7 +2536,7 @@ const struct ofmt of_elf64 = {
 static const struct dfmt elfx32_df_dwarf = {
     "ELFx32 (x86-64) dwarf (newer)",
     "dwarf",
-    dwarf_init,
+    dwarfx32_init,
     dwarf_linenum,
     null_debug_deflabel,
     null_debug_directive,
@@ -2939,9 +2964,67 @@ static void stabs_cleanup(void)
 
 /* dwarf routines */
 
-static void dwarf_init(void)
+static void dwarf_init_common(const struct dwarf_format *fmt)
 {
+    dwfmt = fmt;
     ndebugs = 3; /* 3 debug symbols */
+}
+
+static void dwarf32_init(void)
+{
+    static const struct dwarf_format dwfmt32 = {
+        2,                          /* DWARF 2 */
+        /* section version numbers: */
+        { 2,                        /* .debug_aranges */
+          0,                        /* .rela.debug_aranges */
+          2,                        /* .debug_pubnames */
+          2,                        /* .debug_info */
+          0,                        /* .rela.debug_info */
+          0,                        /* .debug_abbrev */
+          2,                        /* .debug_line */
+          0,                        /* .rela.debug_line */
+          1,                        /* .debug_frame */
+          0 }                       /* .debug_loc */
+    };
+    dwarf_init_common(&dwfmt32);
+}
+
+static void dwarfx32_init(void)
+{
+    static const struct dwarf_format dwfmtx32 = {
+        3,                          /* DWARF 3 */
+        /* section version numbers: */
+        { 2,                        /* .debug_aranges */
+          0,                        /* .rela.debug_aranges */
+          2,                        /* .debug_pubnames */
+          3,                        /* .debug_info */
+          0,                        /* .rela.debug_info */
+          0,                        /* .debug_abbrev */
+          3,                        /* .debug_line */
+          0,                        /* .rela.debug_line */
+          3,                        /* .debug_frame */
+          0 }                       /* .debug_loc */
+    };
+    dwarf_init_common(&dwfmtx32);
+}
+
+static void dwarf64_init(void)
+{
+    static const struct dwarf_format dwfmt64 = {
+        3,                          /* DWARF 3 */
+        /* section version numbers: */
+        { 2,                        /* .debug_aranges */
+          0,                        /* .rela.debug_aranges */
+          2,                        /* .debug_pubnames */
+          3,                        /* .debug_info */
+          0,                        /* .rela.debug_info */
+          0,                        /* .debug_abbrev */
+          3,                        /* .debug_line */
+          0,                        /* .rela.debug_line */
+          3,                        /* .debug_frame */
+          0 }                       /* .debug_loc */
+    };
+    dwarf_init_common(&dwfmt64);
 }
 
 static void dwarf_linenum(const char *filename, int32_t linenumber,
@@ -3026,7 +3109,7 @@ static void dwarf_generate(void)
         /* and build aranges section */
         paranges = saa_init(1L);
         parangesrel = saa_init(1L);
-        saa_write16(paranges,2);    /* dwarf version */
+        saa_write16(paranges, dwfmt->sect_version[DWARF_ARANGES]);
         saa_write32(parangesrel, paranges->datalen+4);
         saa_write32(parangesrel, (dwarf_infosym << 8) +  R_386_32); /* reloc to info */
         saa_write32(parangesrel, 0);
@@ -3071,7 +3154,7 @@ static void dwarf_generate(void)
         /* and build aranges section */
         paranges = saa_init(1L);
         parangesrel = saa_init(1L);
-        saa_write16(paranges,3);            /* dwarf version */
+        saa_write16(paranges, dwfmt->sect_version[DWARF_ARANGES]);
         saa_write32(parangesrel, paranges->datalen+4);
         saa_write32(parangesrel, (dwarf_infosym << 8) +  R_X86_64_32); /* reloc to info */
         saa_write32(parangesrel, 0);
@@ -3117,7 +3200,7 @@ static void dwarf_generate(void)
         /* and build aranges section */
         paranges = saa_init(1L);
         parangesrel = saa_init(1L);
-        saa_write16(paranges,3);            /* dwarf version */
+        saa_write16(paranges, dwfmt->sect_version[DWARF_ARANGES]);
         saa_write64(parangesrel, paranges->datalen+4);
         saa_write64(parangesrel, (dwarf_infosym << 32) +  R_X86_64_32); /* reloc to info */
         saa_write64(parangesrel, 0);
@@ -3166,23 +3249,28 @@ static void dwarf_generate(void)
     saa_free(parangesrel);
 
     /* build pubnames section */
-    ppubnames = saa_init(1L);
-    saa_write16(ppubnames,3);   /* dwarf version */
-    saa_write32(ppubnames,0);   /* offset into info */
-    saa_write32(ppubnames,0);   /* space used in info */
-    saa_write32(ppubnames,0);   /* end of list */
-    saalen = ppubnames->datalen;
-    pubnameslen = saalen + 4;
-    pubnamesbuf = pbuf = nasm_malloc(pubnameslen);
-    WRITELONG(pbuf,saalen);     /* initial length */
-    saa_rnbytes(ppubnames, pbuf, saalen);
-    saa_free(ppubnames);
+    if (0) {
+        ppubnames = saa_init(1L);
+        saa_write16(ppubnames,dwfmt->sect_version[DWARF_PUBNAMES]);
+        saa_write32(ppubnames,0);   /* offset into info */
+        saa_write32(ppubnames,0);   /* space used in info */
+        saa_write32(ppubnames,0);   /* end of list */
+        saalen = ppubnames->datalen;
+        pubnameslen = saalen + 4;
+        pubnamesbuf = pbuf = nasm_malloc(pubnameslen);
+        WRITELONG(pbuf,saalen);     /* initial length */
+        saa_rnbytes(ppubnames, pbuf, saalen);
+        saa_free(ppubnames);
+    } else {
+        /* Don't write a section without actual information */
+        pubnameslen = 0;
+    }
 
     if (is_elf32()) {
         /* build info section */
         pinfo = saa_init(1L);
         pinforel = saa_init(1L);
-        saa_write16(pinfo,2);       /* dwarf version */
+        saa_write16(pinfo, dwfmt->sect_version[DWARF_INFO]);
         saa_write32(pinforel, pinfo->datalen + 4);
         saa_write32(pinforel, (dwarf_abbrevsym << 8) +  R_386_32); /* reloc to abbrev */
         saa_write32(pinforel, 0);
@@ -3221,7 +3309,7 @@ static void dwarf_generate(void)
         /* build info section */
         pinfo = saa_init(1L);
         pinforel = saa_init(1L);
-        saa_write16(pinfo,3);			/* dwarf version */
+        saa_write16(pinfo, dwfmt->sect_version[DWARF_INFO]);
         saa_write32(pinforel, pinfo->datalen + 4);
         saa_write32(pinforel, (dwarf_abbrevsym << 8) + R_X86_64_32); /* reloc to abbrev */
         saa_write32(pinforel, 0);
@@ -3261,7 +3349,7 @@ static void dwarf_generate(void)
         /* build info section */
         pinfo = saa_init(1L);
         pinforel = saa_init(1L);
-        saa_write16(pinfo,3);			/* dwarf version */
+        saa_write16(pinfo, dwfmt->sect_version[DWARF_INFO]);
         saa_write64(pinforel, pinfo->datalen + 4);
         saa_write64(pinforel, (dwarf_abbrevsym << 32) +  R_X86_64_32); /* reloc to abbrev */
         saa_write64(pinforel, 0);
@@ -3376,7 +3464,7 @@ static void dwarf_generate(void)
     linelen = linepoff + totlen + 10;
     linebuf = pbuf = nasm_malloc(linelen);
     WRITELONG(pbuf,linelen-4);      /* initial length */
-    WRITESHORT(pbuf,3);             /* dwarf version */
+    WRITESHORT(pbuf,dwfmt->sect_version[DWARF_LINE]);
     WRITELONG(pbuf,linepoff);       /* offset to line number program */
     /* write line header */
     saalen = linepoff;
@@ -3438,24 +3526,31 @@ static void dwarf_generate(void)
     saa_rnbytes(plinesrel, pbuf, saalen);
     saa_free(plinesrel);
 
-    /* build frame section */
-    framelen = 4;
-    framebuf = pbuf = nasm_malloc(framelen);
-    WRITELONG(pbuf,framelen-4); /* initial length */
-
-    /* build loc section */
-    loclen = 16;
-    locbuf = pbuf = nasm_malloc(loclen);
-    if (is_elf32()) {
-        WRITELONG(pbuf,0);  /* null  beginning offset */
-        WRITELONG(pbuf,0);  /* null  ending offset */
-    } else if (is_elfx32()) {
-        WRITELONG(pbuf,0);  /* null  beginning offset */
-        WRITELONG(pbuf,0);  /* null  ending offset */
+    /* build .debug_frame section */
+    if (0) {
+        framelen = 4;
+        framebuf = pbuf = nasm_malloc(framelen);
+        WRITELONG(pbuf,framelen-4); /* initial length */
     } else {
-        nasm_assert(is_elf64());
-        WRITEDLONG(pbuf,0);  /* null  beginning offset */
-        WRITEDLONG(pbuf,0);  /* null  ending offset */
+        /* Leave .debug_frame empty if not used! */
+        framelen = 0;
+    }
+
+    /* build .debug_loc section */
+    if (0) {
+        loclen = 16;
+        locbuf = pbuf = nasm_malloc(loclen);
+        if (is_elf32() || is_elfx32()) {
+            WRITELONG(pbuf,0);  /* null  beginning offset */
+            WRITELONG(pbuf,0);  /* null  ending offset */
+        } else {
+            nasm_assert(is_elf64());
+            WRITEDLONG(pbuf,0);  /* null  beginning offset */
+            WRITEDLONG(pbuf,0);  /* null  ending offset */
+        }
+    } else {
+        /* Leave .debug_frame empty if not used! */
+        loclen = 0;
     }
 }
 
