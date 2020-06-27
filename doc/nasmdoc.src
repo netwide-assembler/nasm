@@ -923,10 +923,13 @@ shown in \k{opt-pragma} is the same as running this:
 
 \S{opt-limit} The \i\c{--limit-X} Option
 
-This option allows user to setup various maximum values for these:
+This option allows user to setup various maximum values after which
+NASM will terminate with a fatal error rather than consume arbitrary
+amount of compute time. Each limit can be set to a positive number or
+\c{unlimited}.
 
 \b\c{--limit-passes}: Number of maximum allowed passes. Default is
-effectively unlimited.
+\c{unlimited}.
 
 \b\c{--limit-stalled-passes}: Maximum number of allowed unfinished
 passes. Default is 1000.
@@ -946,12 +949,17 @@ under \c{%rep}. Default is 1000000.
 \b\c{--limit-eval}: This number sets the boundary condition of allowed
 expression length. Default is 8192 on most systems.
 
-\b\c{--limit-lines}: Total number of source lines as allowed to be
+\b\c{--limit-lines}: Total number of source lines allowed to be
 processed. Default is 2000000000.
 
-In example, running this limits the maximum line count to be 1000.
+For example, set the maximum line count to 1000:
 
 \c nasm --limit-lines 1000
+
+Limits can also be set via the directive \c{%pragma limit}, for
+example:
+
+\c %pragma limit lines 1000
 
 
 \S{opt-keep-all} The \i\c{--keep-all} Option
@@ -2492,23 +2500,37 @@ includes backwards compatibility aliases defined by NASM itself.
 To disable aliases without undefining them, use the \c{%aliases off}
 directive.
 
-To check whether an alias is defined, use \c{%ifdefalias}.
+To check whether an alias is defined, regardless of the existence of
+the aliased macro, use \c{%ifdefalias}.
 
-This 
+For example:
 
+\c %defalias OLD NEW
+\c    ; OLD and NEW both undefined
+\c %define NEW 123
+\c    ; OLD and NEW both 123
+\c %undef OLD
+\c    ; OLD and NEW both undefined
+\c %define OLD 456
+\c    ; OLD and NEW both 456
+\c %undefalias OLD
+\c    ; OLD undefined, NEW defined to 456
 
 \S{cond-comma} \i{Conditional Comma Operator}: \i\c{%,}
 
-As of version 2.15, NASM has conditional comma operator \c{%,} that expands to a
-comma unless followed by a null expansion, which allows suppressing the comma before an
-empty argument. For example, all the expressions below are valid:
+As of version 2.15, NASM has a conditional comma operator \c{%,} that
+expands to a comma \e{unless} followed by a null expansion, which
+allows suppressing the comma before an empty argument. This is
+especially useful with greedy single-line macros.
+
+For example, all the expressions below are valid:
 
 \c %define greedy(a,b,c+) a + 66 %, b * 3 %, c
 \c
-\c        db greedy(1,2)
-\c        db greedy(1,2,3)
-\c        db greedy(1,2,3,4)
-\c        db greedy(1,2,3,4,5)
+\c        db greedy(1,2)          ; db 1 + 66, 2 * 3
+\c        db greedy(1,2,3)        ; db 1 + 66, 2 * 3, 3
+\c        db greedy(1,2,3,4)      ; db 1 + 66, 2 * 3, 3, 4
+\c        db greedy(1,2,3,4,5)    ; db 1 + 66, 2 * 3, 3, 4, 5
 
 
 \H{strlen} \i{String Manipulation in Macros}
@@ -3402,8 +3424,8 @@ infinite loop in the preprocessor, which (on multitasking or
 multi-user systems) would typically cause all the system memory to
 be gradually used up and other applications to start crashing.
 
-Note a maximum repeat count is limited by 62 bit number, though it
-is hardly possible that you ever need anything bigger.
+Note the maximum repeat count is limited to the value specified by the
+\c{--limit-rep} option or \c{%pragma limit rep}, see \k{opt-limit}.
 
 
 \H{files} Source Files and Dependencies
