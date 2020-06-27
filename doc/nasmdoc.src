@@ -475,29 +475,38 @@ Use this option to specify listing output details.
 
 Supported options are:
 
-\c{-Lb}      show builtin macro packages (standard and \c{%use})
+\b \c{-Lb} show builtin macro packages (standard and \c{%use})
 
-\c{-Ld}      show byte and repeat counts in decimal, not hex
+\b \c{-Ld} show byte and repeat counts in decimal, not hex
 
-\c{-Le}      show the preprocessed input
+\b \c{-Le} show the preprocessed input
 
-\c{-Lf}      ignore \c{.nolist} and force listing output
+\b \c{-Lf} ignore \c{.nolist} and force listing output
 
-\c{-Lm}      show multi-line macro calls with expanded parameters
+\b \c{-Lm} show multi-line macro calls with expanded parameters
 
-\c{-Lp}      output a list file in every pass, in case of errors
+\b \c{-Lp} output a list file in every pass, in case of errors
 
-\c{-Ls}      show all single-line macro definitions
+\b \c{-Ls} show all single-line macro definitions
 
-\c{-Lw}      flush the output after every line (very slow!)
+\b \c{-Lw} flush the output after every line (very slow!)
 
-\c{-L+}      enable \e{all} listing options
+\b \c{-L+} enable \e{all} listing options
 
 These options can be enabled or disabled at runtime using the
 \c{%pragma list options} directive:
 
 \c %pragma list options [+|-]flags...
 
+For example, to turn on the \c{d} and \c{m} flags but disable the
+\c{s} flag:
+
+\c %pragma list options +dm -s
+
+For forward compatility reasons, an undefined flag will be
+ignored. Thus, a new flag introduced in a newer version of NASM can be
+specified without breaking older versions. Listing flags will always
+be a single alphanumeric character and are case sensitive.
 
 \S{opt-M} The \i\c{-M} Option: Generate \i{Makefile Dependencies}
 
@@ -910,7 +919,7 @@ Running this:
 
 \c nasm -f macho --pragma "macho gprefix _"
 
-is equivalent to the example in \k{opt-pfix}.
+is equivalent to the example in \k{opt-pfix}. See \k{pragma}.
 
 
 \S{opt-before} The \i\c{--before} Option
