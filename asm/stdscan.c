@@ -164,7 +164,7 @@ int stdscan(void *private_data, struct tokenval *tv)
              *!ptr [on] non-NASM keyword used in other assemblers
              *!  warns about keywords used in other assemblers that might
              *!  indicate a mistake in the source code.  Currently only the MASM
-             *!  \c{PTR} keyword is recognized.
+             *!  \c{PTR} keyword is recognized. See also \k{pkg_masm}.
              */
             nasm_warn(WARN_PTR, "`%s' is not a NASM keyword",
                        tv->t_charptr);

@@ -5946,7 +5946,7 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
      *!  The legacy behavior is quite strange and highly context-dependent,
      *!  and can be disabled with:
      *!-
-     *!  \c %pragma preproc sane_empty_expansion true
+     *!  \c      %pragma preproc sane_empty_expansion true
      *!-
      *!  It is highly recommended to use this option in new code.
      */
