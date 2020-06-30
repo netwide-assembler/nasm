@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -34,86 +34,202 @@
 /*
  * rbtree.c
  *
- * Simple implementation of a left-leaning red-black tree with 64-bit
- * integer keys.  The search operation will return the highest node <=
- * the key; only search and insert are supported, but additional
- * standard llrbtree operations can be coded up at will.
+ * Simple implementation of a "left-leaning threaded red-black tree"
+ * with 64-bit integer keys.  The search operation will return the
+ * highest node <= the key; only search and insert are supported, but
+ * additional standard llrbtree operations can be coded up at will.
  *
  * See http://www.cs.princeton.edu/~rs/talks/LLRB/RedBlack.pdf for
  * information about left-leaning red-black trees.
+ *
+ * The "threaded" part means that left and right pointers that would
+ * otherwise be NULL are pointers to the in-order predecessor or
+ * successor node. The only pointers that are NULL are the very left-
+ * and rightmost, for which no corresponding side node exists.
+ *
+ * This, among other things, allows for efficient predecessor and
+ * successor operations without requiring dedicated space for a parent
+ * pointer.
+ *
+ * This implementation is robust for identical key values; such keys
+ * will not have their insertion order preserved, and after insertion
+ * of unrelated keys a lookup may return a different node for the
+ * duplicated key, but the prev/next operations will always enumerate
+ * all entries.
+ *
+ * The NULL pointers at the end are considered predecessor/successor
+ * pointers, so if the corresponding flags are clear it is always safe
+ * to access the pointed-to object without an explicit NULL pointer
+ * check.
  */
 
 #include "rbtree.h"
+#include "nasmlib.h"
 
-struct rbtree *rb_search(struct rbtree *tree, uint64_t key)
+struct rbtree *rb_search(const struct rbtree *tree, uint64_t key)
 {
-    struct rbtree *best = NULL;
+    const struct rbtree *best = NULL;
 
-    while (tree) {
-	if (tree->key == key)
-	    return tree;
-	else if (tree->key > key)
-	    tree = tree->left;
-	else {
-	    best = tree;
-	    tree = tree->right;
+    if (tree) {
+        while (true) {
+            if (tree->key > key) {
+                if (tree->m.flags & RBTREE_NODE_PRED)
+                    break;
+                tree = tree->m.left;
+            } else {
+                best = tree;
+                if (tree->key == key || (tree->m.flags & RBTREE_NODE_SUCC))
+                    break;
+                tree = tree->m.right;
+            }
 	}
     }
-    return best;
+    return (struct rbtree *)best;
 }
 
-static bool is_red(struct rbtree *h)
+/* Reds two left in a row? */
+static inline bool is_red_left_left(struct rbtree *h)
 {
-    return h && h->red;
+    return !(h->m.flags & RBTREE_NODE_PRED) &&
+        !(h->m.left->m.flags & (RBTREE_NODE_BLACK|RBTREE_NODE_PRED)) &&
+        !(h->m.left->m.left->m.flags & RBTREE_NODE_BLACK);
 }
 
-static struct rbtree *rotate_left(struct rbtree *h)
+/* Node to the right is red? */
+static inline bool is_red_right(struct rbtree *h)
 {
-    struct rbtree *x = h->right;
-    h->right = x->left;
-    x->left = h;
-    x->red = x->left->red;
-    x->left->red = true;
+    return !(h->m.flags & RBTREE_NODE_SUCC) &&
+           !(h->m.right->m.flags & RBTREE_NODE_BLACK);
+}
+
+/* Both the left and right hand nodes are red? */
+static inline bool is_red_both(struct rbtree *h)
+{
+    return !(h->m.flags & (RBTREE_NODE_PRED|RBTREE_NODE_SUCC))
+        && !(h->m.left->m.flags & h->m.right->m.flags & RBTREE_NODE_BLACK);
+}
+
+static inline struct rbtree *rotate_left(struct rbtree *h)
+{
+    struct rbtree *x = h->m.right;
+    enum rbtree_node_flags hf = h->m.flags;
+    enum rbtree_node_flags xf = x->m.flags;
+
+    if (xf & RBTREE_NODE_PRED) {
+        h->m.right = x;
+        h->m.flags = (hf & RBTREE_NODE_PRED)  | RBTREE_NODE_SUCC;
+    } else {
+        h->m.right = x->m.left;
+        h->m.flags = hf & RBTREE_NODE_PRED;
+    }
+    x->m.flags = (hf & RBTREE_NODE_BLACK) | (xf & RBTREE_NODE_SUCC);
+    x->m.left = h;
+
     return x;
 }
 
-static struct rbtree *rotate_right(struct rbtree *h)
+static inline struct rbtree *rotate_right(struct rbtree *h)
 {
-    struct rbtree *x = h->left;
-    h->left = x->right;
-    x->right = h;
-    x->red = x->right->red;
-    x->right->red = true;
+    struct rbtree *x = h->m.left;
+    enum rbtree_node_flags hf = h->m.flags;
+    enum rbtree_node_flags xf = x->m.flags;
+
+    if (xf & RBTREE_NODE_SUCC) {
+        h->m.left = x;
+        h->m.flags = (hf & RBTREE_NODE_SUCC)  | RBTREE_NODE_PRED;
+    } else {
+        h->m.left = x->m.right;
+        h->m.flags = hf & RBTREE_NODE_SUCC;
+    }
+    x->m.flags = (hf & RBTREE_NODE_BLACK) | (xf & RBTREE_NODE_PRED);
+    x->m.right = h;
+
     return x;
 }
 
-static void color_flip(struct rbtree *h)
+static inline void color_flip(struct rbtree *h)
 {
-    h->red = !h->red;
-    h->left->red = !h->left->red;
-    h->right->red = !h->right->red;
+    h->m.flags          ^= RBTREE_NODE_BLACK;
+    h->m.left->m.flags  ^= RBTREE_NODE_BLACK;
+    h->m.right->m.flags ^= RBTREE_NODE_BLACK;
 }
+
+static struct rbtree *
+_rb_insert(struct rbtree *tree, struct rbtree *node);
 
 struct rbtree *rb_insert(struct rbtree *tree, struct rbtree *node)
 {
-    if (!tree) {
-	node->red = true;
-	return node;
-    }
+    /* Initialize node as if it was the sole member of the tree */
 
-    if (is_red(tree->left) && is_red(tree->right))
+    nasm_zero(node->m);
+    node->m.flags = RBTREE_NODE_PRED|RBTREE_NODE_SUCC;
+
+    if (unlikely(!tree))
+        return node;
+
+    return _rb_insert(tree, node);
+}
+
+static struct rbtree *
+_rb_insert(struct rbtree *tree, struct rbtree *node)
+{
+    /* Recursive part of the algorithm */
+
+    /* Red on both sides? */
+    if (is_red_both(tree))
 	color_flip(tree);
 
-    if (node->key < tree->key)
-	tree->left = rb_insert(tree->left, node);
-    else
-	tree->right = rb_insert(tree->right, node);
+    if (node->key < tree->key) {
+        node->m.right  = tree;  /* Potential successor */
+        if (tree->m.flags & RBTREE_NODE_PRED) {
+            node->m.left   = tree->m.left;
+            tree->m.flags &= ~RBTREE_NODE_PRED;
+            tree->m.left   = node;
+        } else {
+            tree->m.left   = _rb_insert(tree->m.left, node);
+        }
+    } else {
+        node->m.left   = tree;  /* Potential predecessor */
+        if (tree->m.flags & RBTREE_NODE_SUCC) {
+            node->m.right  = tree->m.right;
+            tree->m.flags &= ~RBTREE_NODE_SUCC;
+            tree->m.right  = node;
+        } else {
+            tree->m.right  = _rb_insert(tree->m.right, node);
+        }
+    }
 
-    if (is_red(tree->right))
+    if (is_red_right(tree))
 	tree = rotate_left(tree);
 
-    if (is_red(tree->left) && is_red(tree->left->left))
+    if (is_red_left_left(tree))
 	tree = rotate_right(tree);
 
     return tree;
+}
+
+struct rbtree *rb_prev(const struct rbtree *node)
+{
+    struct rbtree *np = node->m.left;
+
+    if (node->m.flags & RBTREE_NODE_PRED)
+        return np;
+
+    while (!(np->m.flags & RBTREE_NODE_SUCC))
+        np = np->m.right;
+
+    return np;
+}
+
+struct rbtree *rb_next(const struct rbtree *node)
+{
+    struct rbtree *np = node->m.right;
+
+    if (node->m.flags & RBTREE_NODE_SUCC)
+        return np;
+
+    while (!(np->m.flags & RBTREE_NODE_PRED))
+        np = np->m.left;
+
+    return np;
 }
