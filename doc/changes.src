@@ -15,6 +15,9 @@ since 2007.
 
 \b Some documentation improvements and cleanups.
 
+\b Fix the handling of macro parameter ranges (\c{%\{:\}}), including
+with brace-enclosed original arguments.
+
 \S{cl-2.15.01} Version 2.15.01
 
 \b Fix building the documentation from the release archive. For 2.15,
