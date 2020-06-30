@@ -8737,14 +8737,23 @@ the \c{git} distributed source control system.  The link is available
 on the website.  This is recommended only to participate in the
 development of NASM or to assist with testing the development code.
 
-To build NASM from the \c{git} repository you will need a Perl and, if
-building on a Unix system, GNU autoconf.
+To build NASM from the \c{git} repository you will need a Perl
+interpreter and, if building on a Unix system, GNU autoconf installed
+on your system.
 
 To build on a Unix system, run:
 
 \c      sh autogen.sh
 
 to create the \c{configure} script and then build as listed above.
+
+\H{builddoc} Building the documentation
+
+To build the documentation, you will need a Perl interpreter, a
+Postscript to PDF converter such as Ghostscript, and suitable fonts
+installed on your system. The recommended (and default) fonts are
+Adobe's Source Sans and Source Code fonts, which are freely available
+under the SIL Open Font License.
 
 \A{contact} Contact Information
 
