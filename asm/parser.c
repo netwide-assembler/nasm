@@ -234,7 +234,8 @@ static bool parse_braces(decoflags_t *decoflags)
     }
 }
 
-static inline const expr *next_expr(const expr *e, const expr **next_list)
+static inline unused
+const expr *next_expr(const expr *e, const expr **next_list)
 {
     e++;
     if (!e->type) {
