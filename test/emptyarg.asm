@@ -50,6 +50,10 @@
 	xyzzy "with","empty",EMPTY
 %endmacro
 
+%macro orange 1
+	db %{1:1}
+%endmacro
+
 %macro prange1 2-3
 	db %{1:2}, 0%3
 %endmacro
@@ -137,3 +141,7 @@ flup:	foo 1,2
 	prange2 {121},{122}
 	prange2 {121},122,{123}
 	prange2 121,{122,122},123
+
+	orange 130
+	orange 130, 131
+	orange {130, 131}
