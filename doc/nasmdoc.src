@@ -1308,7 +1308,7 @@ valid:
 
 \c        db 33
 \c        db (44)		; Integer expression
-\c ;      db (44,55)      	; Invalid - error
+\c      ; db (44,55)		; Invalid - error
 \c        db %(44,55)
 \c        db %('XX','YY')
 \c        db ('AA')		; Integer expression - outputs single byte
@@ -2238,7 +2238,7 @@ if the argument is never used. For example:
 A single pair of parentheses is a subcase of a single, unused argument:
 
 \c    %define myreg() eax
-\c    	mov edx,myreg()
+\c	mov edx,myreg()
 
 This is similar to the behavior of the C preprocessor.
 
@@ -4649,12 +4649,16 @@ functionality, as intended to be used primarily with machine-generated code.
 It does not include any "programmer-friendly" shortcuts, nor does it in any way
 support ASSUME, symbol typing, or MASM-style structures.
 
-Currently, the MASM compatibility package emulates only the PTR keyword and
-recognize syntax displacement[index] for memory operations.
-
+Currently, the MASM compatibility package emulates only the PTR
+keyword and recognize syntax displacement[index] for memory
+operations.
 To enable the package, use the directive:
 
 \c{%use masm}
+
+In addition, NASM now natively supports the MASM \c{?} and
+\c{DUP} syntax for the \c{DB} etc data declaration directives,
+regardless of if this package is included or not. See \k{db}.
 
 
 \C{directive} \i{Assembler Directives}
