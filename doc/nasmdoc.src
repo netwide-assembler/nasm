@@ -126,7 +126,13 @@
 \IR{+ modifier} \c{+} modifier
 \IR{- opsubtraction} \c{-} operator, binary
 \IR{- opunary} \c{-} operator, unary
-\IR{! opunary} \c{!} operator, unary
+\IR{! opunary} \c{!} operator
+\IA{A16}{a16}
+\IA{A32}{a32}
+\IA{A64}{a64}
+\IA{O16}{o16}
+\IA{O32}{o32}
+\IA{O64}{o64}
 \IR{alignment, in bin sections} alignment, in \c{bin} sections
 \IR{alignment, in elf sections} alignment, in ELF sections
 \IR{alignment, in win32 sections} alignment, in \c{win32} sections
@@ -152,10 +158,9 @@ variables
 \IA{case-sensitive}{case sensitive}
 \IA{case-insensitive}{case sensitive}
 \IA{character constants}{character constant}
-\IR{codeview} CodeView debugging format
+\IR{codeview debugging format} CodeView debugging format
 \IR{common object file format} Common Object File Format
-\IR{common variables, alignment in elf} common variables, alignment
-in ELF
+\IR{common variables, alignment in elf} common variables, alignment in ELF
 \IR{common, elf extensions to} \c{COMMON}, ELF extensions to
 \IR{common, obj extensions to} \c{COMMON}, \c{obj} extensions to
 \IR{declaring structure} declaring structures
@@ -165,15 +170,12 @@ in ELF
 \IR{dll symbols, exporting} DLL symbols, exporting
 \IR{dll symbols, importing} DLL symbols, importing
 \IR{dos} DOS
-\IR{dos archive} DOS archive
-\IR{dos source archive} DOS source archive
-\IR{dup} \c{DUP}
 \IA{effective address}{effective addresses}
 \IA{effective-address}{effective addresses}
 \IR{elf} ELF
 \IR{elf, 16-bit code} ELF, 16-bit code
 \IR{elf, debug formats} ELF, debug formats
-\IR{elf shared libraries} ELF, shared libraries
+\IR{elf shared library} ELF, shared libraries
 \IR{elf32} \c{elf32}
 \IR{elf64} \c{elf64}
 \IR{elfx32} \c{elfx32}
@@ -186,8 +188,7 @@ in ELF
 \IR{freebsd} FreeBSD
 \IR{freelink} FreeLink
 \IR{functions, c calling convention} functions, C calling convention
-\IR{functions, pascal calling convention} functions, Pascal calling
-convention
+\IR{functions, pascal calling convention} functions, \c{PASCAL} calling convention
 \IR{global, aoutb extensions to} \c{GLOBAL}, \c{aoutb} extensions to
 \IR{global, elf extensions to} \c{GLOBAL}, ELF extensions to
 \IR{global, rdf extensions to} \c{GLOBAL}, \c{rdf} extensions to
@@ -199,9 +200,6 @@ convention
 \IR{linux, elf} Linux, ELF
 \IR{linux, a.out} Linux, \c{a.out}
 \IR{linux, as86} Linux, \c{as86}
-\IR{logical and} logical AND
-\IR{logical or} logical OR
-\IR{logical xor} logical XOR
 \IR{mach object file format} Mach, object file format
 \IA{mach-o}{macho}
 \IR{mach-o} Mach-O, object file format
@@ -215,24 +213,30 @@ convention
 \IA{misc directory}{misc subdirectory}
 \IR{misc subdirectory} \c{misc} subdirectory
 \IR{microsoft omf} Microsoft OMF
-\IR{mmx registers} MMX registers
-\IA{modr/m}{modr/m byte}
-\IR{modr/m byte} ModR/M byte
 \IR{ms-dos} MS-DOS
 \IR{ms-dos device drivers} MS-DOS device drivers
 \IR{multipush} \c{multipush} macro
 \IR{nan} NaN
 \IR{nasm version} NASM version
+\IR{nasm version history} NASM version, history
+\IR{nasm version macros} NASM version, macros
+\IR{nasm version id} NASM version, ID macro
+\IR{nasm version string} NASM version, string macro
+\IR{arithmetic negation} negation, arithmetic
+\IR{bitwise negation} negation, bitwise
+\IR{boolean negation} negation, boolean
+\IR{boolean and} boolean, AND
+\IR{boolean or} boolean, OR
+\IR{boolean xor} boolean, XOR
 \IR{netbsd} NetBSD
 \IR{nsis} NSIS
 \IR{nullsoft scriptable installer} Nullsoft Scriptable Installer
+\IA{.OBJ}{.obj}
 \IR{omf} OMF
 \IR{openbsd} OpenBSD
 \IR{operating system} operating system
 \IR{os/2} OS/2
-\IR{pascal calling convention}Pascal calling convention
-\IR{passes} passes, assembly
-\IR{perl} Perl
+\IR{pascal calling convention} Pascal calling convention
 \IR{pic} PIC
 \IR{pharlap} PharLap
 \IR{plt} PLT
@@ -253,14 +257,16 @@ Object File Format
 \IR{section alignment, in win32} section alignment, in \c{win32}
 \IR{section, elf extensions to} \c{SECTION}, ELF extensions to
 \IR{section, macho extensions to} \c{SECTION}, \c{macho} extensions to
-\IR{section, win32 extensions to} \c{SECTION}, \c{win32} extensions to
+\IR{section, windows extensions to} \c{SECTION}, Windows extensions to
 \IR{segment alignment, in bin} segment alignment, in \c{bin}
 \IR{segment alignment, in obj} segment alignment, in \c{obj}
-\IR{segment, obj extensions to} \c{SEGMENT}, ELF extensions to
+\IR{segment, obj extensions to} \c{SEGMENT}, \c{obj} extensions to
 \IR{segment names, borland pascal} segment names, Borland Pascal
 \IR{shift command} \c{shift} command
-\IA{sib}{sib byte}
-\IR{sib byte} SIB byte
+\IA{string constant}{string constants}
+\IR{string constants} string, constants
+\IR{string length} string, length
+\IR{string manipulation in macros} string, manipulation in macros
 \IR{align, smart} \c{ALIGN}, smart
 \IA{sectalign}{sectalign}
 \IR{solaris x86} Solaris x86
@@ -271,7 +277,9 @@ Object File Format
 \IR{thread local storage in elf} thread local storage, in ELF
 \IR{thread local storage in mach-o} thread local storage, in \c{macho}
 \IR{tlink} \c{TLINK}
+\IR{unconditionally importing symbols} importing symbols, unconditionally
 \IR{underscore, in c symbols} underscore, in C symbols
+\IA{uninitialized storage}{storage, uninitialized}
 \IR{unicode} Unicode
 \IR{unix} Unix
 \IR{utf-8} UTF-8
@@ -279,20 +287,16 @@ Object File Format
 \IR{utf-32} UTF-32
 \IA{sco unix}{unix, sco}
 \IR{unix, sco} Unix, SCO
-\IA{unix source archive}{unix, source archive}
-\IR{unix, source archive} Unix, source archive
 \IA{unix system v}{unix, system v}
 \IR{unix, system v} Unix, System V
 \IR{unixware} UnixWare
 \IR{val} VAL
-\IR{version number of nasm} version number of NASM
+\IA{version number of nasm}{nasm, version}
 \IR{visual c++} Visual C++
-\IR{www page} WWW page
 \IR{win32} Win32
-\IR{win32} Win64
+\IR{win64} Win64
 \IR{windows} Windows
-\IR{windows 95} Windows 95
-\IR{windows nt} Windows NT
+\IR{windows debugging formats} Windows, debugging formats
 \# \IC{program entry point}{entry point, program}
 \# \IC{program entry point}{start point, program}
 \# \IC{MS-DOS device drivers}{device drivers, MS-DOS}
@@ -433,7 +437,7 @@ an intervening space. For example:
 \c nasm -f bin driver.asm -odriver.sys
 
 Note that this is a small o, and is different from a capital O , which
-is used to specify the number of optimisation passes required. See \k{opt-O}.
+is used to specify the number of optimization passes required. See \k{opt-O}.
 
 
 \S{opt-f} The \i\c{-f} Option: Specifying the \i{Output File Format}
@@ -1195,21 +1199,21 @@ defines a symbol called \c{eax}, you can refer to \c{$eax} in NASM
 code to distinguish the symbol from the register. Maximum length of
 an identifier is 4095 characters.
 
-The instruction field may contain any machine instruction: Pentium
-and P6 instructions, FPU instructions, MMX instructions and even
+The instruction field may contain any machine instruction: Pentium and
+P6 instructions, FPU instructions, MMX instructions and even
 undocumented instructions are all supported. The instruction may be
 prefixed by \c{LOCK}, \c{REP}, \c{REPE}/\c{REPZ}, \c{REPNE}/\c{REPNZ},
-\c{XACQUIRE}/\c{XRELEASE} or \c{BND}/\c{NOBND}, in the usual way. Explicit
-\I{address-size prefixes}address-size and \i{operand-size prefixes} \i\c{A16},
-\i\c{A32}, \i\c{A64}, \i\c{O16} and \i\c{O32}, \i\c{O64} are provided - one example of their use
-is given in \k{mixsize}. You can also use the name of a \I{segment
-override}segment register as an instruction prefix: coding
-\c{es mov [bx],ax} is equivalent to coding \c{mov [es:bx],ax}. We
-recommend the latter syntax, since it is consistent with other
-syntactic features of the language, but for instructions such as
-\c{LODSB}, which has no operands and yet can require a segment
-override, there is no clean syntactic way to proceed apart from
-\c{es lodsb}.
+\c{XACQUIRE}/\c{XRELEASE} or \c{BND}/\c{NOBND}, in the usual
+way. Explicit \I{address-size prefixes}address-size and
+\i{operand-size prefixes} \i\c{A16}, \i\c{A32}, \i\c{A64}, \i\c{O16}
+and \i\c{O32}, \i\c{O64} are provided - one example of their use is
+given in \k{mixsize}. You can also use the name of a \I{segment
+override}segment register as an instruction prefix: coding \c{es mov
+[bx],ax} is equivalent to coding \c{mov [es:bx],ax}. We recommend the
+latter syntax, since it is consistent with other syntactic features of
+the language, but for instructions such as \c{LODSB}, which has no
+operands and yet can require a segment override, there is no clean
+syntactic way to proceed apart from \c{es lodsb}.
 
 An instruction is not required to use a prefix: prefixes such as
 \c{CS}, \c{A32}, \c{LOCK} or \c{REPE} can appear on a line by
@@ -1250,10 +1254,11 @@ Pseudo-instructions are things which, though not real x86 machine
 instructions, are used in the instruction field anyway because that's
 the most convenient place to put them. The current pseudo-instructions
 are \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, \i\c{DO},
-\i\c{DY} and \i\c\{DZ}; their \i{uninitialized} counterparts
-\i\c{RESB}, \i\c{RESW}, \i\c{RESD}, \i\c{RESQ}, \i\c{REST},
-\i\c{RESO}, \i\c{RESY} and \i\c\{RESZ}; the \i\c{INCBIN} command, the
-\i\c{EQU} command, and the \i\c{TIMES} prefix.
+\i\c{DY} and \i\c\{DZ}; their \I{storage,
+uninitialized}\i{uninitialized} counterparts \i\c{RESB}, \i\c{RESW},
+\i\c{RESD}, \i\c{RESQ}, \i\c{REST}, \i\c{RESO}, \i\c{RESY} and
+\i\c\{RESZ}; the \i\c{INCBIN} command, the \i\c{EQU} command, and the
+\i\c{TIMES} prefix.
 
 
 \S{db} \c{DB} and Friends: Declaring Initialized Data
@@ -1280,12 +1285,12 @@ the output file. They can be invoked in a wide range of ways:
 \c{DT}, \c{DO}, \c{DY} and \c{DZ} do not accept \i{numeric constants}
 as operands.
 
-\I{masmdb} Starting in NASM 2.15, a the following MASM-like features
+\I{masmdb} Starting in NASM 2.15, a the following \i{MASM}-like features
 have been implemented:
 
-\b A \I{?db}\c{?} argument to declare uninitialized data:
+\b A \I{?db}\c{?} argument to declare \i{uninitialized storage}:
 
-\c       db    ?                   ; uninitialized data
+\c       db    ?                   ; uninitialized
 
 \b A superset of the \i\c{DUP} syntax. The NASM version of this has
 the following syntax specification; capital letters indicate literal
@@ -1573,7 +1578,7 @@ Some examples (all producing exactly the same code):
 \c         mov     ax,0b1100_1000  ; same binary constant yet again
 \c         mov     ax,0y1100_1000  ; same binary constant yet again
 
-\S{strings} \I{Strings}\i{Character Strings}
+\S{strings} \I{string}\I{string constants}\i{Character Strings}
 
 A character string consists of up to eight characters enclosed in
 either single quotes (\c{'...'}), double quotes (\c{"..."}) or
@@ -1883,15 +1888,15 @@ The \c{|} operator gives a bitwise OR, exactly as performed by the
 \S{expshift} \i{Bit Shift} Operators
 
 \i\c{<<} gives a bit-shift to the left, just as it does in C. So
-\c{5<<3} evaluates to 5 times 8, or 40. \i\c{>>} gives an \e{unsigned}
-(logical) bit-shift to the right; the bits shifted in from the left
-are set to zero.
+\c{5<<3} evaluates to 5 times 8, or 40. \i\c{>>} gives an \I{unsigned,
+bit shift}\e{unsigned} (logical) bit-shift to the right; the bits
+shifted in from the left are set to zero.
 
 \i\c{<<<} gives a bit-shift to the left, exactly equivalent to the
 \c{<<} operator; it is included for completeness. \i\c{>>>} gives an
-\e{signed} (arithmetic) bit-shift to the right; the bits shifted in
-from the left are filled with copies of the most significant (sign)
-bit.
+\I{signed, bit shift}\e{signed} (arithmetic) bit-shift to the right;
+the bits shifted in from the left are filled with copies of the most
+significant (sign) bit.
 
 
 \S{expplmi} \I{+ opaddition}\c{+} and \I{- opsubtraction}\c{-}:
@@ -1905,11 +1910,13 @@ subtraction.
 
 \i\c{*} is the multiplication operator.
 
-\i\c{/} and \i\c{//} are both division operators: \c{/} is \i{unsigned
-division} and \c{//} is \i{signed division}.
+\i\c{/} and \i\c{//} are both division operators: \c{/} is
+\I{division, unsigned}\I{unsigned, division}unsigned division and \c{//} is
+\I{division, signed}\I{signed, division}signed division.
 
-Similarly, \i\c{%} and \i\c{%%} provide \I{unsigned modulo}\I{modulo
-operators} unsigned and \i{signed modulo} operators respectively.
+Similarly, \i\c{%} and \i\c{%%} provide \I{modulo,
+unsigned}\I{unsigned, modulo}unsigned and \I{modulo, signed}\I{signed,
+modulo}signed modulo operators respectively.
 
 Since the \c{%} character is used extensively by the macro
 \i{preprocessor}, you should ensure that both the signed and unsigned
@@ -1922,22 +1929,27 @@ the signed division operator, such that:
 \c      b * (a // b) + (a %% b) = a       (b != 0)
 
 
-\S{expmul} \i{Unary Operators}
+\S{expmul} \I{operators, unary}\i{Unary Operators}
 
 The highest-priority operators in NASM's expression grammar are those
-which only apply to one argument.  These are \I{+ opunary}\c{+}, \I{-
-opunary}\c{-}, \i\c{~}, \I{! opunary}\c{!}, \i\c{SEG}, and the
-\i{integer functions} operators.
+which only apply to one argument.  These are:
 
-\c{-} negates its operand, \c{+} does nothing (it's provided for
-symmetry with \c{-}), \c{~} computes the \i{one's complement} of its
-operand, \c{!} is the \i{logical negation} operator.
+\b \I{- opunary}\c{-} \I{arithmetic negation}negates (\i{2's complement}) its
+operand.
 
-\c{SEG} provides the \i{segment address}
-of its operand (explained in more detail in \k{segwrt}).
+\b \I{+ opunary}\c{+} does nothing; it's provided for symmetry with \c{-}.
 
-A set of additional operators with leading and trailing double
-underscores are used to implement the integer functions of the
+\b \I{~ opunary}\c{~} computes the \I{negation, bitwise}\i{bitwise
+negation} (\i{1's complement}) of its operand.
+
+\b \I{! opunary}\c{!} is the \I{negation, boolean}\i{boolean negation}
+operator. It evaluates to 1 if the argument is 0, otherwise 0.
+
+\b \c{SEG} provides the \i{segment address} of its operand (explained in
+more detail in \k{segwrt}).
+
+\b A set of additional operators with leading and trailing double
+underscores are used to implement the \c{integer functions} of the
 \c{ifunc} macro package, see \k{pkg_ifunc}.
 
 
@@ -4108,10 +4120,9 @@ be assembled with no pre-defined macros, you can use the \i\c{%clear}
 directive to empty the preprocessor of everything but context-local
 preprocessor variables and single-line macros, see \k{clear}.
 
-Most \i{user-level assembler directives} (see \k{directive}) are
-implemented as macros which invoke primitive directives; these are
-described in \k{directive}. The rest of the standard macro set is
-described here.
+Most \i{user-level directives} (see \k{directive}) are implemented as
+macros which invoke primitive directives; these are described in
+\k{directive}. The rest of the standard macro set is described here.
 
 For compability with NASM versions before NASM 2.15, most standard
 macros of the form \c{__?foo?__} have aliases of form \c{__foo__} (see
@@ -4119,15 +4130,15 @@ macros of the form \c{__?foo?__} have aliases of form \c{__foo__} (see
 defalias}.
 
 
-\H{stdmacver} \i{NASM Version} Macros
+\H{stdmacver} \i{NASM Version Macros}
 
 The single-line macros \i\c{__?NASM_MAJOR?__}, \i\c{__?NASM_MINOR?__},
-\i\c{__?NASM_SUBMINOR?__} and \i\c{__?_NASM_PATCHLEVEL?__} expand to the
+\i\c{__?NASM_SUBMINOR?__} and \i\c{__?NASM_PATCHLEVEL?__} expand to the
 major, minor, subminor and patch level parts of the \i{version
 number of NASM} being used. So, under NASM 0.98.32p1 for
 example, \c{__?NASM_MAJOR?__} would be defined to be 0, \c{__?NASM_MINOR?__}
 would be defined as 98, \c{__?NASM_SUBMINOR?__} would be defined to 32,
-and \c{__?_NASM_PATCHLEVEL?__} would be defined as 1.
+and \c{__?NASM_PATCHLEVEL?__} would be defined as 1.
 
 Additionally, the macro \i\c{__?NASM_SNAPSHOT?__} is defined for
 automatically generated snapshot releases \e{only}.
@@ -4138,7 +4149,7 @@ automatically generated snapshot releases \e{only}.
 The single-line macro \c{__?NASM_VERSION_ID?__} expands to a dword integer
 representing the full version number of the version of nasm being used.
 The value is the equivalent to \c{__?NASM_MAJOR?__}, \c{__?NASM_MINOR?__},
-\c{__?NASM_SUBMINOR?__} and \c{__?_NASM_PATCHLEVEL?__} concatenated to
+\c{__?NASM_SUBMINOR?__} and \c{__?NASM_PATCHLEVEL?__} concatenated to
 produce a single doubleword. Hence, for 0.98.32p1, the returned number
 would be equivalent to:
 
@@ -4153,7 +4164,7 @@ line is used just to give an indication of the order that the separate
 values will be present in memory.
 
 
-\S{stdmacverstr} \i\c{__?NASM_VER?__}: \i{NASM Version string}
+\S{stdmacverstr} \i\c{__?NASM_VER?__}: \i{NASM Version String}
 
 The single-line macro \c{__?NASM_VER?__} expands to a string which defines
 the version number of nasm being used. So, under NASM 0.98.32 for example,
@@ -4952,13 +4963,12 @@ declared as \c{EXTERN} and then defined, it will be treated as
 \c{EXTERN}, it will be treated as \c{COMMON}.
 
 
-\H{required} \i\c{REQUIRED}: \i{Importing Symbols} from Other Modules
+\H{required} \i\c{REQUIRED}: \i{Unconditionally Importing Symbols} from Other Modules
 
-The \c{REQUIRED} keyword is similar to \c{EXTERN} one. The difference is that
-the \c{EXTERN} keyword as of version 2.15 does not generate unknown symbols, as
-this behavior is highly undesirable when using common header files,
-because it might cause the linker to pull in a bunch of unnecessary modules,
-depending on how smart the linker is.
+The \c{REQUIRED} keyword is similar to \c{EXTERN} one. The difference
+is that the \c{EXTERN} keyword as of version 2.15 does not generate
+unknown symbols as that prevents using common header files, as it
+might cause the linker to pull in a bunch of unnecessary modules.
 
 If the old behavior is required, use \c{REQUIRED} keyword instead.
 
@@ -5247,7 +5257,7 @@ does. See \k{proborg} for further comments.
 
 
 \S{binseg} \c{bin} Extensions to the \c{SECTION}
-Directive\I{SECTION, bin extensions to}
+Directive\I{\c{SECTION}, \c{bin} extensions to}
 
 The \c{bin} output format extends the \c{SECTION} (or \c{SEGMENT})
 directive to allow you to specify the alignment requirements of
@@ -5560,7 +5570,7 @@ be specified, even if it is the same as the internal name. The
 available attributes are:
 
 \b \c{resident} indicates that the exported name is to be kept
-resident by the system loader. This is an optimisation for
+resident by the system loader. This is an optimization for
 frequently used symbols imported by name.
 
 \b \c{nodata} indicates that the exported symbol is a function which
@@ -5704,7 +5714,7 @@ files that Win32 linkers can generate correct output from.
 
 
 \S{win32sect} \c{win32} Extensions to the \c{SECTION}
-Directive\I{SECTION, win32 extensions to}
+Directive\I{SECTION, Windows extensions to}
 
 Like the \c{obj} format, \c{win32} allows you to specify additional
 information on the \c{SECTION} directive line, to control the type
@@ -5850,8 +5860,8 @@ later can still be linked by earlier versions or non-Microsoft linkers.
 \S{codeview} Debugging formats for Windows
 \I{Windows debugging formats}
 
-The \c{win32} and \c{win64} formats support the Microsoft CodeView
-debugging format.  Currently CodeView version 8 format is supported
+The \c{win32} and \c{win64} formats support the Microsoft \i{CodeView
+debugging format}.  Currently CodeView version 8 format is supported
 (\i\c{cv8}), but newer versions of the CodeView debugger should be
 able to handle this format as well.
 
@@ -6423,14 +6433,14 @@ of the symbol with code such as:
 \S{elfglob} \c{elf} Extensions to the \c{GLOBAL} Directive\I{GLOBAL,
 elf extensions to}\I{GLOBAL, aoutb extensions to}
 
-\c{ELF} object files can contain more information about a global symbol
-than just its address: they can contain the \I{symbol sizes,
-specifying}\I{size, of symbols}size of the symbol and its \I{symbol
-types, specifying}\I{type, of symbols}type as well. These are not
-merely debugger conveniences, but are actually necessary when the
-program being written is a \i{shared library}. NASM therefore
-supports some extensions to the \c{GLOBAL} directive, allowing you
-to specify these features.
+\c{ELF} object files can contain more information about a global
+symbol than just its address: they can contain the \I{symbols,
+specifying sizes}\I{size, of symbols}size of the symbol and its
+\I{symbols, specifying types}\I{type, of symbols}type as well. These
+are not merely debugger conveniences, but are actually necessary when
+the program being written is a \I{elf shared library}shared
+library. NASM therefore supports some extensions to the \c{GLOBAL}
+directive, allowing you to specify these features.
 
 You can specify whether a global variable is a function or a data
 object by suffixing the name with a colon and the word
@@ -6734,7 +6744,7 @@ also, have to be built as \c{.EXE} files, since Windows does not
 support the \c{.COM} format.
 
 In general, you generate \c{.EXE} files by using the \c{obj} output
-format to produce one or more \i\c{.OBJ} files, and then linking
+format to produce one or more \i\c{.obj} files, and then linking
 them together using a linker. However, NASM also supports the direct
 generation of simple DOS \c{.EXE} files using the \c{bin} output
 format (by using \c{DB} and \c{DW} to construct the \c{.EXE} file
@@ -8063,7 +8073,7 @@ and create \c{library.so.1} as a symbolic link to it.
 
 This chapter tries to cover some of the issues, largely related to
 unusual forms of addressing and jump instructions, encountered when
-writing operating system code such as protected-mode initialisation
+writing operating system code such as protected-mode initialization
 routines, which require code that operates in mixed segment sizes,
 such as code in a 16-bit segment trying to modify data in a 32-bit
 one, or jumps between different-size segments.
@@ -8574,7 +8584,7 @@ Hence, to disassemble a \c{.COM} file:
 will do the trick.
 
 
-\S{ndissync} Code Following Data: Synchronisation
+\S{ndissync} Code Following Data: Synchronization
 
 Suppose you are disassembling a file which contains some data which
 isn't machine code, and \e{then} contains some machine code. NDISASM
@@ -8593,8 +8603,8 @@ then the correct first instruction in the code section will not be
 seen because the starting point skipped over it. This isn't really
 ideal.
 
-To avoid this, you can specify a `\i{synchronisation}' point, or indeed
-as many synchronisation points as you like (although NDISASM can
+To avoid this, you can specify a `\i{synchronization}' point, or indeed
+as many synchronization points as you like (although NDISASM can
 only handle 2147483647 sync points internally). The definition of a sync
 point is this: NDISASM guarantees to hit sync points exactly during
 disassembly. If it is thinking about generating an instruction which
@@ -8618,7 +8628,7 @@ As stated above, you can specify multiple sync markers if you need
 to, just by repeating the \c{-s} option.
 
 
-\S{ndisisync} Mixed Code and Data: Automatic (Intelligent) Synchronisation
+\S{ndisisync} Mixed Code and Data: Automatic (Intelligent) Synchronization
 \I\c{auto-sync}
 
 Suppose you are disassembling the boot sector of a \c{DOS} floppy (maybe
