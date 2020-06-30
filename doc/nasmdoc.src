@@ -1355,11 +1355,10 @@ the above example could also be written:
 
 \S{incbin} \i\c{INCBIN}: Including External \i{Binary Files}
 
-\c{INCBIN} is borrowed from the old Amiga assembler \i{DevPac}: it
-includes a binary file verbatim into the output file. This can be
-handy for (for example) including \i{graphics} and \i{sound} data
-directly into a game executable file. It can be called in one of
-these three ways:
+\c{INCBIN} includes binary file data verbatim into the output
+file. This can be handy for (for example) including \i{graphics} and
+\i{sound} data directly into a game executable file. It can be called
+in one of these three ways:
 
 \c     incbin  "file.dat"             ; include the whole file
 \c     incbin  "file.dat",1024        ; skip the first 1024 bytes
