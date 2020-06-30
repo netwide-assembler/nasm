@@ -4835,17 +4835,15 @@ static int mmac_rotate(const MMacro *mac, unsigned int n)
 /*
  * expands to a list of tokens from %{x:y}
  */
-static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
+void expand_mmac_params_range(MMacro *mac, Token *tline, Token ***tail)
 {
-    Token *t = tline, **tt, *tm, *head;
-    char *pos;
-    int fst, lst, j, i;
+    Token *t;
+    const char *arg = tok_text(tline) + 1;
+    int fst, lst, incr, n;
+    int parsed;
 
-    pos = strchr(tok_text(tline), ':');
-    nasm_assert(pos);
-
-    lst = atoi(pos + 1);
-    fst = atoi(tok_text(tline) + 1);
+    parsed = sscanf(arg, "%d:%d", &fst, &lst);
+    nasm_assert(parsed == 2);
 
     /*
      * only macros params are accounted so
@@ -4863,56 +4861,28 @@ static Token *expand_mmac_params_range(MMacro *mac, Token *tline, Token ***last)
     fst = fst < 0 ? fst + (int)mac->nparam + 1: fst;
     lst = lst < 0 ? lst + (int)mac->nparam + 1: lst;
 
-    /* count from zero */
-    fst--, lst--;
-
     /*
-     * It will be at least one token. Note we
-     * need to scan params until separator, otherwise
-     * only first token will be passed.
+     * It will be at least one parameter, as we can loop
+     * in either direction.
      */
-    j = (fst + mac->rotate) % mac->nparam;
-    tm = mac->params[j+1];
-    if (!tm)
-        goto err;
-    head = dup_Token(NULL, tm);
-    tt = &head->next, tm = tm->next;
-    while (tok_isnt(tm, ',')) {
-        t = dup_Token(NULL, tm);
-        *tt = t, tt = &t->next, tm = tm->next;
+    incr = (fst < lst) ? 1 : -1;
+
+    while (true) {
+        n = mmac_rotate(mac, fst);
+        dup_tlistn(mac->params[n], mac->paramlen[n], tail);
+        if (fst == lst)
+            break;
+        t = make_tok_char(NULL, ',');
+        **tail = t;
+        *tail = &t->next;
+        fst += incr;
     }
 
-    if (fst < lst) {
-        for (i = fst + 1; i <= lst; i++) {
-            t = make_tok_char(NULL, ',');
-            *tt = t, tt = &t->next;
-            j = (i + mac->rotate) % mac->nparam;
-            tm = mac->params[j+1];
-            while (tok_isnt(tm, ',')) {
-                t = dup_Token(NULL, tm);
-                *tt = t, tt = &t->next, tm = tm->next;
-            }
-        }
-    } else {
-        for (i = fst - 1; i >= lst; i--) {
-            t = make_tok_char(NULL, ',');
-            *tt = t, tt = &t->next;
-            j = (i + mac->rotate) % mac->nparam;
-            tm = mac->params[j+1];
-            while (!tok_isnt(tm, ',')) {
-                t = dup_Token(NULL, tm);
-                *tt = t, tt = &t->next, tm = tm->next;
-            }
-        }
-    }
-
-    *last = tt;
-    return head;
+    return;
 
 err:
-    nasm_nonfatal("`%%{%s}': macro parameters out of range",
-		  tok_text(tline) + 1);
-    return NULL;
+    nasm_nonfatal("`%%{%s}': macro parameters out of range", arg);
+    return;
 }
 
 /*
@@ -4963,16 +4933,9 @@ static Token *expand_mmac_params(Token * tline)
             }
 
             if (strchr(text, ':')) {
-                /*
-                 * seems we have a parameters range here
-                 */
-                Token *head, **last;
-                head = expand_mmac_params_range(mac, t, &last);
-                if (head) {
-                    *tail = head;
-                    *last = tline;
-                    text = NULL;
-                }
+                /* It is a range */
+                expand_mmac_params_range(mac, t, &tail);
+                text = NULL;
                 break;
             }
 
