@@ -223,19 +223,19 @@ if ($what eq 'c') {
     # Put a large value in unused slots.  This makes it extremely unlikely
     # that any combination that involves unused slot will pass the range test.
     # This speeds up rejection of unrecognized tokens, i.e. identifiers.
-    print OUT "#define UNUSED (65535/3)\n";
+    print OUT "#define UNUSED_HASH_ENTRY (65535/3)\n";
 
     print OUT "    static const int16_t hash1[$n] = {\n";
     for ($i = 0; $i < $n; $i++) {
 	my $h = ${$g}[$i*2+0];
-	print OUT "        ", defined($h) ? $h : 'UNUSED', ",\n";
+	print OUT "        ", defined($h) ? $h : 'UNUSED_HASH_ENTRY', ",\n";
     }
     print OUT "    };\n";
 
     print OUT "    static const int16_t hash2[$n] = {\n";
     for ($i = 0; $i < $n; $i++) {
 	my $h = ${$g}[$i*2+1];
-	print OUT "        ", defined($h) ? $h : 'UNUSED', ",\n";
+	print OUT "        ", defined($h) ? $h : 'UNUSED_HASH_ENTRY', ",\n";
     }
     print OUT "    };\n";
 

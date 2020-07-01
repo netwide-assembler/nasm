@@ -60,6 +60,12 @@
 /* Define to 1 if compiled with the `-Wc90-c99-compat' compiler flag */
 /* #undef CFLAGS_WC90_C99_COMPAT */
 
+/* Define to 1 if compiled with the `-Wc99-compat' compiler flag */
+/* #undef CFLAGS_WC99_COMPAT */
+
+/* Define to 1 if compiled with the `-Wc99-extensions' compiler flag */
+/* #undef CFLAGS_WC99_EXTENSIONS */
+
 /* Define to 1 if compiled with the `-Werror' compiler flag */
 /* #undef CFLAGS_WERROR */
 
@@ -225,6 +231,10 @@
    functions */
 /* #undef HAVE_FUNC_ATTRIBUTE_SENTINEL */
 
+/* Define to 1 if your compiler supports __attribute__((unused)) on functions
+   */
+/* #undef HAVE_FUNC_ATTRIBUTE_UNUSED */
+
 /* Define to 1 if your compiler supports __attribute__((alloc_size)) on
    function pointers */
 /* #undef HAVE_FUNC_PTR_ATTRIBUTE1_ALLOC_SIZE */
@@ -264,6 +274,10 @@
 /* Define to 1 if your compiler supports __attribute__((sentinel)) on function
    pointers */
 /* #undef HAVE_FUNC_PTR_ATTRIBUTE_SENTINEL */
+
+/* Define to 1 if your compiler supports __attribute__((unused)) on function
+   pointers */
+/* #undef HAVE_FUNC_PTR_ATTRIBUTE_UNUSED */
 
 /* Define to 1 if you have the `getgid' function. */
 /* #undef HAVE_GETGID */
@@ -711,6 +725,22 @@
 #  define unlikely_func_ptr __attribute__((cold))
 # else
 #  define unlikely_func_ptr
+# endif
+#endif
+
+#ifndef unused_func
+# ifdef HAVE_FUNC_ATTRIBUTE_UNUSED
+#  define unused_func __attribute__((unused))
+# else
+#  define unused_func
+# endif
+#endif
+
+#ifndef unused_func_ptr
+# ifdef HAVE_FUNC_PTR_ATTRIBUTE_UNUSED
+#  define unused_func_ptr __attribute__((unused))
+# else
+#  define unused_func_ptr
 # endif
 #endif
 

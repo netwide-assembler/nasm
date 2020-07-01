@@ -7,6 +7,17 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.15.02} Version 2.15.02
+
+\b Fix miscompilation when building with \c{clang}.
+
+\b Add \c{db-empty} warning class, see \k{opt-w}.
+
+\b Some documentation improvements and cleanups.
+
+\b Fix the handling of macro parameter ranges (\c{%\{:\}}), including
+with brace-enclosed original arguments.
+
 \S{cl-2.15.01} Version 2.15.01
 
 \b Fix building the documentation from the release archive. For 2.15,

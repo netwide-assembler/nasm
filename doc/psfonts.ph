@@ -21,33 +21,54 @@ my @QText = ('SourceSansPro-It', 'ClearSans-Italic', 'LiberationSans-Italic',
 	     'Arial-Italic', 'Helvetica-Italic');
 my @QBold = ('SourceSansPro-BoldIt', 'ClearSans-BoldItalic', 'LiberationSans-BoldItalic', 'Arial-Bold', 'Helvetica-BoldItalic');
 my @QCode = ('SourceCodePro-Regular', 'LiberationMono', 'Courier');
+my @XCode = ('SourceCodePro-Regular', 'LiberationMono', 'Courier');
 
 # The fonts we want to use for various things
 # The order is: <normal> <emphatic> <code>
 
+my $lf = 1.2;			# Leading scale factor
+my $cf = 0.8;			# Code size scale factor
+
+my $st = 20;
 %TitlFont = (name => 'tfont',
-	     leading => 24,
-	     fonts => [[20, \@TText], [20, \@TItal], [20, \@TCode]]);
+	     leading => $st*$lf,
+	     fonts => [[$st, \@TText], [$st, \@TItal], [$st*$cf, \@TCode]]);
+
+my $sc = 18;
 %ChapFont = (name => 'cfont',
-	     leading => 21.6,
-	     fonts => [[18, \@HText], [18, \@HItal], [18, \@HCode]]);
+	     leading => $sc*$lf,
+	     fonts => [[$sc, \@HText], [$sc, \@HItal], [$sc*$cf, \@HCode]]);
+
+my $sh = 14;
 %HeadFont = (name => 'hfont',
-		leading => 16.8,
-		fonts => [[14, \@HText], [14, \@HItal], [14, \@HCode]]);
+		leading => $sh*$lf,
+		fonts => [[$sh, \@HText], [$sh, \@HItal], [$sh*$cf, \@HCode]]);
+
+my $ss = 12;
 %SubhFont = (name => 'sfont',
-	     leading => 14.4,
-	     fonts => [[12, \@HText], [12, \@HItal], [12, \@HCode]]);
+	     leading => $ss*$lf,
+	     fonts => [[$ss, \@HText], [$ss, \@HItal], [$ss*$cf, \@HCode]]);
+
+my $sb = 10;
 %BodyFont = (name => 'bfont',
-	     leading => 12,
-	     fonts => [[10, \@BText], [10, \@BItal], [10, \@BCode]]);
+	     leading => $sb*$lf,
+	     fonts => [[$sb, \@BText], [$sb, \@BItal], [$sb*$cf, \@BCode]]);
+
+my $sq = 9;
 %BquoFont = (name => 'qfont',
-	     leading => 10.8,
-	     fonts => [[9, \@QText], [9, \@QBold], [9, \@QCode]]);
+	     leading => $sq*$lf,
+	     fonts => [[$sq, \@QText], [$sq, \@QBold], [$sq*$cf, \@QCode]]);
+
+my $sx = $sb*$cf;
+%CodeFont = (name => 'xfont',
+	     leading => $sx*$lf,
+	     fonts => [[$sx, \@XCode], [$sx, \@XCode], [$sx, \@XCode]]);
+
 #
 # List of all fontsets; used to compute the list of fonts needed
 #
 @AllFonts = ( \%TitlFont, \%ChapFont, \%HeadFont, \%SubhFont, \%BodyFont,
-    \%BquoFont);
+    \%BquoFont, \%CodeFont );
 
 # OK
 1;

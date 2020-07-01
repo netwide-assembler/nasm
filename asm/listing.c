@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -276,8 +276,13 @@ static void list_output(const struct out_data *data)
 	break;
     case OUT_RESERVE:
     {
-        if (size)
+        if (size > 8) {
             list_size(offset, "res", size);
+        } else {
+            memset(q, '?', size << 1);
+            q[size << 1] = '\0';
+            list_out(offset, q);
+        }
 	break;
     }
     default:

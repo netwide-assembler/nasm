@@ -23,18 +23,25 @@ AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_PROG_CC
 AC_PROG_CC_STDC
-AC_PROG_LN_S
-AC_PROG_MAKE_SET
-AC_PROG_INSTALL
-AC_PROG_MKDIR_P
-
-pa_no_optimize=false
 
 dnl If the user did not specify a CFLAGS default, change default
 dnl to -O0 for debugging
 PA_ARG_DISABLED([optimization],
  [compile without optimization (-O0) to help debugging],
  [pa_no_optimize=true])
+
+dnl LLVM doesn't error out on invalid -W options unless this option is
+dnl specified first.  Enable this so this script can actually discover
+dnl which -W options are possible for this compiler.
+PA_ADD_CFLAGS([-Werror=unknown-warning-option])
+
+dnl Other programs
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_INSTALL
+AC_PROG_MKDIR_P
+
+pa_no_optimize=false
 
 dnl Compile and link with dwarf debug
 PA_ARG_ENABLED([gdb],
@@ -282,6 +289,7 @@ PA_FUNC_ATTRIBUTE(format, [printf,1,2], int, [const char *, ...], ["%d",1])
 PA_FUNC_ATTRIBUTE(const)
 PA_FUNC_ATTRIBUTE(pure)
 PA_FUNC_ATTRIBUTE(cold,,,,,unlikely_func)
+PA_FUNC_ATTRIBUTE(unused)
 PA_FUNC_ATTRIBUTE_ERROR
 
 dnl
@@ -320,22 +328,25 @@ PA_ARG_ENABLED([sanitizer],
 
 dnl
 dnl Don't make symbols visible, there is no point and it just
-dnl makes the code slower.
+dnl makes the code slower. This mainly affects ELF.
 dnl
 PA_ADD_CFLAGS([-fvisibility=hidden])
 
-dnl If we have gcc, add appropriate code cleanliness options
+dnl
+dnl If we have gcc, add appropriate code cleanliness options.  Do this
+dnl here at the end, because configure relies on being able to use
+dnl some very, very old C constructs.
+dnl
 PA_ADD_CFLAGS([-Wall])
 PA_ARG_DISABLED([pedantic],
 [disable some extra paranoid compiler warnings],
 [],
 [PA_ADD_CFLAGS([-W])
  PA_ADD_CFLAGS([-pedantic])
- PA_ADD_CFLAGS([-Wc90-c99-compat])])
-dnl LLVM doesn't error out on invalid -W options unless this option is
-dnl specified first.  Enable this so this script can actually discover
-dnl which -W options are possible for this compiler.
-PA_ADD_CFLAGS([-Werror=unknown-warning-option])
+ PA_ADD_CFLAGS([-Wc90-c99-compat])
+ PA_ADD_CFLAGS([-Wc99-compat])
+ PA_ADD_CFLAGS([-Wc99-extensions])
+])
 dnl Suppress format warning on Windows targets due to their <inttypes.h>
 PA_ADD_CFLAGS([-Wpedantic-ms-format],[-Wno-pedantic-ms-format])
 PA_ADD_CFLAGS([-Wlong-long],[-Wno-long-long])
@@ -347,6 +358,7 @@ dnl on compilers with gcc-like command line syntax we pass the -fwrapv
 dnl option for exactly that reason.
 PA_ADD_CFLAGS([-Wshift-negative-value],[-Wno-shift-negative-value])
 
+dnl Want to turn this on at some point...
 dnl PA_ADD_CFLAGS([-Wwrite-strings])
 PA_ARG_ENABLED([werror],
  [compile with -Werror to error out on any warning],

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -234,7 +234,8 @@ static bool parse_braces(decoflags_t *decoflags)
     }
 }
 
-static inline const expr *next_expr(const expr *e, const expr **next_list)
+static inline unused
+const expr *next_expr(const expr *e, const expr **next_list)
 {
     e++;
     if (!e->type) {
@@ -830,7 +831,14 @@ restart_parse:
             /* DB et al */
             result->operands = oper_num;
             if (oper_num == 0)
-                nasm_warn(WARN_OTHER, "no operand for data declaration");
+                /*!
+                 *!db-empty [on] no operand for data declaration
+                 *!  warns about a \c{DB}, \c{DW}, etc declaration
+                 *!  with no operands, producing no output.
+                 *!  This is permitted, but often indicative of an error.
+                 *!  See \k{db}.
+                 */
+                nasm_warn(WARN_DB_EMPTY, "no operand for data declaration");
         }
         return result;
     }

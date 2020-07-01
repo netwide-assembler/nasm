@@ -18,6 +18,7 @@ span.subtitle {
 }
 code, pre {
     font-family: "source code pro", "liberation mono", "monospace";
+    font-size: 80%;
 }
 pre, blockquote {
     margin-left: 4em;

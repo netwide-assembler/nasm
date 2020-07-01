@@ -253,7 +253,18 @@ if ($what eq 'c') {
 	} else {
 	    my $docdef = $whatdef{$warn->{def}};
 
-	    @doc = @{$warn->{doc}};
+	    my $newpara = 0;
+	    foreach my $l (@{$warn->{doc}}) {
+		if ($l =~ /^\s*$/) {
+		    $newpara = 1;
+		} else {
+		    if ($newpara && $l !~ /^\\c\s+/) {
+			$l = '\> ' . $l;
+		    }
+		    $newpara = 0;
+		}
+		push(@doc, $l);
+	    }
 	    if (defined($docdef)) {
 		push(@doc, "\n", "\\> $docdef by default.\n");
 	    }
