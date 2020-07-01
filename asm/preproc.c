@@ -4835,7 +4835,7 @@ static int mmac_rotate(const MMacro *mac, unsigned int n)
 /*
  * expands to a list of tokens from %{x:y}
  */
-void expand_mmac_params_range(MMacro *mac, Token *tline, Token ***tail)
+static void expand_mmac_params_range(MMacro *mac, Token *tline, Token ***tail)
 {
     Token *t;
     const char *arg = tok_text(tline) + 1;
