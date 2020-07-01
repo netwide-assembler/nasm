@@ -13,7 +13,5 @@ This means its development is open to even wider society of programmers
 wishing to improve their lovely assembler.
 
 Visit our [nasm.us](https://www.nasm.us/) website for more details.
-We are gradually moving services away from Sourceforge. For our remaining
-Sourceforge services see [here](https://sourceforge.net/projects/nasm/).
 
 With best regards, the NASM crew.
