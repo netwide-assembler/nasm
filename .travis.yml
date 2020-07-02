@@ -1,10 +1,15 @@
 language: c
-os:
-  - linux
-env:
-  - TR_ARCH=local
+dist: bionic
+arch:
+ - amd64
+ - arm64
+ 
+env: TR_ARCH=local
+
+install:
+ - ./autogen.sh
+ - ./configure
+
 script:
-  - ./autogen.sh
-  - ./configure
-  - make all
-  - python3 ./travis/nasm-t.py run
+ - make all
+ - python3 ./travis/nasm-t.py run
