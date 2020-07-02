@@ -77,7 +77,7 @@ static inline size_t strlist_size(const struct strlist *list)
 	return list ? list->size : 0;
 }
 
-struct strlist safe_alloc *strlist_alloc(bool uniq);
+struct strlist * safe_alloc strlist_alloc(bool uniq);
 const struct strlist_entry *strlist_add(struct strlist *list, const char *str);
 const struct strlist_entry * printf_func(2, 3)
 	strlist_printf(struct strlist *list, const char *fmt, ...);
