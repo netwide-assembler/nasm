@@ -13,6 +13,8 @@ since 2007.
 
 \b Add \c{db-empty} warning class, see \k{opt-w}.
 
+\b Fix the dependencies in the MSVC NMAKE makefile (\c{Mkfiles/msvc.mak}).
+
 \b Some documentation improvements and cleanups.
 
 \b Fix the handling of macro parameter ranges (\c{%\{:\}}), including

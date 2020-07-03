@@ -345,7 +345,7 @@ static inline bool tok_text_match(const struct Token *a, const struct Token *b)
     return a->len == b->len && !memcmp(tok_text(a), tok_text(b), a->len);
 }
 
-static inline unused bool
+static inline unused_func bool
 tok_match(const struct Token *a, const struct Token *b)
 {
     return a->type == b->type && tok_text_match(a, b);
@@ -764,7 +764,7 @@ static const char *unquote_token_cstr(Token *t)
  * TOK_STRING tokens.
  */
 static Token *quote_any_token(Token *t);
-static inline unused
+static inline unused_func
 Token *quote_token(Token *t)
 {
     if (likely(!tok_is(t, TOK_INTERNAL_STRING)))

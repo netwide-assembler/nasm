@@ -310,27 +310,6 @@ static inline void *mempcpy(void *dst, const void *src, size_t n)
 #define printf_func(fmt, list)     format_func3(printf,fmt,list)
 #define printf_func_ptr(fmt, list) format_func3_ptr(printf,fmt,list)
 
-/*
- * A static [inline] function which either is currently unused but
- * likely to be used in the future, or used only under some #if
- * combinations.  Mark with this option to suppress compiler
- * warnings.
- *
- * This is better than #if(def) because it still lets the compiler
- * analyze the function for validity, and it works even for the
- * conditional use case.
- *
- * The macro UNUSED is set to 1 if the unused macro is meaningful,
- * otherwise 0; this may be useful in some #if statements.
- */
-#ifdef HAVE_FUNC_ATTRIBUTE_UNUSED
-# define unused __attribute__((unused))
-# define UNUSED 1
-#else
-# define unused
-# define UNUSED 0
-#endif
-
 /* Determine probabilistically if something is a compile-time constant */
 #ifdef HAVE___BUILTIN_CONSTANT_P
 # if defined(__GNUC__) && (__GNUC__ >= 5)
