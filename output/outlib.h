@@ -254,7 +254,7 @@ static inline uint64_t ol_nsects(void)
 extern int32_t _ol_new_subsection(struct ol_sect *sect);
 static inline int32_t ol_new_subsection(O_Section *sect)
 {
-    return ol_new_subsection((struct ol_sect *)sect);
+    return _ol_new_subsection((struct ol_sect *)sect);
 }
 
 /*
