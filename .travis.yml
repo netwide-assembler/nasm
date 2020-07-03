@@ -1,4 +1,9 @@
 language: c
+dist: bionic
+arch:
+ - amd64
+ - arm64
+
 env: TR_ARCH=local
 
 install:
