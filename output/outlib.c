@@ -194,8 +194,8 @@ int32_t _ol_new_subsection(struct ol_sect *sect)
  * Insert a symbol into a list; need to use upcasting using container_of()
  * to walk the list later.
  */
-void ol_add_sym_to(struct ol_symlist *syml, struct ol_symhead *head,
-                   uint64_t offset)
+static void ol_add_sym_to(struct ol_symlist *syml, struct ol_symhead *head,
+                          uint64_t offset)
 {
     syml->tree.key = offset;
     head->tree     = rb_insert(head->tree, &syml->tree);
