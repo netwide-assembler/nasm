@@ -1284,6 +1284,7 @@ struct optimization {
  */
 enum pass_type {
     PASS_INIT,            /* Initialization, not doing anything yet */
+    PASS_PREPROC,         /* Preprocess-only mode (similar to PASS_FIRST) */
     PASS_FIRST,           /* The very first pass over the code */
     PASS_OPT,             /* Optimization pass */
     PASS_STAB,            /* Stabilization pass (original pass 1) */
@@ -1318,6 +1319,11 @@ static inline bool pass_stable(void)
 static inline bool pass_final(void)
 {
     return pass_type() >= PASS_FINAL;
+}
+/* True for code generation *or* preprocess-only mode */
+static inline bool pass_final_or_preproc(void)
+{
+    return pass_type() >= PASS_FINAL || pass_type() == PASS_PREPROC;
 }
 
 /*

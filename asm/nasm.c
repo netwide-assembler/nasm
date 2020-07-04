@@ -644,7 +644,7 @@ int main(int argc, char **argv)
 
             location.known = false;
 
-            _pass_type = PASS_FIRST; /* We emulate this assembly pass */
+            _pass_type = PASS_PREPROC;
             preproc->reset(inname, PP_PREPROC, depend_list);
 
             while ((line = preproc->getline())) {
@@ -1651,8 +1651,19 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
     while (!terminate_after_phase && !pass_final()) {
         _passn++;
-        if (pass_type() != PASS_OPT || !global_offset_changed)
+        switch (pass_type()) {
+        case PASS_INIT:
+            _pass_type = PASS_FIRST;
+            break;
+        case PASS_OPT:
+            if (global_offset_changed)
+                break;          /* One more optimization pass */
+            /* fall through */
+        default:
             _pass_type++;
+            break;
+        }
+
         global_offset_changed = 0;
 
 	/*
@@ -1830,8 +1841,12 @@ static bool skip_this_pass(errflags severity)
     if (type == ERR_LISTMSG)
         return true;
 
-    /* This message not applicable unless pass_final */
-    return (severity & ERR_PASS2) && !pass_final();
+    /*
+     * This message not applicable unless it is the last pass we are going
+     * to execute; this can be either the final code-generation pass or
+     * the single pass executed in preproc-only mode.
+     */
+    return (severity & ERR_PASS2) && !pass_final_or_preproc();
 }
 
 /**
