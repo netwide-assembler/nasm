@@ -231,6 +231,17 @@ struct SMacro {
 };
 
 /*
+ * "No listing" flags. Inside a loop (%rep..%endrep) we may have
+ * macro listing suppressed with .nolist, but we still need to
+ * update line numbers for error messages and debug information...
+ * unless we are nested inside an actual .nolist macro.
+ */
+enum nolist_flags {
+    NL_LIST   = 1,              /* Suppress list output */
+    NL_LINE   = 2               /* Don't update line information */
+};
+
+/*
  * Store the definition of a multi-line macro. This is also used to
  * store the interiors of `%rep...%endrep' blocks, which are
  * effectively self-re-invoking multi-line macros which simply
@@ -264,9 +275,9 @@ struct MMacro {
 #endif
     char *name;
     int nparam_min, nparam_max;
+    enum nolist_flags nolist;   /* is this macro listing-inhibited? */
     bool casesense;
     bool plus;                  /* is the last parameter greedy? */
-    bool nolist;                /* is this macro listing-inhibited? */
     bool capture_label;         /* macro definition has %00; capture label */
     int32_t in_progress;        /* is this macro currently being expanded? */
     int32_t max_depth;          /* maximum number of recursive expansions allowed */
@@ -447,16 +458,22 @@ struct Line {
 /*
  * To handle an arbitrary level of file inclusion, we maintain a
  * stack (ie linked list) of these things.
+ *
+ * Note: when we issue a message for a continuation line, we want to
+ * issue it for the actual *start* of the continuation line. This means
+ * we need to remember how many lines to skip over for the next one.
  */
 struct Include {
     Include *next;
     FILE *fp;
     Cond *conds;
     Line *expansion;
+    uint64_t nolist;            /* Listing inhibit counter */
+    uint64_t noline;            /* Line number update inhibit counter */
     struct mstk mstk;
-    struct src_location where;      /* Filename and current line number */
+    struct src_location where;  /* Filename and current line number */
     int32_t lineinc;            /* Increment given by %line */
-    bool nolist;
+    int32_t lineskip;           /* Accounting for passed continuation lines */
 };
 
 /*
@@ -1298,9 +1315,12 @@ static char *line_from_file(FILE *f)
     unsigned int size, next;
     const unsigned int delta = 512;
     const unsigned int pad = 8;
-    unsigned int nr_cont = 0;
     bool cont = false;
     char *buffer, *p;
+
+    istk->where.lineno += istk->lineskip + istk->lineinc;
+    src_set_linnum(istk->where.lineno);
+    istk->lineskip = 0;
 
     size = delta;
     p = buffer = nasm_malloc(size);
@@ -1345,7 +1365,7 @@ static char *line_from_file(FILE *f)
             ungetc(next, f);
             if (next == '\r' || next == '\n') {
                 cont = true;
-                nr_cont++;
+                istk->lineskip += istk->lineinc;
                 continue;
             }
             break;
@@ -1359,9 +1379,6 @@ static char *line_from_file(FILE *f)
 
         *p++ = c;
     } while (c);
-
-    istk->where.lineno += (nr_cont + 1) * istk->lineinc;
-    src_set_linnum(istk->where.lineno);
 
     return buffer;
 }
@@ -1382,8 +1399,8 @@ static char *read_line(void)
     if (!line)
         return NULL;
 
-   if (!istk->nolist)
-       lfmt->line(LIST_READ, istk->where.lineno, line);
+    if (!istk->nolist)
+        lfmt->line(LIST_READ, istk->where.lineno, line);
 
     return line;
 }
@@ -3184,7 +3201,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 #endif
     def->name = dup_text(tline);
     def->plus = false;
-    def->nolist = false;
+    def->nolist = 0;
     def->nparam_min = 0;
     def->nparam_max = 0;
 
@@ -3216,7 +3233,8 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 	tline->next->len == 7 &&
         !nasm_stricmp(tline->next->text.a, ".nolist")) {
         tline = tline->next;
-        def->nolist = !list_option('f') || istk->nolist;
+        if (!list_option('f'))
+            def->nolist |= NL_LIST|NL_LINE;
     }
 
     /*
@@ -3413,7 +3431,7 @@ static int do_directive(Token *tline, Token **output)
     enum preproc_token op;
     int j;
     bool err;
-    bool nolist;
+    enum nolist_flags nolist;
     bool casesense;
     int k, m;
     int offset;
@@ -3851,10 +3869,12 @@ static int do_directive(Token *tline, Token **output)
             /* -MG given but file not found, or repeated %require */
             nasm_free(inc);
         } else {
-            src_set(0, found_path ? found_path : p);
             inc->where = src_where();
             inc->lineinc = 1;
             inc->nolist = istk->nolist;
+            inc->noline = istk->noline;
+            if (!inc->noline)
+                src_set(0, found_path ? found_path : p);
             istk = inc;
             lfmt->uplevel(LIST_INCLUDE, 0);
         }
@@ -3880,8 +3900,10 @@ static int do_directive(Token *tline, Token **output)
             stdmacpos = pkg->macros;
             nasm_new(inc);
             inc->next = istk;
-            src_set(0, NULL);
-            inc->nolist = !list_option('b') || istk->nolist;
+            inc->nolist = istk->nolist + !list_option('b');
+            inc->noline = istk->noline;
+            if (!inc->noline)
+                src_set(0, NULL);
             istk = inc;
             lfmt->uplevel(LIST_INCLUDE, 0);
         }
@@ -4206,11 +4228,12 @@ issue_error:
     {
         MMacro *tmp_defining;
 
-        nolist = false;
+        nolist = 0;
         tline = skip_white(tline->next);
         if (tok_type(tline, TOK_ID) && tline->len == 7 &&
 	    !nasm_memicmp(tline->text.a, ".nolist", 7)) {
-            nolist = !list_option('f') || istk->nolist;
+            if (!list_option('f'))
+                nolist |= NL_LIST; /* ... but update line numbers */
             tline = skip_white(tline->next);
         }
 
@@ -4287,7 +4310,11 @@ issue_error:
 
         istk->mstk.mstk = defining;
 
-        lfmt->uplevel(defining->nolist ? LIST_MACRO_NOLIST : LIST_MACRO, 0);
+        /* A loop does not change istk->noline */
+        istk->nolist += !!(defining->nolist & NL_LIST);
+        if (!istk->nolist)
+            lfmt->uplevel(LIST_MACRO, 0);
+
         defining = defining->dstk.mstk;
         break;
 
@@ -4752,9 +4779,8 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
             if (!handle_explicit)
                 break;
 
-            /* Left pasting token is start of line */
+            /* Left pasting token is start of line, just drop %+ */
             if (!prev_nonspace) {
-                nasm_nonfatal("No lvalue found on pasting");
                 tok = delete_Token(tok);
                 break;
             }
@@ -4767,28 +4793,25 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
             /* Delete leading whitespace */
             next = zap_white(t->next);
 
-            /* Delete the %+ token itself */
-            nasm_assert(next == tok);
-            next = delete_Token(next);
-
-            /* Delete trailing whitespace */
-            next = zap_white(next);
+            /*
+             * Delete the %+ token itself, followed by any whitespace.
+             * In a sequence of %+ ... %+ ... %+ pasting sequences where
+             * some expansions in the middle have ended up empty,
+             * we can end up having multiple %+ tokens in a row;
+             * just drop whem in that case.
+             */
+            while (next) {
+                if (next->type == TOK_PASTE || next->type == TOK_WHITESPACE)
+                    next = delete_Token(next);
+                else
+                    break;
+            }
 
             /*
-             * No ending token, this might happen in two
-             * cases
-             *
-             *  1) There indeed no right token at all
-             *  2) There is a bare "%define ID" statement,
-             *     and @ID does expand to whitespace.
-             *
-             * So technically we need to do a grammar analysis
-             * in another stage of parsing, but for now lets don't
-             * change the behaviour people used to. Simply allow
-             * whitespace after paste token.
+             * Nothing after? Just leave the existing token.
              */
             if (!next) {
-                *prev_nonspace = tok = NULL; /* End of line */
+                t->next = tok = NULL; /* End of line */
                 break;
             }
 
@@ -6342,10 +6365,18 @@ static int expand_mmacro(Token * tline)
         }
     }
 
-    lfmt->uplevel(m->nolist ? LIST_MACRO_NOLIST : LIST_MACRO, 0);
+    istk->nolist += !!(m->nolist & NL_LIST);
+    istk->noline += !!(m->nolist & NL_LINE);
 
-    if (list_option('m') && !m->nolist)
-        list_mmacro_call(m);
+    if (!istk->nolist) {
+        lfmt->uplevel(LIST_MACRO, 0);
+
+        if (list_option('m'))
+            list_mmacro_call(m);
+    }
+
+    if (!istk->noline)
+        src_macro_push(m, istk->where);
 
     return 1;
 }
@@ -6568,6 +6599,8 @@ static Token *pp_tokline(void)
         while (l && l->finishes) {
             MMacro *fm = l->finishes;
 
+            nasm_assert(fm == istk->mstk.mstk);
+
             if (!fm->name && fm->in_progress > 1) {
                 /*
                  * This is a macro-end marker for a macro with no
@@ -6647,6 +6680,22 @@ static Token *pp_tokline(void)
                     }
                 }
 
+                if (fm->nolist & NL_LIST) {
+                    istk->nolist--;
+                } else if (!istk->nolist) {
+                    lfmt->downlevel(LIST_MACRO);
+                }
+
+                if (fm->nolist & NL_LINE) {
+                    istk->noline--;
+                } else if (!istk->noline) {
+                    if (fm == src_macro_current())
+                        src_macro_pop();
+                    src_update(l->where);
+                }
+
+                istk->where = l->where;
+
                 /*
                  * FIXME It is incorrect to always free_mmacro here.
                  * It leads to usage-after-free.
@@ -6658,10 +6707,9 @@ static Token *pp_tokline(void)
                     free_mmacro(m);
 #endif
             }
-            istk->where = l->where;
             istk->expansion = l->next;
             nasm_free(l);
-            lfmt->downlevel(LIST_MACRO);
+
             return &tok_pop;
         }
 
@@ -6675,6 +6723,9 @@ static Token *pp_tokline(void)
                 istk->where = l->where;
                 tline = l->first;
                 nasm_free(l);
+
+                if (!istk->noline)
+                    src_update(istk->where);
 
                 if (!istk->nolist) {
                     line = detoken(tline, false);
@@ -6992,44 +7043,20 @@ static Token *make_tok_char(Token *next, char op)
 }
 
 /*
- * Descend the istk looking for macro definitions; we have to
- * recurse because we want to show the messages in top-down order.
+ * Descent the macro hierarchy and display the expansion after
+ * encountering an error message.
  */
-static void pp_list_macro_istk(Include *inc, errflags severity)
-{
-    MMacro *m;
-    Include *inext;
-
-    /* Find the next higher level true macro invocation if any */
-    inext = inc->next;
-    if (inext && inext->mstk.mmac) {
-        while (inext) {
-            if (inext->mstk.mstk->name) {
-                pp_list_macro_istk(inext, severity);
-                break;
-            }
-            inext = inext->next;
-        }
-    }
-
-    m = inc->mstk.mstk;
-    if (m && m->name && !m->nolist) {
-        src_update(inc->where);
-	nasm_error(severity, "... from macro `%s' defined", m->name);
-    }
-}
-
 static void pp_error_list_macros(errflags severity)
 {
-    struct src_location saved;
-
-    if (!istk)
-        return;
+    const MMacro *m;
 
     severity |= ERR_PP_LISTMACRO | ERR_NO_SEVERITY | ERR_HERE;
-    saved = src_where();
-    pp_list_macro_istk(istk, severity);
-    src_update(saved);
+
+    while ((m = src_error_down())) {
+	nasm_error(severity, "... from macro `%s' defined", m->name);
+    }
+
+    src_error_reset();
 }
 
 const struct preproc_ops nasmpp = {

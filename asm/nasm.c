@@ -644,7 +644,7 @@ int main(int argc, char **argv)
 
             location.known = false;
 
-            _pass_type = PASS_FIRST; /* We emulate this assembly pass */
+            _pass_type = PASS_PREPROC;
             preproc->reset(inname, PP_PREPROC, depend_list);
 
             while ((line = preproc->getline())) {
@@ -1651,8 +1651,19 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
     while (!terminate_after_phase && !pass_final()) {
         _passn++;
-        if (pass_type() != PASS_OPT || !global_offset_changed)
+        switch (pass_type()) {
+        case PASS_INIT:
+            _pass_type = PASS_FIRST;
+            break;
+        case PASS_OPT:
+            if (global_offset_changed)
+                break;          /* One more optimization pass */
+            /* fall through */
+        default:
             _pass_type++;
+            break;
+        }
+
         global_offset_changed = 0;
 
 	/*
@@ -1830,8 +1841,12 @@ static bool skip_this_pass(errflags severity)
     if (type == ERR_LISTMSG)
         return true;
 
-    /* This message not applicable unless pass_final */
-    return (severity & ERR_PASS2) && !pass_final();
+    /*
+     * This message not applicable unless it is the last pass we are going
+     * to execute; this can be either the final code-generation pass or
+     * the single pass executed in preproc-only mode.
+     */
+    return (severity & ERR_PASS2) && !pass_final_or_preproc();
 }
 
 /**
@@ -1918,14 +1933,39 @@ static fatal_func die_hard(errflags true_type, errflags severity)
 }
 
 /*
+ * Returns the struct src_location appropriate for use, after some
+ * potential filename mangling.
+ */
+static struct src_location error_where(errflags severity)
+{
+    struct src_location where;
+
+    if (severity & ERR_NOFILE) {
+        where.filename = NULL;
+        where.lineno = 0;
+    } else {
+        where = src_where_error();
+
+        if (!where.filename) {
+            where.filename =
+            inname && inname[0] ? inname :
+                outname && outname[0] ? outname :
+                NULL;
+            where.lineno = 0;
+        }
+    }
+
+    return where;
+}
+
+/*
  * error reporting for critical and panic errors: minimize
  * the amount of system dependencies for getting a message out,
  * and in particular try to avoid memory allocations.
  */
 fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args)
 {
-    const char *currentfile = no_file_name;
-    int32_t lineno = 0;
+    struct src_location where;
     errflags true_type = severity & ERR_MASK;
     static bool been_here = false;
 
@@ -1934,22 +1974,15 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args
 
     been_here = true;
 
-    if (!(severity & ERR_NOFILE)) {
-        src_get(&lineno, &currentfile);
-        if (!currentfile) {
-            currentfile =
-                inname && inname[0] ? inname :
-                outname && outname[0] ? outname :
-                no_file_name;
-                lineno = 0;
-        }
-    }
+    where = error_where(severity);
+    if (!where.filename)
+        where.filename = no_file_name;
 
     fputs(error_pfx_table[severity], error_file);
-    fputs(currentfile, error_file);
-    if (lineno) {
+    fputs(where.filename, error_file);
+    if (where.lineno) {
         fprintf(error_file, "%s%"PRId32"%s",
-                errfmt->beforeline, lineno, errfmt->afterline);
+                errfmt->beforeline, where.lineno, errfmt->afterline);
     }
     fputs(errfmt->beforemsg, error_file);
     vfprintf(error_file, fmt, args);
@@ -1963,11 +1996,10 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args
  */
 struct nasm_errtext {
     struct nasm_errtext *next;
-    const char *currentfile;    /* Owned by the filename system */
     char *msg;                  /* Owned by this structure */
+    struct src_location where;  /* Owned by the srcfile system */
     errflags severity;
     errflags true_type;
-    int32_t lineno;
 };
 struct nasm_errhold {
     struct nasm_errhold *up;
@@ -2052,17 +2084,7 @@ void nasm_verror(errflags severity, const char *fmt, va_list args)
     et->severity = severity;
     et->true_type = true_type;
     et->msg = nasm_vasprintf(fmt, args);
-    if (!(severity & ERR_NOFILE)) {
-        src_get(&et->lineno, &et->currentfile);
-
-        if (!et->currentfile) {
-            et->currentfile =
-                inname && inname[0] ? inname :
-                outname && outname[0] ? outname :
-                NULL;
-            et->lineno = 0;
-        }
-    }
+    et->where = error_where(severity);
 
     if (errhold_stack && true_type <= ERR_NONFATAL) {
         /* It is a tentative error */
@@ -2094,8 +2116,7 @@ static void nasm_issue_error(struct nasm_errtext *et)
     char linestr[64];           /* Formatted line number if applicable */
     const errflags severity  = et->severity;
     const errflags true_type = et->true_type;
-    const char * const currentfile = et->currentfile;
-    const uint32_t lineno = et->lineno;
+    const struct src_location where = et->where;
 
     if (severity & ERR_NO_SEVERITY)
         pfx = "";
@@ -2114,17 +2135,17 @@ static void nasm_issue_error(struct nasm_errtext *et)
     }
 
     *linestr = 0;
-    if (lineno) {
+    if (where.lineno) {
         snprintf(linestr, sizeof linestr, "%s%"PRId32"%s",
-                 errfmt->beforeline, lineno, errfmt->afterline);
+                 errfmt->beforeline, where.lineno, errfmt->afterline);
     }
 
     if (!skip_this_pass(severity)) {
-        const char *file = currentfile ? currentfile : no_file_name;
+        const char *file = where.filename ? where.filename : no_file_name;
         const char *here = "";
 
         if (severity & ERR_HERE) {
-            here = currentfile ? " here" : " in an unknown location";
+            here = where.filename ? " here" : " in an unknown location";
         }
 
         if (warn_list && true_type < ERR_NONFATAL &&
@@ -2161,12 +2182,12 @@ static void nasm_issue_error(struct nasm_errtext *et)
      * pass1 or preprocessor warnings in the list file
      */
     if (severity & ERR_HERE) {
-        if (lineno)
+        if (where.lineno)
             lfmt->error(severity, "%s%s at %s:%"PRId32"%s",
-                        pfx, et->msg, currentfile, lineno, warnsuf);
-        else if (currentfile)
+                        pfx, et->msg, where.filename, where.lineno, warnsuf);
+        else if (where.filename)
             lfmt->error(severity, "%s%s in file %s%s",
-                        pfx, et->msg, currentfile, warnsuf);
+                        pfx, et->msg, where.filename, warnsuf);
         else
             lfmt->error(severity, "%s%s in an unknown location%s",
                         pfx, et->msg, warnsuf);
