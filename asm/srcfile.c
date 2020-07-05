@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -32,7 +32,14 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * srcfile.c - keep track of the current position in the input stream
+ * srcfile.c - keep track of the current position in the input stream.
+ *
+ * This is used for error messages, listing, and debug information. In
+ * both cases we also want to understand where inside a non-nolist
+ * macro we may be.
+ *
+ * This hierarchy is a stack that is kept as a doubly-linked list, as
+ * we want to traverse it in either top-down order or bottom-up.
  */
 
 #include "compiler.h"
@@ -42,7 +49,9 @@
 #include "hashtbl.h"
 #include "srcfile.h"
 
-struct src_location _src_here;
+struct src_location_stack _src_top;
+struct src_location_stack *_src_bottom = &_src_top;
+struct src_location_stack *_src_error = &_src_top;
 
 static struct hash_table filename_hash;
 
@@ -75,8 +84,8 @@ const char *src_set_fname(const char *newname)
         }
     }
 
-    oldname = _src_here.filename;
-    _src_here.filename = newname;
+    oldname = _src_bottom->l.filename;
+    _src_bottom->l.filename = newname;
     return oldname;
 }
 
@@ -84,4 +93,26 @@ void src_set(int32_t line, const char *fname)
 {
     src_set_fname(fname);
     src_set_linnum(line);
+}
+
+void src_macro_push(const void *macro, struct src_location where)
+{
+    struct src_location_stack *sl;
+
+    nasm_new(sl);
+    sl->l = where;
+    sl->macro = macro;
+    sl->up = _src_bottom;
+    _src_bottom->down = sl;
+    _src_bottom = sl;
+}
+
+void src_macro_pop(void)
+{
+    struct src_location_stack *sl = _src_bottom;
+
+    _src_bottom = sl->up;
+    _src_bottom->down = NULL;
+
+    nasm_free(sl);
 }

@@ -428,7 +428,6 @@ static inline char *nasm_skip_identifier(const char *str)
 enum {
     LIST_READ,
     LIST_MACRO,
-    LIST_MACRO_NOLIST,
     LIST_INCLUDE,
     LIST_INCBIN,
     LIST_TIMES

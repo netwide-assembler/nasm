@@ -49,14 +49,6 @@
 #define LIST_INDENT  40
 #define LIST_HEXBIT  18
 
-typedef struct MacroInhibit MacroInhibit;
-
-static struct MacroInhibit {
-    MacroInhibit *next;
-    int level;
-    int inhibiting;
-} *mistack;
-
 static const char xdigit[] = "0123456789ABCDEF";
 
 #define HEX(a,b) (*(a)=xdigit[((b)>>4)&15],(a)[1]=xdigit[(b)&15]);
@@ -135,12 +127,6 @@ static void list_cleanup(void)
     if (!listfp)
         return;
 
-    while (mistack) {
-        MacroInhibit *temp = mistack;
-        mistack = temp->next;
-        nasm_free(temp);
-    }
-
     list_emit();
     fclose(listfp);
     listfp = NULL;
@@ -172,10 +158,6 @@ static void list_init(const char *fname)
     list_errors = NULL;
     listlevel = 0;
     suppress = 0;
-    nasm_new(mistack);
-    mistack->next = NULL;
-    mistack->level = 0;
-    mistack->inhibiting = true;
 }
 
 static void list_out(int64_t offset, char *str)
@@ -292,21 +274,14 @@ static void list_output(const struct out_data *data)
 
 static void list_line(int type, int32_t lineno, const char *line)
 {
+    (void)type;
+
     if (!listfp)
         return;
 
     if (user_nolist)
       return;
 
-    if (mistack && mistack->inhibiting) {
-        if (type == LIST_MACRO)
-            return;
-        else {                  /* pop the m i stack */
-            MacroInhibit *temp = mistack;
-            mistack = temp->next;
-            nasm_free(temp);
-        }
-    }
     list_emit();
     if (lineno >= 0)
         listlineno = lineno;
@@ -314,15 +289,6 @@ static void list_line(int type, int32_t lineno, const char *line)
     strlcpy(listline, line, LIST_MAX_LEN-3);
     memcpy(listline + LIST_MAX_LEN-4, "...", 4);
     listlevel_e = listlevel;
-}
-
-static void mistack_push(bool inhibiting)
-{
-    MacroInhibit *temp = nasm_malloc(sizeof(MacroInhibit));
-    temp->next = mistack;
-    temp->level = listlevel;
-    temp->inhibiting = inhibiting;
-    mistack = temp;
 }
 
 static void list_uplevel(int type, int64_t size)
@@ -343,13 +309,6 @@ static void list_uplevel(int type, int64_t size)
 
     case LIST_INCLUDE:
         listlevel++;
-        if (mistack && mistack->inhibiting)
-            mistack_push(false);
-        break;
-
-    case LIST_MACRO_NOLIST:
-        listlevel++;
-        mistack_push(true);
         break;
 
     default:
@@ -374,11 +333,6 @@ static void list_downlevel(int type)
 
     default:
         listlevel--;
-        while (mistack && mistack->level > listlevel) {
-            MacroInhibit *temp = mistack;
-            mistack = temp->next;
-            nasm_free(temp);
-        }
         break;
     }
 }
