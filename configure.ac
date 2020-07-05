@@ -15,22 +15,33 @@ dnl the best very slow and doesn't buy us a single thing at all.
 WINELOADER=/dev/null
 export WINELOADER
 
+dnl Get the canonical target system name
+AC_CANONICAL_HOST
+
 dnl Checks for programs and enable necessary CC extensions
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_PROG_CC
 AC_PROG_CC_STDC
-AC_PROG_LN_S
-AC_PROG_MAKE_SET
-AC_PROG_INSTALL
-
-pa_no_optimize=false
 
 dnl If the user did not specify a CFLAGS default, change default
 dnl to -O0 for debugging
 PA_ARG_DISABLED([optimization],
  [compile without optimization (-O0) to help debugging],
  [pa_no_optimize=true])
+
+dnl LLVM doesn't error out on invalid -W options unless this option is
+dnl specified first.  Enable this so this script can actually discover
+dnl which -W options are possible for this compiler.
+PA_ADD_CFLAGS([-Werror=unknown-warning-option])
+
+dnl Other programs
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_INSTALL
+AC_PROG_MKDIR_P
+
+pa_no_optimize=false
 
 dnl Compile and link with dwarf debug
 PA_ARG_ENABLED([gdb],
@@ -87,14 +98,56 @@ dnl Look for programs...
 AC_CHECK_PROGS(NROFF,    nroff,    false)
 AC_CHECK_PROGS(ASCIIDOC, asciidoc, false)
 AC_CHECK_PROGS(XMLTO,    xmlto,    false)
+AC_CHECK_PROGS(XZ,       xz,       false)
 
 dnl Check for progs needed for manpage generation
-AS_IF([test $ASCIIDOC = false],
-  [AC_MSG_WARN([No asciidoc package found])]
+MANPAGES=manpages
+AS_IF([test x$ASCIIDOC = xfalse],
+  [AC_MSG_WARN([No asciidoc package found, cannot build man pages])
+   MANPAGES='']
 )
-AS_IF([test $XMLTO = false],
-  [AC_MSG_WARN([No xmlto package found])]
+AS_IF([test x"$XMLTO" = xfalse],
+  [AC_MSG_WARN([No xmlto package found, cannot build man pages])
+   MANPAGES='']
 )
+AC_SUBST([MANPAGES])
+
+dnl Don't create .pdf.xz if there is no xz
+AS_IF([test x"$XZ" = xfalse],
+  [],
+  [XZFILES=xzfiles])
+AC_SUBST([XZFILES])
+
+dnl Can't create NSIS package if there is no makensis
+dnl ... but it only applies to a Windows target ...
+dnl Note: AC_CHECK_TOOLS is supposed to check for the "plain"
+dnl version of the program name, but it doesn't seem to.
+AC_ARG_WITH([nsis],
+[AS_HELP_STRING([[--with-nsis[=makensis]]],
+ [build an install .exe using NSIS on Windows hosts])],
+ [], [with_nsis=yes])
+AS_IF([test x"$MAKENSIS" = x], [],
+      [AS_IF([test x"$with_nsis" = xno], []
+             [with_nsis="$MAKENSIS"])])
+
+MAKENSIS=false
+
+AS_CASE([$host],
+	[*-win* | *-mingw*],
+	[AS_IF([test x"$with_nsis" = xno], [],
+	 [NSIS=nsis
+	  AS_IF([test x"$with_nsis" = xyes],
+	  [AC_CHECK_TOOL(MAKENSIS_TOOL, makensis, false)
+	   MAKENSIS="$MAKENSIS_TOOL"
+	   AS_IF([test x"$MAKENSIS" = xfalse],
+	       [AC_CHECK_PROGS(MAKENSIS_PLAIN, makensis, false)
+	         MAKENSIS="$MAKENSIS_PLAIN"])
+	   AS_IF([test x"$MAKENSIS" = xfalse],
+	         [AC_MSG_WARN([no makensis found, cannot build installer])
+	          NSIS=''])],
+	  [MAKENSIS="$with_nsis"])])])
+AC_SUBST([MAKENSIS])
+AC_SUBST([NSIS])
 
 dnl Check for host compiler tools
 AC_CHECK_TOOL(AR, ar)
@@ -113,6 +166,7 @@ AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(sys/types.h)
 AC_CHECK_HEADERS(sys/stat.h)
+AC_CHECK_HEADERS(sys/resource.h)
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(strcasecmp stricmp)
@@ -126,6 +180,7 @@ AC_CHECK_FUNCS(mempcpy)
 
 AC_CHECK_FUNCS(getuid)
 AC_CHECK_FUNCS(getgid)
+AC_CHECK_FUNCS(getrlimit)
 
 AC_CHECK_FUNCS(realpath)
 AC_CHECK_FUNCS(canonicalize_file_name)
@@ -234,6 +289,7 @@ PA_FUNC_ATTRIBUTE(format, [printf,1,2], int, [const char *, ...], ["%d",1])
 PA_FUNC_ATTRIBUTE(const)
 PA_FUNC_ATTRIBUTE(pure)
 PA_FUNC_ATTRIBUTE(cold,,,,,unlikely_func)
+PA_FUNC_ATTRIBUTE(unused)
 PA_FUNC_ATTRIBUTE_ERROR
 
 dnl
@@ -272,22 +328,25 @@ PA_ARG_ENABLED([sanitizer],
 
 dnl
 dnl Don't make symbols visible, there is no point and it just
-dnl makes the code slower.
+dnl makes the code slower. This mainly affects ELF.
 dnl
 PA_ADD_CFLAGS([-fvisibility=hidden])
 
-dnl If we have gcc, add appropriate code cleanliness options
+dnl
+dnl If we have gcc, add appropriate code cleanliness options.  Do this
+dnl here at the end, because configure relies on being able to use
+dnl some very, very old C constructs.
+dnl
 PA_ADD_CFLAGS([-Wall])
 PA_ARG_DISABLED([pedantic],
 [disable some extra paranoid compiler warnings],
 [],
 [PA_ADD_CFLAGS([-W])
  PA_ADD_CFLAGS([-pedantic])
- PA_ADD_CFLAGS([-Wc90-c99-compat])])
-dnl LLVM doesn't error out on invalid -W options unless this option is
-dnl specified first.  Enable this so this script can actually discover
-dnl which -W options are possible for this compiler.
-PA_ADD_CFLAGS([-Werror=unknown-warning-option])
+ PA_ADD_CFLAGS([-Wc90-c99-compat])
+ PA_ADD_CFLAGS([-Wc99-compat])
+ PA_ADD_CFLAGS([-Wc99-extensions])
+])
 dnl Suppress format warning on Windows targets due to their <inttypes.h>
 PA_ADD_CFLAGS([-Wpedantic-ms-format],[-Wno-pedantic-ms-format])
 PA_ADD_CFLAGS([-Wlong-long],[-Wno-long-long])
@@ -299,6 +358,7 @@ dnl on compilers with gcc-like command line syntax we pass the -fwrapv
 dnl option for exactly that reason.
 PA_ADD_CFLAGS([-Wshift-negative-value],[-Wno-shift-negative-value])
 
+dnl Want to turn this on at some point...
 dnl PA_ADD_CFLAGS([-Wwrite-strings])
 PA_ARG_ENABLED([werror],
  [compile with -Werror to error out on any warning],
@@ -327,5 +387,5 @@ dnl support ccache
 dnl
 PA_ARG_ENABLED([ccache], [compile with ccache], [CC="ccache $CC"], [])
 
-AC_OUTPUT_COMMANDS([mkdir -p config nasmlib nsis output stdlib x86 asm disasm rdoff macros common])
-AC_OUTPUT(Makefile doc/Makefile)
+AC_CONFIG_FILES([Makefile doc/Makefile])
+AC_OUTPUT

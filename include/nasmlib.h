@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -355,11 +355,17 @@ enum file_flags {
     NF_TEXT     = 0x00000001,   /* Text file */
     NF_NONFATAL = 0x00000000,   /* Don't die on open failure (default) */
     NF_FATAL    = 0x00000002,   /* Die on open failure */
-    NF_FORMAP   = 0x00000004    /* Intended to use nasm_map_file() */
+    NF_FORMAP   = 0x00000004,   /* Intended to use nasm_map_file() */
+    NF_IONBF    = 0x00000010,   /* Force unbuffered stdio */
+    NF_IOLBF    = 0x00000020,   /* Force line buffered stdio */
+    NF_IOFBF    = 0000000030    /* Force fully buffered stdio */
 };
+#define NF_BUF_MASK  0x30
 
 FILE *nasm_open_read(const char *filename, enum file_flags flags);
 FILE *nasm_open_write(const char *filename, enum file_flags flags);
+
+void nasm_set_binary_mode(FILE *f);
 
 /* Probe for existence of a file */
 bool nasm_file_exists(const char *filename);
@@ -449,5 +455,8 @@ static inline int64_t const_func signed_bits(int64_t value, int bits)
 
 /* check if value is power of 2 */
 #define is_power2(v)   ((v) && ((v) & ((v) - 1)) == 0)
+
+/* try to get the system stack size */
+extern size_t nasm_get_stack_size_limit(void);
 
 #endif

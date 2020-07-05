@@ -42,6 +42,7 @@
 # Tokens other than instructions and registers
 #
 
+# The ? operator is a keyword, because ? is a legitimate symbol character
 % TOKEN_QMARK, 0, 0, 0
 ?
 
@@ -88,8 +89,13 @@ short
 strict
 to
 
+# PTR is a legitimate symbol, but has an optional warning
 % TOKEN_ID, 0, TFLAG_WARN, 0
 ptr
+
+# DUP is a legitimate symbol, but also has context-specific use in extops
+% TOKEN_ID, 0, TFLAG_DUP, 0
+dup
 
 % TOKEN_FLOAT, 0, 0, 0
 __?infinity?__

@@ -18,7 +18,7 @@ while ($ARGV[0] =~ /^-(.*)$/) {
     my $opt = $1;
     shift @ARGV;
 
-    if ($opt eq '-nocompress') {
+    if ($opt eq 'nocompress') {
         $compress = 0;
     }
 }
@@ -114,11 +114,13 @@ if (defined($fontpath)) {
     $fpopt = "-sFONTPATH${o}" . join($p, @fplist);
 }
 
-my $r = system($gs, "-dCompatibilityLevel${o}1.4",
+my $r = system($gs, "-dCompatibilityLevel${o}1.3",
 	       "-I".File::Spec->curdir(),
 	       "-P-", "-dNOPAUSE", "-dBATCH", "-sDEVICE${o}pdfwrite",
 	       "-sstdout${o}%stderr", "-sOutputFile${o}${out}",
-	       "-dOptimize${o}true", "-dEmbedAllFonts${o}true",
+	       "-dOptimize${o}true",
+	       "-dEmbedAllFonts${o}true", "-dSubsetFonts${o}true",
+	       "-dMaxSubsetPct${o}100",
 	       $fpopt,
                "-dCompressPages${o}" . ($compress ? 'true' : 'false'),
                "-dUseFlateCompression${o}true",

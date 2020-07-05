@@ -15,6 +15,7 @@ BuildRequires: automake
 BuildRequires: asciidoc
 BuildRequires: xmlto
 BuildRequires: xz
+BuildRequires: perl
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %package doc
@@ -47,9 +48,8 @@ include linker, library manager, loader, and information dump.
 
 %build
 sh autogen.sh
-%configure --disable-pdf-compression --enable-sections
+%configure --enable-sections
 make %{?_smp_mflags} everything
-xz -9ef doc/nasmdoc.pdf
 
 %install
 rm -rf "%{buildroot}"

@@ -45,6 +45,7 @@
 *
 *ctx
 *def
+*defalias
 *empty
 *env
 *id
@@ -94,6 +95,7 @@
 %push
 %rep
 %repl
+%require
 %rotate
 %stacksize
 %undef

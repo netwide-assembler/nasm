@@ -62,7 +62,7 @@ LIBOBJ = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) &
 	nasmlib\string.$(O) nasmlib\nctype.$(O) &
 	nasmlib\file.$(O) nasmlib\mmap.$(O) nasmlib\ilog2.$(O) &
 	nasmlib\realpath.$(O) nasmlib\path.$(O) &
-	nasmlib\filename.$(O) &
+	nasmlib\filename.$(O) nasmlib\rlimit.$(O) &
 	nasmlib\zerobuf.$(O) nasmlib\readnum.$(O) nasmlib\bsi.$(O) &
 	nasmlib\rbtree.$(O) nasmlib\hashtbl.$(O) &
 	nasmlib\raa.$(O) nasmlib\saa.$(O) &
@@ -76,7 +76,7 @@ LIBOBJ = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) &
 	x86\disp8.$(O) x86\iflag.$(O) &
 	&
 	asm\error.$(O) asm\warnings.$(O) &
-	asm\float.$(O) &
+	asm\floats.$(O) &
 	asm\directiv.$(O) asm\directbl.$(O) &
 	asm\pragma.$(O) &
 	asm\assemble.$(O) asm\labels.$(O) asm\parser.$(O) &
@@ -156,7 +156,7 @@ PERLREQ = x86\insnsb.c x86\insnsa.c x86\insnsd.c x86\insnsi.h x86\insnsn.c &
 	  x86\iflag.c x86\iflaggen.h &
 	  macros\macros.c &
 	  asm\pptok.ph asm\directbl.c asm\directiv.h &
-	  asm\warnings.c include\warnings.h &
+	  asm\warnings.c include\warnings.h doc\warnings.src &
 	  version.h version.mac version.mak nsis\version.nsh
 
 INSDEP = x86\insns.dat x86\insns.pl x86\insns-iflags.ph x86\iflags.ph
@@ -230,7 +230,7 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 WARNFILES = asm\warnings.c include\warnings.h doc\warnings.src
 
 warnings:
-	rm -f $(WARNFILES)
+	$(RM_F) $(WARNFILES)
 	$(MAKE) $(WARNFILES)
 
 asm\warnings.c: asm\warnings.pl
@@ -282,8 +282,6 @@ perlreq: $(PERLREQ) .SYMBOLIC
 #-- Begin NSIS Rules --#
 # Edit in Makefile.in, not here!
 
-# NSIS is not built except by explicit request, as it only applies to
-# Windows platforms
 nsis\arch.nsh: nsis\getpearch.pl nasm$(X)
 	$(PERL) $(srcdir)\nsis\getpearch.pl nasm$(X) > nsis\arch.nsh
 

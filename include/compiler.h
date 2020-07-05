@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 2007-2018 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -88,6 +88,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <errno.h>
 
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
@@ -357,6 +358,13 @@ static inline void *mempcpy(void *dst, const void *src, size_t n)
 # else
 #  define va_copy(dst,src) memcpy(&(dst),&(src),sizeof(va_list))
 # endif
+#endif
+
+/*
+ * If SIZE_MAX is not defined, rely on size_t being unsigned
+ */
+#ifndef SIZE_MAX
+# define SIZE_MAX (((size_t)0) - 1)
 #endif
 
 /* Watcom doesn't handle switch statements with 64-bit types, hack around it */

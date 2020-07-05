@@ -601,6 +601,83 @@ static inline int64_t merge_resb(insn *ins, int64_t isize)
     return isize;
 }
 
+/* This must be handle non-power-of-2 alignment values */
+static inline size_t pad_bytes(size_t len, size_t align)
+{
+    size_t partial = len % align;
+    return partial ? align - partial : 0;
+}
+
+static void out_eops(struct out_data *data, const extop *e)
+{
+    while (e) {
+        size_t dup = e->dup;
+
+        switch (e->type) {
+        case EOT_NOTHING:
+            break;
+
+        case EOT_EXTOP:
+            while (dup--)
+                out_eops(data, e->val.subexpr);
+            break;
+
+        case EOT_DB_NUMBER:
+            if (e->elem > 8) {
+                nasm_nonfatal("integer supplied as %d-bit data",
+                              e->elem << 3);
+            } else {
+                while (dup--) {
+                    data->insoffs = 0;
+                    data->inslen = data->size = e->elem;
+                    data->tsegment = e->val.num.segment;
+                    data->toffset  = e->val.num.offset;
+                    data->twrt = e->val.num.wrt;
+                    data->relbase = 0;
+                    if (e->val.num.segment != NO_SEG &&
+                        (e->val.num.segment & 1)) {
+                        data->type = OUT_SEGMENT;
+                        data->sign = OUT_UNSIGNED;
+                    } else {
+                        data->type = e->val.num.relative
+                            ? OUT_RELADDR : OUT_ADDRESS;
+                        data->sign = OUT_WRAP;
+                    }
+                    out(data);
+                }
+            }
+            break;
+
+        case EOT_DB_FLOAT:
+        case EOT_DB_STRING:
+        case EOT_DB_STRING_FREE:
+        {
+            size_t pad, len;
+
+            pad = pad_bytes(e->val.string.len, e->elem);
+            len = e->val.string.len + pad;
+
+            while (dup--) {
+                data->insoffs = 0;
+                data->inslen = len;
+                out_rawdata(data, e->val.string.data, e->val.string.len);
+                if (pad)
+                    out_rawdata(data, zero_buffer, pad);
+            }
+            break;
+        }
+
+        case EOT_DB_RESERVE:
+            data->insoffs = 0;
+            data->inslen = dup * e->elem;
+            out_reserve(data, data->inslen);
+            break;
+        }
+
+        e = e->next;
+    }
+}
+
 /* This is totally just a wild guess what is reasonable... */
 #define INCBIN_MAX_BUF (ZERO_BUF_SIZE * 16)
 
@@ -609,7 +686,9 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     struct out_data data;
     const struct itemplate *temp;
     enum match_result m;
-    int64_t wsize;              /* size for DB etc. */
+
+    if (instruction->opcode == I_none)
+        return 0;
 
     nasm_zero(data);
     data.offset = start;
@@ -617,49 +696,10 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     data.itemp = NULL;
     data.bits = bits;
 
-    wsize = db_bytes(instruction->opcode);
-    if (wsize == -1)
-        return 0;
-
-    if (wsize) {
-        extop *e;
-
-        list_for_each(e, instruction->eops) {
-            if (e->type == EOT_DB_NUMBER) {
-                if (wsize > 8) {
-                    nasm_nonfatal("integer supplied to a DT,DO,DY or DZ");
-                } else {
-                    data.insoffs = 0;
-                    data.inslen = data.size = wsize;
-                    data.toffset = e->offset;
-                    data.twrt = e->wrt;
-                    data.relbase = 0;
-                    if (e->segment != NO_SEG && (e->segment & 1)) {
-                        data.tsegment = e->segment;
-                        data.type = OUT_SEGMENT;
-                        data.sign = OUT_UNSIGNED;
-                    } else {
-                        data.tsegment = e->segment;
-                        data.type = e->relative ? OUT_RELADDR : OUT_ADDRESS;
-                        data.sign = OUT_WRAP;
-                    }
-                    out(&data);
-                }
-            } else if (e->type == EOT_DB_STRING ||
-                       e->type == EOT_DB_STRING_FREE) {
-                int align = e->stringlen % wsize;
-                if (align)
-                    align = wsize - align;
-
-                data.insoffs = 0;
-                data.inslen = e->stringlen + align;
-
-                out_rawdata(&data, e->stringval, e->stringlen);
-                out_rawdata(&data, zero_buffer, align);
-            }
-        }
+    if (opcode_is_db(instruction->opcode)) {
+        out_eops(&data, instruction->eops);
     } else if (instruction->opcode == I_INCBIN) {
-        const char *fname = instruction->eops->stringval;
+        const char *fname = instruction->eops->val.string.data;
         FILE *fp;
         size_t t = instruction->times; /* INCBIN handles TIMES by itself */
         off_t base = 0;
@@ -688,14 +728,14 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
         }
 
         if (instruction->eops->next) {
-            base = instruction->eops->next->offset;
+            base = instruction->eops->next->val.num.offset;
             if (base >= len) {
                 len = 0;
             } else {
                 len -= base;
                 if (instruction->eops->next->next &&
-                    len > (off_t)instruction->eops->next->next->offset)
-                    len = (off_t)instruction->eops->next->next->offset;
+                    len > (off_t)instruction->eops->next->next->val.num.offset)
+                    len = (off_t)instruction->eops->next->next->val.num.offset;
             }
         }
 
@@ -897,45 +937,57 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
     return data.offset - start;
 }
 
-static void debug_set_db_type(insn *instruction)
+static int32_t eops_typeinfo(const extop *e)
 {
-    /* Is this really correct? .operands doesn't mean much for Dx */
-    int32_t typeinfo = TYS_ELEMENTS(instruction->operands);
+    int32_t typeinfo = 0;
 
-    switch (instruction->opcode) {
-    case I_DB:
-        typeinfo |= TY_BYTE;
-        break;
-    case I_DW:
-        typeinfo |= TY_WORD;
-        break;
-    case I_DD:
-        if (instruction->eops_float)
-            typeinfo |= TY_FLOAT;
-        else
-            typeinfo |= TY_DWORD;
-        break;
-    case I_DQ:
-        /* What about double? */
-        typeinfo |= TY_QWORD;
-        break;
-    case I_DT:
-        /* What about long double? */
-        typeinfo |= TY_TBYTE;
-        break;
-    case I_DO:
-        typeinfo |= TY_OWORD;
-        break;
-    case I_DY:
-        typeinfo |= TY_YWORD;
-        break;
-    case I_DZ:
-        typeinfo |= TY_ZWORD;
-        break;
-    default:
-        panic();
+    while (e) {
+        switch (e->type) {
+        case EOT_NOTHING:
+            break;
+
+        case EOT_EXTOP:
+            typeinfo |= eops_typeinfo(e->val.subexpr);
+            break;
+
+        case EOT_DB_FLOAT:
+            switch (e->elem) {
+            case  1: typeinfo |= TY_BYTE;  break;
+            case  2: typeinfo |= TY_WORD;  break;
+            case  4: typeinfo |= TY_FLOAT; break;
+            case  8: typeinfo |= TY_QWORD; break; /* double? */
+            case 10: typeinfo |= TY_TBYTE; break; /* long double? */
+            case 16: typeinfo |= TY_YWORD; break;
+            case 32: typeinfo |= TY_ZWORD; break;
+            default: break;
+            }
+            break;
+
+        default:
+            switch (e->elem) {
+            case  1: typeinfo |= TY_BYTE;  break;
+            case  2: typeinfo |= TY_WORD;  break;
+            case  4: typeinfo |= TY_DWORD; break;
+            case  8: typeinfo |= TY_QWORD; break;
+            case 10: typeinfo |= TY_TBYTE; break;
+            case 16: typeinfo |= TY_YWORD; break;
+            case 32: typeinfo |= TY_ZWORD; break;
+            default: break;
+            }
+            break;
+        }
+        e = e->next;
     }
 
+    return typeinfo;
+}
+
+static inline void debug_set_db_type(insn *instruction)
+{
+
+    int32_t typeinfo = TYS_ELEMENTS(instruction->operands);
+
+    typeinfo |= eops_typeinfo(instruction->eops);
     dfmt->debug_typevalue(typeinfo);
 }
 
@@ -1009,6 +1061,42 @@ static void define_equ(insn * instruction)
     }
 }
 
+static int64_t len_extops(const extop *e)
+{
+    int64_t isize = 0;
+    size_t pad;
+
+    while (e) {
+        switch (e->type) {
+        case EOT_NOTHING:
+            break;
+
+        case EOT_EXTOP:
+            isize += e->dup * len_extops(e->val.subexpr);
+            break;
+
+        case EOT_DB_STRING:
+        case EOT_DB_STRING_FREE:
+        case EOT_DB_FLOAT:
+            pad = pad_bytes(e->val.string.len, e->elem);
+            isize += e->dup * (e->val.string.len + pad);
+            break;
+
+        case EOT_DB_NUMBER:
+            warn_overflow_const(e->val.num.offset, e->elem);
+            isize += e->dup * e->elem;
+            break;
+
+        case EOT_DB_RESERVE:
+            isize += e->dup;
+            break;
+        }
+
+        e = e->next;
+    }
+
+    return isize;
+}
 
 int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
 {
@@ -1022,33 +1110,12 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
         define_equ(instruction);
         return 0;
     } else if (opcode_is_db(instruction->opcode)) {
-        extop *e;
-        int32_t osize, wsize;
-
-        wsize = db_bytes(instruction->opcode);
-        nasm_assert(wsize > 0);
-
-        list_for_each(e, instruction->eops) {
-            int32_t align;
-
-            osize = 0;
-            if (e->type == EOT_DB_NUMBER) {
-                osize = 1;
-                warn_overflow_const(e->offset, wsize);
-            } else if (e->type == EOT_DB_STRING ||
-                       e->type == EOT_DB_STRING_FREE)
-                osize = e->stringlen;
-
-            align = (-osize) % wsize;
-            if (align < 0)
-                align += wsize;
-            isize += osize + align;
-        }
-
+        isize = len_extops(instruction->eops);
         debug_set_db_type(instruction);
         return isize;
     } else if (instruction->opcode == I_INCBIN) {
-        const char *fname = instruction->eops->stringval;
+        const extop *e = instruction->eops;
+        const char *fname = e->val.string.data;
         off_t len;
 
         len = nasm_file_size_by_path(fname);
@@ -1058,14 +1125,15 @@ int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction)
             return 0;
         }
 
-        if (instruction->eops->next) {
-            if (len <= (off_t)instruction->eops->next->offset) {
+        e = e->next;
+        if (e) {
+            if (len <= (off_t)e->val.num.offset) {
                 len = 0;
             } else {
-                len -= instruction->eops->next->offset;
-                if (instruction->eops->next->next &&
-                    len > (off_t)instruction->eops->next->next->offset) {
-                    len = (off_t)instruction->eops->next->next->offset;
+                len -= e->val.num.offset;
+                e = e->next;
+                if (e && len > (off_t)e->val.num.offset) {
+                    len = (off_t)e->val.num.offset;
                 }
             }
         }
@@ -2015,7 +2083,6 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         case 0313:
-            ins->rex = 0;
             break;
 
         case4(0314):

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2020 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -237,7 +237,7 @@ if (defined($fontmap)) {
  'dieresis', undef, 'ring', 'cedilla', undef, 'hungarumlaut',
  'ogonek', 'caron', 'space', 'exclam', 'quotedbl', 'numbersign',
  'dollar', 'percent', 'ampersand', 'quoteright', 'parenleft',
- 'parenright', 'asterisk', 'plus', 'comma', 'minus', 'period',
+ 'parenright', 'asterisk', 'plus', 'comma', 'hyphen', 'period',
  'slash', 'zero', 'one', 'two', 'three', 'four', 'five', 'six',
  'seven', 'eight', 'nine', 'colon', 'semicolon', 'less', 'equal',
  'greater', 'question', 'at', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
@@ -254,7 +254,7 @@ if (defined($fontmap)) {
  'scaron', 'guilsignlright', 'oe', undef, 'zcaron', 'Ydieresis',
  'space', 'exclamdown', 'cent', 'sterling', 'currency', 'yen',
  'brokenbar', 'section', 'dieresis', 'copyright', 'ordfeminine',
- 'guillemotleft', 'logicalnot', 'hyphen', 'registered', 'macron',
+ 'guillemotleft', 'logicalnot', 'minus', 'registered', 'macron',
  'degree', 'plusminus', 'twosuperior', 'threesuperior', 'acute', 'mu',
  'paragraph', 'periodcentered', 'cedilla', 'onesuperior',
  'ordmasculine', 'guillemotright', 'onequarter', 'onehalf',
@@ -775,7 +775,7 @@ sub ps_break_lines($$) {
 	    my $p;
 	    # Code paragraph; each chunk is a line
 	    foreach $p ( @data ) {
-		push(@ls, [[$ptype,0,undef,\%BodyFont,0,0],[$p]]);
+		push(@ls, [[$ptype,0,undef,\%CodeFont,0,0],[$p]]);
 	    }
 	    $ls[0]->[0]->[1] |= 1;	     # First in para
 	    $ls[-1]->[0]->[1] |= 2;      # Last in para

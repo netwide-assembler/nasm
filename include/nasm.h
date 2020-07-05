@@ -428,7 +428,6 @@ static inline char *nasm_skip_identifier(const char *str)
 enum {
     LIST_READ,
     LIST_MACRO,
-    LIST_MACRO_NOLIST,
     LIST_INCLUDE,
     LIST_INCBIN,
     LIST_TIMES
@@ -462,6 +461,7 @@ enum ccode { /* condition code names */
 #define TFLAG_BRC_ANY   (TFLAG_BRC | TFLAG_BRC_OPT)
 #define TFLAG_BRDCAST   (1 << 2)    /* broadcasting decorator */
 #define TFLAG_WARN	(1 << 3)    /* warning only, treat as ID */
+#define TFLAG_DUP	(1 << 4)    /* valid ID but also has context-specific use */
 
 static inline uint8_t get_cond_opcode(enum ccode c)
 {
@@ -548,13 +548,6 @@ enum prefixes { /* instruction prefixes */
     PREFIX_ENUM_LIMIT
 };
 
-enum extop_type { /* extended operand types */
-    EOT_NOTHING,
-    EOT_DB_STRING,      /* Byte string */
-    EOT_DB_STRING_FREE, /* Byte string which should be nasm_free'd*/
-    EOT_DB_NUMBER       /* Integer */
-};
-
 enum ea_flags { /* special EA flags */
     EAF_BYTEOFFS    =  1,   /* force offset part to byte size */
     EAF_WORDOFFS    =  2,   /* force offset part to [d]word size */
@@ -595,15 +588,34 @@ typedef struct operand { /* operand to an instruction */
 #define OPFLAG_RELATIVE     8   /* operand is self-relative, e.g. [foo - $]
                                    where foo is not in the current segment */
 
+enum extop_type { /* extended operand types */
+    EOT_NOTHING = 0,
+    EOT_EXTOP,          /* Subexpression */
+    EOT_DB_STRING,      /* Byte string */
+    EOT_DB_FLOAT,       /* Floating-pointer number (special byte string) */
+    EOT_DB_STRING_FREE, /* Byte string which should be nasm_free'd*/
+    EOT_DB_NUMBER,      /* Integer */
+    EOT_DB_RESERVE      /* ? */
+};
+
 typedef struct extop { /* extended operand */
-    struct extop    *next;      /* linked list */
-    char            *stringval; /* if it's a string, then here it is */
-    size_t          stringlen;  /* ... and here's how long it is */
-    int64_t         offset;     /* ... it's given here ... */
-    int32_t         segment;    /* if it's a number/address, then... */
-    int32_t         wrt;        /* ... and here */
-    bool            relative;   /* self-relative expression */
-    enum extop_type type;       /* defined above */
+    struct extop    *next;       /* linked list */
+    union {
+        struct {                 /* text or byte string */
+            char    *data;
+            size_t   len;
+        } string;
+        struct {                 /* numeric expression */
+            int64_t  offset;     /* numeric value or address offset */
+            int32_t  segment;    /* address segment */
+            int32_t  wrt;        /* address wrt */
+            bool     relative;   /* self-relative expression */
+        } num;
+        struct extop *subexpr;   /* actual expressions */
+    } val;
+    size_t dup;                  /* duplicated? */
+    enum extop_type type;        /* defined above */
+    int elem;                    /* element size override, if any (bytes) */
 } extop;
 
 enum ea_type {
@@ -827,7 +839,7 @@ struct ofmt {
      * This procedure is called at the start of each pass.
      */
     void (*reset)(void);
-    
+
     /*
      * This is the modern output function, which gets passed
      * a struct out_data with much more information.  See the
@@ -1252,8 +1264,8 @@ enum decorator_tokens {
  * Global modes
  */
 
-/* 
- * flag to disable optimizations selectively 
+/*
+ * flag to disable optimizations selectively
  * this is useful to turn-off certain optimizations
  */
 enum optimization_disable_flag {
@@ -1271,6 +1283,7 @@ struct optimization {
  */
 enum pass_type {
     PASS_INIT,            /* Initialization, not doing anything yet */
+    PASS_PREPROC,         /* Preprocess-only mode (similar to PASS_FIRST) */
     PASS_FIRST,           /* The very first pass over the code */
     PASS_OPT,             /* Optimization pass */
     PASS_STAB,            /* Stabilization pass (original pass 1) */
@@ -1306,6 +1319,11 @@ static inline bool pass_final(void)
 {
     return pass_type() >= PASS_FINAL;
 }
+/* True for code generation *or* preprocess-only mode */
+static inline bool pass_final_or_preproc(void)
+{
+    return pass_type() >= PASS_FINAL || pass_type() == PASS_PREPROC;
+}
 
 /*
  * The actual pass number. 0 is used during initialization, the very
@@ -1331,4 +1349,4 @@ extern const char *outname;     /* output filename */
  */
 int64_t switch_segment(int32_t segment);
 
-#endif
+#endif  /* NASM_NASM_H */

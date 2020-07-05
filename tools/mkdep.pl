@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2020 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -140,16 +140,15 @@ sub _insert_deps($$) {
     my $cont = "\\";
     my $include_command = undef;
     my $selfrule = 0;
-    my $do_external = 0;
     my $maxline = 78;		# Seems like a reasonable default
     my %exclude = ();		# Don't exclude anything
     my @genhdrs = ();
     my $external = undef;
     my $raw_output = 0;
     my @outfile = ();
-    my $done = 0;
+    my $is_external = 0;
 
-    while ( defined($line = <$in>) && !$done ) {
+    while ( defined($line = <$in>) ) {
 	if ( $line =~ /^([^\s\#\$\:]+\.h):/ ) {
 	    # Note: we trust the first Makefile given best
 	    my $fpath = $1;
@@ -179,10 +178,11 @@ sub _insert_deps($$) {
 		$selfrule = !!$val;
 	    }
 	} elsif ( $line =~ /^(\s*\#?\s*EXTERNAL_DEPENDENCIES\s*=\s*)([01])\s*$/ ) {
+	    # If this line is not present, we cannot externalize
 	    $is_external = $externalize ? 1 : $force_inline ? 0 : $2+0;
 	    $line = $1.$is_external."\n";
 	} elsif ( $line eq $barrier ) {
-	    $done = 1;		# Stop reading input at barrier line
+	    last;		# Stop reading at barrier line
 	}
 
 	push @outfile, $line;
@@ -190,17 +190,20 @@ sub _insert_deps($$) {
     close($in);
 
     $is_external = $is_external && defined($external);
+    undef $external if ( !$is_external );
 
     if ( !$is_external || $externalize ) {
 	print $out @outfile;
-    } else {
-	print $out $barrier;	# Start generated file with barrier
     }
 
+    print $out $barrier;
+
     if ( $externalize ) {
-	if ( $is_external && defined($include_command) ) {
+	# Just strip internal file dependency information
+	if (defined($include_command)) {
 	    print $out "$include_command $external\n";
 	}
+	unlink($external);
 	return undef;
     }
 
@@ -209,6 +212,8 @@ sub _insert_deps($$) {
     foreach my $dfile ($external, sort(keys(%deps)) ) {
 	my $ofile;
 	my @deps;
+
+	next unless (defined($dfile));
 
 	if ( $selfrule && $dfile eq $external ) {
 	    $ofile = convert_file($dfile, $sep).':';

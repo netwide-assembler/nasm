@@ -7,11 +7,126 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.15.02} Version 2.15.02
+
+\b Fix miscompilation when building with \c{clang}.
+
+\b Add \c{db-empty} warning class, see \k{opt-w}.
+
+\b Fix the dependencies in the MSVC NMAKE makefile (\c{Mkfiles/msvc.mak}).
+
+\b Some documentation improvements and cleanups.
+
+\b Fix the handling of macro parameter ranges (\c{%\{:\}}), including
+with brace-enclosed original arguments.
+
+\S{cl-2.15.01} Version 2.15.01
+
+\b Fix building the documentation from the release archive. For 2.15,
+the user has to do \c{make warnings} manually in the main directory in
+order to be able to build the documentation, which means Perl needs to
+be installed on the system.
+
+\b Add instructions for Intel Control Flow Enforcement Technology (CET).
+
 \S{cl-2.15} Version 2.15
+
+\b The comparison and booleanizing operators can now be used in any
+expression context, not just \c{%if}. See \k{expr}.
+
+\b New operator \c{?} ... \c{:}.  See \k{exptri}.
+
+\b Signed shift operators \c{<<<} and \c{>>>}.  See \k{expshift}.
+
+\b The MASM \c{DUP} syntax for data definitions is now supported, in a
+somewhat enhanced form. See \k{db}.
+
+\b Warn for strange legacy behavior regarding empty arguments in
+multi-line macro expansion, but try to match legacy behavior in most
+cases. Legacy behavior can be disabled with the directive \c{%pragma
+preproc sane_empty_expansion}, see \k{mlmacro} and
+\k{pragma-preproc}.
+
+\b A much more sensible limit to expression evaluation depth. The
+previously defined limit would rarely trigger before NASM died with a
+stack overrun error on most systems. See \k{opt-limit}.
 
 \b The state of warnings can now be saved and restored via the
 \c{[WARNING PUSH]} and \c{[WARNING POP]} directives. See
 \k{asmdir-warning}.
+
+\b The \c{sectalign on|off} switch does not affect an explicit directive. See
+\k{sectalign}.
+
+\b Added \c{configure} option to enable building with profiling
+(\c{--enable-profiling}).
+
+\b Attempt to support of long path names, up to 32767 of UTF-16
+characters, on Windows.
+
+\b Fixed 'mismatch in operand sizes' error in the \c{MOVDDUP},
+\c{CMPXCHG8B} and \c{CMPXCHG16B} instructions.
+
+\b Improved error messages in the string transformation routine.
+
+\b Removed obsolete \c{gnu-elf-extensions} warning about 8- and 16-bit
+relocation generation. See \k{elf16}
+
+\b Added group aliases for all prefixed warnings. See \k{opt-w}.
+
+\b Allowed building with MSVC versions older than 1700.
+
+\b Added implicitly sized versions of the \c{K...} instructions, which
+allows the \c{K...} instructions to be specified without a size suffix as
+long as the operands are sized.
+
+\b Added \c{-L} option for additional listing information. See \k{opt-L}.
+
+\b Added some warnings for obsolete instructions for a specified CPU.
+
+\b Deprecated \c{-hf} and \c{-y} options. Use \c{-h} instead.
+
+\b Made DWARF as the default debug format for ELF.
+
+\b Added \c{%pragma list} \e{options...} to set or clear listing options
+(see \c{opt-L}).
+
+\b Allowed immediate syntax for \c{LEA} instruction (ignore operand
+size completely).
+
+\b Added limited functionality MASM compatibility package. See
+\k{pkg_masm}.
+
+\b Add single-line macros aliases using \c{%defalias} or
+\c{%idefalias}. These behave like a kind of "symbolic links" for
+single-line macros. See \k{defalias} and \c{clear}.
+
+\b Added support for stringify, nostrip, evaluating, and greedy
+single-line macro arguments. See \k{define}.
+
+\b Unused single-line macro arguments no longer need to have a
+specified name. See \k{define}.
+
+\b Added conditional comma operator \c{%,}. See \k{cond-comma}.
+
+\b Changed private namespace from \c{__foo__} to \c{__?foo?__}, so a user
+namespace starting from underscore is now clean from symbols. For
+backwards compatibility, the previous names are defined as aliases; see
+\k{defalias}, \k{clear} and \k{stdmac}.
+
+\b Added support of ELF weak symbols and external references. See \k{elfglob}.
+
+\b Changed the behavior of the EXTERN keyword and introduced REQUIRED keyword.
+See \k{required}.
+
+\b Added \c{%ifusable} and \c{%ifusing} directives. See \k{macropkg}.
+
+\b Made various performance improvements and stability fixes in macro
+preprocessor engine.
+
+\b Improved NASM error handling and cleaned up error messages.
+
+\b Many, many bug fixes.
 
 \S{cl-2.14.03} Version 2.14.03
 
@@ -93,7 +208,7 @@ renaming. See \k{opt-pfix}.
 from the command line.  See \k{mangling}.
 
 \b Supported generic \c{%pragma} namespaces, \c{output} and \c{debug}. See
-\k{gen-namespace}.
+\k{pragma}.
 
 \b Added the \c{--pragma} command line option to inject a \c{%pragma}
 directive.  See \k{opt-pragma}.

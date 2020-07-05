@@ -47,13 +47,18 @@ INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 
+# Optional tools
 NROFF		= @NROFF@
 ASCIIDOC	= @ASCIIDOC@
 XMLTO		= @XMLTO@
+MAKENSIS	= @MAKENSIS@
+XZ              = @XZ@
 
-MAKENSIS	= makensis
+# Optional targets
+MANPAGES        = @MANPAGES@
+NSIS            = @NSIS@
 
-MKDIR		= mkdir -p
+MKDIR_P		= @MKDIR_P@
 RM_F		= rm -f
 RM_RF		= rm -rf
 LN_S		= @LN_S@
@@ -74,7 +79,7 @@ endif
 
 .PHONY: all doc rdf install clean distclean cleaner spotless install_rdf test
 .PHONY: install_doc everything install_everything strip perlreq dist tags TAGS
-.PHONY: manpages nsis
+.PHONY: nothing manpages nsis
 
 .c.$(O):
 	$(CC) -c $(ALL_CFLAGS) -o $@ $<
@@ -104,7 +109,7 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	nasmlib/string.$(O) nasmlib/nctype.$(O) \
 	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) \
 	nasmlib/realpath.$(O) nasmlib/path.$(O) \
-	nasmlib/filename.$(O) \
+	nasmlib/filename.$(O) nasmlib/rlimit.$(O) \
 	nasmlib/zerobuf.$(O) nasmlib/readnum.$(O) nasmlib/bsi.$(O) \
 	nasmlib/rbtree.$(O) nasmlib/hashtbl.$(O) \
 	nasmlib/raa.$(O) nasmlib/saa.$(O) \
@@ -118,7 +123,7 @@ LIBOBJ = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	x86/disp8.$(O) x86/iflag.$(O) \
 	\
 	asm/error.$(O) asm/warnings.$(O) \
-	asm/float.$(O) \
+	asm/floats.$(O) \
 	asm/directiv.$(O) asm/directbl.$(O) \
 	asm/pragma.$(O) \
 	asm/assemble.$(O) asm/labels.$(O) asm/parser.$(O) \
@@ -147,9 +152,13 @@ XSUBDIRS = test doc nsis rdoff
 DEPDIRS  = . include config x86 rdoff $(SUBDIRS)
 #-- End File Lists --#
 
-all: nasm$(X) ndisasm$(X) rdf
+all: dirs
+	$(MAKE) nasm$(X) ndisasm$(X) rdf
 
 NASMLIB = libnasm.$(A)
+
+dirs:
+	$(MKDIR_P) $(SUBDIRS) $(XSUBDIRS)
 
 $(NASMLIB): $(LIBOBJ)
 	$(RM_F) $(NASMLIB)
@@ -175,7 +184,7 @@ PERLREQ = x86/insnsb.c x86/insnsa.c x86/insnsd.c x86/insnsi.h x86/insnsn.c \
 	  x86/iflag.c x86/iflaggen.h \
 	  macros/macros.c \
 	  asm/pptok.ph asm/directbl.c asm/directiv.h \
-	  asm/warnings.c include/warnings.h \
+	  asm/warnings.c include/warnings.h doc/warnings.src \
 	  version.h version.mac version.mak nsis/version.nsh
 
 INSDEP = x86/insns.dat x86/insns.pl x86/insns-iflags.ph x86/iflags.ph
@@ -249,7 +258,7 @@ x86/regs.h: x86/regs.dat x86/regs.pl
 WARNFILES = asm/warnings.c include/warnings.h doc/warnings.src
 
 warnings:
-	rm -f $(WARNFILES)
+	$(RM_F) $(WARNFILES)
 	$(MAKE) $(WARNFILES)
 
 asm/warnings.c: asm/warnings.pl
@@ -348,8 +357,6 @@ $(RDFLIB): $(RDFLIBOBJ)
 
 #-- Begin NSIS Rules --#
 
-# NSIS is not built except by explicit request, as it only applies to
-# Windows platforms
 nsis/arch.nsh: nsis/getpearch.pl nasm$(X)
 	$(PERL) $(srcdir)/nsis/getpearch.pl nasm$(X) > nsis/arch.nsh
 
@@ -365,10 +372,10 @@ nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
 manpages: nasm.1 ndisasm.1
 
 install: nasm$(X) ndisasm$(X)
-	$(MKDIR) $(DESTDIR)$(bindir)
+	$(MKDIR_P) $(DESTDIR)$(bindir)
 	$(INSTALL_PROGRAM) nasm$(X) $(DESTDIR)$(bindir)/nasm$(X)
 	$(INSTALL_PROGRAM) ndisasm$(X) $(DESTDIR)$(bindir)/ndisasm$(X)
-	$(MKDIR) $(DESTDIR)$(mandir)/man1
+	$(MKDIR_P) $(DESTDIR)$(mandir)/man1
 	$(INSTALL_DATA) $(srcdir)/nasm.1 $(DESTDIR)$(mandir)/man1/nasm.1
 	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(DESTDIR)$(mandir)/man1/ndisasm.1
 
@@ -386,7 +393,8 @@ clean:
 distclean: clean
 	$(RM_F) config.log config.status config/config.h
 	for d in . $(SUBDIRS) $(XSUBDIRS); do \
-		$(RM_F) "$$d"/*~ "$$d"/*.bak "$$d"/*.lst "$$d"/*.bin ; \
+		$(RM_F) "$$d"/.\# "$$d"/\# "$$d"/*~ "$$d"/*.bak \
+			"$$d"/*.lst "$$d"/*.bin ; \
 	done
 	$(RM_F) test/*.$(O)
 	$(RM_RF) autom4te*.cache
@@ -417,7 +425,7 @@ cscope:
 	cscope -b -f cscope.out
 
 rdf_install install_rdf install_rdoff:
-	$(MKDIR) $(DESTDIR)$(bindir)
+	$(MKDIR_P) $(DESTDIR)$(bindir)
 	for f in $(RDFPROGS); do \
 		$(INSTALL_PROGRAM) "$$f" '$(DESTDIR)$(bindir)'/ ; \
 	done
@@ -426,7 +434,7 @@ rdf_install install_rdf install_rdoff:
 		bn=`basename "$$f"` && $(RM_F) "$$bn" && \
 		$(LN_S) rdf2bin$(X) "$$bn" ; \
 	done
-	$(MKDIR) $(DESTDIR)$(mandir)/man1
+	$(MKDIR_P) $(DESTDIR)$(mandir)/man1
 	$(INSTALL_DATA) $(srcdir)/rdoff/*.1 $(DESTDIR)$(mandir)/man1/
 
 doc: doc/warnings.src
@@ -435,19 +443,28 @@ doc: doc/warnings.src
 doc_install install_doc:
 	$(MAKE) -C doc install
 
-everything: all manpages doc rdf
+# Dummy target to prevent accidental invocation of the default "all" target
+nothing:
+
+always_everything: dirs
+	$(MAKE) all doc
+
+everything: always_everything
+	$(MAKE) $(MANPAGES) $(NSIS) nothing
 
 install_everything: everything install install_doc install_rdf
 
 dist:
 	$(MAKE) alldeps
-	$(MAKE) spotless perlreq manpages spec
+	$(MAKE) spotless perlreq manpages spec $(MANPAGES)
 	autoheader
 	autoconf
 	$(RM_RF) ./autom4te*.cache
 
 tar: dist
-	tar -cvj --exclude CVS -C .. -f ../nasm-`cat version`-`date +%Y%m%d`.tar.bz2 `basename \`pwd\``
+	tar -cv --exclude CVS -C .. -f - | \
+		$(XZ) -9e > \
+		../nasm-`cat version`-`date +%Y%m%d`.tar.xz `basename \`pwd\``
 
 spec: nasm.spec
 
@@ -456,11 +473,11 @@ ALLPERLSRC := $(shell find $(srcdir) -type f -name '*.p[lh]')
 perlbreq.si: $(ALLPERLSRC)
 	sed -n -r -e 's/^[[:space:]]*use[[:space:]]+([^[:space:];]+).*$$/BuildRequires: perl(\1)/p' $(ALLPERLSRC) | \
 	sed -r -e '/perl\((strict|warnings|Win32.*)\)/d' | \
-	sort | uniq > perlbreq.si || ( rm -f perlbreq.si ; false )
+	sort | uniq > perlbreq.si
 
 nasm.spec: nasm.spec.in nasm.spec.sed version.sed perlbreq.si
 	sed -f version.sed -f nasm.spec.sed \
-	< nasm.spec.in > nasm.spec || ( rm -f nasm.spec ; false )
+	< nasm.spec.in > nasm.spec
 
 splint:
 	splint -weak *.c
@@ -495,6 +512,14 @@ doc/Makefile: Makefile
 config/config.h: config.status
 
 #
+# Dummy rules that changes make behavior
+# (at end to avoid confusing non-GNU makes)
+#
+.SECONDARY:
+
+.DELETE_ON_ERROR:
+
+#
 # Does this version of this file have external dependencies?  This definition
 # will be automatically updated by mkdep.pl as needed.
 #
@@ -523,9 +548,6 @@ alldeps: $(PERLREQ) tools/syncfiles.pl tools/mkdep.pl
 		$(DEPDIRS)
 	$(RM_F) *.dep
 	if [ -f config.status ]; then \
-		if [ $(EXTERNAL_DEPENDENCIES) -eq 1 ]; then \
-			sh config.status --recheck; \
-		fi; \
 		sh config.status; \
 	fi
 
@@ -537,9 +559,6 @@ cleandeps: $(PERLREQ) tools/syncfiles.pl tools/mkdep.pl
 		$(DEPDIRS)
 	$(RM_F) *.dep
 	if [ -f config.status ]; then \
-		if [ $(EXTERNAL_DEPENDENCIES) -eq 0 ]; then \
-			sh config.status --recheck; \
-		fi; \
 		sh config.status; \
 	fi
 
@@ -547,7 +566,7 @@ cleandeps: $(PERLREQ) tools/syncfiles.pl tools/mkdep.pl
 # @object-ending: ".$(O)"
 # @path-separator: "/"
 # @external: "Makefile.dep"
-# @include-command: "-include"
+# @include-command: "include"
 # @selfrule: "1"
 #-- Everything below is generated by mkdep.pl - do not edit --#
--include Makefile.dep
+include Makefile.dep

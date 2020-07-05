@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -102,7 +102,8 @@ strlist_add(struct strlist *list, const char *str)
 const struct strlist_entry *
 strlist_vprintf(struct strlist *list, const char *fmt, va_list ap)
 {
-	struct strlist_entry *e;
+	/* clang miscompiles offsetin() unless e is initialized here */
+	struct strlist_entry *e = NULL;
 	struct hash_insert hi;
 
 	if (!list)

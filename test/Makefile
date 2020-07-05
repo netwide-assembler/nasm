@@ -21,16 +21,19 @@ $(NASM):
 	$(NASM) $(NASMOPT) -f srec -o $@ -MD $@.dep -l $@.lst $<
 
 %.o: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f elf32 -o $@ -MD $@.dep -l $@.lst $<
+	$(NASM) $(NASMOPT) -f elf32 -gdwarf -o $@ -MD $@.dep -l $@.lst $<
+
+%.ox: %.asm $(NASMDEP)
+	$(NASM) $(NASMOPT) -f elfx32 -gdwarf -o $@ -MD $@.dep -l $@.lst $<
 
 %.o64: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f elf64 -o $@ -MD $@.dep -l $@.lst $<
+	$(NASM) $(NASMOPT) -f elf64 -gdwarf -o $@ -MD $@.dep -l $@.lst $<
 
 %.aout: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f aout -o $@ -MD $@.dep -l $@.lst $<
 
 %.obj: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f obj -o $@ -MD $@.dep -l $@.lst $<
+	$(NASM) $(NASMOPT) -f obj -gborland -F -o $@ -MD $@.dep -l $@.lst $<
 
 %.rdf: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f rdf -o $@ -MD $@.dep -l $@.lst $<
@@ -42,19 +45,19 @@ $(NASM):
 	$(NASM) $(NASMOPT) -f coff -o $@ -MD $@.dep -l $@.lst $<
 
 %.win32: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f win32 -o $@ -MD $@.dep -l $@.lst $<
+	$(NASM) $(NASMOPT) -f win32 -gcv8 -o $@ -MD $@.dep -l $@.lst $<
 
 %.win64: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f win64 -o $@ -MD $@.dep -l $@.lst $<
+	$(NASM) $(NASMOPT) -f win64 -gcv8 -o $@ -MD $@.dep -l $@.lst $<
 
 %.mo32: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f macho32 -o $@ -MD $@.dep -l $@.lst $<
+	$(NASM) $(NASMOPT) -f macho32 -gdwarf -o $@ -MD $@.dep -l $@.lst $<
 
 %.mo64: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f macho64 -o $@ -MD $@.dep -l $@.lst $<
+	$(NASM) $(NASMOPT) -f macho64 -gdwarf -o $@ -MD $@.dep -l $@.lst $<
 
 %.dbg: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f dbg -o $@ -MD $@.dep -l $@.lst $<
+	$(NASM) $(NASMOPT) -f dbg -gdbg -o $@ -MD $@.dep -l $@.lst $<
 
 %.asm: %.pl
 	$(PERL) $< > $@

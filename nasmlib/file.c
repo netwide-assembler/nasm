@@ -148,6 +148,11 @@ os_filename os_mangle_filename(const char *filename)
 
 #endif
 
+void nasm_set_binary_mode(FILE *f)
+{
+	os_set_binary_mode(f);
+}
+
 FILE *nasm_open_read(const char *filename, enum file_flags flags)
 {
     FILE *f = NULL;
@@ -209,6 +214,20 @@ FILE *nasm_open_write(const char *filename, enum file_flags flags)
     if (!f && (flags & NF_FATAL))
         nasm_fatalf(ERR_NOFILE, "unable to open output file: `%s': %s",
                     filename, strerror(errno));
+
+    switch (flags & NF_BUF_MASK) {
+    case NF_IONBF:
+        setvbuf(f, NULL, _IONBF, 0);
+        break;
+    case NF_IOLBF:
+        setvbuf(f, NULL, _IOLBF, 0);
+        break;
+    case NF_IOFBF:
+        setvbuf(f, NULL, _IOFBF, 0);
+        break;
+    default:
+        break;
+    }
 
     return f;
 }

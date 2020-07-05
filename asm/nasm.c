@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -44,7 +44,7 @@
 #include "error.h"
 #include "saa.h"
 #include "raa.h"
-#include "float.h"
+#include "floats.h"
 #include "stdscan.h"
 #include "insns.h"
 #include "preproc.h"
@@ -55,6 +55,7 @@
 #include "outform.h"
 #include "listing.h"
 #include "iflag.h"
+#include "quote.h"
 #include "ver.h"
 
 /*
@@ -87,6 +88,7 @@ static const struct error_format errfmt_gnu  = { ":", "",  ": "  };
 static const struct error_format errfmt_msvc = { "(", ")", " : " };
 static const struct error_format *errfmt = &errfmt_gnu;
 static struct strlist *warn_list;
+static struct nasm_errhold *errhold_stack;
 
 unsigned int debug_nasm;        /* Debugging messages? */
 
@@ -192,15 +194,27 @@ static const struct limit_info limit_info[LIMIT_MAX+1] = {
     { "macro-tokens", "tokens processed during single-lime macro expansion", 10000000 },
     { "mmacros", "multi-line macros before final return", 100000 },
     { "rep", "%rep count", 1000000 },
-    { "eval", "expression evaluation descent", 1000000},
+    { "eval", "expression evaluation descent", 8192 },
     { "lines", "total source lines processed", 2000000000 }
 };
 
 static void set_default_limits(void)
 {
     int i;
+    size_t rl;
+    int64_t new_limit;
+
     for (i = 0; i <= LIMIT_MAX; i++)
         nasm_limit[i] = limit_info[i].default_val;
+
+    /*
+     * Try to set a sensible default value for the eval depth based
+     * on the limit of the stack size, if knowable...
+     */
+    rl = nasm_get_stack_size_limit();
+    new_limit = rl / (128 * sizeof(void *)); /* Sensible heuristic */
+    if (new_limit < nasm_limit[LIMIT_EVAL])
+        nasm_limit[LIMIT_EVAL] = new_limit;
 }
 
 enum directive_result
@@ -277,15 +291,6 @@ static void increment_offset(int64_t delta)
 
     location.offset += delta;
     set_curr_offs(location.offset);
-}
-
-static void nasm_fputs(const char *line, FILE * outfile)
-{
-    if (outfile) {
-        fputs(line, outfile);
-        putc('\n', outfile);
-    } else
-        puts(line);
 }
 
 /*
@@ -436,6 +441,46 @@ static int64_t make_posix_time(const struct tm *tm)
     return t;
 }
 
+/*
+ * Quote a filename string if and only if it is necessary.
+ * It is considered necessary if any one of these is true:
+ * 1. The filename contains control characters;
+ * 2. The filename starts or ends with a space or quote mark;
+ * 3. The filename contains more than one space in a row;
+ * 4. The filename is empty.
+ *
+ * The filename is returned in a newly allocated buffer.
+ */
+static char *nasm_quote_filename(const char *fn)
+{
+    const unsigned char *p =
+        (const unsigned char *)fn;
+
+    if (!p || !*p)
+        return nasm_strdup("\"\"");
+
+    if (*p <= ' ' || nasm_isquote(*p)) {
+        goto quote;
+    } else {
+        unsigned char cutoff = ' ';
+
+        while (*p) {
+            if (*p < cutoff)
+                goto quote;
+            cutoff = ' ' + (*p == ' ');
+            p++;
+        }
+        if (p[-1] <= ' ' || nasm_isquote(p[-1]))
+            goto quote;
+    }
+
+    /* Quoting not necessary */
+    return nasm_strdup(fn);
+
+quote:
+    return nasm_quote(fn, NULL);
+}
+
 static void timestamp(void)
 {
     struct compile_time * const oct = &official_compile_time;
@@ -582,41 +627,71 @@ int main(int argc, char **argv)
     } else if (operating_mode & OP_PREPROCESS) {
             char *line;
             const char *file_name = NULL;
-            int32_t prior_linnum = 0;
-            int lineinc = 0;
+            char *quoted_file_name = nasm_quote_filename(file_name);
+            int32_t linnum  = 0;
+            int32_t lineinc = 0;
+            FILE *out;
 
             if (outname) {
                 ofile = nasm_open_write(outname, NF_TEXT);
                 if (!ofile)
                     nasm_fatal("unable to open output file `%s'", outname);
-            } else
+                out = ofile;
+            } else {
                 ofile = NULL;
+                out = stdout;
+            }
 
             location.known = false;
 
-            _pass_type = PASS_FIRST; /* We emulate this assembly pass */
+            _pass_type = PASS_PREPROC;
             preproc->reset(inname, PP_PREPROC, depend_list);
 
             while ((line = preproc->getline())) {
                 /*
                  * We generate %line directives if needed for later programs
                  */
-                int32_t linnum = prior_linnum += lineinc;
-                int altline = src_get(&linnum, &file_name);
-                if (altline) {
-                    if (altline == 1 && lineinc == 1)
-                        nasm_fputs("", ofile);
-                    else {
-                        lineinc = (altline != -1 || lineinc != 1);
-                        fprintf(ofile ? ofile : stdout,
-                                "%%line %"PRId32"+%d %s\n", linnum, lineinc,
-                                file_name);
+                struct src_location where = src_where();
+                if (file_name != where.filename) {
+                    file_name = where.filename;
+                    linnum = -1; /* Force a new %line statement */
+                    lineinc = file_name ? 1 : 0;
+                    nasm_free(quoted_file_name);
+                    quoted_file_name = nasm_quote_filename(file_name);
+                } else if (lineinc) {
+                    if (linnum + lineinc == where.lineno) {
+                        /* Add one blank line to account for increment */
+                        fputc('\n', out);
+                        linnum += lineinc;
+                    } else if (linnum - lineinc == where.lineno) {
+                        /*
+                         * Standing still, probably a macro. Set increment
+                         * to zero.
+                         */
+                        lineinc = 0;
                     }
-                    prior_linnum = linnum;
+                } else {
+                    /* lineinc == 0 */
+                    if (linnum + 1 == where.lineno)
+                        lineinc = 1;
                 }
-                nasm_fputs(line, ofile);
-                nasm_free(line);
+
+                /* Skip blank lines if we will need a %line anyway */
+                if (linnum == -1 && !line[0])
+                    continue;
+
+                if (linnum != where.lineno) {
+                    fprintf(out, "%%line %"PRId32"%+"PRId32" %s\n",
+                            where.lineno, lineinc, quoted_file_name);
+                }
+                linnum = where.lineno + lineinc;
+
+                fputs(line, out);
+                fputc('\n', out);
             }
+
+            nasm_free(quoted_file_name);
+
             preproc->cleanup_pass();
             reset_warnings();
             if (ofile)
@@ -1576,8 +1651,19 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
     while (!terminate_after_phase && !pass_final()) {
         _passn++;
-        if (pass_type() != PASS_OPT || !global_offset_changed)
+        switch (pass_type()) {
+        case PASS_INIT:
+            _pass_type = PASS_FIRST;
+            break;
+        case PASS_OPT:
+            if (global_offset_changed)
+                break;          /* One more optimization pass */
+            /* fall through */
+        default:
             _pass_type++;
+            break;
+        }
+
         global_offset_changed = 0;
 
 	/*
@@ -1650,6 +1736,9 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         }                       /* end while (line = preproc->getline... */
 
         preproc->cleanup_pass();
+
+        /* We better not be having an error hold still... */
+        nasm_assert(!errhold_stack);
 
         if (global_offset_changed) {
             switch (pass_type()) {
@@ -1752,8 +1841,12 @@ static bool skip_this_pass(errflags severity)
     if (type == ERR_LISTMSG)
         return true;
 
-    /* This message not applicable unless pass_final */
-    return (severity & ERR_PASS2) && !pass_final();
+    /*
+     * This message not applicable unless it is the last pass we are going
+     * to execute; this can be either the final code-generation pass or
+     * the single pass executed in preproc-only mode.
+     */
+    return (severity & ERR_PASS2) && !pass_final_or_preproc();
 }
 
 /**
@@ -1840,14 +1933,39 @@ static fatal_func die_hard(errflags true_type, errflags severity)
 }
 
 /*
+ * Returns the struct src_location appropriate for use, after some
+ * potential filename mangling.
+ */
+static struct src_location error_where(errflags severity)
+{
+    struct src_location where;
+
+    if (severity & ERR_NOFILE) {
+        where.filename = NULL;
+        where.lineno = 0;
+    } else {
+        where = src_where_error();
+
+        if (!where.filename) {
+            where.filename =
+            inname && inname[0] ? inname :
+                outname && outname[0] ? outname :
+                NULL;
+            where.lineno = 0;
+        }
+    }
+
+    return where;
+}
+
+/*
  * error reporting for critical and panic errors: minimize
  * the amount of system dependencies for getting a message out,
  * and in particular try to avoid memory allocations.
  */
 fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args)
 {
-    const char *currentfile = no_file_name;
-    int32_t lineno = 0;
+    struct src_location where;
     errflags true_type = severity & ERR_MASK;
     static bool been_here = false;
 
@@ -1856,28 +1974,89 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args
 
     been_here = true;
 
-    if (!(severity & ERR_NOFILE)) {
-        src_get(&lineno, &currentfile);
-        if (!currentfile) {
-            currentfile =
-                inname && inname[0] ? inname :
-                outname && outname[0] ? outname :
-                no_file_name;
-                lineno = 0;
-        }
-    }
+    where = error_where(severity);
+    if (!where.filename)
+        where.filename = no_file_name;
 
     fputs(error_pfx_table[severity], error_file);
-    fputs(currentfile, error_file);
-    if (lineno) {
+    fputs(where.filename, error_file);
+    if (where.lineno) {
         fprintf(error_file, "%s%"PRId32"%s",
-                errfmt->beforeline, lineno, errfmt->afterline);
+                errfmt->beforeline, where.lineno, errfmt->afterline);
     }
     fputs(errfmt->beforemsg, error_file);
     vfprintf(error_file, fmt, args);
     fputc('\n', error_file);
 
     die_hard(true_type, severity);
+}
+
+/**
+ * Stack of tentative error hold lists.
+ */
+struct nasm_errtext {
+    struct nasm_errtext *next;
+    char *msg;                  /* Owned by this structure */
+    struct src_location where;  /* Owned by the srcfile system */
+    errflags severity;
+    errflags true_type;
+};
+struct nasm_errhold {
+    struct nasm_errhold *up;
+    struct nasm_errtext *head, **tail;
+};
+
+static void nasm_free_error(struct nasm_errtext *et)
+{
+    nasm_free(et->msg);
+    nasm_free(et);
+}
+
+static void nasm_issue_error(struct nasm_errtext *et);
+
+struct nasm_errhold *nasm_error_hold_push(void)
+{
+    struct nasm_errhold *eh;
+
+    nasm_new(eh);
+    eh->up = errhold_stack;
+    eh->tail = &eh->head;
+    errhold_stack = eh;
+
+    return eh;
+}
+
+void nasm_error_hold_pop(struct nasm_errhold *eh, bool issue)
+{
+    struct nasm_errtext *et, *etmp;
+
+    /* Allow calling with a null argument saying no hold in the first place */
+    if (!eh)
+        return;
+
+    /* This *must* be the current top of the errhold stack */
+    nasm_assert(eh == errhold_stack);
+
+    if (eh->head) {
+        if (issue) {
+            if (eh->up) {
+                /* Commit the current hold list to the previous level */
+                *eh->up->tail = eh->head;
+                eh->up->tail = eh->tail;
+            } else {
+                /* Issue errors */
+                list_for_each_safe(et, etmp, eh->head)
+                    nasm_issue_error(et);
+            }
+        } else {
+            /* Free the list, drop errors */
+            list_for_each_safe(et, etmp, eh->head)
+                nasm_free_error(et);
+        }
+    }
+
+    errhold_stack = eh->up;
+    nasm_free(eh);
 }
 
 /**
@@ -1892,13 +2071,8 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args
  */
 void nasm_verror(errflags severity, const char *fmt, va_list args)
 {
-    char msg[1024];
-    char warnsuf[64];
-    char linestr[64];
-    const char *pfx;
+    struct nasm_errtext *et;
     errflags true_type = true_error_type(severity);
-    const char *currentfile = NULL;
-    int32_t lineno = 0;
 
     if (true_type >= ERR_CRITICAL)
         nasm_verror_critical(severity, fmt, args);
@@ -1906,23 +2080,49 @@ void nasm_verror(errflags severity, const char *fmt, va_list args)
     if (is_suppressed(severity))
         return;
 
-    if (!(severity & ERR_NOFILE)) {
-        src_get(&lineno, &currentfile);
-        if (!currentfile) {
-            currentfile =
-                inname && inname[0] ? inname :
-                outname && outname[0] ? outname :
-                NULL;
-                lineno = 0;
-        }
+    nasm_new(et);
+    et->severity = severity;
+    et->true_type = true_type;
+    et->msg = nasm_vasprintf(fmt, args);
+    et->where = error_where(severity);
+
+    if (errhold_stack && true_type <= ERR_NONFATAL) {
+        /* It is a tentative error */
+        *errhold_stack->tail = et;
+        errhold_stack->tail = &et->next;
+    } else {
+        nasm_issue_error(et);
     }
+
+    /*
+     * Don't do this before then, if we do, we lose messages in the list
+     * file, as the list file is only generated in the last pass.
+     */
+    if (skip_this_pass(severity))
+        return;
+
+    if (!(severity & (ERR_HERE|ERR_PP_LISTMACRO)))
+        if (preproc)
+            preproc->error_list_macros(severity);
+}
+
+/*
+ * Actually print, list and take action on an error
+ */
+static void nasm_issue_error(struct nasm_errtext *et)
+{
+    const char *pfx;
+    char warnsuf[64];           /* Warning suffix */
+    char linestr[64];           /* Formatted line number if applicable */
+    const errflags severity  = et->severity;
+    const errflags true_type = et->true_type;
+    const struct src_location where = et->where;
 
     if (severity & ERR_NO_SEVERITY)
         pfx = "";
     else
         pfx = error_pfx_table[true_type];
 
-    vsnprintf(msg, sizeof msg, fmt, args);
     *warnsuf = 0;
     if ((severity & (ERR_MASK|ERR_HERE|ERR_PP_LISTMACRO)) == ERR_WARNING) {
         /*
@@ -1935,32 +2135,32 @@ void nasm_verror(errflags severity, const char *fmt, va_list args)
     }
 
     *linestr = 0;
-    if (lineno) {
+    if (where.lineno) {
         snprintf(linestr, sizeof linestr, "%s%"PRId32"%s",
-                 errfmt->beforeline, lineno, errfmt->afterline);
+                 errfmt->beforeline, where.lineno, errfmt->afterline);
     }
 
     if (!skip_this_pass(severity)) {
-        const char *file = currentfile ? currentfile : no_file_name;
+        const char *file = where.filename ? where.filename : no_file_name;
         const char *here = "";
 
-        if (severity & ERR_HERE)
-            here = currentfile ? " here" : " in an unknown location";
+        if (severity & ERR_HERE) {
+            here = where.filename ? " here" : " in an unknown location";
+        }
 
         if (warn_list && true_type < ERR_NONFATAL &&
-            !(pass_first() && (severity & ERR_PASS1)))
-        {
+            !(pass_first() && (severity & ERR_PASS1))) {
             /*
              * Buffer up warnings until we either get an error
              * or we are on the code-generation pass.
              */
             strlist_printf(warn_list, "%s%s%s%s%s%s%s",
                            file, linestr, errfmt->beforemsg,
-                           pfx, msg, here, warnsuf);
+                           pfx, et->msg, here, warnsuf);
         } else {
             /*
-             * If we have buffered warnings, and this is a non-warning,
-             * output them now.
+             * Actually output an error.  If we have buffered
+             * warnings, and this is a non-warning, output them now.
              */
             if (true_type >= ERR_NONFATAL && warn_list) {
                 strlist_write(warn_list, "\n", error_file);
@@ -1969,45 +2169,42 @@ void nasm_verror(errflags severity, const char *fmt, va_list args)
 
             fprintf(error_file, "%s%s%s%s%s%s%s\n",
                     file, linestr, errfmt->beforemsg,
-                    pfx, msg, here, warnsuf);
-
+                    pfx, et->msg, here, warnsuf);
         }
     }
 
     /* Are we recursing from error_list_macros? */
     if (severity & ERR_PP_LISTMACRO)
-        return;
+        goto done;
 
     /*
      * Don't suppress this with skip_this_pass(), or we don't get
      * pass1 or preprocessor warnings in the list file
      */
     if (severity & ERR_HERE) {
-        if (lineno)
+        if (where.lineno)
             lfmt->error(severity, "%s%s at %s:%"PRId32"%s",
-                        pfx, msg, currentfile, lineno, warnsuf);
-        else if (currentfile)
+                        pfx, et->msg, where.filename, where.lineno, warnsuf);
+        else if (where.filename)
             lfmt->error(severity, "%s%s in file %s%s",
-                        pfx, msg, currentfile, warnsuf);
+                        pfx, et->msg, where.filename, warnsuf);
         else
             lfmt->error(severity, "%s%s in an unknown location%s",
-                        pfx, msg, warnsuf);
+                        pfx, et->msg, warnsuf);
     } else {
-        lfmt->error(severity, "%s%s%s", pfx, msg, warnsuf);
+        lfmt->error(severity, "%s%s%s", pfx, et->msg, warnsuf);
     }
 
     if (skip_this_pass(severity))
-        return;
-
-    /* error_list_macros can for obvious reasons not work with ERR_HERE */
-    if (!(severity & ERR_HERE))
-        if (preproc)
-            preproc->error_list_macros(severity);
+        goto done;
 
     if (true_type >= ERR_FATAL)
         die_hard(true_type, severity);
     else if (true_type >= ERR_NONFATAL)
         terminate_after_phase = true;
+
+done:
+    nasm_free_error(et);
 }
 
 static void usage(void)
@@ -2067,6 +2264,7 @@ static void help(FILE *out)
         "       -Lm        show multi-line macro calls with expanded parmeters\n"
         "       -Lp        output a list file every pass, in case of errors\n"
         "       -Ls        show all single-line macro definitions\n"
+        "       -Lw        flush the output after every line\n"
         "       -L+        enable all listing options (very verbose!)\n"
         "\n"
         "    -Oflags...    optimize opcodes, immediates and branch offsets\n"

@@ -241,8 +241,12 @@ bool set_warning_status(const char *value)
 
         vlen = value ? strlen(value) : 0;
 
-	/* This is inefficient, but it shouldn't matter... */
-	for (wa = warning_alias; wa < &warning_alias[NUM_WARNING_ALIAS]; wa++) {
+	/*
+         * This is inefficient, but it shouldn't matter.
+         * Note: warning_alias[0] is "all".
+         */
+	for (wa = warning_alias+1;
+             wa < &warning_alias[NUM_WARNING_ALIAS]; wa++) {
             enum warn_index i = wa->warning;
 
             if (value) {
