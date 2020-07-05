@@ -4726,9 +4726,8 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
             if (!handle_explicit)
                 break;
 
-            /* Left pasting token is start of line */
+            /* Left pasting token is start of line, just drop %+ */
             if (!prev_nonspace) {
-                nasm_nonfatal("No lvalue found on pasting");
                 tok = delete_Token(tok);
                 break;
             }
@@ -4741,28 +4740,25 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
             /* Delete leading whitespace */
             next = zap_white(t->next);
 
-            /* Delete the %+ token itself */
-            nasm_assert(next == tok);
-            next = delete_Token(next);
-
-            /* Delete trailing whitespace */
-            next = zap_white(next);
+            /*
+             * Delete the %+ token itself, followed by any whitespace.
+             * In a sequence of %+ ... %+ ... %+ pasting sequences where
+             * some expansions in the middle have ended up empty,
+             * we can end up having multiple %+ tokens in a row;
+             * just drop whem in that case.
+             */
+            while (next) {
+                if (next->type == TOK_PASTE || next->type == TOK_WHITESPACE)
+                    next = delete_Token(next);
+                else
+                    break;
+            }
 
             /*
-             * No ending token, this might happen in two
-             * cases
-             *
-             *  1) There indeed no right token at all
-             *  2) There is a bare "%define ID" statement,
-             *     and @ID does expand to whitespace.
-             *
-             * So technically we need to do a grammar analysis
-             * in another stage of parsing, but for now lets don't
-             * change the behaviour people used to. Simply allow
-             * whitespace after paste token.
+             * Nothing after? Just leave the existing token.
              */
             if (!next) {
-                *prev_nonspace = tok = NULL; /* End of line */
+                t->next = tok = NULL; /* End of line */
                 break;
             }
 
