@@ -86,18 +86,12 @@ dnl specified first.  Enable this so this script can actually discover
 dnl which -W options are possible for this compiler.
 PA_ADD_CFLAGS([-Werror=unknown-warning-option])
 
-dnl Without this option, clang sometimes fail to link if LDFLAGS is
-dnl a superset of CFLAGS, which is the normal thing...
-PA_ADD_CFLAGS([-Wno-unused-command-line-argument])
-
 dnl Force gcc and gcc-compatible compilers treat signed integers
 dnl as 2's complement
 PA_ADD_CFLAGS([-fwrapv])
 
 dnl Force clang to behave in a predictable manner, in order to make bugs
 dnl possible to track down. gcc appears to have this behavior by default.
-dnl Needing the -enable-... option is kind of a bizarre thing.
-PA_ADD_CFLAGS([-enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang])
 PA_ADD_CFLAGS([-ftrivial-auto-var-init=zero])
 
 dnl Some environments abuse __STRICT_ANSI__ to disable some
