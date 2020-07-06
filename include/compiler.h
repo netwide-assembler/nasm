@@ -202,6 +202,7 @@ typedef enum bool { false, true } bool;
 # else
 /* Fallback, technically non-portable if p is uninitialized. */
 #  define offsetin(p,m)	((const char *)&((p).m) - (const char *)&(p))
+# endif
 #endif
 
 /* The container_of construct: if p is a pointer to member m of
