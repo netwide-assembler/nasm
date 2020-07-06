@@ -137,7 +137,8 @@ $(NASMLIB): $(LIBOBJ)
 # have Perl just to recompile NASM from the distribution.
 
 # Perl-generated source files
-PERLREQ = x86\insnsb.c x86\insnsa.c x86\insnsd.c x86\insnsi.h x86\insnsn.c \
+PERLREQ = config\unconfig.h \
+	  x86\insnsb.c x86\insnsa.c x86\insnsd.c x86\insnsi.h x86\insnsn.c \
 	  x86\regs.c x86\regs.h x86\regflags.c x86\regdis.c x86\regdis.h \
 	  x86\regvals.c asm\tokhash.c asm\tokens.h asm\pptok.h asm\pptok.c \
 	  x86\iflag.c x86\iflaggen.h \
@@ -147,6 +148,10 @@ PERLREQ = x86\insnsb.c x86\insnsa.c x86\insnsd.c x86\insnsi.h x86\insnsn.c \
 	  version.h version.mac version.mak nsis\version.nsh
 
 INSDEP = x86\insns.dat x86\insns.pl x86\insns-iflags.ph x86\iflags.ph
+
+config\unconfig.h: config\config.h.in
+	$(RUNPERL) $(srcdir)\tools\unconfig.pl \
+		'$(srcdir)' config\config.h.in config\unconfig.h
 
 x86\iflag.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)\x86\insns.pl -fc \
