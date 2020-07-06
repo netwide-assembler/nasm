@@ -57,7 +57,7 @@ $(NASM):
 	$(NASM) $(NASMOPT) -f macho64 -gdwarf -o $@ -MD $@.dep -l $@.lst $<
 
 %.dbg: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f dbg -gdbg -o $@ -MD $@.dep -l $@.lst $<
+	$(NASM) $(NASMOPT) -f dbg -gdebug -o $@ -MD $@.dep -l $@.lst $<
 
 %.asm: %.pl
 	$(PERL) $< > $@
