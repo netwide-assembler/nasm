@@ -6,6 +6,11 @@
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
+/* Define to 1 if compiled with the
+   `-enable-trivial-auto-var-init-zero-knowing-it-will-be-removed-from-clang'
+   compiler flag */
+/* #undef CFLAGS_ENABLE_TRIVIAL_AUTO_VAR_INIT_ZERO_KNOWING_IT_WILL_BE_REMOVED_FROM_CLANG */
+
 /* Define to 1 if compiled with the `-fdata-sections' compiler flag */
 /* #undef CFLAGS_FDATA_SECTIONS */
 
@@ -29,6 +34,10 @@
 
 /* Define to 1 if compiled with the `-fsanitize=undefined' compiler flag */
 /* #undef CFLAGS_FSANITIZE_UNDEFINED */
+
+/* Define to 1 if compiled with the `-ftrivial-auto-var-init=zero' compiler
+   flag */
+/* #undef CFLAGS_FTRIVIAL_AUTO_VAR_INIT_ZERO */
 
 /* Define to 1 if compiled with the `-fvisibility=hidden' compiler flag */
 /* #undef CFLAGS_FVISIBILITY_HIDDEN */
@@ -111,6 +120,10 @@
 
 /* Define to 1 if compiled with the `-Wlong-long' compiler flag */
 /* #undef CFLAGS_WLONG_LONG */
+
+/* Define to 1 if compiled with the `-Wno-unused-command-line-argument'
+   compiler flag */
+/* #undef CFLAGS_WNO_UNUSED_COMMAND_LINE_ARGUMENT */
 
 /* Define to 1 if compiled with the `-Wpedantic-ms-format' compiler flag */
 /* #undef CFLAGS_WPEDANTIC_MS_FORMAT */
