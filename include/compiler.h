@@ -189,11 +189,19 @@ typedef enum bool { false, true } bool;
 # define offsetof(t,m) ((size_t)&(((t *)0)->m))
 #endif
 
-/* This is like offsetof(), but takes an object rather than a type.
-   Ironically enough this is actually guaranteed to be portable,
-   as far as I know... */
+/* If typeof is defined as a macro, assume we have typeof even if
+   HAVE_TYPEOF is not declared (e.g. due to not using autoconf.) */
+#ifdef typeof
+# define HAVE_TYPEOF 1
+#endif
+
+/* This is like offsetof(), but takes an object rather than a type. */
 #ifndef offsetin
-# define offsetin(p,m)	((const char *)&((p).m) - (const char *)&(p))
+# ifdef HAVE_TYPEOF
+#  define offsetin(p,m) offsetof(typeof(p),m)
+# else
+/* Fallback, technically non-portable if p is uninitialized. */
+#  define offsetin(p,m)	((const char *)&((p).m) - (const char *)&(p))
 #endif
 
 /* The container_of construct: if p is a pointer to member m of

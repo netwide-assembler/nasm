@@ -103,6 +103,9 @@ dnl assume all compilers support common, and this will help find those
 dnl problems.  This also works around an OSX linker problem.
 PA_ADD_CFLAGS([-fno-common])
 
+dnl Other C features
+PA_C_TYPEOF
+
 dnl Look for programs...
 AC_CHECK_PROGS(NROFF,    nroff,    false)
 AC_CHECK_PROGS(ASCIIDOC, asciidoc, false)
