@@ -7,6 +7,21 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.15.03} Version 2.15.03
+
+\b Properly display warnings in preprocess-only mode.
+
+\b Fix copy-and-paste of examples from the PDF documentation.
+
+\b Debug information now properly reflect the line numbers of macro
+invocations (unless declared \c{.nolist}).
+
+\b Fix alignment of sections in the \c{coff}/\c{win32}/\c{win64}
+output formats when the desired alignment is less than the default
+alignment for the section or section type.
+
+\b Portability fixes.
+
 \S{cl-2.15.02} Version 2.15.02
 
 \b Fix miscompilation when building with \c{clang}.
