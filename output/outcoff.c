@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -158,6 +158,8 @@ static int32_t imagebase_sect;
 #define BSS_FLAGS       ((win32 | win64) ? BSS_FLAGS_WIN   : BSS_FLAGS_DOS)
 #define RDATA_FLAGS     ((win32 | win64) ? RDATA_FLAGS_WIN : RDATA_FLAGS_DOS)
 
+#define COFF_MAX_ALIGNMENT 8192
+
 #define SECT_DELTA 32
 struct coff_Section **coff_sects;
 static int sectlen;
@@ -283,15 +285,20 @@ int coff_make_section(char *name, uint32_t flags)
     return coff_nsects - 1;
 }
 
-static inline int32_t coff_sectalign_flags(unsigned int align)
+static inline uint32_t coff_sectalign_flags(unsigned int align)
 {
     return (ilog2_32(align) + 1) << 20;
+}
+
+static inline unsigned int coff_alignment(uint32_t flags)
+{
+    return 1U << (((flags & IMAGE_SCN_ALIGN_MASK) >> 20) - 1);
 }
 
 static int32_t coff_section_names(char *name, int *bits)
 {
     char *p;
-    uint32_t flags, align_and = ~0L, align_or = 0L;
+    uint32_t flags, align_flags;
     int i;
 
     /*
@@ -317,7 +324,7 @@ static int32_t coff_section_names(char *name, int *bits)
             name[8] = '\0';
         }
     }
-    flags = 0;
+    flags = align_flags = 0;
 
     while (*p && nasm_isspace(*p))
         p++;
@@ -353,24 +360,18 @@ static int32_t coff_section_names(char *name, int *bits)
                               " informational sections");
             }
         } else if (!nasm_strnicmp(q, "align=", 6)) {
-            if (!(win32 | win64))
-                nasm_nonfatal("standard COFF does not support"
-                              " section alignment specification");
+            if (q[6 + strspn(q + 6, "0123456789")])
+                nasm_nonfatal("argument to `align' is not numeric");
             else {
-                if (q[6 + strspn(q + 6, "0123456789")])
-                    nasm_nonfatal("argument to `align' is not numeric");
-                else {
-                    unsigned int align = atoi(q + 6);
-                    if (!align || ((align - 1) & align))
-                        nasm_nonfatal("argument to `align' is not a"
-                                      " power of two");
-                    else if (align > 64)
-                        nasm_nonfatal("Win32 cannot align sections"
-                                      " to better than 64-byte boundaries");
-                    else {
-                        align_and = ~0x00F00000L;
-                        align_or  = coff_sectalign_flags(align);
-                    }
+                unsigned int align = atoi(q + 6);
+                if (!align || ((align - 1) & align)) {
+                    nasm_nonfatal("argument to `align' is not a"
+                                  " power of two");
+                } else if (align > 8192) {
+                    nasm_nonfatal("maximum alignment in COFF is %d bytes",
+                                  COFF_MAX_ALIGNMENT);
+                } else {
+                    align_flags = coff_sectalign_flags(align);
                 }
             }
         }
@@ -397,11 +398,8 @@ static int32_t coff_section_names(char *name, int *bits)
         i = coff_make_section(name, flags);
         if (flags)
             coff_sects[i]->flags = flags;
-        coff_sects[i]->flags &= align_and;
-        coff_sects[i]->flags |= align_or;
     } else if (flags) {
         /* Check if any flags are respecified */
-        unsigned int align_flags = flags & IMAGE_SCN_ALIGN_MASK;
 
         /* Warn if non-alignment flags differ */
         if ((flags ^ coff_sects[i]->flags) & ~IMAGE_SCN_ALIGN_MASK &&
@@ -409,18 +407,20 @@ static int32_t coff_section_names(char *name, int *bits)
             nasm_warn(WARN_OTHER, "section attributes changed on"
                       " redeclaration of section `%s'", name);
         }
+
         /* Check if alignment might be needed */
-        if (align_flags > IMAGE_SCN_ALIGN_1BYTES) {
-            unsigned int sect_align_flags = coff_sects[i]->flags & IMAGE_SCN_ALIGN_MASK;
+        if (align_flags) {
+            uint32_t sect_align_flags = coff_sects[i]->align_flags;
 
             /* Compute the actual alignment */
-            unsigned int align = 1u << ((align_flags - IMAGE_SCN_ALIGN_1BYTES) >> 20);
+            unsigned int align = coff_alignment(align_flags);
 
             /* Update section header as needed */
             if (align_flags > sect_align_flags) {
-                coff_sects[i]->flags = (coff_sects[i]->flags & ~IMAGE_SCN_ALIGN_MASK) | align_flags;
+                coff_sects[i]->align_flags = align_flags;
             }
             /* Check if not already aligned */
+            /* XXX: other formats don't do this... */
             if (coff_sects[i]->len % align) {
                 unsigned int padding = (align - coff_sects[i]->len) % align;
                 /* We need to write at most 8095 bytes */
@@ -875,6 +875,28 @@ static inline void coff_adjust_relocs(struct coff_Section *s)
     s->nrelocs++;
 }
 
+/*
+ * Make sure we satisfy all section alignment requirements and put the
+ * resulting alignment flags into the flags value in the header.  If
+ * no user-specified alignment is given, use the default for the
+ * section type; then either way round up to alignment specified by
+ * sectalign directives.
+ */
+static inline void coff_adjust_alignment(struct coff_Section *s)
+{
+    uint32_t align_flags = s->align_flags;
+
+    if (!align_flags) {
+        /* No user-specified alignment, use default for partition type */
+        align_flags = s->flags & IMAGE_SCN_ALIGN_MASK;
+    }
+
+    if (align_flags < s->sectalign_flags)
+        align_flags = s->sectalign_flags;
+
+    s->flags = (s->flags & ~IMAGE_SCN_ALIGN_MASK) | align_flags;
+}
+
 static void coff_write(void)
 {
     int32_t pos, sympos, vsize;
@@ -905,6 +927,7 @@ static void coff_write(void)
     pos = 0x14 + 0x28 * coff_nsects;
     initsym = 3;                /* two for the file, one absolute */
     for (i = 0; i < coff_nsects; i++) {
+        coff_adjust_alignment(coff_sects[i]);
         if (coff_sects[i]->data) {
             coff_adjust_relocs(coff_sects[i]);
             coff_sects[i]->pos = pos;
@@ -1104,7 +1127,7 @@ static void coff_write_symbols(void)
 static void coff_sectalign(int32_t seg, unsigned int value)
 {
     struct coff_Section *s = NULL;
-    uint32_t align;
+    uint32_t flags;
     int i;
 
     for (i = 0; i < coff_nsects; i++) {
@@ -1117,14 +1140,12 @@ static void coff_sectalign(int32_t seg, unsigned int value)
     if (!s || !is_power2(value))
         return;
 
-    /* DOS has limitation on 64 bytes */
-    if (!(win32 | win64) && value > 64)
-        return;
+    if (value > COFF_MAX_ALIGNMENT)
+        value = COFF_MAX_ALIGNMENT; /* Do our best... */
 
-    align = (s->flags & IMAGE_SCN_ALIGN_MASK);
-    value = coff_sectalign_flags(value);
-    if (value > align)
-        s->flags = (s->flags & ~IMAGE_SCN_ALIGN_MASK) | value;
+    flags = coff_sectalign_flags(value);
+    if (flags > s->sectalign_flags)
+        s->sectalign_flags = flags;
 }
 
 extern macros_t coff_stdmac[];
