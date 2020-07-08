@@ -269,27 +269,32 @@ const char *filename_set_extension(const char *inname, const char *extension);
  *  list_for_each - regular iterator over list
  *  list_for_each_safe - the same but safe against list items removal
  *  list_last - find the last element in a list
+ *  list_reverse - reverse the order of a list
+ *
+ *  Arguments named with _ + single letter should be temp variables
+ *  of the appropriate pointer type.
  */
 #define list_for_each(pos, head)                        \
     for (pos = head; pos; pos = pos->next)
-#define list_for_each_safe(pos, n, head)                \
-    for (pos = head, n = (pos ? pos->next : NULL); pos; \
-        pos = n, n = (n ? n->next : NULL))
+#define list_for_each_safe(pos, _n, head)                \
+    for (pos = head, _n = (pos ? pos->next : NULL); pos; \
+        pos = _n, _n = (_n ? _n->next : NULL))
 #define list_last(pos, head)                            \
     for (pos = head; pos && pos->next; pos = pos->next) \
         ;
-#define list_reverse(head, prev, next)                  \
+#define list_reverse(head)                              \
     do {                                                \
+        void *_p, *_n;                                  \
         if (!head || !head->next)                       \
             break;                                      \
-        prev = NULL;                                    \
+        _p = NULL;                                      \
         while (head) {                                  \
-            next = head->next;                          \
-            head->next = prev;                          \
-            prev = head;                                \
-            head = next;                                \
+            _n = head->next;                            \
+            head->next = _p;                            \
+            _p = head;                                  \
+            head = _n;                                  \
         }                                               \
-        head = prev;                                    \
+        head = _p;                                      \
     } while (0)
 
 /*
