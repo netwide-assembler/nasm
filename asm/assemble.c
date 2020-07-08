@@ -424,7 +424,7 @@ static void out(struct out_data *data)
      * changed, and the amount by which lineno changed,
      * if it did. thus, these variables must be static
      */
-    if (src_get(&lineno, &lnfname))
+    if (src_get(&lineno, &lnfname) && lnfname)
         dfmt->linenum(lnfname, lineno, data->segment);
 
     if (asize > amax) {
