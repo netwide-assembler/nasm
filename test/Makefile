@@ -2,7 +2,8 @@
 
 NASMDEP = ../nasm
 NASM	= ../nasm
-NASMOPT = -Ox -I../misc -L+ $(OPT)
+LISTOPT = -L+
+NASMOPT = -Ox -I../misc $(LISTOPT) $(OPT)
 PERL	= perl
 TESTS	= $(wildcard *.asm)
 RM_F	= rm -f
