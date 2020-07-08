@@ -87,6 +87,14 @@ struct rbtree *rb_search(const struct rbtree *tree, uint64_t key)
     return (struct rbtree *)best;
 }
 
+struct rbtree *rb_search_exact(const struct rbtree *tree, uint64_t key)
+{
+    struct rbtree *rv;
+
+    rv = rb_search(tree, key);
+    return (rv && rv->key == key) ? rv : NULL;
+}
+
 /* Reds two left in a row? */
 static inline bool is_red_left_left(struct rbtree *h)
 {

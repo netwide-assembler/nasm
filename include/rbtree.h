@@ -73,6 +73,11 @@ struct rbtree *rb_insert(struct rbtree *, struct rbtree *);
 struct rbtree *rb_search(const struct rbtree *, uint64_t);
 
 /*
+ * Find a node in the tree exactly matching the key value.
+ */
+struct rbtree *rb_search_exact(const struct rbtree *, uint64_t);
+
+/*
  * Return the immediately previous or next node in key order.
  * Returns NULL if this node is the end of the tree.
  * These operations are safe for complee (but not partial!)
