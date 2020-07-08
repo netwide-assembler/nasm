@@ -6137,12 +6137,14 @@ static struct debug_macro_addr *
 debug_macro_get_addr_inv(int32_t seg, struct debug_macro_inv *inv)
 {
     struct debug_macro_addr *addr;
+    static_assert(offsetof(struct debug_macro_addr, tree) == 0);
 
     if (likely(seg == inv->lastseg))
         return inv->addr.last;
 
     inv->lastseg = seg;
-    addr = (struct debug_macro_addr *)rb_search(inv->addr.tree, seg);
+    addr = (struct debug_macro_addr *)
+        rb_search_exact(inv->addr.tree, seg);
     if (unlikely(!addr)) {
         nasm_new(addr);
         addr->tree.key = seg;

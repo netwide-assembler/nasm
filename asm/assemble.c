@@ -427,12 +427,6 @@ static void out(struct out_data *data)
     if (src_get(&lineno, &lnfname))
         dfmt->linenum(lnfname, lineno, data->segment);
 
-    /*
-     * Collect macro-related information for the debugger, if applicable
-     */
-    if (debug_current_macro)
-        debug_macro_out(data);
-
     if (asize > amax) {
         if (data->type == OUT_RELADDR || data->sign == OUT_SIGNED) {
             nasm_nonfatal("%u-bit signed relocation unsupported by output format %s",
@@ -455,6 +449,12 @@ static void out(struct out_data *data)
     lfmt->output(data);
 
     if (likely(data->segment != NO_SEG)) {
+        /*
+         * Collect macro-related information for the debugger, if applicable
+         */
+        if (debug_current_macro)
+            debug_macro_out(data);
+
         ofmt->output(data);
     } else {
         /* Outputting to ABSOLUTE section - only reserve is permitted */
