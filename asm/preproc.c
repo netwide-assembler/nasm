@@ -6207,6 +6207,8 @@ static void debug_macro_end(MMacro *m)
 
     nasm_assert(inv == debug_current_macro);
 
+    list_reverse(inv->down.l);
+
     m->dbg.inv = NULL;
     inv = inv->up;
 
@@ -6263,6 +6265,13 @@ static void free_debug_macro_info(void)
     free_debug_macro_inv_list(dmi.inv.l);
 
     nasm_zero(dmi);
+}
+
+static void debug_macro_output(void)
+{
+    list_reverse(dmi.inv.l);
+    dfmt->debug_macros(&dmi);
+    free_debug_macro_info();
 }
 
 /*
@@ -7011,10 +7020,8 @@ static void pp_cleanup_pass(void)
         ctx_pop();
     src_set_fname(NULL);
 
-    if (ppdbg & PDBG_MACROS) {
-        dfmt->debug_macros(&dmi);
-        free_debug_macro_info();
-    }
+    if (ppdbg & PDBG_MACROS)
+        debug_macro_output();
 }
 
 static void pp_cleanup_session(void)
