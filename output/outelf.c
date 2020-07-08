@@ -2435,6 +2435,7 @@ static const struct dfmt elf32_df_dwarf = {
     dwarf32_init,
     dwarf_linenum,
     null_debug_deflabel,
+    NULL,                       /* .debug_macros */
     null_debug_directive,
     debug_typevalue,
     dwarf_output,
@@ -2448,6 +2449,7 @@ static const struct dfmt elf32_df_stabs = {
     null_debug_init,
     stabs_linenum,
     null_debug_deflabel,
+    NULL,                       /* .debug_macros */
     null_debug_directive,
     debug_typevalue,
     stabs_output,
@@ -2487,6 +2489,7 @@ static const struct dfmt elf64_df_dwarf = {
     dwarf64_init,
     dwarf_linenum,
     null_debug_deflabel,
+    NULL,                       /* .debug_macros */
     null_debug_directive,
     debug_typevalue,
     dwarf_output,
@@ -2500,6 +2503,7 @@ static const struct dfmt elf64_df_stabs = {
     null_debug_init,
     stabs_linenum,
     null_debug_deflabel,
+    NULL,                       /* .debug_macros */
     null_debug_directive,
     debug_typevalue,
     stabs_output,
@@ -2539,6 +2543,7 @@ static const struct dfmt elfx32_df_dwarf = {
     dwarfx32_init,
     dwarf_linenum,
     null_debug_deflabel,
+    NULL,                       /* .debug_macros */
     null_debug_directive,
     debug_typevalue,
     dwarf_output,
@@ -2552,6 +2557,7 @@ static const struct dfmt elfx32_df_stabs = {
     null_debug_init,
     stabs_linenum,
     null_debug_deflabel,
+    NULL,                       /* .debug_macros */
     null_debug_directive,
     debug_typevalue,
     stabs_output,

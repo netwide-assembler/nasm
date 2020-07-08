@@ -1464,6 +1464,7 @@ static const struct dfmt ladsoft_debug_form = {
     dbgls_init,
     dbgls_linnum,
     dbgls_deflabel,
+    NULL,                       /* .debug_macros */
     null_debug_directive,
     dbgls_typevalue,
     dbgls_output,

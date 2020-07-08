@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -1004,6 +1004,7 @@ extern FILE *ofile;
  * interfaces to the functions therein.
  * ------------------------------------------------------------
  */
+struct debug_macro_info;
 
 struct dfmt {
     /*
@@ -1036,6 +1037,14 @@ struct dfmt {
 
     void (*debug_deflabel)(char *name, int32_t segment, int64_t offset,
                            int is_global, char *special);
+
+    /*
+     * debug_macros - called once at the end with a definition for each
+     * non-.nolist macro that has been invoked at least once in the program,
+     * and the corresponding address ranges. See dbginfo.h.
+     */
+    void (*debug_macros)(const struct debug_macro_info *);
+
     /*
      * debug_directive - called whenever a DEBUG directive other than 'LINE'
      * is encountered. 'directive' contains the first parameter to the

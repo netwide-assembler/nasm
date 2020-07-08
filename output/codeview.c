@@ -64,6 +64,7 @@ const struct dfmt df_cv8 = {
     cv8_init,                   /* .init */
     cv8_linenum,                /* .linenum */
     cv8_deflabel,               /* .debug_deflabel */
+    NULL,                       /* .debug_macros */
     null_debug_directive,       /* .debug_directive */
     cv8_typevalue,              /* .debug_typevalue */
     cv8_output,                 /* .debug_output */

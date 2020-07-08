@@ -186,6 +186,7 @@
 #include "tables.h"
 #include "disp8.h"
 #include "listing.h"
+#include "dbginfo.h"
 
 enum match_result {
     /*
@@ -324,6 +325,24 @@ static void warn_overflow_out(int64_t data, int size, enum out_sign sign)
 }
 
 /*
+ * Collect macro-related debug information, if applicable.
+ */
+static void debug_macro_out(const struct out_data *data)
+{
+    struct debug_macro_addr *addr;
+    uint64_t start = data->offset;
+    uint64_t end  = start + data->size;
+
+    addr = debug_macro_get_addr(data->segment);
+    while (addr) {
+        if (!addr->len)
+            addr->start = start;
+        addr->len = end - addr->start;
+        addr = addr->up;
+    }
+}
+
+/*
  * This routine wrappers the real output format's output routine,
  * in order to pass a copy of the data off to the listing file
  * generator at the same time, flatten unnecessary relocations,
@@ -405,9 +424,14 @@ static void out(struct out_data *data)
      * changed, and the amount by which lineno changed,
      * if it did. thus, these variables must be static
      */
-
     if (src_get(&lineno, &lnfname))
         dfmt->linenum(lnfname, lineno, data->segment);
+
+    /*
+     * Collect macro-related information for the debugger, if applicable
+     */
+    if (debug_current_macro)
+        debug_macro_out(data);
 
     if (asize > amax) {
         if (data->type == OUT_RELADDR || data->sign == OUT_SIGNED) {

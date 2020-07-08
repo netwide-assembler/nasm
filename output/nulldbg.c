@@ -83,6 +83,7 @@ const struct dfmt null_debug_form = {
     null_debug_init,
     null_debug_linenum,
     null_debug_deflabel,
+    NULL,                       /* .debug_macros */
     null_debug_directive,
     null_debug_typevalue,
     null_debug_output,

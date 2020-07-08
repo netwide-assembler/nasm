@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -46,6 +46,7 @@
 #include "outform.h"
 #include "outlib.h"
 #include "insns.h"
+#include "dbginfo.h"
 
 #ifdef OF_DBG
 
@@ -137,7 +138,7 @@ static int32_t dbg_herelabel(const char *name, enum label_type type,
                              bool *copyoffset)
 {
     int32_t newseg = oldseg;
-    
+
     if (subsections_via_symbols && type != LBL_LOCAL) {
         newseg = *subsection;
         if (newseg == NO_SEG) {
@@ -397,39 +398,96 @@ static const char * const types[] = {
 };
 static void dbgdbg_init(void)
 {
-    fprintf(ofile, "   With debug info\n");
+    fprintf(ofile, "dbg init: debug information enabled\n");
 }
 static void dbgdbg_cleanup(void)
 {
+    fprintf(ofile, "dbg cleanup: called\n");
 }
 
 static void dbgdbg_linnum(const char *lnfname, int32_t lineno, int32_t segto)
 {
-    fprintf(ofile, "dbglinenum %s(%"PRId32") segment %"PRIx32"\n",
+    fprintf(ofile, "dbg linenum: %s(%"PRId32") segment %"PRIx32"\n",
 	    lnfname, lineno, segto);
 }
 static void dbgdbg_deflabel(char *name, int32_t segment,
                             int64_t offset, int is_global, char *special)
 {
-    fprintf(ofile, "dbglabel %s := %08"PRIx32":%016"PRIx64" %s (%d)%s%s\n",
+    fprintf(ofile, "dbg deflabel: %s = %08"PRIx32":%016"PRIx64" %s (%d)%s%s\n",
             name,
             segment, offset,
             is_global == 2 ? "common" : is_global ? "global" : "local",
             is_global, special ? ": " : "", special);
 }
+
 static void dbgdbg_define(const char *type, const char *params)
 {
-    fprintf(ofile, "dbgdirective [%s] value [%s]\n", type, params);
+    fprintf(ofile, "dbg directive: [%s] value [%s]\n", type, params);
 }
 static void dbgdbg_output(int output_type, void *param)
 {
     (void)output_type;
     (void)param;
+    fprintf(ofile, "dbg output: called\n");
 }
 static void dbgdbg_typevalue(int32_t type)
 {
-    fprintf(ofile, "new type: %s(%"PRIX32")\n",
+    fprintf(ofile, "dbg typevalue: %s(%"PRIX32")\n",
             types[TYM_TYPE(type) >> 3], TYM_ELEMENTS(type));
+}
+
+static void
+write_macro_inv_list(const struct debug_macro_inv *inv, int level)
+{
+    int indent = (level+1) << 1;
+
+    while (inv) {
+        const struct rbtree *rb;
+
+        fprintf(ofile, "%*smacro: %s, invoked at %s:%"PRId32
+                ", %"PRIu32" ranges\n",
+                indent, "", inv->def->name, inv->where.filename,
+                inv->where.lineno, inv->naddr);
+
+        for (rb = rb_first(inv->addr.tree); rb; rb = rb_next(rb)) {
+            const struct debug_macro_addr *addr =
+                (const struct debug_macro_addr *)rb;
+            if (!addr->len) {
+                fprintf(ofile, "%*s%08"PRIx32": empty\n",
+                        indent+2, "", debug_macro_seg(addr));
+            } else {
+                fprintf(ofile,
+                        "%*s%08"PRIx32":[%016"PRIx64" ... %016"PRIx64"] "
+                        "len %"PRIu64"\n",
+                        indent+2, "",
+                        debug_macro_seg(addr), addr->start,
+                        addr->start + addr->len - 1, addr->len);
+            }
+        }
+
+        write_macro_inv_list(inv->down.l, level+1);
+        inv = inv->next;
+    }
+}
+
+static void dbgdbg_debug_macros(const struct debug_macro_info *dmi)
+{
+    const struct debug_macro_def *def;
+
+    fprintf(ofile, "dbg macros: %llu macros defined\n",
+            (unsigned long long)dmi->def.n);
+
+    fprintf(ofile, "  macro definitions:\n");
+    list_for_each(def, dmi->def.l) {
+        fprintf(ofile, "    macro: %s, count %llu, defined at %s:%"PRId32"\n",
+                def->name, (unsigned long long)def->ninv,
+                def->where.filename, def->where.lineno);
+    }
+
+    fprintf(ofile, "  macro invocations:\n");
+    write_macro_inv_list(dmi->inv.l, 1);
+
+    fprintf(ofile, "  end macro debug information\n");
 }
 
 static const struct pragma_facility dbgdbg_pragma_list[] = {
@@ -443,6 +501,7 @@ static const struct dfmt debug_debug_form = {
     dbgdbg_init,
     dbgdbg_linnum,
     dbgdbg_deflabel,
+    dbgdbg_debug_macros,
     dbgdbg_define,
     dbgdbg_typevalue,
     dbgdbg_output,
