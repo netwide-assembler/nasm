@@ -1280,6 +1280,8 @@ struct optimization {
 
 /*
  * Various types of compiler passes we may execute.
+ * If these are changed, you need to also change _pass_types[]
+ * in asm/nasm.c.
  */
 enum pass_type {
     PASS_INIT,            /* Initialization, not doing anything yet */
