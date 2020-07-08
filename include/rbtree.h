@@ -74,9 +74,30 @@ struct rbtree *rb_search(const struct rbtree *, uint64_t);
 
 /*
  * Return the immediately previous or next node in key order.
- * Returns NULL if this node is the end of the
+ * Returns NULL if this node is the end of the tree.
+ * These operations are safe for complee (but not partial!)
+ * tree walk-with-destruction in key order.
  */
 struct rbtree *rb_prev(const struct rbtree *);
 struct rbtree *rb_next(const struct rbtree *);
+
+/*
+ * Return the very first or very last node in key order.
+ */
+struct rbtree *rb_first(const struct rbtree *);
+struct rbtree *rb_last(const struct rbtree *);
+
+/*
+ * Left and right nodes, if real. These operations are
+ * safe for tree destruction, but not for splitting a tree.
+ */
+static inline struct rbtree *rb_left(const struct rbtree *rb)
+{
+    return (rb->m.flags & RBTREE_NODE_PRED) ? NULL : rb->m.left;
+}
+static inline struct rbtree *rb_right(const struct rbtree *rb)
+{
+    return (rb->m.flags & RBTREE_NODE_SUCC) ? NULL : rb->m.right;
+}
 
 #endif /* NASM_RBTREE_H */
