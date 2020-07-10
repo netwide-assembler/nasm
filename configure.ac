@@ -23,7 +23,7 @@ export WINELOADER
 dnl Get the canonical target system name
 AC_CANONICAL_HOST
 
-dnl Checks for programs and enable necessary CC extensions
+dnl Enable necessary CC extensions
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_PROG_CC
@@ -36,11 +36,6 @@ PA_ARG_DISABLED([optimization],
  [pa_no_optimize=true])
 
 dnl Other programs
-AC_PROG_LN_S
-AC_PROG_MAKE_SET
-AC_PROG_INSTALL
-AC_PROG_MKDIR_P
-
 pa_no_optimize=false
 
 dnl Compile and link with dwarf debug
@@ -65,13 +60,7 @@ PA_ARG_ENABLED([panic-abort],
 AH_TEMPLATE(ABORT_ON_PANIC,
 [Define to 1 to call abort() on panics (internal errors), for debugging.])
 
-dnl Check for library extension
-PA_LIBEXT
-
 dnl Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_C_INLINE
-AC_C_RESTRICT
 AC_TYPE_SIZE_T
 AC_C_BIGENDIAN(AC_DEFINE(WORDS_BIGENDIAN),AC_DEFINE(WORDS_LITTLEENDIAN),,)
 AH_TEMPLATE(WORDS_BIGENDIAN,
@@ -103,10 +92,15 @@ dnl assume all compilers support common, and this will help find those
 dnl problems.  This also works around an OSX linker problem.
 PA_ADD_CFLAGS([-fno-common])
 
-dnl Other C features
-PA_C_TYPEOF
+dnl Check for library extension
+PA_LIBEXT
 
 dnl Look for programs...
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_INSTALL
+AC_PROG_MKDIR_P
+
 AC_CHECK_PROGS(NROFF,    nroff,    false)
 AC_CHECK_PROGS(ASCIIDOC, asciidoc, false)
 AC_CHECK_PROGS(XMLTO,    xmlto,    false)
@@ -166,8 +160,21 @@ AC_CHECK_TOOL(AR, ar)
 AC_CHECK_TOOL(RANLIB, ranlib, :)
 AC_CHECK_TOOL(STRIP, strip)
 
+dnl
+dnl NOTE: the tests for header files and library functions use constructs
+dnl that create warnings on modern compilers, due to lack of prototypes,
+dnl etc. Therefore, do not add the -Werror options before this.
+dnl
+
+dnl Tests which may trigger warnings on some compilers
+AC_C_CONST
+AC_C_INLINE
+AC_C_RESTRICT
+
 dnl Checks for header files.
 AC_HEADER_STDC
+PA_ADD_HEADERS(string.h)
+PA_ADD_HEADERS(stdarg.h)
 AC_CHECK_HEADERS(inttypes.h)
 AC_CHECK_HEADERS(strings.h)
 AC_HEADER_STDBOOL
@@ -220,9 +227,8 @@ PA_HAVE_FUNC(__builtin_clzll, (0ULL))
 PA_HAVE_FUNC(_BitScanReverse, (0))
 PA_HAVE_FUNC(_BitScanReverse64, (0))
 
-dnl Functions for which we have replacements available in stdlib/
-AC_CHECK_FUNCS([vsnprintf _vsnprintf])
-AC_CHECK_FUNCS([snprintf _snprintf])
+PA_FUNC_SNPRINTF
+PA_FUNC_VSNPRINTF
 AC_CHECK_FUNCS([strlcpy])
 AC_CHECK_FUNCS([strrchrnul])
 
@@ -388,11 +394,11 @@ PA_ARG_ENABLED([werror],
 )
 
 dnl
-dnl On some versions of gcc, -Werror=missing-prototypes causes problems
-dnl with C99-style external inlines.  Test this *after* adding the -Werror
-dnl options.
+dnl Test compiler features. On some compilers, this can be affected
+dnl by -Werror options, so run this *after* those options are added.
 dnl
 PA_CHECK_BAD_STDC_INLINE
+PA_C_TYPEOF
 
 dnl
 dnl support ccache
