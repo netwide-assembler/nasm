@@ -3042,7 +3042,7 @@ static SMacro *define_smacro(const char *mname, bool casesense,
 
     smac->name      = nasm_strdup(mname);
     smac->casesense = casesense;
-    smac->expansion = expansion;
+    smac->expansion = reverse_tokens(expansion);
     smac->expand    = smacro_expand_default;
     if (tmpl) {
         smac->nparam     = tmpl->nparam;
@@ -4364,8 +4364,7 @@ issue_error:
                     mark_smac_params(tline, &tmpl, TOK_XDEF_PARAM);
                 tline = expand_smacro(tline);
             }
-            /* NB: Does this still make sense? */
-            macro_start = reverse_tokens(tline);
+            macro_start = tline;
         }
 
         /*
@@ -4432,7 +4431,7 @@ issue_error:
          * are stored with the token stream reversed, so we have to
          * reverse the output of tokenize().
          */
-        macro_start = reverse_tokens(tokenize(unquote_token_cstr(t)));
+        macro_start = tokenize(unquote_token_cstr(t));
 
         /*
          * We now have a macro name, an implicit parameter count of
