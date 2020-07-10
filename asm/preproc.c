@@ -7180,12 +7180,23 @@ static void pp_extra_stdmac(macros_t *macros)
         extrastdmac = macros;
 }
 
-/* Create a numeric token */
+/* Create a numeric token, with possible - token in front */
 static Token *make_tok_num(Token *next, int64_t val)
 {
     char numbuf[32];
-    int len = snprintf(numbuf, sizeof(numbuf), "%"PRId64"", val);
-    return new_Token(next, TOK_NUMBER, numbuf, len);
+    int len;
+    uint64_t uval;
+    bool minus = val < 0;
+
+    uval = minus ? -val : val;
+
+    len = snprintf(numbuf, sizeof numbuf, "%"PRIu64, uval);
+    next = new_Token(next, TOK_NUMBER, numbuf, len);
+
+    if (minus)
+        next = make_tok_char(next, '-');
+
+    return next;
 }
 
 /* Create a quoted string token */
