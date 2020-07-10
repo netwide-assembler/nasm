@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -401,11 +401,14 @@ static void out(struct out_data *data)
 
     /*
      * If the source location or output segment has changed,
-     * let the debug backend know.
+     * let the debug backend know. Some backends really don't
+     * like being given a NULL filename as can happen if we
+     * use -Lb and expand a macro, so filter out that case.
      */
     data->where = src_where();
-    if (!src_location_same(data->where, dbg.where) |
-        (data->segment != dbg.segment)) {
+    if (data->where.filename &&
+        (!src_location_same(data->where, dbg.where) |
+         (data->segment != dbg.segment))) {
         dbg.where   = data->where;
         dbg.segment = data->segment;
         dfmt->linenum(dbg.where.filename, dbg.where.lineno, data->segment);
