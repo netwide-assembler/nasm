@@ -23,11 +23,12 @@ export WINELOADER
 dnl Get the canonical target system name
 AC_CANONICAL_HOST
 
-dnl Enable necessary CC extensions
+dnl Enable any available C extensions
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 AC_PROG_CC
 AC_PROG_CC_STDC
+PA_ADD_CFLAGS([-std=c11])
 
 dnl If the user did not specify a CFLAGS default, change default
 dnl to -O0 for debugging
