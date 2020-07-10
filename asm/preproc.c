@@ -4035,7 +4035,13 @@ issue_error:
         nasm_assert(!defining);
         nasm_new(def);
         def->casesense = casesense;
-        def->dstk.mmac = defining;
+        /*
+         * dstk.mstk points to the previous definition bracket,
+         * whereas dstk.mmac points to the topmost mmacro, which
+         * in this case is the one we are just starting to create.
+         */
+        def->dstk.mstk = defining;
+        def->dstk.mmac = def;
         if (op == PP_RMACRO)
             def->max_depth = nasm_limit[LIMIT_MACRO_LEVELS];
         if (!parse_mmacro_spec(tline, def, dname)) {
