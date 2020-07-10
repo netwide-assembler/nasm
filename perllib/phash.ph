@@ -145,8 +145,10 @@ sub gen_perfect_hash($) {
 
     # Minimal power of 2 value for N with enough wiggle room.
     # The scaling constant must be larger than 0.5 in order for the
-    # algorithm to ever terminate.
-    my $room = int(scalar(@keys)*0.8);
+    # algorithm to ever terminate. The higher the scaling constant,
+    # the more space does the hash take up, but the less likely is it
+    # that an invalid token will require a string comparison.
+    my $room = int(scalar(@keys)*1.6);
     $n = 1;
     while ($n < $room) {
 	$n <<= 1;
