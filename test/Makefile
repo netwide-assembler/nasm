@@ -34,7 +34,7 @@ $(NASM):
 	$(NASM) $(NASMOPT) -f aout -o $@ -MD $@.dep -l $@.lst $<
 
 %.obj: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f obj -gborland -F -o $@ -MD $@.dep -l $@.lst $<
+	$(NASM) $(NASMOPT) -f obj -gborland -o $@ -MD $@.dep -l $@.lst $<
 
 %.rdf: %.asm $(NASMDEP)
 	$(NASM) $(NASMOPT) -f rdf -o $@ -MD $@.dep -l $@.lst $<
