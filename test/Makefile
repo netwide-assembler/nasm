@@ -2,7 +2,8 @@
 
 NASMDEP = ../nasm
 NASM	= ../nasm
-NASMOPT = -Ox -I../misc -L+ $(OPT)
+LISTOPT = -L+
+NASMOPT = -Ox -I../misc $(LISTOPT) $(OPT)
 PERL	= perl
 TESTS	= $(wildcard *.asm)
 RM_F	= rm -f
@@ -57,7 +58,7 @@ $(NASM):
 	$(NASM) $(NASMOPT) -f macho64 -gdwarf -o $@ -MD $@.dep -l $@.lst $<
 
 %.dbg: %.asm $(NASMDEP)
-	$(NASM) $(NASMOPT) -f dbg -gdbg -o $@ -MD $@.dep -l $@.lst $<
+	$(NASM) $(NASMOPT) -f dbg -gdebug -o $@ -MD $@.dep -l $@.lst $<
 
 %.asm: %.pl
 	$(PERL) $< > $@

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -186,6 +186,7 @@
 #include "tables.h"
 #include "disp8.h"
 #include "listing.h"
+#include "dbginfo.h"
 
 enum match_result {
     /*
@@ -300,27 +301,37 @@ static void warn_overflow_const(int64_t data, int size)
         warn_overflow(size);
 }
 
-static void warn_overflow_out(int64_t data, int size, enum out_sign sign)
+static void warn_overflow_out(int64_t data, int size, enum out_flags flags)
 {
     bool err;
 
-    switch (sign) {
-    case OUT_WRAP:
-        err = overflow_general(data, size);
-        break;
-    case OUT_SIGNED:
+    if (flags & OUT_SIGNED)
         err = overflow_signed(data, size);
-        break;
-    case OUT_UNSIGNED:
+    else if (flags & OUT_UNSIGNED)
         err = overflow_unsigned(data, size);
-        break;
-    default:
-        panic();
-        break;
-    }
+    else
+        err = overflow_general(data, size);
 
     if (err)
         warn_overflow(size);
+}
+
+/*
+ * Collect macro-related debug information, if applicable.
+ */
+static void debug_macro_out(const struct out_data *data)
+{
+    struct debug_macro_addr *addr;
+    uint64_t start = data->offset;
+    uint64_t end  = start + data->size;
+
+    addr = debug_macro_get_addr(data->segment);
+    while (addr) {
+        if (!addr->len)
+            addr->start = start;
+        addr->len = end - addr->start;
+        addr = addr->up;
+    }
 }
 
 /*
@@ -341,8 +352,10 @@ static void warn_overflow_out(int64_t data, int size, enum out_sign sign)
  */
 static void out(struct out_data *data)
 {
-    static int32_t lineno = 0;     /* static!!! */
-    static const char *lnfname = NULL;
+    static struct last_debug_info {
+        struct src_location where;
+        int32_t segment;
+    } dbg;
     union {
         uint8_t b[8];
         uint64_t q;
@@ -374,11 +387,14 @@ static void out(struct out_data *data)
         nasm_assert(data->size <= 8);
         asize = data->size;
         amax = ofmt->maxbits >> 3; /* Maximum address size in bytes */
-        if ((ofmt->flags & OFMT_KEEP_ADDR) == 0 && data->tsegment == fixseg &&
+        if (!(ofmt->flags & OFMT_KEEP_ADDR) &&
+            data->tsegment == fixseg &&
             data->twrt == NO_SEG) {
-            if (asize >= (size_t)(data->bits >> 3))
-                data->sign = OUT_WRAP; /* Support address space wrapping for low-bit modes */
-            warn_overflow_out(addrval, asize, data->sign);
+            if (asize >= (size_t)(data->bits >> 3)) {
+                 /* Support address space wrapping for low-bit modes */
+                data->flags &= ~OUT_SIGNMASK;
+            }
+            warn_overflow_out(addrval, asize, data->flags);
             xdata.q = cpu_to_le64(addrval);
             data->data = xdata.b;
             data->type = OUT_RAWDATA;
@@ -398,19 +414,22 @@ static void out(struct out_data *data)
     }
 
     /*
-     * this call to src_get determines when we call the
-     * debug-format-specific "linenum" function
-     * it updates lineno and lnfname to the current values
-     * returning 0 if "same as last time", -2 if lnfname
-     * changed, and the amount by which lineno changed,
-     * if it did. thus, these variables must be static
+     * If the source location or output segment has changed,
+     * let the debug backend know. Some backends really don't
+     * like being given a NULL filename as can happen if we
+     * use -Lb and expand a macro, so filter out that case.
      */
-
-    if (src_get(&lineno, &lnfname))
-        dfmt->linenum(lnfname, lineno, data->segment);
+    data->where = src_where();
+    if (data->where.filename &&
+        (!src_location_same(data->where, dbg.where) |
+         (data->segment != dbg.segment))) {
+        dbg.where   = data->where;
+        dbg.segment = data->segment;
+        dfmt->linenum(dbg.where.filename, dbg.where.lineno, data->segment);
+    }
 
     if (asize > amax) {
-        if (data->type == OUT_RELADDR || data->sign == OUT_SIGNED) {
+        if (data->type == OUT_RELADDR || (data->flags & OUT_SIGNED)) {
             nasm_nonfatal("%u-bit signed relocation unsupported by output format %s",
                           (unsigned int)(asize << 3), ofmt->shortname);
         } else {
@@ -431,6 +450,12 @@ static void out(struct out_data *data)
     lfmt->output(data);
 
     if (likely(data->segment != NO_SEG)) {
+        /*
+         * Collect macro-related information for the debugger, if applicable
+         */
+        if (debug_current_macro)
+            debug_macro_out(data);
+
         ofmt->output(data);
     } else {
         /* Outputting to ABSOLUTE section - only reserve is permitted */
@@ -482,17 +507,17 @@ static void out_segment(struct out_data *data, const struct operand *opx)
     if (opx->opflags & OPFLAG_RELATIVE)
         nasm_nonfatal("segment references cannot be relative");
 
-    data->type = OUT_SEGMENT;
-    data->sign = OUT_UNSIGNED;
-    data->size = 2;
-    data->toffset = opx->offset;
-    data->tsegment = ofmt->segbase(opx->segment | 1);
-    data->twrt = opx->wrt;
+    data->type      = OUT_SEGMENT;
+    data->flags     = OUT_UNSIGNED;
+    data->size      = 2;
+    data->toffset   = opx->offset;
+    data->tsegment  = ofmt->segbase(opx->segment | 1);
+    data->twrt      = opx->wrt;
     out(data);
 }
 
 static void out_imm(struct out_data *data, const struct operand *opx,
-                    int size, enum out_sign sign)
+                    int size, enum out_flags sign)
 {
     if (opx->segment != NO_SEG && (opx->segment & 1)) {
         /*
@@ -507,10 +532,10 @@ static void out_imm(struct out_data *data, const struct operand *opx,
         data->type = (opx->opflags & OPFLAG_RELATIVE)
             ? OUT_RELADDR : OUT_ADDRESS;
     }
-    data->sign = sign;
-    data->toffset = opx->offset;
+    data->flags    = sign;
+    data->toffset  = opx->offset;
     data->tsegment = opx->segment;
-    data->twrt = opx->wrt;
+    data->twrt     = opx->wrt;
     /*
      * XXX: improve this if at some point in the future we can
      * distinguish the subtrahend in expressions like [foo - bar]
@@ -529,13 +554,13 @@ static void out_reladdr(struct out_data *data, const struct operand *opx,
     if (opx->opflags & OPFLAG_RELATIVE)
         nasm_nonfatal("invalid use of self-relative expression");
 
-    data->type = OUT_RELADDR;
-    data->sign = OUT_SIGNED;
-    data->size = size;
-    data->toffset = opx->offset;
+    data->type     = OUT_RELADDR;
+    data->flags    = OUT_SIGNED;
+    data->size     = size;
+    data->toffset  = opx->offset;
     data->tsegment = opx->segment;
-    data->twrt = opx->wrt;
-    data->relbase = data->offset + (data->inslen - data->insoffs);
+    data->twrt     = opx->wrt;
+    data->relbase  = data->offset + (data->inslen - data->insoffs);
     out(data);
 }
 
@@ -636,12 +661,12 @@ static void out_eops(struct out_data *data, const extop *e)
                     data->relbase = 0;
                     if (e->val.num.segment != NO_SEG &&
                         (e->val.num.segment & 1)) {
-                        data->type = OUT_SEGMENT;
-                        data->sign = OUT_UNSIGNED;
+                        data->type  = OUT_SEGMENT;
+                        data->flags = OUT_UNSIGNED;
                     } else {
                         data->type = e->val.num.relative
                             ? OUT_RELADDR : OUT_ADDRESS;
-                        data->sign = OUT_WRAP;
+                        data->flags = OUT_WRAP;
                     }
                     out(data);
                 }

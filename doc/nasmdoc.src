@@ -5765,6 +5765,11 @@ qualifiers are:
 \c section .rdata   rdata align=8
 \c section .bss     bss   align=4
 
+The \c{win64} format also adds:
+
+\c section .pdata   rdata align=4
+\c section .xdata   rdata align=8
+
 Any other section name is treated by default like \c{.text}.
 
 \S{win32safeseh} \c{win32}: Safe Structured Exception Handling

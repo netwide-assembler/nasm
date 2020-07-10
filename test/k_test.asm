@@ -42,7 +42,7 @@ bar	equ 0xcc
 
 %endmacro
 
-%pragma list options +bempf
+;%pragma list options +bempf
 
 	;; k_rr op kreg size_suffix size_name
 %macro k_rr 4

@@ -75,6 +75,7 @@
 #include "tokens.h"
 #include "tables.h"
 #include "listing.h"
+#include "dbginfo.h"
 
 /*
  * Preprocessor execution options that can be controlled by %pragma or
@@ -85,6 +86,10 @@ static struct pp_opts {
     bool noaliases;
     bool sane_empty_expansion;
 } ppopt;
+
+static enum pp_debug_flags {
+    PDBG_MACROS = 1              /* Collect macro information */
+} ppdbg;
 
 typedef struct SMacro SMacro;
 typedef struct MMacro MMacro;
@@ -296,6 +301,10 @@ struct MMacro {
     int *paramlen;
     uint64_t unique;
     uint64_t condcnt;           /* number of if blocks... */
+    struct {                    /* Debug information */
+        struct debug_macro_def *def; /* Definition */
+        struct debug_macro_inv *inv; /* Current invocation (if any) */
+    } dbg;
 };
 
 
@@ -3873,10 +3882,11 @@ static int do_directive(Token *tline, Token **output)
             inc->lineinc = 1;
             inc->nolist = istk->nolist;
             inc->noline = istk->noline;
-            if (!inc->noline)
-                src_set(0, found_path ? found_path : p);
             istk = inc;
-            lfmt->uplevel(LIST_INCLUDE, 0);
+            if (!istk->noline)
+                src_set(0, found_path ? found_path : p);
+            if (!istk->nolist)
+                lfmt->uplevel(LIST_INCLUDE, 0);
         }
         break;
 
@@ -3900,12 +3910,15 @@ static int do_directive(Token *tline, Token **output)
             stdmacpos = pkg->macros;
             nasm_new(inc);
             inc->next = istk;
-            inc->nolist = istk->nolist + !list_option('b');
-            inc->noline = istk->noline;
+            if (!list_option('b')) {
+                inc->nolist++;
+                inc->noline++;
+            }
+            istk = inc;
+            if (!istk->nolist)
+                lfmt->uplevel(LIST_INCLUDE, 0);
             if (!inc->noline)
                 src_set(0, NULL);
-            istk = inc;
-            lfmt->uplevel(LIST_INCLUDE, 0);
         }
         break;
     }
@@ -6165,6 +6178,156 @@ static void list_mmacro_call(const MMacro *m)
 }
 
 /*
+ * Collect information about macro invocations for the benefit of
+ * the debugger. During execution we create a reverse list; before
+ * calling the backend reverse it to definition/invocation order just
+ * to be nicer. [XXX: not implemented yet]
+ */
+struct debug_macro_inv *debug_current_macro;
+
+/* Get/create a addr structure for a seg:inv combo */
+static struct debug_macro_addr *
+debug_macro_get_addr_inv(int32_t seg, struct debug_macro_inv *inv)
+{
+    struct debug_macro_addr *addr;
+    static_assert(offsetof(struct debug_macro_addr, tree) == 0);
+
+    if (likely(seg == inv->lastseg))
+        return inv->addr.last;
+
+    inv->lastseg = seg;
+    addr = (struct debug_macro_addr *)
+        rb_search_exact(inv->addr.tree, seg);
+    if (unlikely(!addr)) {
+        nasm_new(addr);
+        addr->tree.key = seg;
+        inv->addr.tree = rb_insert(inv->addr.tree, &addr->tree);
+        inv->naddr++;
+        if (inv->up)
+            addr->up = debug_macro_get_addr_inv(seg, inv->up);
+    }
+
+    return inv->addr.last = addr;
+}
+
+/* Get/create an addr structure for a seg in debug_current_macro */
+struct debug_macro_addr *debug_macro_get_addr(int32_t seg)
+{
+    return debug_macro_get_addr_inv(seg, debug_current_macro);
+}
+
+static struct debug_macro_info dmi;
+static struct debug_macro_inv_list *current_inv_list = &dmi.inv;
+
+static void debug_macro_start(MMacro *m, struct src_location where)
+{
+    struct debug_macro_def *def = m->dbg.def;
+    struct debug_macro_inv *inv;
+
+    nasm_assert(!m->dbg.inv);
+
+    /* First invocation? Need to create a def structure */
+    if (unlikely(!def)) {
+        nasm_new(def);
+        def->name = nasm_strdup(m->name);
+        def->where = m->where;
+
+        def->next = dmi.def.l;
+        dmi.def.l = def;
+        dmi.def.n++;
+
+        m->dbg.def = def;
+    }
+
+    nasm_new(inv);
+    inv->lastseg = NO_SEG;
+    inv->where = where;
+    inv->up = debug_current_macro;
+    inv->next = current_inv_list->l;
+    inv->def = def;
+    current_inv_list->l = inv;
+    current_inv_list->n++;
+    current_inv_list = &inv->down;
+
+    def->ninv++;
+    m->dbg.inv = inv;
+    debug_current_macro = inv;
+}
+
+static void debug_macro_end(MMacro *m)
+{
+    struct debug_macro_inv *inv = m->dbg.inv;
+
+    nasm_assert(inv == debug_current_macro);
+
+    list_reverse(inv->down.l);
+
+    m->dbg.inv = NULL;
+    inv = inv->up;
+
+    m = istk->mstk.mmac;
+    if (m) {
+        nasm_assert(inv == m->dbg.inv);
+        debug_current_macro = inv;
+        current_inv_list = &inv->down;
+    } else {
+        nasm_assert(!inv);
+        debug_current_macro = NULL;
+        current_inv_list = &dmi.inv;
+    }
+}
+
+static void free_debug_macro_addr_tree(struct rbtree *tree)
+{
+    struct rbtree *left, *right;
+    static_assert(offsetof(struct debug_macro_addr,tree) == 0);
+
+    if (!tree)
+        return;
+
+    left  = rb_left(tree);
+    right = rb_right(tree);
+
+    nasm_free(tree);
+
+    free_debug_macro_addr_tree(left);
+    free_debug_macro_addr_tree(right);
+}
+
+static void free_debug_macro_inv_list(struct debug_macro_inv *inv)
+{
+    struct debug_macro_inv *itmp;
+
+    if (!inv)
+        return;
+
+    list_for_each_safe(inv, itmp, inv) {
+        free_debug_macro_inv_list(inv->down.l);
+        free_debug_macro_addr_tree(inv->addr.tree);
+        nasm_free(inv);
+    }
+}
+
+static void free_debug_macro_info(void)
+{
+    struct debug_macro_def *def, *dtmp;
+
+    list_for_each_safe(def, dtmp, dmi.def.l)
+        nasm_free(def);
+
+    free_debug_macro_inv_list(dmi.inv.l);
+
+    nasm_zero(dmi);
+}
+
+static void debug_macro_output(void)
+{
+    list_reverse(dmi.inv.l);
+    dfmt->debug_macros(&dmi);
+    free_debug_macro_info();
+}
+
+/*
  * Expand the multi-line macro call made by the given line, if
  * there is one to be expanded. If there is, push the expansion on
  * istk->expansion and return 1. Otherwise return 0.
@@ -6369,10 +6532,13 @@ static int expand_mmacro(Token * tline)
     istk->noline += !!(m->nolist & NL_LINE);
 
     if (!istk->nolist) {
-        lfmt->uplevel(LIST_MACRO, 0);
-
         if (list_option('m'))
             list_mmacro_call(m);
+
+        lfmt->uplevel(LIST_MACRO, 0);
+
+        if (ppdbg & PDBG_MACROS)
+            debug_macro_start(m, src_where());
     }
 
     if (!istk->noline)
@@ -6500,6 +6666,13 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
     /* Reset options to default */
     nasm_zero(ppopt);
 
+    /* Disable all debugging info, except in the last pass */
+    ppdbg = 0;
+    if (pass_final()) {
+        if (dfmt->debug_macros)
+            ppdbg |= PDBG_MACROS;
+    }
+
     if (!use_loaded)
         use_loaded = nasm_malloc(use_package_count * sizeof(bool));
     memset(use_loaded, 0, use_package_count * sizeof(bool));
@@ -6525,9 +6698,10 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
     inc->next = istk;
     src_set(0, NULL);
     inc->where = src_where();
-    inc->nolist = !list_option('b');
+    inc->nolist = inc->noline = !list_option('b');
     istk = inc;
-    lfmt->uplevel(LIST_INCLUDE, 0);
+    if (!istk->nolist)
+        lfmt->uplevel(LIST_INCLUDE, 0);
 
     pp_add_magic_stdmac();
 
@@ -6680,18 +6854,20 @@ static Token *pp_tokline(void)
                     }
                 }
 
-                if (fm->nolist & NL_LIST) {
-                    istk->nolist--;
-                } else if (!istk->nolist) {
-                    lfmt->downlevel(LIST_MACRO);
-                }
-
                 if (fm->nolist & NL_LINE) {
                     istk->noline--;
                 } else if (!istk->noline) {
                     if (fm == src_macro_current())
                         src_macro_pop();
                     src_update(l->where);
+                }
+
+                if (fm->nolist & NL_LIST) {
+                    istk->nolist--;
+                } else if (!istk->nolist) {
+                    lfmt->downlevel(LIST_MACRO);
+                    if ((ppdbg & PDBG_MACROS) && fm->name)
+                        debug_macro_end(fm);
                 }
 
                 istk->where = l->where;
@@ -6741,7 +6917,6 @@ static Token *pp_tokline(void)
                  * The current file has ended; work down the istk
                  */
                 Include *i = istk;
-                Include *is;
 
                 if (i->fp)
                     fclose(i->fp);
@@ -6750,14 +6925,13 @@ static Token *pp_tokline(void)
                     nasm_fatal("expected `%%endif' before end of file");
                 }
 
-                list_for_each(is, i->next) {
-                    if (is->fp) {
-                        lfmt->downlevel(LIST_INCLUDE);
-                        src_update(is->where);
-                        break;
-                    }
-                }
                 istk = i->next;
+
+                if (!i->nolist)
+                    lfmt->downlevel(LIST_INCLUDE);
+                if (!i->noline && istk)
+                    src_update(istk->where);
+
                 nasm_free(i);
                 return &tok_pop;
             }
@@ -6898,6 +7072,9 @@ static void pp_cleanup_pass(void)
     while (cstk)
         ctx_pop();
     src_set_fname(NULL);
+
+    if (ppdbg & PDBG_MACROS)
+        debug_macro_output();
 }
 
 static void pp_cleanup_session(void)

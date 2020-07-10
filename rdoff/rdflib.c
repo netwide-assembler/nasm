@@ -181,6 +181,8 @@ int main(int argc, char **argv)
         nasm_write(sig_modname, strlen(sig_modname) + 1, fp);
         nasm_write(rdl_signature, strlen(rdl_signature), fp);
 	t = time(NULL);
+        l = sizeof(t);
+        fwriteint32_t(l, fp);
         fwriteint32_t(t, fp);
         fclose(fp);
         break;
@@ -232,7 +234,7 @@ int main(int argc, char **argv)
             fprintf(stderr, "rdflib: required parameter missing\n");
             exit(1);
         }
-        break;
+        /* fall through */
     case 't':
         fp = fopen(argv[2], "rb");
         if (!fp) {

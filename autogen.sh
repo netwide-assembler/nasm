@@ -43,15 +43,6 @@ if test ! -f autoconf/aclocal.m4; then
 fi
 rm -rf autoconf/*m4.old
 "$AUTOHEADER" -B autoconf
-if [ config/config.h.in -nt config/unconfig.h ]; then
-    # Create a file corresponding to a completely empty configure
-    # instance, commenting out the #undef directives from the template
-    # just like configure would do.
-    perl -np < config/config.h.in > config/unconfig.h \
-	 -e 's:^(\#\s*undef\s.*)$:/* $1 */:;' \
-	 -e 's:config/config.h.in:config/unconfig.h:;' \
-	 -e 's:autoheader:autogen.sh:;'
-fi
 "$AUTOCONF" -B autoconf
 rm -rf autom4te.cache config.log config.status config/config.h Makefile
 

@@ -13,11 +13,11 @@ dnl direct function, as some gcc [and others?] versions have problems
 dnl with attributes on function pointers, and we might as well check both.
 dnl --------------------------------------------------------------------------
 AC_DEFUN([_PA_FUNC_ATTRIBUTE],
-[AC_MSG_CHECKING([if $CC supports the $1 function attribute])
- m4_define([_pa_faa],ifelse([$2],[],[],[($2)]))
+[m4_define([_pa_faa],ifelse([$2],[],[],[($2)]))
  m4_define([_pa_fam],ifelse([$2],[],[],[(m4_join([,],m4_for(_pa_n,1,m4_count($2),1,[m4_quote([x]_pa_n),])))]))
  m4_define([_pa_suf],ifelse([$2],[],[],[m4_count($2)]))
  m4_define([_pa_mac],ifelse([$6],[],[$1_func]_pa_suf,[$6]))
+ AC_MSG_CHECKING([if $CC supports the $1]_pa_faa[ function attribute])
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 extern ifelse([$3],[],[void *],[$3])  __attribute__(([$1]_pa_faa))
@@ -44,11 +44,11 @@ ifelse([$3],[],[void *],[$3]) foo(void)
 ])
 
 AC_DEFUN([_PA_FUNC_PTR_ATTRIBUTE],
-[AC_MSG_CHECKING([if $CC supports the $1 function attribute on pointers])
- m4_define([_pa_faa],ifelse([$2],[],[],[($2)]))
+[m4_define([_pa_faa],ifelse([$2],[],[],[($2)]))
  m4_define([_pa_fam],ifelse([$2],[],[],[(m4_join([,],m4_for(_pa_n,1,m4_count($2),1,[m4_quote([x]_pa_n),])))]))
  m4_define([_pa_suf],ifelse([$2],[],[],[m4_count($2)]))
  m4_define([_pa_mac],ifelse([$6],[],[$1_func]_pa_suf,[$6])_ptr)
+ AC_MSG_CHECKING([if $CC supports the $1]_pa_faa[ function attribute on pointers])
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 extern ifelse([$3],[],[void *],[$3])  __attribute__(([$1]_pa_faa))

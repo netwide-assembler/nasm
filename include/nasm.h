@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -111,10 +111,11 @@ enum out_type {
     OUT_REL8ADR
 };
 
-enum out_sign {
-    OUT_WRAP,                   /* Undefined signedness (wraps) */
-    OUT_SIGNED,                 /* Value is signed */
-    OUT_UNSIGNED                /* Value is unsigned */
+enum out_flags {
+    OUT_WRAP     = 0,           /* Undefined signedness (wraps) */
+    OUT_SIGNED   = 1,           /* Value is signed */
+    OUT_UNSIGNED = 2,           /* Value is unsigned */
+    OUT_SIGNMASK = 3            /* Mask for signedness bits */
 };
 
 /*
@@ -126,7 +127,7 @@ struct out_data {
     int64_t offset;             /* Offset within segment */
     int32_t segment;            /* Segment written to */
     enum out_type type;         /* See above */
-    enum out_sign sign;         /* See above */
+    enum out_flags flags;       /* See above */
     int inslen;                 /* Length of instruction */
     int insoffs;                /* Offset inside instruction */
     int bits;                   /* Bits mode of compilation */
@@ -137,6 +138,7 @@ struct out_data {
     int32_t tsegment;           /* Target segment for relocation */
     int32_t twrt;               /* Relocation with respect to */
     int64_t relbase;            /* Relative base for OUT_RELADDR */
+    struct src_location where;  /* Source file and line */
 };
 
 /*
@@ -908,7 +910,7 @@ struct ofmt {
      * It is allowed to modify the string it is given a pointer to.
      *
      * It is also allowed to specify a default instruction size for
-     * the segment, by setting `*bits' to 16 or 32. Or, if it
+     * the segment, by setting `*bits' to 16, 32 or 64. Or, if it
      * doesn't wish to define a default, it can leave `bits' alone.
      */
     int32_t (*section)(char *name, int *bits);
@@ -1004,6 +1006,7 @@ extern FILE *ofile;
  * interfaces to the functions therein.
  * ------------------------------------------------------------
  */
+struct debug_macro_info;
 
 struct dfmt {
     /*
@@ -1036,6 +1039,14 @@ struct dfmt {
 
     void (*debug_deflabel)(char *name, int32_t segment, int64_t offset,
                            int is_global, char *special);
+
+    /*
+     * debug_macros - called once at the end with a definition for each
+     * non-.nolist macro that has been invoked at least once in the program,
+     * and the corresponding address ranges. See dbginfo.h.
+     */
+    void (*debug_macros)(const struct debug_macro_info *);
+
     /*
      * debug_directive - called whenever a DEBUG directive other than 'LINE'
      * is encountered. 'directive' contains the first parameter to the
@@ -1280,6 +1291,8 @@ struct optimization {
 
 /*
  * Various types of compiler passes we may execute.
+ * If these are changed, you need to also change _pass_types[]
+ * in asm/nasm.c.
  */
 enum pass_type {
     PASS_INIT,            /* Initialization, not doing anything yet */

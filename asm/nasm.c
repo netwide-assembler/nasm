@@ -105,7 +105,7 @@ bool tasm_compatible_mode = false;
 enum pass_type _pass_type;
 const char * const _pass_types[] =
 {
-    "init", "first", "optimize", "stabilize", "final"
+    "init", "preproc-only", "first", "optimize", "stabilize", "final"
 };
 int64_t _passn;
 int globalrel = 0;

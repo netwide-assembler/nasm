@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2010 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -481,6 +481,8 @@ struct coff_Section {
     int32_t index;
     struct coff_Reloc *head, **tail;
     uint32_t flags;             /* section flags */
+    uint32_t align_flags;       /* user-specified alignment flags */
+    uint32_t sectalign_flags;   /* minimum alignment from sectalign */
     char *name;
     int32_t namepos;            /* Offset of name into the strings table */
     int32_t pos, relpos;
