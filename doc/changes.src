@@ -25,6 +25,8 @@ section type.
 where one or more parts result from empty token expansion, resulting
 in \c{%+} tokens at the beginning or end, or multiple ones in a row.
 
+\b Fix macro label capture (\c{%00}, \k{percent00}).
+
 \b Portability fixes.
 
 \S{cl-2.15.02} Version 2.15.02

@@ -2935,6 +2935,10 @@ Examples are given in \k{rotate}.
 label must be on the same line as the macro invocation, may be a local label
 (see \k{locallab}), and need not end in a colon.
 
+If \c{%00} is present anywhere in the macro body, the label itself
+will not be emitted by NASM. You can, of course, put \c{%00:}
+explicitly at the beginning of your macro.
+
 
 \S{rotate} \i\c{%rotate}: \i{Rotating Macro Parameters}
 
