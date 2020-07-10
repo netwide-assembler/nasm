@@ -4649,6 +4649,11 @@ issue_error:
     case PP_LINE:
         nasm_panic("`%s' directive not preprocessed early", dname);
         break;
+
+    case PP_NULL:
+        /* Goes nowhere, does nothing... */
+        break;
+
     }
 
 done:
