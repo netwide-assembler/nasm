@@ -27,6 +27,9 @@ in \c{%+} tokens at the beginning or end, or multiple ones in a row.
 
 \b Fix macro label capture (\c{%00}, \k{percent00}).
 
+\b Much better documentation for the MASM compatiblity package,
+\c{%use masm} (see \k{pkg_masm}).
+
 \b Portability fixes.
 
 \S{cl-2.15.02} Version 2.15.02

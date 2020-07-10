@@ -4664,17 +4664,61 @@ functionality, as intended to be used primarily with machine-generated code.
 It does not include any "programmer-friendly" shortcuts, nor does it in any way
 support ASSUME, symbol typing, or MASM-style structures.
 
-Currently, the MASM compatibility package emulates only the PTR
-keyword and recognize syntax displacement[index] for memory
-operations.
 To enable the package, use the directive:
 
 \c{%use masm}
 
-In addition, NASM now natively supports the MASM \c{?} and
-\c{DUP} syntax for the \c{DB} etc data declaration directives,
-regardless of if this package is included or not. See \k{db}.
+Currently, the MASM compatibility package emulates:
 
+\b The \c{FLAT} and \c{OFFSET} keywords are recognized and ignored.
+
+\b The \c{PTR} keyword signifies a memory reference, as if the
+argument had been put in square brackets:
+
+\c      mov eax,[foo]               ; memory reference
+\c      mov eax,dword ptr foo       ; memory reference
+\c      mov eax,dowrd ptr flat:foo  ; memory reference
+\c      mov eax,offset foo          ; address
+\c      mov eax,foo                 ; address (ambiguous syntax in MASM)
+
+\b The \c{SEGMENT} ... \c{ENDS} syntax:
+
+\c    segname SEGMENT
+\c        ...
+\c    segname ENDS
+
+\b The \c{PROC} ... \c{ENDP} syntax:
+
+\c    procname PROC [FAR]
+\c         ...
+\c    procname ENDP
+
+\> \c{PROC} will also define \c{RET} as a macro expanding to either
+\c{RETF} if \c{FAR} is specified and \c{RETN} otherwise. Any keyword
+after \c{PROC} other than \c{FAR} is ignored.
+
+\b The \c{TBYTE} keyword as an alias for \c{TWORD} (see \k{qsother}).
+
+\b The \c{END} directive is ignored.
+
+\b In 64-bit mode relative addressing is the default (\c{DEFAULT REL},
+see \k{REL & ABS}).
+
+In addition, NASM now natively supports, regardless of whether this
+package is used or not:
+
+\b \c{?} and \c{DUP} syntax for the \c{DB} etc data declaration
+directives (see \k{db}).
+
+\b \c{displacement[base+index]} syntax for memory operations, instead
+of \c{[base+index+displacement]}.
+
+\b \c{seg:[addr]} instead of \c{[seg:addr]} syntax.
+
+\b A pure offset can be given to \c{LEA} without square brackets:
+
+\c      lea rax,[foo]               ; standard syntax
+\c      lea rax,foo                 ; also accepted
 
 \C{directive} \i{Assembler Directives}
 
