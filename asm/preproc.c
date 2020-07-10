@@ -3410,6 +3410,61 @@ done:
     return DIRECTIVE_FOUND;
 }
 
+/*
+ * Used for the %arg and %local directives
+ */
+static void define_stack_smacro(const char *name, int offset)
+{
+    Token *tt;
+
+    tt = make_tok_char(NULL, ')');
+    tt = make_tok_num(tt, offset);
+    if (!tok_is(tt, '-'))
+        tt = make_tok_char(tt, '+');
+    tt = new_Token(tt, TOK_ID, StackPointer, 0);
+    tt = make_tok_char(tt, '(');
+
+    define_smacro(name, true, tt, NULL);
+}
+
+
+/*
+ * This implements the %assign directive: expand an smacro expression,
+ * then evaluate it, and assign the corresponding number to an smacro.
+ */
+static void assign_smacro(const char *mname, bool casesense,
+                          Token *tline, const char *dname)
+{
+    struct ppscan pps;
+    expr *evalresult;
+    struct tokenval tokval;
+
+    tline = expand_smacro(tline);
+
+    pps.tptr = tline;
+    pps.ntokens = -1;
+    tokval.t_type = TOKEN_INVALID;
+    evalresult = evaluate(ppscan, &pps, &tokval, NULL, true, NULL);
+    free_tlist(tline);
+    if (!evalresult)
+        return;
+
+    if (tokval.t_type)
+        nasm_warn(WARN_OTHER, "trailing garbage after expression ignored");
+
+    if (!is_simple(evalresult)) {
+        nasm_nonfatal("non-constant value given to `%s'", dname);
+    } else {
+	tline = make_tok_num(NULL, reloc_value(evalresult));
+
+        /*
+         * We now have a macro name, an implicit parameter count of
+         * zero, and a numeric token to use as an expansion. Create
+         * and store an SMacro.
+         */
+        define_smacro(mname, casesense, tline, NULL);
+    }
+}
 
 /**
  * find and process preprocessor directive in passed line
@@ -3463,7 +3518,12 @@ static int do_directive(Token *tline, Token **output)
     switch (tline->type) {
     case TOK_PREPROC_ID:
         dname = tok_text(tline);
-        if (dname[1] == '%' || dname[1] == '$')
+        /*
+         * For it to be a directive, the second character has to be an
+         * ASCII letter; this is a very quick and dirty test for that;
+         * all other cases will get rejected by the token hash.
+         */
+        if ((uint8_t)(dname[1] - 'A') > (uint8_t)('z' - 'A'))
             return NO_DIRECTIVE_FOUND;
 
         op = pp_token_hash(dname);
@@ -3647,7 +3707,6 @@ static int do_directive(Token *tline, Token **output)
         offset = ArgOffset;
         do {
             const char *arg;
-            char directive[256];
             int size = StackSize;
 
             /* Find the argument name */
@@ -3685,9 +3744,7 @@ static int do_directive(Token *tline, Token **output)
             size = ALIGN(size, StackSize);
 
             /* Now define the macro for the argument */
-            snprintf(directive, sizeof(directive), "%%define %s (%s+%d)",
-                     arg, StackPointer, offset);
-            do_directive(tokenize(directive), output);
+            define_stack_smacro(arg, offset);
             offset += size;
 
             /* Move to the next argument in the list */
@@ -3697,6 +3754,9 @@ static int do_directive(Token *tline, Token **output)
         break;
 
     case PP_LOCAL:
+    {
+        int total_size = 0;
+
         /* TASM like LOCAL directive to define local variables for a
          * function, in the following form:
          *
@@ -3709,7 +3769,6 @@ static int do_directive(Token *tline, Token **output)
         offset = LocalOffset;
         do {
             const char *local;
-	    char directive[256];
             int size = StackSize;
 
             /* Find the argument name */
@@ -3749,21 +3808,24 @@ static int do_directive(Token *tline, Token **output)
             offset += size;     /* Negative offset, increment before */
 
             /* Now define the macro for the argument */
-            snprintf(directive, sizeof(directive), "%%define %s (%s-%d)",
-                     local, StackPointer, offset);
-            do_directive(tokenize(directive), output);
+            define_stack_smacro(local, -offset);
 
-            /* Now define the assign to setup the enter_c macro correctly */
-            snprintf(directive, sizeof(directive),
-                     "%%assign %%$localsize %%$localsize+%d", size);
-            do_directive(tokenize(directive), output);
+            /* How is this different from offset? */
+            total_size += size;
 
             /* Move to the next argument in the list */
             tline = skip_white(tline->next);
         } while (tok_is(tline, ','));
+
+        /* Now define the assign to setup the enter_c macro correctly */
+        tt = make_tok_num(NULL, total_size);
+        tt = make_tok_char(tt, '+');
+        tt = new_Token(tt, TOK_LOCAL_MACRO, "%$localsize", 11);
+        assign_smacro("%$localsize", true, tt, dname);
+
         LocalOffset = offset;
         break;
-
+    }
     case PP_CLEAR:
     {
         bool context = false;
@@ -4645,35 +4707,10 @@ issue_error:
             goto done;
 
         last = tline;
-        tline = expand_smacro(tline->next);
+        tline = tline->next;
         last->next = NULL;
-
-        pps.tptr = tline;
-	pps.ntokens = -1;
-        tokval.t_type = TOKEN_INVALID;
-        evalresult = evaluate(ppscan, &pps, &tokval, NULL, true, NULL);
-        free_tlist(tline);
-        if (!evalresult)
-            goto done;
-
-        if (tokval.t_type)
-            nasm_warn(WARN_OTHER, "trailing garbage after expression ignored");
-
-        if (!is_simple(evalresult)) {
-            nasm_nonfatal("non-constant value given to `%s'", dname);
-            free_tlist(origline);
-            return DIRECTIVE_FOUND;
-	}
-
-	macro_start = make_tok_num(NULL, reloc_value(evalresult));
-
-        /*
-         * We now have a macro name, an implicit parameter count of
-         * zero, and a numeric token to use as an expansion. Create
-         * and store an SMacro.
-         */
-        define_smacro(mname, casesense, macro_start, NULL);
-        break;
+        assign_smacro(mname, casesense, tline, dname);
+        goto done;
 
     case PP_ALIASES:
         tline = tline->next;
@@ -4687,8 +4724,8 @@ issue_error:
     }
 
 done:
-        free_tlist(origline);
-        return DIRECTIVE_FOUND;
+    free_tlist(origline);
+    return DIRECTIVE_FOUND;
 }
 
 /*
