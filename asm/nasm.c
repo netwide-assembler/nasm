@@ -2150,8 +2150,7 @@ static void nasm_issue_error(struct nasm_errtext *et)
             here = where.filename ? " here" : " in an unknown location";
         }
 
-        if (warn_list && true_type < ERR_NONFATAL &&
-            !(pass_first() && (severity & ERR_PASS1))) {
+        if (warn_list && true_type < ERR_NONFATAL) {
             /*
              * Buffer up warnings until we either get an error
              * or we are on the code-generation pass.

@@ -1400,7 +1400,7 @@ static Token *tokenize(const char *line)
                     if (*p)
                         p++;
                     else
-                        nasm_nonfatalf(ERR_PASS1, "unterminated %%! string");
+                        nasm_nonfatal("unterminated %%! string");
                 } else {
                     /* %! without anything else... */
                 }

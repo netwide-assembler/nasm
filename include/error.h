@@ -93,7 +93,6 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list ap);
 #define ERR_NOFILE		0x00000010	/* don't give source file name/line */
 #define ERR_HERE		0x00000020      /* point to a specific source location */
 #define ERR_USAGE		0x00000040	/* print a usage message */
-#define ERR_PASS1		0x00000080	/* message on pass_first */
 #define ERR_PASS2		0x00000100	/* ignore unless on pass_final */
 
 #define ERR_NO_SEVERITY		0x00000200	/* suppress printing severity */

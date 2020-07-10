@@ -1326,13 +1326,13 @@ bin_directive(enum directive directive, char *args)
                 else {          /* Must be a filename. */
                     rf = nasm_open_write(p, NF_TEXT);
                     if (!rf) {
-                        nasm_warn(WARN_OTHER|ERR_PASS1, "unable to open map file `%s'", p);
+                        nasm_warn(WARN_OTHER, "unable to open map file `%s'", p);
                         map_control = 0;
                         return DIRR_OK;
                     }
                 }
             } else
-                nasm_warn(WARN_OTHER|ERR_PASS1, "map file already specified");
+                nasm_warn(WARN_OTHER, "map file already specified");
         }
         if (map_control == 0)
             map_control |= MAP_ORIGIN | MAP_SUMMARY;
