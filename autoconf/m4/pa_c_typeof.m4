@@ -7,7 +7,8 @@ dnl --------------------------------------------------------------------------
 AC_DEFUN([PA_C_TYPEOF],
 [AC_CACHE_CHECK([if $CC supports typeof], [pa_cv_typeof],
  [pa_cv_typeof=no
- for pa_typeof_try in typeof __typeof__ decltype __decltype__; do
+ for pa_typeof_try in typeof __typeof __typeof__ decltype __decltype __decltype__
+ do
   AS_IF([test $pa_cv_typeof = no],
         [AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
