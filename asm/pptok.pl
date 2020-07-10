@@ -224,7 +224,7 @@ if ($what eq 'c') {
     # Put a large value in unused slots.  This makes it extremely unlikely
     # that any combination that involves unused slot will pass the range test.
     # This speeds up rejection of unrecognized tokens, i.e. identifiers.
-    print OUT "#define UNUSED_HASH_ENTRY (65535/3)\n";
+    print OUT "\n#define UNUSED_HASH_ENTRY (65535/3)\n";
 
     print OUT "\n\n/* Primary preprocessor token hash */\n\n";
 
