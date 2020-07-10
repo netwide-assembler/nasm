@@ -138,6 +138,7 @@ struct out_data {
     int32_t tsegment;           /* Target segment for relocation */
     int32_t twrt;               /* Relocation with respect to */
     int64_t relbase;            /* Relative base for OUT_RELADDR */
+    struct src_location where;  /* Source file and line */
 };
 
 /*

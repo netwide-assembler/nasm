@@ -43,6 +43,18 @@ struct src_location {
     const char *filename;
     int32_t lineno;
 };
+
+/*
+ * Comparing the *pointer value* of filenames is valid, because the
+ * filename hash system guarantees that each unique filename string is
+ * permanently allocated in exactly one location.
+ */
+static inline bool
+src_location_same(struct src_location here, struct src_location there)
+{
+    return here.filename == there.filename && here.lineno == there.lineno;
+}
+
 struct src_location_stack {
     struct src_location l;
     struct src_location_stack *up, *down;

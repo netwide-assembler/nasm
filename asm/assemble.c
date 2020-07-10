@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -352,8 +352,10 @@ static void debug_macro_out(const struct out_data *data)
  */
 static void out(struct out_data *data)
 {
-    static int32_t lineno = 0;     /* static!!! */
-    static const char *lnfname = NULL;
+    static struct last_debug_info {
+        struct src_location where;
+        int32_t segment;
+    } dbg;
     union {
         uint8_t b[8];
         uint64_t q;
@@ -412,15 +414,19 @@ static void out(struct out_data *data)
     }
 
     /*
-     * this call to src_get determines when we call the
-     * debug-format-specific "linenum" function
-     * it updates lineno and lnfname to the current values
-     * returning 0 if "same as last time", -2 if lnfname
-     * changed, and the amount by which lineno changed,
-     * if it did. thus, these variables must be static
+     * If the source location or output segment has changed,
+     * let the debug backend know. Some backends really don't
+     * like being given a NULL filename as can happen if we
+     * use -Lb and expand a macro, so filter out that case.
      */
-    if (src_get(&lineno, &lnfname) && lnfname)
-        dfmt->linenum(lnfname, lineno, data->segment);
+    data->where = src_where();
+    if (data->where.filename &&
+        (!src_location_same(data->where, dbg.where) |
+         (data->segment != dbg.segment))) {
+        dbg.where   = data->where;
+        dbg.segment = data->segment;
+        dfmt->linenum(dbg.where.filename, dbg.where.lineno, data->segment);
+    }
 
     if (asize > amax) {
         if (data->type == OUT_RELADDR || (data->flags & OUT_SIGNED)) {

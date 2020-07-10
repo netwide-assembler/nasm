@@ -22,8 +22,8 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap)
     int rv, bytes;
 
     if (size > BUFFER_SIZE) {
-        nasm_panic("vsnprintf: size (%d) > BUFFER_SIZE (%d)",
-                   size, BUFFER_SIZE);
+        nasm_panic("vsnprintf: size (%llu) > BUFFER_SIZE (%d)",
+                   (unsigned long long)size, BUFFER_SIZE);
         size = BUFFER_SIZE;
     }
 
