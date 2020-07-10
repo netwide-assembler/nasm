@@ -1,5 +1,5 @@
 dnl --------------------------------------------------------------------------
-dnl PA_ADD_FLAGS(variable, flag [,actual_flag])
+dnl PA_ADD_FLAGS(variable, flag [,actual_flag [,success [,failure]]])
 dnl
 dnl Attempt to add the given option to CPPFLAGS, if it doesn't break
 dnl compilation.  If the option to be tested is different than the
@@ -15,6 +15,8 @@ AC_DEFUN([PA_ADD_FLAGS],
  [AC_MSG_RESULT([yes])
   $1="$pa_add_flags__old_flags ifelse([$3],[],[$2],[$3])"
   AC_DEFINE(PA_SYM([$1_],[$2]), 1,
-   [Define to 1 if compiled with the `$2' compiler flag])],
+   [Define to 1 if compiled with the `$2' compiler flag])
+  $4],
  [AC_MSG_RESULT([no])
-  $1="$pa_add_flags__old_flags"])])
+  $1="$pa_add_flags__old_flags"
+  $5])])
