@@ -181,30 +181,45 @@ static const char *out_type(enum out_type type)
     return out_types[type];
 }
 
-static const char *out_sign(enum out_sign sign)
+static const char *out_flags(enum out_flags flags)
 {
-    static const char *out_signs[] = {
-        "wrap",
+    static const char *out_flags[] = {
         "signed",
         "unsigned"
     };
-    static char invalid_buf[64];
+    static char flags_buf[1024];
+    unsigned long flv = flags;
+    size_t n;
+    size_t left = sizeof flags_buf - 1;
+    char *p = flags_buf;
+    unsigned int i;
 
-    if (sign >= sizeof(out_signs)/sizeof(out_signs[0])) {
-        sprintf(invalid_buf, "[invalid sign %d]", sign);
-        return invalid_buf;
+    for (i = 0; flv; flv >>= 1, i++) {
+        if (flv & 1) {
+            if (i < ARRAY_SIZE(out_flags))
+                n = snprintf(p, left, "%s,", out_flags[i]);
+            else
+                n = snprintf(p, left, "%u,", i);
+            if (n >= left)
+                break;
+            left -= n;
+            p += n;
+        }
     }
+    if (p > flags_buf)
+        p--;                    /* Delete final comma */
+    *p = '\0';
 
-    return out_signs[sign];
+    return flags_buf;
 }
 
 static void dbg_out(const struct out_data *data)
 {
     fprintf(ofile,
-            "out to %"PRIx32":%"PRIx64" %s %s bits %d insoffs %d/%d "
+            "out to %"PRIx32":%"PRIx64" %s(%s) bits %d insoffs %d/%d "
             "size %"PRIu64,
             data->segment, data->offset,
-            out_type(data->type), out_sign(data->sign),
+            out_type(data->type), out_flags(data->flags),
             data->bits, data->insoffs, data->inslen, data->size);
     if (data->itemp) {
         fprintf(ofile, " ins %s(%d)",
@@ -521,7 +536,7 @@ const struct ofmt of_dbg = {
     "Trace of all info passed to output stage",
     "dbg",
     ".dbg",
-    OFMT_TEXT,
+    OFMT_TEXT|OFMT_KEEP_ADDR,
     64,
     debug_debug_arr,
     &debug_debug_form,

@@ -111,10 +111,11 @@ enum out_type {
     OUT_REL8ADR
 };
 
-enum out_sign {
-    OUT_WRAP,                   /* Undefined signedness (wraps) */
-    OUT_SIGNED,                 /* Value is signed */
-    OUT_UNSIGNED                /* Value is unsigned */
+enum out_flags {
+    OUT_WRAP     = 0,           /* Undefined signedness (wraps) */
+    OUT_SIGNED   = 1,           /* Value is signed */
+    OUT_UNSIGNED = 2,           /* Value is unsigned */
+    OUT_SIGNMASK = 3            /* Mask for signedness bits */
 };
 
 /*
@@ -126,7 +127,7 @@ struct out_data {
     int64_t offset;             /* Offset within segment */
     int32_t segment;            /* Segment written to */
     enum out_type type;         /* See above */
-    enum out_sign sign;         /* See above */
+    enum out_flags flags;       /* See above */
     int inslen;                 /* Length of instruction */
     int insoffs;                /* Offset inside instruction */
     int bits;                   /* Bits mode of compilation */
@@ -908,7 +909,7 @@ struct ofmt {
      * It is allowed to modify the string it is given a pointer to.
      *
      * It is also allowed to specify a default instruction size for
-     * the segment, by setting `*bits' to 16 or 32. Or, if it
+     * the segment, by setting `*bits' to 16, 32 or 64. Or, if it
      * doesn't wish to define a default, it can leave `bits' alone.
      */
     int32_t (*section)(char *name, int *bits);
