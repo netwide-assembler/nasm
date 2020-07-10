@@ -2776,14 +2776,23 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
         if (input->basereg == -1 &&
             (input->indexreg == -1 || input->scale == 0)) {
             /*
-             * It's a pure offset.
+             * It's a pure offset. If it is an IMMEDIATE, it is a pattern
+             * in insns.dat which allows an immediate to be used as a memory
+             * address, in which case apply the default REL/ABS.
              */
-            if (bits == 64 && ((input->type & IP_REL) == IP_REL)) {
-                if (input->segment == NO_SEG ||
-                    (input->opflags & OPFLAG_RELATIVE)) {
-                    nasm_warn(WARN_OTHER|ERR_PASS2, "absolute address can not be RIP-relative");
-                    input->type &= ~IP_REL;
-                    input->type |= MEMORY;
+            if (bits == 64) {
+                if (is_class(IMMEDIATE, input->type)) {
+                    if (!(input->eaflags & EAF_ABS) &&
+                        ((input->eaflags & EAF_REL) || globalrel))
+                        input->type |= IP_REL;
+                }
+                if ((input->type & IP_REL) == IP_REL) {
+                    if (input->segment == NO_SEG ||
+                        (input->opflags & OPFLAG_RELATIVE)) {
+                        nasm_warn(WARN_OTHER|ERR_PASS2, "absolute address can not be RIP-relative");
+                        input->type &= ~IP_REL;
+                        input->type |= MEMORY;
+                    }
                 }
             }
 
