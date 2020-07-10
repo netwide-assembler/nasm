@@ -143,9 +143,9 @@ static struct RAA *offsets;
 static struct SAA *forwrefs;    /* keep track of forward references */
 static const struct forwrefinfo *forwref;
 
-static const struct preproc_ops *preproc;
+#define preproc (&preproc_nasm) /* Hack */
 static struct strlist *include_path;
-bool pp_noline;                 /* Ignore %line directives */
+static enum preproc_opt ppopt;
 
 #define OP_NORMAL           (1U << 0)
 #define OP_PREPROCESS       (1U << 1)
@@ -364,7 +364,7 @@ static void define_macros(void)
  */
 static void preproc_init(struct strlist *ipath)
 {
-    preproc->init();
+    preproc->init(ppopt);
     define_macros();
     preproc->include_path(ipath);
 }
@@ -549,7 +549,6 @@ int main(int argc, char **argv)
     offsets = raa_init();
     forwrefs = saa_init((int32_t)sizeof(struct forwrefinfo));
 
-    preproc = &nasmpp;
     operating_mode = OP_NORMAL;
 
     parse_cmdline(argc, argv, 1);
@@ -574,6 +573,11 @@ int main(int argc, char **argv)
         }
     }
 
+    /* Have we enabled TASM mode? */
+    if (tasm_compatible_mode) {
+        ppopt |= PP_TASM;
+        nasm_ctype_tasm_mode();
+    }
     preproc_init(include_path);
 
     parse_cmdline(argc, argv, 2);
@@ -1138,10 +1142,8 @@ static bool process_arg(char *p, char *q, int pass)
             break;
 
         case 't':
-            if (pass == 2) {
+            if (pass == 1)
                 tasm_compatible_mode = true;
-                nasm_ctype_tasm_mode();
-            }
             break;
 
         case 'v':
@@ -1156,7 +1158,7 @@ static bool process_arg(char *p, char *q, int pass)
 
         case 'a':       /* assemble only - don't preprocess */
             if (pass == 1)
-                preproc = &preproc_nop;
+                ppopt |= PP_TRIVIAL;
             break;
 
         case 'w':
@@ -1325,7 +1327,7 @@ static bool process_arg(char *p, char *q, int pass)
                     keep_all = true;
                     break;
                 case OPT_NO_LINE:
-                    pp_noline = true;
+                    ppopt |= PP_NOLINE;
                     break;
                 case OPT_DEBUG:
                     debug_nasm = param ? strtoul(param, NULL, 10) : debug_nasm+1;

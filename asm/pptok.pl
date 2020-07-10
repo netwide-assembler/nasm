@@ -63,15 +63,19 @@ while (defined($line = <IN>)) {
     } elsif ($line =~ /^\*(.*)$/) {
 	# Condition tail
 	push(@cond, $1);
+    } elsif ($line =~ /^\@(.*)$/) {
+	# TASM compatibility directive
+	push(@tasm, $1);
     }
 }
 close(IN);
 
 # Always sort %if first
-@cctok = sort { $a eq 'if' ? -1 : $b eq 'if' ? 1 : $a cmp $b } @cctok;
-@cond = sort @cond;
-@pptok = sort @pptok;
+@cctok  = sort { $a eq 'if' ? -1 : $b eq 'if' ? 1 : $a cmp $b } @cctok;
+@cond   = sort @cond;
+@pptok  = sort @pptok;
 @ppitok = sort @ppitok;
+@tasm   = sort @tasm;
 
 # Generate the expanded list including conditionals.  The conditionals
 # are at the beginning, padded to a power of 2, with the inverses
@@ -217,14 +221,15 @@ if ($what eq 'c') {
     }
     print OUT  "};\n";
 
-    print OUT "enum preproc_token pp_token_hash(const char *token)\n";
-    print OUT "{\n";
-
     # Put a large value in unused slots.  This makes it extremely unlikely
     # that any combination that involves unused slot will pass the range test.
     # This speeds up rejection of unrecognized tokens, i.e. identifiers.
     print OUT "#define UNUSED_HASH_ENTRY (65535/3)\n";
 
+    print OUT "\n\n/* Primary preprocessor token hash */\n\n";
+
+    print OUT "enum preproc_token pp_token_hash(const char *token)\n";
+    print OUT "{\n";
     print OUT "    static const int16_t hash1[$n] = {\n";
     for ($i = 0; $i < $n; $i++) {
 	my $h = ${$g}[$i*2+0];
@@ -257,6 +262,69 @@ if ($what eq 'c') {
     print OUT  "\n";
 
     print OUT  "    if (!pp_directives[ix] || nasm_stricmp(pp_directives[ix], token))\n";
+    print OUT  "        return PP_INVALID;\n";
+    print OUT  "\n";
+    print OUT  "    return ix;\n";
+    print OUT  "}\n";
+
+    my %tasmtokens = ();
+    foreach $pt (@tasm) {
+	# TASM compatiblity token
+	$nasmt = '%'.$pt;
+	if (!defined($tokens{$nasmt})) {
+	    die "$in: TASM compat token $pt does not have a ".
+		"corresponding $nasmt\n";
+	}
+	$tasmtokens{$pt} = $tokens{$nasmt};
+    }
+
+    @hashinfo = gen_perfect_hash(\%tasmtokens);
+    if (!@hashinfo) {
+	die "$0: no hash found\n";
+    }
+
+    # Paranoia...
+    verify_hash_table(\%tasmtokens, \@hashinfo);
+
+    ($n, $sv, $g) = @hashinfo;
+    die if ($n & ($n-1));
+
+    print OUT "\n\n/* TASM compatibility preprocessor token hash */\n";
+
+    print OUT "enum preproc_token pp_tasm_token_hash(const char *token)\n";
+    print OUT "{\n";
+    print OUT "    static const int16_t hash1[$n] = {\n";
+    for ($i = 0; $i < $n; $i++) {
+	my $h = ${$g}[$i*2+0];
+	print OUT "        ", defined($h) ? $h : 'UNUSED_HASH_ENTRY', ",\n";
+    }
+    print OUT "    };\n";
+
+    print OUT "    static const int16_t hash2[$n] = {\n";
+    for ($i = 0; $i < $n; $i++) {
+	my $h = ${$g}[$i*2+1];
+	print OUT "        ", defined($h) ? $h : 'UNUSED_HASH_ENTRY', ",\n";
+    }
+    print OUT "    };\n";
+
+    print OUT  "    uint32_t k1, k2;\n";
+    print OUT  "    uint64_t crc;\n";
+    # For correct overflow behavior, "ix" should be unsigned of the same
+    # width as the hash arrays.
+    print OUT  "    uint16_t ix;\n";
+    print OUT  "\n";
+
+    printf OUT "    crc = crc64i(UINT64_C(0x%08x%08x), token);\n",
+	$$sv[0], $$sv[1];
+    print  OUT "    k1 = (uint32_t)crc;\n";
+    print  OUT "    k2 = (uint32_t)(crc >> 32);\n";
+    print  OUT "\n";
+    printf OUT "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
+    printf OUT "    if (ix >= %d)\n", scalar(@pptok);
+    print OUT  "        return PP_INVALID;\n";
+    print OUT  "\n";
+
+    print OUT  "    if (!pp_directives[ix] || nasm_stricmp(pp_directives[ix]+1, token))\n";
     print OUT  "        return PP_INVALID;\n";
     print OUT  "\n";
     print OUT  "    return ix;\n";

@@ -40,11 +40,12 @@
 %if*
 %elif*
 
-# Condition tests
+# Condition tests.
 *
 *ctx
 *def
 *defalias
+*difi
 *empty
 *env
 *id
@@ -101,3 +102,15 @@
 %undefalias
 %use
 %warning
+
+# These directives do not require % in TASM-compatible mode
+@arg
+@elif
+@else
+@endif
+@if
+@ifdef
+@ifdifi
+@ifndef
+@include
+@local

@@ -85,7 +85,6 @@ LIBOBJ = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) &
 	asm\stdscan.$(O) &
 	asm\strfunc.$(O) asm\tokhash.$(O) &
 	asm\segalloc.$(O) &
-	asm\preproc-nop.$(O) &
 	asm\rdstrnum.$(O) &
 	asm\srcfile.$(O) &
 	macros\macros.$(O) &

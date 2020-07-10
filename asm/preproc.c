@@ -82,14 +82,22 @@
  * other directives.  This structure is initialized to zero on each
  * pass; this *must* reflect the default initial state.
  */
-static struct pp_opts {
+static struct pp_config {
     bool noaliases;
     bool sane_empty_expansion;
-} ppopt;
+} ppconf;
 
+/*
+ * Preprocessor debug-related flags
+ */
 static enum pp_debug_flags {
     PDBG_MACROS = 1              /* Collect macro information */
 } ppdbg;
+
+/*
+ * Preprocessor options configured on the command line
+ */
+static enum preproc_opt ppopt;
 
 typedef struct SMacro SMacro;
 typedef struct MMacro MMacro;
@@ -582,22 +590,6 @@ static int is_condition(enum preproc_token arg)
     return PP_IS_COND(arg) || (arg == PP_ELSE) || (arg == PP_ENDIF);
 }
 
-/* For TASM compatibility we need to be able to recognise TASM compatible
- * conditional compilation directives. Using the NASM pre-processor does
- * not work, so we look for them specifically from the following list and
- * then jam in the equivalent NASM directive into the input stream.
- */
-
-enum {
-    TM_ARG, TM_ELIF, TM_ELSE, TM_ENDIF, TM_IF, TM_IFDEF, TM_IFDIFI,
-    TM_IFNDEF, TM_INCLUDE, TM_LOCAL
-};
-
-static const char * const tasm_directives[] = {
-    "arg", "elif", "else", "endif", "if", "ifdef", "ifdifi",
-    "ifndef", "include", "local"
-};
-
 static int StackSize = 4;
 static const char *StackPointer = "ebp";
 static int ArgOffset = 8;
@@ -890,90 +882,6 @@ static const char *pp_getenv(const Token *t, bool warn)
 	nasm_free(buf);
 
     return v;
-}
-
-/*
- * Handle TASM specific directives, which do not contain a % in
- * front of them. We do it here because I could not find any other
- * place to do it for the moment, and it is a hack (ideally it would
- * be nice to be able to use the NASM pre-processor to do it).
- */
-static char *check_tasm_directive(char *line)
-{
-    int32_t i, j, k, m, len;
-    char *p, *q, *oldline, oldchar;
-
-    p = nasm_skip_spaces(line);
-
-    /* Binary search for the directive name */
-    i = -1;
-    j = ARRAY_SIZE(tasm_directives);
-    q = nasm_skip_word(p);
-    len = q - p;
-    if (len) {
-        oldchar = p[len];
-        p[len] = 0;
-        while (j - i > 1) {
-            k = (j + i) / 2;
-            m = nasm_stricmp(p, tasm_directives[k]);
-            if (m == 0) {
-                /* We have found a directive, so jam a % in front of it
-                 * so that NASM will then recognise it as one if it's own.
-                 */
-                p[len] = oldchar;
-                len = strlen(p);
-                oldline = line;
-                line = nasm_malloc(len + 2);
-                line[0] = '%';
-                if (k == TM_IFDIFI) {
-                    /*
-                     * NASM does not recognise IFDIFI, so we convert
-                     * it to %if 0. This is not used in NASM
-                     * compatible code, but does need to parse for the
-                     * TASM macro package.
-                     */
-                    strcpy(line + 1, "if 0");
-                } else {
-                    memcpy(line + 1, p, len + 1);
-                }
-                nasm_free(oldline);
-                return line;
-            } else if (m < 0) {
-                j = k;
-            } else
-                i = k;
-        }
-        p[len] = oldchar;
-    }
-    return line;
-}
-
-/*
- * The pre-preprocessing stage... This function translates line
- * number indications as they emerge from GNU cpp (`# lineno "file"
- * flags') into NASM preprocessor line number indications (`%line
- * lineno file').
- */
-static char *prepreproc(char *line)
-{
-    int lineno, fnlen;
-    char *fname, *oldline;
-
-    if (line[0] == '#' && line[1] == ' ') {
-        oldline = line;
-        fname = oldline + 2;
-        lineno = atoi(fname);
-        fname += strspn(fname, "0123456789 ");
-        if (*fname == '"')
-            fname++;
-        fnlen = strcspn(fname, "\"");
-        line = nasm_malloc(20 + fnlen);
-        snprintf(line, 20 + fnlen, "%%line %d %.*s", lineno, fnlen, fname);
-        nasm_free(oldline);
-    }
-    if (tasm_compatible_mode)
-        return check_tasm_directive(line);
-    return line;
 }
 
 /*
@@ -2421,7 +2329,7 @@ restart:
             (nparam <= 0 || m->nparam == 0 || nparam == m->nparam ||
              (m->greedy && nparam >= m->nparam-1))) {
             if (m->alias && !find_alias) {
-                if (!ppopt.noaliases) {
+                if (!ppconf.noaliases) {
                     name = tok_text(m->expansion);
                     goto restart;
                 } else {
@@ -2601,6 +2509,15 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
         }
         break;
     }
+
+    case PP_IFDIFI:
+        /*
+         * %ifdifi doesn't actually exist; it ignores its argument and is
+         * always false. This exists solely to stub out the corresponding
+         * TASM directive.
+         */
+        j = false;
+        goto fail;
 
     case PP_IFENV:
         tline = expand_smacro(tline);
@@ -3100,7 +3017,7 @@ static SMacro *define_smacro(const char *mname, bool casesense,
              * some others didn't.  What is the right thing to do here?
              */
             goto fail;
-        } else if (!smac->alias || ppopt.noaliases || defining_alias) {
+        } else if (!smac->alias || ppconf.noaliases || defining_alias) {
             /*
              * We're redefining, so we have to take over an
              * existing SMacro structure. This means freeing
@@ -3169,7 +3086,7 @@ static void undef_smacro(const char *mname, bool undefalias)
         while ((s = *sp) != NULL) {
             if (!mstrcmp(s->name, mname, s->casesense)) {
                 if (s->alias && !undefalias) {
-                    if (!ppopt.noaliases) {
+                    if (!ppconf.noaliases) {
                         if (s->in_progress) {
                             nasm_nonfatal("macro alias loop");
                         } else {
@@ -3255,7 +3172,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
         def->dlist = tline->next;
         tline->next = NULL;
         comma = count_mmac_params(def->dlist, &def->ndefs, &def->defaults);
-        if (!ppopt.sane_empty_expansion && comma) {
+        if (!ppconf.sane_empty_expansion && comma) {
             *comma = NULL;
             def->ndefs--;
             nasm_warn(WARN_MACRO_PARAMS_LEGACY,
@@ -3313,8 +3230,8 @@ static void do_pragma_preproc(Token *tline)
     txt = tok_text(tline);
     if (!nasm_stricmp(txt, "sane_empty_expansion")) {
         tline = skip_white(tline->next);
-        ppopt.sane_empty_expansion =
-            pp_get_boolean_option(tline, ppopt.sane_empty_expansion);
+        ppconf.sane_empty_expansion =
+            pp_get_boolean_option(tline, ppconf.sane_empty_expansion);
     } else {
         /* Unknown pragma, ignore for now */
     }
@@ -3422,6 +3339,78 @@ static void do_clear(enum clear_what what, bool context)
     }
 }
 
+/*
+ * Process a %line directive, including the gcc/cpp compatibility
+ * form with a # at the front.
+ */
+static int line_directive(Token *origline, Token *tline)
+{
+    int k, m;
+    bool err;
+    const char *dname;
+
+    /*
+     * Valid syntaxes:
+     * %line nnn[+mmm] [filename]
+     * %line nnn[+mmm] "filename" flags...
+     *
+     * "flags" are for gcc compatibility and are currently ignored.
+     *
+     * '#' at the beginning of the line is also treated as a %line
+     * directive, again for compatibility with gcc.
+     */
+    if ((ppopt & PP_NOLINE) || istk->mstk.mstk)
+        goto done;
+
+    dname = tok_text(tline);
+    tline = tline->next;
+    tline = skip_white(tline);
+    if (!tok_type(tline, TOK_NUMBER)) {
+        nasm_nonfatal("`%s' expects a line number", dname);
+        goto done;
+    }
+    k = readnum(tok_text(tline), &err);
+    m = 1;
+    tline = tline->next;
+    if (tok_is(tline, '+') || tok_is(tline, '-')) {
+        bool minus = tok_is(tline, '-');
+        tline = tline->next;
+        if (!tok_type(tline, TOK_NUMBER)) {
+            nasm_nonfatal("`%s' expects a line increment", dname);
+            goto done;
+        }
+        m = readnum(tok_text(tline), &err);
+        if (minus)
+            m = -m;
+        tline = tline->next;
+    }
+    tline = skip_white(tline);
+    if (tline) {
+        if (tline->type == TOK_STRING) {
+            /*
+             * If this is a quoted string, ignore anything after
+             * it; this allows for compatiblity with gcc's
+             * additional flags options.
+             */
+            src_set_fname(unquote_token(tline));
+        } else {
+            char *fname = detoken(tline, false);
+            src_set_fname(fname);
+            nasm_free(fname);
+        }
+    }
+    src_set_linnum(k);
+
+    istk->where = src_where();
+    istk->lineinc = m;
+    goto done;
+
+done:
+    free_tlist(origline);
+    return DIRECTIVE_FOUND;
+}
+
+
 /**
  * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
@@ -3439,10 +3428,8 @@ static int do_directive(Token *tline, Token **output)
 {
     enum preproc_token op;
     int j;
-    bool err;
     enum nolist_flags nolist;
     bool casesense;
-    int k, m;
     int offset;
     const char *p;
     char *q, *qbuf;
@@ -3465,70 +3452,59 @@ static int do_directive(Token *tline, Token **output)
     *output = NULL;             /* No output generated */
     origline = tline;
 
+    /* cpp-like line directive, must not be preceeded by whitespace */
+    if (tok_is(tline, '#'))
+        return line_directive(origline, tline);
+
     tline = skip_white(tline);
-    if (!tline || !tok_type(tline, TOK_PREPROC_ID))
-	return NO_DIRECTIVE_FOUND;
+    if (!tline)
+        return NO_DIRECTIVE_FOUND;
 
-    dname = tok_text(tline);
-    if (dname[1] == '%')
-	return NO_DIRECTIVE_FOUND;
+    switch (tline->type) {
+    case TOK_PREPROC_ID:
+        dname = tok_text(tline);
+        if (dname[1] == '%' || dname[1] == '$')
+            return NO_DIRECTIVE_FOUND;
 
-    op = pp_token_hash(dname);
+        op = pp_token_hash(dname);
+        break;
+
+    case TOK_ID:
+        if (likely(!(ppopt & PP_TASM)))
+            return NO_DIRECTIVE_FOUND;
+
+        dname = tok_text(tline);
+        op = pp_tasm_token_hash(dname);
+        break;
+
+    default:
+        return NO_DIRECTIVE_FOUND;
+    }
+
+    switch (op) {
+    case PP_INVALID:
+        return NO_DIRECTIVE_FOUND;
+
+    case PP_LINE:
+        /*
+         * %line directives are always processed immediately and
+         * unconditionally, as they are intended to reflect position
+         * in externally preprocessed sources.
+         */
+        if (op == PP_LINE)
+            return line_directive(origline, tline);
+
+    default:
+        break;
+    }
+
+    if (unlikely(ppopt & PP_TRIVIAL))
+        goto done;
 
     casesense = true;
     if (PP_HAS_CASE(op) & PP_INSENSITIVE(op)) {
         casesense = false;
         op--;
-    }
-
-    /*
-     * %line directives are always processed immediately and
-     * unconditionally, as they are intended to reflect position
-     * in externally preprocessed sources.
-     */
-    if (op == PP_LINE) {
-        /*
-         * Syntax is `%line nnn[+mmm] [filename]'
-         */
-        if (pp_noline || istk->mstk.mstk)
-            goto done;
-
-        tline = tline->next;
-        tline = skip_white(tline);
-        if (!tok_type(tline, TOK_NUMBER)) {
-            nasm_nonfatal("`%s' expects line number", dname);
-            goto done;
-        }
-        k = readnum(tok_text(tline), &err);
-        m = 1;
-        tline = tline->next;
-        if (tok_is(tline, '+') || tok_is(tline, '-')) {
-            bool minus = tok_is(tline, '-');
-            tline = tline->next;
-            if (!tok_type(tline, TOK_NUMBER)) {
-                nasm_nonfatal("`%s' expects line increment", dname);
-                goto done;
-            }
-            m = readnum(tok_text(tline), &err);
-            if (minus)
-                m = -m;
-            tline = tline->next;
-        }
-        tline = skip_white(tline);
-        if (tline) {
-            if (tline->type == TOK_STRING) {
-                src_set_fname(unquote_token(tline));
-            } else {
-                char *fname = detoken(tline, false);
-                src_set_fname(fname);
-                nasm_free(fname);
-            }
-        }
-        src_set_linnum(k);
-
-        istk->where = src_where();
-        istk->lineinc = m;
-        goto done;
     }
 
     /*
@@ -4703,7 +4679,7 @@ issue_error:
     case PP_ALIASES:
         tline = tline->next;
         tline = expand_smacro(tline);
-        ppopt.noaliases = !pp_get_boolean_option(tline, !ppopt.noaliases);
+        ppconf.noaliases = !pp_get_boolean_option(tline, !ppconf.noaliases);
         break;
 
     case PP_LINE:
@@ -5244,7 +5220,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
      * checking for parameters if necessary.
      */
     list_for_each(m, head) {
-        if (unlikely(m->alias && ppopt.noaliases))
+        if (unlikely(m->alias && ppconf.noaliases))
             continue;
         if (!mstrcmp(m->name, mname, m->casesense))
             break;
@@ -6004,7 +5980,7 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
      *!-
      *!  It is highly recommended to use this option in new code.
      */
-    if (!ppopt.sane_empty_expansion) {
+    if (!ppconf.sane_empty_expansion) {
         if (!found) {
             if (raw_nparam == 0 && !empty_args) {
                 /*
@@ -6190,7 +6166,7 @@ static struct debug_macro_addr *
 debug_macro_get_addr_inv(int32_t seg, struct debug_macro_inv *inv)
 {
     struct debug_macro_addr *addr;
-    static_assert(offsetof(struct debug_macro_addr, tree) == 0);
+    nasm_static_assert(offsetof(struct debug_macro_addr, tree) == 0);
 
     if (likely(seg == inv->lastseg))
         return inv->addr.last;
@@ -6280,7 +6256,7 @@ static void debug_macro_end(MMacro *m)
 static void free_debug_macro_addr_tree(struct rbtree *tree)
 {
     struct rbtree *left, *right;
-    static_assert(offsetof(struct debug_macro_addr,tree) == 0);
+    nasm_static_assert(offsetof(struct debug_macro_addr,tree) == 0);
 
     if (!tree)
         return;
@@ -6573,11 +6549,13 @@ static bool pp_suppress_error(errflags severity)
 static Token *
 stdmac_file(const SMacro *s, Token **params, int nparams)
 {
+    const char *fname = src_get_fname();
+
     (void)s;
     (void)params;
     (void)nparams;
 
-    return make_tok_qstr(NULL, src_get_fname());
+    return fname ? make_tok_qstr(NULL, fname) : NULL;
 }
 
 static Token *
@@ -6648,47 +6626,10 @@ static void pp_add_magic_stdmac(void)
     }
 }
 
-static void
-pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
+static void pp_reset_stdmac(enum preproc_mode mode)
 {
     int apass;
     struct Include *inc;
-
-    cstk = NULL;
-    defining = NULL;
-    nested_mac_count = 0;
-    nested_rep_count = 0;
-    init_macros();
-    unique = 0;
-    deplist = dep_list;
-    pp_mode = mode;
-
-    /* Reset options to default */
-    nasm_zero(ppopt);
-
-    /* Disable all debugging info, except in the last pass */
-    ppdbg = 0;
-    if (pass_final()) {
-        if (dfmt->debug_macros)
-            ppdbg |= PDBG_MACROS;
-    }
-
-    if (!use_loaded)
-        use_loaded = nasm_malloc(use_package_count * sizeof(bool));
-    memset(use_loaded, 0, use_package_count * sizeof(bool));
-
-    /* First set up the top level input file */
-    nasm_new(istk);
-    istk->fp = nasm_open_read(file, NF_TEXT);
-    if (!istk->fp) {
-	nasm_fatalf(ERR_NOFILE, "unable to open input file `%s'%s%s",
-                    file, errno ? " " : "", errno ? strerror(errno) : "");
-    }
-    src_set(0, file);
-    istk->where = src_where();
-    istk->lineinc = 1;
-
-    strlist_add(deplist, file);
 
     /*
      * Set up the stdmac packages as a virtual include file,
@@ -6696,12 +6637,14 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
      */
     nasm_new(inc);
     inc->next = istk;
-    src_set(0, NULL);
-    inc->where = src_where();
     inc->nolist = inc->noline = !list_option('b');
     istk = inc;
     if (!istk->nolist)
         lfmt->uplevel(LIST_INCLUDE, 0);
+    if (!istk->noline)
+        src_set(0, NULL);
+
+    istk->where = src_where();
 
     pp_add_magic_stdmac();
 
@@ -6747,8 +6690,55 @@ pp_reset(const char *file, enum preproc_mode mode, struct strlist *dep_list)
     define_smacro("__?PASS?__", true, make_tok_num(NULL, apass), NULL);
 }
 
-static void pp_init(void)
+static void pp_reset(const char *file, enum preproc_mode mode,
+                     struct strlist *dep_list)
 {
+    cstk = NULL;
+    defining = NULL;
+    nested_mac_count = 0;
+    nested_rep_count = 0;
+    init_macros();
+    unique = 0;
+    deplist = dep_list;
+    pp_mode = mode;
+
+    /* Reset options to default */
+    nasm_zero(ppconf);
+
+    /* Disable all debugging info, except in the last pass */
+    ppdbg = 0;
+    if (!(ppopt & PP_TRIVIAL)) {
+        if (pass_final()) {
+            if (dfmt->debug_macros)
+                ppdbg |= PDBG_MACROS;
+        }
+    }
+
+    memset(use_loaded, 0, use_package_count * sizeof(bool));
+
+    /* First set up the top level input file */
+    nasm_new(istk);
+    istk->fp = nasm_open_read(file, NF_TEXT);
+    if (!istk->fp) {
+	nasm_fatalf(ERR_NOFILE, "unable to open input file `%s'%s%s",
+                    file, errno ? " " : "", errno ? strerror(errno) : "");
+    }
+    src_set(0, file);
+    istk->where = src_where();
+    istk->lineinc = 1;
+
+    strlist_add(deplist, file);
+
+    do_predef = false;
+
+    if (!(ppopt & PP_TRIVIAL))
+        pp_reset_stdmac(mode);
+}
+
+static void pp_init(enum preproc_opt opt)
+{
+    ppopt = opt;
+    nasm_newn(use_loaded, use_package_count);
 }
 
 /*
@@ -6909,7 +6899,6 @@ static Token *pp_tokline(void)
                     nasm_free(line);
                 }
             } else if ((line = read_line())) {
-                line = prepreproc(line);
                 tline = tokenize(line);
                 nasm_free(line);
             } else {
@@ -7236,7 +7225,8 @@ static void pp_error_list_macros(errflags severity)
     src_error_reset();
 }
 
-const struct preproc_ops nasmpp = {
+/* The normal NASM preprocessor */
+const struct preproc_ops preproc_nasm = {
     pp_init,
     pp_reset,
     pp_getline,

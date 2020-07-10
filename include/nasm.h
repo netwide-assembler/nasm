@@ -344,11 +344,17 @@ enum preproc_mode {
     PP_PREPROC                  /* Preprocessing only */
 };
 
+enum preproc_opt {
+    PP_TRIVIAL  = 1,            /* Only %line or # directives */
+    PP_NOLINE   = 2,            /* Ignore %line and # directives */
+    PP_TASM     = 4             /* TASM compatibility hacks */
+};
+
 struct preproc_ops {
     /*
      * Called once at the very start of assembly.
      */
-    void (*init)(void);
+    void (*init)(enum preproc_opt opt);
 
     /*
      * Called at the start of a pass; given a file name, the number
@@ -398,8 +404,7 @@ struct preproc_ops {
     bool (*suppress_error)(errflags severity);
 };
 
-extern const struct preproc_ops nasmpp;
-extern const struct preproc_ops preproc_nop;
+extern const struct preproc_ops preproc_nasm;
 
 /* List of dependency files */
 extern struct strlist *depend_list;

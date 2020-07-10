@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -43,12 +43,12 @@
 
 extern const char * const pp_directives[];
 extern const uint8_t pp_directives_len[];
-extern bool pp_noline;
 
 /* Pointer to a macro chain */
 typedef const unsigned char macros_t;
 
 enum preproc_token pp_token_hash(const char *token);
+enum preproc_token pp_tasm_token_hash(const char *token);
 
 /* Opens an include file or input file. This uses the include path. */
 FILE *pp_input_fopen(const char *filename, enum file_flags mode);
