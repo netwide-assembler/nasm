@@ -2000,6 +2000,16 @@ static char *detoken(Token * tlist, bool expand_locals)
 	    }
 	    break;
 
+        case TOK_INDIRECT:
+            /*
+             * This won't happen in when emitting to the assembler,
+             * but can happen when emitting output for some of the
+             * list options. The token string doesn't actually include
+             * the brackets in this case.
+             */
+            len += 3;           /* %[] */
+            break;
+
 	default:
 	    break;		/* No modifications */
         }
@@ -2019,8 +2029,19 @@ static char *detoken(Token * tlist, bool expand_locals)
 
     p = line = nasm_malloc(len + 1);
 
-    list_for_each(t, tlist)
-	p = mempcpy(p, tok_text(t), t->len);
+    list_for_each(t, tlist) {
+        switch (t->type) {
+        case TOK_INDIRECT:
+            *p++ = '%';
+            *p++ = '[';
+            p = mempcpy(p, tok_text(t), t->len);
+            *p++ = ']';
+            break;
+
+        default:
+            p = mempcpy(p, tok_text(t), t->len);
+        }
+    }
     *p = '\0';
 
     return line;
