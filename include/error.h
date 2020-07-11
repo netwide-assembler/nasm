@@ -97,7 +97,7 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list ap);
 
 #define ERR_NO_SEVERITY		0x00000200	/* suppress printing severity */
 #define ERR_PP_PRECOND		0x00000400	/* for preprocessor use */
-#define ERR_PP_LISTMACRO	0x00000800	/* from preproc->error_list_macros() */
+#define ERR_PP_LISTMACRO	0x00000800	/* from pp_error_list_macros() */
 #define ERR_HOLD		0x00001000      /* this error/warning can be held */
 
 /*

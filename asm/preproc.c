@@ -6564,7 +6564,7 @@ static int expand_mmacro(Token * tline)
  * It will never be called with a severity level of ERR_FATAL or
  * higher.
  */
-static bool pp_suppress_error(errflags severity)
+bool pp_suppress_error(errflags severity)
 {
     /*
      * If we're in a dead branch of IF or something like it, ignore the error.
@@ -6726,8 +6726,8 @@ static void pp_reset_stdmac(enum preproc_mode mode)
     define_smacro("__?PASS?__", true, make_tok_num(NULL, apass), NULL);
 }
 
-static void pp_reset(const char *file, enum preproc_mode mode,
-                     struct strlist *dep_list)
+void pp_reset(const char *file, enum preproc_mode mode,
+              struct strlist *dep_list)
 {
     cstk = NULL;
     defining = NULL;
@@ -6771,7 +6771,7 @@ static void pp_reset(const char *file, enum preproc_mode mode,
         pp_reset_stdmac(mode);
 }
 
-static void pp_init(enum preproc_opt opt)
+void pp_init(enum preproc_opt opt)
 {
     ppopt = opt;
     nasm_newn(use_loaded, use_package_count);
@@ -7038,7 +7038,7 @@ static Token *pp_tokline(void)
     }
 }
 
-static char *pp_getline(void)
+char *pp_getline(void)
 {
     char *line = NULL;
     Token *tline;
@@ -7071,7 +7071,7 @@ static char *pp_getline(void)
     return line;
 }
 
-static void pp_cleanup_pass(void)
+void pp_cleanup_pass(void)
 {
     if (defining) {
         if (defining->name) {
@@ -7102,7 +7102,7 @@ static void pp_cleanup_pass(void)
         debug_macro_output();
 }
 
-static void pp_cleanup_session(void)
+void pp_cleanup_session(void)
 {
     nasm_free(use_loaded);
     free_llist(predef);
@@ -7111,12 +7111,12 @@ static void pp_cleanup_session(void)
     ipath_list = NULL;
 }
 
-static void pp_include_path(struct strlist *list)
+void pp_include_path(struct strlist *list)
 {
     ipath_list = list;
 }
 
-static void pp_pre_include(char *fname)
+void pp_pre_include(char *fname)
 {
     Token *inc, *space, *name;
     Line *l;
@@ -7132,7 +7132,7 @@ static void pp_pre_include(char *fname)
     predef = l;
 }
 
-static void pp_pre_define(char *definition)
+void pp_pre_define(char *definition)
 {
     Token *def, *space;
     Line *l;
@@ -7159,7 +7159,7 @@ static void pp_pre_define(char *definition)
     predef = l;
 }
 
-static void pp_pre_undefine(char *definition)
+void pp_pre_undefine(char *definition)
 {
     Token *def, *space;
     Line *l;
@@ -7176,7 +7176,7 @@ static void pp_pre_undefine(char *definition)
 }
 
 /* Insert an early preprocessor command that doesn't need special handling */
-static void pp_pre_command(const char *what, char *string)
+void pp_pre_command(const char *what, char *string)
 {
     char *cmd;
     Token *def, *space;
@@ -7212,7 +7212,7 @@ static void pp_add_stdmac(macros_t *macros)
     *mp = macros;
 }
 
-static void pp_extra_stdmac(macros_t *macros)
+void pp_extra_stdmac(macros_t *macros)
 {
         extrastdmac = macros;
 }
@@ -7259,7 +7259,7 @@ static Token *make_tok_char(Token *next, char op)
  * Descent the macro hierarchy and display the expansion after
  * encountering an error message.
  */
-static void pp_error_list_macros(errflags severity)
+void pp_error_list_macros(errflags severity)
 {
     const MMacro *m;
 
@@ -7271,20 +7271,3 @@ static void pp_error_list_macros(errflags severity)
 
     src_error_reset();
 }
-
-/* The normal NASM preprocessor */
-const struct preproc_ops preproc_nasm = {
-    pp_init,
-    pp_reset,
-    pp_getline,
-    pp_cleanup_pass,
-    pp_cleanup_session,
-    pp_extra_stdmac,
-    pp_pre_define,
-    pp_pre_undefine,
-    pp_pre_include,
-    pp_pre_command,
-    pp_include_path,
-    pp_error_list_macros,
-    pp_suppress_error
-};

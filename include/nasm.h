@@ -350,61 +350,57 @@ enum preproc_opt {
     PP_TASM     = 4             /* TASM compatibility hacks */
 };
 
-struct preproc_ops {
-    /*
-     * Called once at the very start of assembly.
-     */
-    void (*init)(enum preproc_opt opt);
+/*
+ * Called once at the very start of assembly.
+ */
+void pp_init(enum preproc_opt opt);
 
-    /*
-     * Called at the start of a pass; given a file name, the number
-     * of the pass, an error reporting function, an evaluator
-     * function, and a listing generator to talk to.
-     */
-    void (*reset)(const char *file, enum preproc_mode mode,
-                  struct strlist *deplist);
+/*
+ * Called at the start of a pass; given a file name, the number
+ * of the pass, an error reporting function, an evaluator
+ * function, and a listing generator to talk to.
+ */
+void pp_reset(const char *file, enum preproc_mode mode,
+              struct strlist *deplist);
 
-    /*
-     * Called to fetch a line of preprocessed source. The line
-     * returned has been malloc'ed, and so should be freed after
-     * use.
-     */
-    char *(*getline)(void);
+/*
+ * Called to fetch a line of preprocessed source. The line
+ * returned has been malloc'ed, and so should be freed after
+ * use.
+ */
+char *pp_getline(void);
 
-    /* Called at the end of each pass. */
-    void (*cleanup_pass)(void);
+/* Called at the end of each pass. */
+void pp_cleanup_pass(void);
 
-    /*
-     * Called at the end of the assembly session,
-     * after cleanup_pass() has been called for the
-     * last pass.
-     */
-    void (*cleanup_session)(void);
+/*
+ * Called at the end of the assembly session,
+ * after cleanup_pass() has been called for the
+ * last pass.
+ */
+void pp_cleanup_session(void);
 
-    /* Additional macros specific to output format */
-    void (*extra_stdmac)(macros_t *macros);
+/* Additional macros specific to output format */
+void pp_extra_stdmac(macros_t *macros);
 
-    /* Early definitions and undefinitions for macros */
-    void (*pre_define)(char *definition);
-    void (*pre_undefine)(char *definition);
+/* Early definitions and undefinitions for macros */
+void pp_pre_define(char *definition);
+void pp_pre_undefine(char *definition);
 
-    /* Include file from command line */
-    void (*pre_include)(char *fname);
+/* Include file from command line */
+void pp_pre_include(char *fname);
 
-    /* Add a command from the command line */
-    void (*pre_command)(const char *what, char *str);
+/* Add a command from the command line */
+void pp_pre_command(const char *what, char *str);
 
-    /* Include path from command line */
-    void (*include_path)(struct strlist *ipath);
+/* Include path from command line */
+void pp_include_path(struct strlist *ipath);
 
-    /* Unwind the macro stack when printing an error message */
-    void (*error_list_macros)(errflags severity);
+/* Unwind the macro stack when printing an error message */
+void pp_error_list_macros(errflags severity);
 
-    /* Return true if an error message should be suppressed */
-    bool (*suppress_error)(errflags severity);
-};
-
-extern const struct preproc_ops preproc_nasm;
+/* Return true if an error message should be suppressed */
+bool pp_suppress_error(errflags severity);
 
 /* List of dependency files */
 extern struct strlist *depend_list;
