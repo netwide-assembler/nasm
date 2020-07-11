@@ -260,6 +260,7 @@ if (!@hashinfo) {
 verify_hash_table(\%pkg_number, \@hashinfo);
 my ($n, $sv, $g) = @hashinfo;
 die if ($n & ($n-1));
+$n <<= 1;
 
 printf OUT "const int use_package_count = %d;\n\n", $npkg;
 
@@ -278,16 +279,9 @@ print OUT "    };\n";
 # This speeds up rejection of unrecognized tokens, i.e. identifiers.
 print OUT "#define INVALID_HASH_ENTRY (65535/3)\n";
 
-print OUT "    static const int16_t hash1[$n] = {\n";
+print OUT "    static const int16_t hashdata[$n] = {\n";
 for ($i = 0; $i < $n; $i++) {
-    my $h = ${$g}[$i*2+0];
-    print OUT "        ", defined($h) ? $h : 'INVALID_HASH_ENTRY', ",\n";
-}
-print OUT "    };\n";
-
-print OUT "    static const int16_t hash2[$n] = {\n";
-for ($i = 0; $i < $n; $i++) {
-    my $h = ${$g}[$i*2+1];
+    my $h = ${$g}[$i];
     print OUT "        ", defined($h) ? $h : 'INVALID_HASH_ENTRY', ",\n";
 }
 print OUT "    };\n";
@@ -301,10 +295,10 @@ print OUT  "\n";
 
 printf OUT "    crc = crc64i(UINT64_C(0x%08x%08x), name);\n",
     $$sv[0], $$sv[1];
-print  OUT "    k1 = (uint32_t)crc;\n";
-print  OUT "    k2 = (uint32_t)(crc >> 32);\n";
+printf OUT "    k1 = ((uint32_t)crc & 0x%x) + 0;\n", $n-2;
+printf OUT "    k2 = ((uint32_t)(crc >> 32) & 0x%x) + 1;\n", $n-2;
 print  OUT "\n";
-printf OUT "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
+printf OUT "    ix = hashdata[k1] + hashdata[k2];\n";
 printf OUT "    if (ix >= %d)\n", scalar(@pkg_list);
 print OUT  "        return NULL;\n";
 print OUT  "\n";

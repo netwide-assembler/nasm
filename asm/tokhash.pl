@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2020 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -201,6 +201,7 @@ if ($output eq 'h') {
 
     ($n, $sv, $g) = @hashinfo;
     die if ($n & ($n-1));
+    $n <<= 1;
 
     print "/*\n";
     print " * This file is generated from insns.dat, regs.dat and token.dat\n";
@@ -236,16 +237,9 @@ if ($output eq 'h') {
     # This speeds up rejection of unrecognized tokens, i.e. identifiers.
     print "#define INVALID_HASH_ENTRY (65535/3)\n";
 
-    print "    static const int16_t hash1[$n] = {\n";
+    printf "    static const int16_t hashdata[%d] = {\n", $n;
     for ($i = 0; $i < $n; $i++) {
-	my $h = ${$g}[$i*2+0];
-	print "        ", defined($h) ? $h : 'INVALID_HASH_ENTRY', ",\n";
-    }
-    print "    };\n";
-
-    print "    static const int16_t hash2[$n] = {\n";
-    for ($i = 0; $i < $n; $i++) {
-	my $h = ${$g}[$i*2+1];
+	my $h = ${$g}[$i];
 	print "        ", defined($h) ? $h : 'INVALID_HASH_ENTRY', ",\n";
     }
     print "    };\n";
@@ -275,10 +269,11 @@ if ($output eq 'h') {
     print  "        crc = crc64_byte(crc, c);\n";
     print  "    };\n";
     print  "\n";
-    print  "    k1 = (uint32_t)crc;\n";
-    print  "    k2 = (uint32_t)(crc >> 32);\n";
+    printf "    k1 = ((uint32_t)crc & 0x%x) + 0;\n", $n-2;
+    printf "    k2 = ((uint32_t)(crc >> 32) & 0x%x) + 1;\n", $n-2;
     print  "\n";
-    printf "    ix = hash1[k1 & 0x%x] + hash2[k2 & 0x%x];\n", $n-1, $n-1;
+    printf "    ix = hashdata[k1] + hashdata[k2];\n",
+	$n-2, $n-2;
     printf "    if (ix >= %d)\n", scalar(@tokendata);
     print  "        goto notfound;\n";
     print  "\n";

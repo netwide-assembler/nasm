@@ -15,10 +15,11 @@ require 'crc64.ph';
 sub prehash($$$) {
     my($key, $n, $sv) = @_;
     my @c = crc64($sv, $key);
+    my $nmask = ($n << 1) - 2;
 
     # Create a bipartite graph...
-    $k1 = (($c[1] & ($n-1)) << 1) + 0; # low word
-    $k2 = (($c[0] & ($n-1)) << 1) + 1; # high word
+    $k1 = ($c[1] & $nmask) + 0; # low word
+    $k2 = ($c[0] & $nmask) + 1; # high word
 
     return ($k1, $k2);
 }

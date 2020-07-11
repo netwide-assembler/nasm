@@ -42,9 +42,9 @@ int perfhash_find(const struct perfect_hash *hash, const char *str)
 
     crc = crc64i(hash->crcinit, str);
     k1 = (uint32_t)crc & hash->hashmask;
-    k2 = (uint32_t)(crc >> 32) & hash->hashmask;
+    k2 = ((uint32_t)(crc >> 32) & hash->hashmask) + 1;
 
-    ix = hash->hashvals[k1] + hash->hashvals[k2 + hash->hashmask + 1];
+    ix = hash->hashvals[k1] + hash->hashvals[k2];
 
     if (ix >= hash->tbllen ||
         !hash->strings[ix] ||
