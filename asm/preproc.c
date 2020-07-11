@@ -797,7 +797,7 @@ Token *quote_token(Token *t)
  */
 static Token *quote_any_token(Token *t)
 {
-    size_t len;
+    size_t len = t->len;
     char *p;
 
     p = nasm_quote(tok_text(t), &len);
