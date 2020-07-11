@@ -797,10 +797,11 @@ Token *quote_token(Token *t)
  */
 static Token *quote_any_token(Token *t)
 {
-    size_t len;
+    const char *s = tok_text(t);
+    size_t len = strlen(s);
     char *p;
 
-    p = nasm_quote(tok_text(t), &len);
+    p = nasm_quote(s, &len);
     t->type = TOK_STRING;
     return set_text_free(t, p, len);
 }
