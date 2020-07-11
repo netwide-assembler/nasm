@@ -945,26 +945,12 @@ static char *check_tasm_directive(char *line)
  * flags') into NASM preprocessor line number indications (`%line
  * lineno file').
  */
-static char *prepreproc(char *line)
+static inline char *prepreproc(char *line)
 {
-    int lineno, fnlen;
-    char *fname, *oldline;
-
-    if (line[0] == '#' && line[1] == ' ') {
-        oldline = line;
-        fname = oldline + 2;
-        lineno = atoi(fname);
-        fname += strspn(fname, "0123456789 ");
-        if (*fname == '"')
-            fname++;
-        fnlen = strcspn(fname, "\"");
-        line = nasm_malloc(20 + fnlen);
-        snprintf(line, 20 + fnlen, "%%line %d %.*s", lineno, fnlen, fname);
-        nasm_free(oldline);
-    }
-    if (tasm_compatible_mode)
+    if (unlikely(tasm_compatible_mode))
         return check_tasm_directive(line);
-    return line;
+    else
+        return line;
 }
 
 /*
@@ -3426,6 +3412,14 @@ static int do_directive(Token *tline, Token **output)
     *output = NULL;             /* No output generated */
     origline = tline;
 
+    if (tok_is(tline, '#')) {
+        /* cpp-style line directive */
+        if (!tok_white(tline->next))
+            return NO_DIRECTIVE_FOUND;
+        dname = tok_text(tline);
+        goto pp_line;
+    }
+
     tline = skip_white(tline);
     if (!tline || !tok_type(tline, TOK_PREPROC_ID))
 	return NO_DIRECTIVE_FOUND;
@@ -3448,6 +3442,7 @@ static int do_directive(Token *tline, Token **output)
      * in externally preprocessed sources.
      */
     if (op == PP_LINE) {
+    pp_line:
         /*
          * Syntax is `%line nnn[+mmm] [filename]'
          */
@@ -3478,7 +3473,19 @@ static int do_directive(Token *tline, Token **output)
         tline = skip_white(tline);
         if (tline) {
             if (tline->type == TOK_STRING) {
+                if (dname[0] == '#') {
+                    /* cpp version: treat double quotes like NASM backquotes */
+                    char *txt = tok_text_buf(tline);
+                    if (txt[0] == '"') {
+                        txt[0] = '`';
+                        txt[tline->len - 1] = '`';
+                    }
+                }
                 src_set_fname(unquote_token(tline));
+                /*
+                 * Anything after the string is ignored by design (for cpp
+                 * compatibility and future extensions.)
+                 */
             } else {
                 char *fname = detoken(tline, false);
                 src_set_fname(fname);

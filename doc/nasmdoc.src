@@ -2753,6 +2753,11 @@ interfering with the local label mechanism, as described in
 (the \c{..@} prefix, then a number, then another period) in case
 they interfere with macro-local labels.
 
+These labels are really macro-local \e{tokens}, and can be used for
+other purposes where a token unique to each macro invocation is
+desired, e.g. to name single-line macros without using the context
+feature (\k{ctxlocal}).
+
 
 \S{mlmacgre} \i{Greedy Macro Parameters}
 
@@ -4047,7 +4052,8 @@ which specifies a line increment value; each line of the input file
 read in is considered to correspond to \c{mmm} lines of the original
 source file.  Finally, \c{filename} is an optional parameter which
 specifies the file name of the original source file. It may be a
-quoted string.
+quoted string, in which case any additional argument after the quoted
+string will be ignored.
 
 After reading a \c{%line} preprocessor directive, NASM will report
 all file name and line numbers relative to the values specified
@@ -4059,6 +4065,13 @@ code. See \k{opt-no-line}.
 
 Starting in NASM 2.15, \c{%line} directives are processed before any
 other processing takes place.
+
+For compatibility with the output from some other preprocessors,
+including many C preprocessors, a \c{#} character followed by
+whitespace \e{at the very beginning of a line} is also treated as a
+\c{%line} directive, except that double quotes surrounding the
+filename are treated like NASM backquotes, with \c{\\}-escaped
+sequences decoded.
 
 \# This isn't a directive, it should be moved elsewhere...
 \S{getenv} \i\c{%!}\e{variable}: Read an Environment Variable.
