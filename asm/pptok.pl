@@ -124,9 +124,11 @@ if ($what eq 'h') {
 
     print OUT "enum preproc_token {\n";
     $n = 0;
+    my $maxlen = 0;
     foreach $pt (@pptok) {
 	if (defined($pt)) {
 	    printf OUT "    %-24s = %3d,\n", "PP_\U$pt\E", $n;
+	    $maxlen = length($pt) if (length($pt) > $maxlen);
 	}
 	$n++;
     }
@@ -143,6 +145,8 @@ if ($what eq 'h') {
     printf OUT "#define PP_HAS_CASE(x) ((x) >= PP_%s)\n",
 	uc($pptok[$first_itoken]);
     print  OUT "#define PP_INSENSITIVE(x) ((x) & 1)\n";
+    # The +1 here is for the initial % sign
+    printf OUT "#define PP_TOKLEN_MAX %d\n", $maxlen+1;
     print  OUT "\n";
 
     foreach $ct (@cctok) {

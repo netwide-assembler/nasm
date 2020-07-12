@@ -3050,8 +3050,10 @@ static SMacro *define_smacro(const char *mname, bool casesense,
         smac->params     = tmpl->params;
         smac->alias      = tmpl->alias;
         smac->greedy     = tmpl->greedy;
-        if (tmpl->expand)
-            smac->expand = tmpl->expand;
+        if (tmpl->expand) {
+            smac->expand    = tmpl->expand;
+            smac->expandpvt = tmpl->expandpvt;
+        }
     }
     if (list_option('s')) {
         list_smacro_def((smac->alias ? PP_DEFALIAS : PP_DEFINE)
@@ -5543,8 +5545,8 @@ static SMacro *expand_one_smacro(Token ***tpp)
     /* Note: we own the expansion this returns. */
     t = m->expand(m, params, nparam);
 
-    tafter = tline->next;       /* Skip past the macro call */
-    tline->next = NULL;		/* Truncate list at the macro call end */
+    tafter = tline->next;   /* Skip past the macro call */
+    tline->next = NULL;     /* Truncate list at the macro call end */
     tline = tafter;
 
     tup = NULL;
@@ -6634,32 +6636,64 @@ stdmac_ptr(const SMacro *s, Token **params, int nparams)
     }
 }
 
+static Token *
+stdmac_is(const SMacro *s, Token **params, int nparams)
+{
+    int retval;
+    struct Token *pline = params[0];
+
+    (void)nparams;
+
+    params[0] = NULL;           /* Don't free this later */
+
+    retval = if_condition(pline, s->expandpvt.u) == COND_IF_TRUE;
+    return make_tok_num(NULL, retval);
+}
+
 /* Add magic standard macros */
 struct magic_macros {
     const char *name;
     int nparam;
     ExpandSMacro func;
 };
-static const struct magic_macros magic_macros[] =
-{
-    { "__?FILE?__", 0, stdmac_file },
-    { "__?LINE?__", 0, stdmac_line },
-    { "__?BITS?__", 0, stdmac_bits },
-    { "__?PTR?__",  0, stdmac_ptr },
-    { NULL, 0, NULL }
-};
-
 static void pp_add_magic_stdmac(void)
 {
+    static const struct magic_macros magic_macros[] = {
+        { "__?FILE?__", 0, stdmac_file },
+        { "__?LINE?__", 0, stdmac_line },
+        { "__?BITS?__", 0, stdmac_bits },
+        { "__?PTR?__",  0, stdmac_ptr },
+        { NULL, 0, NULL }
+    };
     const struct magic_macros *m;
     SMacro tmpl;
+    enum preproc_token pt;
+    char name_buf[PP_TOKLEN_MAX+1];
 
+    /* Simple standard magic macros */
     nasm_zero(tmpl);
-
     for (m = magic_macros; m->name; m++) {
         tmpl.nparam = m->nparam;
         tmpl.expand = m->func;
         define_smacro(m->name, true, NULL, &tmpl);
+    }
+
+    /* %is...() macro functions */
+    tmpl.nparam = 1;
+    tmpl.greedy = true;
+    tmpl.expand = stdmac_is;
+    name_buf[0] = '%';
+    name_buf[1] = 'i';
+    name_buf[2] = 's';
+    for (pt = PP_IF; pt < PP_IFN; pt++) {
+        if (pp_directives[pt]) {
+            nasm_new(tmpl.params);
+
+            tmpl.params[0].flags = SPARM_GREEDY;
+            strcpy(name_buf+3, pp_directives[pt]+3);
+            tmpl.expandpvt.u = pt;
+            define_smacro(name_buf, false, NULL, &tmpl);
+        }
     }
 }
 
