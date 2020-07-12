@@ -21,3 +21,13 @@
 
 
  dd 1e+5, 1e+5
+
+
+
+
+
+
+
+
+%line 2+1 '`weirdpaste.asm'
+mov eax, eax
