@@ -20,11 +20,14 @@ if test ! x"$autolib" = x; then
     for prg in install-sh compile config.guess config.sub; do
 	# Update autoconf helpers if and only if newer ones are available
 	if test -f "$autolib"/"$prg" && \
-		( test -f "$autolib"/"$prg" && \
-		      sed -n -r -e \
-			  's/^(scriptver(|sion)|timestamp)=['\''"]?([^'\''"]+).*$/\3/p' \
+		( set -e ; \
+		  test -f autoconf/helpers/"$prg" && sed -n \
+		    -e 's/^scriptver=/scriptversion=/' \
+		    -e 's/^timestamp=/scriptversion=/' \
+		    -e 's/^scriptversion=['\''"]?\([^'\''"]*\).*$/\1/p' \
 			  "$autolib"/"$prg" autoconf/helpers/"$prg" | \
-			  sort --check=quiet; test $? -ne 0 )
+			  sort -c 2>/dev/null ; \
+		  test $? -ne 0 )
 	then
 	    cp -f "$autolib"/"$prg" autoconf/helpers
 	fi
