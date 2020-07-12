@@ -454,7 +454,6 @@ static char *nasm_quote_filename(const char *fn)
 {
     const unsigned char *p =
         (const unsigned char *)fn;
-    size_t len;
 
     if (!p || !*p)
         return nasm_strdup("\"\"");
@@ -478,8 +477,7 @@ static char *nasm_quote_filename(const char *fn)
     return nasm_strdup(fn);
 
 quote:
-    len = strlen(fn);
-    return nasm_quote(fn, &len);
+    return nasm_quote(fn, NULL);
 }
 
 static void timestamp(void)
