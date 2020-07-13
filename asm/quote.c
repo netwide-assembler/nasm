@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -291,10 +291,17 @@ char *nasm_quote_cstr(const char *str, size_t *lenp)
  * corresponding to bits set in badctl; in that case, the output
  * string, but not *ep, is truncated before the first invalid
  * character.
+ *
+ * badctl is a bitmask of control characters (0-31) which are forbidden
+ * from appearing in the final output.
+ *
+ * The qstart character can be either '`' (NASM style) or '\"' (C style),
+ * to indicate the lead marker of a quoted string. If it is '\"', then
+ * '`' is not a special character at all.
  */
 
-static size_t nasm_unquote_common(char *str, char **ep,
-                                  const uint32_t badctl)
+size_t nasm_unquote_anystr(char *str, char **ep, const uint32_t badctl,
+                           const char qstart)
 {
     unsigned char bq;
     const unsigned char *p;
@@ -319,15 +326,7 @@ static size_t nasm_unquote_common(char *str, char **ep,
     if (!bq)
 	return 0;
 
-    switch (bq) {
-    case '\'':
-    case '\"':
-	/* '...' or "..." string */
-        while ((c = *p++) && (c != bq))
-            EMIT(c);
-	break;
-
-    case '`':
+    if (bq == (unsigned char)qstart) {
 	/* `...` string */
 	state = st_start;
 
@@ -335,18 +334,13 @@ static size_t nasm_unquote_common(char *str, char **ep,
 	    c = *p++;
 	    switch (state) {
 	    case st_start:
-		switch (c) {
-		case '\\':
+                if (c == '\\') {
 		    state = st_backslash;
-		    break;
-		case '`':
-                case '\0':
+                } else if ((c == '\0') | (c == bq)) {
                     state = st_done;
-                    break;
-		default:
+                } else {
                     EMIT(c);
-		    break;
-		}
+                }
 		break;
 
 	    case st_backslash:
@@ -450,14 +444,19 @@ static size_t nasm_unquote_common(char *str, char **ep,
             default:
                 panic();
             }
-    }
-    break;
-
-    default:
+        }
+    } else if (bq == '\'' || bq == '\"') {
+	/*
+         * '...' or "..." string, NASM legacy style (no escapes of
+         * * any kind, including collapsing double quote marks.)
+         * We obviously can't get here if qstart == '\"'.
+         */
+        while ((c = *p++) && (c != bq))
+            EMIT(c);
+    } else {
 	/* Not a quoted string, just return the input... */
         while ((c = *p++))
             EMIT(c);
-	break;
     }
 
     /* Zero-terminate the output */
@@ -472,24 +471,30 @@ static size_t nasm_unquote_common(char *str, char **ep,
 }
 #undef EMIT
 
+/*
+ * Unquote any arbitrary string; may produce any bytes, including embedded
+ * control- and NUL characters.
+ */
 size_t nasm_unquote(char *str, char **ep)
 {
-    return nasm_unquote_common(str, ep, 0);
+    return nasm_unquote_anystr(str, ep, 0, STR_NASM);
 }
+
+/*
+ * Unquote a string indended to be used as a C string; most control
+ * characters are rejected, including whitespace characters that
+ * would imply line endings and so on.
+ */
 size_t nasm_unquote_cstr(char *str, char **ep)
 {
-    /*
-     * These are the only control characters permitted: BEL BS TAB ESC
-     */
-    const uint32_t okctl = (1 << '\a') | (1 << '\b') | (1 << '\t') | (1 << 27);
-
-    return nasm_unquote_common(str, ep, ~okctl);
+    return nasm_unquote_anystr(str, ep, BADCTL, STR_NASM);
 }
 
 /*
  * Find the end of a quoted string; returns the pointer to the terminating
  * character (either the ending quote or the null character, if unterminated.)
  * If the input is not a quoted string, return NULL.
+ * This applies to NASM style strings only.
  */
 char *nasm_skip_string(const char *str)
 {
@@ -537,7 +542,9 @@ char *nasm_skip_string(const char *str)
 		 * Note: for the purpose of finding the end of the string,
 		 * all successor states to st_backslash are functionally
 		 * equivalent to st_start, since either a backslash or
-		 * a backquote will force a return to the st_start state.
+		 * a backquote will force a return to the st_start state,
+                 * and any possible multi-character state will terminate
+                 * for any non-alphanumeric character.
 		 */
 		state = c ? st_start : st_done;
 		break;

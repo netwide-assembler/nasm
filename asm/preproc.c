@@ -721,30 +721,37 @@ static inline bool tok_isnt(const Token *x, char c)
  * Unquote a token if it is a string, and set its type to
  * TOK_INTERNAL_STRING.
  */
-static const char *unquote_token(Token *t)
+
+/*
+ * Common version for any kind of quoted string; see asm/quote.c for
+ * information about the arguments.
+ */
+static const char *unquote_token_anystr(Token *t, uint32_t badctl, char qstart)
 {
+    size_t nlen, olen;
+    char *p;
+
     if (t->type != TOK_STRING)
 	return tok_text(t);
 
+    olen = t->len;
+    p = (olen > INLINE_TEXT) ? t->text.p.ptr : t->text.a;
+    t->len = nlen = nasm_unquote_anystr(p, NULL, badctl, qstart);
     t->type = TOK_INTERNAL_STRING;
 
-    if (t->len > INLINE_TEXT) {
-	char *p = t->text.p.ptr;
+    if (olen <= INLINE_TEXT || nlen > INLINE_TEXT)
+        return p;
 
-	t->len = nasm_unquote(p, NULL);
+    nasm_zero(t->text.a);
+    memcpy(t->text.a, p, nlen);
+    nasm_free(p);
+    return t->text.a;
+}
 
-	if (t->len <= INLINE_TEXT) {
-	    nasm_zero(t->text.a);
-	    memcpy(t->text.a, p, t->len);
-	    nasm_free(p);
-	    return t->text.a;
-	} else {
-	    return p;
-	}
-    } else {
-	t->len = nasm_unquote(t->text.a, NULL);
-	return t->text.a;
-    }
+/* Unquote any string, can produce any arbitrary binary output */
+static const char *unquote_token(Token *t)
+{
+    return unquote_token_anystr(t, 0, STR_NASM);
 }
 
 /*
@@ -753,28 +760,7 @@ static const char *unquote_token(Token *t)
  */
 static const char *unquote_token_cstr(Token *t)
 {
-    if (t->type != TOK_STRING)
-	return tok_text(t);
-
-    t->type = TOK_INTERNAL_STRING;
-
-    if (t->len > INLINE_TEXT) {
-	char *p = t->text.p.ptr;
-
-	t->len = nasm_unquote_cstr(p, NULL);
-
-	if (t->len <= INLINE_TEXT) {
-	    nasm_zero(t->text.a);
-	    memcpy(t->text.a, p, t->len);
-	    nasm_free(p);
-	    return t->text.a;
-	} else {
-	    return p;
-	}
-    } else {
-	t->len = nasm_unquote_cstr(t->text.a, NULL);
-	return t->text.a;
-    }
+    return unquote_token_anystr(t, BADCTL, STR_NASM);
 }
 
 /*
@@ -3389,14 +3375,19 @@ static int line_directive(Token *origline, Token *tline)
     tline = skip_white(tline);
     if (tline) {
         if (tline->type == TOK_STRING) {
+            const char *fname;
             /*
              * If this is a quoted string, ignore anything after
              * it; this allows for compatiblity with gcc's
              * additional flags options.
              */
-            src_set_fname(unquote_token(tline));
+
+            fname = unquote_token_anystr(tline, BADCTL,
+                                          dname[0] == '#' ? STR_C : STR_NASM);
+            src_set_fname(fname);
         } else {
-            char *fname = detoken(tline, false);
+            char *fname;
+            fname = detoken(tline, false);
             src_set_fname(fname);
             nasm_free(fname);
         }
