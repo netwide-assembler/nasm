@@ -6333,7 +6333,7 @@ static void free_debug_macro_info(void)
 static void debug_macro_output(void)
 {
     list_reverse(dmi.inv.l);
-    dfmt->debug_macros(&dmi);
+    dfmt->debug_mmacros(&dmi);
     free_debug_macro_info();
 }
 
@@ -6772,7 +6772,7 @@ void pp_reset(const char *file, enum preproc_mode mode,
     ppdbg = 0;
     if (!(ppopt & PP_TRIVIAL)) {
         if (pass_final()) {
-            if (dfmt->debug_macros)
+            if (dfmt->debug_mmacros)
                 ppdbg |= PDBG_MACROS;
         }
     }

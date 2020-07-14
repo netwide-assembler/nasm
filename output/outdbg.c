@@ -485,7 +485,7 @@ write_macro_inv_list(const struct debug_macro_inv *inv, int level)
     }
 }
 
-static void dbgdbg_debug_macros(const struct debug_macro_info *dmi)
+static void dbgdbg_debug_mmacros(const struct debug_macro_info *dmi)
 {
     const struct debug_macro_def *def;
 
@@ -516,7 +516,7 @@ static const struct dfmt debug_debug_form = {
     dbgdbg_init,
     dbgdbg_linnum,
     dbgdbg_deflabel,
-    dbgdbg_debug_macros,
+    dbgdbg_debug_mmacros,
     dbgdbg_define,
     dbgdbg_typevalue,
     dbgdbg_output,

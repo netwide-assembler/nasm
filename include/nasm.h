@@ -1104,11 +1104,11 @@ struct dfmt {
                            int is_global, char *special);
 
     /*
-     * debug_macros - called once at the end with a definition for each
+     * debug_mmacros - called once at the end with a definition for each
      * non-.nolist macro that has been invoked at least once in the program,
      * and the corresponding address ranges. See dbginfo.h.
      */
-    void (*debug_macros)(const struct debug_macro_info *);
+    void (*debug_mmacros)(const struct debug_macro_info *);
 
     /*
      * debug_directive - called whenever a DEBUG directive other than 'LINE'

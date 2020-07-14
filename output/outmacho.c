@@ -2289,7 +2289,7 @@ static const struct dfmt macho32_df_dwarf = {
     macho_dbg_init,
     macho_dbg_linenum,
     null_debug_deflabel,
-    NULL,                       /* .debug_macros */
+    NULL,                       /* .debug_mmacros */
     null_debug_directive,
     null_debug_typevalue,
     macho_dbg_output,
@@ -2357,7 +2357,7 @@ static const struct dfmt macho64_df_dwarf = {
     macho_dbg_init,
     macho_dbg_linenum,
     null_debug_deflabel,
-    NULL,                       /* .debug_macros */
+    NULL,                       /* .debug_mmacros */
     null_debug_directive,
     null_debug_typevalue,
     macho_dbg_output,
