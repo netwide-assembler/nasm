@@ -112,7 +112,7 @@ typedef struct Cond Cond;
  * This is the internal form which we break input lines up into.
  * Typically stored in linked lists.
  *
- * Note that `type' serves a double meaning: TOK_SMAC_START_PARAMS is
+ * Note that `type' serves a double meaning: TOKEN_SMAC_START_PARAMS is
  * not necessarily used as-is, but is also used to encode the number
  * and expansion type of substituted parameter. So in the definition
  *
@@ -122,12 +122,12 @@ typedef struct Cond Cond;
  * tok_smac_param(0) but the one representing `y' will be
  * tok_smac_param(1); see the accessor functions below.
  *
- * TOK_INTERNAL_STR is a string which has been unquoted, but should
+ * TOKEN_INTERNAL_STR is a string which has been unquoted, but should
  * be treated as if it was a quoted string. The code is free to change
- * one into the other at will. TOK_NAKED_STR is a text token which
+ * one into the other at will. TOKEN_NAKED_STR is a text token which
  * should be treated as a string, but which MUST NOT be turned into a
- * quoted string. TOK_INTERNAL_STRs can contain any character,
- * including NUL, but TOK_NAKED_STR must be a valid C string.
+ * quoted string. TOKEN_INTERNAL_STRs can contain any character,
+ * including NUL, but TOKEN_NAKED_STR must be a valid C string.
  */
 
 static inline enum token_type tok_smac_param(int param)
