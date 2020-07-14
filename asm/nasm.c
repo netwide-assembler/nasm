@@ -1314,7 +1314,7 @@ static bool process_arg(char *p, char *q, int pass)
                     break;
                 case OPT_PRAGMA:
                     if (pass == 2)
-                        pp_pre_command("pragma", param);
+                        pp_pre_command("%pragma", param);
                     break;
                 case OPT_BEFORE:
                     if (pass == 2)
