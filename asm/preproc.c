@@ -4728,7 +4728,7 @@ static inline bool pp_concat_match(const Token *t, unsigned int mask)
 static bool paste_tokens(Token **head, const struct tokseq_match *m,
                          size_t mnum, bool handle_explicit)
 {
-    Token *tok, *t, *next, **prev_next, **prev_nonspace;
+    Token *tok, *t, *next, **prev_next, **prev_nonspace, **nextp;
     bool pasted = false;
     char *buf, *p;
     size_t len, i;
@@ -4765,30 +4765,28 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
             if (!handle_explicit)
                 break;
 
-            /* Left pasting token is start of line, just drop %+ */
-            if (!prev_nonspace) {
-                tok = delete_Token(tok);
-                break;
-            }
-
             did_paste = true;
 
-            prev_next = prev_nonspace;
-            t = *prev_nonspace;
-
-            /* Delete leading whitespace */
-            next = zap_white(t->next);
+            /* Left pasting token is start of line, just drop %+ */
+            if (!prev_nonspace) {
+                prev_next = nextp = head;
+                t = NULL;
+            } else {
+                prev_next = prev_nonspace;
+                t = *prev_next;
+                nextp = &t->next;
+            }
 
             /*
-             * Delete the %+ token itself, followed by any whitespace.
+             * Delete the %+ token itself plus any whitespace.
              * In a sequence of %+ ... %+ ... %+ pasting sequences where
              * some expansions in the middle have ended up empty,
              * we can end up having multiple %+ tokens in a row;
              * just drop whem in that case.
              */
-            while (next) {
+            while ((next = *nextp)) {
                 if (next->type == TOK_PASTE || next->type == TOK_WHITESPACE)
-                    next = delete_Token(next);
+                    *nextp = delete_Token(next);
                 else
                     break;
             }
@@ -4796,11 +4794,16 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
             /*
              * Nothing after? Just leave the existing token.
              */
-            if (!next) {
-                t->next = tok = NULL; /* End of line */
+            if (!next)
+                break;
+
+            if (!t) {
+                /* Nothing to actually paste, just zapping the paste */
+                *prev_next = tok = next;
                 break;
             }
 
+            /* An actual paste */
             p = buf = nasm_malloc(t->len + next->len + 1);
             p = mempcpy(p, tok_text(t), t->len);
             p = mempcpy(p, tok_text(next), next->len);
@@ -4814,10 +4817,10 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
                  * No output at all? Replace with a single whitespace.
                  * This should never happen.
                  */
-                t = new_White(NULL);
+                tok = t = new_White(NULL);
+            } else {
+                *prev_nonspace = tok = t;
             }
-
-            *prev_nonspace = tok = t;
             while (t->next)
                 t = t->next;    /* Find the last token produced */
 
@@ -4825,7 +4828,7 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
             t->next = delete_Token(next);
 
             /* We want to restart from the head of the pasted token */
-            next = tok;
+            *prev_next = next = tok;
             break;
 
         default:
@@ -4861,10 +4864,14 @@ static bool paste_tokens(Token **head, const struct tokseq_match *m,
              * Connect pasted into original stream,
              * ie A -> new-tokens -> B
              */
-            while (t->next)
-                t = t->next;
+            while ((tok = t->next)) {
+                if (tok->type != TOK_WHITESPACE && tok->type != TOK_PASTE)
+                    prev_nonspace = &t->next;
+                t = tok;
+            }
+
             t->next = next;
-            prev_next = prev_nonspace = &t->next;
+            prev_next = &t->next;
             did_paste = true;
             break;
         }
