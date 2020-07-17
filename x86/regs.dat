@@ -130,6 +130,9 @@ zmm0	ZMM0		zmmreg		0
 zmm1-15	ZMM_L16		zmmreg		1
 zmm16-31	ZMMREG		zmmreg		16
 
+# AMX tile registers
+tmm0-7	TMMREG		tmmreg		0
+
 # Opmask registers
 k0	OPMASK0		opmaskreg	0
 k1-7	OPMASKREG	opmaskreg	1   TFLAG_BRC_OPT

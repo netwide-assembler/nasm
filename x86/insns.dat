@@ -5999,6 +5999,51 @@ WRUSSQ		mem,reg64			[mr:	o64 66 0f 38 f5 /r]			CET,FUTURE,X64
 WRSSD		mem,reg32			[mr:	o32 0f 38 f6 /r]			CET,FUTURE
 WRSSQ		mem,reg64			[mr:	o64 0f 38 f6 /r]			CET,FUTURE,X64
 
+;# Instructions from ISE doc 319433-040, June 2020
+ENQCMD		reg16,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE
+ENQCMD		reg32,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE,ND
+ENQCMD		reg32,mem512			[rm:	a32 f2 0f 38 f8 /r]			ENQCMD,FUTURE
+ENQCMD		reg64,mem512			[rm:	a64 f2 0f 38 f8 /r]			ENQCMD,FUTURE,X64
+ENQCMDS		reg16,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV
+ENQCMDS		reg32,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV,ND
+ENQCMDS		reg32,mem512			[rm:	a32 f2 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV
+ENQCMDS		reg64,mem512			[rm:	a64 f2 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV,X64
+PCONFIG		void				[	np 0f 01 c5]				PCONFIG,FUTURE,PRIV
+SERIALIZE	void				[	np 0f 01 e8]				SERIALIZE,FUTURE
+WBNOINVD	void				[	f3 0f 09]				WBNOINVD,FUTURE,PRIV
+XRESLDTRK	void				[	f2 0f 01 e9]				TSXLDTRK,FUTURE
+XSUSLDTRK	void				[	f2 0f 01 e8]				TSXLDTRK,FUTURE
+
+;# AVX512 Bfloat16 instructions
+VCVTNE2PS2BF16	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:	evex.128.f2.0f38.w0 72 /r]	AVX512BF16,FUTURE
+VCVTNE2PS2BF16	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:	evex.256.f2.0f38.w0 72 /r]	AVX512BF16,FUTURE
+VCVTNE2PS2BF16	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:	evex.512.f2.0f38.w0 72 /r]	AVX512BF16,FUTURE
+VCVTNE2PS2BF16	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:	evex.128.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
+VCVTNE2PS2BF16	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:	evex.256.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
+VCVTNE2PS2BF16	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:	evex.512.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
+VDPBF16PS	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:	evex.128.f3.0f38.w0 52 /r]	AVX512BF16,FUTURE
+VDPBF16PS	ymmreg|mask|z,ymmreg*,ymmrm128|b32	[rvm:	evex.256.f3.0f38.w0 52 /r]	AVX512BF16,FUTURE
+VDPBF16PS	zmmreg|mask|z,zmmreg*,zmmrm128|b32	[rvm:	evex.512.f3.0f38.w0 52 /r]	AVX512BF16,FUTURE
+
+;# AVX512 mask intersect instructions
+VP2INTERSECTD	kreg|rs2,xmmreg,xmmrm128|b32		[rvm:	evex.nds.128.f2.0f38.w0 68 /r]	AVX512BF16,FUTURE
+VP2INTERSECTD	kreg|rs2,ymmreg,ymmrm128|b32		[rvm:	evex.nds.256.f2.0f38.w0 68 /r]	AVX512BF16,FUTURE
+VP2INTERSECTD	kreg|rs2,zmmreg,zmmrm128|b32		[rvm:	evex.nds.512.f2.0f38.w0 68 /r]	AVX512BF16,FUTURE
+
+;# Intel Advanced Matrix Extensions (AMX)
+LDTILECFG	mem512				[m:	vex.128.np.0f38.w0 49 /0]		AMXTILE,FUTURE,SZ,X64
+STTILECFG	mem512				[m:	vex.128.66.0f38.w0 49 /0]		AMXTILE,FUTURE,SZ,X64
+TDPBF16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5c /r]		AMXBF16,FUTURE,X64
+TDPBSSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5e /r]		AMXINT8,FUTURE,X64
+TDPBSUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5e /r]		AMXINT8,FUTURE,X64
+TDPBUSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 5e /r]		AMXINT8,FUTURE,X64
+TDPBUUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 5e /r]		AMXINT8,FUTURE,X64
+TILELOADD	tmmreg,mem			[rm:	vex.128.f2.0f38.w0 4b /r]		AMXTILE,MIB,FUTURE,SX,X64
+TILELOADDT1	tmmreg,mem			[rm:	vex.128.f2.0f38.w0 4b /r]		AMXTILE,MIB,FUTURE,SX,X64
+TILERELEASE	void				[	vex.128.np.0f38.w0 49 c0]		AMXTILE,FUTURE,X64
+TILESTORED	mem,tmmreg			[mr:	vex.128.f3.0f38.w0 4b /r]		AMXTILE,MIB,FUTURE,SX,X64
+TILEZERO	tmmreg				[r:	vex.128.f2.0f38.w0 49 /3r0]		AMXTILE,FUTURE,X64
+
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
 HINT_NOP0	rm16				[m:	o16 0f 18 /0]				P6,UNDOC

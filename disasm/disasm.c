@@ -203,6 +203,8 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
         return GET_REGISTER(nasm_rd_opmaskreg, regval);
     if (!(BNDREG & ~regflags))
         return GET_REGISTER(nasm_rd_bndreg, regval);
+    if (!(TMMREG & ~regflags))
+        return GET_REGISTER(nasm_rd_tmmreg, regval);
 
 #undef GET_REGISTER
     return 0;
@@ -676,6 +678,22 @@ static int matches(const struct itemplate *t, uint8_t *data,
             opx->basereg = ((modrm >> 3) & 7) + (ins->rex & REX_R ? 8 : 0);
             if ((ins->rex & REX_EV) && (segsize == 64))
                 opx->basereg += (ins->evex_p[0] & EVEX_P0RP ? 0 : 16);
+            break;
+        }
+
+        case 0171:
+        {
+            uint8_t t = *r++;
+            uint8_t d = *data++;
+            if ((d ^ t) & ~070) {
+                return 0;
+            } else {
+                op2 = (op2 & ~3) | ((t >> 3) & 3);
+                opy = &ins->oprs[op2];
+                opy->basereg = ((d >> 3) & 7) +
+                    (ins->rex & REX_R ? 8 : 0);
+                opy->segment |= SEG_RMREG;
+            }
             break;
         }
 

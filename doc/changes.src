@@ -9,6 +9,9 @@ since 2007.
 
 \S{cl-2.15.03} Version 2.15.03
 
+\b Add instructions from the Intel Instruction Set Extensions and
+Future Features Programming Reference, June 2020.
+
 \b Properly display warnings in preprocess-only mode.
 
 \b Fix copy-and-paste of examples from the PDF documentation.

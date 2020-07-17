@@ -81,19 +81,19 @@
 /*
  * Register classes.
  *
- * Bits: 7 - 16
+ * Bits: 7 - 17
  */
 #define REG_CLASS_SHIFT         (7)
-#define REG_CLASS_BITS          (10)
+#define REG_CLASS_BITS          (11)
 #define REG_CLASS_MASK          OP_GENMASK(REG_CLASS_BITS, REG_CLASS_SHIFT)
 #define GEN_REG_CLASS(bit)      OP_GENBIT(bit, REG_CLASS_SHIFT)
 
 /*
  * Subclasses. Depends on type of operand.
  *
- * Bits: 17 - 24
+ * Bits: 18 - 25
  */
-#define SUBCLASS_SHIFT          (17)
+#define SUBCLASS_SHIFT          (18)
 #define SUBCLASS_BITS           (8)
 #define SUBCLASS_MASK           OP_GENMASK(SUBCLASS_BITS, SUBCLASS_SHIFT)
 #define GEN_SUBCLASS(bit)       OP_GENBIT(bit, SUBCLASS_SHIFT)
@@ -101,9 +101,9 @@
 /*
  * Special flags. Context dependant.
  *
- * Bits: 25 - 31
+ * Bits: 26 - 32
  */
-#define SPECIAL_SHIFT           (25)
+#define SPECIAL_SHIFT           (26)
 #define SPECIAL_BITS            (7)
 #define SPECIAL_MASK            OP_GENMASK(SPECIAL_BITS, SPECIAL_SHIFT)
 #define GEN_SPECIAL(bit)        OP_GENBIT(bit, SPECIAL_SHIFT)
@@ -111,9 +111,9 @@
 /*
  * Sizes of the operands and attributes.
  *
- * Bits: 32 - 42
+ * Bits: 33 - 43
  */
-#define SIZE_SHIFT              (32)
+#define SIZE_SHIFT              (33)
 #define SIZE_BITS               (11)
 #define SIZE_MASK               OP_GENMASK(SIZE_BITS, SIZE_SHIFT)
 #define GEN_SIZE(bit)           OP_GENBIT(bit, SIZE_SHIFT)
@@ -121,9 +121,9 @@
 /*
  * Register set count
  *
- * Bits: 47 - 43
+ * Bits: 44 - 48
  */
-#define REGSET_SHIFT            (43)
+#define REGSET_SHIFT            (44)
 #define REGSET_BITS             (5)
 #define REGSET_MASK             OP_GENMASK(REGSET_BITS, REGSET_SHIFT)
 #define GEN_REGSET(bit)         OP_GENBIT(bit, REGSET_SHIFT)
@@ -138,11 +138,11 @@
  *
  * ............................................................1111 optypes
  * .........................................................111.... modifiers
- * ...............................................1111111111....... register classes
- * .......................................11111111................. subclasses
- * ................................1111111......................... specials
- * .....................11111111111................................ sizes
- * ................11111........................................... regset count
+ * ..............................................11111111111....... register classes
+ * ......................................11111111.................. subclasses
+ * ...............................1111111.......................... specials
+ * ....................11111111111................................. sizes
+ * ...............11111............................................ regset count
  */
 
 #define REGISTER                GEN_OPTYPE(0)                   /* register number in 'basereg' */
@@ -176,6 +176,7 @@
 #define REG_CLASS_RM_ZMM        GEN_REG_CLASS(7)
 #define REG_CLASS_OPMASK        GEN_REG_CLASS(8)
 #define REG_CLASS_BND           GEN_REG_CLASS(9)
+#define REG_CLASS_RM_TMM	GEN_REG_CLASS(10)
 
 static inline bool is_class(opflags_t class, opflags_t op)
 {
@@ -217,6 +218,7 @@ static inline bool is_reg_class(opflags_t class, opflags_t reg)
 #define KREG                    OPMASKREG
 #define RM_BND                  (                  REG_CLASS_BND              | REGMEM)                 /* Bounds operand */
 #define BNDREG                  (                  REG_CLASS_BND              | REGMEM | REGISTER)      /* Bounds register */
+#define TMMREG                  (                  REG_CLASS_RM_TMM           | REGMEM | REGISTER)      /* TMM (AMX) register */
 #define REG_CDT                 (                  REG_CLASS_CDT    | BITS32           | REGISTER)      /* CRn, DRn and TRn */
 #define REG_CREG                (GEN_SUBCLASS(1) | REG_CLASS_CDT    | BITS32           | REGISTER)      /* CRn */
 #define REG_DREG                (GEN_SUBCLASS(2) | REG_CLASS_CDT    | BITS32           | REGISTER)      /* DRn */
