@@ -694,21 +694,13 @@ static expr *expr5(void)
 static expr *eval_floatize(enum floatize type)
 {
     uint8_t result[16], *p;     /* Up to 128 bits */
-    static const struct {
-        int bytes, start, len;
-    } formats[] = {
-        {  1, 0, 1 },           /* FLOAT_8 */
-        {  2, 0, 2 },           /* FLOAT_16 */
-        {  4, 0, 4 },           /* FLOAT_32 */
-        {  8, 0, 8 },           /* FLOAT_64 */
-        { 10, 0, 8 },           /* FLOAT_80M */
-        { 10, 8, 2 },           /* FLOAT_80E */
-        { 16, 0, 8 },           /* FLOAT_128L */
-        { 16, 8, 8 },           /* FLOAT_128H */
-    };
     int sign = 1;
     int64_t val;
+    size_t len;
     int i;
+    const struct ieee_format *fmt;
+
+    fmt = &fp_formats[type];
 
     scan();
     if (tt != '(') {
@@ -724,7 +716,7 @@ static expr *eval_floatize(enum floatize type)
         nasm_nonfatal("expecting floating-point number");
         return NULL;
     }
-    if (!float_const(tokval->t_charptr, sign, result, formats[type].bytes))
+    if (!float_const(tokval->t_charptr, sign, result, type))
         return NULL;
     scan();
     if (tt != ')') {
@@ -732,9 +724,12 @@ static expr *eval_floatize(enum floatize type)
         return NULL;
     }
 
-    p = result+formats[type].start+formats[type].len;
+    len = fmt->bytes - fmt->offset;
+    if (len > 8)
+        len = 8;                /* Max 64 bits */
+    p = result + len;
     val = 0;
-    for (i = formats[type].len; i; i--) {
+    for (i = len; i; i--) {
         p--;
         val = (val << 8) + *p;
     }

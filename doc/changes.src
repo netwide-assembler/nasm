@@ -12,6 +12,9 @@ since 2007.
 \b Add instructions from the Intel Instruction Set Extensions and
 Future Features Programming Reference, June 2020.
 
+\b Support for \c{bfloat16} floating-point constants. See \k{fltconst}
+and \k{pkg_fp}.
+
 \b Properly display warnings in preprocess-only mode.
 
 \b Fix copy-and-paste of examples from the PDF documentation.

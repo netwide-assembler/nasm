@@ -1692,9 +1692,9 @@ context.
 \i{Floating-point} constants are acceptable only as arguments to
 \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, and \i\c{DO}, or as
 arguments to the special operators \i\c{__?float8?__},
-\i\c{__?float16?__}, \i\c{__?float32?__}, \i\c{__?float64?__},
-\i\c{__?float80m?__}, \i\c{__?float80e?__}, \i\c{__?float128l?__}, and
-\i\c{__?float128h?__}.
+\i\c{__?float16?__}, \i\c{__?bfloat16?__}, \i\c{__?float32?__},
+\i\c{__?float64?__}, \i\c{__?float80m?__}, \i\c{__?float80e?__},
+\i\c{__?float128l?__}, and \i\c{__?float128h?__}. See also \k{pkg_fp}.
 
 Floating-point constants are expressed in the traditional form:
 digits, then a period, then optionally more digits, then optionally an
@@ -1732,6 +1732,13 @@ sign:exponent:mantissa = 1:4:3 with an exponent bias of 7.  This
 appears to be the most frequently used 8-bit floating-point format,
 although it is not covered by any formal standard.  This is sometimes
 called a "\i{minifloat}."
+
+The \i\c{bfloat16} format is effectively a compressed version of the
+32-bit single precision format, with a reduced mantissa. It is
+effectively the same as truncating the 32-bit format to the upper 16
+bits, except for rounding. There is no \c{D}\e{x} directive that
+corresponds to \c{bfloat16} as it obviously has the same size as the
+IEEE standard 16-bit half precision format, see however \k{pkg_fp}.
 
 The special operators are used to produce floating-point numbers in
 other contexts.  They produce the binary representation of a specific
@@ -4633,12 +4640,19 @@ This packages contains the following floating-point convenience macros:
 \c
 \c %define float8(x)       __?float8?__(x)
 \c %define float16(x)      __?float16?__(x)
+\c %define bfloat16(x)     __?bfloat16?__(x)
 \c %define float32(x)      __?float32?__(x)
 \c %define float64(x)      __?float64?__(x)
 \c %define float80m(x)     __?float80m?__(x)
 \c %define float80e(x)     __?float80e?__(x)
 \c %define float128l(x)    __?float128l?__(x)
 \c %define float128h(x)    __?float128h?__(x)
+
+It also defines the a multi-line macro \i\c{bf16} that can be used
+in a similar way to the \c{D}\e{x} directives for the other
+floating-point numbers:
+
+\c      bf16 -3.1415, NaN, 2000.0, +Inf
 
 
 \H{pkg_ifunc} \i\c{ifunc}: \i{Integer functions}
