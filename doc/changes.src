@@ -10,7 +10,9 @@ since 2007.
 \S{cl-2.15.03} Version 2.15.03
 
 \b Add instructions from the Intel Instruction Set Extensions and
-Future Features Programming Reference, June 2020.
+Future Features Programming Reference, June 2020. This includes
+AVX5512 \c{bfloat16}, AVX512 mask intersect, and Intel Advanced Matrix
+Extensions (AMX).
 
 \b Support for \c{bfloat16} floating-point constants. See \k{fltconst}
 and \k{pkg_fp}.
