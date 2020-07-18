@@ -115,10 +115,12 @@
 #   another, so that \I{foobar} has the effect of \I{bazquux}, and
 #   \i{foobar} has the effect of \I{bazquux}foobar
 #
-# Metadata
+# Metadata/macros
 # \M{key}{something}
 #   defines document metadata, such as authorship, title and copyright;
 #   different output formats use this differently.
+# \m{key}
+#   insert the {something} string associated with metadata {key}
 #
 # Include subfile
 # \&{filename}
@@ -269,6 +271,15 @@ sub got_para {
   return if !/\S/;
 
   @$pname = ();
+
+  # Replace metadata macros
+  while (/^(.*)\\m\{([^\}]*)\}(.*)$/) {
+      if (defined($metadata{$2})) {
+	  $_ = $1.$metadata{$2}.$3;
+      } else {
+	  $_ = $1.$2.$3;
+      }
+  }
 
   # Strip off _leading_ spaces, then determine type of paragraph.
   s/^\s*//;
