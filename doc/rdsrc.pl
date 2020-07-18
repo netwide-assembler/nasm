@@ -660,11 +660,13 @@ sub write_txt {
       }
       print "$title\n";
     } elsif ($ptype eq "code") {
-      # Code paragraph. Emit each line with a seven character indent.
-      foreach $i (@$pname) {
-        warn "code line longer than 68 chars: $i\n" if length $i > 68;
-        print ' 'x7, $i, "\n";
-      }
+	# Code paragraph. Emit each line with a seven character indent.
+	my $maxlen = 80;
+	foreach $i (@$pname) {
+	    warn "code line longer than $maxlen chars: $i\n"
+		if ( length($i) > $maxlen );
+	    print ' 'x7, $i, "\n";
+	}
     } elsif ($ptype =~ /^(norm|bull|indt|bquo)$/) {
       # Ordinary paragraph, optionally indented. We wrap, with ragged
       # 75-char right margin and either 7 or 11 char left margin
