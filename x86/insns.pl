@@ -502,13 +502,11 @@ sub format_insn($$$$$) {
     # expand and uniqify the flags
     my %flags;
     foreach my $flag (split(',', $flags)) {
+	next if ($flag eq '');
+	
 	if ($flag eq 'ND') {
 	    $nd = 1;
-	} elsif ($flag eq 'X64') {
-	    # X64 is shorthand for "LONG,X86_64"
-	    $flags{'LONG'}++;
-	    $flags{'X86_64'}++;
-	} elsif ($flag ne '') {
+	} else {
 	    $flags{$flag}++;
 	}
 
