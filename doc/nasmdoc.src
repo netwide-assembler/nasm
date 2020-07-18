@@ -2459,6 +2459,7 @@ example:
 
 \c %idefine pause $%*?                 ; Hide the PAUSE instruction
 
+\c{%*?} and \c{%*??} were introduced in NASM 2.15.04.
 
 \S{undef} Undefining Single-Line Macros: \i\c{%undef}
 
