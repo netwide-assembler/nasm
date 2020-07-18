@@ -90,6 +90,7 @@
 %include
 %line
 %local
+%null
 %pop
 %pragma
 %push

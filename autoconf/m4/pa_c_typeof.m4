@@ -7,7 +7,7 @@ dnl --------------------------------------------------------------------------
 AC_DEFUN([PA_C_TYPEOF],
 [AC_CACHE_CHECK([if $CC supports typeof], [pa_cv_typeof],
  [pa_cv_typeof=no
- for pa_typeof_try in typeof __typeof __typeof__ decltype __decltype __decltype__
+ for pa_typeof_try in typeof __typeof __typeof__ decltype __decltype __decltype__ _Decltype
  do
   AS_IF([test $pa_cv_typeof = no],
         [AC_COMPILE_IFELSE([AC_LANG_SOURCE([
@@ -29,4 +29,4 @@ int testme(int x)
 	AS_IF([test $pa_cv_typeof = typeof],
 	      [],
 	      [AC_DEFINE_UNQUOTED([typeof], [$pa_cv_typeof],
-	        [Define if your typeof operator is not named typeof.])])])])
+	        [Define if your typeof operator is not named `typeof'.])])])])

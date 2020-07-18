@@ -1692,9 +1692,9 @@ context.
 \i{Floating-point} constants are acceptable only as arguments to
 \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, and \i\c{DO}, or as
 arguments to the special operators \i\c{__?float8?__},
-\i\c{__?float16?__}, \i\c{__?float32?__}, \i\c{__?float64?__},
-\i\c{__?float80m?__}, \i\c{__?float80e?__}, \i\c{__?float128l?__}, and
-\i\c{__?float128h?__}.
+\i\c{__?float16?__}, \i\c{__?bfloat16?__}, \i\c{__?float32?__},
+\i\c{__?float64?__}, \i\c{__?float80m?__}, \i\c{__?float80e?__},
+\i\c{__?float128l?__}, and \i\c{__?float128h?__}. See also \k{pkg_fp}.
 
 Floating-point constants are expressed in the traditional form:
 digits, then a period, then optionally more digits, then optionally an
@@ -1732,6 +1732,13 @@ sign:exponent:mantissa = 1:4:3 with an exponent bias of 7.  This
 appears to be the most frequently used 8-bit floating-point format,
 although it is not covered by any formal standard.  This is sometimes
 called a "\i{minifloat}."
+
+The \i\c{bfloat16} format is effectively a compressed version of the
+32-bit single precision format, with a reduced mantissa. It is
+effectively the same as truncating the 32-bit format to the upper 16
+bits, except for rounding. There is no \c{D}\e{x} directive that
+corresponds to \c{bfloat16} as it obviously has the same size as the
+IEEE standard 16-bit half precision format, see however \k{pkg_fp}.
 
 The special operators are used to produce floating-point numbers in
 other contexts.  They produce the binary representation of a specific
@@ -2753,6 +2760,11 @@ interfering with the local label mechanism, as described in
 (the \c{..@} prefix, then a number, then another period) in case
 they interfere with macro-local labels.
 
+These labels are really macro-local \e{tokens}, and can be used for
+other purposes where a token unique to each macro invocation is
+desired, e.g. to name single-line macros without using the context
+feature (\k{ctxlocal}).
+
 
 \S{mlmacgre} \i{Greedy Macro Parameters}
 
@@ -2934,6 +2946,10 @@ Examples are given in \k{rotate}.
 \c{%00} will return the label preceeding the macro invocation, if any. The
 label must be on the same line as the macro invocation, may be a local label
 (see \k{locallab}), and need not end in a colon.
+
+If \c{%00} is present anywhere in the macro body, the label itself
+will not be emitted by NASM. You can, of course, put \c{%00:}
+explicitly at the beginning of your macro.
 
 
 \S{rotate} \i\c{%rotate}: \i{Rotating Macro Parameters}
@@ -4043,7 +4059,8 @@ which specifies a line increment value; each line of the input file
 read in is considered to correspond to \c{mmm} lines of the original
 source file.  Finally, \c{filename} is an optional parameter which
 specifies the file name of the original source file. It may be a
-quoted string.
+quoted string, in which case any additional argument after the quoted
+string will be ignored.
 
 After reading a \c{%line} preprocessor directive, NASM will report
 all file name and line numbers relative to the values specified
@@ -4055,6 +4072,13 @@ code. See \k{opt-no-line}.
 
 Starting in NASM 2.15, \c{%line} directives are processed before any
 other processing takes place.
+
+For compatibility with the output from some other preprocessors,
+including many C preprocessors, a \c{#} character followed by
+whitespace \e{at the very beginning of a line} is also treated as a
+\c{%line} directive, except that double quotes surrounding the
+filename are treated like NASM backquotes, with \c{\\}-escaped
+sequences decoded.
 
 \# This isn't a directive, it should be moved elsewhere...
 \S{getenv} \i\c{%!}\e{variable}: Read an Environment Variable.
@@ -4616,12 +4640,19 @@ This packages contains the following floating-point convenience macros:
 \c
 \c %define float8(x)       __?float8?__(x)
 \c %define float16(x)      __?float16?__(x)
+\c %define bfloat16(x)     __?bfloat16?__(x)
 \c %define float32(x)      __?float32?__(x)
 \c %define float64(x)      __?float64?__(x)
 \c %define float80m(x)     __?float80m?__(x)
 \c %define float80e(x)     __?float80e?__(x)
 \c %define float128l(x)    __?float128l?__(x)
 \c %define float128h(x)    __?float128h?__(x)
+
+It also defines the a multi-line macro \i\c{bf16} that can be used
+in a similar way to the \c{D}\e{x} directives for the other
+floating-point numbers:
+
+\c      bf16 -3.1415, NaN, 2000.0, +Inf
 
 
 \H{pkg_ifunc} \i\c{ifunc}: \i{Integer functions}
@@ -4660,17 +4691,61 @@ functionality, as intended to be used primarily with machine-generated code.
 It does not include any "programmer-friendly" shortcuts, nor does it in any way
 support ASSUME, symbol typing, or MASM-style structures.
 
-Currently, the MASM compatibility package emulates only the PTR
-keyword and recognize syntax displacement[index] for memory
-operations.
 To enable the package, use the directive:
 
 \c{%use masm}
 
-In addition, NASM now natively supports the MASM \c{?} and
-\c{DUP} syntax for the \c{DB} etc data declaration directives,
-regardless of if this package is included or not. See \k{db}.
+Currently, the MASM compatibility package emulates:
 
+\b The \c{FLAT} and \c{OFFSET} keywords are recognized and ignored.
+
+\b The \c{PTR} keyword signifies a memory reference, as if the
+argument had been put in square brackets:
+
+\c      mov eax,[foo]               ; memory reference
+\c      mov eax,dword ptr foo       ; memory reference
+\c      mov eax,dowrd ptr flat:foo  ; memory reference
+\c      mov eax,offset foo          ; address
+\c      mov eax,foo                 ; address (ambiguous syntax in MASM)
+
+\b The \c{SEGMENT} ... \c{ENDS} syntax:
+
+\c    segname SEGMENT
+\c        ...
+\c    segname ENDS
+
+\b The \c{PROC} ... \c{ENDP} syntax:
+
+\c    procname PROC [FAR]
+\c         ...
+\c    procname ENDP
+
+\> \c{PROC} will also define \c{RET} as a macro expanding to either
+\c{RETF} if \c{FAR} is specified and \c{RETN} otherwise. Any keyword
+after \c{PROC} other than \c{FAR} is ignored.
+
+\b The \c{TBYTE} keyword as an alias for \c{TWORD} (see \k{qsother}).
+
+\b The \c{END} directive is ignored.
+
+\b In 64-bit mode relative addressing is the default (\c{DEFAULT REL},
+see \k{REL & ABS}).
+
+In addition, NASM now natively supports, regardless of whether this
+package is used or not:
+
+\b \c{?} and \c{DUP} syntax for the \c{DB} etc data declaration
+directives (see \k{db}).
+
+\b \c{displacement[base+index]} syntax for memory operations, instead
+of \c{[base+index+displacement]}.
+
+\b \c{seg:[addr]} instead of \c{[seg:addr]} syntax.
+
+\b A pure offset can be given to \c{LEA} without square brackets:
+
+\c      lea rax,[foo]               ; standard syntax
+\c      lea rax,foo                 ; also accepted
 
 \C{directive} \i{Assembler Directives}
 

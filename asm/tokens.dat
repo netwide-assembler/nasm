@@ -113,6 +113,9 @@ __?float80e?__
 __?float128l?__
 __?float128h?__
 
+% TOKEN_FLOATIZE, 0, 0, FLOAT_B{__?bfloat*?__}
+__?bfloat16?__
+
 % TOKEN_STRFUNC, 0, 0, STRFUNC_{__?*?__}
 __?utf16?__
 __?utf16le?__

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -48,7 +48,20 @@ enum float_round {
     FLOAT_RC_UP
 };
 
-int float_const(const char *string, int sign, uint8_t *result, int bytes);
+/* Note: enum floatize and FLOAT_ERR are defined in nasm.h */
+
+/* Floating-point format description */
+struct ieee_format {
+    int bytes;                  /* Total bytes */
+    int mantissa;               /* Fractional bits in the mantissa */
+    int explicit;               /* Explicit integer */
+    int exponent;               /* Bits in the exponent */
+    int offset;                 /* Offset into byte array for floatize op */
+};
+extern const struct ieee_format fp_formats[FLOAT_ERR];
+
+int float_const(const char *str, int s, uint8_t *result, enum floatize ffmt);
+enum floatize float_deffmt(int bytes);
 int float_option(const char *option);
 
 #endif /* NASM_FLOATS_H */

@@ -880,11 +880,19 @@ sub byte_code_compile($$) {
             $prefix_ok = 0;
         } elsif ($op =~ m:^/([0-7])$:) {
             if (!defined($oppos{'m'})) {
-                die "$fname:$line: $op requires m operand\n";
+                die "$fname:$line: $op requires an m operand\n";
             }
             push(@codes, 06) if ($oppos{'m'} & 4);
             push(@codes, 0200 + (($oppos{'m'} & 3) << 3) + $1);
             $prefix_ok = 0;
+	} elsif ($op =~ m:^/([0-3]?)r([0-7])$:) {
+	    if (!defined($oppos{'r'})) {
+                die "$fname:$line: $op requires an r operand\n";
+	    }
+	    push(@codes, 05) if ($oppos{'r'} & 4);
+	    push(@codes, 0171);
+	    push(@codes, (($1+0) << 6) + (($oppos{'r'} & 3) << 3) + $2);
+	    $prefix_ok = 0;
         } elsif ($op =~ /^(vex|xop)(|\..*)$/) {
             my $vexname = $1;
             my $c = $vexmap{$vexname};
@@ -907,7 +915,7 @@ sub byte_code_compile($$) {
                         $w = 2;
                     } elsif ($oq eq 'ww') {
                         $w = 3;
-                    } elsif ($oq eq 'p0') {
+                    } elsif ($oq eq 'np' || $oq eq 'p0') {
                         $p = 0;
                     } elsif ($oq eq '66' || $oq eq 'p1') {
                         $p = 1;
@@ -934,9 +942,6 @@ sub byte_code_compile($$) {
                 }
             if (!defined($m) || !defined($w) || !defined($l) || !defined($p)) {
                 die "$fname:$line: missing fields in \U$vexname\E specification\n";
-            }
-            if (defined($oppos{'v'}) && !$has_nds) {
-                die "$fname:$line: 'v' operand without ${vexname}.nds or ${vexname}.ndd\n";
             }
 	    my $minmap = ($c == 1) ? 8 : 0; # 0-31 for VEX, 8-31 for XOP
 	    if ($m < $minmap || $m > 31) {
@@ -966,7 +971,7 @@ sub byte_code_compile($$) {
                         $w = 2;
                     } elsif ($oq eq 'ww') {
                         $w = 3;
-                    } elsif ($oq eq 'p0') {
+                    } elsif ($oq eq 'np' || $oq eq 'p0') {
                         $p = 0;
                     } elsif ($oq eq '66' || $oq eq 'p1') {
                         $p = 1;
@@ -993,9 +998,6 @@ sub byte_code_compile($$) {
                 }
             if (!defined($m) || !defined($w) || !defined($l) || !defined($p)) {
                 die "$fname:$line: missing fields in EVEX specification\n";
-            }
-            if (defined($oppos{'v'}) && !$has_nds) {
-                die "$fname:$line: 'v' operand without evex.nds or evex.ndd\n";
             }
 	    if ($m > 15) {
 		die "$fname:$line: Only maps 0-15 are valid for EVEX\n";

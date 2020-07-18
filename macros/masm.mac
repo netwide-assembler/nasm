@@ -50,7 +50,7 @@ USE: masm
 %endmacro
 
 %imacro ends 0+.nolist
-  %pragma ignore ends %00
+  %null ends %00
 %endmacro
 
 %imacro proc 0-*.nolist
@@ -65,7 +65,7 @@ USE: masm
 %endmacro
 
 %imacro endp 0.nolist
-  %pragma ignore endp %00
+  %null endp %00
   %undef ret
 %endmacro
 
