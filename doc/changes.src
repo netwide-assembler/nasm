@@ -7,6 +7,18 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.15.04} Version 2.15.04
+
+\b More sensible handling of the case where one single-line macro
+definition will shadow another. A warning will be issued, but the
+additional definition will be allowed. For the existing error case
+where both a parameterless and parametered macro are created, that
+warning is promoted to an error by default.
+
+\b Add special preprocessor tokens \c{%*?} and \c{%*??} that expand
+like \c{%?} and \c{%??} in single-line macros only. See
+\k{selfref%*?}.
+
 \S{cl-2.15.03} Version 2.15.03
 
 \b Add instructions from the Intel Instruction Set Extensions and

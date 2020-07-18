@@ -2403,7 +2403,9 @@ macros, but for case-insensitive macros, they can differ.
 
 For example:
 
-\c %idefine Foo mov %?,%??
+\c %imacro Foo 0
+\c         mov %?,%??
+\c %endmacro
 \c
 \c         foo
 \c         FOO
@@ -2413,14 +2415,49 @@ will expand to:
 \c         mov foo,Foo
 \c         mov FOO,Foo
 
-The sequence:
+These tokens can be used for single-line macros \e{if defined outside
+any multi-line macros.} See below.
 
-\c %idefine keyword $%?
+\S{selfref%*?} The Single-Line Macro Name: \i\c{%*?} and \i\c{%*??}
 
-can be used to make a keyword "disappear", for example in case a new
-instruction has been used as a label in older code.  For example:
+If the tokens \c{%?} and \c{%??} are used inside a multi-line macro,
+they are expanded before any directives are processed. As a result,
 
-\c %idefine pause $%?                  ; Hide the PAUSE instruction
+\c %imacro Foo 0
+\c       %idefine Bar _%?
+\c       mov BAR,bAr
+\c %endmacro
+\c
+\c       foo
+\c       mov eax,bar
+
+will expand to:
+
+\c       mov _foo,_foo
+\c       mov eax,_foo
+
+which may or may not be what you expected. The tokens \c{%*?} and
+\c{%*??} behave like \c{%?} and \c{%??} but are only expanded inside
+single-line macros. Thus:
+
+\c %imacro Foo 0
+\c       %idefine Bar _%*?
+\c       mov BAR,bAr
+\c %endmacro
+\c
+\c       foo
+\c       mov eax,bar
+
+will expand to:
+
+\c       mov _BAR,_bAr
+\c       mov eax,_bar
+
+The \c{%*?} can be used to make a keyword "disappear", for example in
+case a new instruction has been used as a label in older code.  For
+example:
+
+\c %idefine pause $%*?                 ; Hide the PAUSE instruction
 
 
 \S{undef} Undefining Single-Line Macros: \i\c{%undef}

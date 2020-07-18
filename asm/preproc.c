@@ -125,7 +125,8 @@ enum pp_token_type {
     TOK_LOCAL_MACRO, TOK_ENVIRON, TOK_STRING,
     TOK_NUMBER, TOK_FLOAT, TOK_OTHER,
     TOK_INTERNAL_STRING, TOK_NAKED_STRING,
-    TOK_PREPROC_Q, TOK_PREPROC_QQ,
+    TOK_PREPROC_Q, TOK_PREPROC_SQ, 	/* %?,  %*?  */
+    TOK_PREPROC_QQ, TOK_PREPROC_SQQ,    /* %??, %*?? */
     TOK_PASTE,              /* %+ */
     TOK_COND_COMMA,         /* %, */
     TOK_INDIRECT,           /* %[...] */
@@ -1456,6 +1457,11 @@ static Token *tokenize(const char *line)
                 p++;
                 if (*p == '?')
                     p++;
+            } else if (*p == '*' && p[1] == '?') {
+                /* %*? and %*?? */
+                p += 2;
+                if (*p == '?')
+                    p++;
             } else if (*p == '!') {
                 /* Environment variable reference */
                 p++;
@@ -1514,6 +1520,16 @@ static Token *tokenize(const char *line)
                         type = TOK_PREPROC_QQ;
                     else
                         type = TOK_PREPROC_ID;
+                    break;
+
+                case '*':
+                    type = TOK_OTHER;
+                    if (line[2] == '?') {
+                        if (toklen == 3)
+                            type = TOK_PREPROC_SQ;
+                        else if (toklen == 4 && line[3] == '?')
+                            type = TOK_PREPROC_SQQ;
+                    }
                     break;
 
                 case '!':
@@ -1584,7 +1600,8 @@ static Token *tokenize(const char *line)
                 /* type = -1; */
             }
         } else if (p[0] == '$' && p[1] == '$') {
-            type = TOK_OTHER;   /* TOKEN_BASE */
+            /* TOKEN_BASE - treat as TOK_ID for pasting purposes */
+            type = TOK_ID;
             p += 2;
         } else if (nasm_isnumstart(*p)) {
             bool is_hex = false;
@@ -1650,7 +1667,8 @@ static Token *tokenize(const char *line)
             p--;        /* Point to first character beyond number */
 
             if (p == line+1 && *line == '$') {
-                type = TOK_OTHER; /* TOKEN_HERE */
+                /* TOKEN_HERE - treat as TOK_ID for pasting purposes */
+                type = TOK_ID;
             } else {
                 if (has_e && !is_hex) {
                     /* 1e13 is floating-point, but 1e13h is not */
@@ -2375,9 +2393,8 @@ restart:
                     continue;
                 }
             }
-            if (defn) {
-                *defn = (nparam == m->nparam || nparam == -1) ? m : NULL;
-            }
+            if (defn)
+                *defn = m;
             return true;
         }
         m = m->next;
@@ -3019,7 +3036,8 @@ static SMacro *define_smacro(const char *mname, bool casesense,
     struct hash_table *smtbl;
     Context *ctx;
     bool defining_alias = false;
-    unsigned int nparam = 0;
+    int nparam = 0;
+    bool defined;
 
     if (tmpl) {
         defining_alias = tmpl->alias;
@@ -3028,46 +3046,99 @@ static SMacro *define_smacro(const char *mname, bool casesense,
             mark_smac_params(expansion, tmpl, 0);
     }
 
-    while (1) {
-        ctx = get_ctx(mname, &mname);
+    ctx = get_ctx(mname, &mname);
 
-        if (!smacro_defined(ctx, mname, nparam, &smac, casesense, true)) {
-            /* Create a new macro */
-            smtbl  = ctx ? &ctx->localmac : &smacros;
-            smhead = (SMacro **) hash_findi_add(smtbl, mname);
-            nasm_new(smac);
-            smac->next = *smhead;
-            *smhead = smac;
-            break;
-        } else if (!smac) {
-            nasm_warn(WARN_OTHER, "single-line macro `%s' defined both with and"
-                       " without parameters", mname);
-            /*
-             * Some instances of the old code considered this a failure,
-             * some others didn't.  What is the right thing to do here?
-             */
-            goto fail;
-        } else if (!smac->alias || ppopt.noaliases || defining_alias) {
-            /*
-             * We're redefining, so we have to take over an
-             * existing SMacro structure. This means freeing
-             * what was already in it, but not the structure itself.
-             */
-            clear_smacro(smac);
-            break;
-        } else if (smac->in_progress) {
-            nasm_nonfatal("macro alias loop");
-            goto fail;
-        } else {
-            /* It is an alias macro; follow the alias link */
-            SMacro *s;
+    defined = smacro_defined(ctx, mname, nparam, &smac, casesense, true);
 
-            smac->in_progress = true;
-            s = define_smacro(tok_text(smac->expansion), casesense,
-                              expansion, tmpl);
-            smac->in_progress = false;
-            return s;
+    if (defined) {
+        if (smac->alias) {
+            if (smac->in_progress) {
+                nasm_nonfatal("macro alias loop");
+                goto fail;
+            }
+
+            if (!defining_alias && !ppopt.noaliases) {
+                /* It is an alias macro; follow the alias link */
+                SMacro *s;
+
+                smac->in_progress = true;
+                s = define_smacro(tok_text(smac->expansion), casesense,
+                                  expansion, tmpl);
+                smac->in_progress = false;
+                return s;
+            }
         }
+
+        if (casesense ^ smac->casesense) {
+            /*
+             *!macro-def-case-single [on] single-line macro defined both case sensitive and insensitive
+             *!  warns when a single-line macro is defined both case
+             *!  sensitive and case insensitive.
+             *!  The new macro
+             *!  definition will override (shadow) the original one,
+             *!  although the original macro is not deleted, and will
+             *!  be re-exposed if the new macro is deleted with
+             *!  \c{%undef}, or, if the original macro is the case
+             *!  insensitive one, the macro call is done with a
+             *!  different case.
+             */
+            nasm_warn(WARN_MACRO_DEF_CASE_SINGLE, "case %ssensitive definition of macro `%s' will shadow %ssensitive macro `%s'",
+                      casesense ? "" : "in",
+                      mname,
+                      smac->casesense ? "" : "in",
+                      smac->name);
+            defined = false;
+        } else if ((!!nparam) ^ (!!smac->nparam)) {
+            /*
+             * Most recent versions of NASM considered this an error,
+             * so promote this warning to error by default.
+             *
+             *!macro-def-param-single [err] single-line macro defined with and without parameters
+             *!  warns if the same single-line macro is defined with and
+             *!  without parameters.
+             *!  The new macro
+             *!  definition will override (shadow) the original one,
+             *!  although the original macro is not deleted, and will
+             *!  be re-exposed if the new macro is deleted with
+             *!  \c{%undef}.
+             */
+            nasm_warn(WARN_MACRO_DEF_PARAM_SINGLE,
+                      "macro `%s' defined both with and without parameters",
+                      mname);
+            defined = false;
+        } else if (smac->nparam < nparam) {
+            /*
+             *!macro-def-greedy-single [on] single-line macro
+             *!  definition shadows greedy macro warns when a
+             *!  single-line macro is defined which would match a
+             *!  previously existing greedy definition.  The new macro
+             *!  definition will override (shadow) the original one,
+             *!  although the original macro is not deleted, and will
+             *!  be re-exposed if the new macro is deleted with
+             *!  \c{%undef}, and will be invoked if called with a
+             *!  parameter count that does not match the new definition.
+             */
+            nasm_warn(WARN_MACRO_DEF_GREEDY_SINGLE,
+                      "defining macro `%s' shadows previous greedy definition",
+                      mname);
+            defined = false;
+        }
+    }
+
+    if (defined) {
+        /*
+         * We're redefinining, so we have to take over an
+         * existing SMacro structure. This means freeing
+         * what was already in it, but not the structure itself.
+         */
+        clear_smacro(smac);
+    } else {
+        /* Create a new macro */
+        smtbl  = ctx ? &ctx->localmac : &smacros;
+        smhead = (SMacro **) hash_findi_add(smtbl, mname);
+        nasm_new(smac);
+        smac->next = *smhead;
+        *smhead = smac;
     }
 
     smac->name      = nasm_strdup(mname);
@@ -4685,8 +4756,8 @@ issue_error:
     }
 
 done:
-        free_tlist(origline);
-        return DIRECTIVE_FOUND;
+    free_tlist(origline);
+    return DIRECTIVE_FOUND;
 }
 
 /*
@@ -5523,11 +5594,13 @@ static SMacro *expand_one_smacro(Token ***tpp)
 
         switch (type) {
         case TOK_PREPROC_Q:
+        case TOK_PREPROC_SQ:
             delete_Token(t);
             t = dup_Token(tline, mstart);
             break;
 
         case TOK_PREPROC_QQ:
+        case TOK_PREPROC_SQQ:
         {
             size_t mlen = strlen(m->name);
 	    size_t len;
