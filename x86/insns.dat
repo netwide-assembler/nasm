@@ -2039,7 +2039,6 @@ PCMPGTQ		xmmreg,xmmrm			[rm:	66 0f 38 37 /r]				SSE42
 POPCNT		reg16,rm16			[rm:	o16 f3i 0f b8 /r]			NEHALEM,SW
 POPCNT		reg32,rm32			[rm:	o32 f3i 0f b8 /r]			NEHALEM,SD
 POPCNT		reg64,rm64			[rm:	o64 f3i 0f b8 /r]			NEHALEM,SQ,LONG
-POPCNT		reg64,rm64			[rm:	o64 f3i 0f b8 /r]			NEHALEM,SQ,LONG
 
 ;# Intel SMX
 GETSEC		void				[	0f 37]					KATMAI
@@ -5815,15 +5814,11 @@ VXORPS          zmmreg|mask|z,zmmreg*,zmmrm512|b32  [rvm:fv: evex.nds.512.0f.w0 
 
 ;# Intel memory protection keys for userspace (PKU aka PKEYs)
 RDPKRU		void				[	0f 01 ee]				LONG,FUTURE
-RDPKRU		void				[	0f 01 ee]				LONG,FUTURE
-WRPKRU		void				[	0f 01 ef]				LONG,FUTURE
 WRPKRU		void				[	0f 01 ef]				LONG,FUTURE
 
 ;# Read Processor ID
 RDPID		reg32				[m:	f3 0f c7 /7]				NOLONG,FUTURE
 RDPID		reg64				[m:	o64nw f3 0f c7 /7]			LONG,FUTURE
-RDPID		reg64				[m:	o64nw f3 0f c7 /7]			LONG,FUTURE
-RDPID		reg32				[m:	f3 0f c7 /7]				LONG,UNDOC,FUTURE
 RDPID		reg32				[m:	f3 0f c7 /7]				LONG,UNDOC,FUTURE
 
 ;# New memory instructions
@@ -5837,11 +5832,9 @@ CLZERO		void				[	0f 01 fc]				FUTURE,AMD
 CLZERO		reg_ax				[-:	a16 0f 01 fc]				FUTURE,AMD,ND,NOLONG
 CLZERO		reg_eax				[-:	a32 0f 01 fc]				FUTURE,AMD,ND
 CLZERO		reg_rax				[-:	a64 0f 01 fc]				FUTURE,AMD,ND,LONG
-CLZERO		reg_rax				[-:	a64 0f 01 fc]				FUTURE,AMD,ND,LONG
 
 ;# Processor trace write
 PTWRITE		rm32				[m:	np 0f ae /4]				FUTURE
-PTWRITE		rm64				[m:	o64 np 0f ae /4]			LONG,FUTURE
 PTWRITE		rm64				[m:	o64 np 0f ae /4]			LONG,FUTURE
 
 ;# Instructions from the Intel Instruction Set Extensions,
@@ -5849,17 +5842,14 @@ PTWRITE		rm64				[m:	o64 np 0f ae /4]			LONG,FUTURE
 CLDEMOTE	mem				[m:	np 0f 1c /0]				FUTURE
 MOVDIRI		mem32,reg32			[mr:	np 0f 38 f9 /r]				FUTURE,SD
 MOVDIRI		mem64,reg64			[mr:	o64 0f 38 f9 /r]			FUTURE,LONG,SQ
-MOVDIRI		mem64,reg64			[mr:	o64 0f 38 f9 /r]			FUTURE,LONG,SQ
 MOVDIR64B	reg16,mem512			[rm:	a16 66 0f 38 f8 /r]			FUTURE,NOLONG
 MOVDIR64B	reg32,mem512			[rm:	a32 66 0f 38 f8 /r]			FUTURE
-MOVDIR64B	reg64,mem512			[rm:	o64nw a64 66 0f 38 f8 /r]		FUTURE,LONG
 MOVDIR64B	reg64,mem512			[rm:	o64nw a64 66 0f 38 f8 /r]		FUTURE,LONG
 PCONFIG		void				[	np 0f 01 c5]				FUTURE
 TPAUSE		reg32				[m:	66 0f ae /6]				FUTURE
 TPAUSE		reg32,reg_edx,reg_eax		[m--:	66 0f ae /6]				FUTURE,ND
 UMONITOR	reg16				[m:	a16 f3 0f ae /6]			FUTURE,NOLONG
 UMONITOR	reg32				[m:	a32 f3 0f ae /6]			FUTURE
-UMONITOR	reg64				[m:	o64nw a64 f3 0f ae /6]			FUTURE,LONG
 UMONITOR	reg64				[m:	o64nw a64 f3 0f ae /6]			FUTURE,LONG
 UMWAIT		reg32				[m:	f2 0f ae /6]				FUTURE
 UMWAIT		reg32,reg_edx,reg_eax		[m--:	f2 0f ae /6]				FUTURE,ND
@@ -5999,18 +5989,14 @@ ENDBR32		void				[	f3 0f 1e fb]				CET,FUTURE
 ENDBR64		void				[	f3 0f 1e fa]				CET,FUTURE
 INCSSPD		reg32				[m:	o32 f3 0f ae /5]			CET,FUTURE
 INCSSPQ		reg64				[m:	o64 f3 0f ae /5]			CET,FUTURE,LONG
-INCSSPQ		reg64				[m:	o64 f3 0f ae /5]			CET,FUTURE,LONG
 RDSSPD		reg32				[m:	o32 f3 0f 1e /1]			CET,FUTURE
-RDSSPQ		reg64				[m:	o64 f3 0f 1e /1]			CET,FUTURE,LONG
 RDSSPQ		reg64				[m:	o64 f3 0f 1e /1]			CET,FUTURE,LONG
 RSTORSSP	mem64				[m:	f3 0f 01 /5]				CET,FUTURE
 SAVEPREVSSP	void				[	f3 0f 01 ea]				CET,FUTURE
 SETSSBSY	void				[	f3 0f 01 e8]				CET,FUTURE
 WRUSSD		mem,reg32			[mr:	o32 66 0f 38 f5 /r]			CET,FUTURE
 WRUSSQ		mem,reg64			[mr:	o64 66 0f 38 f5 /r]			CET,FUTURE,LONG
-WRUSSQ		mem,reg64			[mr:	o64 66 0f 38 f5 /r]			CET,FUTURE,LONG
 WRSSD		mem,reg32			[mr:	o32 0f 38 f6 /r]			CET,FUTURE
-WRSSQ		mem,reg64			[mr:	o64 0f 38 f6 /r]			CET,FUTURE,LONG
 WRSSQ		mem,reg64			[mr:	o64 0f 38 f6 /r]			CET,FUTURE,LONG
 
 ;# Instructions from ISE doc 319433-040, June 2020
@@ -6018,11 +6004,9 @@ ENQCMD		reg16,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE
 ENQCMD		reg32,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE,ND
 ENQCMD		reg32,mem512			[rm:	a32 f2 0f 38 f8 /r]			ENQCMD,FUTURE
 ENQCMD		reg64,mem512			[rm:	a64 f2 0f 38 f8 /r]			ENQCMD,FUTURE,LONG
-ENQCMD		reg64,mem512			[rm:	a64 f2 0f 38 f8 /r]			ENQCMD,FUTURE,LONG
 ENQCMDS		reg16,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV
 ENQCMDS		reg32,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV,ND
 ENQCMDS		reg32,mem512			[rm:	a32 f2 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV
-ENQCMDS		reg64,mem512			[rm:	a64 f2 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV,LONG
 ENQCMDS		reg64,mem512			[rm:	a64 f2 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV,LONG
 PCONFIG		void				[	np 0f 01 c5]				PCONFIG,FUTURE,PRIV
 SERIALIZE	void				[	np 0f 01 e8]				SERIALIZE,FUTURE
@@ -6048,28 +6032,16 @@ VP2INTERSECTD	kreg|rs2,zmmreg,zmmrm128|b32		[rvm:fv:	evex.nds.512.f2.0f38.w0 68 
 
 ;# Intel Advanced Matrix Extensions (AMX)
 LDTILECFG	mem512				[m:	vex.128.np.0f38.w0 49 /0]		AMXTILE,FUTURE,SZ,LONG
-LDTILECFG	mem512				[m:	vex.128.np.0f38.w0 49 /0]		AMXTILE,FUTURE,SZ,LONG
-STTILECFG	mem512				[m:	vex.128.66.0f38.w0 49 /0]		AMXTILE,FUTURE,SZ,LONG
 STTILECFG	mem512				[m:	vex.128.66.0f38.w0 49 /0]		AMXTILE,FUTURE,SZ,LONG
 TDPBF16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5c /r]		AMXBF16,FUTURE,LONG
-TDPBF16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5c /r]		AMXBF16,FUTURE,LONG
-TDPBSSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
 TDPBSSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
 TDPBSUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
-TDPBSUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
-TDPBUSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
 TDPBUSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
 TDPBUUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
-TDPBUUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
-TILELOADD	tmmreg,mem			[rm:	vex.128.f2.0f38.w0 4b /r]		AMXTILE,MIB,FUTURE,SX,LONG
 TILELOADD	tmmreg,mem			[rm:	vex.128.f2.0f38.w0 4b /r]		AMXTILE,MIB,FUTURE,SX,LONG
 TILELOADDT1	tmmreg,mem			[rm:	vex.128.f2.0f38.w0 4b /r]		AMXTILE,MIB,FUTURE,SX,LONG
-TILELOADDT1	tmmreg,mem			[rm:	vex.128.f2.0f38.w0 4b /r]		AMXTILE,MIB,FUTURE,SX,LONG
-TILERELEASE	void				[	vex.128.np.0f38.w0 49 c0]		AMXTILE,FUTURE,LONG
 TILERELEASE	void				[	vex.128.np.0f38.w0 49 c0]		AMXTILE,FUTURE,LONG
 TILESTORED	mem,tmmreg			[mr:	vex.128.f3.0f38.w0 4b /r]		AMXTILE,MIB,FUTURE,SX,LONG
-TILESTORED	mem,tmmreg			[mr:	vex.128.f3.0f38.w0 4b /r]		AMXTILE,MIB,FUTURE,SX,LONG
-TILEZERO	tmmreg				[r:	vex.128.f2.0f38.w0 49 /3r0]		AMXTILE,FUTURE,LONG
 TILEZERO	tmmreg				[r:	vex.128.f2.0f38.w0 49 /3r0]		AMXTILE,FUTURE,LONG
 
 ;# Systematic names for the hinting nop instructions
