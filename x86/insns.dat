@@ -1554,10 +1554,8 @@ CMPUNORDPS	xmmreg,xmmrm128			[rm:	np 0f c2 /r 03]				KATMAI,SSE
 CMPUNORDSS	xmmreg,xmmrm32			[rm:	f3 0f c2 /r 03]				KATMAI,SSE
 ; CMPPS/CMPSS must come after the specific ops; that way the disassembler will find the
 ; specific ops first and only disassemble illegal ones as cmpps/cmpss.
-CMPPS		xmmreg,mem,imm			[rmi:	np 0f c2 /r ib,u]			KATMAI,SSE,SB,AR2
-CMPPS		xmmreg,xmmreg,imm		[rmi:	np 0f c2 /r ib,u]			KATMAI,SSE,SB,AR2
-CMPSS		xmmreg,mem,imm			[rmi:	f3 0f c2 /r ib,u]			KATMAI,SSE,SB,AR2
-CMPSS		xmmreg,xmmreg,imm		[rmi:	f3 0f c2 /r ib,u]			KATMAI,SSE,SB,AR2
+CMPPS		xmmreg,xmmrm128,imm8		[rmi:	np 0f c2 /r ib,u]			KATMAI,SSE
+CMPSS		xmmreg,xmmrm32,imm8		[rmi:	f3 0f c2 /r ib,u]			KATMAI,SSE
 COMISS		xmmreg,xmmrm32			[rm:	np 0f 2f /r]				KATMAI,SSE
 CVTPI2PS	xmmreg,mmxrm64			[rm:	np 0f 2a /r]				KATMAI,SSE,MMX
 CVTPS2PI	mmxreg,xmmrm64			[rm:	np 0f 2d /r]				KATMAI,SSE,MMX
@@ -1590,8 +1588,7 @@ MOVMSKPS	reg32,xmmreg			[rm:	np 0f 50 /r]				KATMAI,SSE
 MOVMSKPS	reg64,xmmreg			[rm:	np o64 0f 50 /r]			X86_64,LONG,SSE
 MOVNTPS		mem128,xmmreg			[mr:	np 0f 2b /r]				KATMAI,SSE
 MOVSS		xmmreg,xmmrm32			[rm:	f3 0f 10 /r]				KATMAI,SSE
-MOVSS		mem32,xmmreg			[mr:	f3 0f 11 /r]				KATMAI,SSE
-MOVSS		xmmreg,xmmreg			[rm:	f3 0f 10 /r]				KATMAI,SSE
+MOVSS		xmmrm32,xmmreg			[mr:	f3 0f 11 /r]				KATMAI,SSE
 MOVUPS		xmmreg,xmmrm128			[rm:	np 0f 10 /r]				KATMAI,SSE
 MOVUPS		xmmrm128,xmmreg			[mr:	np 0f 11 /r]				KATMAI,SSE
 MULPS		xmmreg,xmmrm128			[rm:	np 0f 59 /r]				KATMAI,SSE
@@ -1688,14 +1685,10 @@ MOVD		mem,xmmreg			[mr:	66 norexw 0f 7e /r]			WILLAMETTE,SSE2,SD
 MOVD		xmmreg,mem			[rm:	66 norexw 0f 6e /r]			WILLAMETTE,SSE2,SD
 MOVD		xmmreg,rm32			[rm:	66 norexw 0f 6e /r]			WILLAMETTE,SSE2
 MOVD		rm32,xmmreg			[mr:	66 norexw 0f 7e /r]			WILLAMETTE,SSE2
-MOVDQA		xmmreg,xmmreg			[rm:	66 0f 6f /r]				WILLAMETTE,SSE2
-MOVDQA		mem,xmmreg			[mr:	66 0f 7f /r]				WILLAMETTE,SSE2,SO
-MOVDQA		xmmreg,mem			[rm:	66 0f 6f /r]				WILLAMETTE,SSE2,SO
-MOVDQA		xmmreg,xmmreg			[mr:	66 0f 7f /r]				WILLAMETTE,SSE2
-MOVDQU		xmmreg,xmmreg			[rm:	f3 0f 6f /r]				WILLAMETTE,SSE2
-MOVDQU		mem,xmmreg			[mr:	f3 0f 7f /r]				WILLAMETTE,SSE2,SO
-MOVDQU		xmmreg,mem			[rm:	f3 0f 6f /r]				WILLAMETTE,SSE2,SO
-MOVDQU		xmmreg,xmmreg			[mr:	f3 0f 7f /r]				WILLAMETTE,SSE2
+MOVDQA		xmmreg,xmmrm128			[rm:	66 0f 6f /r]				WILLAMETTE,SSE2,SO
+MOVDQA		xmmrm128,xmmreg			[mr:	66 0f 7f /r]				WILLAMETTE,SSE2,SO
+MOVDQU		xmmreg,xmmrm128			[rm:	f3 0f 6f /r]				WILLAMETTE,SSE2,SO
+MOVDQU		xmmrm128,xmmreg			[mr:	f3 0f 7f /r]				WILLAMETTE,SSE2,SO
 MOVDQ2Q		mmxreg,xmmreg			[rm:	f2 0f d6 /r]				WILLAMETTE,SSE2
 MOVQ		xmmreg,xmmreg			[rm:	f3 0f 7e /r]				WILLAMETTE,SSE2
 MOVQ		xmmreg,xmmreg			[mr:	66 0f d6 /r]				WILLAMETTE,SSE2
@@ -1795,26 +1788,26 @@ ADDSD		xmmreg,xmmrm			[rm:	f2 0f 58 /r]				WILLAMETTE,SSE2,SQ
 ANDNPD		xmmreg,xmmrm			[rm:	66 0f 55 /r]				WILLAMETTE,SSE2,SO
 ANDPD		xmmreg,xmmrm			[rm:	66 0f 54 /r]				WILLAMETTE,SSE2,SO
 CMPEQPD		xmmreg,xmmrm			[rm:	66 0f c2 /r 00]				WILLAMETTE,SSE2,SO
-CMPEQSD		xmmreg,xmmrm			[rm:	f2 0f c2 /r 00]				WILLAMETTE,SSE2
+CMPEQSD		xmmreg,xmmrm			[rm:	f2 0f c2 /r 00]				WILLAMETTE,SSE2,SQ
 CMPLEPD		xmmreg,xmmrm			[rm:	66 0f c2 /r 02]				WILLAMETTE,SSE2,SO
-CMPLESD		xmmreg,xmmrm			[rm:	f2 0f c2 /r 02]				WILLAMETTE,SSE2
+CMPLESD		xmmreg,xmmrm			[rm:	f2 0f c2 /r 02]				WILLAMETTE,SSE2,SQ
 CMPLTPD		xmmreg,xmmrm			[rm:	66 0f c2 /r 01]				WILLAMETTE,SSE2,SO
-CMPLTSD		xmmreg,xmmrm			[rm:	f2 0f c2 /r 01]				WILLAMETTE,SSE2
+CMPLTSD		xmmreg,xmmrm			[rm:	f2 0f c2 /r 01]				WILLAMETTE,SSE2,SQ
 CMPNEQPD	xmmreg,xmmrm			[rm:	66 0f c2 /r 04]				WILLAMETTE,SSE2,SO
-CMPNEQSD	xmmreg,xmmrm			[rm:	f2 0f c2 /r 04]				WILLAMETTE,SSE2
+CMPNEQSD	xmmreg,xmmrm			[rm:	f2 0f c2 /r 04]				WILLAMETTE,SSE2,SQ
 CMPNLEPD	xmmreg,xmmrm			[rm:	66 0f c2 /r 06]				WILLAMETTE,SSE2,SO
-CMPNLESD	xmmreg,xmmrm			[rm:	f2 0f c2 /r 06]				WILLAMETTE,SSE2
+CMPNLESD	xmmreg,xmmrm			[rm:	f2 0f c2 /r 06]				WILLAMETTE,SSE2,SQ
 CMPNLTPD	xmmreg,xmmrm			[rm:	66 0f c2 /r 05]				WILLAMETTE,SSE2,SO
-CMPNLTSD	xmmreg,xmmrm			[rm:	f2 0f c2 /r 05]				WILLAMETTE,SSE2
+CMPNLTSD	xmmreg,xmmrm			[rm:	f2 0f c2 /r 05]				WILLAMETTE,SSE2,SQ
 CMPORDPD	xmmreg,xmmrm			[rm:	66 0f c2 /r 07]				WILLAMETTE,SSE2,SO
-CMPORDSD	xmmreg,xmmrm			[rm:	f2 0f c2 /r 07]				WILLAMETTE,SSE2
+CMPORDSD	xmmreg,xmmrm			[rm:	f2 0f c2 /r 07]				WILLAMETTE,SSE2,SQ
 CMPUNORDPD	xmmreg,xmmrm			[rm:	66 0f c2 /r 03]				WILLAMETTE,SSE2,SO
-CMPUNORDSD	xmmreg,xmmrm			[rm:	f2 0f c2 /r 03]				WILLAMETTE,SSE2
+CMPUNORDSD	xmmreg,xmmrm			[rm:	f2 0f c2 /r 03]				WILLAMETTE,SSE2,SQ
 ; CMPPD/CMPSD must come after the specific ops; that way the disassembler will find the
 ; specific ops first and only disassemble illegal ones as cmppd/cmpsd.
 CMPPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f c2 /r ib,u]			WILLAMETTE,SSE2
 CMPSD		xmmreg,xmmrm128,imm8		[rmi:	f2 0f c2 /r ib,u]			WILLAMETTE,SSE2
-COMISD		xmmreg,xmmrm			[rm:	66 0f 2f /r]				WILLAMETTE,SSE2
+COMISD		xmmreg,xmmrm64			[rm:	66 0f 2f /r]				WILLAMETTE,SSE2
 CVTDQ2PD	xmmreg,xmmrm			[rm:	f3 0f e6 /r]				WILLAMETTE,SSE2,SQ
 CVTDQ2PS	xmmreg,xmmrm			[rm:	np 0f 5b /r]				WILLAMETTE,SSE2,SO
 CVTPD2DQ	xmmreg,xmmrm			[rm:	f2 0f e6 /r]				WILLAMETTE,SSE2,SO
@@ -1840,54 +1833,47 @@ CVTTSD2SI	reg32,mem			[rm:	norexw f2 0f 2c /r]			WILLAMETTE,SSE2,SQ,AR1
 CVTTSD2SI	reg64,xmmreg			[rm:	o64 f2 0f 2c /r]			X86_64,LONG,SSE2,SQ,AR1
 CVTTSD2SI	reg64,mem			[rm:	o64 f2 0f 2c /r]			X86_64,LONG,SSE2,SQ,AR1
 DIVPD		xmmreg,xmmrm			[rm:	66 0f 5e /r]				WILLAMETTE,SSE2,SO
-DIVSD		xmmreg,xmmrm			[rm:	f2 0f 5e /r]				WILLAMETTE,SSE2
+DIVSD		xmmreg,xmmrm			[rm:	f2 0f 5e /r]				WILLAMETTE,SSE2,SQ
 MAXPD		xmmreg,xmmrm			[rm:	66 0f 5f /r]				WILLAMETTE,SSE2,SO
-MAXSD		xmmreg,xmmrm			[rm:	f2 0f 5f /r]				WILLAMETTE,SSE2
+MAXSD		xmmreg,xmmrm			[rm:	f2 0f 5f /r]				WILLAMETTE,SSE2,SQ
 MINPD		xmmreg,xmmrm			[rm:	66 0f 5d /r]				WILLAMETTE,SSE2,SO
-MINSD		xmmreg,xmmrm			[rm:	f2 0f 5d /r]				WILLAMETTE,SSE2
-MOVAPD		xmmreg,xmmreg			[rm:	66 0f 28 /r]				WILLAMETTE,SSE2
-MOVAPD		xmmreg,xmmreg			[mr:	66 0f 29 /r]				WILLAMETTE,SSE2
-MOVAPD		mem,xmmreg			[mr:	66 0f 29 /r]				WILLAMETTE,SSE2,SO
-MOVAPD		xmmreg,mem			[rm:	66 0f 28 /r]				WILLAMETTE,SSE2,SO
-MOVHPD		mem,xmmreg			[mr:	66 0f 17 /r]				WILLAMETTE,SSE2
-MOVHPD		xmmreg,mem			[rm:	66 0f 16 /r]				WILLAMETTE,SSE2
+MINSD		xmmreg,xmmrm			[rm:	f2 0f 5d /r]				WILLAMETTE,SSE2,SQ
+MOVAPD		xmmreg,xmmrm128			[rm:	66 0f 28 /r]				WILLAMETTE,SSE2,SO
+MOVAPD		xmmrm128,xmmreg			[mr:	66 0f 29 /r]				WILLAMETTE,SSE2,SO
+MOVHPD		mem64,xmmreg			[mr:	66 0f 17 /r]				WILLAMETTE,SSE2,SO
+MOVHPD		xmmreg,mem64			[rm:	66 0f 16 /r]				WILLAMETTE,SSE2,SO
 MOVLPD		mem64,xmmreg			[mr:	66 0f 13 /r]				WILLAMETTE,SSE2
 MOVLPD		xmmreg,mem64			[rm:	66 0f 12 /r]				WILLAMETTE,SSE2
 MOVMSKPD	reg32,xmmreg			[rm:	66 0f 50 /r]				WILLAMETTE,SSE2
 MOVMSKPD	reg64,xmmreg			[rm:	66 o64 0f 50 /r]			X86_64,LONG,SSE2
-MOVSD		xmmreg,xmmreg			[rm:	f2 0f 10 /r]				WILLAMETTE,SSE2
-MOVSD		xmmreg,xmmreg			[mr:	f2 0f 11 /r]				WILLAMETTE,SSE2
-MOVSD		mem64,xmmreg			[mr:	f2 0f 11 /r]				WILLAMETTE,SSE2
-MOVSD		xmmreg,mem64			[rm:	f2 0f 10 /r]				WILLAMETTE,SSE2
-MOVUPD		xmmreg,xmmreg			[rm:	66 0f 10 /r]				WILLAMETTE,SSE2
-MOVUPD		xmmreg,xmmreg			[mr:	66 0f 11 /r]				WILLAMETTE,SSE2
-MOVUPD		mem,xmmreg			[mr:	66 0f 11 /r]				WILLAMETTE,SSE2,SO
-MOVUPD		xmmreg,mem			[rm:	66 0f 10 /r]				WILLAMETTE,SSE2,SO
-MULPD		xmmreg,xmmrm			[rm:	66 0f 59 /r]				WILLAMETTE,SSE2,SO
-MULSD		xmmreg,xmmrm			[rm:	f2 0f 59 /r]				WILLAMETTE,SSE2
-ORPD		xmmreg,xmmrm			[rm:	66 0f 56 /r]				WILLAMETTE,SSE2,SO
-SHUFPD		xmmreg,xmmreg,imm		[rmi:	66 0f c6 /r ib,u]			WILLAMETTE,SSE2,SB,AR2
-SHUFPD		xmmreg,mem,imm			[rmi:	66 0f c6 /r ib,u]			WILLAMETTE,SSE2,SM,SB,AR2
-SQRTPD		xmmreg,xmmrm			[rm:	66 0f 51 /r]				WILLAMETTE,SSE2,SO
-SQRTSD		xmmreg,xmmrm			[rm:	f2 0f 51 /r]				WILLAMETTE,SSE2
-SUBPD		xmmreg,xmmrm			[rm:	66 0f 5c /r]				WILLAMETTE,SSE2,SO
-SUBSD		xmmreg,xmmrm			[rm:	f2 0f 5c /r]				WILLAMETTE,SSE2
-UCOMISD		xmmreg,xmmrm			[rm:	66 0f 2e /r]				WILLAMETTE,SSE2
+MOVSD		xmmreg,xmmrm64			[rm:	f2 0f 10 /r]				WILLAMETTE,SSE2
+MOVSD		xmmrm64,xmmreg			[mr:	f2 0f 11 /r]				WILLAMETTE,SSE2
+MOVUPD		xmmreg,xmmrm128			[rm:	66 0f 10 /r]				WILLAMETTE,SSE2
+MOVUPD		xmmrm128,xmmreg			[mr:	66 0f 11 /r]				WILLAMETTE,SSE2
+MULPD		xmmreg,xmmrm128			[rm:	66 0f 59 /r]				WILLAMETTE,SSE2,SO
+MULSD		xmmreg,xmmrm64			[rm:	f2 0f 59 /r]				WILLAMETTE,SSE2,SQ
+ORPD		xmmreg,xmmrm128			[rm:	66 0f 56 /r]				WILLAMETTE,SSE2,SO
+SHUFPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f c6 /r ib,u]			WILLAMETTE,SSE2
+SQRTPD		xmmreg,xmmrm128			[rm:	66 0f 51 /r]				WILLAMETTE,SSE2,SO
+SQRTSD		xmmreg,xmmrm64			[rm:	f2 0f 51 /r]				WILLAMETTE,SSE2
+SUBPD		xmmreg,xmmrm128			[rm:	66 0f 5c /r]				WILLAMETTE,SSE2,SO
+SUBSD		xmmreg,xmmrm64			[rm:	f2 0f 5c /r]				WILLAMETTE,SSE2
+UCOMISD		xmmreg,xmmrm64			[rm:	66 0f 2e /r]				WILLAMETTE,SSE2
 UNPCKHPD	xmmreg,xmmrm128			[rm:	66 0f 15 /r]				WILLAMETTE,SSE2
 UNPCKLPD	xmmreg,xmmrm128			[rm:	66 0f 14 /r]				WILLAMETTE,SSE2
 XORPD		xmmreg,xmmrm128			[rm:	66 0f 57 /r]				WILLAMETTE,SSE2
 
 ;# Prescott New Instructions (SSE3)
-ADDSUBPD	xmmreg,xmmrm			[rm:	66 0f d0 /r]				PRESCOTT,SSE3,SO
-ADDSUBPS	xmmreg,xmmrm			[rm:	f2 0f d0 /r]				PRESCOTT,SSE3,SO
-HADDPD		xmmreg,xmmrm			[rm:	66 0f 7c /r]				PRESCOTT,SSE3,SO
-HADDPS		xmmreg,xmmrm			[rm:	f2 0f 7c /r]				PRESCOTT,SSE3,SO
-HSUBPD		xmmreg,xmmrm			[rm:	66 0f 7d /r]				PRESCOTT,SSE3,SO
-HSUBPS		xmmreg,xmmrm			[rm:	f2 0f 7d /r]				PRESCOTT,SSE3,SO
-LDDQU		xmmreg,mem			[rm:	f2 0f f0 /r]				PRESCOTT,SSE3,SO
-MOVDDUP		xmmreg,xmmrm			[rm:	f2 0f 12 /r]				PRESCOTT,SSE3,SQ
-MOVSHDUP	xmmreg,xmmrm			[rm:	f3 0f 16 /r]				PRESCOTT,SSE3
-MOVSLDUP	xmmreg,xmmrm			[rm:	f3 0f 12 /r]				PRESCOTT,SSE3
+ADDSUBPD	xmmreg,xmmrm128			[rm:	66 0f d0 /r]				PRESCOTT,SSE3,SO
+ADDSUBPS	xmmreg,xmmrm128			[rm:	f2 0f d0 /r]				PRESCOTT,SSE3,SO
+HADDPD		xmmreg,xmmrm128			[rm:	66 0f 7c /r]				PRESCOTT,SSE3,SO
+HADDPS		xmmreg,xmmrm128			[rm:	f2 0f 7c /r]				PRESCOTT,SSE3,SO
+HSUBPD		xmmreg,xmmrm128			[rm:	66 0f 7d /r]				PRESCOTT,SSE3,SO
+HSUBPS		xmmreg,xmmrm128			[rm:	f2 0f 7d /r]				PRESCOTT,SSE3,SO
+LDDQU		xmmreg,mem128			[rm:	f2 0f f0 /r]				PRESCOTT,SSE3,SO
+MOVDDUP		xmmreg,xmmrm64			[rm:	f2 0f 12 /r]				PRESCOTT,SSE3,SQ
+MOVSHDUP	xmmreg,xmmrm128			[rm:	f3 0f 16 /r]				PRESCOTT,SSE3
+MOVSLDUP	xmmreg,xmmrm128			[rm:	f3 0f 12 /r]				PRESCOTT,SSE3
 
 ;# VMX/SVM Instructions
 CLGI		void				[	0f 01 dd]				VMX,AMD
@@ -1917,45 +1903,45 @@ INVVPID		reg64,mem			[rm: o64nw 66 0f 38 81 /r]			VMX,SO,LONG
 
 ;# Tejas New Instructions (SSSE3)
 PABSB		mmxreg,mmxrm			[rm:	np 0f 38 1c /r]				SSSE3,MMX,SQ
-PABSB		xmmreg,xmmrm			[rm:	66 0f 38 1c /r]				SSSE3
+PABSB		xmmreg,xmmrm128			[rm:	66 0f 38 1c /r]				SSSE3
 PABSW		mmxreg,mmxrm			[rm:	np 0f 38 1d /r]				SSSE3,MMX,SQ
-PABSW		xmmreg,xmmrm			[rm:	66 0f 38 1d /r]				SSSE3
+PABSW		xmmreg,xmmrm128			[rm:	66 0f 38 1d /r]				SSSE3
 PABSD		mmxreg,mmxrm			[rm:	np 0f 38 1e /r]				SSSE3,MMX,SQ
-PABSD		xmmreg,xmmrm			[rm:	66 0f 38 1e /r]				SSSE3
+PABSD		xmmreg,xmmrm128			[rm:	66 0f 38 1e /r]				SSSE3
 PALIGNR		mmxreg,mmxrm,imm		[rmi:	np 0f 3a 0f /r ib,u]			SSSE3,MMX,SQ
 PALIGNR		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0f /r ib,u]			SSSE3
 PHADDW		mmxreg,mmxrm			[rm:	np 0f 38 01 /r]				SSSE3,MMX,SQ
-PHADDW		xmmreg,xmmrm			[rm:	66 0f 38 01 /r]				SSSE3
+PHADDW		xmmreg,xmmrm128			[rm:	66 0f 38 01 /r]				SSSE3
 PHADDD		mmxreg,mmxrm			[rm:	np 0f 38 02 /r]				SSSE3,MMX,SQ
-PHADDD		xmmreg,xmmrm			[rm:	66 0f 38 02 /r]				SSSE3
+PHADDD		xmmreg,xmmrm128			[rm:	66 0f 38 02 /r]				SSSE3
 PHADDSW		mmxreg,mmxrm			[rm:	np 0f 38 03 /r]				SSSE3,MMX,SQ
-PHADDSW		xmmreg,xmmrm			[rm:	66 0f 38 03 /r]				SSSE3
+PHADDSW		xmmreg,xmmrm128			[rm:	66 0f 38 03 /r]				SSSE3
 PHSUBW		mmxreg,mmxrm			[rm:	np 0f 38 05 /r]				SSSE3,MMX,SQ
-PHSUBW		xmmreg,xmmrm			[rm:	66 0f 38 05 /r]				SSSE3
+PHSUBW		xmmreg,xmmrm128			[rm:	66 0f 38 05 /r]				SSSE3
 PHSUBD		mmxreg,mmxrm			[rm:	np 0f 38 06 /r]				SSSE3,MMX,SQ
-PHSUBD		xmmreg,xmmrm			[rm:	66 0f 38 06 /r]				SSSE3
+PHSUBD		xmmreg,xmmrm128			[rm:	66 0f 38 06 /r]				SSSE3
 PHSUBSW		mmxreg,mmxrm			[rm:	np 0f 38 07 /r]				SSSE3,MMX,SQ
-PHSUBSW		xmmreg,xmmrm			[rm:	66 0f 38 07 /r]				SSSE3
+PHSUBSW		xmmreg,xmmrm128			[rm:	66 0f 38 07 /r]				SSSE3
 PMADDUBSW	mmxreg,mmxrm			[rm:	np 0f 38 04 /r]				SSSE3,MMX,SQ
-PMADDUBSW	xmmreg,xmmrm			[rm:	66 0f 38 04 /r]				SSSE3
+PMADDUBSW	xmmreg,xmmrm128			[rm:	66 0f 38 04 /r]				SSSE3
 PMULHRSW	mmxreg,mmxrm			[rm:	np 0f 38 0b /r]				SSSE3,MMX,SQ
-PMULHRSW	xmmreg,xmmrm			[rm:	66 0f 38 0b /r]				SSSE3
+PMULHRSW	xmmreg,xmmrm128			[rm:	66 0f 38 0b /r]				SSSE3
 PSHUFB		mmxreg,mmxrm			[rm:	np 0f 38 00 /r]				SSSE3,MMX,SQ
-PSHUFB		xmmreg,xmmrm			[rm:	66 0f 38 00 /r]				SSSE3
+PSHUFB		xmmreg,xmmrm128			[rm:	66 0f 38 00 /r]				SSSE3
 PSIGNB		mmxreg,mmxrm			[rm:	np 0f 38 08 /r]				SSSE3,MMX,SQ
-PSIGNB		xmmreg,xmmrm			[rm:	66 0f 38 08 /r]				SSSE3
+PSIGNB		xmmreg,xmmrm128			[rm:	66 0f 38 08 /r]				SSSE3
 PSIGNW		mmxreg,mmxrm			[rm:	np 0f 38 09 /r]				SSSE3,MMX,SQ
-PSIGNW		xmmreg,xmmrm			[rm:	66 0f 38 09 /r]				SSSE3
+PSIGNW		xmmreg,xmmrm128			[rm:	66 0f 38 09 /r]				SSSE3
 PSIGND		mmxreg,mmxrm			[rm:	np 0f 38 0a /r]				SSSE3,MMX,SQ
-PSIGND		xmmreg,xmmrm			[rm:	66 0f 38 0a /r]				SSSE3
+PSIGND		xmmreg,xmmrm128			[rm:	66 0f 38 0a /r]				SSSE3
 
 ;# AMD SSE4A
 EXTRQ		xmmreg,imm,imm			[mij:	66 0f 78 /0 ib,u ib,u]			SSE4A,AMD
 EXTRQ		xmmreg,xmmreg			[rm:	66 0f 79 /r]				SSE4A,AMD
 INSERTQ		xmmreg,xmmreg,imm,imm		[rmij:	f2 0f 78 /r ib,u ib,u]			SSE4A,AMD
 INSERTQ		xmmreg,xmmreg			[rm:	f2 0f 79 /r]				SSE4A,AMD
-MOVNTSD		mem,xmmreg			[mr:	f2 0f 2b /r]				SSE4A,AMD,SQ
-MOVNTSS		mem,xmmreg			[mr:	f3 0f 2b /r]				SSE4A,AMD,SD
+MOVNTSD		mem64,xmmreg			[mr:	f2 0f 2b /r]				SSE4A,AMD,SQ
+MOVNTSS		mem32,xmmreg			[mr:	f3 0f 2b /r]				SSE4A,AMD,SD
 
 ;# New instructions in Barcelona
 LZCNT		reg16,rm16			[rm:	o16 f3i 0f bd /r]			P6,AMD
@@ -1963,67 +1949,65 @@ LZCNT		reg32,rm32			[rm:	o32 f3i 0f bd /r]			P6,AMD
 LZCNT		reg64,rm64			[rm:	o64 f3i 0f bd /r]			X86_64,LONG,AMD
 
 ;# Penryn New Instructions (SSE4.1)
-BLENDPD		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0d /r ib,u]			SSE41
-BLENDPS		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0c /r ib,u]			SSE41
-BLENDVPD	xmmreg,xmmrm,xmm0		[rm-:	66 0f 38 15 /r]				SSE41
-BLENDVPD	xmmreg,xmmrm			[rm:	66 0f 38 15 /r]				SSE41
-BLENDVPS	xmmreg,xmmrm,xmm0		[rm-:	66 0f 38 14 /r]				SSE41
-BLENDVPS	xmmreg,xmmrm			[rm:	66 0f 38 14 /r]				SSE41
-DPPD		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 41 /r ib,u]			SSE41
-DPPS		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 40 /r ib,u]			SSE41
-EXTRACTPS	rm32,xmmreg,imm			[mri:	66 0f 3a 17 /r ib,u]			SSE41
-EXTRACTPS	reg64,xmmreg,imm		[mri:	o64 66 0f 3a 17 /r ib,u]		SSE41,X86_64,LONG
-INSERTPS	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 21 /r ib,u]			SSE41,SD
+BLENDPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 0d /r ib,u]			SSE41
+BLENDPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 0c /r ib,u]			SSE41
+BLENDVPD	xmmreg,xmmrm128,xmm0		[rm-:	66 0f 38 15 /r]				SSE41
+BLENDVPD	xmmreg,xmmrm128			[rm:	66 0f 38 15 /r]				SSE41
+BLENDVPS	xmmreg,xmmrm128,xmm0		[rm-:	66 0f 38 14 /r]				SSE41
+BLENDVPS	xmmreg,xmmrm128			[rm:	66 0f 38 14 /r]				SSE41
+DPPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 41 /r ib,u]			SSE41
+DPPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 40 /r ib,u]			SSE41
+EXTRACTPS	rm32,xmmreg,imm8		[mri:	66 0f 3a 17 /r ib,u]			SSE41
+EXTRACTPS	reg64,xmmreg,imm8		[mri:	o64 66 0f 3a 17 /r ib,u]		SSE41,X86_64,LONG
+INSERTPS	xmmreg,xmmrm32,imm8		[rmi:	66 0f 3a 21 /r ib,u]			SSE41,SD
 MOVNTDQA	xmmreg,mem128			[rm:	66 0f 38 2a /r]				SSE41
-MPSADBW		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 42 /r ib,u]			SSE41
-PACKUSDW	xmmreg,xmmrm			[rm:	66 0f 38 2b /r]				SSE41
+MPSADBW		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 42 /r ib,u]			SSE41
+PACKUSDW	xmmreg,xmmrm128			[rm:	66 0f 38 2b /r]				SSE41
 PBLENDVB	xmmreg,xmmrm,xmm0		[rm-:	66 0f 38 10 /r]				SSE41
-PBLENDVB	xmmreg,xmmrm			[rm:	66 0f 38 10 /r]				SSE41
-PBLENDW		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0e /r ib,u]			SSE41
-PCMPEQQ		xmmreg,xmmrm			[rm:	66 0f 38 29 /r]				SSE41
-PEXTRB		reg32,xmmreg,imm		[mri:	66 0f 3a 14 /r ib,u]			SSE41
-PEXTRB		mem8,xmmreg,imm			[mri:	66 0f 3a 14 /r ib,u]			SSE41
-PEXTRB		reg64,xmmreg,imm		[mri:	o64nw 66 0f 3a 14 /r ib,u]		SSE41,X86_64,LONG
-PEXTRD		rm32,xmmreg,imm			[mri:	norexw 66 0f 3a 16 /r ib,u]		SSE41
-PEXTRQ		rm64,xmmreg,imm			[mri:	o64 66 0f 3a 16 /r ib,u]		SSE41,X86_64,LONG
-PEXTRW		reg32,xmmreg,imm		[mri:	66 0f 3a 15 /r ib,u]			SSE41
-PEXTRW		mem16,xmmreg,imm		[mri:	66 0f 3a 15 /r ib,u]			SSE41
-PEXTRW		reg64,xmmreg,imm		[mri:	o64 66 0f 3a 15 /r ib,u]		SSE41,X86_64,LONG
-PHMINPOSUW	xmmreg,xmmrm			[rm:	66 0f 38 41 /r]				SSE41
-PINSRB		xmmreg,mem,imm			[rmi:	66 0f 3a 20 /r ib,u]			SSE41,SB,AR2
-PINSRB		xmmreg,rm8,imm			[rmi:	nohi 66 0f 3a 20 /r ib,u]		SSE41,SB,AR2
-PINSRB		xmmreg,reg32,imm		[rmi:	66 0f 3a 20 /r ib,u]			SSE41,SB,AR2
-PINSRD		xmmreg,mem,imm			[rmi:	norexw 66 0f 3a 22 /r ib,u]		SSE41,SB,AR2
-PINSRD		xmmreg,rm32,imm			[rmi:	norexw 66 0f 3a 22 /r ib,u]		SSE41,SB,AR2
-PINSRQ		xmmreg,mem,imm			[rmi:	o64 66 0f 3a 22 /r ib,u]		SSE41,X86_64,LONG,SB,AR2
-PINSRQ		xmmreg,rm64,imm			[rmi:	o64 66 0f 3a 22 /r ib,u]		SSE41,X86_64,LONG,SB,AR2
-PMAXSB		xmmreg,xmmrm			[rm:	66 0f 38 3c /r]				SSE41
-PMAXSD		xmmreg,xmmrm			[rm:	66 0f 38 3d /r]				SSE41
-PMAXUD		xmmreg,xmmrm			[rm:	66 0f 38 3f /r]				SSE41
-PMAXUW		xmmreg,xmmrm			[rm:	66 0f 38 3e /r]				SSE41
-PMINSB		xmmreg,xmmrm			[rm:	66 0f 38 38 /r]				SSE41
-PMINSD		xmmreg,xmmrm			[rm:	66 0f 38 39 /r]				SSE41
-PMINUD		xmmreg,xmmrm			[rm:	66 0f 38 3b /r]				SSE41
-PMINUW		xmmreg,xmmrm			[rm:	66 0f 38 3a /r]				SSE41
-PMOVSXBW	xmmreg,xmmrm			[rm:	66 0f 38 20 /r]				SSE41,SQ
-PMOVSXBD	xmmreg,xmmrm			[rm:	66 0f 38 21 /r]				SSE41,SD
-PMOVSXBQ	xmmreg,xmmrm			[rm:	66 0f 38 22 /r]				SSE41,SW
-PMOVSXWD	xmmreg,xmmrm			[rm:	66 0f 38 23 /r]				SSE41,SQ
-PMOVSXWQ	xmmreg,xmmrm			[rm:	66 0f 38 24 /r]				SSE41,SD
-PMOVSXDQ	xmmreg,xmmrm			[rm:	66 0f 38 25 /r]				SSE41,SQ
-PMOVZXBW	xmmreg,xmmrm			[rm:	66 0f 38 30 /r]				SSE41,SQ
-PMOVZXBD	xmmreg,xmmrm			[rm:	66 0f 38 31 /r]				SSE41,SD
-PMOVZXBQ	xmmreg,xmmrm			[rm:	66 0f 38 32 /r]				SSE41,SW
-PMOVZXWD	xmmreg,xmmrm			[rm:	66 0f 38 33 /r]				SSE41,SQ
-PMOVZXWQ	xmmreg,xmmrm			[rm:	66 0f 38 34 /r]				SSE41,SD
-PMOVZXDQ	xmmreg,xmmrm			[rm:	66 0f 38 35 /r]				SSE41,SQ
-PMULDQ		xmmreg,xmmrm			[rm:	66 0f 38 28 /r]				SSE41
-PMULLD		xmmreg,xmmrm			[rm:	66 0f 38 40 /r]				SSE41
-PTEST		xmmreg,xmmrm			[rm:	66 0f 38 17 /r]				SSE41
-ROUNDPD		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 09 /r ib,u]			SSE41
-ROUNDPS		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 08 /r ib,u]			SSE41
-ROUNDSD		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0b /r ib,u]			SSE41
-ROUNDSS		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0a /r ib,u]			SSE41
+PBLENDVB	xmmreg,xmmrm128			[rm:	66 0f 38 10 /r]				SSE41
+PBLENDW		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 0e /r ib,u]			SSE41
+PCMPEQQ		xmmreg,xmmrm128			[rm:	66 0f 38 29 /r]				SSE41
+PEXTRB		reg32,xmmreg,imm8		[mri:	66 0f 3a 14 /r ib,u]			SSE41
+PEXTRB		mem8,xmmreg,imm8		[mri:	66 0f 3a 14 /r ib,u]			SSE41
+PEXTRB		reg64,xmmreg,imm8		[mri:	o64nw 66 0f 3a 14 /r ib,u]		SSE41,X86_64,LONG
+PEXTRD		rm32,xmmreg,imm8		[mri:	norexw 66 0f 3a 16 /r ib,u]		SSE41
+PEXTRQ		rm64,xmmreg,imm8		[mri:	o64 66 0f 3a 16 /r ib,u]		SSE41,X86_64,LONG
+PEXTRW		reg32,xmmreg,imm8		[mri:	66 0f 3a 15 /r ib,u]			SSE41
+PEXTRW		mem16,xmmreg,imm8		[mri:	66 0f 3a 15 /r ib,u]			SSE41
+PEXTRW		reg64,xmmreg,imm8		[mri:	o64 66 0f 3a 15 /r ib,u]		SSE41,X86_64,LONG
+PHMINPOSUW	xmmreg,xmmrm128			[rm:	66 0f 38 41 /r]				SSE41
+PINSRB		xmmreg,mem,imm8			[rmi:	66 0f 3a 20 /r ib,u]			SSE41,SB,AR2
+PINSRB		xmmreg,rm8,imm8			[rmi:	nohi 66 0f 3a 20 /r ib,u]		SSE41,SB,AR2
+PINSRB		xmmreg,reg32,imm8		[rmi:	66 0f 3a 20 /r ib,u]			SSE41,SB,AR2
+PINSRD		xmmreg,rm32,imm8		[rmi:	norexw 66 0f 3a 22 /r ib,u]		SSE41,SB,AR2
+PINSRQ		xmmreg,rm64,imm8		[rmi:	o64 66 0f 3a 22 /r ib,u]		SSE41,X86_64,LONG,SB,AR2
+PMAXSB		xmmreg,xmmrm128			[rm:	66 0f 38 3c /r]				SSE41
+PMAXSD		xmmreg,xmmrm128			[rm:	66 0f 38 3d /r]				SSE41
+PMAXUD		xmmreg,xmmrm128			[rm:	66 0f 38 3f /r]				SSE41
+PMAXUW		xmmreg,xmmrm128			[rm:	66 0f 38 3e /r]				SSE41
+PMINSB		xmmreg,xmmrm128			[rm:	66 0f 38 38 /r]				SSE41
+PMINSD		xmmreg,xmmrm128			[rm:	66 0f 38 39 /r]				SSE41
+PMINUD		xmmreg,xmmrm128			[rm:	66 0f 38 3b /r]				SSE41
+PMINUW		xmmreg,xmmrm128			[rm:	66 0f 38 3a /r]				SSE41
+PMOVSXBW	xmmreg,xmmrm64			[rm:	66 0f 38 20 /r]				SSE41,SQ
+PMOVSXBD	xmmreg,xmmrm32			[rm:	66 0f 38 21 /r]				SSE41,SD
+PMOVSXBQ	xmmreg,xmmrm16			[rm:	66 0f 38 22 /r]				SSE41,SW
+PMOVSXWD	xmmreg,xmmrm64			[rm:	66 0f 38 23 /r]				SSE41,SQ
+PMOVSXWQ	xmmreg,xmmrm32			[rm:	66 0f 38 24 /r]				SSE41,SD
+PMOVSXDQ	xmmreg,xmmrm64			[rm:	66 0f 38 25 /r]				SSE41,SQ
+PMOVZXBW	xmmreg,xmmrm64			[rm:	66 0f 38 30 /r]				SSE41,SQ
+PMOVZXBD	xmmreg,xmmrm32			[rm:	66 0f 38 31 /r]				SSE41,SD
+PMOVZXBQ	xmmreg,xmmrm16			[rm:	66 0f 38 32 /r]				SSE41,SW
+PMOVZXWD	xmmreg,xmmrm64			[rm:	66 0f 38 33 /r]				SSE41,SQ
+PMOVZXWQ	xmmreg,xmmrm32			[rm:	66 0f 38 34 /r]				SSE41,SD
+PMOVZXDQ	xmmreg,xmmrm64			[rm:	66 0f 38 35 /r]				SSE41,SQ
+PMULDQ		xmmreg,xmmrm128			[rm:	66 0f 38 28 /r]				SSE41
+PMULLD		xmmreg,xmmrm128			[rm:	66 0f 38 40 /r]				SSE41
+PTEST		xmmreg,xmmrm128			[rm:	66 0f 38 17 /r]				SSE41
+ROUNDPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 09 /r ib,u]			SSE41
+ROUNDPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 08 /r ib,u]			SSE41
+ROUNDSD		xmmreg,xmmrm64,imm8		[rmi:	66 0f 3a 0b /r ib,u]			SSE41
+ROUNDSS		xmmreg,xmmrm32,imm8		[rmi:	66 0f 3a 0a /r ib,u]			SSE41
 
 ;# Nehalem New Instructions (SSE4.2)
 CRC32		reg32,rm8			[rm:	f2i 0f 38 f0 /r]			SSE42
@@ -2031,11 +2015,11 @@ CRC32		reg32,rm16			[rm:	o16 f2i 0f 38 f1 /r]			SSE42
 CRC32		reg32,rm32			[rm:	o32 f2i 0f 38 f1 /r]			SSE42
 CRC32		reg64,rm8			[rm:	o64 f2i 0f 38 f0 /r]			SSE42,X86_64,LONG
 CRC32		reg64,rm64			[rm:	o64 f2i 0f 38 f1 /r]			SSE42,X86_64,LONG
-PCMPESTRI	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 61 /r ib,u]			SSE42
-PCMPESTRM	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 60 /r ib,u]			SSE42
-PCMPISTRI	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 63 /r ib,u]			SSE42
-PCMPISTRM	xmmreg,xmmrm,imm		[rmi:	66 0f 3a 62 /r ib,u]			SSE42
-PCMPGTQ		xmmreg,xmmrm			[rm:	66 0f 38 37 /r]				SSE42
+PCMPESTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 61 /r ib,u]			SSE42
+PCMPESTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 60 /r ib,u]			SSE42
+PCMPISTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 63 /r ib,u]			SSE42
+PCMPISTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 62 /r ib,u]			SSE42
+PCMPGTQ		xmmreg,xmmrm128			[rm:	66 0f 38 37 /r]				SSE42
 POPCNT		reg16,rm16			[rm:	o16 f3i 0f b8 /r]			NEHALEM,SW
 POPCNT		reg32,rm32			[rm:	o32 f3i 0f b8 /r]			NEHALEM,SD
 POPCNT		reg64,rm64			[rm:	o64 f3i 0f b8 /r]			NEHALEM,SQ,LONG
@@ -5994,10 +5978,10 @@ RDSSPQ		reg64				[m:	o64 f3 0f 1e /1]			CET,FUTURE,LONG
 RSTORSSP	mem64				[m:	f3 0f 01 /5]				CET,FUTURE
 SAVEPREVSSP	void				[	f3 0f 01 ea]				CET,FUTURE
 SETSSBSY	void				[	f3 0f 01 e8]				CET,FUTURE
-WRUSSD		mem,reg32			[mr:	o32 66 0f 38 f5 /r]			CET,FUTURE
-WRUSSQ		mem,reg64			[mr:	o64 66 0f 38 f5 /r]			CET,FUTURE,LONG
-WRSSD		mem,reg32			[mr:	o32 0f 38 f6 /r]			CET,FUTURE
-WRSSQ		mem,reg64			[mr:	o64 0f 38 f6 /r]			CET,FUTURE,LONG
+WRUSSD		mem32,reg32			[mr:	o32 66 0f 38 f5 /r]			CET,FUTURE
+WRUSSQ		mem64,reg64			[mr:	o64 66 0f 38 f5 /r]			CET,FUTURE,LONG
+WRSSD		mem32,reg32			[mr:	o32 0f 38 f6 /r]			CET,FUTURE
+WRSSQ		mem64,reg64			[mr:	o64 0f 38 f6 /r]			CET,FUTURE,LONG
 
 ;# Instructions from ISE doc 319433-040, June 2020
 ENQCMD		reg16,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE
