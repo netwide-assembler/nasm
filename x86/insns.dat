@@ -1838,10 +1838,10 @@ MAXPD		xmmreg,xmmrm			[rm:	66 0f 5f /r]				WILLAMETTE,SSE2,SO
 MAXSD		xmmreg,xmmrm			[rm:	f2 0f 5f /r]				WILLAMETTE,SSE2,SQ
 MINPD		xmmreg,xmmrm			[rm:	66 0f 5d /r]				WILLAMETTE,SSE2,SO
 MINSD		xmmreg,xmmrm			[rm:	f2 0f 5d /r]				WILLAMETTE,SSE2,SQ
-MOVAPD		xmmreg,xmmrm128			[rm:	66 0f 28 /r]				WILLAMETTE,SSE2,SO
-MOVAPD		xmmrm128,xmmreg			[mr:	66 0f 29 /r]				WILLAMETTE,SSE2,SO
-MOVHPD		mem64,xmmreg			[mr:	66 0f 17 /r]				WILLAMETTE,SSE2,SO
-MOVHPD		xmmreg,mem64			[rm:	66 0f 16 /r]				WILLAMETTE,SSE2,SO
+MOVAPD		xmmreg,xmmrm128			[rm:	66 0f 28 /r]				WILLAMETTE,SSE2
+MOVAPD		xmmrm128,xmmreg			[mr:	66 0f 29 /r]				WILLAMETTE,SSE2
+MOVHPD		mem64,xmmreg			[mr:	66 0f 17 /r]				WILLAMETTE,SSE2
+MOVHPD		xmmreg,mem64			[rm:	66 0f 16 /r]				WILLAMETTE,SSE2
 MOVLPD		mem64,xmmreg			[mr:	66 0f 13 /r]				WILLAMETTE,SSE2
 MOVLPD		xmmreg,mem64			[rm:	66 0f 12 /r]				WILLAMETTE,SSE2
 MOVMSKPD	reg32,xmmreg			[rm:	66 0f 50 /r]				WILLAMETTE,SSE2
