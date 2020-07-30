@@ -4811,6 +4811,33 @@ VPBROADCASTW    ymmreg|mask|z,reg64                 [rm: evex.256.66.0f38.w0 7b 
 VPBROADCASTW    zmmreg|mask|z,reg16                 [rm: evex.512.66.0f38.w0 7b /r ] AVX512BW,FUTURE
 VPBROADCASTW    zmmreg|mask|z,reg32                 [rm: evex.512.66.0f38.w0 7b /r ] AVX512BW,FUTURE
 VPBROADCASTW    zmmreg|mask|z,reg64                 [rm: evex.512.66.0f38.w0 7b /r ] AVX512BW,FUTURE
+; VPCMPEQx and VPCMPGTx come in two flavors: SSE-like, and VPCMP with immediate. They are both
+; valid, but prefer the SSE version as it is one byte shorter.
+VPCMPEQB        kreg|mask,xmmreg,xmmrm128           [rvm:fvm: evex.nds.128.66.0f.wig 74 /r ] AVX512VL,AVX512BW,FUTURE
+VPCMPEQB        kreg|mask,ymmreg,ymmrm256           [rvm:fvm: evex.nds.256.66.0f.wig 74 /r ] AVX512VL,AVX512BW,FUTURE
+VPCMPEQB        kreg|mask,zmmreg,zmmrm512           [rvm:fvm: evex.nds.512.66.0f.wig 74 /r ] AVX512BW,FUTURE
+VPCMPEQD        kreg|mask,xmmreg,xmmrm128|b32       [rvm:fv: evex.nds.128.66.0f.w0 76 /r ] AVX512VL,AVX512,FUTURE
+VPCMPEQD        kreg|mask,ymmreg,ymmrm256|b32       [rvm:fv: evex.nds.256.66.0f.w0 76 /r ] AVX512VL,AVX512,FUTURE
+VPCMPEQD        kreg|mask,zmmreg,zmmrm512|b32       [rvm:fv: evex.nds.512.66.0f.w0 76 /r ] AVX512,FUTURE
+VPCMPEQQ        kreg|mask,xmmreg,xmmrm128|b64       [rvm:fv: evex.nds.128.66.0f38.w1 29 /r ] AVX512VL,AVX512,FUTURE
+VPCMPEQQ        kreg|mask,ymmreg,ymmrm256|b64       [rvm:fv: evex.nds.256.66.0f38.w1 29 /r ] AVX512VL,AVX512,FUTURE
+VPCMPEQQ        kreg|mask,zmmreg,zmmrm512|b64       [rvm:fv: evex.nds.512.66.0f38.w1 29 /r ] AVX512,FUTURE
+VPCMPEQW        kreg|mask,xmmreg,xmmrm128           [rvm:fvm: evex.nds.128.66.0f.wig 75 /r ] AVX512VL,AVX512BW,FUTURE
+VPCMPEQW        kreg|mask,ymmreg,ymmrm256           [rvm:fvm: evex.nds.256.66.0f.wig 75 /r ] AVX512VL,AVX512BW,FUTURE
+VPCMPEQW        kreg|mask,zmmreg,zmmrm512           [rvm:fvm: evex.nds.512.66.0f.wig 75 /r ] AVX512BW,FUTURE
+VPCMPGTB        kreg|mask,xmmreg,xmmrm128           [rvm:fvm: evex.nds.128.66.0f.wig 64 /r ] AVX512VL,AVX512BW,FUTURE
+VPCMPGTB        kreg|mask,ymmreg,ymmrm256           [rvm:fvm: evex.nds.256.66.0f.wig 64 /r ] AVX512VL,AVX512BW,FUTURE
+VPCMPGTB        kreg|mask,zmmreg,zmmrm512           [rvm:fvm: evex.nds.512.66.0f.wig 64 /r ] AVX512BW,FUTURE
+VPCMPGTD        kreg|mask,xmmreg,xmmrm128|b32       [rvm:fv: evex.nds.128.66.0f.w0 66 /r ] AVX512VL,AVX512,FUTURE
+VPCMPGTD        kreg|mask,ymmreg,ymmrm256|b32       [rvm:fv: evex.nds.256.66.0f.w0 66 /r ] AVX512VL,AVX512,FUTURE
+VPCMPGTD        kreg|mask,zmmreg,zmmrm512|b32       [rvm:fv: evex.nds.512.66.0f.w0 66 /r ] AVX512,FUTURE
+VPCMPGTQ        kreg|mask,xmmreg,xmmrm128|b64       [rvm:fv: evex.nds.128.66.0f38.w1 37 /r ] AVX512VL,AVX512,FUTURE
+VPCMPGTQ        kreg|mask,ymmreg,ymmrm256|b64       [rvm:fv: evex.nds.256.66.0f38.w1 37 /r ] AVX512VL,AVX512,FUTURE
+VPCMPGTQ        kreg|mask,zmmreg,zmmrm512|b64       [rvm:fv: evex.nds.512.66.0f38.w1 37 /r ] AVX512,FUTURE
+VPCMPGTW        kreg|mask,xmmreg,xmmrm128           [rvm:fvm: evex.nds.128.66.0f.wig 65 /r ] AVX512VL,AVX512BW,FUTURE
+VPCMPGTW        kreg|mask,ymmreg,ymmrm256           [rvm:fvm: evex.nds.256.66.0f.wig 65 /r ] AVX512VL,AVX512BW,FUTURE
+VPCMPGTW        kreg|mask,zmmreg,zmmrm512           [rvm:fvm: evex.nds.512.66.0f.wig 65 /r ] AVX512BW,FUTURE
+; The systematic VPCMP with immediate instructions
 VPCMPEQB          kreg|mask,xmmreg,xmmrm128      [rvmi:fvm: evex.nds.128.66.0f3a.w0 3f /r 00 ] AVX512VL,AVX512BW,FUTURE
 VPCMPEQB          kreg|mask,ymmreg,ymmrm256      [rvmi:fvm: evex.nds.256.66.0f3a.w0 3f /r 00 ] AVX512VL,AVX512BW,FUTURE
 VPCMPEQB          kreg|mask,zmmreg,zmmrm512      [rvmi:fvm: evex.nds.512.66.0f3a.w0 3f /r 00 ] AVX512BW,FUTURE
