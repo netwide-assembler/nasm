@@ -31,6 +31,9 @@ behavior, other backends, or user expectations.
 \b Fix SSE instructions not being recognized with an explicit memory
 operation size (e.g. \c{movsd qword [eax],xmm0}).
 
+\b The \c{-L+} option no longer enables \c{-Lw}, which is mainly
+useful to debug NASM crashes. See \k{opt-L}.
+
 \S{cl-2.15.03} Version 2.15.03
 
 \b Add instructions from the Intel Instruction Set Extensions and

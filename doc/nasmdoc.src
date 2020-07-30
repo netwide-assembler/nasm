@@ -491,9 +491,10 @@ Supported options are:
 
 \b \c{-Ls} show all single-line macro definitions
 
-\b \c{-Lw} flush the output after every line (very slow!)
+\b \c{-Lw} flush the output after every line (very slow, mainly useful
+to debug NASM crashes)
 
-\b \c{-L+} enable \e{all} listing options
+\b \c{-L+} enable \e{all} listing options except \c{-Lw} (very verbose)
 
 These options can be enabled or disabled at runtime using the
 \c{%pragma list options} directive:
