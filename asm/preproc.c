@@ -125,7 +125,7 @@ enum pp_token_type {
     TOK_LOCAL_MACRO, TOK_ENVIRON, TOK_STRING,
     TOK_NUMBER, TOK_FLOAT, TOK_OTHER,
     TOK_INTERNAL_STRING, TOK_NAKED_STRING,
-    TOK_PREPROC_Q, TOK_PREPROC_SQ, 	/* %?,  %*?  */
+    TOK_PREPROC_Q, TOK_PREPROC_SQ,	/* %?,  %*?  */
     TOK_PREPROC_QQ, TOK_PREPROC_SQQ,    /* %??, %*?? */
     TOK_PASTE,              /* %+ */
     TOK_COND_COMMA,         /* %, */
@@ -3660,6 +3660,9 @@ static int do_directive(Token *tline, Token **output)
         break;
 
     case PP_STACKSIZE:
+    {
+        const char *arg;
+
         /* Directive to tell NASM what the default stack size is. The
          * default is for a 16-bit stack, and this can be overriden with
          * %stacksize large.
@@ -3667,20 +3670,24 @@ static int do_directive(Token *tline, Token **output)
         tline = skip_white(tline->next);
         if (!tline || tline->type != TOK_ID) {
             nasm_nonfatal("`%s' missing size parameter", dname);
+            break;
         }
-        if (nasm_stricmp(tok_text(tline), "flat") == 0) {
+
+        arg = tok_text(tline);
+
+        if (nasm_stricmp(arg, "flat") == 0) {
             /* All subsequent ARG directives are for a 32-bit stack */
             StackSize = 4;
             StackPointer = "ebp";
             ArgOffset = 8;
             LocalOffset = 0;
-        } else if (nasm_stricmp(tok_text(tline), "flat64") == 0) {
+        } else if (nasm_stricmp(arg, "flat64") == 0) {
             /* All subsequent ARG directives are for a 64-bit stack */
             StackSize = 8;
             StackPointer = "rbp";
             ArgOffset = 16;
             LocalOffset = 0;
-        } else if (nasm_stricmp(tok_text(tline), "large") == 0) {
+        } else if (nasm_stricmp(arg, "large") == 0) {
             /* All subsequent ARG directives are for a 16-bit stack,
              * far function call.
              */
@@ -3688,7 +3695,7 @@ static int do_directive(Token *tline, Token **output)
             StackPointer = "bp";
             ArgOffset = 4;
             LocalOffset = 0;
-        } else if (nasm_stricmp(tok_text(tline), "small") == 0) {
+        } else if (nasm_stricmp(arg, "small") == 0) {
             /* All subsequent ARG directives are for a 16-bit stack,
              * far function call. We don't support near functions.
              */
@@ -3700,6 +3707,7 @@ static int do_directive(Token *tline, Token **output)
             nasm_nonfatal("`%s' invalid size type", dname);
         }
         break;
+    }
 
     case PP_ARG:
         /* TASM like ARG directive to define arguments to functions, in
