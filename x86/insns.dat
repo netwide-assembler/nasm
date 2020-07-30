@@ -218,36 +218,36 @@ BT		mem,reg32			[mr:	o32 0f a3 /r]				386,SM
 BT		reg32,reg32			[mr:	o32 0f a3 /r]				386
 BT		mem,reg64			[mr:	o64 0f a3 /r]				X86_64,LONG,SM
 BT		reg64,reg64			[mr:	o64 0f a3 /r]				X86_64,LONG
-BT		rm16,imm			[mi:	o16 0f ba /4 ib,u]			386,SB
-BT		rm32,imm			[mi:	o32 0f ba /4 ib,u]			386,SB
-BT		rm64,imm			[mi:	o64 0f ba /4 ib,u]			X86_64,LONG,SB
+BT		rm16,imm8			[mi:	o16 0f ba /4 ib,u]			386
+BT		rm32,imm8			[mi:	o32 0f ba /4 ib,u]			386
+BT		rm64,imm8			[mi:	o64 0f ba /4 ib,u]			X86_64,LONG
 BTC		mem,reg16			[mr:	hle o16 0f bb /r]			386,SM,LOCK
 BTC		reg16,reg16			[mr:	o16 0f bb /r]				386
 BTC		mem,reg32			[mr:	hle o32 0f bb /r]			386,SM,LOCK
 BTC		reg32,reg32			[mr:	o32 0f bb /r]				386
 BTC		mem,reg64			[mr:	hle o64 0f bb /r]			X86_64,LONG,SM,LOCK
 BTC		reg64,reg64			[mr:	o64 0f bb /r]				X86_64,LONG
-BTC		rm16,imm			[mi:	hle o16 0f ba /7 ib,u]			386,SB,LOCK
-BTC		rm32,imm			[mi:	hle o32 0f ba /7 ib,u]			386,SB,LOCK
-BTC		rm64,imm			[mi:	hle o64 0f ba /7 ib,u]			X86_64,LONG,SB,LOCK
+BTC		rm16,imm8			[mi:	hle o16 0f ba /7 ib,u]			386,LOCK
+BTC		rm32,imm8			[mi:	hle o32 0f ba /7 ib,u]			386,LOCK
+BTC		rm64,imm8			[mi:	hle o64 0f ba /7 ib,u]			X86_64,LONG,LOCK
 BTR		mem,reg16			[mr:	hle o16 0f b3 /r]			386,SM,LOCK
 BTR		reg16,reg16			[mr:	o16 0f b3 /r]				386
 BTR		mem,reg32			[mr:	hle o32 0f b3 /r]			386,SM,LOCK
 BTR		reg32,reg32			[mr:	o32 0f b3 /r]				386
 BTR		mem,reg64			[mr:	hle o64 0f b3 /r]			X86_64,LONG,SM,LOCK
 BTR		reg64,reg64			[mr:	o64 0f b3 /r]				X86_64,LONG
-BTR		rm16,imm			[mi:	hle o16 0f ba /6 ib,u]			386,SB,LOCK
-BTR		rm32,imm			[mi:	hle o32 0f ba /6 ib,u]			386,SB,LOCK
-BTR		rm64,imm			[mi:	hle o64 0f ba /6 ib,u]			X86_64,LONG,SB,LOCK
+BTR		rm16,imm8			[mi:	hle o16 0f ba /6 ib,u]			386,LOCK
+BTR		rm32,imm8			[mi:	hle o32 0f ba /6 ib,u]			386,LOCK
+BTR		rm64,imm8			[mi:	hle o64 0f ba /6 ib,u]			X86_64,LONG,LOCK
 BTS		mem,reg16			[mr:	hle o16 0f ab /r]			386,SM,LOCK
 BTS		reg16,reg16			[mr:	o16 0f ab /r]				386
 BTS		mem,reg32			[mr:	hle o32 0f ab /r]			386,SM,LOCK
 BTS		reg32,reg32			[mr:	o32 0f ab /r]				386
 BTS		mem,reg64			[mr:	hle o64 0f ab /r]			X86_64,LONG,SM,LOCK
 BTS		reg64,reg64			[mr:	o64 0f ab /r]				X86_64,LONG
-BTS		rm16,imm			[mi:	hle o16 0f ba /5 ib,u]			386,SB,LOCK
-BTS		rm32,imm			[mi:	hle o32 0f ba /5 ib,u]			386,SB,LOCK
-BTS		rm64,imm			[mi:	hle o64 0f ba /5 ib,u]			X86_64,LONG,SB,LOCK
+BTS		rm16,imm8			[mi:	hle o16 0f ba /5 ib,u]			386,LOCK
+BTS		rm32,imm8			[mi:	hle o32 0f ba /5 ib,u]			386,LOCK
+BTS		rm64,imm8			[mi:	hle o64 0f ba /5 ib,u]			X86_64,LONG,LOCK
 CALL		imm				[i:	odf e8 rel]				8086,BND
 CALL		imm|near			[i:	odf e8 rel]				8086,ND,BND
 CALL		imm|far				[i:	odf 9a iwd seg]				8086,ND,NOLONG
@@ -607,7 +607,7 @@ IMUL		reg32,mem			[rm:	o32 0f af /r]				386,SM
 IMUL		reg32,reg32			[rm:	o32 0f af /r]				386
 IMUL		reg64,mem			[rm:	o64 0f af /r]				X86_64,LONG,SM
 IMUL		reg64,reg64			[rm:	o64 0f af /r]				X86_64,LONG
-IMUL		reg16,mem,imm8			[rmi:	o16 6b /r ib,s]				186,SM
+IMUL		reg16,mem,imm8			[rmi:	o16 6b /r ib,s]				186,SM2
 IMUL		reg16,mem,sbyteword		[rmi:	o16 6b /r ib,s]				186,SM,ND
 IMUL		reg16,mem,imm16			[rmi:	o16 69 /r iw]				186,SM
 IMUL		reg16,mem,imm			[rmi:	o16 69 /r iw]				186,SM,ND
@@ -615,7 +615,7 @@ IMUL		reg16,reg16,imm8		[rmi:	o16 6b /r ib,s]				186
 IMUL		reg16,reg16,sbyteword		[rmi:	o16 6b /r ib,s]				186,SM,ND
 IMUL		reg16,reg16,imm16		[rmi:	o16 69 /r iw]				186
 IMUL		reg16,reg16,imm			[rmi:	o16 69 /r iw]				186,SM,ND
-IMUL		reg32,mem,imm8			[rmi:	o32 6b /r ib,s]				386,SM
+IMUL		reg32,mem,imm8			[rmi:	o32 6b /r ib,s]				386,SM2
 IMUL		reg32,mem,sbytedword		[rmi:	o32 6b /r ib,s]				386,SM,ND
 IMUL		reg32,mem,imm32			[rmi:	o32 69 /r id]				386,SM
 IMUL		reg32,mem,imm			[rmi:	o32 69 /r id]				386,SM,ND
@@ -623,9 +623,9 @@ IMUL		reg32,reg32,imm8		[rmi:	o32 6b /r ib,s]				386
 IMUL		reg32,reg32,sbytedword		[rmi:	o32 6b /r ib,s]				386,SM,ND
 IMUL		reg32,reg32,imm32		[rmi:	o32 69 /r id]				386
 IMUL		reg32,reg32,imm			[rmi:	o32 69 /r id]				386,SM,ND
-IMUL		reg64,mem,imm8			[rmi:	o64 6b /r ib,s]				X86_64,LONG,SM
+IMUL		reg64,mem,imm8			[rmi:	o64 6b /r ib,s]				X86_64,LONG,SM2
 IMUL		reg64,mem,sbytedword		[rmi:	o64 6b /r ib,s]				X86_64,LONG,SM,ND
-IMUL		reg64,mem,imm32			[rmi:	o64 69 /r id]				X86_64,LONG,SM
+IMUL		reg64,mem,imm32			[rmi:	o64 69 /r id]				X86_64,LONG,SM2
 IMUL		reg64,mem,imm			[rmi:	o64 69 /r id,s]				X86_64,LONG,SM,ND
 IMUL		reg64,reg64,imm8		[rmi:	o64 6b /r ib,s]				X86_64,LONG
 IMUL		reg64,reg64,sbytedword		[rmi:	o64 6b /r ib,s]				X86_64,LONG,SM,ND
@@ -1959,7 +1959,7 @@ DPPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 41 /r ib,u]			SSE41
 DPPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 40 /r ib,u]			SSE41
 EXTRACTPS	rm32,xmmreg,imm8		[mri:	66 0f 3a 17 /r ib,u]			SSE41
 EXTRACTPS	reg64,xmmreg,imm8		[mri:	o64 66 0f 3a 17 /r ib,u]		SSE41,X86_64,LONG
-INSERTPS	xmmreg,xmmrm32,imm8		[rmi:	66 0f 3a 21 /r ib,u]			SSE41,SD
+INSERTPS	xmmreg,xmmrm32,imm8		[rmi:	66 0f 3a 21 /r ib,u]			SSE41
 MOVNTDQA	xmmreg,mem128			[rm:	66 0f 38 2a /r]				SSE41
 MPSADBW		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 42 /r ib,u]			SSE41
 PACKUSDW	xmmreg,xmmrm128			[rm:	66 0f 38 2b /r]				SSE41
