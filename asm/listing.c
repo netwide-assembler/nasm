@@ -337,7 +337,7 @@ static void list_downlevel(int type)
     }
 }
 
-static void list_error(errflags severity, const char *fmt, ...)
+static void printf_func(2, 3) list_error(errflags severity, const char *fmt, ...)
 {
     va_list ap;
 

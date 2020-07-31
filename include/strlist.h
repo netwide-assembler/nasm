@@ -81,7 +81,7 @@ struct strlist * safe_alloc strlist_alloc(bool uniq);
 const struct strlist_entry *strlist_add(struct strlist *list, const char *str);
 const struct strlist_entry * printf_func(2, 3)
 	strlist_printf(struct strlist *list, const char *fmt, ...);
-const struct strlist_entry *
+const struct strlist_entry * vprintf_func(2)
 	strlist_vprintf(struct strlist *list, const char *fmt, va_list ap);
 const struct strlist_entry *
 strlist_find(const struct strlist *list, const char *str);
