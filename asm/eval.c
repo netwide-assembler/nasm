@@ -727,7 +727,7 @@ static expr *eval_floatize(enum floatize type)
     len = fmt->bytes - fmt->offset;
     if (len > 8)
         len = 8;                /* Max 64 bits */
-    p = result + len;
+    p = result + len + fmt->offset;
     val = 0;
     for (i = len; i; i--) {
         p--;
