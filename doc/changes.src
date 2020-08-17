@@ -34,11 +34,8 @@ operation size (e.g. \c{movsd qword [eax],xmm0}).
 \b The \c{-L+} option no longer enables \c{-Lw}, which is mainly
 useful to debug NASM crashes. See \k{opt-L}.
 
-\b Fix the \c{__float80e__} and \c{__float128h__} conversions, which
-would return the wrong bytes of the result.
-
-\b Fix inefficient encoding of the \c{BNDMK}, \c{BNDLDX}, and
-\c{BNDSTX} instructions under certain circumstances.
+\b Document long-standing hazards in the use of \c{$} in \c{Dx}
+statements, see \k{db}.
 
 \S{cl-2.15.03} Version 2.15.03
 
