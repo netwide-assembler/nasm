@@ -37,6 +37,13 @@ useful to debug NASM crashes. See \k{opt-L}.
 \b Document long-standing hazards in the use of \c{$} in \c{Dx}
 statements, see \k{db}.
 
+\b The NASM-only RDOFF output format backend, which has been broken
+since at least NASM 2.14, has been disabled. The RDOFF tools are
+scheduled to be removed from the NASM distribution in NASM 2.16. If
+you have a concrete use case for RDOFF, please file a NASM bug report
+at \W{https://bugs.nasm.us/}\c{https://bugs.nasm.us/} as soon as
+possible. See \k{rdffmt}.
+
 \S{cl-2.15.03} Version 2.15.03
 
 \b Add instructions from the Intel Instruction Set Extensions and

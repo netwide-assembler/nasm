@@ -318,9 +318,6 @@ easy to understand, similar to the syntax in the Intel Software
 Developer Manual with minimal complexity. It supports all currently
 known x86 architectural extensions, and has strong support for macros.
 
-NASM also comes with a set of utilities for handling its own RDOFF2
-object-file format.
-
 \S{legal} \i{License}
 
 NASM is under the so-called 2-clause BSD license, also
@@ -6719,7 +6716,14 @@ only special symbol supported is \c{..start}.
 
 
 \H{rdffmt} \I{RDOFF}\i\c{rdf}: \i{Relocatable Dynamic Object File
-Format}
+Format} (deprecated)
+
+\e{The RDOFF format is strongly deprecated and has been disabled
+starting in NASM 2.15.04. The RDOFF backend has been broken since at
+least NASM 2.14. The RDOFF utilities are scheduled to be removed from
+the NASM distribution in NASM 2.16.} If you have a strong use case for
+the RDOFF format, file a bug report at
+\W{https://bugs.nasm.us/}\c{https://bugs.nasm.us/} as soon as possible.
 
 The \c{rdf} output format produces \c{RDOFF} object files. \c{RDOFF}
 (Relocatable Dynamic Object File Format) is a home-grown object-file
@@ -6736,9 +6740,6 @@ both contain an \I{rdoff subdirectory}\c{rdoff} subdirectory holding
 a set of RDOFF utilities: an RDF linker, an \c{RDF} static-library
 manager, an RDF file dump utility, and a program which will load and
 execute an RDF executable under Linux.
-
-\c{rdf} supports only the \i{standard section names} \i\c{.text},
-\i\c{.data} and \i\c{.bss}.
 
 
 \S{rdflib} Requiring a Library: The \i\c{LIBRARY} Directive
