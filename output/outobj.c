@@ -425,7 +425,7 @@ static ObjRecord *obj_name(ObjRecord * orp, const char *name)
     uint8_t *ptr;
 
     if (len > UINT8_MAX) {
-        nasm_warn(WARN_OTHER, "cutting object name `%.64s...' to %u bytes",
+        nasm_warn(WARN_OTHER, "truncating object name `%.64s...' to %u bytes",
                   name, UINT8_MAX);
         len = UINT8_MAX;
     }
