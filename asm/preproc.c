@@ -5612,7 +5612,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
         {
             size_t mlen = strlen(m->name);
 	    size_t len;
-            char *p;
+            char *p, *from;
 
             t->type = mstart->type;
             if (t->type == TOK_LOCAL_MACRO) {
@@ -5625,15 +5625,15 @@ static SMacro *expand_one_smacro(Token ***tpp)
                 plen = pep - psp;
 
                 len = mlen + plen;
-                p = nasm_malloc(len + 1);
+                from = p = nasm_malloc(len + 1);
                 p = mempcpy(p, psp, plen);
             } else {
                 len = mlen;
-                p = nasm_malloc(len + 1);
+                from = p = nasm_malloc(len + 1);
             }
             p = mempcpy(p, m->name, mlen);
             *p = '\0';
-	    set_text_free(t, p, len);
+	    set_text_free(t, from, len);
 
             t->next = tline;
             break;
