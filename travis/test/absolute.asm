@@ -1,4 +1,7 @@
+%ifmacro org
 	org 7c00h
+%endif
+
 init_foo:
 	jmp init_bar
 	nop
