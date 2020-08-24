@@ -34,6 +34,46 @@ for cmd in ['run']:
                      help = 'Run the selected test only',
                      required = False)
 
+for cmd in ['new']:
+    spp = sp.add_parser(cmd, help = 'Add a new test case')
+    spp.add_argument('--description',
+                     dest = 'description', default = "Description of a test",
+                     help = 'Description of a test',
+                     required = False)
+    spp.add_argument('--id',
+                     dest = 'id',
+                     help = 'Test identifier/name',
+                     required = True)
+    spp.add_argument('--format',
+                     dest = 'format', default = 'bin',
+                     help = 'Output format',
+                     required = False)
+    spp.add_argument('--source',
+                     dest = 'source',
+                     help = 'Source file',
+                     required = False)
+    spp.add_argument('--option',
+                     dest = 'option',
+                     default = '-Ox',
+                     help = 'NASM options',
+                     required = False)
+    spp.add_argument('--ref',
+                     dest = 'ref',
+                     help = 'Test reference',
+                     required = False)
+    spp.add_argument('--output',
+                     dest = 'output', default = 'y',
+                     help = 'Output (compiled) file name (or "y")',
+                     required = False)
+    spp.add_argument('--stdout',
+                     dest = 'stdout', default = 'y',
+                     help = 'Filename of stdout file (or "y")',
+                     required = False)
+    spp.add_argument('--stderr',
+                     dest = 'stderr', default = 'y',
+                     help = 'Filename of stderr file (or "y")',
+                     required = False)
+
 for cmd in ['list']:
     spp = sp.add_parser(cmd, help = 'List test cases')
 
@@ -43,6 +83,27 @@ for cmd in ['update']:
                      dest = 'test',
                      help = 'Update the selected test only',
                      required = False)
+
+map_fmt_ext = {
+        'bin':      '.bin',
+        'elf':      '.o',
+        'elf64':    '.o',
+        'elf32':    '.o',
+        'elfx32':   '.o',
+        'ith':      '.ith',
+        'srec':     '.srec',
+        'obj':      '.obj',
+        'win32':    '.obj',
+        'win64':    '.obj',
+        'coff':     '.obj',
+        'macho':    '.o',
+        'macho32':  '.o',
+        'macho64':  '.o',
+        'aout':     '.out',
+        'aoutb':    '.out',
+        'as86':     '.o',
+        'rdf':      '.rdf',
+}
 
 args = parser.parse_args()
 
@@ -394,6 +455,63 @@ def test_update(desc):
                 f.close()
 
     return test_updated(desc['_test-name'])
+
+#
+# Create a new empty test case
+if args.cmd == 'new':
+    #
+    # If no source provided create one
+    # from (ID which is required)
+    if not args.source:
+        args.source = args.id + ".asm"
+
+    #
+    # Emulate "touch" on source file
+    path_asm = args.dir + os.sep + args.source
+    print("\tCreating %s" % (path_asm))
+    open(path_asm, 'a').close()
+
+    #
+    # Fill the test descriptor
+    #
+    # FIXME: We should probably use Jinja
+    path_json = args.dir + os.sep + args.id + ".json"
+    print("\tFilling descriptor %s" % (path_json))
+    with open(path_json, 'wb') as f:
+        f.write("[\n\t{\n".encode("utf-8"))
+        acc = []
+        if args.description:
+            acc.append("\t\t\"description\": \"{}\"".format(args.description))
+        acc.append("\t\t\"id\": \"{}\"".format(args.id))
+        if args.format:
+            acc.append("\t\t\"format\": \"{}\"".format(args.format))
+        acc.append("\t\t\"source\": \"{}\"".format(args.source))
+        if args.option:
+            acc.append("\t\t\"option\": \"{}\"".format(args.option))
+        if args.ref:
+            acc.append("\t\t\"ref\": \"{}\"".format(args.ref))
+        f.write(",\n".join(acc).encode("utf-8"))
+        if args.output or args.stdout or args.stderr:
+            acc = []
+            if args.output:
+                if args.output == 'y':
+                    if args.format in map_fmt_ext:
+                        args.output = args.id + map_fmt_ext[args.format]
+                acc.append("\t\t\t{{ \"output\": \"{}\" }}".format(args.output))
+            if args.stdout:
+                if args.stdout == 'y':
+                    args.stdout = args.id + '.stdout'
+                acc.append("\t\t\t{{ \"stdout\": \"{}\" }}".format(args.stdout))
+            if args.stderr:
+                if args.stderr == 'y':
+                    args.stderr = args.id + '.stderr'
+                acc.append("\t\t\t{{ \"stderr\": \"{}\" }}".format(args.stderr))
+            f.write(",\n".encode("utf-8"))
+            f.write("\t\t\"target\": [\n".encode("utf-8"))
+            f.write(",\n".join(acc).encode("utf-8"))
+            f.write("\n\t\t]".encode("utf-8"))
+        f.write("\n\t}\n]\n".encode("utf-8"))
+        f.close()
 
 if args.cmd == 'run':
     desc_array = []
