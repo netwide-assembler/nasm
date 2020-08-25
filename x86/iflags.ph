@@ -84,6 +84,16 @@ if_("AVX5124FMAPS",      "AVX-512 4-iteration multiply-add");
 if_("AVX5124VNNIW",      "AVX-512 4-iteration dot product");
 if_("SGX",               "Intel Software Guard Extensions (SGX)");
 if_("CET",               "Intel Control-Flow Enforcement Technology (CET)");
+if_("ENQCMD",            "Enqueue command instructions");
+if_("PCONFIG",           "Platform configuration instruction");
+if_("WBNOINVD",          "Writeback and do not invalidate instruction");
+if_("TSXLDTRK",          "TSX suspend load address tracking");
+if_("SERIALIZE",         "SERIALIZE instruction");
+if_("AVX512BF16",        "AVX-512 bfloat16");
+if_("AVX512VP2INTERSECT", "AVX-512 VP2INTERSECT instructions");
+if_("AMXTILE",           "AMX tile configuration instructions");
+if_("AMXBF16",           "AMX bfloat16 multiplication");
+if_("AMXINT8",           "AMX 8-bit integer multiplication");
 
 # Put these last [hpa: why?]
 if_("OBSOLETE",          "Instruction removed from architecture");

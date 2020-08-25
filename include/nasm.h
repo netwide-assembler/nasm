@@ -259,15 +259,18 @@ enum token_type { /* token types, other than chars */
     TOKEN_MAX = INT_MAX		/* Keep compiler from reducing the range */
 };
 
+/* Must match the fp_formats[] array in asm/floats.c */
 enum floatize {
     FLOAT_8,
     FLOAT_16,
+    FLOAT_B16,
     FLOAT_32,
     FLOAT_64,
     FLOAT_80M,
     FLOAT_80E,
     FLOAT_128L,
-    FLOAT_128H
+    FLOAT_128H,
+    FLOAT_ERR                   /* Invalid format, MUST BE LAST */
 };
 
 /* Must match the list in string_transform(), in strfunc.c */

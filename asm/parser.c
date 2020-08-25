@@ -531,10 +531,12 @@ static int parse_eops(extop **result, bool critical, int elem)
                 goto is_float;
             }
         } else if (i == TOKEN_FLOAT) {
+            enum floatize fmt;
         is_float:
             eop->type = EOT_DB_FLOAT;
 
-            if (eop->elem > 16) {
+            fmt = float_deffmt(eop->elem);
+            if (fmt == FLOAT_ERR) {
                 nasm_nonfatal("no %d-bit floating-point format supported",
                               eop->elem << 3);
                 eop->val.string.len = 0;
@@ -552,8 +554,7 @@ static int parse_eops(extop **result, bool critical, int elem)
                 eop = nasm_realloc(eop, sizeof(extop) + eop->val.string.len);
                 eop->val.string.data = (char *)eop + sizeof(extop);
                 if (!float_const(tokval.t_charptr, sign,
-                                 (uint8_t *)eop->val.string.data,
-                                 eop->val.string.len))
+                                 (uint8_t *)eop->val.string.data, fmt))
                     eop->val.string.len = 0;
             }
             if (!eop->val.string.len)

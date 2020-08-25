@@ -63,17 +63,18 @@
  *                                          assembly mode or the operand-size override on the operand
  * \70..\73         rel32                   a long relative operand, from operand 0..3
  * \74..\77         seg                     a word constant, from the _segment_ part of operand 0..3
- * \1ab                                     a ModRM, calculated on EA in operand a, with the spare
+ * \1ab             /r                      a ModRM, calculated on EA in operand a, with the reg
  *                                          field the register value of operand b.
- * \172\ab                                  the register number from operand a in bits 7..4, with
+ * \171\mab         /mrb (e.g /3r0)         a ModRM, with the reg field taken from operand a, and the m
+ *                                          and b fields set to the specified values.
+ * \172\ab          /is4                    the register number from operand a in bits 7..4, with
  *                                          the 4-bit immediate from operand b in bits 3..0.
  * \173\xab                                 the register number from operand a in bits 7..4, with
  *                                          the value b in bits 3..0.
  * \174..\177                               the register number from operand 0..3 in bits 7..4, and
  *                                          an arbitrary value in bits 3..0 (assembled as zero.)
- * \2ab                                     a ModRM, calculated on EA in operand a, with the spare
+ * \2ab             /b                      a ModRM, calculated on EA in operand a, with the reg
  *                                          field equal to digit b.
- *
  * \240..\243                               this instruction uses EVEX rather than REX or VEX/XOP, with the
  *                                          V field taken from operand 0..3.
  * \250                                     this instruction uses EVEX rather than REX or VEX/XOP, with the
@@ -103,12 +104,11 @@
  *                tup is tuple type for Disp8*N from %tuple_codes in insns.pl
  *                    (compressed displacement encoding)
  *
- * \254..\257       id,s                        a signed 32-bit operand to be extended to 64 bits.
- * \260..\263                                   this instruction uses VEX/XOP rather than REX, with the
- *                                              V field taken from operand 0..3.
- * \270                                         this instruction uses VEX/XOP rather than REX, with the
- *                                              V field set to 1111b.
- *
+ * \254..\257       id,s                    a signed 32-bit operand to be extended to 64 bits.
+ * \260..\263                               this instruction uses VEX/XOP rather than REX, with the
+ *                                          V field taken from operand 0..3.
+ * \270                                     this instruction uses VEX/XOP rather than REX, with the
+ *                                          V field set to 1111b.
  * VEX/XOP prefixes are followed by the sequence:
  * \tmm\wlp        where mm is the M field; and wlp is:
  *                 00 wwl lpp
@@ -1337,6 +1337,14 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length += 2;
             break;
 
+        case 0171:
+            c = *codes++;
+            op2 = (op2 & ~3) | ((c >> 3) & 3);
+            opx = &ins->oprs[op2];
+            ins->rex |= op_rexflags(opx, REX_R|REX_H|REX_P|REX_W);
+            length++;
+            break;
+
         case 0172:
         case 0173:
             codes++;
@@ -1969,6 +1977,15 @@ static void gencode(struct out_data *data, insn *ins)
             if (opx->segment == NO_SEG)
                 nasm_nonfatal("value referenced by FAR is not relocatable");
             out_segment(data, opx);
+            break;
+
+        case 0171:
+            c = *codes++;
+            op2 = (op2 & ~3) | ((c >> 3) & 3);
+            opx = &ins->oprs[op2];
+            r = nasm_regvals[opx->basereg];
+            c = (c & ~070) | ((r & 7) << 3);
+            out_rawbyte(data, c);
             break;
 
         case 0172:
@@ -2796,14 +2813,23 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
         if (input->basereg == -1 &&
             (input->indexreg == -1 || input->scale == 0)) {
             /*
-             * It's a pure offset.
+             * It's a pure offset. If it is an IMMEDIATE, it is a pattern
+             * in insns.dat which allows an immediate to be used as a memory
+             * address, in which case apply the default REL/ABS.
              */
-            if (bits == 64 && ((input->type & IP_REL) == IP_REL)) {
-                if (input->segment == NO_SEG ||
-                    (input->opflags & OPFLAG_RELATIVE)) {
-                    nasm_warn(WARN_OTHER|ERR_PASS2, "absolute address can not be RIP-relative");
-                    input->type &= ~IP_REL;
-                    input->type |= MEMORY;
+            if (bits == 64) {
+                if (is_class(IMMEDIATE, input->type)) {
+                    if (!(input->eaflags & EAF_ABS) &&
+                        ((input->eaflags & EAF_REL) || globalrel))
+                        input->type |= IP_REL;
+                }
+                if ((input->type & IP_REL) == IP_REL) {
+                    if (input->segment == NO_SEG ||
+                        (input->opflags & OPFLAG_RELATIVE)) {
+                        nasm_warn(WARN_OTHER|ERR_PASS2, "absolute address can not be RIP-relative");
+                        input->type &= ~IP_REL;
+                        input->type |= MEMORY;
+                    }
                 }
             }
 
@@ -2818,7 +2844,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                  input->disp_size != (addrbits != 16 ? 32 : 16)))
                 nasm_warn(WARN_OTHER, "displacement size ignored on absolute address");
 
-            if (bits == 64 && (~input->type & IP_REL)) {
+            if ((eaflags & EAF_MIB) || (bits == 64 && (~input->type & IP_REL))) {
                 output->sib_present = true;
                 output->sib         = GEN_SIB(0, 4, 5);
                 output->bytes       = 4;
@@ -3037,7 +3063,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                 output->rex |= rexflags(it, ix, REX_X);
                 output->rex |= rexflags(bt, bx, REX_B);
 
-                if (it == -1 && (bt & 7) != REG_NUM_ESP) {
+                if (it == -1 && (bt & 7) != REG_NUM_ESP && !(eaflags & EAF_MIB)) {
                     /* no SIB needed */
                     int mod, rm;
 

@@ -1906,6 +1906,16 @@ static char *detoken(Token * tlist, bool expand_locals)
 	    }
 	    break;
 
+        case TOKEN_INDIRECT:
+            /*
+             * This won't happen in when emitting to the assembler,
+             * but can happen when emitting output for some of the
+             * list options. The token string doesn't actually include
+             * the brackets in this case.
+             */
+            len += 3;           /* %[] */
+            break;
+
 	default:
 	    break;		/* No modifications */
         }
@@ -1925,8 +1935,19 @@ static char *detoken(Token * tlist, bool expand_locals)
 
     p = line = nasm_malloc(len + 1);
 
-    list_for_each(t, tlist)
-	p = mempcpy(p, tok_text(t), t->len);
+    list_for_each(t, tlist) {
+        switch (t->type) {
+        case TOKEN_INDIRECT:
+            *p++ = '%';
+            *p++ = '[';
+            p = mempcpy(p, tok_text(t), t->len);
+            *p++ = ']';
+            break;
+
+        default:
+            p = mempcpy(p, tok_text(t), t->len);
+        }
+    }
     *p = '\0';
 
     return line;
@@ -3534,8 +3555,7 @@ static int do_directive(Token *tline, Token **output)
          * unconditionally, as they are intended to reflect position
          * in externally preprocessed sources.
          */
-        if (op == PP_LINE)
-            return line_directive(origline, tline);
+        return line_directive(origline, tline);
 
     default:
         break;
@@ -4127,7 +4147,13 @@ issue_error:
         nasm_assert(!defining);
         nasm_new(def);
         def->casesense = casesense;
-        def->dstk.mmac = defining;
+        /*
+         * dstk.mstk points to the previous definition bracket,
+         * whereas dstk.mmac points to the topmost mmacro, which
+         * in this case is the one we are just starting to create.
+         */
+        def->dstk.mstk = defining;
+        def->dstk.mmac = def;
         if (op == PP_RMACRO)
             def->max_depth = nasm_limit[LIMIT_MACRO_LEVELS];
         if (!parse_mmacro_spec(tline, def, dname)) {
@@ -4709,6 +4735,11 @@ issue_error:
     case PP_LINE:
         nasm_panic("`%s' directive not preprocessed early", dname);
         break;
+
+    case PP_NULL:
+        /* Goes nowhere, does nothing... */
+        break;
+
     }
 
 done:
@@ -4803,7 +4834,7 @@ static inline bool pp_concat_match(const Token *t, enum concat_flags mask)
 static bool paste_tokens(Token **head, const struct concat_mask *m,
                          size_t mnum, bool handle_explicit)
 {
-    Token *tok, *t, *next, **prev_next, **prev_nonspace;
+    Token *tok, *t, *next, **prev_next, **prev_nonspace, **nextp;
     bool pasted = false;
     char *buf, *p;
     size_t len, i;
@@ -4842,29 +4873,24 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
 
             did_paste = true;
 
+            /* Left pasting token is start of line, just drop %+ */
             if (!prev_nonspace) {
-                /*
-                 * Left pasting token is start of line, just drop %+
-                 * and any whitespace leading up to it.
-                 */
-                *head = next = delete_Token(tok);
-                break;
+                prev_next = nextp = head;
+                t = NULL;
+            } else {
+                prev_next = prev_nonspace;
+                t = *prev_next;
+                nextp = &t->next;
             }
 
-            prev_next = prev_nonspace;
-            t = *prev_nonspace;
-
-            /* Delete leading whitespace */
-            next = zap_white(t->next);
-
             /*
-             * Delete the %+ token itself, followed by any whitespace.
+             * Delete the %+ token itself plus any whitespace.
              * In a sequence of %+ ... %+ ... %+ pasting sequences where
              * some expansions in the middle have ended up empty,
              * we can end up having multiple %+ tokens in a row;
              * just drop whem in that case.
              */
-            while (next) {
+            while ((next = *nextp)) {
                 if (next->type == TOKEN_PASTE || next->type == TOKEN_WHITESPACE)
                     next = delete_Token(next);
                 else
@@ -4874,11 +4900,16 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
             /*
              * Nothing after? Just leave the existing token.
              */
-            if (!next) {
-                t->next = next = NULL; /* End of line */
+            if (!next)
+                break;
+
+            if (!t) {
+                /* Nothing to actually paste, just zapping the paste */
+                *prev_next = tok = next;
                 break;
             }
 
+            /* An actual paste */
             p = buf = nasm_malloc(t->len + next->len + 1);
             p = mempcpy(p, tok_text(t), t->len);
             p = mempcpy(p, tok_text(next), next->len);
@@ -4903,7 +4934,7 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
             t->next = delete_Token(next);
 
             /* We want to restart from the head of the pasted token */
-            next = tok;
+            *prev_next = next = tok;
             break;
 
         default:
@@ -4939,10 +4970,14 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
              * Connect pasted into original stream,
              * ie A -> new-tokens -> B
              */
-            while (t->next)
-                t = t->next;
+            while ((tok = t->next)) {
+                if (tok->type != TOKEN_WHITESPACE && tok->type != TOKEN_PASTE)
+                    prev_nonspace = &t->next;
+                t = tok;
+            }
+
             t->next = next;
-            tok = t;
+            prev_next = &t->next;
             did_paste = true;
             break;
         }
@@ -7331,6 +7366,8 @@ void pp_error_list_macros(errflags severity)
     severity |= ERR_PP_LISTMACRO | ERR_NO_SEVERITY | ERR_HERE;
 
     while ((m = src_error_down())) {
+        if ((m->nolist & NL_LIST) || !m->where.filename)
+            break;
 	nasm_error(severity, "... from macro `%s' defined", m->name);
     }
 

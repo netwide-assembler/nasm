@@ -9,6 +9,14 @@ since 2007.
 
 \S{cl-2.15.03} Version 2.15.03
 
+\b Add instructions from the Intel Instruction Set Extensions and
+Future Features Programming Reference, June 2020. This includes
+AVX5512 \c{bfloat16}, AVX512 mask intersect, and Intel Advanced Matrix
+Extensions (AMX).
+
+\b Support for \c{bfloat16} floating-point constants. See \k{fltconst}
+and \k{pkg_fp}.
+
 \b Properly display warnings in preprocess-only mode.
 
 \b Fix copy-and-paste of examples from the PDF documentation.
@@ -24,6 +32,13 @@ section type.
 \b Fix explicit token pasting (\c{%+}, \k{concat%+}) for the cases
 where one or more parts result from empty token expansion, resulting
 in \c{%+} tokens at the beginning or end, or multiple ones in a row.
+
+\b Fix macro label capture (\c{%00}, \k{percent00}).
+
+\b Much better documentation for the MASM compatiblity package,
+\c{%use masm} (see \k{pkg_masm}).
+
+\b Fix \c{LEA} without square brackets, for MASM compatibility.
 
 \b Portability fixes.
 
