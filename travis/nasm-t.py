@@ -61,6 +61,10 @@ for cmd in ['new']:
                      dest = 'ref',
                      help = 'Test reference',
                      required = False)
+    spp.add_argument('--error',
+                     dest = 'error',
+                     help = 'Set to "y" if test is supposed to fail',
+                     required = False)
     spp.add_argument('--output',
                      dest = 'output', default = 'y',
                      help = 'Output (compiled) file name (or "y")',
@@ -495,6 +499,8 @@ if args.cmd == 'new':
             acc.append("\t\t\"option\": \"{}\"".format(args.option))
         if args.ref:
             acc.append("\t\t\"ref\": \"{}\"".format(args.ref))
+        if args.error == 'y':
+            acc.append("\t\t\"error\": \"true\"")
         f.write(",\n".join(acc).encode("utf-8"))
         if args.output or args.stdout or args.stderr:
             acc = []
