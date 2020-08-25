@@ -1685,9 +1685,8 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         cpu = cmd_cpu;
         if (listname) {
             if (pass_final() || list_on_every_pass()) {
-                active_list_options = list_options;
                 lfmt->init(listname);
-            } else if (active_list_options) {
+            } else if (list_active()) {
                 /*
                  * Looks like we used the list engine on a previous pass,
                  * but now it is turned off, presumably via %pragma -p
@@ -1695,7 +1694,6 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                 lfmt->cleanup();
                 if (!keep_all)
                     remove(listname);
-                active_list_options = 0;
             }
         }
 

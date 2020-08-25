@@ -126,35 +126,38 @@ extern bool user_nolist;
 extern uint64_t list_options, active_list_options;
 
 /*
- * This maps the characters a-z, A-Z and 0-9 onto a 64-bit bitmask
- * (with two bits left over for future use! This isn't particularly
- * efficient code, but just about every instance of it should be
- * fed a constant, so the entire function can be precomputed at
- * compile time. The only cases where the full computation is needed
- * is when parsing the -L option or %pragma list options, neither of
- * which is in any way performance critical.
+ * This maps the characters a-z, A-Z and 0-9 onto a 64-bit bitmask.
+ * Bit 0 is used to indicate that the listing engine is active, and
+ * bit 1 is reserved, so this will only return mask bits 2 and higher;
+ * as there are 62 possible characters this fits nicely.
+ *
+ * The mask returned is 0 for invalid characters, accessing no bits at
+ * all.
+ *
+ * This isn't particularly efficient code, but just about every
+ * instance of it should be fed a constant, so the entire function can
+ * be precomputed at compile time. The only cases where the full
+ * computation is needed is when parsing the -L option or %pragma list
+ * options, neither of which is in any way performance critical.
  *
  * The character + represents ALL listing options.
- *
- * This returns 0 for invalid values, so that no bit is accessed
- * for unsupported characters.
  */
 static inline const_func uint64_t list_option_mask(unsigned char x)
 {
     if (x >= 'a') {
         if (x > 'z')
             return 0;
-        x = x - 'a';
+        x = x - 'a' + 2;
     } else if (x >= 'A') {
         if (x > 'Z')
             return 0;
-        x = x - 'A' + 26;
+        x = x - 'A' + 2 + 26;
     } else if (x >= '0') {
         if (x > '9')
             return 0;
-        x = x - '0' + 26*2;
+        x = x - '0' + 2 + 26*2;
     } else if (x == '+') {
-        return ~UINT64_C(0);
+        return ~UINT64_C(1);
     } else {
         return 0;
     }
@@ -162,6 +165,7 @@ static inline const_func uint64_t list_option_mask(unsigned char x)
     return UINT64_C(1) << x;
 }
 
+/* Return true if the listing engine is active and a certain option is set. */
 static inline pure_func bool list_option(unsigned char x)
 {
     return unlikely(active_list_options & list_option_mask(x));
@@ -171,6 +175,12 @@ static inline pure_func bool list_option(unsigned char x)
 static inline pure_func bool list_on_every_pass(void)
 {
     return unlikely(list_options & list_option_mask('p'));
+}
+
+/* Is the listing engine active? */
+static inline pure_func bool list_active(void)
+{
+    return (active_list_options & 1);
 }
 
 /* Pragma handler */
