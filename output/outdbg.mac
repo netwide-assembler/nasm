@@ -33,7 +33,7 @@
 
 ;
 ; Define a few macros which lets the dbg format process files intended
-; for the .obj format.
+; for the .obj and .bin formats.
 ;
 OUT: dbg
 %define __?SECT?__ [section .text]
@@ -48,6 +48,9 @@ OUT: dbg
 %endmacro
 %imacro import 1+.nolist
  %pragma dbg import %1
+%endmacro
+%imacro org 1+.nolist
+ %pragma dbg org %1
 %endmacro
 %macro __?NASM_CDecl?__ 1
 %endmacro
