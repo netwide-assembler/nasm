@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -140,9 +140,10 @@ extern uint64_t list_options, active_list_options;
  * computation is needed is when parsing the -L option or %pragma list
  * options, neither of which is in any way performance critical.
  *
- * The character + represents ALL listing options.
+ * The character + represents ALL listing options except -Lw (flush
+ * after every line.)
  */
-static inline const_func uint64_t list_option_mask(unsigned char x)
+static inline const_func uint64_t list_option_mask_val(unsigned char x)
 {
     if (x >= 'a') {
         if (x > 'z')
@@ -156,13 +157,19 @@ static inline const_func uint64_t list_option_mask(unsigned char x)
         if (x > '9')
             return 0;
         x = x - '0' + 2 + 26*2;
-    } else if (x == '+') {
-        return ~UINT64_C(1);
     } else {
         return 0;
     }
 
     return UINT64_C(1) << x;
+}
+
+static inline const_func uint64_t list_option_mask(unsigned char x)
+{
+    if (x == '+')
+        return ~(list_option_mask_val('w') | 3);
+    else
+        return list_option_mask_val(x);
 }
 
 /* Return true if the listing engine is active and a certain option is set. */

@@ -124,7 +124,7 @@ my $r = system($gs, "-dCompatibilityLevel${o}1.3",
 	       $fpopt,
                "-dCompressPages${o}" . ($compress ? 'true' : 'false'),
                "-dUseFlateCompression${o}true",
-	       "-c", ".setpdfwrite", "-f", $in);
+	       "-f", $in);
 exit 0 if ( !$r && -f $out );
 
 # 3. pstopdf (BSD/MacOS X utility)

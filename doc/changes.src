@@ -7,6 +7,43 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.15.04} Version 2.15.04
+
+\b More sensible handling of the case where one single-line macro
+definition will shadow another. A warning will be issued, but the
+additional definition will be allowed. For the existing error case
+where both a parameterless and parametered macro are created, that
+warning is promoted to an error by default.
+
+\b Add special preprocessor tokens \c{%*?} and \c{%*??} that expand
+like \c{%?} and \c{%??} in single-line macros only. See
+\k{selfref%*?}.
+
+\b Correct the encoding of the \c{ENQCMDS} and \c{TILELOADT1}
+instructions.
+
+\b Fix case where the COFF backend (the \c{coff}, \c{win32} and
+\c{win64} output formats) would add padding bytes in the middle of a
+section if a \c{SECTION}/\c{SEGMENT} directive was provided which
+repeated an \c{ALIGN=} attribute. This neither matched legacy
+behavior, other backends, or user expectations.
+
+\b Fix SSE instructions not being recognized with an explicit memory
+operation size (e.g. \c{movsd qword [eax],xmm0}).
+
+\b The \c{-L+} option no longer enables \c{-Lw}, which is mainly
+useful to debug NASM crashes. See \k{opt-L}.
+
+\b Document long-standing hazards in the use of \c{$} in \c{Dx}
+statements, see \k{db}.
+
+\b The NASM-only RDOFF output format backend, which has been broken
+since at least NASM 2.14, has been disabled. The RDOFF tools are
+scheduled to be removed from the NASM distribution in NASM 2.16. If
+you have a concrete use case for RDOFF, please file a NASM bug report
+at \W{https://bugs.nasm.us/}\c{https://bugs.nasm.us/} as soon as
+possible. See \k{rdffmt}.
+
 \S{cl-2.15.03} Version 2.15.03
 
 \b Add instructions from the Intel Instruction Set Extensions and

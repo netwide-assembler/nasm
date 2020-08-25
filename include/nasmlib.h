@@ -83,9 +83,9 @@ char * safe_alloc end_with_null nasm_strcatn(const char *one, ...);
  * this additional storage.
  */
 char * safe_alloc printf_func(1, 2) nasm_asprintf(const char *fmt, ...);
-char * safe_alloc nasm_vasprintf(const char *fmt, va_list ap);
+char * safe_alloc vprintf_func(1) nasm_vasprintf(const char *fmt, va_list ap);
 void * safe_alloc printf_func(2, 3) nasm_axprintf(size_t extra, const char *fmt, ...);
-void * safe_alloc nasm_vaxprintf(size_t extra, const char *fmt, va_list ap);
+void * safe_alloc vprintf_func(2) nasm_vaxprintf(size_t extra, const char *fmt, va_list ap);
 
 /*
  * nasm_last_string_len() returns the length of the last string allocated

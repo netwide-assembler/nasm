@@ -72,8 +72,8 @@ fatal_func printf_func(2, 3) nasm_panicf(errflags flags, const char *fmt, ...);
 fatal_func nasm_panic_from_macro(const char *file, int line);
 #define panic() nasm_panic_from_macro(__FILE__, __LINE__);
 
-void nasm_verror(errflags severity, const char *fmt, va_list ap);
-fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list ap);
+void vprintf_func(2) nasm_verror(errflags severity, const char *fmt, va_list ap);
+fatal_func vprintf_func(2) nasm_verror_critical(errflags severity, const char *fmt, va_list ap);
 
 /*
  * These are the error severity codes which get passed as the first

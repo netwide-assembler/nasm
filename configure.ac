@@ -396,6 +396,18 @@ PA_ARG_ENABLED([werror],
   PA_ADD_CFLAGS([-Werror=vla])]
 )
 
+dnl Warnings that are probabilistic based on the compiler version, and
+dnl only should be used specifically when looking for opportunities to
+dnl address or optimize these cases.
+PA_ARG_ENABLED([suggestions],
+ [compile with compiler suggestion warnings enabled],
+ [PA_ADD_CFLAGS([-Wsuggest-attribute=pure])
+  PA_ADD_CFLAGS([-Wsuggest-attribute=const])
+  PA_ADD_CFLAGS([-Wsuggest-attribute=noreturn])
+  PA_ADD_CFLAGS([-Wsuggest-attribute=format])
+  PA_ADD_CFLAGS([-Wsuggest-attribute=cold])
+  PA_ADD_CFLAGS([-Wsuggest-attribute=malloc])])
+
 dnl
 dnl Test compiler features. On some compilers, this can be affected
 dnl by -Werror options, so run this *after* those options are added.

@@ -1347,6 +1347,11 @@ static Token *tokenize(const char *line)
                 p++;
                 if (*p == '?')
                     p++;
+            } else if (*p == '*' && p[1] == '?') {
+                /* %*? and %*?? */
+                p += 2;
+                if (*p == '?')
+                    p++;
             } else if (*p == '!') {
                 /* Environment variable reference */
                 p++;
@@ -1405,6 +1410,16 @@ static Token *tokenize(const char *line)
                         type = TOKEN_PREPROC_QQ;
                     else
                         type = TOKEN_PREPROC_ID;
+                    break;
+
+                case '*':
+                    type = TOKEN_OTHER;
+                    if (line[2] == '?') {
+                        if (toklen == 3)
+                            type = TOKEN_PREPROC_SQ;
+                        else if (toklen == 4 && line[3] == '?')
+                            type = TOKEN_PREPROC_SQQ;
+                    }
                     break;
 
                 case '!':
@@ -2335,9 +2350,8 @@ restart:
                     continue;
                 }
             }
-            if (defn) {
-                *defn = (nparam == m->nparam || nparam == -1) ? m : NULL;
-            }
+            if (defn)
+                *defn = m;
             return true;
         }
         m = m->next;
@@ -2986,7 +3000,8 @@ static SMacro *define_smacro(const char *mname, bool casesense,
     struct hash_table *smtbl;
     Context *ctx;
     bool defining_alias = false;
-    unsigned int nparam = 0;
+    int nparam = 0;
+    bool defined;
 
     if (tmpl) {
         defining_alias = tmpl->alias;
@@ -2995,46 +3010,99 @@ static SMacro *define_smacro(const char *mname, bool casesense,
             mark_smac_params(expansion, tmpl, 0);
     }
 
-    while (1) {
-        ctx = get_ctx(mname, &mname);
+    ctx = get_ctx(mname, &mname);
 
-        if (!smacro_defined(ctx, mname, nparam, &smac, casesense, true)) {
-            /* Create a new macro */
-            smtbl  = ctx ? &ctx->localmac : &smacros;
-            smhead = (SMacro **) hash_findi_add(smtbl, mname);
-            nasm_new(smac);
-            smac->next = *smhead;
-            *smhead = smac;
-            break;
-        } else if (!smac) {
-            nasm_warn(WARN_OTHER, "single-line macro `%s' defined both with and"
-                       " without parameters", mname);
-            /*
-             * Some instances of the old code considered this a failure,
-             * some others didn't.  What is the right thing to do here?
-             */
-            goto fail;
-        } else if (!smac->alias || ppconf.noaliases || defining_alias) {
-            /*
-             * We're redefining, so we have to take over an
-             * existing SMacro structure. This means freeing
-             * what was already in it, but not the structure itself.
-             */
-            clear_smacro(smac);
-            break;
-        } else if (smac->in_progress) {
-            nasm_nonfatal("macro alias loop");
-            goto fail;
-        } else {
-            /* It is an alias macro; follow the alias link */
-            SMacro *s;
+    defined = smacro_defined(ctx, mname, nparam, &smac, casesense, true);
 
-            smac->in_progress = true;
-            s = define_smacro(tok_text(smac->expansion), casesense,
-                              expansion, tmpl);
-            smac->in_progress = false;
-            return s;
+    if (defined) {
+        if (smac->alias) {
+            if (smac->in_progress) {
+                nasm_nonfatal("macro alias loop");
+                goto fail;
+            }
+
+            if (!defining_alias && !ppconf.noaliases) {
+                /* It is an alias macro; follow the alias link */
+                SMacro *s;
+
+                smac->in_progress = true;
+                s = define_smacro(tok_text(smac->expansion), casesense,
+                                  expansion, tmpl);
+                smac->in_progress = false;
+                return s;
+            }
         }
+
+        if (casesense ^ smac->casesense) {
+            /*
+             *!macro-def-case-single [on] single-line macro defined both case sensitive and insensitive
+             *!  warns when a single-line macro is defined both case
+             *!  sensitive and case insensitive.
+             *!  The new macro
+             *!  definition will override (shadow) the original one,
+             *!  although the original macro is not deleted, and will
+             *!  be re-exposed if the new macro is deleted with
+             *!  \c{%undef}, or, if the original macro is the case
+             *!  insensitive one, the macro call is done with a
+             *!  different case.
+             */
+            nasm_warn(WARN_MACRO_DEF_CASE_SINGLE, "case %ssensitive definition of macro `%s' will shadow %ssensitive macro `%s'",
+                      casesense ? "" : "in",
+                      mname,
+                      smac->casesense ? "" : "in",
+                      smac->name);
+            defined = false;
+        } else if ((!!nparam) ^ (!!smac->nparam)) {
+            /*
+             * Most recent versions of NASM considered this an error,
+             * so promote this warning to error by default.
+             *
+             *!macro-def-param-single [err] single-line macro defined with and without parameters
+             *!  warns if the same single-line macro is defined with and
+             *!  without parameters.
+             *!  The new macro
+             *!  definition will override (shadow) the original one,
+             *!  although the original macro is not deleted, and will
+             *!  be re-exposed if the new macro is deleted with
+             *!  \c{%undef}.
+             */
+            nasm_warn(WARN_MACRO_DEF_PARAM_SINGLE,
+                      "macro `%s' defined both with and without parameters",
+                      mname);
+            defined = false;
+        } else if (smac->nparam < nparam) {
+            /*
+             *!macro-def-greedy-single [on] single-line macro
+             *!  definition shadows greedy macro warns when a
+             *!  single-line macro is defined which would match a
+             *!  previously existing greedy definition.  The new macro
+             *!  definition will override (shadow) the original one,
+             *!  although the original macro is not deleted, and will
+             *!  be re-exposed if the new macro is deleted with
+             *!  \c{%undef}, and will be invoked if called with a
+             *!  parameter count that does not match the new definition.
+             */
+            nasm_warn(WARN_MACRO_DEF_GREEDY_SINGLE,
+                      "defining macro `%s' shadows previous greedy definition",
+                      mname);
+            defined = false;
+        }
+    }
+
+    if (defined) {
+        /*
+         * We're redefinining, so we have to take over an
+         * existing SMacro structure. This means freeing
+         * what was already in it, but not the structure itself.
+         */
+        clear_smacro(smac);
+    } else {
+        /* Create a new macro */
+        smtbl  = ctx ? &ctx->localmac : &smacros;
+        smhead = (SMacro **) hash_findi_add(smtbl, mname);
+        nasm_new(smac);
+        smac->next = *smhead;
+        *smhead = smac;
     }
 
     smac->name      = nasm_strdup(mname);
@@ -3660,6 +3728,9 @@ static int do_directive(Token *tline, Token **output)
         break;
 
     case PP_STACKSIZE:
+    {
+        const char *arg;
+
         /* Directive to tell NASM what the default stack size is. The
          * default is for a 16-bit stack, and this can be overriden with
          * %stacksize large.
@@ -3667,20 +3738,24 @@ static int do_directive(Token *tline, Token **output)
         tline = skip_white(tline->next);
         if (!tline || tline->type != TOKEN_ID) {
             nasm_nonfatal("`%s' missing size parameter", dname);
+            break;
         }
-        if (nasm_stricmp(tok_text(tline), "flat") == 0) {
+
+        arg = tok_text(tline);
+
+        if (nasm_stricmp(arg, "flat") == 0) {
             /* All subsequent ARG directives are for a 32-bit stack */
             StackSize = 4;
             StackPointer = "ebp";
             ArgOffset = 8;
             LocalOffset = 0;
-        } else if (nasm_stricmp(tok_text(tline), "flat64") == 0) {
+        } else if (nasm_stricmp(arg, "flat64") == 0) {
             /* All subsequent ARG directives are for a 64-bit stack */
             StackSize = 8;
             StackPointer = "rbp";
             ArgOffset = 16;
             LocalOffset = 0;
-        } else if (nasm_stricmp(tok_text(tline), "large") == 0) {
+        } else if (nasm_stricmp(arg, "large") == 0) {
             /* All subsequent ARG directives are for a 16-bit stack,
              * far function call.
              */
@@ -3688,7 +3763,7 @@ static int do_directive(Token *tline, Token **output)
             StackPointer = "bp";
             ArgOffset = 4;
             LocalOffset = 0;
-        } else if (nasm_stricmp(tok_text(tline), "small") == 0) {
+        } else if (nasm_stricmp(arg, "small") == 0) {
             /* All subsequent ARG directives are for a 16-bit stack,
              * far function call. We don't support near functions.
              */
@@ -3700,6 +3775,7 @@ static int do_directive(Token *tline, Token **output)
             nasm_nonfatal("`%s' invalid size type", dname);
         }
         break;
+    }
 
     case PP_ARG:
         /* TASM like ARG directive to define arguments to functions, in
@@ -5609,15 +5685,17 @@ static SMacro *expand_one_smacro(Token ***tpp)
 
         switch (type) {
         case TOKEN_PREPROC_Q:
+        case TOKEN_PREPROC_SQ:
             delete_Token(t);
             t = dup_Token(tline, mstart);
             break;
 
         case TOKEN_PREPROC_QQ:
+        case TOKEN_PREPROC_SQQ:
         {
             size_t mlen = strlen(m->name);
 	    size_t len;
-            char *p;
+            char *p, *from;
 
             t->type = mstart->type;
             if (t->type == TOKEN_LOCAL_MACRO) {
@@ -5630,15 +5708,15 @@ static SMacro *expand_one_smacro(Token ***tpp)
                 plen = pep - psp;
 
                 len = mlen + plen;
-                p = nasm_malloc(len + 1);
+                from = p = nasm_malloc(len + 1);
                 p = mempcpy(p, psp, plen);
             } else {
                 len = mlen;
-                p = nasm_malloc(len + 1);
+                from = p = nasm_malloc(len + 1);
             }
             p = mempcpy(p, m->name, mlen);
             *p = '\0';
-	    set_text_free(t, p, len);
+	    set_text_free(t, from, len);
 
             t->next = tline;
             break;
@@ -6974,6 +7052,9 @@ static Token *pp_tokline(void)
                         free_tlist(m->iline);
                         nasm_free(m->paramlen);
                         fm->in_progress = 0;
+			m->params = NULL;
+			m->iline = NULL;
+			m->paramlen = NULL;
                     }
                 }
 

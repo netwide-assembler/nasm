@@ -326,6 +326,8 @@ static inline void *mempcpy(void *dst, const void *src, size_t n)
  */
 #define printf_func(fmt, list)     format_func3(printf,fmt,list)
 #define printf_func_ptr(fmt, list) format_func3_ptr(printf,fmt,list)
+#define vprintf_func(fmt)          format_func3(printf,fmt,0)
+#define vprintf_func_ptr(fmt)      format_func3_ptr(printf,fmt,0)
 
 /* Determine probabilistically if something is a compile-time constant */
 #ifdef HAVE___BUILTIN_CONSTANT_P

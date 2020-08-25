@@ -1246,7 +1246,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     enum ea_type eat;
     uint8_t hleok = 0;
     bool lockcheck = true;
-    enum reg_enum mib_index = R_none;   /* For a separate index MIB reg form */
+    enum reg_enum mib_index = R_none;   /* For a separate index reg form */
     const char *errmsg;
 
     ins->rex = 0;               /* Ensure REX is reset */
@@ -1282,7 +1282,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
 
         case4(014):
-            /* this is an index reg of MIB operand */
+            /* this is an index reg of a split SIB operand */
             mib_index = opx->basereg;
             break;
 
@@ -1611,6 +1611,10 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                         opy->hinttype = EAH_NOTBASE;
                     }
                 }
+
+                /* SIB encoding required */
+                if (itemp_has(temp, IF_SIB))
+                    opy->eaflags |= EAF_SIB;
 
                 if (process_ea(opy, &ea_data, bits,
                                rfield, rflags, ins, &errmsg) != eat) {
@@ -2833,9 +2837,8 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                 }
             }
 
-            if (bits == 64 &&
-                !(IP_REL & ~input->type) && (eaflags & EAF_MIB)) {
-                *errmsg = "RIP-relative addressing is prohibited for MIB";
+            if (bits == 64 && !(IP_REL & ~input->type) && (eaflags & EAF_SIB)) {
+                *errmsg = "instruction requires SIB encoding, cannot be RIP-relative";
                 goto err;
             }
 
@@ -2844,7 +2847,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                  input->disp_size != (addrbits != 16 ? 32 : 16)))
                 nasm_warn(WARN_OTHER, "displacement size ignored on absolute address");
 
-            if ((eaflags & EAF_MIB) || (bits == 64 && (~input->type & IP_REL))) {
+            if ((eaflags & EAF_SIB) || (bits == 64 && (~input->type & IP_REL))) {
                 output->sib_present = true;
                 output->sib         = GEN_SIB(0, 4, 5);
                 output->bytes       = 4;
@@ -3022,7 +3025,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                     bt = it, bx = ix, it = -1, ix = 0;
                 }
                 if (eaflags & EAF_MIB) {
-                    /* only for mib operands */
+                    /* MIB/split-SIB encoding */
                     if (it == -1 && (hb == b && ht == EAH_NOTBASE)) {
                         /*
                          * make a single reg index [reg*1].
@@ -3063,7 +3066,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
                 output->rex |= rexflags(it, ix, REX_X);
                 output->rex |= rexflags(bt, bx, REX_B);
 
-                if (it == -1 && (bt & 7) != REG_NUM_ESP && !(eaflags & EAF_MIB)) {
+                if (it == -1 && (bt & 7) != REG_NUM_ESP && !(eaflags & EAF_SIB)) {
                     /* no SIB needed */
                     int mod, rm;
 

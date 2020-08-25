@@ -250,6 +250,8 @@ enum token_type { /* token types, other than chars */
     TOKEN_NAKED_STR,       /* Unquoted string that can be re-quoted */
     TOKEN_PREPROC_Q,       /* %? */
     TOKEN_PREPROC_QQ,      /* %?? */
+    TOKEN_PREPROC_SQ,      /* %*? */
+    TOKEN_PREPROC_SQQ,     /* %*? */
     TOKEN_PASTE,           /* %+ */
     TOKEN_COND_COMMA,      /* %, */
     TOKEN_INDIRECT,        /* %[...] */
@@ -617,13 +619,14 @@ enum prefixes { /* instruction prefixes */
 };
 
 enum ea_flags { /* special EA flags */
-    EAF_BYTEOFFS    =  1,   /* force offset part to byte size */
-    EAF_WORDOFFS    =  2,   /* force offset part to [d]word size */
-    EAF_TIMESTWO    =  4,   /* really do EAX*2 not EAX+EAX */
-    EAF_REL         =  8,   /* IP-relative addressing */
-    EAF_ABS         = 16,   /* non-IP-relative addressing */
-    EAF_FSGS        = 32,   /* fs/gs segment override present */
-    EAF_MIB         = 64    /* mib operand */
+    EAF_BYTEOFFS    =   1,  /* force offset part to byte size */
+    EAF_WORDOFFS    =   2,  /* force offset part to [d]word size */
+    EAF_TIMESTWO    =   4,  /* really do EAX*2 not EAX+EAX */
+    EAF_REL         =   8,  /* IP-relative addressing */
+    EAF_ABS         =  16,  /* non-IP-relative addressing */
+    EAF_FSGS        =  32,  /* fs/gs segment override present */
+    EAF_MIB         =  64,  /* mib operand */
+    EAF_SIB         = 128   /* SIB encoding obligatory */
 };
 
 enum eval_hint { /* values for `hinttype' */

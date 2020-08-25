@@ -1128,15 +1128,15 @@ static void ieee_write_dword(struct ieeeSection *seg, int32_t data)
     ieee_write_byte(seg, (data >> 16) & 0xFF);
     ieee_write_byte(seg, (data >> 24) & 0xFF);
 }
-static void ieee_putascii(char *format, ...)
+static void printf_func(1, 2) ieee_putascii(char *format, ...)
 {
     char buffer[256];
-    int i, l;
+    size_t i, l;
     va_list ap;
 
     va_start(ap, format);
-    vsnprintf(buffer, sizeof(buffer), format, ap);
-    l = strlen(buffer);
+    l = vsnprintf(buffer, sizeof(buffer), format, ap);
+    nasm_assert(l < sizeof(buffer));
     for (i = 0; i < l; i++)
         if ((uint8_t)buffer[i] > 31)
             checksum += buffer[i];
