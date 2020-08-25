@@ -44,6 +44,12 @@ struct src_location {
     int32_t lineno;
 };
 
+static inline const_func struct src_location src_nowhere(void)
+{
+    struct src_location no_where = { NULL, 0 };
+    return no_where;
+}
+
 /*
  * Comparing the *pointer value* of filenames is valid, because the
  * filename hash system guarantees that each unique filename string is
