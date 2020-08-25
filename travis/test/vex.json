@@ -1,0 +1,21 @@
+[
+	{
+		"description": "Test VEX2/VEX3/EVEX prefix",
+		"id": "vex",
+		"format": "bin",
+		"source": "vex.asm",
+		"option": "-Ox",
+		"target": [
+			{ "output": "vex.bin" }
+		]
+	},
+	{
+		"description": "Test VEX3 prefix error",
+		"ref": "vex",
+		"option": "-Ox -DERROR -o vex.bin.err",
+		"target": [
+			{ "stderr": "vex.stderr" }
+		],
+		"error": "expected"
+	}
+]
