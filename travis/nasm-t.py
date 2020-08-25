@@ -378,6 +378,9 @@ def exec_nasm(desc):
 def test_run(desc):
     print("=== Running %s ===" % (desc['_test-name']))
 
+    if 'disable' in desc:
+        return test_skip(desc['_test-name'], desc["disable"])
+
     pnasm, stdout, stderr = exec_nasm(desc)
     if pnasm == None:
         return False
@@ -430,6 +433,8 @@ def test_update(desc):
 
     if 'update' in desc and desc['update'] == 'false':
         return test_skip(desc['_test-name'], "No output provided")
+    if 'disable' in desc:
+        return test_skip(desc['_test-name'], desc["disable"])
 
     pnasm, stdout, stderr = exec_nasm(desc)
     if pnasm == None:
