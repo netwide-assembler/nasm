@@ -1104,6 +1104,28 @@ struct dfmt {
                            int is_global, char *special);
 
     /*
+     * debug_smacros - called when an smacro is defined or undefined
+     * during the code-generation pass. The definition string contains
+     * the macro name, any arguments, a single space, and the macro
+     * definition; this is what is expected by e.g. DWARF.
+     *
+     * The definition is provided even for an undef.
+     */
+    void (*debug_smacros)(bool define, const char *def);
+
+    /*
+     * debug_include - called when a file is included or the include
+     * is finished during the code-generation pass.  The filename is
+     * kept by the srcfile system and so can be compared for pointer
+     * equality.
+     *
+     * A filename of NULL means builtin (initial or %use) or command
+     * line statements.
+     */
+    void (*debug_include)(bool start, struct src_location outer,
+                          struct src_location inner);
+
+    /*
      * debug_mmacros - called once at the end with a definition for each
      * non-.nolist macro that has been invoked at least once in the program,
      * and the corresponding address ranges. See dbginfo.h.

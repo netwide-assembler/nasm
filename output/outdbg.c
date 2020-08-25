@@ -435,10 +435,19 @@ static void dbgdbg_deflabel(char *name, int32_t segment,
             is_global, special ? ": " : "", special);
 }
 
-static void dbgdbg_define(const char *type, const char *params)
+static void dbgdbg_debug_smacros(bool define, const char *def)
 {
-    fprintf(ofile, "dbg directive: [%s] value [%s]\n", type, params);
+    fprintf(ofile, "dbg define: %s [%s]\n",
+            define ? "define " : "undef ", def);
 }
+static void dbgdbg_debug_include(bool start, struct src_location outer,
+                                 struct src_location inner)
+{
+    fprintf(ofile, "dbg include: %s include: %s:%"PRId32" %s %s:%"PRId32"\n",
+            start ? "start" : "end", outer.filename, outer.lineno,
+            start ? "->" : "<-", inner.filename, inner.lineno);
+}
+
 static void dbgdbg_output(int output_type, void *param)
 {
     (void)output_type;
@@ -505,6 +514,13 @@ static void dbgdbg_debug_mmacros(const struct debug_macro_info *dmi)
     fprintf(ofile, "  end macro debug information\n");
 }
 
+static void dbgdbg_debug_directive(const char *id, const char *value)
+{
+    fprintf(ofile, "dbg directive: id [%s] value [%s] pass %"PRId64" (%s)\n",
+            id, value, pass_count(), pass_type_name());
+}
+
+
 static const struct pragma_facility dbgdbg_pragma_list[] = {
     { "dbgdbg", dbg_pragma },
     { NULL, dbg_pragma }        /* Won't trigger, "debug" is a reserved ns */
@@ -516,8 +532,10 @@ static const struct dfmt debug_debug_form = {
     dbgdbg_init,
     dbgdbg_linnum,
     dbgdbg_deflabel,
+    dbgdbg_debug_smacros,
+    dbgdbg_debug_include,
     dbgdbg_debug_mmacros,
-    dbgdbg_define,
+    dbgdbg_debug_directive,
     dbgdbg_typevalue,
     dbgdbg_output,
     dbgdbg_cleanup,

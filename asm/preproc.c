@@ -91,7 +91,10 @@ static struct pp_config {
  * Preprocessor debug-related flags
  */
 static enum pp_debug_flags {
-    PDBG_MACROS = 1              /* Collect macro information */
+    PDBG_MMACROS      = 1,      /* Collect mmacro information */
+    PDBG_SMACROS      = 2,      /* Collect smacro information */
+    PDBG_LIST_SMACROS = 4,      /* Smacros to list file (list option 's') */
+    PDBG_INCLUDE      = 8       /* Collect %include information */
 } ppdbg;
 
 /*
@@ -2726,17 +2729,17 @@ smacro_expand_default(const SMacro *s, Token **params, int nparams)
 }
 
 /*
- * Emit a macro defintion or undef to the listing file, if
- * desired. This is similar to detoken(), but it handles the reverse
- * expansion list, does not expand %! or local variable tokens, and
- * does some special handling for macro parameters.
+ * Emit a macro defintion or undef to the listing file or debug format
+ * if desired. This is similar to detoken(), but it handles the
+ * reverse expansion list, does not expand %! or local variable
+ * tokens, and does some special handling for macro parameters.
  */
 static void
 list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
 {
     Token *t;
     size_t namelen, size;
-    char *def, *p;
+    char *def, *p, *end_spec;
     char *context_prefix = NULL;
     size_t context_len;
 
@@ -2781,6 +2784,7 @@ list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
     }
 
     *--p = ' ';
+    end_spec = p;               /* Truncate here for macro def only */
 
     if (m->nparam) {
         int i;
@@ -2813,7 +2817,14 @@ list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
         nasm_free(context_prefix);
     }
 
-    nasm_listmsg("%s %s", pp_directives[op], p);
+    if (ppdbg & PDBG_LIST_SMACROS)
+        nasm_listmsg("%s %s", pp_directives[op], p);
+    if (ppdbg & PDBG_SMACROS) {
+        bool define = !(op == PP_UNDEF || op == PP_UNDEFALIAS);
+        if (!define)
+            *end_spec = '\0';   /* Remove the expansion (for list file only) */
+        dfmt->debug_smacros(define, p);
+    }
     nasm_free(def);
 }
 
@@ -3019,7 +3030,7 @@ static SMacro *define_smacro(const char *mname, bool casesense,
             smac->expandpvt = tmpl->expandpvt;
         }
     }
-    if (list_option('s')) {
+    if (ppdbg & (PDBG_SMACROS|PDBG_LIST_SMACROS)) {
         list_smacro_def((smac->alias ? PP_DEFALIAS : PP_DEFINE)
                         + !casesense, ctx, smac);
     }
@@ -3888,13 +3899,18 @@ static int do_directive(Token *tline, Token **output)
             /* -MG given but file not found, or repeated %require */
             nasm_free(inc);
         } else {
-            inc->where = src_where();
-            inc->lineinc = 1;
-            inc->nolist = istk->nolist;
-            inc->noline = istk->noline;
+            inc->nolist  = istk->nolist;
+            inc->noline  = istk->noline;
+            inc->where   = istk->where;
+            inc->lineinc = 0;
             istk = inc;
-            if (!istk->noline)
+            if (!istk->noline) {
                 src_set(0, found_path ? found_path : p);
+                istk->where = src_where();
+                istk->lineinc = 1;
+                if (ppdbg & PDBG_INCLUDE)
+                    dfmt->debug_include(true, istk->next->where, istk->where);
+            }
             if (!istk->nolist)
                 lfmt->uplevel(LIST_INCLUDE, 0);
         }
@@ -4824,13 +4840,16 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
             if (!handle_explicit)
                 break;
 
-            /* Left pasting token is start of line, just drop %+ */
+            did_paste = true;
+
             if (!prev_nonspace) {
-                tok = delete_Token(tok);
+                /*
+                 * Left pasting token is start of line, just drop %+
+                 * and any whitespace leading up to it.
+                 */
+                *head = next = delete_Token(tok);
                 break;
             }
-
-            did_paste = true;
 
             prev_next = prev_nonspace;
             t = *prev_nonspace;
@@ -4856,7 +4875,7 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
              * Nothing after? Just leave the existing token.
              */
             if (!next) {
-                t->next = tok = NULL; /* End of line */
+                t->next = next = NULL; /* End of line */
                 break;
             }
 
@@ -4873,10 +4892,10 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
                  * No output at all? Replace with a single whitespace.
                  * This should never happen.
                  */
-                t = new_White(NULL);
+                tok = t = new_White(NULL);
+            } else {
+                *prev_nonspace = tok = t;
             }
-
-            *prev_nonspace = tok = t;
             while (t->next)
                 t = t->next;    /* Find the last token produced */
 
@@ -4923,7 +4942,7 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
             while (t->next)
                 t = t->next;
             t->next = next;
-            prev_next = prev_nonspace = &t->next;
+            tok = t;
             did_paste = true;
             break;
         }
@@ -4932,10 +4951,10 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
             pasted = true;
         } else {
             prev_next = &tok->next;
-            if (next && next->type != TOKEN_WHITESPACE && next->type != TOKEN_PASTE)
+            if (next && next->type != TOKEN_WHITESPACE &&
+                next->type != TOKEN_PASTE)
                 prev_nonspace = prev_next;
         }
-
         tok = next;
     }
 
@@ -6544,7 +6563,7 @@ static int expand_mmacro(Token * tline)
 
         lfmt->uplevel(LIST_MACRO, 0);
 
-        if (ppdbg & PDBG_MACROS)
+        if (ppdbg & PDBG_MMACROS)
             debug_macro_start(m, src_where());
     }
 
@@ -6701,13 +6720,17 @@ static void pp_reset_stdmac(enum preproc_mode mode)
     nasm_new(inc);
     inc->next = istk;
     inc->nolist = inc->noline = !list_option('b');
+    inc->where = istk->where;
     istk = inc;
-    if (!istk->nolist)
+    if (!istk->nolist) {
         lfmt->uplevel(LIST_INCLUDE, 0);
-    if (!istk->noline)
+    }
+    if (!istk->noline) {
         src_set(0, NULL);
-
-    istk->where = src_where();
+        istk->where = src_where();
+        if (ppdbg & PDBG_INCLUDE)
+            dfmt->debug_include(true, istk->next->where, istk->where);
+    }
 
     pp_add_magic_stdmac();
 
@@ -6773,8 +6796,15 @@ void pp_reset(const char *file, enum preproc_mode mode,
     if (!(ppopt & PP_TRIVIAL)) {
         if (pass_final()) {
             if (dfmt->debug_mmacros)
-                ppdbg |= PDBG_MACROS;
+                ppdbg |= PDBG_MMACROS;
+            if (dfmt->debug_smacros)
+                ppdbg |= PDBG_SMACROS;
+            if (dfmt->debug_include)
+                ppdbg |= PDBG_INCLUDE;
         }
+
+        if (list_option('s'))
+            ppdbg |= PDBG_LIST_SMACROS;
     }
 
     memset(use_loaded, 0, use_package_count * sizeof(bool));
@@ -6789,6 +6819,11 @@ void pp_reset(const char *file, enum preproc_mode mode,
     src_set(0, file);
     istk->where = src_where();
     istk->lineinc = 1;
+
+    if (ppdbg & PDBG_INCLUDE) {
+        /* Let the debug format know the main file */
+        dfmt->debug_include(true, src_nowhere(), istk->where);
+    }
 
     strlist_add(deplist, file);
 
@@ -6919,7 +6954,7 @@ static Token *pp_tokline(void)
                     istk->nolist--;
                 } else if (!istk->nolist) {
                     lfmt->downlevel(LIST_MACRO);
-                    if ((ppdbg & PDBG_MACROS) && fm->name)
+                    if ((ppdbg & PDBG_MMACROS) && fm->name)
                         debug_macro_end(fm);
                 }
 
@@ -6981,8 +7016,14 @@ static Token *pp_tokline(void)
 
                 if (!i->nolist)
                     lfmt->downlevel(LIST_INCLUDE);
-                if (!i->noline && istk)
-                    src_update(istk->where);
+                if (!i->noline) {
+                    struct src_location whereto
+                        = istk ? istk->where : src_nowhere();
+                    if (ppdbg & PDBG_INCLUDE)
+                        dfmt->debug_include(false, whereto, i->where);
+                    if (istk)
+                        src_update(istk->where);
+                }
 
                 nasm_free(i);
                 return &tok_pop;
@@ -7120,13 +7161,17 @@ void pp_cleanup_pass(void)
         Include *i = istk;
         istk = istk->next;
         fclose(i->fp);
+        if (!istk && (ppdbg & PDBG_INCLUDE)) {
+            /* Signal closing the top-level input file */
+            dfmt->debug_include(false, src_nowhere(), i->where);
+        }
         nasm_free(i);
     }
     while (cstk)
         ctx_pop();
     src_set_fname(NULL);
 
-    if (ppdbg & PDBG_MACROS)
+    if (ppdbg & PDBG_MMACROS)
         debug_macro_output();
 }
 

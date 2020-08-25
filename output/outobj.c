@@ -2650,6 +2650,8 @@ static const struct dfmt borland_debug_form = {
     dbgbi_init,
     dbgbi_linnum,
     dbgbi_deflabel,
+    NULL,                       /* .debug_smacros */
+    NULL,                       /* .debug_include */
     NULL,                       /* .debug_mmacros */
     null_debug_directive,
     dbgbi_typevalue,
