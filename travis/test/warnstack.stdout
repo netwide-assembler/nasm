@@ -1,0 +1,9 @@
+%line 2+1 ./travis/test/warnstack.asm
+ [warning push]
+ [warning -user]
+
+ [warning pop]
+
+ [warning -user]
+
+ [warning pop]
