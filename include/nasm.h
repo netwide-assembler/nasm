@@ -251,7 +251,7 @@ enum token_type { /* token types, other than chars */
     TOKEN_PREPROC_Q,       /* %? */
     TOKEN_PREPROC_QQ,      /* %?? */
     TOKEN_PREPROC_SQ,      /* %*? */
-    TOKEN_PREPROC_SQQ,     /* %*? */
+    TOKEN_PREPROC_SQQ,     /* %*?? */
     TOKEN_PASTE,           /* %+ */
     TOKEN_COND_COMMA,      /* %, */
     TOKEN_INDIRECT,        /* %[...] */
