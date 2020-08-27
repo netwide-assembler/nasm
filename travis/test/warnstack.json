@@ -1,11 +1,12 @@
 [
 	{
 		"description": "Test warning stack",
-		"id": "warnstack",
-		"source": "warnstack.asm",
-		"option": "-E",
-		"target": [
-			{ "stdout": "warnstack.stdout" },
+	        "id": "warnstack",
+	        "format": "bin",
+	        "source": "warnstack.asm",
+	 	"option": "-Ox",
+	    "target": [
+			{ "output": "warnstack.bin" },
 			{ "stderr": "warnstack.stderr" }
 		]
 	}
