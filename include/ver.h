@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -44,12 +44,12 @@ extern const char nasm_version[];
 extern const char nasm_date[];
 extern const char nasm_compile_options[];
 
+extern bool reproducible;
+
 extern const char *nasm_comment(void);
 extern size_t nasm_comment_len(void);
 
 extern const char *nasm_signature(void);
 extern size_t nasm_signature_len(void);
-
-extern int nasm_test_run(void);
 
 #endif /* NASM_VER_H */

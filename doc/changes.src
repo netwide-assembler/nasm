@@ -12,6 +12,9 @@ since 2007.
 \b Correct \c{%ifid $} and \c{%ifid $$} being treated as true. See
 \k{iftyp}.
 
+\b Add \c{--reproducible} option to suppress NASM version numbers and
+timestamps in output files. See \k{opt-reproducible}.
+
 \S{cl-2.15.04} Version 2.15.04
 
 \b More sensible handling of the case where one single-line macro

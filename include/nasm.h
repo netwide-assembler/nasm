@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -66,6 +66,13 @@ struct compile_time {
     struct tm gm;
 };
 extern struct compile_time official_compile_time;
+
+/* POSIX timestamp if and only if we are not a reproducible build */
+extern bool reproducible;
+static inline int64_t posix_timestamp(void)
+{
+    return reproducible ? 0 : official_compile_time.posix;
+}
 
 #define NO_SEG  INT32_C(-1)     /* null segment value */
 #define SEG_ABS 0x40000000L     /* mask for far-absolute segments */

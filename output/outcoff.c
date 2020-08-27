@@ -936,16 +936,7 @@ static void coff_write(void)
         i = IMAGE_FILE_MACHINE_I386;
     fwriteint16_t(i,                    ofile); /* machine type */
     fwriteint16_t(coff_nsects,               ofile); /* number of sections */
-
-    /*
-     * When running tests we'are comparing binary output
-     * so time should be zapped.
-     */
-    if (nasm_test_run())
-        fwriteint32_t(0, ofile); /* time stamp */
-    else
-        fwriteint32_t(time(NULL), ofile); /* time stamp */
-
+    fwriteint32_t(posix_timestamp(), ofile); /* timestamp */
     fwriteint32_t(sympos,               ofile);
     fwriteint32_t(coff_nsyms + initsym,      ofile);
     fwriteint16_t(0,                    ofile); /* no optional header */

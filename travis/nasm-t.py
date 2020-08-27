@@ -340,7 +340,7 @@ def exec_nasm(desc):
     opts = [args.nasm] + prepare_run_opts(desc)
 
     nasm_env = os.environ.copy()
-    nasm_env['NASM_TEST_RUN'] = 'y'
+    nasm_env['NASMENV'] = '--reproducible'
 
     desc_env = desc.get('environ')
     if desc_env:
