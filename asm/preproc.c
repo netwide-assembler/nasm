@@ -1600,8 +1600,7 @@ static Token *tokenize(const char *line)
                 /* type = -1; */
             }
         } else if (p[0] == '$' && p[1] == '$') {
-            /* TOKEN_BASE - treat as TOK_ID for pasting purposes */
-            type = TOK_ID;
+            type = TOK_OTHER;   /* TOKEN_BASE */
             p += 2;
         } else if (nasm_isnumstart(*p)) {
             bool is_hex = false;
@@ -1667,8 +1666,7 @@ static Token *tokenize(const char *line)
             p--;        /* Point to first character beyond number */
 
             if (p == line+1 && *line == '$') {
-                /* TOKEN_HERE - treat as TOK_ID for pasting purposes */
-                type = TOK_ID;
+                type = TOK_OTHER; /* TOKEN_HERE */
             } else {
                 if (has_e && !is_hex) {
                     /* 1e13 is floating-point, but 1e13h is not */
