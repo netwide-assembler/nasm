@@ -982,6 +982,12 @@ If this option is given, all \i\c{%line} directives in the source code
 are ignored. This can be useful for debugging already preprocessed
 code. See \k{line}.
 
+\S{opt-reproducible} The \i\c{--reproducible} Option
+
+If this option is given, NASM will not emit information that is
+inherently dependent on the NASM version or different from run to run
+(such as timestamps) into the output file.
+
 
 \S{nasmenv} The \i\c{NASMENV} \i{Environment} Variable
 

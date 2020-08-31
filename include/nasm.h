@@ -67,6 +67,13 @@ struct compile_time {
 };
 extern struct compile_time official_compile_time;
 
+/* POSIX timestamp if and only if we are not a reproducible build */
+extern bool reproducible;
+static inline int64_t posix_timestamp(void)
+{
+    return reproducible ? 0 : official_compile_time.posix;
+}
+
 #define NO_SEG  INT32_C(-1)     /* null segment value */
 #define SEG_ABS 0x40000000L     /* mask for far-absolute segments */
 

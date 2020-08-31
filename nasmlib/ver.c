@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -43,46 +43,38 @@ const char nasm_compile_options[] = ""
 #endif
     ;
 
-/* These are used by some backends. */
-static const char __nasm_comment[] =
-    "The Netwide Assembler " NASM_VER;
+bool reproducible;              /* Reproducible output */
 
-static const char __nasm_signature[] =
-    "NASM " NASM_VER;
-
-/* These are constant so we could pass regression tests  */
-static const char __nasm_comment_const[] ="The Netwide Assembler CONST";
-static const char __nasm_signature_const[] = "NASM CONST";
-
-int nasm_test_run(void)
+/* These are used by some backends. For a reproducible build,
+ * these cannot contain version numbers.
+ */
+static const char * const _nasm_comment[2] =
 {
-	return getenv("NASM_TEST_RUN") ? 1 : 0;
-}
+    "The Netwide Assembler " NASM_VER,
+    "The Netwide Assembler"
+};
+
+static const char * const _nasm_signature[2] = {
+    "NASM " NASM_VER,
+    "NASM"
+};
 
 const char *nasm_comment(void)
 {
-	if (!nasm_test_run())
-		return __nasm_comment;
-	return __nasm_comment_const;
+    return _nasm_comment[reproducible];
 }
 
 size_t nasm_comment_len(void)
 {
-	if (!nasm_test_run())
-		return strlen(__nasm_comment);
-	return strlen(__nasm_comment_const);
+    return strlen(nasm_comment());
 }
 
 const char *nasm_signature(void)
 {
-	if (!nasm_test_run())
-		return __nasm_signature;
-	return __nasm_signature_const;
+    return _nasm_signature[reproducible];
 }
 
 size_t nasm_signature_len(void)
 {
-	if (!nasm_test_run())
-		return strlen(__nasm_signature);
-	return strlen(__nasm_signature_const);
+    return strlen(nasm_signature());
 }

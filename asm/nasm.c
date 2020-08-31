@@ -941,7 +941,8 @@ enum text_options {
     OPT_LIMIT,
     OPT_KEEP_ALL,
     OPT_NO_LINE,
-    OPT_DEBUG
+    OPT_DEBUG,
+    OPT_REPRODUCIBLE
 };
 enum need_arg {
     ARG_NO,
@@ -973,6 +974,7 @@ static const struct textargs textopts[] = {
     {"keep-all", OPT_KEEP_ALL, ARG_NO, 0},
     {"no-line",  OPT_NO_LINE, ARG_NO, 0},
     {"debug",    OPT_DEBUG, ARG_MAYBE, 0},
+    {"reproducible", OPT_REPRODUCIBLE, ARG_NO, 0},
     {NULL, OPT_BOGUS, ARG_NO, 0}
 };
 
@@ -1332,6 +1334,9 @@ static bool process_arg(char *p, char *q, int pass)
                     break;
                 case OPT_DEBUG:
                     debug_nasm = param ? strtoul(param, NULL, 10) : debug_nasm+1;
+                    break;
+                case OPT_REPRODUCIBLE:
+                    reproducible = true;
                     break;
                 case OPT_HELP:
                     help(stdout);
@@ -2289,6 +2294,8 @@ static void help(FILE *out)
         "                  common and global symbols (also --gprefix)\n"
         "   --lprefix str  prepend the given string to local symbols\n"
         "   --lpostfix str append the given string to local symbols\n"
+        "\n"
+        "   --reproducible attempt to produce run-to-run identical output\n"
         "\n"
         "    -w+x          enable warning x (also -Wx)\n"
         "    -w-x          disable warning x (also -Wno-x)\n"

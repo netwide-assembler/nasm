@@ -4872,7 +4872,7 @@ static inline bool pp_concat_match(const Token *t, enum concat_flags mask)
 
     switch (t->type) {
     case TOKEN_ID:
-        ctype = CONCAT_ID;      /* Should this include $ and $$? */
+        ctype = CONCAT_ID;      /* Ought this include $ and $$? */
         break;
     case TOKEN_LOCAL_MACRO:
         ctype = CONCAT_LOCAL_MACRO;
