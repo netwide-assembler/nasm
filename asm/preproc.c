@@ -194,13 +194,16 @@ typedef Token *(*ExpandSMacro)(const SMacro *s, Token **params, int nparams);
 
 /*
  * Store the definition of a single-line macro.
+ *
+ * Note: SPARM_VARADIC is only used by internal "magic" macros.
  */
 enum sparmflags {
     SPARM_PLAIN   = 0,
     SPARM_EVAL    = 1,      /* Evaluate as a numeric expression (=) */
     SPARM_STR     = 2,      /* Convert to quoted string ($) */
     SPARM_NOSTRIP = 4,      /* Don't strip braces (!) */
-    SPARM_GREEDY  = 8       /* Greedy final parameter (+) */
+    SPARM_GREEDY  = 8,      /* Greedy final parameter (+) */
+    SPARM_VARADIC = 16      /* Zero or more individual arguments (...) */
 };
 
 struct smac_param {
@@ -216,7 +219,7 @@ struct SMacro {
     intorptr expandpvt;
     struct smac_param *params;
     int nparam;
-    bool greedy;
+    bool varadic;               /* greedy or supports > nparam arguments */
     bool casesense;
     bool in_progress;
     bool alias;                 /* This is an alias macro */
@@ -871,6 +874,9 @@ static void free_llist(Line * list)
 static void free_tlist_array(Token **array, size_t nlists)
 {
     Token **listp = array;
+
+    if (!array)
+        return;
 
     while (nlists--)
         free_tlist(*listp++);
@@ -1731,8 +1737,11 @@ static Token *alloc_Token(void)
 
 static Token *delete_Token(Token *t)
 {
-    Token *next = t->next;
+    Token *next;
 
+    nasm_assert(t && t->type != TOKEN_FREE);
+
+    next = t->next;
     nasm_zero(*t);
     t->type = TOKEN_FREE;
     t->next = freeTokens;
@@ -2341,7 +2350,7 @@ restart:
     while (m) {
         if (!mstrcmp(m->name, name, m->casesense && nocase) &&
             (nparam <= 0 || m->nparam == 0 || nparam == m->nparam ||
-             (m->greedy && nparam >= m->nparam-1))) {
+             (m->varadic && nparam >= m->nparam-1))) {
             if (m->alias && !find_alias) {
                 if (!ppconf.noaliases) {
                     name = tok_text(m->expansion);
@@ -2825,9 +2834,10 @@ list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
         int i;
 
         *--p = ')';
+
         for (i = m->nparam-1; i >= 0; i--) {
             enum sparmflags flags = m->params[i].flags;
-            if (flags & SPARM_GREEDY)
+            if (flags & (SPARM_GREEDY|SPARM_VARADIC))
                 *--p = '+';
 	    p -= m->params[i].name.len;
 	    memcpy(p, tok_text(&m->params[i].name), m->params[i].name.len);
@@ -2865,12 +2875,19 @@ list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
 
 /*
  * Parse smacro arguments, return argument count. If the tmpl argument
- * is set, set the nparam, greedy and params field in the template.
+ * is set, set the nparam, varadic and params field in the template.
+ * The varadic field is not used by define_smacro(), but is provided
+ * in case the caller wants it for other purposes.
+ *
  * *tpp is updated to point to the pointer to the first token after the
  * prototype.
  *
  * The text values from any argument tokens are "stolen" and the
  * corresponding text fields set to NULL.
+ *
+ * Note that the user can't define a true varadic macro; doing so
+ * would be meaningless. The true varadic macros are only used for
+ * internal "magic macro" functions.
  */
 static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
 {
@@ -2981,9 +2998,9 @@ finish:
     }
     *tpp = tn;
     if (tmpl) {
-        tmpl->nparam = nparam;
-        tmpl->greedy = greedy;
-        tmpl->params = params;
+        tmpl->nparam  = nparam;
+        tmpl->varadic = greedy;
+        tmpl->params  = params;
     }
     return nparam;
 }
@@ -3109,15 +3126,17 @@ static SMacro *define_smacro(const char *mname, bool casesense,
     smac->casesense = casesense;
     smac->expansion = reverse_tokens(expansion);
     smac->expand    = smacro_expand_default;
+    smac->nparam    = nparam;
     if (tmpl) {
-        smac->nparam     = tmpl->nparam;
         smac->params     = tmpl->params;
         smac->alias      = tmpl->alias;
-        smac->greedy     = tmpl->greedy;
         if (tmpl->expand) {
             smac->expand    = tmpl->expand;
             smac->expandpvt = tmpl->expandpvt;
         }
+        if (nparam && (tmpl->params[nparam-1].flags &
+                       (SPARM_GREEDY|SPARM_VARADIC)))
+            smac->varadic = true;
     }
     if (ppdbg & (PDBG_SMACROS|PDBG_LIST_SMACROS)) {
         list_smacro_def((smac->alias ? PP_DEFALIAS : PP_DEFINE)
@@ -5511,7 +5530,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
             if (!mstrcmp(m->name, mname, m->casesense)) {
                 if (nparam == m->nparam)
                     break;      /* It's good */
-                if (m->greedy && nparam >= m->nparam-1)
+                if (m->varadic && nparam >= m->nparam-1)
                     break;      /* Also good */
             }
             m = m->next;
@@ -5534,7 +5553,8 @@ static SMacro *expand_one_smacro(Token ***tpp)
         bool bad_bracket = false;
         enum sparmflags flags;
 
-        nparam = m->nparam;
+        if (m->params[m->nparam-1].flags & SPARM_GREEDY)
+            nparam = m->nparam;
         paren = 1;
         nasm_newn(params, nparam);
         i = 0;
@@ -5569,7 +5589,8 @@ static SMacro *expand_one_smacro(Token ***tpp)
                     *pep = NULL;
                     bracketed = false;
                     skip = true;
-                    flags = m->params[i].flags;
+                    if (!(flags & SPARM_VARADIC))
+                        flags = m->params[i].flags;
                 }
                 break;
 
@@ -5626,8 +5647,10 @@ static SMacro *expand_one_smacro(Token ***tpp)
          * Possible further processing of parameters. Note that the
          * ordering matters here.
          */
+        flags = 0;
         for (i = 0; i < nparam; i++) {
-            enum sparmflags flags = m->params[i].flags;
+            if (!(flags & SPARM_VARADIC))
+                flags = m->params[i].flags;
 
             if (flags & SPARM_EVAL) {
                 /* Evaluate this parameter as a number */
@@ -5636,13 +5659,18 @@ static SMacro *expand_one_smacro(Token ***tpp)
                 expr *evalresult;
                 Token *eval_param;
 
-                pps.tptr = eval_param = expand_smacro_noreset(params[i]);
+                eval_param = zap_white(expand_smacro_noreset(params[i]));
+                params[i] = NULL;
+
+                if ((flags & (SPARM_GREEDY|SPARM_VARADIC)) && !eval_param)
+                    continue;
+
+                pps.tptr = eval_param;
                 pps.ntokens = -1;
                 tokval.t_type = TOKEN_INVALID;
                 evalresult = evaluate(ppscan, &pps, &tokval, NULL, true, NULL);
 
                 free_tlist(eval_param);
-                params[i] = NULL;
 
                 if (!evalresult) {
                     /* Nothing meaningful to do */
@@ -5794,8 +5822,7 @@ not_a_macro:
     m = NULL;
 done:
     smacro_deadman.levels++;
-    if (unlikely(params))
-        free_tlist_array(params, nparam);
+    free_tlist_array(params, nparam);
     return m;
 }
 
@@ -6760,6 +6787,7 @@ stdmac_ptr(const SMacro *s, Token **params, int nparams)
     }
 }
 
+/* %is...() function macros */
 static Token *
 stdmac_is(const SMacro *s, Token **params, int nparams)
 {
@@ -6774,20 +6802,53 @@ stdmac_is(const SMacro *s, Token **params, int nparams)
     return make_tok_num(NULL, retval);
 }
 
+/*
+ * Join all expanded macro arguments with commas, e.g. %eval().
+ * Remember that this needs to output the tokens in reverse order.
+ */
+static Token *
+stdmac_join(const SMacro *s, Token **params, int nparams)
+{
+    struct Token *tline = NULL;
+    int i;
+
+    (void)s;
+
+    for (i = 0; i < nparams; i++) {
+        Token *t, *ttmp;
+
+        if (i)
+            tline = make_tok_char(tline, ',');
+
+        list_for_each_safe(t, ttmp, params[i]) {
+            t->next = tline;
+            tline = t;
+        }
+
+        /* Avoid freeing the tokens we "stole" */
+        params[i] = NULL;
+    }
+
+    return tline;
+}
+
 /* Add magic standard macros */
 struct magic_macros {
     const char *name;
+    bool casesense;
     int nparam;
+    enum sparmflags flags;
     ExpandSMacro func;
 };
 static void pp_add_magic_stdmac(void)
 {
     static const struct magic_macros magic_macros[] = {
-        { "__?FILE?__", 0, stdmac_file },
-        { "__?LINE?__", 0, stdmac_line },
-        { "__?BITS?__", 0, stdmac_bits },
-        { "__?PTR?__",  0, stdmac_ptr },
-        { NULL, 0, NULL }
+        { "__?FILE?__", true, 0, 0, stdmac_file },
+        { "__?LINE?__", true, 0, 0, stdmac_line },
+        { "__?BITS?__", true, 0, 0, stdmac_bits },
+        { "__?PTR?__",  true, 0, 0, stdmac_ptr },
+        { "%eval",      false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
+        { NULL, false, 0, 0, NULL }
     };
     const struct magic_macros *m;
     SMacro tmpl;
@@ -6799,25 +6860,36 @@ static void pp_add_magic_stdmac(void)
     for (m = magic_macros; m->name; m++) {
         tmpl.nparam = m->nparam;
         tmpl.expand = m->func;
-        define_smacro(m->name, true, NULL, &tmpl);
+        if (m->nparam) {
+            int i;
+            enum sparmflags flags = m->flags;
+
+            nasm_newn(tmpl.params, m->nparam);
+            for (i = m->nparam-1; i >= 0; i--) {
+                tmpl.params[i].flags = flags;
+                flags &= ~(SPARM_GREEDY|SPARM_VARADIC); /* Last arg only */
+            }
+        }
+        define_smacro(m->name, m->casesense, NULL, &tmpl);
     }
 
     /* %is...() macro functions */
-    tmpl.nparam = 1;
-    tmpl.greedy = true;
-    tmpl.expand = stdmac_is;
-    name_buf[0] = '%';
-    name_buf[1] = 'i';
-    name_buf[2] = 's';
-    for (pt = PP_IF; pt < PP_IFN; pt++) {
-        if (pp_directives[pt]) {
-            nasm_new(tmpl.params);
+    tmpl.nparam  = 1;
+    tmpl.varadic = true;
+    tmpl.expand  = stdmac_is;
+    name_buf[0]  = '%';
+    name_buf[1]  = 'i';
+    name_buf[2]  = 's';
+    for (pt = PP_IF; pt < (PP_IFN+(PP_IFN-PP_IF)); pt++) {
+        if (!pp_directives[pt])
+            continue;
 
-            tmpl.params[0].flags = SPARM_GREEDY;
-            strcpy(name_buf+3, pp_directives[pt]+3);
-            tmpl.expandpvt.u = pt;
-            define_smacro(name_buf, false, NULL, &tmpl);
-        }
+        nasm_new(tmpl.params);
+        tmpl.params[0].flags = SPARM_GREEDY;
+
+        strcpy(name_buf+3, pp_directives[pt]+3);
+        tmpl.expandpvt.u = pt;
+        define_smacro(name_buf, false, NULL, &tmpl);
     }
 }
 
