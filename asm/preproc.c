@@ -4985,12 +4985,14 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
              * we can end up having multiple %+ tokens in a row;
              * just drop whem in that case.
              */
-            while ((next = *nextp)) {
+            next = *nextp;
+            while (next) {
                 if (next->type == TOKEN_PASTE || next->type == TOKEN_WHITESPACE)
                     next = delete_Token(next);
                 else
                     break;
             }
+            *nextp = next;
 
             /*
              * Nothing after? Just leave the existing token.
