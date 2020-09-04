@@ -2963,8 +2963,11 @@ static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
         case ',':
             if (greedy)
                 nasm_nonfatal("greedy parameter must be last");
-            /* fall through */
+            goto end_param;
         case ')':
+            done = true;
+            goto end_param;
+        end_param:
             if (params) {
                 if (name)
                     steal_Token(&params[nparam].name, name);
@@ -2973,7 +2976,6 @@ static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
             nparam++;
             name = NULL;
             flags = 0;
-            done = true;
             break;
         case TOKEN_WHITESPACE:
             break;
