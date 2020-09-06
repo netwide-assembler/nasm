@@ -63,7 +63,7 @@ for cmd in ['new']:
                      required = False)
     spp.add_argument('--error',
                      dest = 'error',
-                     help = 'Set to "y" if test is supposed to fail',
+                     help = '"y" if test is supposed to fail or "i" to ignore',
                      required = False)
     spp.add_argument('--output',
                      dest = 'output', default = 'y',
@@ -500,7 +500,9 @@ if args.cmd == 'new':
         if args.ref:
             acc.append("\t\t\"ref\": \"{}\"".format(args.ref))
         if args.error == 'y':
-            acc.append("\t\t\"error\": \"true\"")
+            acc.append("\t\t\"error\": \"expected\"")
+        elif args.error == 'i':
+            acc.append("\t\t\"error\": \"over\"")
         f.write(",\n".join(acc).encode("utf-8"))
         if args.output or args.stdout or args.stderr:
             acc = []
