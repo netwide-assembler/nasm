@@ -26,6 +26,7 @@
 *.srec
 *.si
 *.swp
+*.time
 *.win32
 *.win64
 *.xml
