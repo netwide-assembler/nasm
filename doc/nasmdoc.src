@@ -3376,9 +3376,13 @@ string.
 
 The conditional assembly construct \c{%ifid}, taking one parameter
 (which may be blank), assembles the subsequent code if and only if
-the first token in the parameter exists and is an identifier.
-\c{%ifnum} works similarly, but tests for the token being a numeric
-constant; \c{%ifstr} tests for it being a string.
+\e{the first token} in the parameter exists and is an
+identifier. \c{$} and \c{$$} are \e{not} considered identifiers by
+\c{%ifid}.
+
+\c{%ifnum} works similarly, but tests for the token being an integer
+numeric constant (not an expression!) possibly preceeded by \c{+} or
+\c{-}; \c{%ifstr} tests for it being a quoted string.
 
 For example, the \c{writefile} macro defined in \k{mlmacgre} can be
 extended to take advantage of \c{%ifstr} in the following fashion:

@@ -9,8 +9,8 @@ since 2007.
 
 \S{cl-2.15.05} Version 2.15.05
 
-\b Correct \c{%ifid $} and \c{%ifid $$} being treated as true. See
-\k{iftyp}.
+\b Fix \c{%ifid $} and \c{%ifid $$} incorrectly being treated as
+true. See \k{iftyp}.
 
 \b Add \c{--reproducible} option to suppress NASM version numbers and
 timestamps in output files. See \k{opt-reproducible}.
