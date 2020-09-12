@@ -1475,6 +1475,7 @@ static Token *tokenize(const char *line)
         } else if (*p == '?' && !nasm_isidchar(p[1])) {
             /* ? operator */
             type = TOKEN_QMARK;
+            p++;
         } else if (nasm_isidstart(*p) || (*p == '$' && nasm_isidstart(p[1]))) {
             /*
              * A regular identifier. This includes keywords, which are not
