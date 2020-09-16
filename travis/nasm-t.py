@@ -361,6 +361,9 @@ def exec_nasm(desc):
         test_fail(desc['_test-name'], "Unable to execute test")
         return None
 
+    #
+    # FIXME: For now 4M buffer is enough but
+    # better provide reading in a cycle.
     stderr = pnasm.stderr.read(4194304).decode("utf-8").strip("\n")
     stdout = pnasm.stdout.read(4194304).decode("utf-8").strip("\n")
 
