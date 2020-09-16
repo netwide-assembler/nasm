@@ -117,7 +117,7 @@ if args.cmd == None:
 
 def read_stdfile(path):
     with open(path, "rb") as f:
-        data = f.read().decode("utf-8").strip("\n")
+        data = f.read().decode("utf-8")
         f.close()
         return data
 
@@ -297,8 +297,8 @@ def show_diff(test, patha, pathb):
     pb = run_hexdump(pathb)
     if pa == None or pb == None:
         return test_fail(test, "Can't create dumps")
-    sa = pa.stdout.read().decode("utf-8").strip("\n")
-    sb = pb.stdout.read().decode("utf-8").strip("\n")
+    sa = pa.stdout.read().decode("utf-8")
+    sb = pb.stdout.read().decode("utf-8")
     print("\t--- hexdump %s" % (patha))
     for i in sa.split("\n"):
         print("\t%s" % i)
@@ -364,8 +364,8 @@ def exec_nasm(desc):
     #
     # FIXME: For now 4M buffer is enough but
     # better provide reading in a cycle.
-    stderr = pnasm.stderr.read(4194304).decode("utf-8").strip("\n")
-    stdout = pnasm.stdout.read(4194304).decode("utf-8").strip("\n")
+    stderr = pnasm.stderr.read(4194304).decode("utf-8")
+    stdout = pnasm.stdout.read(4194304).decode("utf-8")
 
     pnasm.stdout.close()
     pnasm.stderr.close()
