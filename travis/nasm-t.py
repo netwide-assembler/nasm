@@ -182,7 +182,7 @@ def read_json(path):
     try:
         with open(path, "rb") as f:
             try:
-                desc = json.loads(f.read().decode("utf-8").strip("\n"))
+                desc = json.loads(f.read().decode("utf-8"))
             except:
                 desc = None
             finally:
