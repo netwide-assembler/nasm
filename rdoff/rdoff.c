@@ -612,8 +612,8 @@ int rdfwriteheader(FILE * fp, rdf_headerbuf * h)
 
     l = membuflength(h->buf);
     l2 = l + 14 + 10 * h->nsegments + h->seglength;
-    fwriteint32_t(l, fp);
-    fwriteint32_t(l2, fp);
+    fwriteint32_t(l2, fp);      /* object length */
+    fwriteint32_t(l, fp);       /* header length */
 
     membufdump(h->buf, fp);
 
