@@ -2137,12 +2137,13 @@ static void macho_dbg_linenum(const char *file_name, int32_t line_num, int32_t s
             }
         }
 
-        if(need_new_list) {
+        if (need_new_list)
             new_file_list(cur_file, cur_dir);
-        } else {
+    }
+
+    if (!need_new_list) {
             nasm_free((void *)cur_file);
             nasm_free((void *)cur_dir);
-        }
     }
 
     dbg_immcall = true;
