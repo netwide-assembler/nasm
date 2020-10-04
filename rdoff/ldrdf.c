@@ -606,6 +606,7 @@ static int search_libraries(void)
 
     cur = libraries;
 
+    memset(&f, 0, sizeof(f));
     while (cur) {
         if (options.verbose > 2)
             printf("scanning library `%s', pass %d...\n", cur->name, pass);
