@@ -7,6 +7,11 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.15.06} Version 2.15.06
+
+\b Fix object and header length in \c{rdf} format.
+It is been broken in 2.13.xx series.
+
 \S{cl-2.15.05} Version 2.15.05
 
 \b Fix \c{%ifid $} and \c{%ifid $$} incorrectly being treated as
