@@ -4,9 +4,9 @@
 		"id": "nasmformat",
 		"format": "bin",
 		"source": "nasmformat.asm",
-		"option": "-Ox",
+		"option": "-E -Ox",
 		"target": [
-			{ "output": "nasmformat.bin" }
+			{ "stdout": "nasmformat-bin.stdout" }
 		]
 	},
 	{
@@ -14,7 +14,7 @@
 		"ref": "nasmformat",
 		"format": "elf32",
 		"target": [
-			{ "output": "nasmformat-elf32.o" }
+			{ "stdout": "nasmformat-elf32.stdout" }
 		]
 	},
 	{
@@ -22,7 +22,7 @@
 		"ref": "nasmformat",
 		"format": "elf64",
 		"target": [
-			{ "output": "nasmformat-elf64.o" }
+			{ "stdout": "nasmformat-elf64.stdout" }
 		]
 	},
 	{
@@ -30,7 +30,7 @@
 		"ref": "nasmformat",
 		"format": "macho32",
 		"target": [
-			{ "output": "nasmformat-macho32.o" }
+			{ "stdout": "nasmformat-macho32.stdout" }
 		]
 	},
 	{
@@ -38,7 +38,47 @@
 		"ref": "nasmformat",
 		"format": "macho64",
 		"target": [
-			{ "output": "nasmformat-macho64.o" }
+			{ "stdout": "nasmformat-macho64.stdout" }
+		]
+	},
+	{
+		"description": "Test __OUTPUT_FORMAT__ directive (aout)",
+		"ref": "nasmformat",
+		"format": "aout",
+		"target": [
+			{ "stdout": "nasmformat-aout.stdout" }
+		]
+	},
+	{
+		"description": "Test __OUTPUT_FORMAT__ directive (win32)",
+		"ref": "nasmformat",
+		"format": "win32",
+		"target": [
+			{ "stdout": "nasmformat-win32.stdout" }
+		]
+	},
+	{
+		"description": "Test __OUTPUT_FORMAT__ directive (win64)",
+		"ref": "nasmformat",
+		"format": "win64",
+		"target": [
+			{ "stdout": "nasmformat-win64.stdout" }
+		]
+	},
+	{
+		"description": "Test __OUTPUT_FORMAT__ directive (obj)",
+		"ref": "nasmformat",
+		"format": "obj",
+		"target": [
+			{ "stdout": "nasmformat-obj.stdout" }
+		]
+	},
+	{
+		"description": "Test __OUTPUT_FORMAT__ directive (ieee)",
+		"ref": "nasmformat",
+		"format": "ieee",
+		"target": [
+			{ "stdout": "nasmformat-ieee.stdout" }
 		]
 	}
 ]
