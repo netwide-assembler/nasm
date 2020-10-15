@@ -24,6 +24,8 @@
 		vpextrd		eax,xmm1,0x33
 ;		vpextrq		eax,xmm1,0x33
 
+		pextrw		rax,xmm0,0x33
+
 		vcvtpd2ps	xmm0,xmm1
 		vcvtpd2ps	xmm0,oword [rsi]
 		vcvtpd2ps	xmm0,ymm1
