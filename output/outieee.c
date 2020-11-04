@@ -795,6 +795,23 @@ static int32_t ieee_segment(char *name, int *bits)
             define_label(name, seg->index + 1, 0L, false);
         ieee_seg_needs_update = NULL;
 
+        /*
+         * In commit 98578071b9d71ecaa2344dd9c185237c1765041e
+         * we reworked labels significantly which in turn lead
+         * to the case where seg->name = NULL here and we get
+         * nil dereference in next segments definitions.
+         *
+         * Lets placate this case with explicit name setting
+         * if labels engine didn't set it yet.
+         *
+         * FIXME: Need to revisit this moment if such fix doesn't
+         * break anything but since IEEE 695 format is veeery
+         * old I don't expect there are many users left. In worst
+         * case this should only lead to a memory leak.
+         */
+        if (!seg->name)
+            seg->name = nasm_strdup(name);
+
         if (seg->use32)
             *bits = 32;
         else
