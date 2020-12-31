@@ -4225,6 +4225,19 @@ issue_error:
             goto done;
         }
         mmac_p = (MMacro **) hash_findi(&mmacros, spec.name, NULL);
+
+        /* Check the macro to be undefined is not being expanded */
+        list_for_each(l, istk->expansion) {
+            if (l->finishes == *mmac_p) {
+                nasm_nonfatal("`%%unmacro' can't undefine the macro being expanded");
+                /*
+                 * Do not release the macro instance to avoid using the freed
+                 * memory while proceeding the expansion.
+                 */
+                goto done;
+            }
+        }
+
         while (mmac_p && *mmac_p) {
             mmac = *mmac_p;
             if (mmac->casesense == spec.casesense &&
