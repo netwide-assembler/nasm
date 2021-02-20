@@ -335,6 +335,8 @@ static void bin_cleanup(void)
         if (!s)
             nasm_fatal("section %s follows an invalid or"
                   " unknown section (%s)", g->name, g->follows);
+        if (s == g)
+            nasm_fatal("section %s is self following", s->name);
         if (s->next && (s->next->flags & FOLLOWS_DEFINED) &&
             !strcmp(s->name, s->next->follows))
             nasm_fatal("sections %s and %s can't both follow"
