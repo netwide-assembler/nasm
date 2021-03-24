@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2021 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -1478,7 +1478,7 @@ static Token *tokenize(const char *line)
             p++;
         } else if (nasm_isidstart(*p) || (*p == '$' && nasm_isidstart(p[1]))) {
             /*
-             * A regular identifier. This includes keywords, which are not
+             * A regular identifier. This includes keywords which are not
              * special to the preprocessor.
              */
             type = TOKEN_ID;
@@ -4907,7 +4907,8 @@ static inline bool pp_concat_match(const Token *t, enum concat_flags mask)
 
     switch (t->type) {
     case TOKEN_ID:
-        ctype = CONCAT_ID;      /* Ought this include $ and $$? */
+    case TOKEN_QMARK:           /* Keyword, treated as ID for pasting */
+        ctype = CONCAT_ID;
         break;
     case TOKEN_LOCAL_MACRO:
         ctype = CONCAT_LOCAL_MACRO;
@@ -4921,6 +4922,11 @@ static inline bool pp_concat_match(const Token *t, enum concat_flags mask)
     case TOKEN_NUM:
     case TOKEN_FLOAT:
         ctype = CONCAT_NUM;
+        break;
+    case TOKEN_HERE:
+    case TOKEN_BASE:
+        /* NASM 2.15 treats these as operators, but is that sane? */
+        ctype = CONCAT_OP;
         break;
     case TOKEN_OTHER:
         ctype = CONCAT_OP;      /* For historical reasons */
