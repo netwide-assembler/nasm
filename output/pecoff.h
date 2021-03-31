@@ -487,6 +487,13 @@ struct coff_Section {
     int32_t namepos;            /* Offset of name into the strings table */
     int32_t pos, relpos;
     int64_t pass_last_seen;
+
+    /* comdat-related members */
+    char *comdat_name;
+    uint32_t checksum;          /* set only for comdat sections */
+    int8_t comdat_selection;
+    int8_t comdat_symbol;       /* is the "comdat name" in symbol table? */
+    int32_t comdat_associated;  /* associated section for selection==5 */
 };
 
 struct coff_Reloc {
