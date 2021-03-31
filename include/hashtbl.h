@@ -79,6 +79,8 @@ static inline uint64_t crc64_byte(uint64_t crc, uint8_t v)
     return crc64_tab[(uint8_t)(v ^ crc)] ^ (crc >> 8);
 }
 
+uint32_t crc32b(uint32_t crc, const void *data, size_t len);
+
 void **hash_find(struct hash_table *head, const char *string,
 		struct hash_insert *insert);
 void **hash_findb(struct hash_table *head, const void *key, size_t keylen,

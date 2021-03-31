@@ -184,6 +184,7 @@ static void coff_write(void);
 static void coff_section_header(char *, int32_t, int32_t, int32_t, int32_t, int32_t, int, int32_t);
 static void coff_write_relocs(struct coff_Section *);
 static void coff_write_symbols(void);
+static void coff_defcomdatname(char *name, int32_t segment);
 
 static void coff_win32_init(void)
 {
@@ -238,6 +239,7 @@ static void coff_cleanup(void)
             nasm_free(r);
         }
         nasm_free(coff_sects[i]->name);
+        nasm_free(coff_sects[i]->comdat_name);
         nasm_free(coff_sects[i]);
     }
     nasm_free(coff_sects);
@@ -306,9 +308,10 @@ static inline unsigned int coff_alignment(uint32_t flags)
 
 static int32_t coff_section_names(char *name, int *bits)
 {
-    char *p;
+    char *p, *comdat_name;
     uint32_t flags, align_flags;
-    int i;
+    int i, j;
+    int8_t comdat_selection;
 
     /*
      * Set default bits.
@@ -333,7 +336,8 @@ static int32_t coff_section_names(char *name, int *bits)
             name[8] = '\0';
         }
     }
-    flags = align_flags = 0;
+    flags = align_flags = comdat_selection = 0;
+    comdat_name = NULL;
 
     while (*p && nasm_isspace(*p))
         p++;
@@ -386,12 +390,45 @@ static int32_t coff_section_names(char *name, int *bits)
                     align_flags = coff_sectalign_flags(align);
                 }
             }
+        } else if (!nasm_strnicmp(q, "comdat=", 7)) {
+            /*
+             * Expected format: comdat=num:name]
+             * where
+             *   num is a number: one of the IMAGE_COMDAT_SELECT_* constants
+             *   name is a string: the "COMDAT name"
+             */
+            comdat_selection = strtoul(q + 7, &q, 10);
+            if (!comdat_selection)
+                nasm_nonfatal("invalid argument to `comdat'");
+            else if (*q != ':')
+                nasm_nonfatal("missing name in `comdat'");
+            else {
+                comdat_name = q + 1;
+            }
         }
     }
 
     for (i = 0; i < coff_nsects; i++)
-        if (!strcmp(name, coff_sects[i]->name))
-            break;
+        if (!strcmp(name, coff_sects[i]->name)) {
+            if (!comdat_name && !coff_sects[i]->comdat_name)
+                break;
+            else if (comdat_name && coff_sects[i]->comdat_name &&
+                     !strcmp(comdat_name, coff_sects[i]->comdat_name)) {
+                /*
+                 * For COMDAT, it makes sense to have multiple sections with
+                 * the same name (different comdat name though)
+                 */
+                if ((coff_sects[i]->comdat_selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE &&
+                    comdat_selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) ||
+                    (coff_sects[i]->comdat_selection != IMAGE_COMDAT_SELECT_ASSOCIATIVE &&
+                    comdat_selection != IMAGE_COMDAT_SELECT_ASSOCIATIVE)) {
+                    /*
+                     * Let's also allow an associative/other pair with the same name
+                     */
+                    break;
+                }
+            }
+        }
     if (i == coff_nsects) {
         if (!flags) {
             flags = TEXT_FLAGS;
@@ -409,10 +446,37 @@ static int32_t coff_section_names(char *name, int *bits)
                     flags = XDATA_FLAGS;
             }
         }
+
+        if (comdat_name)
+            flags |= IMAGE_SCN_LNK_COMDAT;
+
         i = coff_make_section(name, flags);
         coff_sects[i]->align_flags = align_flags;
+
+        if (comdat_name) {
+            coff_sects[i]->comdat_selection = comdat_selection;
+
+            coff_sects[i]->comdat_name = strdup(comdat_name);
+            if (comdat_selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
+                /*
+                 * Find a previous section with given comdat name
+                 */ 
+                for (j = 0; j < coff_nsects - 1; j++)
+                    if (coff_sects[j]->comdat_name &&
+                        !strcmp(coff_sects[j]->comdat_name, comdat_name))
+                        break;
+                if (j < coff_nsects - 1) {
+                    coff_sects[i]->comdat_associated = j + 1;
+                }
+                else
+                    nasm_nonfatal("unknown `comdat' associative");
+            }
+        }
     } else {
         if (flags) {
+            if (comdat_name)
+                flags |= IMAGE_SCN_LNK_COMDAT;
+
             /* Warn if non-alignment flags differ */
             if (((flags ^ coff_sects[i]->flags) & ~IMAGE_SCN_ALIGN_MASK) &&
                 coff_sects[i]->pass_last_seen == pass_count()) {
@@ -428,6 +492,14 @@ static int32_t coff_section_names(char *name, int *bits)
         if (align_flags > coff_sects[i]->align_flags) {
             coff_sects[i]->align_flags = align_flags;
         }
+
+        if (comdat_name) {
+            if ((coff_sects[i]->comdat_selection != comdat_selection) &&
+                coff_sects[i]->pass_last_seen == pass_count()) {
+                nasm_warn(WARN_OTHER, "comdat selection changed on"
+                          " redeclaration of name `%s'", comdat_name);
+            }
+        }
     }
 
     coff_sects[i]->pass_last_seen = pass_count();
@@ -437,7 +509,7 @@ static int32_t coff_section_names(char *name, int *bits)
 static void coff_deflabel(char *name, int32_t segment, int64_t offset,
                           int is_global, char *special)
 {
-    int pos = strslen + 4;
+    int pos, section;
     struct coff_Symbol *sym;
 
     if (special)
@@ -450,6 +522,32 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
         return;
     }
 
+    if (segment == NO_SEG)
+        section = -1;      /* absolute symbol */
+    else {
+        int i;
+        section = 0;
+        for (i = 0; i < coff_nsects; i++)
+            if (segment == coff_sects[i]->index) {
+                section = i + 1;
+
+                if (coff_sects[i]->comdat_name && !coff_sects[i]->comdat_symbol) {
+                    /*
+                     * The "comdat symbol" must be the first one in symbol table
+                     * So we'll insert/define it - before defining the other one
+                     */
+                    coff_sects[i]->comdat_symbol = 1;
+
+                    if (coff_sects[i]->comdat_selection != IMAGE_COMDAT_SELECT_ASSOCIATIVE &&
+                        0 != strcmp(coff_sects[i]->comdat_name, name)) {
+                        coff_defcomdatname(coff_sects[i]->comdat_name, segment);
+                    }
+                }
+                break;
+            }
+    }
+
+    pos = strslen + 4;
     if (strlen(name) > 8) {
         size_t nlen = strlen(name)+1;
         saa_wbytes(coff_strs, name, nlen);
@@ -465,19 +563,9 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
         strcpy(sym->name, name);
     sym->is_global = !!is_global;
     sym->type = 0;              /* Default to T_NULL (no type) */
-    if (segment == NO_SEG)
-        sym->section = -1;      /* absolute symbol */
-    else {
-        int i;
-        sym->section = 0;
-        for (i = 0; i < coff_nsects; i++)
-            if (segment == coff_sects[i]->index) {
-                sym->section = i + 1;
-                break;
-            }
-        if (!sym->section)
-            sym->is_global = true;
-    }
+    sym->section = section;
+    if (!sym->section)
+        sym->is_global = true;
     if (is_global == 2)
         sym->value = offset;
     else
@@ -740,6 +828,11 @@ static void BuildExportTable(STRING **rvp)
     *rvp = NULL;
 }
 
+static void coff_defcomdatname(char *name, int32_t segment)
+{
+    coff_deflabel(name, segment, 0, 1, NULL);
+}
+
 static enum directive_result
 coff_directives(enum directive directive, char *value)
 {
@@ -907,6 +1000,17 @@ static void coff_write(void)
     }
 
     /*
+     * Check if all comdat sections have their comdat symbol
+     * If not, define it
+     */
+    for (i = 0; i < coff_nsects; i++) {
+        if (coff_sects[i]->comdat_name && !coff_sects[i]->comdat_symbol &&
+            coff_sects[i]->comdat_selection != IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
+            coff_defcomdatname(coff_sects[i]->comdat_name, coff_sects[i]->index);
+        }
+    }
+
+    /*
      * Work out how big the file will get.
      * Calculate the start of the `real' symbols at the same time.
      * Check for massive relocations.
@@ -961,6 +1065,22 @@ static void coff_write(void)
         if (coff_sects[i]->data) {
             saa_fpwrite(coff_sects[i]->data, ofile);
             coff_write_relocs(coff_sects[i]);
+
+            if (coff_sects[i]->flags & IMAGE_SCN_LNK_COMDAT) {
+                /*
+                 * Checksum the section data
+                 */
+                uint32_t checksum = 0;
+                const char *data;
+                size_t len;
+
+                saa_rewind(coff_sects[i]->data);
+                while (len = coff_sects[i]->data->datalen,
+                        (data = saa_rbytes(coff_sects[i]->data, &len)) != NULL)
+                    checksum = crc32b(checksum, data, len);
+
+                coff_sects[i]->checksum = checksum;
+            }
         }
 
     /*
@@ -1091,7 +1211,15 @@ static void coff_write_symbols(void)
         coff_symbol(coff_sects[i]->name, 0L, 0L, i + 1, 0, 3, 1);
         fwriteint32_t(coff_sects[i]->len,    ofile);
         fwriteint16_t(coff_sects[i]->nrelocs,ofile);
-        nasm_write(filename, 12, ofile);
+        if (coff_sects[i]->flags & IMAGE_SCN_LNK_COMDAT) {
+            fwriteint16_t(0, ofile);
+            fwriteint32_t(coff_sects[i]->checksum, ofile);
+            fwriteint16_t(coff_sects[i]->comdat_associated, ofile);
+            fputc(coff_sects[i]->comdat_selection, ofile);
+            nasm_write(filename, 3, ofile);
+        }
+        else
+            nasm_write(filename, 12, ofile);
     }
 
     /*
