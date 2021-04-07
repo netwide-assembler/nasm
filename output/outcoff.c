@@ -186,6 +186,8 @@ static void coff_write_relocs(struct coff_Section *);
 static void coff_write_symbols(void);
 static void coff_defcomdatname(char *name, int32_t segment);
 
+#define COMDAT_PLACEHOLDER_NAME ".tmpcmdt"
+
 static void coff_win32_init(void)
 {
     win32 = true;
@@ -289,6 +291,31 @@ int coff_make_section(char *name, uint32_t flags)
 }
 
 /*
+ * Update the name and flags of an existing section
+ */
+static void coff_update_section(int section, char *name, uint32_t flags)
+{
+    struct coff_Section *s = coff_sects[section];
+    size_t namelen = strlen(name);
+
+    if (namelen > 8) {
+        if (win32 || win64) {
+            s->namepos = strslen + 4;
+            saa_wbytes(coff_strs, name, namelen + 1);
+            strslen += namelen + 1;
+        } else {
+            namelen = 8;
+        }
+    }
+
+    nasm_free(s->name);
+    s->name = nasm_malloc(namelen + 1);
+    strncpy(s->name, name, namelen);
+    s->name[namelen] = '\0';
+    s->flags = flags;
+}
+
+/*
  * Convert an alignment value to the corresponding flags.
  * An alignment value of 0 means no flags should be set.
  */
@@ -306,12 +333,38 @@ static inline unsigned int coff_alignment(uint32_t flags)
     return (1U << ((flags & IMAGE_SCN_ALIGN_MASK) >> 20)) >> 1;
 }
 
+/*
+ * Get the default section flags (based on section name)
+ */
+static uint32_t coff_section_flags(char *name, uint32_t flags)
+{
+    if (!flags) {
+        flags = TEXT_FLAGS;
+
+        if (!strcmp(name, ".data")) {
+            flags = DATA_FLAGS;
+        } else if (!strcmp(name, ".rdata")) {
+            flags = RDATA_FLAGS;
+        } else if (!strcmp(name, ".bss")) {
+            flags = BSS_FLAGS;
+        } else if (win64) {
+            if (!strcmp(name, ".pdata"))
+                flags = PDATA_FLAGS;
+            else if (!strcmp(name, ".xdata"))
+                flags = XDATA_FLAGS;
+        }
+    }
+
+    return flags;
+}
+
 static int32_t coff_section_names(char *name, int *bits)
 {
     char *p, *comdat_name;
     uint32_t flags, align_flags;
     int i, j;
     int8_t comdat_selection;
+    int32_t comdat_associated;
 
     /*
      * Set default bits.
@@ -336,7 +389,7 @@ static int32_t coff_section_names(char *name, int *bits)
             name[8] = '\0';
         }
     }
-    flags = align_flags = comdat_selection = 0;
+    flags = align_flags = comdat_selection = comdat_associated = 0;
     comdat_name = NULL;
 
     while (*p && nasm_isspace(*p))
@@ -400,7 +453,7 @@ static int32_t coff_section_names(char *name, int *bits)
             comdat_selection = strtoul(q + 7, &q, 10);
             if (!comdat_selection)
                 nasm_nonfatal("invalid argument to `comdat'");
-            else if (*q != ':')
+            else if (*q != ':' || q[1] == '\0')
                 nasm_nonfatal("missing name in `comdat'");
             else {
                 comdat_name = q + 1;
@@ -429,48 +482,61 @@ static int32_t coff_section_names(char *name, int *bits)
                 }
             }
         }
-    if (i == coff_nsects) {
-        if (!flags) {
-            flags = TEXT_FLAGS;
-
-            if (!strcmp(name, ".data")) {
-                flags = DATA_FLAGS;
-            } else if (!strcmp(name, ".rdata")) {
-                flags = RDATA_FLAGS;
-            } else if (!strcmp(name, ".bss")) {
-                flags = BSS_FLAGS;
-            } else if (win64) {
-                if (!strcmp(name, ".pdata"))
-                    flags = PDATA_FLAGS;
-                else if (!strcmp(name, ".xdata"))
-                    flags = XDATA_FLAGS;
-            }
+        else if (comdat_name && coff_sects[i]->comdat_name &&
+                 !coff_sects[i]->comdat_selection &&
+                 !strcmp(comdat_name, coff_sects[i]->comdat_name) &&
+                 comdat_selection != IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
+            /*
+             * This seems to be a "placeholder section" we've created before
+             * to be the associate of a previous comdat section.
+             * We'll just update the name and flags with the real ones now.
+             */
+            flags = coff_section_flags(name, flags);
+            coff_update_section(i, name, flags | IMAGE_SCN_LNK_COMDAT);
+            coff_sects[i]->comdat_selection = comdat_selection;
+            break;
         }
 
-        if (comdat_name)
+    if (i == coff_nsects) {
+        flags = coff_section_flags(name, flags);
+
+        if (comdat_name) {
             flags |= IMAGE_SCN_LNK_COMDAT;
+
+            if (comdat_selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
+                /*
+                 * Find an existing section with given comdat name
+                 */ 
+                for (j = 0; j < coff_nsects; j++)
+                    if (coff_sects[j]->comdat_name &&
+                        !strcmp(coff_sects[j]->comdat_name, comdat_name))
+                        break;
+
+                if (j == coff_nsects) {
+                    /*
+                     * The associated section doesn't exist (yet)
+                     * Even though the specs don't enforce a particular order,
+                     * VS (2019) linker doesn't accept .obj files where the
+                     * target section is a later one (than the one with sel==5)
+                     * 
+                     * So let's insert another section now (a placeholder),
+                     * hoping it will be turned into the target section later.
+                     */
+                    j = coff_make_section(COMDAT_PLACEHOLDER_NAME, TEXT_FLAGS);
+                    coff_sects[j]->comdat_name = nasm_strdup(comdat_name);
+                }
+
+                comdat_associated = j + 1;
+            }
+        }
 
         i = coff_make_section(name, flags);
         coff_sects[i]->align_flags = align_flags;
 
         if (comdat_name) {
             coff_sects[i]->comdat_selection = comdat_selection;
-
-            coff_sects[i]->comdat_name = strdup(comdat_name);
-            if (comdat_selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
-                /*
-                 * Find a previous section with given comdat name
-                 */ 
-                for (j = 0; j < coff_nsects - 1; j++)
-                    if (coff_sects[j]->comdat_name &&
-                        !strcmp(coff_sects[j]->comdat_name, comdat_name))
-                        break;
-                if (j < coff_nsects - 1) {
-                    coff_sects[i]->comdat_associated = j + 1;
-                }
-                else
-                    nasm_nonfatal("unknown `comdat' associative");
-            }
+            coff_sects[i]->comdat_associated = comdat_associated;
+            coff_sects[i]->comdat_name = nasm_strdup(comdat_name);
         }
     } else {
         if (flags) {
@@ -1000,15 +1066,25 @@ static void coff_write(void)
     }
 
     /*
-     * Check if all comdat sections have their comdat symbol
-     * If not, define it
+     * Check all comdat sections
      */
-    for (i = 0; i < coff_nsects; i++) {
-        if (coff_sects[i]->comdat_name && !coff_sects[i]->comdat_symbol &&
-            coff_sects[i]->comdat_selection != IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
-            coff_defcomdatname(coff_sects[i]->comdat_name, coff_sects[i]->index);
+    for (i = 0; i < coff_nsects; i++)
+        if (coff_sects[i]->comdat_name) {
+            if (!coff_sects[i]->comdat_symbol &&
+                coff_sects[i]->comdat_selection != IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
+                /*
+                 * This section doesn't have its comdat symbol defined; do it
+                 */
+                coff_defcomdatname(coff_sects[i]->comdat_name, coff_sects[i]->index);
+            }
+            if (!coff_sects[i]->comdat_selection) {
+                /*
+                 * This is a placeholder section that wasn't properly defined
+                 */
+                nasm_nonfatal("`comdat' associate with symbol `%s` wasn't defined",
+                              coff_sects[i]->comdat_name);
+            }
         }
-    }
 
     /*
      * Work out how big the file will get.
