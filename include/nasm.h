@@ -619,7 +619,9 @@ enum prefixes { /* instruction prefixes */
     P_XRELEASE,
     P_BND,
     P_NOBND,
+    P_REX,
     P_EVEX,
+    P_VEX,
     P_VEX3,
     P_VEX2,
     PREFIX_ENUM_LIMIT
@@ -715,14 +717,15 @@ enum ea_type {
  * the introduction of HLE.
  */
 enum prefix_pos {
-    PPS_WAIT,   /* WAIT (technically not a prefix!) */
-    PPS_REP,    /* REP/HLE prefix */
-    PPS_LOCK,   /* LOCK prefix */
-    PPS_SEG,    /* Segment override prefix */
-    PPS_OSIZE,  /* Operand size prefix */
-    PPS_ASIZE,  /* Address size prefix */
-    PPS_VEX,    /* VEX type */
-    MAXPREFIX   /* Total number of prefix slots */
+    PPS_TIMES = -1,     /* TIMES (not a slot, handled separately) */
+    PPS_WAIT  =  0,   	/* WAIT (technically not a prefix!) */
+    PPS_REP,    	/* REP/HLE prefix */
+    PPS_LOCK,   	/* LOCK prefix */
+    PPS_SEG,    	/* Segment override prefix */
+    PPS_OSIZE,  	/* Operand size prefix */
+    PPS_ASIZE,  	/* Address size prefix */
+    PPS_REX,    	/* REX/VEX type */
+    MAXPREFIX   	/* Total number of prefix slots */
 };
 
 /*

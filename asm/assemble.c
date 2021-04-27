@@ -935,15 +935,13 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                 nasm_nonfatal("instruction not supported in %d-bit mode", bits);
                 break;
             case MERR_ENCMISMATCH:
-                nasm_nonfatal("specific encoding scheme not available");
+                nasm_nonfatal("instruction not encodable with %s prefix",
+                              prefix_name(instruction->prefixes[PPS_REX]));
                 break;
             case MERR_BADBND:
-                nasm_nonfatal("bnd prefix is not allowed");
-                break;
             case MERR_BADREPNE:
                 nasm_nonfatal("%s prefix is not allowed",
-                              (has_prefix(instruction, PPS_REP, P_REPNE) ?
-                               "repne" : "repnz"));
+                              prefix_name(instruction->prefixes[PPS_REP]));
                 break;
             case MERR_REGSETSIZE:
                 nasm_nonfatal("invalid register set size");
@@ -1644,15 +1642,21 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         ins->rex &= ~REX_P;        /* Don't force REX prefix due to high reg */
     }
 
-    switch (ins->prefixes[PPS_VEX]) {
+    switch (ins->prefixes[PPS_REX]) {
     case P_EVEX:
         if (!(ins->rex & REX_EV))
             return -1;
         break;
+    case P_VEX:
     case P_VEX3:
     case P_VEX2:
         if (!(ins->rex & REX_V))
             return -1;
+        break;
+    case P_REX:
+        if (ins->rex & (REX_V|REX_EV))
+            return -1;
+        ins->rex |= REX_P;      /* Force REX prefix */
         break;
     default:
         break;
@@ -1687,16 +1691,19 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             nasm_nonfatal("invalid high-16 register in non-AVX-512");
             return -1;
         }
-        if (ins->rex & REX_EV)
+        if (ins->rex & REX_EV) {
             length += 4;
-        else if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_X|REX_B)) ||
-                 ins->prefixes[PPS_VEX] == P_VEX3)
+        } else if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_X|REX_B)) ||
+                 ins->prefixes[PPS_REX] == P_VEX3) {
+            if (ins->prefixes[PPS_REX] == P_VEX2)
+                nasm_nonfatal("instruction not encodable with {vex2} prefix");
             length += 3;
-        else
+        } else {
             length += 2;
+        }
     } else if (ins->rex & REX_MASK) {
         if (ins->rex & REX_H) {
-            nasm_nonfatal("cannot use high register in rex instruction");
+            nasm_nonfatal("cannot use high byte register in rex instruction");
             return -1;
         } else if (bits == 64) {
             length++;
@@ -1849,6 +1856,8 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
         case P_OSP:
             c = 0x66;
             break;
+        case P_REX:
+        case P_VEX:
         case P_EVEX:
         case P_VEX3:
         case P_VEX2:
@@ -1994,7 +2003,7 @@ static void gencode(struct out_data *data, insn *ins)
 
         case 0172:
         {
-            int mask = ins->prefixes[PPS_VEX] == P_EVEX ? 7 : 15;
+            int mask = ins->prefixes[PPS_REX] == P_EVEX ? 7 : 15;
             const struct operand *opy;
 
             c = *codes++;
@@ -2054,7 +2063,7 @@ static void gencode(struct out_data *data, insn *ins)
         case 0270:
             codes += 2;
             if (ins->vex_cm != 1 || (ins->rex & (REX_W|REX_X|REX_B)) ||
-                ins->prefixes[PPS_VEX] == P_VEX3) {
+                ins->prefixes[PPS_REX] == P_VEX3) {
                 bytes[0] = (ins->vex_cm >> 6) ? 0x8f : 0xc4;
                 bytes[1] = (ins->vex_cm & 31) | ((~ins->rex & 7) << 5);
                 bytes[2] = ((ins->rex & REX_W) << (7-3)) |
@@ -2383,11 +2392,12 @@ static enum match_result find_match(const struct itemplate **tempp,
     int i;
 
     /* broadcasting uses a different data element size */
-    for (i = 0; i < instruction->operands; i++)
+    for (i = 0; i < instruction->operands; i++) {
         if (i == broadcast)
             xsizeflags[i] = instruction->oprs[i].decoflags & BRSIZE_MASK;
         else
             xsizeflags[i] = instruction->oprs[i].type & SIZE_MASK;
+    }
 
     merr = MERR_INVALOP;
 
@@ -2507,16 +2517,22 @@ static enum match_result matches(const struct itemplate *itemp,
 	return MERR_INVALOP;
 
     /*
-     * {evex} available?
+     * {rex/vexn/evex} available?
      */
-    switch (instruction->prefixes[PPS_VEX]) {
+    switch (instruction->prefixes[PPS_REX]) {
     case P_EVEX:
         if (!itemp_has(itemp, IF_EVEX))
             return MERR_ENCMISMATCH;
         break;
+    case P_VEX:
     case P_VEX3:
     case P_VEX2:
         if (!itemp_has(itemp, IF_VEX))
+            return MERR_ENCMISMATCH;
+        break;
+    case P_REX:
+        if (itemp_has(itemp, IF_VEX) || itemp_has(itemp, IF_EVEX) ||
+            bits != 64)
             return MERR_ENCMISMATCH;
         break;
     default:
@@ -2667,6 +2683,9 @@ static enum match_result matches(const struct itemplate *itemp,
                      * considered a wildcard match rather than an error.
                      */
                     opsizemissing = true;
+                } else if (is_class(REG_HIGH, type) &&
+                           instruction->prefixes[PPS_REX]) {
+                    return MERR_ENCMISMATCH;
                 }
             } else if (is_broadcast &&
                        (brcast_num !=
@@ -2764,13 +2783,14 @@ static enum match_result matches(const struct itemplate *itemp,
 
 static enum ea_type process_ea(operand *input, ea *output, int bits,
                                int rfield, opflags_t rflags, insn *ins,
-                               const char **errmsg)
+                               const char **errmsgp)
 {
     bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
     int addrbits = ins->addr_size;
     int eaflags = input->eaflags;
+    const char *errmsg = NULL;
 
-    *errmsg = "invalid effective address"; /* Default error message */
+    errmsg = NULL;
 
     output->type    = EA_SCALAR;
     output->rip     = false;
@@ -2793,7 +2813,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
 
         /* broadcasting is not available with a direct register operand. */
         if (input->decoflags & BRDCAST_MASK) {
-            *errmsg = "broadcast not allowed with register operand";
+            errmsg = "broadcast not allowed with register operand";
             goto err;
         }
 
@@ -2809,7 +2829,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
 
         /* Embedded rounding or SAE is not available with a mem ref operand. */
         if (input->decoflags & (ER | SAE)) {
-            *errmsg = "embedded rounding is available only with "
+            errmsg = "embedded rounding is available only with "
                 "register-register operations";
             goto err;
         }
@@ -2838,7 +2858,7 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
             }
 
             if (bits == 64 && !(IP_REL & ~input->type) && (eaflags & EAF_SIB)) {
-                *errmsg = "instruction requires SIB encoding, cannot be RIP-relative";
+                errmsg = "instruction requires SIB encoding, cannot be RIP-relative";
                 goto err;
             }
 
@@ -3224,6 +3244,14 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
     return output->type;
 
 err:
+    if (!errmsg) {
+        /* Default error message */
+        static char invalid_address_msg[40];
+        snprintf(invalid_address_msg, sizeof invalid_address_msg,
+                 "invalid %d-bit effective address", bits);
+        errmsg = invalid_address_msg;
+    }
+    *errmsgp = errmsg;
     return output->type = EA_INVALID;
 }
 

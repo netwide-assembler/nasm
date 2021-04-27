@@ -55,50 +55,6 @@ static int end_expression_next(void);
 
 static struct tokenval tokval;
 
-static int prefix_slot(int prefix)
-{
-    switch (prefix) {
-    case P_WAIT:
-        return PPS_WAIT;
-    case R_CS:
-    case R_DS:
-    case R_SS:
-    case R_ES:
-    case R_FS:
-    case R_GS:
-        return PPS_SEG;
-    case P_LOCK:
-        return PPS_LOCK;
-    case P_REP:
-    case P_REPE:
-    case P_REPZ:
-    case P_REPNE:
-    case P_REPNZ:
-    case P_XACQUIRE:
-    case P_XRELEASE:
-    case P_BND:
-    case P_NOBND:
-        return PPS_REP;
-    case P_O16:
-    case P_O32:
-    case P_O64:
-    case P_OSP:
-        return PPS_OSIZE;
-    case P_A16:
-    case P_A32:
-    case P_A64:
-    case P_ASP:
-        return PPS_ASIZE;
-    case P_EVEX:
-    case P_VEX3:
-    case P_VEX2:
-        return PPS_VEX;
-    default:
-        nasm_panic("Invalid value %d passed to prefix_slot()", prefix);
-        return -1;
-    }
-}
-
 static void process_size_override(insn *result, operand *op)
 {
     if (tasm_compatible_mode) {
@@ -185,7 +141,7 @@ static void process_size_override(insn *result, operand *op)
 }
 
 /*
- * Brace decorators are are parsed here.  opmask and zeroing
+ * Braced keywords are are parsed here.  opmask and zeroing
  * decorators can be placed in any order.  e.g. zmm1 {k2}{z} or zmm2
  * {z}{k3} decorator(s) are placed at the end of an operand.
  */
@@ -715,42 +671,51 @@ restart_parse:
     if (i == TOKEN_EOS)
         goto fail;
 
-    while (i == TOKEN_PREFIX ||
-           (i == TOKEN_REG && IS_SREG(tokval.t_integer))) {
-        first = false;
+    while (i) {
+        int slot = PPS_SEG;
 
-        /*
-         * Handle special case: the TIMES prefix.
-         */
-        if (i == TOKEN_PREFIX && tokval.t_integer == P_TIMES) {
-            expr *value;
+        if (i == TOKEN_PREFIX) {
+            slot = tokval.t_inttwo;
 
-            i = stdscan(NULL, &tokval);
-            value = evaluate(stdscan, NULL, &tokval, NULL, pass_stable(), NULL);
-            i = tokval.t_type;
-            if (!value)                  /* Error in evaluator */
-                goto fail;
-            if (!is_simple(value)) {
-                nasm_nonfatal("non-constant argument supplied to TIMES");
-                result->times = 1L;
-            } else {
-                result->times = value->value;
-                if (value->value < 0) {
-                    nasm_nonfatalf(ERR_PASS2, "TIMES value %"PRId64" is negative", value->value);
-                    result->times = 0;
+            if (slot == PPS_TIMES) {
+                /* TIMES is a very special prefix */
+                expr *value;
+
+                i = stdscan(NULL, &tokval);
+                value = evaluate(stdscan, NULL, &tokval, NULL,
+                                 pass_stable(), NULL);
+                i = tokval.t_type;
+                if (!value)                  /* Error in evaluator */
+                    goto fail;
+                if (!is_simple(value)) {
+                    nasm_nonfatal("non-constant argument supplied to TIMES");
+                    result->times = 1;
+                } else {
+                    result->times = value->value;
+                    if (value->value < 0) {
+                        nasm_nonfatalf(ERR_PASS2, "TIMES value %"PRId64" is negative", value->value);
+                        result->times = 0;
+                    }
                 }
+                first = false;
+                continue;
             }
+        } else if (i == TOKEN_REG && IS_SREG(tokval.t_integer)) {
+            slot = PPS_SEG;
+            first = false;
         } else {
-            int slot = prefix_slot(tokval.t_integer);
-            if (result->prefixes[slot]) {
-               if (result->prefixes[slot] == tokval.t_integer)
-                    nasm_warn(WARN_OTHER, "instruction has redundant prefixes");
-               else
-                    nasm_nonfatal("instruction has conflicting prefixes");
-            }
-            result->prefixes[slot] = tokval.t_integer;
-            i = stdscan(NULL, &tokval);
+            break;              /* Not a prefix */
         }
+
+        if (result->prefixes[slot]) {
+            if (result->prefixes[slot] == tokval.t_integer)
+                nasm_warn(WARN_OTHER, "instruction has redundant prefixes");
+            else
+                nasm_nonfatal("instruction has conflicting prefixes");
+        }
+        result->prefixes[slot] = tokval.t_integer;
+        i = stdscan(NULL, &tokval);
+        first = false;
     }
 
     if (i != TOKEN_INSN) {
