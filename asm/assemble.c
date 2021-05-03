@@ -245,8 +245,8 @@ static int op_rexflags(const operand *, int);
 static int op_evexflags(const operand *, int, uint8_t);
 static void add_asp(insn *, int);
 
-static enum ea_type process_ea(operand *, ea *, int, int,
-                               opflags_t, insn *, const char **);
+static int process_ea(operand *, ea *, int, int, opflags_t,
+                      insn *, enum ea_type, const char **);
 
 static inline bool absolute_op(const struct operand *o)
 {
@@ -1615,7 +1615,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                     opy->eaflags |= EAF_SIB;
 
                 if (process_ea(opy, &ea_data, bits,
-                               rfield, rflags, ins, &errmsg) != eat) {
+                               rfield, rflags, ins, eat, &errmsg)) {
                     nasm_nonfatal("%s", errmsg);
                     return -1;
                 } else {
@@ -2261,7 +2261,7 @@ static void gencode(struct out_data *data, insn *ins)
                 }
 
                 if (process_ea(opy, &ea_data, bits,
-                               rfield, rflags, ins, &errmsg) != eat)
+                               rfield, rflags, ins, eat, &errmsg))
                     nasm_nonfatal("%s", errmsg);
 
                 p = bytes;
@@ -2781,9 +2781,9 @@ static enum match_result matches(const struct itemplate *itemp,
                      input->eaflags & EAF_BYTEOFFS || (o >= -128 &&    \
                      o <= 127 && seg == NO_SEG && !forw_ref)))
 
-static enum ea_type process_ea(operand *input, ea *output, int bits,
-                               int rfield, opflags_t rflags, insn *ins,
-                               const char **errmsgp)
+static int process_ea(operand *input, ea *output, int bits,
+                      int rfield, opflags_t rflags, insn *ins,
+                      enum ea_type expected, const char **errmsgp)
 {
     bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
     int addrbits = ins->addr_size;
@@ -3241,9 +3241,16 @@ static enum ea_type process_ea(operand *input, ea *output, int bits,
     }
 
     output->size = 1 + output->sib_present + output->bytes;
-    return output->type;
+    /*
+     * The type parsed might not match one supplied by
+     * a caller. In this case exit with error and let
+     * the caller to deside how critical it is.
+     */
+    if (output->type != expected)
+        goto err_set_msg;
+    return 0;
 
-err:
+err_set_msg:
     if (!errmsg) {
         /* Default error message */
         static char invalid_address_msg[40];
@@ -3252,7 +3259,11 @@ err:
         errmsg = invalid_address_msg;
     }
     *errmsgp = errmsg;
-    return output->type = EA_INVALID;
+    return -1;
+
+err:
+    output->type = EA_INVALID;
+    goto err_set_msg;
 }
 
 static void add_asp(insn *ins, int addrbits)
