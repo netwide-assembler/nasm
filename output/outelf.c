@@ -113,11 +113,6 @@ static int add_sectname(const char *, const char *);
 /* First debugging section index */
 static int sec_debug;
 
-struct erel {
-    int                 offset;
-    int                 info;
-};
-
 struct symlininfo {
     int                 offset;
     int                 section;        /* index into sects[] */
