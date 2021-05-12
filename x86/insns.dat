@@ -1900,6 +1900,8 @@ INVEPT		reg32,mem			[rm: 66 0f 38 80 /r]				VMX,SO,NOLONG
 INVEPT		reg64,mem			[rm: o64nw 66 0f 38 80 /r]			VMX,SO,LONG
 INVVPID		reg32,mem			[rm: 66 0f 38 81 /r]				VMX,SO,NOLONG
 INVVPID		reg64,mem			[rm: o64nw 66 0f 38 81 /r]			VMX,SO,LONG
+;# SEV-SNP AMD instructions
+PVALIDATE	void				[       f2 0f 01 ff]				VMX,AMD
 
 ;# Tejas New Instructions (SSSE3)
 PABSB		mmxreg,mmxrm			[rm:	np 0f 38 1c /r]				SSSE3,MMX,SQ

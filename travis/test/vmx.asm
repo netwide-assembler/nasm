@@ -19,3 +19,5 @@
 	vmxon		[0x33333333]
 	invept		rbx, [0x44444444]
 	invvpid		rcx, [0x55555555]
+
+	pvalidate
