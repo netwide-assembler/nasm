@@ -21,3 +21,4 @@
 	invvpid		rcx, [0x55555555]
 
 	pvalidate
+	rmpadjust
