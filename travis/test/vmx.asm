@@ -22,3 +22,7 @@
 
 	pvalidate
 	rmpadjust
+
+	vmgexit
+	repne vmcall
+	rep vmcall
