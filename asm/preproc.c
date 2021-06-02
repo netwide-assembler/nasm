@@ -4330,6 +4330,11 @@ issue_error:
             goto done;
         }
         mmac_p = (MMacro **) hash_findi(&mmacros, spec.name, NULL);
+        if (mmac_p == NULL) {
+          // If the macro cannot be found, there's nothing to do.
+          free_tlist(spec.dlist);
+          break;
+        }
 
         /* Check the macro to be undefined is not being expanded */
         list_for_each(l, istk->expansion) {
