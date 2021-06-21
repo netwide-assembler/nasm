@@ -1,6 +1,6 @@
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2021 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -46,27 +46,44 @@
 % TOKEN_QMARK, 0, 0, 0
 ?
 
-% TOKEN_PREFIX, 0, 0, P_*
+% TOKEN_PREFIX, PPS_ASIZE, 0, P_*
 a16
 a32
 a64
 asp
+
+% TOKEN_PREFIX, PPS_LOCK, 0, P_*
 lock
+
+% TOKEN_PREFIX, PPS_OSIZE, 0, P_*
 o16
 o32
 o64
 osp
+
+% TOKEN_PREFIX, PPS_REP, 0, P_*
 rep
 repe
 repne
 repnz
 repz
-times
-wait
 xacquire
 xrelease
 bnd
 nobnd
+
+% TOKEN_PREFIX, PPS_TIMES, 0, P_*
+times
+
+% TOKEN_PREFIX, PPS_WAIT, 0, P_*
+wait
+
+% TOKEN_PREFIX, PPS_REX, TFLAG_BRC, P_*
+rex
+evex
+vex
+vex3
+vex2
 
 % TOKEN_SIZE, SIZE_*, 0, S_*
 byte
@@ -153,11 +170,6 @@ rz-sae
 % TOKEN_DECORATOR, 0, TFLAG_BRC, BRC_*
 sae
 z
-
-% TOKEN_PREFIX, 0, TFLAG_BRC, P_*
-evex
-vex3
-vex2
 
 # Multi-character operators. Used in ppscan().
 % TOKEN_SHR, 0, 0, 0

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *   
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2021 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -46,14 +46,15 @@
 int globalbits = 0;
 /*
  * Common list of prefix names; ideally should be auto-generated
- * from tokens.dat
+ * from tokens.dat. This MUST match the enum in include/nasm.h.
  */
 const char *prefix_name(int token)
 {
     static const char *prefix_names[] = {
         "a16", "a32", "a64", "asp", "lock", "o16", "o32", "o64", "osp",
         "rep", "repe", "repne", "repnz", "repz", "times", "wait",
-        "xacquire", "xrelease", "bnd"
+        "xacquire", "xrelease", "bnd", "nobnd", "{rex}", "{evex}", "{vex}",
+        "{vex3}", "{vex2}"
     };
     unsigned int prefix = token-PREFIX_ENUM_START;
 

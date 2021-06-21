@@ -297,7 +297,7 @@ int main(int argc, char **argv)
     p = q = buffer;
     nextsync = next_sync(offset, &synclen);
     do {
-        uint32_t to_read = buffer + sizeof(buffer) - p;
+        int32_t to_read = buffer + sizeof(buffer) - p;
 	if ((nextsync || synclen) &&
 	    to_read > nextsync - offset - (p - q))
             to_read = nextsync - offset - (p - q);
