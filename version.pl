@@ -68,7 +68,7 @@
 ($what) = @ARGV;
 
 $line = <STDIN>;
-$line =~ s/\R\z//; #chomp $line;
+$line =~ s/\x0D?\x0A?$//; #chomp $line;
 
 undef $maj;
 undef $min;
