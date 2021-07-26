@@ -64,6 +64,7 @@
 #define MACHO_SYMCMD_SIZE		24
 #define MACHO_NLIST_SIZE		12
 #define MACHO_RELINFO_SIZE		8
+#define MACHO_BUILDVERSION_SIZE		24
 
 #define MACHO_HEADER64_SIZE		32
 #define MACHO_SEGCMD64_SIZE		72
@@ -214,6 +215,15 @@ static uint64_t seg_filesize = 0;
 static uint64_t seg_vmsize = 0;
 static uint32_t seg_nsects = 0;
 static uint64_t rel_padcnt = 0;
+
+/* build_version_platform information
+   PLATFORM_INVALID implies that build_version_platform won't emitted. */
+static uint32_t build_version_platform = PLATFORM_INVALID;
+/* X.Y.Z is encoded in nibbles xxxx.yy.zz */
+static uint32_t build_version_minos = 0;
+
+/* used in nasm.c */
+bool macho_set_min_os(const char *str);
 
 /*
  * Functions for handling fixed-length zero-padded string
@@ -744,6 +754,7 @@ static const struct macho_known_section {
     { ".data",          "__DATA",   "__data",           S_REGULAR       },
     { ".rodata",        "__DATA",   "__const",          S_REGULAR       },
     { ".bss",           "__DATA",   "__bss",            S_ZEROFILL      },
+    {".llvmasm",        "__LLVM",   "__asm",            S_REGULAR       },
     { ".debug_abbrev",  "__DWARF",  "__debug_abbrev",   S_ATTR_DEBUG    },
     { ".debug_info",    "__DWARF",  "__debug_info",     S_ATTR_DEBUG    },
     { ".debug_line",    "__DWARF",  "__debug_line",     S_ATTR_DEBUG    },
@@ -1263,6 +1274,12 @@ static void macho_calculate_sizes (void)
 	}
     }
 
+    /* for build_version_command */
+    if (build_version_platform != PLATFORM_INVALID) {
+        ++head_ncmds;
+        head_sizeofcmds = MACHO_BUILDVERSION_SIZE;
+    }
+
     /* calculate size of all headers, load commands and sections to
     ** get a pointer to the start of all the raw data */
     if (seg_nsects > 0) {
@@ -1647,6 +1664,16 @@ static void macho_write (void)
 
     offset = fmt.header_size + head_sizeofcmds;
 
+    if (build_version_platform != PLATFORM_INVALID) {
+        /* emit build_version_command */
+        fwriteint32_t(LC_BUILD_VERSION, ofile);
+        fwriteint32_t(MACHO_BUILDVERSION_SIZE, ofile);
+        fwriteint32_t(build_version_platform, ofile);
+        fwriteint32_t(build_version_minos, ofile);
+        fwriteint32_t(0 /* sdk */, ofile);
+        fwriteint32_t(0 /* ntools */, ofile);
+    }
+
     /* emit the segment load command */
     if (seg_nsects > 0)
 	offset = macho_write_segment (offset);
@@ -1687,8 +1714,19 @@ static void macho_cleanup(void)
     struct section *s;
     struct reloc *r;
     struct symbol *sym;
+    int bits;
 
     dfmt->cleanup();
+
+    /* create a dummy __asm section with a single zero byte.
+     * this is a workaround for making binaries compatible with
+     * bitcode enabled, which is required for watchOS and tvOS */
+    macho_section(".llvmasm", &bits);
+    s = get_section_by_name("__LLVM", "__asm");
+    if (s != NULL) {
+        saa_write8(s->data, 0);
+        s->size += 1;
+    }
 
     /* Sort all symbols.  */
     macho_layout_symbols (&nsyms, &strslen);
@@ -2375,6 +2413,85 @@ static const struct dfmt macho64_df_dwarf = {
 
 static const struct dfmt * const macho64_df_arr[2] =
  { &macho64_df_dwarf, NULL };
+
+bool macho_set_min_os(const char *str) {
+    nasm_assert(str != NULL);
+
+    const char *platform_ver = nasm_strdup(str);
+    const char *environment = "";
+    char *sep = strchr(platform_ver, '-');
+    if (sep != NULL) {
+        sep[0] = '\0';
+        environment = sep + 1;
+    }
+
+    const char *version = platform_ver;
+    while (*version) {
+        if (*version >= '0' && *version <= '9') {
+            break;
+        }
+        ++version;
+    }
+    if (*version == '\0') {
+        nasm_free((char *)platform_ver);
+        return false;
+    }
+
+    /* Mimic clang's target triple */
+    int platform = PLATFORM_INVALID;
+    if (strstr(platform_ver, "macos") == platform_ver) {
+        platform = PLATFORM_MACOS;
+    } else if ((strstr(platform_ver, "ios") == platform_ver)) {
+        if (environment[0] == '\0') {
+            platform = PLATFORM_IOS;
+        } else if ((strstr(environment, "simulator") == environment)) {
+            platform = PLATFORM_IOSSIMULATOR;
+        } else if ((strstr(environment, "catalyst") == environment)) {
+            platform = PLATFORM_MACCATALYST;
+        } else {
+            nasm_free((char *)platform_ver);
+            return false;
+        }
+    } else if ((strstr(platform_ver, "tvos") == platform_ver)) {
+        if (environment[0] == '\0') {
+            platform = PLATFORM_TVOS;
+        } else if ((strstr(environment, "simulator") == environment)) {
+            platform = PLATFORM_TVOSSIMULATOR;
+        } else {
+            nasm_free((char *)platform_ver);
+            return false;
+        }
+    } else if (xstrncmp("watchos", platform_ver) == 0) {
+        if (environment[0] == '\0') {
+            platform = PLATFORM_WATCHOS;
+        } else if ((strstr(environment, "simulator") == environment)) {
+            platform = PLATFORM_WATCHOSSIMULATOR;
+        } else {
+            nasm_free((char *)platform_ver);
+            return false;
+        }
+    } else if (xstrncmp("bridgeos", platform_ver) == 0) {
+        platform = PLATFORM_BRIDGEOS;
+    } else {
+        nasm_free((char *)platform_ver);
+        return false;
+    }
+
+    unsigned short major = 0, minor = 0, subminor = 0;
+    int count = sscanf(version, "%hu.%hu.%hu", &major, &minor, &subminor);
+    /* at least major and minor must be given */
+    if (count < 2) {
+        nasm_free((char *)platform_ver);
+        return false;
+    }
+
+    build_version_platform = platform;
+    build_version_minos =
+        ((major & 0xffff) << 16) | ((minor & 0xff) << 8) | (subminor & 0xff);
+
+    nasm_free((char *)platform_ver);
+    return true;
+}
 
 const struct ofmt of_macho64 = {
     "Mach-O x86-64 (Mach, including MacOS X and variants)",
