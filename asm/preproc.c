@@ -5574,7 +5574,6 @@ static SMacro *expand_one_smacro(Token ***tpp)
         int brackets = 0;
         int paren;
         bool bracketed = false;
-        bool bad_bracket = false;
         enum sparmflags flags;
 
         if (m->params[m->nparam-1].flags & SPARM_GREEDY)
@@ -5654,8 +5653,6 @@ static SMacro *expand_one_smacro(Token ***tpp)
 
             if (!skip) {
                 Token *t;
-
-                bad_bracket |= bracketed && !brackets;
 
                 if (white) {
                     *pep = t = new_White(NULL);
