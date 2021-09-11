@@ -217,7 +217,7 @@ static inline int os_stat(os_filename osfname, os_struct_stat *st)
 #ifndef os_fstat
 static inline int os_fstat(int fd, os_struct_stat *st)
 {
-    (void)osfname;
+    (void)fd;
     (void)st;
     return -1;
 }
