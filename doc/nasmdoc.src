@@ -5896,6 +5896,44 @@ for data (and BSS) sections.
 Informational sections get a default alignment of 1 byte (no
 alignment), though the value does not matter.
 
+\b \I{comdat, win32 attribute}\c{comdat=}, followed by a number
+("selection"), colon (acting as a separator) and a name,
+marks the section as a \I{COMDAT section, in win32}"COMDAT section".
+It allows Microsoft linkers to perform function-level linking,
+to deal with multiply defined symbols, to eliminate dead code/data.
+The "selection" number should be one of the
+\c{IMAGE_COMDAT_SELECT_*} constants from
+\W{https://github.com/MicrosoftDocs/win32/blob/docs/desktop-src/Debug/pe-format.md#comdat-sections-object-only}\c{COFF format specification};
+this value controls if the linker allows multiply defined symbols
+and how it handles them.
+The name is the \I{COMDAT symbol, in win32}"COMDAT symbol"
+- basically a new name for the section. So even though you have one
+section given by the main name (e.g. \c{.text}), it can actually
+consist of hundreds of COMDAT sections having their own name
+(and alignment).
+When the "selection" is IMAGE_COMDAT_SELECT_ASSOCIATIVE (5),
+the following name is the "COMDAT symbol" of the associated COMDAT
+section; this way you can link a piece of code or data only when
+another piece of code or data gets actually linked.
+
+\> So, when linking a NASM-compiled file with some C code,
+the source may be structured as follows.
+Note that the default \c{.text} section in handled in a special
+way and it doesn't work well with \c{comdat}; you may want to append
+a \c{$} character and an arbitrary suffix to the section name.
+It will get linked into the \c{.text} section anyway - see the info on
+\W{https://github.com/MicrosoftDocs/win32/blob/docs/desktop-src/Debug/pe-format.md#grouped-sections-object-only}\c{Grouped Sections}.
+
+\c    section .text$1 align=16 comdat=1:FirstFnc
+\c       ...                                        ; Code linked only if referenced from C
+\c
+\c    section .text$1 align=16 comdat=1:SecondFnc
+\c       ...                                        ; Code linked only if referenced from C
+\c
+\c    section .rdata align=32 comdat=5:FirstFnc
+\c       ...                                        ; Data linked only if the related code (FirstFnc) is linked
+\c
+
 The defaults assumed by NASM if you do not specify the above
 qualifiers are:
 
