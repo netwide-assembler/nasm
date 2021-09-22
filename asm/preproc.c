@@ -1613,7 +1613,7 @@ static Token *tokenize(const char *line)
 	    case '<':
 		if (*p == '<') {
 		    p++;
-                    type = TOKEN_SHR;
+                    type = TOKEN_SHL;
 		    if (*p == '<')
 			p++;
 		} else if (*p == '=') {
