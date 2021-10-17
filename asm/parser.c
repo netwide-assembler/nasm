@@ -979,13 +979,12 @@ restart_parse:
             /*
              * Process the segment override.
              */
-            if (value[1].type   != 0    ||
-                value->value    != 1    ||
-                !IS_SREG(value->type))
+            if (!IS_SREG(value->type) || value->value != 1 ||
+                value[1].type != 0) {
                 nasm_nonfatal("invalid segment override");
-            else if (result->prefixes[PPS_SEG])
+            } else if (result->prefixes[PPS_SEG]) {
                 nasm_nonfatal("instruction has conflicting segment overrides");
-            else {
+            } else {
                 result->prefixes[PPS_SEG] = value->type;
                 if (IS_FSGS(value->type))
                     op->eaflags |= EAF_FSGS;
