@@ -40,7 +40,7 @@
 #include "nasmlib.h"
 #include "insns.h"
 
-static int32_t next_seg  = 2;
+static int32_t next_seg  = 0;
 
 int32_t seg_alloc(void)
 {
