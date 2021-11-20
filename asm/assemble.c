@@ -1111,7 +1111,7 @@ static int64_t len_extops(const extop *e)
             break;
 
         case EOT_DB_RESERVE:
-            isize += e->dup;
+            isize += e->dup * e->elem;
             break;
         }
 
