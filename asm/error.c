@@ -165,7 +165,7 @@ void reset_warnings(void)
 
 /*
  * This is called when processing a -w or -W option, or a warning directive.
- * Returns on if if the action was successful.
+ * Returns ok if the action was successful.
  *
  * Special pseudo-warnings:
  *
