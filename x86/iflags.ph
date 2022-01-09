@@ -131,6 +131,6 @@ if_("IA64",              "IA64 (in x86 mode)");
 # Must be the last CPU definition
 if_("ANY",               "Any x86 CPU");
 
-# These must come after the CPU defitions proper
+# These must come after the CPU definitions proper
 if_("CYRIX",             "Cyrix-specific");
 if_("AMD",               "AMD-specific");

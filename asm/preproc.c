@@ -1118,7 +1118,7 @@ hash_findix(struct hash_table *hash, const char *str)
 }
 
 /*
- * read line from standart macros set,
+ * read line from standard macros set,
  * if there no more left -- return NULL
  */
 static char *line_from_stdmac(void)
@@ -2774,7 +2774,7 @@ smacro_expand_default(const SMacro *s, Token **params, int nparams)
 }
 
 /*
- * Emit a macro defintion or undef to the listing file or debug format
+ * Emit a macro definition or undef to the listing file or debug format
  * if desired. This is similar to detoken(), but it handles the
  * reverse expansion list, does not expand %! or local variable
  * tokens, and does some special handling for macro parameters.
@@ -3265,7 +3265,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
             *comma = NULL;
             def->ndefs--;
             nasm_warn(WARN_MACRO_PARAMS_LEGACY,
-                      "dropping trailing empty default parameter in defintion of multi-line macro `%s'",
+                      "dropping trailing empty default parameter in definition of multi-line macro `%s'",
                       def->name);
         }
     } else {
@@ -3479,7 +3479,7 @@ static int line_directive(Token *origline, Token *tline)
             const char *fname;
             /*
              * If this is a quoted string, ignore anything after
-             * it; this allows for compatiblity with gcc's
+             * it; this allows for compatibility with gcc's
              * additional flags options.
              */
 
@@ -3601,7 +3601,7 @@ static int do_directive(Token *tline, Token **output)
     *output = NULL;             /* No output generated */
     origline = tline;
 
-    /* cpp-like line directive, must not be preceeded by whitespace */
+    /* cpp-like line directive, must not be preceded by whitespace */
     if (tok_is(tline, '#'))
         return line_directive(origline, tline);
 
@@ -3754,7 +3754,7 @@ static int do_directive(Token *tline, Token **output)
         const char *arg;
 
         /* Directive to tell NASM what the default stack size is. The
-         * default is for a 16-bit stack, and this can be overriden with
+         * default is for a 16-bit stack, and this can be overridden with
          * %stacksize large.
          */
         tline = skip_white(tline->next);
@@ -4942,7 +4942,7 @@ static inline bool pp_concat_match(const Token *t, enum concat_flags mask)
 }
 
 /*
- * This routines walks over tokens strem and handles tokens
+ * This routines walks over tokens stream and handles tokens
  * pasting, if @handle_explicit passed then explicit pasting
  * term is handled, otherwise -- implicit pastings only.
  * The @m array can contain a series of token types which are
@@ -6365,7 +6365,7 @@ static void list_mmacro_call(const MMacro *m)
         *p++ = ',';
     }
 
-    *--p = '\0';                /* Replace last delimeter with null */
+    *--p = '\0';                /* Replace last delimiter with null */
     lfmt->line(LIST_MACRO, -1, buf);
     nasm_free(buf);
 }
@@ -6966,7 +6966,7 @@ static void pp_reset_stdmac(enum preproc_mode mode)
      * 0 = dependencies only
      * 1 = preparatory passes
      * 2 = final pass
-     * 3 = preproces only
+     * 3 = preprocess only
      */
     switch (mode) {
     case PP_NORMAL:

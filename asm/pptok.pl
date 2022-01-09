@@ -268,7 +268,7 @@ if ($what eq 'c') {
 
     my %tasmtokens = ();
     foreach $pt (@tasm) {
-	# TASM compatiblity token
+	# TASM compatibility token
 	$nasmt = '%'.$pt;
 	if (!defined($tokens{$nasmt})) {
 	    die "$in: TASM compat token $pt does not have a ".

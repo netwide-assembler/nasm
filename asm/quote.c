@@ -481,7 +481,7 @@ size_t nasm_unquote(char *str, char **ep)
 }
 
 /*
- * Unquote a string indended to be used as a C string; most control
+ * Unquote a string intended to be used as a C string; most control
  * characters are rejected, including whitespace characters that
  * would imply line endings and so on.
  */

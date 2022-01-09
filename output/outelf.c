@@ -2099,7 +2099,7 @@ static void elf_sym(const struct elf_symbol *sym)
 
     /*
      * Careful here. This relies on sym->section being signed; for
-     * special section indicies this value needs to be cast to
+     * special section indices this value needs to be cast to
      * (int16_t) so that it sign-extends, however, here SHN_LORESERVE
      * is used as an unsigned constant.
      */
@@ -3492,7 +3492,7 @@ static void dwarf_generate(void)
     saa_rnbytes(plines, pbuf, saalen);   /* read a given no. of bytes */
     pbuf += linepoff;
     saa_free(plines);
-    /* concatonate line program ranges */
+    /* concatenate line program ranges */
     linepoff += 13;
     plinesrel = saa_init(1L);
     psect = dwarf_fsect;

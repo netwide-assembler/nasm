@@ -751,7 +751,7 @@ static void write_symbolinfo_table(struct coff_Section *const sect)
     section_write32(sect, 0x000000F1);
     section_write32(sect, field_length);
 
-    /* for sub fields, length preceeds type */
+    /* for sub fields, length proceeds type */
 
     out_len = write_symbolinfo_obj(sect);
     nasm_assert(out_len == obj_length);

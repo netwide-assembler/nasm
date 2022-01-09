@@ -358,7 +358,7 @@ sub string2array($)
 }
 
 #
-# Take a crossreference name and generate the PostScript name for it.
+# Take a cross-reference name and generate the PostScript name for it.
 #
 # This hack produces a somewhat smaller PDF...
 #%ps_xref_list = ();
@@ -417,7 +417,7 @@ sub ps_flow_lines($$$@) {
 		$pastmarker = 1;
 	    }
 	    if ( $$e[0] == -1 || $$e[0] == -6 ) {
-		# -1 (end anchor) or -6 (marker) goes with the preceeding
+		# -1 (end anchor) or -6 (marker) goes with the preceding
 		# text, otherwise with the subsequent text
 		push(@l, $e);
 	    } else {
@@ -743,7 +743,7 @@ $npara = scalar(@paras);
 @pslines    = ();
 
 #
-# Line Auxilliary Information Types
+# Line Auxiliary Information Types
 #
 $AuxStr	    = 1;		# String
 $AuxPage    = 2;		# Page number (from xref)
@@ -790,7 +790,7 @@ sub ps_break_lines($$) {
 	    my $sech = $2;
 	    my $font = ($ptype eq 'head') ? \%HeadFont : \%SubhFont;
 	    @ls = ps_flow_lines($linewidth, $font, $ptype, @data);
-	    # We need the heading number as auxillary data
+	    # We need the heading number as auxilary data
 	    $ls[0]->[0]->[2] = [[$AuxStr,$secn]];
 	} elsif ( $ptype eq 'norm' ) {
 	    @ls = ps_flow_lines($linewidth, \%BodyFont, $ptype, @data);
@@ -813,7 +813,7 @@ sub ps_break_lines($$) {
 				$psconf{tocpnz}-$refwidth,
 				\%BodyFont, $ptype, @data);
 
-	    # Auxilliary data: for the first line, the cross reference symbol
+	    # Auxiliary data: for the first line, the cross reference symbol
 	    # and the reference name; for all lines but the first, the
 	    # reference width; and for the last line, the page number
 	    # as a string.
@@ -1318,7 +1318,7 @@ foreach $line ( @pslines ) {
 	    } elsif ( $$x[0] == $AuxNum ) {
 		print $$x[1],' ';
 	    } else {
-		die "Unknown auxilliary data type";
+		die "Unknown auxiliary data type";
 	    }
 	}
     }

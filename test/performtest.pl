@@ -180,7 +180,7 @@ with "golden" output files.
     testname should ideally describe the arguments, eg. unoptimized for -O0.
     arguments can be an optimization level (-O), an output format (-f),
     an output file specifier (-o) etc.
-    The output files should be a space seperated list of files that will
+    The output files should be a space separated list of files that will
     be checked for regressions. This should often be the output file
     and the special files stdout and stderr.
 

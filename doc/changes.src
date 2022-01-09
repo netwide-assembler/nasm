@@ -85,7 +85,7 @@ in \c{%+} tokens at the beginning or end, or multiple ones in a row.
 
 \b Fix macro label capture (\c{%00}, \k{percent00}).
 
-\b Much better documentation for the MASM compatiblity package,
+\b Much better documentation for the MASM compatibility package,
 \c{%use masm} (see \k{pkg_masm}).
 
 \b Fix \c{LEA} without square brackets, for MASM compatibility.
@@ -233,7 +233,7 @@ generation pass if a list file is specified.
 
 \S{cl-2.14.01} Version 2.14.01
 
-\b Create all system-defined macros defore processing command-line
+\b Create all system-defined macros before processing command-line
 given preprocessing directives (\c{-p}, \c{-d}, \c{-u}, \c{--pragma},
 \c{--before}).
 
@@ -595,7 +595,7 @@ files. See \k{opt-keep-all}.
 \b Fix \c{-MD} option handling, which was rather broken in previous
 release changing command line api.
 
-\b Fix access to unitialized space when handling strings with
+\b Fix access to uninitialized space when handling strings with
 a single grave.
 
 \b Fix nil dereference in handling memory reference parsing.
@@ -870,7 +870,7 @@ only integer logarithms.  See \k{pkg_ifunc}.
 
 \S{cl-2.09.04} Version 2.09.04
 
-\b Fix incorrect labels offset for VEX intructions.
+\b Fix incorrect labels offset for VEX instructions.
 
 \b Eliminate bogus warning on implicit operand size override.
 
@@ -888,7 +888,7 @@ only integer logarithms.  See \k{pkg_ifunc}.
    too early and sometime simply wrong. Move behaviour back to
    the origins (down to NASM 2.05.01).
 
-\b Fix unitialized data dereference on OMF output format.
+\b Fix uninitialized data dereference on OMF output format.
 
 \b Issue warning on unterminated \c{%{} construct.
 
@@ -941,7 +941,7 @@ only integer logarithms.  See \k{pkg_ifunc}.
 
 \b Macros parameters range expansion introduced. See \k{mlmacrange}.
 
-\b Backward compatibility on expanging of local sigle macros restored.
+\b Backward compatibility on expanging of local single macros restored.
 
 \b 8 bit relocations for \c{elf} and \c{bin} output formats are introduced.
 
@@ -1636,7 +1636,7 @@ it 0.98.28 to not confuse poor little apt-get.
 
 \b Line continuation character \c{\\}.
 
-\b Docs inadvertantly reverted - "dos packaging".
+\b Docs inadvertently reverted - "dos packaging".
 
 
 \S{cl-0.98.24p1} Version 0.98.24p1
@@ -2098,7 +2098,7 @@ in macros etc. For example:
 
 \>    In this example the "if" mmacro enters into the "if" context, so %$arg1
     is not valid anymore inside "if". Of course it could be worked around
-    by using explicitely %$$arg1 but this is ugly IMHO.
+    by using explicitly %$$arg1 but this is ugly IMHO.
 
 \b Fixed memory leak in \c{%undef}. The origline wasn't freed before
     exiting on success.

@@ -197,7 +197,7 @@ char *translatesegmenttype(uint16_t type)
     if (type < 0x1000)
         return "reserved - Moscow";
     if (type < 0x8000)
-        return "reserved - system dependant";
+        return "reserved - system dependent";
     if (type < 0xFFFF)
         return "reserved - other";
     if (type == 0xFFFF)

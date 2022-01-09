@@ -50,7 +50,7 @@ RDOFF module consists of three parts:
 
 @itemize
 @item Master header
-@item Header (may be omited)
+@item Header (may be omitted)
 @item Sections
 @end itemize
 

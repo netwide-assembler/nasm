@@ -34,7 +34,7 @@
 ;;
 ;; masm.mac
 ;;
-;; Very limited MASM compatiblity package; intended to be used
+;; Very limited MASM compatibility package; intended to be used
 ;; primarily with machine-generated code. It does not include any
 ;; "programmer friendly" shortcuts, nor does it in any way support
 ;; ASSUME, symbol typing, or MASM-style structures.

@@ -406,7 +406,7 @@ static void ieee_out(int32_t segto, const void *data,
     }
 
     /*
-     * Find the segment we are targetting.
+     * Find the segment we are targeting.
      */
     for (seg = seghead; seg; seg = seg->next)
         if (seg->index == segto)
@@ -1210,7 +1210,7 @@ static int32_t ieee_putlr(struct ieeeFixupp *p)
  * defines two types of segments: absolute and virtual.  Note that
  * 'absolute' in this context is a different thing from the IEEE
  * definition of an absolute segment type, which is also supported. If a
- * sement is linked in virtual mode the low limit (L-var) is
+ * segment is linked in virtual mode the low limit (L-var) is
  * subtracted from each R,X, and P variable which appears in an
  * expression, so that we can have relative offsets.  Meanwhile
  * in the ABSOLUTE mode this subtraction is not done and
@@ -1321,7 +1321,7 @@ static void dbgls_cleanup(void)
  * because this routine is not bracketed in
  * the main program, this routine will be called even if there
  * is no request for debug info
- * so, we have to make sure the ??LINE segment is avaialbe
+ * so, we have to make sure the ??LINE segment is available
  * as the first segment when this debug format is selected
  */
 static void dbgls_linnum(const char *lnfname, int32_t lineno, int32_t segto)
@@ -1343,7 +1343,7 @@ static void dbgls_linnum(const char *lnfname, int32_t lineno, int32_t segto)
     }
 
     /*
-     * Find the segment we are targetting.
+     * Find the segment we are targeting.
      */
     for (seg = seghead; seg; seg = seg->next)
         if (seg->index == segto)

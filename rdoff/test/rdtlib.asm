@@ -10,7 +10,7 @@ _strcmp:
 	push ebp
 	mov ebp,esp
 
-	;; ebp+8 = first paramater, ebp+12 = second
+	;; ebp+8 = first parameter, ebp+12 = second
 
 	mov esi,[ebp+8]
 	mov edi,[ebp+12]
@@ -27,11 +27,11 @@ _strcmp:
 	inc edi
 	jmp .loop
 
-.below:	
+.below:
 	mov eax,-1
 	pop ebp
 	ret
-	
+
 .above:
 	mov eax,1
 	pop ebp

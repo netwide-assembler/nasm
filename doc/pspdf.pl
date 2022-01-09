@@ -96,7 +96,7 @@ exit 0 if ( !$r && -f $out );
 # 2. ps2pdf (from Ghostscript)
 #
 # GhostScript uses # rather than = to separate options and values on Windows,
-# it seems.  Similary it uses ; in path lists rather than :.
+# it seems.  Similarly it uses ; in path lists rather than :.
 # Call gs directly rather than ps2pdf, because -dSAFER
 # breaks font discovery on some systems, apparently.
 win32_gs_help();

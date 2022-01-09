@@ -283,7 +283,7 @@ while ( defined(my $arg = shift(@ARGV)) ) {
     } elsif ( $arg eq '-d' ) {
 	$debug++;
     } elsif ( $arg eq '-M' ) {
-	$mkmode = 1;		# Futher filenames are output Makefile names
+	$mkmode = 1;		# Further filenames are output Makefile names
     } elsif ( $arg eq '--' && $mkmode ) {
 	$mkmode = 0;
     } elsif ( $arg =~ /^-/ ) {

@@ -40,7 +40,7 @@
 \M{author}{The NASM Development Team}
 \M{copyright_tail}{-- All Rights Reserved}
 \M{license}{This document is redistributable under the license given in the section "License".}
-\M{summary}{This file documents NASM, the Netwide Assembler: an assembler targetting the Intel x86 series of processors, with portable source.}
+\M{summary}{This file documents NASM, the Netwide Assembler: an assembler targeting the Intel x86 series of processors, with portable source.}
 \M{infoname}{NASM}
 \M{infofile}{nasm}
 \M{infotitle}{The Netwide Assembler for x86}
@@ -775,7 +775,7 @@ which depend on the values of symbols: so code such as
 
 will cause an error in \i{preprocess-only mode}.
 
-For compatiblity with older version of NASM, this option can also be
+For compatibility with older version of NASM, this option can also be
 written \c{-e}.  \c{-E} in older versions of NASM was the equivalent
 of the current \c{-Z} option, \k{opt-Z}.
 
@@ -1314,7 +1314,7 @@ keywords:
 
 \> Note that a \e{list} needs to be prefixed with a \I{%db}\c{%} sign unless
 prefixed by either \c{DUP} or a \e{type} in order to avoid confusing it with
-a parentesis starting an expression. The following expressions are all
+a parenthesis starting an expression. The following expressions are all
 valid:
 
 \c        db 33
@@ -1528,7 +1528,7 @@ In 64-bit mode, NASM will by default generate absolute addresses.  The
 this is frequently the normally desired behaviour, see the \c{DEFAULT}
 directive (\k{default}). The keyword \i\c{ABS} overrides \i\c{REL}.
 
-A new form of split effective addres syntax is also supported. This is
+A new form of split effective address syntax is also supported. This is
 mainly intended for mib operands as used by MPX instructions, but can
 be used for any memory reference. The basic concept of this form is
 splitting base and index.
@@ -1888,7 +1888,7 @@ NASM supports the following comparison operators:
 
 \b \i\c{>} compares signed greater than.
 
-\b \i\c{>=} compares signed greather than or equal.
+\b \i\c{>=} compares signed greater than or equal.
 
 These operators evaluate to 0 for false or 1 for true.
 
@@ -2685,7 +2685,7 @@ than the description:
 As with \c{%strlen} (see \k{strlen}), the first parameter is the
 single-line macro to be created and the second is the string. The
 third parameter specifies the first character to be selected, and the
-optional fourth parameter preceeded by comma) is the length.  Note
+optional fourth parameter preceded by comma) is the length.  Note
 that the first index is 1, not 0 and the last index is equal to the
 value that \c{%strlen} would assign given the same string. Index
 values out of range result in an empty string.  A negative length
@@ -3001,9 +3001,9 @@ number of parameters. It can be used as an argument to \c{%rep}
 Examples are given in \k{rotate}.
 
 
-\S{percent00} \i\c{%00}: \I{label preceeding macro}Label Preceeding Macro
+\S{percent00} \i\c{%00}: \I{label preceding macro}Label Preceding Macro
 
-\c{%00} will return the label preceeding the macro invocation, if any. The
+\c{%00} will return the label preceding the macro invocation, if any. The
 label must be on the same line as the macro invocation, may be a local label
 (see \k{locallab}), and need not end in a colon.
 
@@ -3381,7 +3381,7 @@ identifier. \c{$} and \c{$$} are \e{not} considered identifiers by
 \c{%ifid}.
 
 \c{%ifnum} works similarly, but tests for the token being an integer
-numeric constant (not an expression!) possibly preceeded by \c{+} or
+numeric constant (not an expression!) possibly preceded by \c{+} or
 \c{-}; \c{%ifstr} tests for it being a quoted string.
 
 For example, the \c{writefile} macro defined in \k{mlmacgre} can be
@@ -4075,7 +4075,7 @@ are defined.
 \b \c{debug}: debug format options.
 
 In addition, the name of any output or debug format, and sometimes
-groups thereof, also constitue \c{%pragma} namespaces. The namespaces
+groups thereof, also constitute \c{%pragma} namespaces. The namespaces
 \c{output} and \c{debug} simply refer to \e{any} output or debug
 format, respectively.
 
@@ -4212,7 +4212,7 @@ Most \i{user-level directives} (see \k{directive}) are implemented as
 macros which invoke primitive directives; these are described in
 \k{directive}. The rest of the standard macro set is described here.
 
-For compability with NASM versions before NASM 2.15, most standard
+For compatibility with NASM versions before NASM 2.15, most standard
 macros of the form \c{__?foo?__} have aliases of form \c{__foo__} (see
 \k{defalias}). These can be removed with the directive \c{%clear
 defalias}.
@@ -4892,7 +4892,7 @@ The \c{BITS} directive has an exactly equivalent primitive form,
 \c{[BITS 16]}, \c{[BITS 32]} and \c{[BITS 64]}. The user-level form is
 a macro which has no function other than to call the primitive form.
 
-Note that the space is neccessary, e.g. \c{BITS32} will \e{not} work!
+Note that the space is necessary, e.g. \c{BITS32} will \e{not} work!
 
 \S{USE16 & USE32} \i\c{USE16} & \i\c{USE32}: Aliases for BITS
 
@@ -6375,7 +6375,7 @@ right-hand side of the \c{WRT} operator:
 \b \c{..gotpcrel} is used to specify references to the Global Offset
    Table.  The GOT is supported in the \c{macho64} format only.
 
-\S{macho-ssvs} \c{macho} specfic directive \i\c{subsections_via_symbols}
+\S{macho-ssvs} \c{macho} specific directive \i\c{subsections_via_symbols}
 
 The directive \c{subsections_via_symbols} sets the
 \c{MH_SUBSECTIONS_VIA_SYMBOLS} flag in the Mach-O header, that effectively
@@ -6390,7 +6390,7 @@ non-Mach-O builds of the same source code:
 
 \c      %pragma macho subsections_via_symbols
 
-\S{macho-ssvs} \c{macho} specfic directive \i\c{no_dead_strip}
+\S{macho-ssvs} \c{macho} specific directive \i\c{no_dead_strip}
 
 The directive \c{no_dead_strip} sets the Mach-O \c{SH_NO_DEAD_STRIP}
 section flag on the section containing a a specific symbol.  This
