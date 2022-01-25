@@ -5892,15 +5892,15 @@ VGF2P8MULB		ymmreg|mask|z,ymmreg*,ymmrm256		[rvm:fvm: evex.nds.256.66.0f38.w0 cf
 VGF2P8MULB		zmmreg|mask|z,zmmreg*,zmmrm512		[rvm:fvm: evex.nds.512.66.0f38.w0 cf /r]	GFNI,AVX512,FUTURE
 
 ;# AVX512 Vector Bit Manipulation Instructions 2
-VPCOMPRESSB     mem128|mask,xmmreg                      [mr:t1s:   evex.128.66.0f38.w0 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
-VPCOMPRESSB     mem256|mask,ymmreg                      [mr:t1s:   evex.256.66.0f38.w0 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
-VPCOMPRESSB     mem512|mask,zmmreg                      [mr:t1s:   evex.512.66.0f38.w0 63 /r]		AVX512VBMI2,FUTURE
+VPCOMPRESSB     mem128|mask,xmmreg                      [mr:t1s8:  evex.128.66.0f38.w0 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
+VPCOMPRESSB     mem256|mask,ymmreg                      [mr:t1s8:  evex.256.66.0f38.w0 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
+VPCOMPRESSB     mem512|mask,zmmreg                      [mr:t1s8:  evex.512.66.0f38.w0 63 /r]		AVX512VBMI2,FUTURE
 VPCOMPRESSB     xmmreg|mask|z,xmmreg                    [mr:       evex.128.66.0f38.w0 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
 VPCOMPRESSB     ymmreg|mask|z,ymmreg                    [mr:       evex.256.66.0f38.w0 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
 VPCOMPRESSB     zmmreg|mask|z,zmmreg                    [mr:       evex.512.66.0f38.w0 63 /r]		AVX512VBMI2,FUTURE
-VPCOMPRESSW     mem128|mask,xmmreg                      [mr:t1s:   evex.128.66.0f38.w1 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
-VPCOMPRESSW     mem256|mask,ymmreg                      [mr:t1s:   evex.256.66.0f38.w1 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
-VPCOMPRESSW     mem512|mask,zmmreg                      [mr:t1s:   evex.512.66.0f38.w1 63 /r]		AVX512VBMI2,FUTURE
+VPCOMPRESSW     mem128|mask,xmmreg                      [mr:t1s16: evex.128.66.0f38.w1 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
+VPCOMPRESSW     mem256|mask,ymmreg                      [mr:t1s16: evex.256.66.0f38.w1 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
+VPCOMPRESSW     mem512|mask,zmmreg                      [mr:t1s16: evex.512.66.0f38.w1 63 /r]		AVX512VBMI2,FUTURE
 VPCOMPRESSW     xmmreg|mask|z,xmmreg                    [mr:       evex.128.66.0f38.w1 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
 VPCOMPRESSW     ymmreg|mask|z,ymmreg                    [mr:       evex.256.66.0f38.w1 63 /r]		AVX512VBMI2,AVX512VL,FUTURE
 VPCOMPRESSW     zmmreg|mask|z,zmmreg                    [mr:       evex.512.66.0f38.w1 63 /r]		AVX512VBMI2,FUTURE
