@@ -2281,7 +2281,7 @@ static void help(FILE *out)
         "    -E (or -e)    preprocess only (writes output to stdout by default)\n"
         "    -a            don't preprocess (assemble only)\n"
         "    -Ipath        add a pathname to the include file path\n"
-        "    -Pfile        pre-include a file (also --include)\n"
+        "    -P|-p file    pre-include a file (also --include)\n"
         "    -Dmacro[=str] pre-define a macro\n"
         "    -Umacro       undefine a macro\n"
         "   --pragma str   pre-executes a specific %%pragma\n"
