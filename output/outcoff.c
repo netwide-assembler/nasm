@@ -1275,7 +1275,10 @@ static void coff_write_symbols(void)
      * The `.file' record, and the file name auxiliary record.
      */
     coff_symbol(".file", 0L, 0L, -2, 0, 0x67, 1);
-    strncpy(filename, inname, 18);
+    if (reproducible)
+        memset(filename, 0, 18);
+    else
+        strncpy(filename, inname, 18);
     nasm_write(filename, 18, ofile);
 
     /*
