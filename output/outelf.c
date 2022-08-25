@@ -3339,8 +3339,8 @@ static void dwarf_generate(void)
         saa_write32(pinfo,0);			/* DW_AT_low_pc */
         saa_write32(pinforel, pinfo->datalen + 4);
         saa_write32(pinforel, ((dwarf_fsect->section + 2) << 8) + R_X86_64_32);
-        saa_write32(pinforel, 0);
-        saa_write32(pinfo,highaddr);		/* DW_AT_high_pc */
+        saa_write32(pinforel, highaddr);
+        saa_write32(pinfo,0);			/* DW_AT_high_pc */
         saa_write32(pinforel, pinfo->datalen + 4);
         saa_write32(pinforel, (dwarf_linesym << 8) + R_X86_64_32); /* reloc to line */
         saa_write32(pinforel, 0);
@@ -3380,8 +3380,8 @@ static void dwarf_generate(void)
         saa_write64(pinfo,0);			/* DW_AT_low_pc */
         saa_write64(pinforel, pinfo->datalen + 4);
         saa_write64(pinforel, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
-        saa_write64(pinforel, 0);
-        saa_write64(pinfo,highaddr);		/* DW_AT_high_pc */
+        saa_write64(pinforel, highaddr);
+        saa_write64(pinfo,0);			/* DW_AT_high_pc */
         saa_write64(pinforel, pinfo->datalen + 4);
         saa_write64(pinforel, (dwarf_linesym << 32) +  R_X86_64_32); /* reloc to line */
         saa_write64(pinforel, 0);
