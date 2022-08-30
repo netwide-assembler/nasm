@@ -2696,7 +2696,11 @@ static void debug_typevalue(int32_t type)
             stype = STT_NOTYPE;
             break;
     }
-    if (stype == STT_OBJECT && lastsym && !lastsym->type) {
+    /* Set type and size info on most recently seen symbol if we haven't set it already.
+       But avoid setting size info on object (data) symbols in absolute sections (which
+       is primarily structs); some environments get confused with non-zero-extent absolute
+       object symbols and end up showing them in backtraces for NULL fn pointer calls. */
+    if (stype == STT_OBJECT && lastsym && !lastsym->type && lastsym->section != XSHN_ABS) {
         lastsym->size = ssize;
         lastsym->type = stype;
     }
