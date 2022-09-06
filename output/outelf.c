@@ -1878,13 +1878,13 @@ static void elf_write(void)
            not all of which are currently implemented,
            although all of them are defined. */
         add_sectname("", ".debug_aranges");
-        add_sectname(".rela", ".debug_aranges");
+        add_sectname(efmt->relpfx, ".debug_aranges");
         add_sectname("", ".debug_pubnames");
         add_sectname("", ".debug_info");
-        add_sectname(".rela", ".debug_info");
+        add_sectname(efmt->relpfx, ".debug_info");
         add_sectname("", ".debug_abbrev");
         add_sectname("", ".debug_line");
-        add_sectname(".rela", ".debug_line");
+        add_sectname(efmt->relpfx, ".debug_line");
         add_sectname("", ".debug_frame");
         add_sectname("", ".debug_loc");
     }
@@ -1994,6 +1994,9 @@ static void elf_write(void)
         /* for dwarf debugging information, create the ten dwarf sections */
 
         /* this function call creates the dwarf sections in memory */
+	int reltype = efmt->reltype;
+	int relsize = (efmt->reltype == SHT_RELA
+		       ? efmt->rela_size : efmt->rel_size);
         if (dwarf_fsect)
             dwarf_generate();
 
@@ -2001,10 +2004,10 @@ static void elf_write(void)
                            arangeslen, 0, 0, 1, 0);
         p += strlen(p) + 1;
 
-        elf_section_header(p - shstrtab, SHT_RELA, 0, arangesrelbuf, false,
-                           arangesrellen, sec_symtab,
+        elf_section_header(p - shstrtab, reltype, 0, arangesrelbuf, false,
+			   arangesrellen, sec_symtab,
                            sec_debug_aranges,
-                           efmt->word, efmt->rela_size);
+                           efmt->word, relsize);
         p += strlen(p) + 1;
 
         elf_section_header(p - shstrtab, SHT_PROGBITS, 0, pubnamesbuf,
@@ -2015,10 +2018,10 @@ static void elf_write(void)
                            infolen, 0, 0, 1, 0);
         p += strlen(p) + 1;
 
-        elf_section_header(p - shstrtab, SHT_RELA, 0, inforelbuf, false,
+        elf_section_header(p - shstrtab, reltype, 0, inforelbuf, false,
                            inforellen, sec_symtab,
                            sec_debug_info,
-                           efmt->word, efmt->rela_size);
+                           efmt->word, relsize);
         p += strlen(p) + 1;
 
         elf_section_header(p - shstrtab, SHT_PROGBITS, 0, abbrevbuf, false,
@@ -2029,10 +2032,10 @@ static void elf_write(void)
                            linelen, 0, 0, 1, 0);
         p += strlen(p) + 1;
 
-        elf_section_header(p - shstrtab, SHT_RELA, 0, linerelbuf, false,
+        elf_section_header(p - shstrtab, reltype, 0, linerelbuf, false,
                            linerellen, sec_symtab,
                            sec_debug_line,
-                           efmt->word, efmt->rela_size);
+                           efmt->word, relsize);
         p += strlen(p) + 1;
 
         elf_section_header(p - shstrtab, SHT_PROGBITS, 0, framebuf, false,
@@ -3128,7 +3131,6 @@ static void dwarf_generate(void)
         saa_write16(paranges, dwfmt->sect_version[DWARF_ARANGES]);
         saa_write32(parangesrel, paranges->datalen+4);
         saa_write32(parangesrel, (dwarf_infosym << 8) +  R_386_32); /* reloc to info */
-        saa_write32(parangesrel, 0);
         saa_write32(paranges,0);    /* offset into info */
         saa_write8(paranges,4);     /* pointer size */
         saa_write8(paranges,0);     /* not segmented */
@@ -3149,7 +3151,6 @@ static void dwarf_generate(void)
             /* range table relocation entry */
             saa_write32(parangesrel, paranges->datalen + 4);
             saa_write32(parangesrel, ((uint32_t) (psect->section + 2) << 8) +  R_386_32);
-            saa_write32(parangesrel, (uint32_t) 0);
             /* range table entry */
             saa_write32(paranges,0x0000);   /* range start */
             saa_write32(paranges,sects[psect->section]->len); /* range length */
@@ -3289,21 +3290,17 @@ static void dwarf_generate(void)
         saa_write16(pinfo, dwfmt->sect_version[DWARF_INFO]);
         saa_write32(pinforel, pinfo->datalen + 4);
         saa_write32(pinforel, (dwarf_abbrevsym << 8) +  R_386_32); /* reloc to abbrev */
-        saa_write32(pinforel, 0);
         saa_write32(pinfo,0);       /* offset into abbrev */
         saa_write8(pinfo,4);        /* pointer size */
         saa_write8(pinfo,1);        /* abbrviation number LEB128u */
         saa_write32(pinforel, pinfo->datalen + 4);
         saa_write32(pinforel, ((dwarf_fsect->section + 2) << 8) +  R_386_32);
-        saa_write32(pinforel, 0);
         saa_write32(pinfo,0);       /* DW_AT_low_pc */
         saa_write32(pinforel, pinfo->datalen + 4);
         saa_write32(pinforel, ((dwarf_fsect->section + 2) << 8) +  R_386_32);
-        saa_write32(pinforel, 0);
         saa_write32(pinfo,highaddr);    /* DW_AT_high_pc */
         saa_write32(pinforel, pinfo->datalen + 4);
         saa_write32(pinforel, (dwarf_linesym << 8) +  R_386_32); /* reloc to line */
-        saa_write32(pinforel, 0);
         saa_write32(pinfo,0);       /* DW_AT_stmt_list */
         saa_wbytes(pinfo, elf_module, strlen(elf_module)+1); /* DW_AT_name */
         saa_wbytes(pinfo, elf_dir, strlen(elf_dir)+1); /* DW_AT_comp_dir */
@@ -3312,7 +3309,6 @@ static void dwarf_generate(void)
         saa_write8(pinfo,2);        /* abbrviation number LEB128u */
         saa_write32(pinforel, pinfo->datalen + 4);
         saa_write32(pinforel, ((dwarf_fsect->section + 2) << 8) +  R_386_32);
-        saa_write32(pinforel, 0);
         saa_write32(pinfo,0);       /* DW_AT_low_pc */
         saa_write32(pinfo,0);       /* DW_AT_frame_base */
         saa_write8(pinfo,0);        /* end of entries */
@@ -3500,7 +3496,6 @@ static void dwarf_generate(void)
         for (indx = 0; indx < dwarf_nsections; indx++) {
             saa_write32(plinesrel, linepoff);
             saa_write32(plinesrel, ((uint32_t) (psect->section + 2) << 8) +  R_386_32);
-            saa_write32(plinesrel, (uint32_t) 0);
             plinep = psect->psaa;
             saalen = plinep->datalen;
             saa_rnbytes(plinep, pbuf, saalen);
