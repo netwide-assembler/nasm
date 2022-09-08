@@ -99,7 +99,13 @@ STD: nasm
 %endmacro
 
 %imacro at 1-2+.nolist
-    times (%1-%$strucname)-($-%$strucstart) db 0
+    %defstr %$member %1
+    %substr %$member1 %$member 1
+    %ifidn %$member1, '.'
+        times (%$strucname%1-%$strucname)-($-%$strucstart) db 0
+    %else
+        times (%1-%$strucname)-($-%$strucstart) db 0
+    %endif
     %2
 %endmacro
 
