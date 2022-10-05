@@ -10,13 +10,14 @@ AC_DEFUN([PA_ADD_FLAGS],
 [AC_MSG_CHECKING([if $CC accepts $2])
  pa_add_flags__old_flags="$$1"
  $1="$$1 $2"
- AC_TRY_LINK(AC_INCLUDES_DEFAULT,
- [printf("Hello, World!\n");],
- [AC_MSG_RESULT([yes])
-  $1="$pa_add_flags__old_flags ifelse([$3],[],[$2],[$3])"
-  AC_DEFINE(PA_SYM([$1_],[$2]), 1,
-   [Define to 1 if compiled with the `$2' compiler flag])
-  $4],
- [AC_MSG_RESULT([no])
-  $1="$pa_add_flags__old_flags"
-  $5])])
+ AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
+   [printf("Hello, World!\n");])],
+  [AC_MSG_RESULT([yes])
+   $1="$pa_add_flags__old_flags ifelse([$3],[],[$2],[$3])"
+   AC_DEFINE(PA_SYM([$1_],[$2]), 1,
+    [Define to 1 if compiled with the `$2' compiler flag])
+   $4],
+  [AC_MSG_RESULT([no])
+   $1="$pa_add_flags__old_flags"
+   $5])])
