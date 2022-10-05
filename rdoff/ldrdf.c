@@ -735,7 +735,7 @@ static void write_output(const char *filename)
             printf("\nadding generic record from binary file %s\n",
                    generic_rec_file);
 
-        hr = (rdfheaderrec *) nasm_malloc(sizeof(struct GenericRec));
+        nasm_new(hr);
         if ((ff = fopen(generic_rec_file, "r")) == NULL) {
             fprintf(stderr, "ldrdf: couldn't open %s for input\n",
                     generic_rec_file);
@@ -772,7 +772,7 @@ static void write_output(const char *filename)
         if (options.verbose)
             printf("\nadding module name record %s\n", modname_specified);
 
-        hr = (rdfheaderrec *) nasm_malloc(sizeof(struct ModRec));
+        nasm_new(hr);
 	hr->m.type = RDFREC_MODNAME;
         hr->m.reclen = n + 1;
         strcpy(hr->m.modname, modname_specified);
