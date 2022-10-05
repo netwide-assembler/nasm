@@ -715,8 +715,9 @@ JMP		rm64				[m:	o64nw ff /4]				X86_64,LONG,BND
 JMPE		imm				[i:	odf 0f b8 rel]				IA64
 JMPE		imm16				[i:	o16 0f b8 rel]				IA64
 JMPE		imm32				[i:	o32 0f b8 rel]				IA64
-JMPE		rm16				[m:	o16 0f 00 /6]				IA64
-JMPE		rm32				[m:	o32 0f 00 /6]				IA64
+JMPE		rm16				[m:	norep o16 0f 00 /6]			IA64
+JMPE		rm32				[m:	norep o32 0f 00 /6]			IA64
+JMPE		rm64				[m:	norep o64 0f 00 /6]			IA64,LONG
 LAHF		void				[	9f]					8086
 LAR		reg16,mem			[rm:	o16 0f 02 /r]				286,PROT,SW
 LAR		reg16,reg16			[rm:	o16 0f 02 /r]				286,PROT
@@ -6059,6 +6060,14 @@ TILELOADDT1	tmmreg,mem			[rm:	vex.128.66.0f38.w0 4b /r]		AMXTILE,MIB,SIB,FUTURE,
 TILERELEASE	void				[	vex.128.np.0f38.w0 49 c0]		AMXTILE,FUTURE,LONG
 TILESTORED	mem,tmmreg			[mr:	vex.128.f3.0f38.w0 4b /r]		AMXTILE,MIB,SIB,FUTURE,SX,LONG
 TILEZERO	tmmreg				[r:	vex.128.f2.0f38.w0 49 /3r0]		AMXTILE,FUTURE,LONG
+
+;# Flexible Return and Exception Delivery (FRED)
+ERETS		void				[	f2 0f 01 ca]				FRED,FUTURE,LONG,PRIV
+ERETU		void				[	f3 0f 01 ca]				FRED,FUTURE,LONG,PRIV
+LKGS		reg16				[m:	f2 0f 00 /6]				FRED,FUTURE,LONG,PRIV
+LKGS		reg32				[m:	f2 0f 00 /6]				FRED,FUTURE,LONG,PRIV,ND
+LKGS		reg64				[m:	f2 0f 00 /6]				FRED,FUTURE,LONG,PRIV,ND
+LKGS		mem				[m:	f2 0f 00 /6]				FRED,FUTURE,LONG,PRIV,SW
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
