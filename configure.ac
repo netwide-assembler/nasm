@@ -1,7 +1,8 @@
 dnl Process this file with autoconf 2.69 or later to produce
 dnl a configure script.
-AC_PREREQ(2.69)
-AC_INIT([config/config.h.in])
+AC_PREREQ([2.71])
+AC_INIT
+AC_CONFIG_SRCDIR([config/config.h.in])
 AC_CONFIG_HEADERS([config/config.h])
 AC_PREFIX_PROGRAM(nasm)
 AC_CONFIG_AUX_DIR(autoconf/helpers)
@@ -24,10 +25,9 @@ dnl Get the canonical target system name
 AC_CANONICAL_HOST
 
 dnl Enable any available C extensions
+AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
-AC_PROG_CC
-AC_PROG_CC_STDC
 PA_ADD_CFLAGS([-std=c17], [], [],
 [PA_ADD_CFLAGS([-std=c11], [], [],
  [PA_ADD_CFLAGS([-std=c99])])])
@@ -175,7 +175,8 @@ AC_C_INLINE
 AC_C_RESTRICT
 
 dnl Checks for header files.
-AC_HEADER_STDC
+AC_CHECK_INCLUDES_DEFAULT
+
 PA_ADD_HEADERS(string.h)
 PA_ADD_HEADERS(stdarg.h)
 AC_CHECK_HEADERS(inttypes.h)
