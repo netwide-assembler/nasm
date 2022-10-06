@@ -250,7 +250,8 @@ static uint32_t append_evex_mem_deco(char *buf, uint32_t num, opflags_t type,
 
     if ((evex[2] & EVEX_P2B) && (deco & BRDCAST_MASK)) {
         decoflags_t deco_brsize = deco & BRSIZE_MASK;
-        opflags_t template_opsize = (deco_brsize == BR_BITS32 ? BITS32 : BITS64);
+        opflags_t template_opsize = (deco_brsize == BR_BITS16 ? BITS16 :
+                                    (deco_brsize == BR_BITS32 ? BITS32 : BITS64));
         uint8_t br_num = (type & SIZE_MASK) / BITS128 *
                          BITS64 / template_opsize * 2;
 
@@ -1540,9 +1541,12 @@ int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, i
                     snprintf(output + slen, outbufsize - slen, "tword ");
             if ((ins.evex_p[2] & EVEX_P2B) && (deco & BRDCAST_MASK)) {
                 /* when broadcasting, each element size should be used */
-                if (deco & BR_BITS32)
+                if (deco & BR_BITS16)
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "dword ");
+                else if (deco & BR_BITS32)
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "word ");
                 else if (deco & BR_BITS64)
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "qword ");

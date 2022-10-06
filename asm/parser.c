@@ -171,6 +171,7 @@ static bool parse_braces(decoflags_t *decoflags)
             case BRC_1TO4:
             case BRC_1TO8:
             case BRC_1TO16:
+            case BRC_1TO32:
                 *decoflags |= BRDCAST_MASK | VAL_BRNUM(j - BRC_1TO2);
                 break;
             default:

@@ -1257,6 +1257,7 @@ enum decorator_tokens {
     BRC_1TO4,
     BRC_1TO8,
     BRC_1TO16,
+    BRC_1TO32,
     BRC_RN,
     BRC_RD,
     BRC_RU,
@@ -1277,8 +1278,8 @@ enum decorator_tokens {
  * ..........................1..... broadcast
  * .........................1...... static rounding
  * ........................1....... SAE
- * ......................11........ broadcast element size
- * ....................11.......... number of broadcast elements
+ * .....................111........ broadcast element size
+ * ..................111........... number of broadcast elements
  */
 #define OP_GENVAL(val, bits, shift)     (((val) & ((UINT64_C(1) << (bits)) - 1)) << (shift))
 
@@ -1340,23 +1341,24 @@ enum decorator_tokens {
 /*
  * Broadcasting element size.
  *
- * Bits: 8 - 9
+ * Bits: 8 - 10
  */
 #define BRSIZE_SHIFT            (8)
-#define BRSIZE_BITS             (2)
+#define BRSIZE_BITS             (3)
 #define BRSIZE_MASK             OP_GENMASK(BRSIZE_BITS, BRSIZE_SHIFT)
 #define GEN_BRSIZE(bit)         OP_GENBIT(bit, BRSIZE_SHIFT)
 
-#define BR_BITS32               GEN_BRSIZE(0)
-#define BR_BITS64               GEN_BRSIZE(1)
+#define BR_BITS16               GEN_BRSIZE(0)
+#define BR_BITS32               GEN_BRSIZE(1)
+#define BR_BITS64               GEN_BRSIZE(2)
 
 /*
  * Number of broadcasting elements
  *
- * Bits: 10 - 11
+ * Bits: 11 - 13
  */
 #define BRNUM_SHIFT             (10)
-#define BRNUM_BITS              (2)
+#define BRNUM_BITS              (3)
 #define BRNUM_MASK              OP_GENMASK(BRNUM_BITS, BRNUM_SHIFT)
 #define VAL_BRNUM(val)          OP_GENVAL(val, BRNUM_BITS, BRNUM_SHIFT)
 
@@ -1364,9 +1366,11 @@ enum decorator_tokens {
 #define BR_1TO4                 VAL_BRNUM(1)
 #define BR_1TO8                 VAL_BRNUM(2)
 #define BR_1TO16                VAL_BRNUM(3)
+#define BR_1TO32                VAL_BRNUM(4)
 
 #define MASK                    OPMASK_MASK             /* Opmask (k1 ~ 7) can be used */
 #define Z                       Z_MASK
+#define B16                     (BRDCAST_MASK|BR_BITS16) /* {1to32} : broadcast 16b * 32 to zmm(512b) */
 #define B32                     (BRDCAST_MASK|BR_BITS32) /* {1to16} : broadcast 32b * 16 to zmm(512b) */
 #define B64                     (BRDCAST_MASK|BR_BITS64) /* {1to8}  : broadcast 64b *  8 to zmm(512b) */
 #define ER                      STATICRND_MASK          /* ER(Embedded Rounding) == Static rounding mode */
