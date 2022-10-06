@@ -461,7 +461,7 @@ sub format_insn($$$$$) {
             @opevex = ();
             foreach $opp (split(/\|/, $op)) {
                 @oppx = ();
-                if ($opp =~ s/^(b(32|64)|mask|z|er|sae)$//) {
+                if ($opp =~ s/^(b(16|32|64)|mask|z|er|sae)$//) {
                     push(@opevex, $1);
                 }
 
@@ -972,6 +972,10 @@ sub byte_code_compile($$) {
                         $m = 2;
                     } elsif ($oq eq '0f3a') {
                         $m = 3;
+                    } elsif ($oq eq 'map5') {
+                        $m = 5;
+                    } elsif ($oq eq 'map6') {
+                        $m = 6;
                     } elsif ($oq =~ /^m([0-9]+)$/) {
                         $m = $1+0;
                     } elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {
@@ -1028,6 +1032,10 @@ sub byte_code_compile($$) {
                         $m = 2;
                     } elsif ($oq eq '0f3a') {
                         $m = 3;
+                    } elsif ($oq eq 'map5') {
+                        $m = 5;
+                    } elsif ($oq eq 'map6') {
+                        $m = 6;
                     } elsif ($oq =~ /^m([0-9]+)$/) {
                         $m = $1+0;
                     } elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {

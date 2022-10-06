@@ -2445,8 +2445,10 @@ static enum match_result find_match(const struct itemplate **tempp,
 
         if (i == broadcast) {
             instruction->oprs[i].decoflags |= xsizeflags[i];
-            instruction->oprs[i].type |= (xsizeflags[i] == BR_BITS32 ?
-                                          BITS32 : BITS64);
+            instruction->oprs[i].type |= (xsizeflags[i] == BR_BITS16 ?
+                                          BITS16 :
+                                          (xsizeflags[i] == BR_BITS32 ?
+                                          BITS32 : BITS64));
         } else {
             instruction->oprs[i].type |= xsizeflags[i]; /* Set the size */
         }
@@ -2651,7 +2653,8 @@ static enum match_result matches(const struct itemplate *itemp,
              * the instruction type. decorator flag should match.
              */
             if (deco_brsize) {
-                template_opsize = (deco_brsize == BR_BITS32 ? BITS32 : BITS64);
+                template_opsize = (deco_brsize == BR_BITS16 ? BITS16 :
+                                   (deco_brsize == BR_BITS32 ? BITS32 : BITS64));
                 /* calculate the proper number : {1to<brcast_num>} */
                 brcast_num = get_broadcast_num(itemp->opd[i], template_opsize);
             } else {

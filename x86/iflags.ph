@@ -83,6 +83,8 @@ if_("AVX512BITALG",      "AVX-512 Bit Algorithm instructions");
 if_("AVX512VPOPCNTDQ",   "AVX-512 VPOPCNTD/VPOPCNTQ");
 if_("AVX5124FMAPS",      "AVX-512 4-iteration multiply-add");
 if_("AVX5124VNNIW",      "AVX-512 4-iteration dot product");
+if_("AVX512FP16",        "AVX-512 FP16 instructions");
+if_("AVX512FC16",        "AVX-512 FC16 instructions");
 if_("SGX",               "Intel Software Guard Extensions (SGX)");
 if_("CET",               "Intel Control-Flow Enforcement Technology (CET)");
 if_("ENQCMD",            "Enqueue command instructions");

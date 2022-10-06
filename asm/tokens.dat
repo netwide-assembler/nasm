@@ -160,6 +160,7 @@ __?masm_flat?__
 1to4
 1to8
 1to16
+1to32
 
 % TOKEN_DECORATOR, 0, TFLAG_BRC, BRC_{*-sae}
 rn-sae
