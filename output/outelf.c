@@ -242,7 +242,7 @@ static bool dfmt_is_dwarf(void);
  */
 static int32_t elf_gotpc_sect, elf_gotoff_sect;
 static int32_t elf_got_sect, elf_plt_sect;
-static int32_t elf_sym_sect, elf_gottpoff_sect, elf_tlsie_sect;
+static int32_t elf_sym_sect, elf_gottpoff_sect, elf_tlsie_sect, elf_tlsle_sect;
 
 uint8_t elf_osabi = 0;      /* Default OSABI = 0 (System V or Linux) */
 uint8_t elf_abiver = 0;     /* Current ABI version */
@@ -580,7 +580,7 @@ static void elf_init(void)
     }
 
     /*
-     * FIXME: tlsie is Elf32 only and
+     * FIXME: tlsie and tlsle are Elf32 only and
      * gottpoff is Elfx32|64 only.
      */
     elf_gotpc_sect = seg_alloc();
@@ -597,6 +597,8 @@ static void elf_init(void)
     backend_label("..gottpoff", elf_gottpoff_sect + 1, 0L);
     elf_tlsie_sect = seg_alloc();
     backend_label("..tlsie", elf_tlsie_sect + 1, 0L);
+    elf_tlsle_sect = seg_alloc();
+    backend_label("..tlsle", elf_tlsle_sect + 1, 0L);
 
     def_seg = seg_alloc();
 }
@@ -775,12 +777,13 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
          * the ELF symbol table, even if it's a valid one. If it
          * _isn't_ a valid one, we should barf immediately.
          *
-         * FIXME: tlsie is Elf32 only, and gottpoff is Elfx32|64 only.
+         * FIXME: tlsie and tlsle are Elf32 only, and gottpoff is
+         * Elfx32|64 only.
          */
         if (strcmp(name, "..gotpc") && strcmp(name, "..gotoff") &&
             strcmp(name, "..got") && strcmp(name, "..plt") &&
             strcmp(name, "..sym") && strcmp(name, "..gottpoff") &&
-            strcmp(name, "..tlsie"))
+            strcmp(name, "..tlsie") && strcmp(name, "..tlsle"))
             nasm_nonfatal("unrecognised special symbol `%s'", name);
         return;
     }
@@ -1206,6 +1209,9 @@ static void elf32_out(int32_t segto, const void *data,
                     err = asize != 4;
                     addr = elf_add_gsym_reloc(s, segment, addr, 0,
                                               R_386_TLS_IE, true);
+                } else if (wrt == elf_tlsle_sect + 1) {
+                    err = asize != 4;
+                    elf_add_reloc(s, segment, 0, R_386_TLS_LE);
                 } else if (wrt == elf_got_sect + 1) {
                     err = asize != 4;
                     addr = elf_add_gsym_reloc(s, segment, addr, 0,

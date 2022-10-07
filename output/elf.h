@@ -359,6 +359,7 @@ enum reloc32_type {
 	R_386_TLS_TPOFF		= 14,	/* Offset in static TLS block */
 	R_386_TLS_IE		= 15,	/* Address of GOT entry for static TLS block offset */
 	/* These are GNU extensions, but useful */
+	R_386_TLS_LE		= 17,	/* Negative offset relative to static TLS block */
 	R_386_16		= 20,	/* A 16-bit absolute relocation */
 	R_386_PC16		= 21,	/* A 16-bit PC-relative relocation */
 	R_386_8			= 22,	/* An 8-bit absolute relocation */
