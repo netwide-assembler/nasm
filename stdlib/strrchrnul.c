@@ -37,13 +37,8 @@
 
 char *strrchrnul(const char *s, int c)
 {
-    char *p;
-
-    p = strrchr(s, c);
-    if (!p)
-        p = strchr(s, '\0');
-
-    return p;
+    if (!strrchr(s, c))
+        return strchr(s, '\0');
 }
 
 #endif
