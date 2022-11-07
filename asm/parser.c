@@ -141,7 +141,7 @@ static void process_size_override(insn *result, operand *op)
 }
 
 /*
- * Braced keywords are are parsed here.  opmask and zeroing
+ * Braced keywords are parsed here.  opmask and zeroing
  * decorators can be placed in any order.  e.g. zmm1 {k2}{z} or zmm2
  * {z}{k3} decorator(s) are placed at the end of an operand.
  */

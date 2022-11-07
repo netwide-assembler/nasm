@@ -276,7 +276,7 @@ void process_pragma(char *str)
 
     /*
      * Search the global pragma namespaces. This is done
-     * as a loop rather than than letting search_pragma_list()
+     * as a loop rather than letting search_pragma_list()
      * just run, because we don't want to keep searching if
      * we have a facility match, thus we want to call
      * search_pragma_list() individually for each namespace.

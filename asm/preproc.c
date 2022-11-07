@@ -5908,7 +5908,7 @@ static Token *expand_smacro_noreset(Token *org_tline)
         Token **tail = &tline;
 
         /*
-         * We hold warnings/errors until we are done this this loop. It is
+         * We hold warnings/errors until we are done in this loop. It is
          * possible for nuisance warnings to appear that disappear on later
          * passes.
          */

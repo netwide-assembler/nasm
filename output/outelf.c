@@ -2824,7 +2824,7 @@ static void stabs_generate(void)
     if (ptr) {
         /*
          * this is the first stab, its strx points to the filename of the
-         * the source-file, the n_desc field should be set to the number
+         * source-file, the n_desc field should be set to the number
          * of remaining stabs
          */
         WRITE_STAB(sptr, fileidx[0], 0, 0, 0, stabstrlen);
