@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2021 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -1848,7 +1848,7 @@ static Token *new_Token_free(Token * next, enum token_type type,
 
     if (txtlen <= INLINE_TEXT) {
         memcpy(t->text.a, text, txtlen);
-        free(text);
+        nasm_free(text);
     } else {
         t->text.p.ptr = text;
     }
