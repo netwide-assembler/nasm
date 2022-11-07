@@ -4858,7 +4858,6 @@ issue_error:
     }
 
 done:
-    free_mmacro_table(&mmacros);
     free_tlist(origline);
     return DIRECTIVE_FOUND;
 }
