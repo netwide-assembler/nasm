@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -210,8 +210,7 @@ struct elf_format_info {
     size_t ehdr_size;           /* Size of the ELF header */
     size_t shdr_size;           /* Size of a section header */
     size_t sym_size;            /* Size of a symbol */
-    size_t rel_size;            /* Size of a reltype relocation */
-    size_t rela_size;           /* Size of a RELA relocation */
+    size_t relsize;             /* Size of a reltype relocation */
     char relpfx[8];             /* Relocation section prefix */
     uint32_t reltype;           /* Relocation section type */
     uint16_t e_machine;         /* Header e_machine field */
@@ -484,7 +483,6 @@ static void elf32_init(void)
         sizeof(Elf32_Shdr),
         sizeof(Elf32_Sym),
         sizeof(Elf32_Rel),
-        sizeof(Elf32_Rela),
         ".rel",
         SHT_REL,
         EM_386,
@@ -506,7 +504,6 @@ static void elfx32_init(void)
         sizeof(Elf32_Shdr),
         sizeof(Elf32_Sym),
         sizeof(Elf32_Rela),
-        sizeof(Elf32_Rela),
         ".rela",
         SHT_RELA,
         EM_X86_64,
@@ -527,7 +524,6 @@ static void elf64_init(void)
         sizeof(Elf64_Ehdr),
         sizeof(Elf64_Shdr),
         sizeof(Elf64_Sym),
-        sizeof(Elf64_Rela),
         sizeof(Elf64_Rela),
         ".rela",
         SHT_RELA,
@@ -1987,27 +1983,24 @@ static void elf_write(void)
             elf_section_header(p - shstrtab, efmt->reltype, 0,
                                stabrelbuf, false, stabrellen,
                                sec_symtab, sec_stab,
-                               efmt->word, efmt->rel_size);
+                               efmt->word, efmt->relsize);
             p += strlen(p) + 1;
         }
     } else if (dfmt_is_dwarf()) {
         /* for dwarf debugging information, create the ten dwarf sections */
 
         /* this function call creates the dwarf sections in memory */
-	int reltype = efmt->reltype;
-	int relsize = (efmt->reltype == SHT_RELA
-		       ? efmt->rela_size : efmt->rel_size);
-        if (dwarf_fsect)
+	if (dwarf_fsect)
             dwarf_generate();
 
         elf_section_header(p - shstrtab, SHT_PROGBITS, 0, arangesbuf, false,
                            arangeslen, 0, 0, 1, 0);
         p += strlen(p) + 1;
 
-        elf_section_header(p - shstrtab, reltype, 0, arangesrelbuf, false,
+        elf_section_header(p - shstrtab, efmt->reltype, 0, arangesrelbuf, false,
 			   arangesrellen, sec_symtab,
                            sec_debug_aranges,
-                           efmt->word, relsize);
+                           efmt->word, efmt->relsize);
         p += strlen(p) + 1;
 
         elf_section_header(p - shstrtab, SHT_PROGBITS, 0, pubnamesbuf,
@@ -2018,10 +2011,10 @@ static void elf_write(void)
                            infolen, 0, 0, 1, 0);
         p += strlen(p) + 1;
 
-        elf_section_header(p - shstrtab, reltype, 0, inforelbuf, false,
+        elf_section_header(p - shstrtab, efmt->reltype, 0, inforelbuf, false,
                            inforellen, sec_symtab,
                            sec_debug_info,
-                           efmt->word, relsize);
+                           efmt->word, efmt->relsize);
         p += strlen(p) + 1;
 
         elf_section_header(p - shstrtab, SHT_PROGBITS, 0, abbrevbuf, false,
@@ -2032,10 +2025,10 @@ static void elf_write(void)
                            linelen, 0, 0, 1, 0);
         p += strlen(p) + 1;
 
-        elf_section_header(p - shstrtab, reltype, 0, linerelbuf, false,
+        elf_section_header(p - shstrtab, efmt->reltype, 0, linerelbuf, false,
                            linerellen, sec_symtab,
                            sec_debug_line,
-                           efmt->word, relsize);
+                           efmt->word, efmt->relsize);
         p += strlen(p) + 1;
 
         elf_section_header(p - shstrtab, SHT_PROGBITS, 0, framebuf, false,
@@ -2077,7 +2070,7 @@ static void elf_write(void)
             elf_section_header(p - shstrtab, efmt->reltype, 0,
                                sects[i]->rel, true, sects[i]->rel->datalen,
                                sec_symtab, sects[i]->shndx,
-                               efmt->word, efmt->rel_size);
+                               efmt->word, efmt->relsize);
             p += strlen(p) + 1;
         }
     }
