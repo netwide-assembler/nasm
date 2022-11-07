@@ -4716,15 +4716,12 @@ issue_error:
         list_for_each(t, tline) {
             switch (t->type) {
             case TOKEN_WHITESPACE:
+            case TOKEN_COMMA:
                 break;
             case TOKEN_STR:
 		unquote_token(t);
                 len += t->len;
                 break;
-            case TOKEN_OTHER:
-                if (tok_is(t, ',')) /* permit comma separators */
-                    break;
-                /* else fall through */
             default:
                 nasm_nonfatal("non-string passed to `%s': %s", dname,
 			      tok_text(t));
