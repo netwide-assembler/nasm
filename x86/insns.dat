@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2022 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -6035,9 +6035,9 @@ XSUSLDTRK	void				[	f2 0f 01 e8]				TSXLDTRK,FUTURE
 VCVTNE2PS2BF16	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f2.0f38.w0 72 /r]	AVX512BF16,FUTURE
 VCVTNE2PS2BF16	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:fv:	evex.256.f2.0f38.w0 72 /r]	AVX512BF16,FUTURE
 VCVTNE2PS2BF16	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:fv:	evex.512.f2.0f38.w0 72 /r]	AVX512BF16,FUTURE
-VCVTNE2PS2BF16	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
-VCVTNE2PS2BF16	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:fv:	evex.256.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
-VCVTNE2PS2BF16	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:fv:	evex.512.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
+VCVTNEPS2BF16	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
+VCVTNEPS2BF16	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:fv:	evex.256.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
+VCVTNEPS2BF16	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:fv:	evex.512.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
 VDPBF16PS	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f3.0f38.w0 52 /r]	AVX512BF16,FUTURE
 VDPBF16PS	ymmreg|mask|z,ymmreg*,ymmrm128|b32	[rvm:fv:	evex.256.f3.0f38.w0 52 /r]	AVX512BF16,FUTURE
 VDPBF16PS	zmmreg|mask|z,zmmreg*,zmmrm128|b32	[rvm:fv:	evex.512.f3.0f38.w0 52 /r]	AVX512BF16,FUTURE
