@@ -200,6 +200,7 @@ AC_CHECK_FUNCS(strrchrnul)
 AC_CHECK_FUNCS(iscntrl)
 AC_CHECK_FUNCS(isascii)
 AC_CHECK_FUNCS(mempcpy)
+AC_CHECK_FUNCS(mempset)
 
 AC_CHECK_FUNCS(getuid)
 AC_CHECK_FUNCS(getgid)

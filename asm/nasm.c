@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -817,8 +817,7 @@ static char *quote_for_pmake(const char *str)
     }
 
     /* Convert N backslashes at the end of filename to 2N backslashes */
-    if (nbs)
-        n += nbs;
+    n += nbs;
 
     os = q = nasm_malloc(n);
 
@@ -827,10 +826,10 @@ static char *quote_for_pmake(const char *str)
         switch (*p) {
         case ' ':
         case '\t':
-            while (nbs--)
-                *q++ = '\\';
+            q = mempset(q, '\\', nbs);
             *q++ = '\\';
             *q++ = *p;
+            nbs = 0;
             break;
         case '$':
             *q++ = *p;
@@ -852,9 +851,8 @@ static char *quote_for_pmake(const char *str)
             break;
         }
     }
-    while (nbs--)
-        *q++ = '\\';
 
+    q = mempset(q, '\\', nbs);
     *q = '\0';
 
     return os;

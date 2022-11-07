@@ -252,6 +252,13 @@ static inline void *mempcpy(void *dst, const void *src, size_t n)
 }
 #endif
 
+#ifndef HAVE_MEMPSET
+static inline void *mempset(void *dst, int c, size_t n)
+{
+    return (char *)memset(dst, c, n) + n;
+}
+#endif
+
 /*
  * Hack to support external-linkage inline functions
  */
