@@ -167,7 +167,6 @@ ifdef __NASM_MAJOR__
 %idefine True		1
 %idefine No			0
 %idefine Yes		1
-%idefine Yes		1
 
 ; Macro to be invoked at the start of all modules to set up segments for
 ; later use. Does nothing for NASM.
