@@ -1677,9 +1677,13 @@ static Token *tokenize(const char *line)
 
         if (!ep)
             ep = p;
-        *tail = t = new_Token(NULL, type, line, ep - line);
-        *tok_text_buf(t) = firstchar; /* E.g. %{foo} -> {foo -> %foo */
-        tail = &t->next;
+        toklen = ep - line;
+
+        if (toklen) {
+            *tail = t = new_Token(NULL, type, line, toklen);
+            *tok_text_buf(t) = firstchar; /* E.g. %{foo} -> {foo -> %foo */
+            tail = &t->next;
+        }
 
         line = p;
     }
