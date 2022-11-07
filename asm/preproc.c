@@ -1397,6 +1397,9 @@ static Token *tokenize(const char *line)
             /* Classify here, to handle %{...} correctly */
             if (toklen < 2) {
                 type = '%';     /* % operator */
+                if (unlikely(*line == '{')) {
+                    nasm_warn(WARN_OTHER, "empty %%{} construct treated like the %% arithmetric operator");
+                }
             } else {
                 char c0 = line[1];
 
