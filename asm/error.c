@@ -169,7 +169,7 @@ void reset_warnings(void)
  *
  * Special pseudo-warnings:
  *
- *!other [on] any warning not specifially mentioned above
+ *!other [on] any warning not specifically mentioned above
  *!  specifies any warning not included in any specific warning class.
  *
  *!all [all] all possible warnings

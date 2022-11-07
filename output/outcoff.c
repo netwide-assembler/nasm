@@ -506,7 +506,7 @@ static int32_t coff_section_names(char *name, int *bits)
             if (comdat_selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
                 /*
                  * Find an existing section with given comdat name
-                 */ 
+                 */
                 for (j = 0; j < coff_nsects; j++)
                     if (coff_sects[j]->comdat_name &&
                         !strcmp(coff_sects[j]->comdat_name, comdat_name))
@@ -518,7 +518,7 @@ static int32_t coff_section_names(char *name, int *bits)
                      * Even though the specs don't enforce a particular order,
                      * VS (2019) linker doesn't accept .obj files where the
                      * target section is a later one (than the one with sel==5)
-                     * 
+                     *
                      * So let's insert another section now (a placeholder),
                      * hoping it will be turned into the target section later.
                      */
@@ -980,7 +980,7 @@ coff_directives(enum directive directive, char *value)
 
                 if (equals) {
                     /*
-                     * this value arithmetics effectively reflects
+                     * this value arithmetic effectively reflects
                      * initsym in coff_write(): 2 for file, 1 for
                      * .absolute and two per each section
                      */

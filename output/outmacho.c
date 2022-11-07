@@ -1604,7 +1604,7 @@ static void macho_write (void)
     **   uint32_t in-file offset
     **   uint32_t alignment
     **    (irrelevant in MH_OBJECT)
-    **   uint32_t in-file offset of relocation entires
+    **   uint32_t in-file offset of relocation entries
     **   uint32_t number of relocations
     **   uint32_t flags
     **   uint32_t reserved

@@ -32,7 +32,7 @@ struct segconfig sconft[SEGCONFIGMAX] = {
     {0x0006, 0x0007, "debug information", 2, 0},
     {0x0008, 0x001F, "reserved(general extensions)", 1, 0},
     {0x0020, 0x0FFF, "reserved(MOSCOW)", 1, 0},
-    {0x1000, 0x7FFF, "reserved(system dependant)", 1, 0},
+    {0x1000, 0x7FFF, "reserved(system dependent)", 1, 0},
     {0x8000, 0xFFFE, "reserved(other)", 1, 0},
     {0xFFFF, 0xFFFF, "invalid segment", 0, 0}
 };

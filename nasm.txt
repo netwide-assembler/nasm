@@ -75,7 +75,7 @@ OPTIONS
 	output is suppressed.
 
 *-MG* 'file'::
-	Same as *-M* but assumes that missing Makefile dependecies are generated
+	Same as *-M* but assumes that missing Makefile dependencies are generated
 	and added to dependency list without a prefix.
 
 *-MF* 'file'::

@@ -195,7 +195,7 @@ push %1			;
 ; To support other types of macros that extend the definition of instructions,
 ; I disabled the warning on a multi-line macro called with the wrong number of
 ; parameters.  PUSH and POP can be extended equally well by either method, but
-; other intruction extensions may need one method or the other, so I made both
+; other instruction extensions may need one method or the other, so I made both
 ; work.
 ;
 ; Note that neither of these warnings was really needed, because a later stage
@@ -306,17 +306,17 @@ arg_example2 arg2
 ;
 	sqrtps xmm0,[ebx+10]	; SSE opcode
 	paddsiw mm0,[ebx+10]	; Cyrix opcode with the same byte seq.
-	
+
 ;-----------------------------------------------------------------------------
 ; Enhancement by hpa in preproc.c
 ;
-; Support %undef to remoce a single-line macro
+; Support %undef to remove a single-line macro
 ;
 %define	TEST_ME 42
 %ifndef TEST_ME
 %error	"TEST_ME not defined after %define"
 %endif
-			
+
 %undef  TEST_ME
 %ifdef  TEST_ME
 %error	"TEST_ME defined after %undef"
@@ -331,7 +331,7 @@ arg_example2 arg2
 	pshufw mm2, mm1, 3
 	pshufw mm3,[ebx],2
 	pshufw mm7,[0+edi*8],1
-	
+
 	pshufw mm2, mm1, byte 3
 	pshufw mm3,[ebx],byte 2
 	pshufw mm7,[0+edi*8],byte 1
@@ -349,9 +349,9 @@ arg_example2 arg2
 	pinsrw mm1, [esi], byte 1
 	pinsrw mm1, word [esi], byte 1
 
-	
+
 %endif				; oldmsg
-	
+
 %ifdef oldcrash  ;*************************************************************
 
 This_label_is_256_characters_long__There_used_to_be_a_bug_in_stdscan_which_made_it_crash_when_it_did_a_keyword_search_on_any_label_longer_than_255_characters__Now_anything_longer_than_MAX_KEYWORD_is_always_a_symbol__It_will_not_even_try_a_keyword_search___

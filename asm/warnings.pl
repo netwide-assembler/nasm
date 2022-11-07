@@ -85,7 +85,7 @@ sub find_warnings {
 			     doc => [], file => $infile, line => $nline};
 
 		    if (defined(my $that = $aliases{$name})) {
-			# Duplicate defintion?!
+			# Duplicate definition?!
 			printf STDERR "%s:%s: warning %s previously defined at %s:%s\n",
 			    $infile, $nline, $name, $that->{file}, $that->{line};
 		    } else {

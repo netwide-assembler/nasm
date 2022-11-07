@@ -14,7 +14,7 @@ GLOBAL variables:
                             references generate long offsets; always
                             assembles
                             no optimization passes
-                        2 or more specifies optmization passes.  5 is
+                        2 or more specifies optimization passes.  5 is
                             the actual recommended minimum setting
                             optimization passes (2 or more, plus
                             passes 1 and 2 will be required)

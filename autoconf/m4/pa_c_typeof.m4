@@ -1,7 +1,7 @@
 dnl --------------------------------------------------------------------------
 dnl PA_C_TYPEOF
 dnl
-dnl Find if typeof() exists, or an equvalent (__typeof__, decltype,
+dnl Find if typeof() exists, or an equivalent (__typeof__, decltype,
 dnl __decltype__)
 dnl --------------------------------------------------------------------------
 AC_DEFUN([PA_C_TYPEOF],

@@ -64,7 +64,7 @@
  */
 
 /*
- * These routines are built around the ObjRecord data struture.  An ObjRecord
+ * These routines are built around the ObjRecord data structure.  An ObjRecord
  * holds an object file record that may be under construction or complete.
  *
  * A major function of these routines is to support continuation of an obj
@@ -199,7 +199,7 @@ static ObjRecord *obj_clear(ObjRecord * orp)
 
 /*
  * Emit an ObjRecord structure.  (Never reallocates).
- * The record is written out preceeded (recursively) by its previous part (if
+ * The record is written out proceeded (recursively) by its previous part (if
  * any) and followed (recursively) by its child (if any).
  * The previous part and the child are freed.  The main ObjRecord is cleared,
  * not freed.
@@ -246,7 +246,7 @@ static ObjRecord *obj_new(void)
 /*
  * Advance to the next record because the existing one is full or its x_size
  * is incompatible.
- * Any uncommited data is moved into the next record.
+ * Any uncommitted data is moved into the next record.
  */
 static ObjRecord *obj_bump(ObjRecord * orp)
 {
@@ -294,7 +294,7 @@ static ObjRecord *obj_check(ObjRecord * orp, int size)
 }
 
 /*
- * All data written so far is commited to the current record (won't be moved to
+ * All data written so far is committed to the current record (won't be moved to
  * the next record in case of continuation).
  */
 static ObjRecord *obj_commit(ObjRecord * orp)
@@ -1037,7 +1037,7 @@ static void obj_out(int32_t segto, const void *data,
     }
 
     /*
-     * Find the segment we are targetting.
+     * Find the segment we are targeting.
      */
     for (seg = seghead; seg; seg = seg->next)
         if (seg->index == segto)
@@ -2510,7 +2510,7 @@ static void dbgbi_linnum(const char *lnfname, int32_t lineno, int32_t segto)
     }
 
     /*
-     * Find the segment we are targetting.
+     * Find the segment we are targeting.
      */
     for (seg = seghead; seg; seg = seg->next)
         if (seg->index == segto)

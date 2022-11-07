@@ -22,11 +22,11 @@
 ;* Language:    NetWide Assembler (NASM) or Turbo Assembler (TASM)
 ;* Environment: Any Intel Environment
 ;*
-;* Description: Macros to provide memory model independant assembly language
+;* Description: Macros to provide memory model independent assembly language
 ;*              module for C programming. Supports the large and flat memory
 ;*				models.
 ;*
-;*          	The defines that you should use when assembling modules that
+;*		The defines that you should use when assembling modules that
 ;*				use this macro package are:
 ;*
 ;*					__LARGE__	Assemble for 16-bit large model
@@ -88,18 +88,18 @@ ifdef __NASM_MAJOR__
 %idefine _bp	ebp
 %idefine _sp	esp
 %idefine _es
-%idefine UCHAR 	BYTE		; Size of a character
+%idefine UCHAR	BYTE		; Size of a character
 %idefine USHORT WORD		; Size of a short
-%idefine UINT 	DWORD		; Size of an integer
-%idefine ULONG 	DWORD		; Size of a long
-%idefine BOOL 	DWORD      	; Size of a boolean
-%idefine DPTR 	DWORD		; Size of a data pointer
-%idefine FDPTR 	FWORD		; Size of a far data pointer
-%idefine NDPTR 	DWORD		; Size of a near data pointer
-%idefine CPTR 	DWORD		; Size of a code pointer
-%idefine FCPTR 	FWORD		; Size of a far code pointer
-%idefine NCPTR 	DWORD		; Size of a near code pointer
-%idefine FPTR 	NEAR		; Distance for function pointers
+%idefine UINT	DWORD		; Size of an integer
+%idefine ULONG	DWORD		; Size of a long
+%idefine BOOL	DWORD		; Size of a boolean
+%idefine DPTR	DWORD		; Size of a data pointer
+%idefine FDPTR	FWORD		; Size of a far data pointer
+%idefine NDPTR	DWORD		; Size of a near data pointer
+%idefine CPTR	DWORD		; Size of a code pointer
+%idefine FCPTR	FWORD		; Size of a far code pointer
+%idefine NCPTR	DWORD		; Size of a near code pointer
+%idefine FPTR	NEAR		; Distance for function pointers
 %idefine DUINT	dd			; Declare a integer variable
 %idefine intsize 4
 %idefine flatmodel 1
@@ -113,17 +113,17 @@ ifdef __NASM_MAJOR__
 %idefine _bp	bp
 %idefine _sp	sp
 %idefine _es	es:
-%idefine UCHAR 	BYTE      	; Size of a character
+%idefine UCHAR	BYTE		; Size of a character
 %idefine USHORT WORD		; Size of a short
-%idefine UINT 	WORD		; Size of an integer
-%idefine ULONG 	DWORD		; Size of a long
-%idefine BOOL 	WORD		; Size of a boolean
-%idefine DPTR 	DWORD		; Size of a data pointer
-%idefine FDPTR 	DWORD		; Size of a far data pointer
-%idefine NDPTR 	WORD		; Size of a near data pointer
-%idefine CPTR 	DWORD		; Size of a code pointer
-%idefine FCPTR 	DWORD		; Size of a far code pointer
-%idefine NCPTR 	WORD		; Size of a near code pointer
+%idefine UINT	WORD		; Size of an integer
+%idefine ULONG	DWORD		; Size of a long
+%idefine BOOL	WORD		; Size of a boolean
+%idefine DPTR	DWORD		; Size of a data pointer
+%idefine FDPTR	DWORD		; Size of a far data pointer
+%idefine NDPTR	WORD		; Size of a near data pointer
+%idefine CPTR	DWORD		; Size of a code pointer
+%idefine FCPTR	DWORD		; Size of a far code pointer
+%idefine NCPTR	WORD		; Size of a near code pointer
 %idefine FPTR   FAR			; Distance for function pointers
 %idefine DUINT	dw			; Declare a integer variable
 %idefine intsize 2
@@ -629,19 +629,19 @@ endif
 ; environment
 
 ifdef	__WINDOWS16__
-__WINDOWS__ 		= 1
+__WINDOWS__		= 1
 endif
 ifdef	__WINDOWS32__
-__WINDOWS__ 		= 1
-__WINDOWS32_386__ 	= 1
+__WINDOWS__		= 1
+__WINDOWS32_386__	= 1
 endif
 ifdef	__WIN386__
-__WINDOWS__ 		= 1
-__WINDOWS32_386__ 	= 1
+__WINDOWS__		= 1
+__WINDOWS32_386__	= 1
 endif
 ifdef	__VXD__
-__WINDOWS__ 		= 1
-__WINDOWS32_386__ 	= 1
+__WINDOWS__		= 1
+__WINDOWS32_386__	= 1
 		MASM
 		.386
 		NO_SEGMENTS	= 1
@@ -655,7 +655,7 @@ endif
 ifdef   __FLAT__
 		_ax			EQU	eax		; EAX is used for accumulator
 		_bx			EQU	ebx		; EBX is used for accumulator
-		_cx        	EQU ecx     ; ECX is used for looping
+		_cx			EQU	ecx		; ECX is used for looping
 		_dx			EQU	edx		; EDX is used for data register
 		_si			EQU	esi		; ESI is the source index register
 		_di			EQU	edi		; EDI is the destination index register
@@ -682,7 +682,7 @@ ifdef   __FLAT__
 else
 		_ax			EQU	ax		; AX is used for accumulator
 		_bx			EQU	bx		; BX is used for accumulator
-		_cx        	EQU cx     	; CX is used for looping
+		_cx			EQU	cx		; CX is used for looping
 		_dx			EQU	dx		; DX is used for data register
 		_si			EQU	si		; SI is the source index register
 		_di			EQU	di		; DI is the destination index register
@@ -903,21 +903,21 @@ ENDM
 ; Macro to start a C callable function. This will be a far function for
 ; 16-bit code, and a near function for 32-bit code.
 
-MACRO   cprocstatic name       	; Set up model independant private proc
+MACRO   cprocstatic name	; Set up model independent private proc
 ifdef flatmodel
-PROC   	name NEAR
+PROC	name NEAR
 else
 PROC    name FAR
 endif
 LocalSize	= 0
 ENDM
 
-MACRO   cprocstart name        	; Set up model independant proc
+MACRO   cprocstart name		; Set up model independent proc
 ifdef flatmodel
 ifdef	__NOU__
-PROC   	name NEAR
+PROC	name NEAR
 else
-PROC   	_&name& NEAR
+PROC	_&name& NEAR
 endif
 else
 ifdef	__NOU__
@@ -930,7 +930,7 @@ LocalSize	= 0
 		cglobalfunc	name
 ENDM
 
-MACRO   cprocnear name         	; Set up near proc
+MACRO   cprocnear name		; Set up near proc
 ifdef	__NOU__
 PROC    name NEAR
 else

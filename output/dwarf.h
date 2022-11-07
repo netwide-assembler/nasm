@@ -35,7 +35,7 @@
 #define OUTPUT_DWARF_H
 
 /*
- * based on DWARF 3 standart
+ * based on DWARF 3 standard
  */
 
 enum dwarf_tag {

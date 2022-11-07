@@ -88,9 +88,9 @@
 #define EM_X86_64	62
 #define EM_CRIS		76
 #define EM_V850		87
-#define EM_ALPHA	0x9026	/* Interrim Alpha that stuck around */
+#define EM_ALPHA	0x9026	/* Interim Alpha that stuck around */
 #define EM_CYGNUS_V850	0x9080	/* Old v850 ID used by Cygnus */
-#define EM_S390_OLD	0xA390	/* Obsolete interrim value for S/390 */
+#define EM_S390_OLD	0xA390	/* Obsolete interim value for S/390 */
 
 /* Dynamic type values */
 #define DT_NULL		0
@@ -120,7 +120,7 @@
 #define DT_LOPROC	0x70000000
 #define DT_HIPROC	0x7fffffff
 
-/* Auxilliary table entries */
+/* Auxiliary table entries */
 #define AT_NULL		0	/* end of vector */
 #define AT_IGNORE	1	/* entry should be ignored */
 #define AT_EXECFD	2	/* file descriptor of program */
@@ -205,7 +205,7 @@
 /* Section align flag */
 #define SHA_ANY		1	/* No alignment constraint */
 
-/* Lenght of magic at the start of a file */
+/* Length of magic at the start of a file */
 #define EI_NIDENT	16
 
 /* Magic number constants... */

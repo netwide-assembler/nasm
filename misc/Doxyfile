@@ -139,7 +139,7 @@ STRIP_CODE_COMMENTS    = YES
 # file names in lower case letters. If set to YES upper case letters are also 
 # allowed. This is useful if you have classes or files whose names only differ 
 # in case and if your file system supports case sensitive file names. Windows 
-# users are adviced to set this option to NO.
+# users are advised to set this option to NO.
 
 CASE_SENSE_NAMES       = YES
 
@@ -165,7 +165,7 @@ SHOW_INCLUDE_FILES     = YES
 # will interpret the first line (until the first dot) of a JavaDoc-style 
 # comment as the brief description. If set to NO, the JavaDoc 
 # comments  will behave just like the Qt-style comments (thus requiring an 
-# explict @brief command for a brief description. 
+# explicit @brief command for a brief description. 
 
 JAVADOC_AUTOBRIEF      = NO
 
@@ -532,7 +532,7 @@ COMPACT_RTF            = NO
 RTF_HYPERLINKS         = NO
 
 # Load stylesheet definitions from file. Syntax is similar to doxygen's 
-# config file, i.e. a series of assigments. You only have to provide 
+# config file, i.e. a series of assignments. You only have to provide 
 # replacements, missing definitions are set to their default value. 
 
 RTF_STYLESHEET_FILE    = 

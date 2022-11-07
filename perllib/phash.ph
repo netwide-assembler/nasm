@@ -102,7 +102,7 @@ sub gen_hash_n($$$$) {
     # Now we need to assign values to each vertex, so that for each
     # edge, the sum of the values for the two vertices give the value
     # for the edge (which is our hash index.)  If we find an impossible
-    # sitation, the graph was cyclic.
+    # situation, the graph was cyclic.
     @nodeval = (undef) x $gsize;
 
     for ($i = 0; $i < $gsize; $i++) {

@@ -87,7 +87,7 @@ Sat Nov 10 21:55:19 2007 -0800 Charles Crayne
 Sat Nov 10 17:52:23 2007 -0800 Charles Crayne 
   * Clean up a few more 32-bit bottlenecks
 Fri Nov 9 16:37:41 2007 -0800 Charles Crayne 
-  * Update documantation for stack relative directives
+  * Update documentation for stack relative directives
 Fri Nov 9 16:33:54 2007 -0800 Charles Crayne 
   * Merge branch 'master' of /home/chuck/development/gitnasm/
 Fri Nov 9 16:25:43 2007 -0800 Charles Crayne 
@@ -1030,7 +1030,7 @@ Sat Nov 10 21:55:19 2007 -0800 Charles Crayne
 Sat Nov 10 17:52:23 2007 -0800 Charles Crayne 
   * Clean up a few more 32-bit bottlenecks
 Fri Nov 9 16:37:41 2007 -0800 Charles Crayne 
-  * Update documantation for stack relative directives
+  * Update documentation for stack relative directives
 Fri Nov 9 16:33:54 2007 -0800 Charles Crayne 
   * Merge branch 'master' of /home/chuck/development/gitnasm/
 Fri Nov 9 16:25:43 2007 -0800 Charles Crayne 
@@ -1903,7 +1903,7 @@ Sat Nov 10 21:55:19 2007 -0800 Charles Crayne
 Sat Nov 10 17:52:23 2007 -0800 Charles Crayne 
   * Clean up a few more 32-bit bottlenecks
 Fri Nov 9 16:37:41 2007 -0800 Charles Crayne 
-  * Update documantation for stack relative directives
+  * Update documentation for stack relative directives
 Fri Nov 9 16:33:54 2007 -0800 Charles Crayne 
   * Merge branch 'master' of /home/chuck/development/gitnasm/
 Fri Nov 9 16:25:43 2007 -0800 Charles Crayne 
@@ -2851,7 +2851,7 @@ Thu Apr 12 16:12:09 2007 +0000 H. Peter Anvin
    * (*.c): added c99 data-type compliance and <inttypes.h> inclusion.
    * (*.pl): added c99 data-type compliance and <inttypes.h> inclusion.
    * (*.h): added c99 data-type compliance.
-   * (assemble.h): fixed procedure defintions to sync with respective
+   * (assemble.h): fixed procedure definitions to sync with respective
    procedure declarations.
 
 2002-05-16  Ed Beroset <beroset@mindspring.com>

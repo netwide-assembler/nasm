@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -85,7 +85,7 @@ static int segmenttypenumbers[COUNT_SEGTYPES] = {
                                  * on 80x86 machines for efficiency */
 
 /***********************************************************************
- * Actual code to deal with RDOFF2 ouput format begins here...
+ * Actual code to deal with RDOFF2 output format begins here...
  */
 
 /* global variables set during the initialisation phase */
@@ -556,7 +556,7 @@ static void rdf2_out(int32_t segto, const void *data,
     }
 
     if (type == OUT_RESERVE) {
-        if (segto == 2)         /* BSS segment space reserverd */
+        if (segto == 2)         /* BSS segment space reserved */
             bsslength += size;
         else
             while (size--)
@@ -718,7 +718,7 @@ rdf2_directive(enum directive directive, char *value)
             write_dll_rec(&r);
         }
         return DIRR_OK;
-	
+
     case D_MODULE:
 	if ((n = strlen(value)) >= MODLIB_NAME_MAX) {
 	    nasm_error(ERR_NONFATAL, "name size exceeds %d bytes", MODLIB_NAME_MAX);

@@ -108,7 +108,7 @@ sub if_end() {
     $iflag_words = $n_iflags >> 5;
 }
 
-# The actual flags defintions
+# The actual flags definitions
 require 'x86/iflags.ph';
 if_end();
 

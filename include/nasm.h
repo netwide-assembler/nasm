@@ -797,7 +797,7 @@ typedef uint64_t iflags_t;
  *
  * DIRR_BADPARAM causes a generic error message to be printed.  Note
  * that it is an error, not a warning, even in the case of pragmas;
- * don't use it where forward compatiblity would be compromised
+ * don't use it where forward compatibility would be compromised
  * (instead consider adding a DIRR_WARNPARAM.)
  */
 enum directive_result {

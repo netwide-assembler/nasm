@@ -72,7 +72,7 @@ char *nasm_realpath(const char *rel_path)
 
     rp = realpath(rel_path, NULL);
 
-    /* Not all implemetations of realpath() support a NULL second argument */
+    /* Not all implementations of realpath() support a NULL second argument */
     if (!rp && errno == EINVAL) {
         long path_max = -1;
         char *rp;

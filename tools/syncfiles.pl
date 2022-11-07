@@ -50,7 +50,7 @@ sub do_transform($$) {
     $l =~ s/\x03/$$h{'continuation'}/g;
 
     if ($ps eq '') {
-	# Remove the path separator and the preceeding directory
+	# Remove the path separator and the preceding directory
 	$l =~ s/[^\s\=]*\x02//g;
     } else {
 	# Convert the path separator

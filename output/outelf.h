@@ -50,7 +50,7 @@
 #define TY_DEBUGSYMLIN 0x40     /* internal call to debug_out */
 
 /*
- * Debugging ELF sections (section indicies starting with sec_debug)
+ * Debugging ELF sections (section indices starting with sec_debug)
  */
 
 /* stabs */

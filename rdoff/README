@@ -137,7 +137,7 @@ but accept them gracefully, and read them byte for byte into
 a 'generic record' (see the definition of GenericRec in 'rdoff.h').
 
 If you are using these functions to write RDF modules (rather than
-just reading them), then please note the existance of a new function
+just reading them), then please note the existence of a new function
 'rdfaddsegment(rdf_headerbuf,long)'. This must be called once for
 each segment in your object, to tell the header writing functions
 how long the segment is.
@@ -172,7 +172,7 @@ There are still various things unimplemented that we would like to add.
 If you want to find out what these are, search near the top of each *.c
 file for a comment containing the word 'TODO'. A brief list is given here:
 
-- Improve the performace of ldrdf (there are several enhancements I can think
+- Improve the performance of ldrdf (there are several enhancements I can think
   of that wouldn't be too hard to add)
 - Stop assuming that we're on a little endian machine
 - Check for more bugs

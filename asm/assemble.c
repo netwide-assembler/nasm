@@ -3247,7 +3247,7 @@ static int process_ea(operand *input, ea *output, int bits,
     /*
      * The type parsed might not match one supplied by
      * a caller. In this case exit with error and let
-     * the caller to deside how critical it is.
+     * the caller to decide how critical it is.
      */
     if (output->type != expected)
         goto err_set_msg;

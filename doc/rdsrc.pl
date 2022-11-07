@@ -758,7 +758,7 @@ sub write_html {
   select TEXT;
   &html_preamble(0);
   print "<p>This manual documents NASM, the Netwide Assembler: an assembler\n";
-  print "targetting the Intel x86 series of processors, with portable source.\n</p>";
+  print "targeting the Intel x86 series of processors, with portable source.\n</p>";
   print "<div class=\"toc\">\n";
   $level = 0;
   for ($node = $tstruct_next{'Top'}; $node; $node = $tstruct_next{$node}) {
