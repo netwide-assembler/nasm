@@ -325,15 +325,6 @@ static inline uint32_t coff_sectalign_flags(unsigned int align)
 }
 
 /*
- * Get the alignment value from a flags field.
- * Returns 0 if no alignment defined.
- */
-static inline unsigned int coff_alignment(uint32_t flags)
-{
-    return (1U << ((flags & IMAGE_SCN_ALIGN_MASK) >> 20)) >> 1;
-}
-
-/*
  * Get the default section flags (based on section name)
  */
 static uint32_t coff_section_flags(char *name, uint32_t flags)
