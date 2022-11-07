@@ -2264,6 +2264,17 @@ static void gencode(struct out_data *data, insn *ins)
                                rfield, rflags, ins, eat, &errmsg))
                     nasm_nonfatal("%s", errmsg);
 
+                /* If RIP-relative, indexreg and scale must not be present:
+                 * [basereg + indexreg*scale + displacement]
+                 * https://bugzilla.nasm.us/show_bug.cgi?id=3392797
+                 */
+                if (bits == 64 && (opy->eaflags & EAF_REL) &&
+                    ((opy->indexreg != -1) || (opy->scale != -1))) {
+                  nasm_warn(WARN_OTHER | ERR_PASS2,
+                            "invalid addressing mode: RIP-relative address "
+                            "cannot contain index register or scale");
+                }
+
                 p = bytes;
                 *p++ = ea_data.modrm;
                 if (ea_data.sib_present)
