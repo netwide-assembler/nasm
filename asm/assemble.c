@@ -2264,17 +2264,6 @@ static void gencode(struct out_data *data, insn *ins)
                                rfield, rflags, ins, eat, &errmsg))
                     nasm_nonfatal("%s", errmsg);
 
-                /* If RIP-relative, indexreg and scale must not be present:
-                 * [basereg + indexreg*scale + displacement]
-                 * https://bugzilla.nasm.us/show_bug.cgi?id=3392797
-                 */
-                if (bits == 64 && (opy->eaflags & EAF_REL) &&
-                    ((opy->indexreg != -1) || (opy->scale != -1))) {
-                  nasm_warn(WARN_OTHER | ERR_PASS2,
-                            "invalid addressing mode: RIP-relative address "
-                            "cannot contain index register or scale");
-                }
-
                 p = bytes;
                 *p++ = ea_data.modrm;
                 if (ea_data.sib_present)
@@ -2800,8 +2789,8 @@ static int process_ea(operand *input, ea *output, int bits,
                       enum ea_type expected, const char **errmsgp)
 {
     bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
-    int addrbits = ins->addr_size;
-    int eaflags = input->eaflags;
+    const int addrbits = ins->addr_size;
+    const int eaflags = input->eaflags;
     const char *errmsg = NULL;
 
     errmsg = NULL;
@@ -2864,7 +2853,8 @@ static int process_ea(operand *input, ea *output, int bits,
                 if ((input->type & IP_REL) == IP_REL) {
                     if (input->segment == NO_SEG ||
                         (input->opflags & OPFLAG_RELATIVE)) {
-                        nasm_warn(WARN_OTHER|ERR_PASS2, "absolute address can not be RIP-relative");
+                        nasm_warn(WARN_OTHER|ERR_PASS2,
+                                  "absolute address can not be RIP-relative");
                         input->type &= ~IP_REL;
                         input->type |= MEMORY;
                     }
@@ -3251,6 +3241,12 @@ static int process_ea(operand *input, ea *output, int bits,
                 output->bytes       = mod;      /* bytes of offset needed */
                 output->modrm       = GEN_MODRM(mod, rfield, rm);
             }
+
+            if (eaflags & EAF_REL) {
+                /* Explicit REL reference with indirect memory */
+                nasm_warn(WARN_OTHER,
+                          "indirect address displacements cannot be RIP-relative");
+            }
         }
     }
 
@@ -3262,6 +3258,7 @@ static int process_ea(operand *input, ea *output, int bits,
      */
     if (output->type != expected)
         goto err_set_msg;
+
     return 0;
 
 err_set_msg:
