@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -1278,8 +1278,8 @@ enum decorator_tokens {
  * ..........................1..... broadcast
  * .........................1...... static rounding
  * ........................1....... SAE
- * .....................111........ broadcast element size
- * ..................111........... number of broadcast elements
+ * ....................1111........ broadcast element size
+ * .................111............ number of broadcast elements
  */
 #define OP_GENVAL(val, bits, shift)     (((val) & ((UINT64_C(1) << (bits)) - 1)) << (shift))
 
@@ -1341,23 +1341,24 @@ enum decorator_tokens {
 /*
  * Broadcasting element size.
  *
- * Bits: 8 - 10
+ * Bits: 8 - 11
  */
 #define BRSIZE_SHIFT            (8)
-#define BRSIZE_BITS             (3)
+#define BRSIZE_BITS             (4)
 #define BRSIZE_MASK             OP_GENMASK(BRSIZE_BITS, BRSIZE_SHIFT)
 #define GEN_BRSIZE(bit)         OP_GENBIT(bit, BRSIZE_SHIFT)
 
-#define BR_BITS16               GEN_BRSIZE(0)
-#define BR_BITS32               GEN_BRSIZE(1)
-#define BR_BITS64               GEN_BRSIZE(2)
+#define BR_BITS8		GEN_BRSIZE(0) /* For potential future use */
+#define BR_BITS16               GEN_BRSIZE(1)
+#define BR_BITS32               GEN_BRSIZE(2)
+#define BR_BITS64               GEN_BRSIZE(3)
 
 /*
  * Number of broadcasting elements
  *
- * Bits: 11 - 13
+ * Bits: 12 - 14
  */
-#define BRNUM_SHIFT             (10)
+#define BRNUM_SHIFT             (12)
 #define BRNUM_BITS              (3)
 #define BRNUM_MASK              OP_GENMASK(BRNUM_BITS, BRNUM_SHIFT)
 #define VAL_BRNUM(val)          OP_GENVAL(val, BRNUM_BITS, BRNUM_SHIFT)
@@ -1367,6 +1368,7 @@ enum decorator_tokens {
 #define BR_1TO8                 VAL_BRNUM(2)
 #define BR_1TO16                VAL_BRNUM(3)
 #define BR_1TO32                VAL_BRNUM(4)
+#define BR_1TO64                VAL_BRNUM(5) /* For potential future use */
 
 #define MASK                    OPMASK_MASK             /* Opmask (k1 ~ 7) can be used */
 #define Z                       Z_MASK
@@ -1375,6 +1377,14 @@ enum decorator_tokens {
 #define B64                     (BRDCAST_MASK|BR_BITS64) /* {1to8}  : broadcast 64b *  8 to zmm(512b) */
 #define ER                      STATICRND_MASK          /* ER(Embedded Rounding) == Static rounding mode */
 #define SAE                     SAE_MASK                /* SAE(Suppress All Exception) */
+
+/*
+ * Broadcast flags (BR_BITS*) to sizes (BITS*)
+ */
+static inline opflags_t brsize_to_size(opflags_t brbits)
+{
+    return (brbits & BRSIZE_MASK) << (SIZE_SHIFT - BRSIZE_SHIFT);
+}
 
 /*
  * Global modes
