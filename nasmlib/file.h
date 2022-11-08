@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -217,7 +217,7 @@ static inline int os_stat(os_filename osfname, os_struct_stat *st)
 #ifndef os_fstat
 static inline int os_fstat(int fd, os_struct_stat *st)
 {
-    (void)osfname;
+    (void)fd;
     (void)st;
     return -1;
 }
