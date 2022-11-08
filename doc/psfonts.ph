@@ -4,24 +4,47 @@
 #
 
 # Font substitution lists, in order of preference
-my @TText = ('SourceSansPro-Bold', 'ClearSans-Bold', 'LiberationSans-Bold',
-	     'Arial-Bold', 'Helvetica-Bold');
-my @TItal = ('SourceSansPro-BoldItalic', 'ClearSans-BoldItalic', 'LiberationSans-BoldItalic',
-	     'Arial-BoldItalic', 'Helvetica-BoldItalic');
-my @TCode = ('SourceCodePro-Bold', 'LiberationMono-Bold', 'Courier-Bold');
-my @HText = ('SourceSansPro-SemiBold', 'ClearSans-Bold', 'Arial-Bold', 'Helvetica-Bold');
-my @HItal = ('SourceSansPro-SemiBoldItalic', 'ClearSans-BoldItalic',
-	     'Arial-BoldItalic', 'Helvetica-BoldItalic');
-my @HCode = ('SourceCodePro-SemiBold', 'LiberationMono-Bold', 'Courier-Bold');
-my @BText = ('SourceSansPro-Regular', 'ClearSans', 'LiberationSans', 'Arial', 'Helvetica');
-my @BItal = ('SourceSansPro-Italic', 'ClearSans-Italic', 'LiberationSans-Italic',
-	     'Arial-Italic', 'Helvetica-Italic');
-my @BCode = ('SourceCodePro-Regular', 'LiberationMono', 'Courier');
-my @QText = ('SourceSansPro-Italic', 'ClearSans-Italic', 'LiberationSans-Italic',
-	     'Arial-Italic', 'Helvetica-Italic');
-my @QBold = ('SourceSansPro-BoldItalic', 'ClearSans-BoldItalic', 'LiberationSans-BoldItalic', 'Arial-Bold', 'Helvetica-BoldItalic');
-my @QCode = ('SourceCodePro-Regular', 'LiberationMono', 'Courier');
-my @XCode = ('SourceCodePro-Regular', 'LiberationMono', 'Courier');
+
+# Note: for some reason the Source Pro fonts use -It rather than
+# -Italic for the PostScript name of the OTF font, but some systems
+# have been said to want it the other way, maybe because they have the
+# TTF format installed?
+#
+# Thus, support various aliases in combination.
+
+sub font {
+    my($fonts, @mods) = @_;
+    my @f = map { $_.'-' } @$fonts;
+
+    foreach my $m (@mods) {
+	@f = map { my $ff = $_; map { $ff.$_ } @$m } @f;
+    }
+
+    return map { /^(.*?)-*$/; $1 } @f;
+}
+
+my $text    = ['SourceSans', 'SourceSans3',
+	       'SourceSansPro', 'SourceSansPro3',
+	       'LiberationSans', 'Arial', 'Helvetica'];
+my $code    = ['SourceCodePro', 'LiberationMono', 'Courier'];
+my $regular = ['Regular', ''];
+my $italic  = ['Italic', 'It'];
+my $bold    = ['Bold'];
+my $semi    = ['Semibold', 'Bold'];
+
+my @TText = font($text, $bold);
+my @TItal = font($text, $bold, $italic);
+my @TCode = font($code, $bold);
+my @HText = font($text, $semi);
+my @HItal = font($text, $semi, $italic);
+my @HCode = font($code, $semi);
+my @BText = font($text, $regular);
+my @BItal = font($text, $italic);
+my @BCode = font($code, $regular);
+my @QText = font($text, $italic);
+my @QBold = font($text, $bold, $italic);
+my @QCode = font($code, $regular);
+my @XCode = font($code, $regular);
 
 # The fonts we want to use for various things
 # The order is: <normal> <emphatic> <code>
