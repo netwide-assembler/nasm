@@ -228,6 +228,9 @@ if ($what eq 'c') {
 		    'off' => 'Disabled',
 		    'err' => 'Enabled and promoted to error' );
 
+    my @indexinfo = ();
+    my @outtxt    = ();
+
     foreach my $pfx (sort { $a cmp $b } keys(%prefixes)) {
 	my $warn = $aliases{$pfx};
 	my @doc;
@@ -236,24 +239,22 @@ if ($what eq 'c') {
 	    my @plist = sort { $a cmp $b } @{$prefixes{$pfx}};
 	    next if ( $#plist < 1 );
 
-	    @doc = ("is a group alias for all warning classes prefixed by ".
-		    "\\c{".$pfx."-}; currently\n");
-	    for (my $i = 0; $i <= $#plist; $i++) {
-		if ($i > 0) {
-		    if ($i < $#plist) {
-			push(@doc, ", ");
-		    } else {
-			push(@doc, ($i == 1) ? " and " : ", and ");
-		    }
-		}
-		push(@doc, '\c{'.$plist[$i].'}');
-	    }
-	    push(@doc, ".\n");
+	    @doc = ("all \\c{$pfx-} warnings\n\n",
+		    "\\> \\c{$pfx} is a group alias for all warning classes\n",
+		    "prefixed by \\c{$pfx-}; currently\n");
+	    # Just commas is bad grammar to be sure, but it is more
+	    # legible than the alternative.
+	    push(@doc, join(scalar(@plist) < 3 ? ' and ' : ',', @plist).".\n");
 	} elsif ($pfx ne $warn->{name}) {
-	    @doc = ("is a backwards compatibility alias for \\c{",
-		    $warn->{name}, "}.\n");
+	    my $awarn = $aliases{$warn->{name}};
+	    @doc = ($awarn->{help}."\n\n",
+		    "\\> \\c{$pfx} is a backwards compatibility alias for \\c{".
+		    $warn->{name}."}.\n");
 	} else {
 	    my $docdef = $whatdef{$warn->{def}};
+
+	    @doc = ($warn->{help}."\n\n",
+		    "\\> \\c{".$warn->{name}."} ");
 
 	    my $newpara = 0;
 	    foreach my $l (@{$warn->{doc}}) {
@@ -272,8 +273,11 @@ if ($what eq 'c') {
 	    }
 	}
 
-	print $out "\\b \\i\\c{", $pfx, "} ", @doc, "\n";
+	push(@indexinfo, "\\IR{w-$pfx} warning class, \\c{$pfx}\n");
+	push(@outtxt, "\\b \\I{w-$pfx} \\c{$pfx}: ", @doc, "\n");
     }
+
+    print $out "\n", @indexinfo, "\n", @outtxt;
 }
 
 close($out);
