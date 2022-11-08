@@ -55,7 +55,7 @@ since at least NASM 2.14, has been disabled. The RDOFF tools are
 scheduled to be removed from the NASM distribution in NASM 2.16. If
 you have a concrete use case for RDOFF, please file a NASM bug report
 at \W{https://bugs.nasm.us/}\c{https://bugs.nasm.us/} as soon as
-possible. See \k{rdffmt}.
+possible.
 
 \S{cl-2.15.03} Version 2.15.03
 

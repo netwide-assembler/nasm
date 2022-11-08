@@ -1,6 +1,5 @@
 ;Testname=obj; Arguments=-fobj -onasmfomat.o; Files=stdout stderr nasmfomat.o
 ;Testname=bin; Arguments=-fbin -onasmfomat.o; Files=stdout stderr nasmfomat.o
-;Testname=rdf; Arguments=-frdf -onasmfomat.o; Files=stdout stderr nasmfomat.o
 
 %if __OUTPUT_FORMAT__ == 'bin'
 

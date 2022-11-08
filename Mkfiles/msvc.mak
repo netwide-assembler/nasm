@@ -107,7 +107,7 @@ LIBOBJ_NW = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) \
 	output\nulldbg.$(O) output\nullout.$(O) \
 	output\outbin.$(O) output\outaout.$(O) output\outcoff.$(O) \
 	output\outelf.$(O) \
-	output\outobj.$(O) output\outas86.$(O) output\outrdf2.$(O) \
+	output\outobj.$(O) output\outas86.$(O) \
 	output\outdbg.$(O) output\outieee.$(O) output\outmacho.$(O) \
 	output\codeview.$(O) \
 	\
@@ -121,13 +121,13 @@ ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 
 SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
-XSUBDIRS = test doc nsis rdoff
-DEPDIRS  = . include config x86 rdoff $(SUBDIRS)
+XSUBDIRS = test doc nsis
+DEPDIRS  = . include config x86 $(SUBDIRS)
 #-- End File Lists --#
 
 NASMLIB = libnasm.$(A)
 
-all: nasm$(X) ndisasm$(X) rdf
+all: nasm$(X) ndisasm$(X)
 
 nasm$(X): $(NASM) $(NASMLIB)
 	$(CC) /Fe$@ $(NASM) $(LDFLAGS) $(NASMLIB) $(LIBS)
@@ -299,53 +299,6 @@ asm\directbl.c: asm\directiv.dat nasmlib\perfhash.pl perllib\phash.ph
 
 perlreq: $(PERLREQ)
 
-# This rule is only used for RDOFF
-.obj.exe:
-	$(CC) /Fe$@ $< $(LDFLAGS) $(RDFLIB) $(NASMLIB) $(LIBS)
-
-RDFLN = copy
-RDFLNPFX = rdoff^\
-
-#-- Begin RDOFF Shared Rules --#
-# Edit in Makefile.in, not here!
-
-RDFLIBOBJ = rdoff\rdoff.$(O) rdoff\rdfload.$(O) rdoff\symtab.$(O) \
-	    rdoff\collectn.$(O) rdoff\rdlib.$(O) rdoff\segtab.$(O) \
-	    rdoff\hash.$(O)
-
-RDFPROGS = rdoff\rdfdump$(X) rdoff\ldrdf$(X) rdoff\rdx$(X) rdoff\rdflib$(X) \
-	   rdoff\rdf2bin$(X)
-RDF2BINLINKS = rdoff\rdf2com$(X) rdoff\rdf2ith$(X) \
-	    rdoff\rdf2ihx$(X) rdoff\rdf2srec$(X)
-
-RDFLIB = rdoff\librdoff.$(A)
-RDFLIBS = $(RDFLIB) $(NASMLIB)
-
-rdoff\rdfdump$(X): rdoff\rdfdump.$(O) $(RDFLIBS)
-rdoff\ldrdf$(X): rdoff\ldrdf.$(O) $(RDFLIBS)
-rdoff\rdx$(X): rdoff\rdx.$(O) $(RDFLIBS)
-rdoff\rdflib$(X): rdoff\rdflib.$(O) $(RDFLIBS)
-rdoff\rdf2bin$(X): rdoff\rdf2bin.$(O) $(RDFLIBS)
-rdoff\rdf2com$(X): rdoff\rdf2bin$(X)
-	$(RM_F) rdoff\rdf2com$(X)
-	$(RDFLN) $(RDFLNPFX)rdf2bin$(X) $(RDFLNPFX)rdf2com$(X)
-rdoff\rdf2ith$(X): rdoff\rdf2bin$(X)
-	$(RM_F) rdoff\rdf2ith$(X)
-	$(RDFLN) $(RDFLNPFX)rdf2bin$(X) $(RDFLNPFX)rdf2ith$(X)
-rdoff\rdf2ihx$(X): rdoff\rdf2bin$(X)
-	$(RM_F) rdoff\rdf2ihx$(X)
-	$(RDFLN) $(RDFLNPFX)rdf2bin$(X) $(RDFLNPFX)rdf2ihx$(X)
-rdoff\rdf2srec$(X): rdoff\rdf2bin$(X)
-	$(RM_F) rdoff\rdf2srec$(X)
-	$(RDFLN) $(RDFLNPFX)rdf2bin$(X) $(RDFLNPFX)rdf2srec$(X)
-
-#-- End RDOFF Shared Rules --#
-
-rdf: $(RDFPROGS) $(RDF2BINLINKS)
-
-$(RDFLIB): $(RDFLIBOBJ)
-	$(AR) $(ARFLAGS) /OUT:$@ $**
-
 #-- Begin NSIS Rules --#
 # Edit in Makefile.in, not here!
 
@@ -368,7 +321,6 @@ clean:
 	-del /f $(NASMLIB) $(RDFLIB)
 	-del /f nasm$(X)
 	-del /f ndisasm$(X)
-	-del /f rdoff\*$(X)
 
 distclean: clean
 	-del /f config.h
@@ -387,7 +339,6 @@ distclean: clean
 	-del /f test\*.$(O)
 	-del /f test\*.bin
 	-del /f/s autom4te*.cache
-	rem cd rdoff && $(MAKE) distclean
 
 cleaner: clean
 	-del /f $(PERLREQ)

@@ -1,6 +1,6 @@
 \# --------------------------------------------------------------------------
 \#
-\#   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+\#   Copyright 1996-2022 The NASM Authors - All Rights Reserved
 \M{year}{1996-2020}
 \#   See the file AUTHORS included with the NASM distribution for
 \#   the specific copyright holders.
@@ -182,7 +182,6 @@ variables
 \IR{executable and linkable format} Executable and Linkable Format
 \IR{extern, elf extensions to} \c{EXTERN}, \c{elf} extensions to
 \IR{extern, obj extensions to} \c{EXTERN}, \c{obj} extensions to
-\IR{extern, rdf extensions to} \c{EXTERN}, \c{rdf} extensions to
 \IR{floating-point, constants} floating-point, constants
 \IR{floating-point, packed bcd constants} floating-point, packed BCD constants
 \IR{freebsd} FreeBSD
@@ -245,10 +244,6 @@ variables
 \IA{preprocessor expressions}{preprocessor, expressions}
 \IA{preprocessor loops}{preprocessor, loops}
 \IA{preprocessor variables}{preprocessor, variables}
-\IA{rdoff subdirectory}{rdoff}
-\IR{rdoff} \c{rdoff} subdirectory
-\IR{relocatable dynamic object file format} Relocatable Dynamic
-Object File Format
 \IR{relocations, pic-specific} relocations, PIC-specific
 \IA{repeating}{repeating code}
 \IR{section alignment, in elf} section alignment, in ELF
@@ -413,8 +408,8 @@ it will remove the \c{.asm} \i{extension} (or whatever extension you
 like to use - NASM doesn't care) from your source file name and
 substitute \c{.obj}. For Unix object file formats (\c{aout}, \c{as86},
 \c{coff}, \c{elf32}, \c{elf64}, \c{elfx32}, \c{ieee}, \c{macho32} and
-\c{macho64}) it will substitute \c{.o}. For \c{dbg}, \c{rdf}, \c{ith}
-and \c{srec}, it will use \c{.dbg}, \c{.rdf}, \c{.ith} and \c{.srec},
+\c{macho64}) it will substitute \c{.o}. For \c{dbg}, \c{ith}
+and \c{srec}, it will use \c{.dbg}, \c{.ith} and \c{.srec},
 respectively, and for the \c{bin} format it will simply remove the
 extension, so that \c{myfile.asm} produces the output file \c{myfile}.
 
@@ -6765,103 +6760,6 @@ and no extensions to any standard directives. It supports only the three
 only special symbol supported is \c{..start}.
 
 
-\H{rdffmt} \I{RDOFF}\i\c{rdf}: \i{Relocatable Dynamic Object File
-Format} (deprecated)
-
-\e{The RDOFF format is strongly deprecated and has been disabled
-starting in NASM 2.15.04. The RDOFF backend has been broken since at
-least NASM 2.14. The RDOFF utilities are scheduled to be removed from
-the NASM distribution in NASM 2.16.} If you have a strong use case for
-the RDOFF format, file a bug report at
-\W{https://bugs.nasm.us/}\c{https://bugs.nasm.us/} as soon as possible.
-
-The \c{rdf} output format produces \c{RDOFF} object files. \c{RDOFF}
-(Relocatable Dynamic Object File Format) is a home-grown object-file
-format, designed alongside NASM itself and reflecting in its file
-format the internal structure of the assembler.
-
-\c{RDOFF} is not used by any well-known operating systems. Those
-writing their own systems, however, may well wish to use \c{RDOFF}
-as their object format, on the grounds that it is designed primarily
-for simplicity and contains very little file-header bureaucracy.
-
-The Unix NASM archive, and the DOS archive which includes sources,
-both contain an \I{rdoff subdirectory}\c{rdoff} subdirectory holding
-a set of RDOFF utilities: an RDF linker, an \c{RDF} static-library
-manager, an RDF file dump utility, and a program which will load and
-execute an RDF executable under Linux.
-
-
-\S{rdflib} Requiring a Library: The \i\c{LIBRARY} Directive
-
-\c{RDOFF} contains a mechanism for an object file to demand a given
-library to be linked to the module, either at load time or run time.
-This is done by the \c{LIBRARY} directive, which takes one argument
-which is the name of the module:
-
-\c     library  mylib.rdl
-
-
-\S{rdfmod} Specifying a Module Name: The \i\c{MODULE} Directive
-
-Special \c{RDOFF} header record is used to store the name of the module.
-It can be used, for example, by run-time loader to perform dynamic
-linking. \c{MODULE} directive takes one argument which is the name
-of current module:
-
-\c     module  mymodname
-
-Note that when you statically link modules and tell linker to strip
-the symbols from output file, all module names will be stripped too.
-To avoid it, you should start module names with \I{$, prefix}\c{$}, like:
-
-\c     module  $kernel.core
-
-
-\S{rdfglob} \c{rdf} Extensions to the \c{GLOBAL} Directive\I{GLOBAL,
-rdf extensions to}
-
-\c{RDOFF} global symbols can contain additional information needed by
-the static linker. You can mark a global symbol as exported, thus
-telling the linker do not strip it from target executable or library
-file. Like in \c{ELF}, you can also specify whether an exported symbol
-is a procedure (function) or data object.
-
-Suffixing the name with a colon and the word \i\c{export} you make the
-symbol exported:
-
-\c     global  sys_open:export
-
-To specify that exported symbol is a procedure (function), you add the
-word \i\c{proc} or \i\c{function} after declaration:
-
-\c     global  sys_open:export proc
-
-Similarly, to specify exported data object, add the word \i\c{data}
-or \i\c{object} to the directive:
-
-\c     global  kernel_ticks:export data
-
-
-\S{rdfimpt} \c{rdf} Extensions to the \c{EXTERN} Directive\I{EXTERN,
-rdf extensions to}
-
-By default the \c{EXTERN} directive in \c{RDOFF} declares a "pure external"
-symbol (i.e. the static linker will complain if such a symbol is not resolved).
-To declare an "imported" symbol, which must be resolved later during a dynamic
-linking phase, \c{RDOFF} offers an additional \c{import} modifier. As in
-\c{GLOBAL}, you can also specify whether an imported symbol is a procedure
-(function) or data object. For example:
-
-\c     library $libc
-\c     extern  _open:import
-\c     extern  _printf:import proc
-\c     extern  _errno:import data
-
-Here the directive \c{LIBRARY} is also included, which gives the dynamic linker
-a hint as to where to find requested symbols.
-
-
 \H{dbgfmt} \i\c{dbg}: Debugging Format
 
 The \c{dbg} format does not output an object file as such; instead,
@@ -6884,14 +6782,14 @@ will not be defined in the \c{dbg} format. Therefore it can be
 useful to run NASM twice, in order to do the preprocessing with the
 native object format selected:
 
-\c nasm -e -f rdf -o rdfprog.i rdfprog.asm
-\c nasm -a -f dbg rdfprog.i
+\c nasm -e -f elf32 -o elfprog.i elfprog.asm
+\c nasm -a -f dbg elfprog.i
 
-This preprocesses \c{rdfprog.asm} into \c{rdfprog.i}, keeping the
-\c{rdf} object format selected in order to make sure RDF special
+This preprocesses \c{elfprog.asm} into \c{elfprog.i}, keeping the
+\c{elf32} object format selected in order to make sure ELF special
 directives are converted into primitive form correctly. Then the
-preprocessed source is fed through the \c{dbg} format to generate
-the final diagnostic output.
+preprocessed source is fed through the \c{dbg} format to generate the
+final diagnostic output.
 
 This workaround will still typically not work for programs intended
 for \c{obj} format, because the \c{obj} \c{SEGMENT} and \c{GROUP}

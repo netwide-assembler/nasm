@@ -6,7 +6,6 @@
 ;Testname=as86;  Arguments=-fas86  -obr560575.o; Files=stderr stdout br560575.o
 ;Testname=win32; Arguments=-fwin32 -obr560575.o; Files=stderr stdout br560575.o
 ;Testname=win64; Arguments=-fwin64 -obr560575.o; Files=stderr stdout br560575.o
-;Testname=rdf;   Arguments=-frdf   -obr560575.o; Files=stderr stdout br560575.o
 ;Testname=ieee;  Arguments=-fieee  -obr560575.o; Files=stderr stdout br560575.o
 ;Testname=macho; Arguments=-fmacho -obr560575.o; Files=stderr stdout br560575.o
 

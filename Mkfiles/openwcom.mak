@@ -96,7 +96,7 @@ LIBOBJ_NW = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) &
 	output\nulldbg.$(O) output\nullout.$(O) &
 	output\outbin.$(O) output\outaout.$(O) output\outcoff.$(O) &
 	output\outelf.$(O) &
-	output\outobj.$(O) output\outas86.$(O) output\outrdf2.$(O) &
+	output\outobj.$(O) output\outas86.$(O) &
 	output\outdbg.$(O) output\outieee.$(O) output\outmacho.$(O) &
 	output\codeview.$(O) &
 	&
@@ -110,8 +110,8 @@ ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 
 SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
-XSUBDIRS = test doc nsis rdoff
-DEPDIRS  = . include config x86 rdoff $(SUBDIRS)
+XSUBDIRS = test doc nsis
+DEPDIRS  = . include config x86 $(SUBDIRS)
 #-- End File Lists --#
 
 what:   .SYMBOLIC
@@ -339,15 +339,12 @@ clean: .SYMBOLIC
     rm -f disasm\*.$(O) disasm\*.s disasm\*.i
     rm -f config.h config.log config.status
     rm -f nasm$(X) ndisasm$(X) $(NASMLIB)
-#   cd rdoff && $(MAKE) clean
 
 distclean: clean .SYMBOLIC
     rm -f config.h config.log config.status
     rm -f Makefile *~ *.bak *.lst *.bin
     rm -f output\*~ output\*.bak
     rm -f test\*.lst test\*.bin test\*.$(O) test\*.bin
-#   -del \s autom4te*.cache
-#   cd rdoff && $(MAKE) distclean
 
 cleaner: clean .SYMBOLIC
     rm -f $(PERLREQ)
@@ -361,13 +358,10 @@ spotless: distclean cleaner .SYMBOLIC
 strip: .SYMBOLIC
     $(STRIP) *.exe
 
-rdf:
-#   cd rdoff && $(MAKE)
-
 doc:
 #   cd doc && $(MAKE) all
 
-everything: all doc rdf
+everything: all doc
 
 #
 # This build dependencies in *ALL* makefiles.  Partially for that reason,

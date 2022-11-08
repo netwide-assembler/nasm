@@ -77,7 +77,7 @@ endif
 .SUFFIXES:
 .SUFFIXES: $(X) .$(O) .$(A) .xml .1 .c .i .s .txt .time
 
-.PHONY: all doc rdf install clean distclean cleaner spotless install_rdf test
+.PHONY: all doc install clean distclean cleaner spotless test
 .PHONY: install_doc everything install_everything strip perlreq dist tags TAGS
 .PHONY: nothing manpages nsis
 
@@ -143,7 +143,7 @@ LIBOBJ_NW = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	output/nulldbg.$(O) output/nullout.$(O) \
 	output/outbin.$(O) output/outaout.$(O) output/outcoff.$(O) \
 	output/outelf.$(O) \
-	output/outobj.$(O) output/outas86.$(O) output/outrdf2.$(O) \
+	output/outobj.$(O) output/outas86.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
 	output/codeview.$(O) \
 	\
@@ -157,12 +157,12 @@ ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 
 SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
-XSUBDIRS = test doc nsis rdoff
-DEPDIRS  = . include config x86 rdoff $(SUBDIRS)
+XSUBDIRS = test doc nsis
+DEPDIRS  = . include config x86 $(SUBDIRS)
 #-- End File Lists --#
 
 all: dirs
-	$(MAKE) $(PROGS) rdf
+	$(MAKE) $(PROGS)
 
 NASMLIB = libnasm.$(A)
 
@@ -340,54 +340,6 @@ asm/directbl.c: asm/directiv.dat nasmlib/perfhash.pl perllib/phash.ph
 
 perlreq: $(PERLREQ)
 
-# This rule is only used for RDOFF
-.$(O)$(X):
-	$(CC) $(ALL_LDFLAGS) -o $@ $< $(RDFLIB) $(NASMLIB) $(LIBS)
-
-RDFLN    = cd rdoff && ln -s
-RDFLNPFX =
-
-#-- Begin RDOFF Shared Rules --#
-
-RDFLIBOBJ = rdoff/rdoff.$(O) rdoff/rdfload.$(O) rdoff/symtab.$(O) \
-	    rdoff/collectn.$(O) rdoff/rdlib.$(O) rdoff/segtab.$(O) \
-	    rdoff/hash.$(O)
-
-RDFPROGS = rdoff/rdfdump$(X) rdoff/ldrdf$(X) rdoff/rdx$(X) rdoff/rdflib$(X) \
-	   rdoff/rdf2bin$(X)
-RDF2BINLINKS = rdoff/rdf2com$(X) rdoff/rdf2ith$(X) \
-	    rdoff/rdf2ihx$(X) rdoff/rdf2srec$(X)
-
-RDFLIB = rdoff/librdoff.$(A)
-RDFLIBS = $(RDFLIB) $(NASMLIB)
-
-rdoff/rdfdump$(X): rdoff/rdfdump.$(O) $(RDFLIBS)
-rdoff/ldrdf$(X): rdoff/ldrdf.$(O) $(RDFLIBS)
-rdoff/rdx$(X): rdoff/rdx.$(O) $(RDFLIBS)
-rdoff/rdflib$(X): rdoff/rdflib.$(O) $(RDFLIBS)
-rdoff/rdf2bin$(X): rdoff/rdf2bin.$(O) $(RDFLIBS)
-rdoff/rdf2com$(X): rdoff/rdf2bin$(X)
-	$(RM_F) rdoff/rdf2com$(X)
-	$(RDFLN) $(RDFLNPFX)rdf2bin$(X) $(RDFLNPFX)rdf2com$(X)
-rdoff/rdf2ith$(X): rdoff/rdf2bin$(X)
-	$(RM_F) rdoff/rdf2ith$(X)
-	$(RDFLN) $(RDFLNPFX)rdf2bin$(X) $(RDFLNPFX)rdf2ith$(X)
-rdoff/rdf2ihx$(X): rdoff/rdf2bin$(X)
-	$(RM_F) rdoff/rdf2ihx$(X)
-	$(RDFLN) $(RDFLNPFX)rdf2bin$(X) $(RDFLNPFX)rdf2ihx$(X)
-rdoff/rdf2srec$(X): rdoff/rdf2bin$(X)
-	$(RM_F) rdoff/rdf2srec$(X)
-	$(RDFLN) $(RDFLNPFX)rdf2bin$(X) $(RDFLNPFX)rdf2srec$(X)
-
-#-- End RDOFF Shared Rules --#
-
-rdf: $(RDFPROGS) $(RDF2BINLINKS)
-
-$(RDFLIB): $(RDFLIBOBJ)
-	$(RM_F) $(RDFLIB)
-	$(AR) cq $(RDFLIB) $(RDFLIBOBJ)
-	$(RANLIB) $(RDFLIB)
-
 #-- Begin NSIS Rules --#
 
 nsis/arch.nsh: nsis/getpearch.pl nasm$(X)
@@ -420,7 +372,6 @@ clean:
 	$(RM_F) tags TAGS
 	$(RM_F) nsis/arch.nsh
 	$(RM_F) perlbreq.si
-	$(RM_F) $(RDFPROGS) $(RDF2BINLINKS)
 
 distclean: clean
 	$(RM_F) config.log config.status config/config.h
@@ -456,19 +407,6 @@ cscope:
 	$(FIND) . -name '*.[hcS]' -print > cscope.files
 	cscope -b -f cscope.out
 
-rdf_install install_rdf install_rdoff:
-	$(MKDIR_P) $(DESTDIR)$(bindir)
-	for f in $(RDFPROGS); do \
-		$(INSTALL_PROGRAM) "$$f" '$(DESTDIR)$(bindir)'/ ; \
-	done
-	cd '$(DESTDIR)$(bindir)' && \
-	for f in $(RDF2BINLINKS); do \
-		bn=`basename "$$f"` && $(RM_F) "$$bn" && \
-		$(LN_S) rdf2bin$(X) "$$bn" ; \
-	done
-	$(MKDIR_P) $(DESTDIR)$(mandir)/man1
-	$(INSTALL_DATA) $(srcdir)/rdoff/*.1 $(DESTDIR)$(mandir)/man1/
-
 doc: doc/warnings.src
 	$(MAKE) -C doc all
 
@@ -484,7 +422,7 @@ always_everything: dirs
 everything: always_everything
 	$(MAKE) $(MANPAGES) $(NSIS) nothing
 
-install_everything: everything install install_doc install_rdf
+install_everything: everything install install_doc
 
 dist:
 	$(MAKE) alldeps
