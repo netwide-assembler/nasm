@@ -42,6 +42,12 @@ require 'psfonts.ph';		# The fonts we want to use
 require 'pswidth.ph';		# PostScript string width
 require 'findfont.ph';		# Find fonts in the system
 
+sub basename($) {
+    my($path) = @_;
+    my($vol,$dir,$file) = File::Spec->splitpath($path);
+    return $file;
+}
+
 #
 # Document formatting parameters
 #
@@ -869,7 +875,8 @@ sub ps_break_pages($$) {
     # Paragraph types which are heading (meaning they should not be broken
     # immediately after)
     my $nobreakafter = "^(chap|appn|head|subh)\$";
-    # Paragraph types which should never be broken *before*
+    # Paragraph types which should never be broken *before*, unless
+    # the previous paragraph has the same type
     my $nobreakbefore = "^idx[1-9]\$";
     # Paragraph types which are set in columnar format
     my $columnregexp = "^idx.\$";
@@ -918,15 +925,17 @@ sub ps_break_pages($$) {
 		    # This would be an orphan, don't break.
 		} elsif ( $$linfo[1] & 1 ) {
 		    # Sole line or start of paragraph.  Break unless
-		    # the previous line was part of a heading.
-		    $broken = 1 if ( $$pinfo[0] !~ /$nobreakafter/o &&
-				     $$linfo[0] !~ /$nobreakbefore/o );
+		    # the previous line was part of a heading or a comma
+		    # index entry.
+		    $broken = $$pinfo[0] !~ /$nobreakafter/o &&
+			($$linfo[0] !~ /$nobreakbefore/o ||
+			 $$linfo[0] eq $$pinfo[0]);
 		} else {
 		    # Middle of paragraph.  Break unless we're in a
 		    # no-break paragraph, or the previous line would
 		    # end up being a widow.
-		    $broken = 1 if ( $$linfo[0] !~ /$nobreakregexp/o &&
-				     $$pinfo[1] != 1 );
+		    $broken = $$linfo[0] !~ /$nobreakregexp/o &&
+			$$pinfo[1] != 1;
 		}
 		$i--;
 	    }
@@ -1066,7 +1075,7 @@ $need_fonts_str = join(' ', @need_fonts_lst);
 print "%!PS-Adobe-3.0\n";
 print "%%Pages: $curpage\n";
 print "%%BoundingBox: 0 0 ", $psconf{pagewidth}, ' ', $psconf{pageheight}, "\n";
-print "%%Creator: (NASM psflow.pl)\n";
+print "%%Creator: ", basename($0), "\n";
 print "%%DocumentData: Clean7Bit\n";
 print "%%DocumentFonts: $all_fonts_str\n";
 print "%%DocumentNeededFonts: $need_fonts_str\n";
