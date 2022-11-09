@@ -5014,7 +5014,7 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
              * In a sequence of %+ ... %+ ... %+ pasting sequences where
              * some expansions in the middle have ended up empty,
              * we can end up having multiple %+ tokens in a row;
-             * just drop whem in that case.
+             * just drop when in that case.
              */
             next = *nextp;
             while (next) {

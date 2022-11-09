@@ -886,9 +886,9 @@ R_DrawSpan_8:
         push    edi
         push    ebx
 ;;
-;; initilise registers
+;; initialise registers
 ;;
-  
+
         mov     edx, [ds_xfrac]
         mov     eax, [ds_ystep]
         ror     edx, 14
