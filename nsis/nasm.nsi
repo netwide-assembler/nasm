@@ -142,17 +142,6 @@ skip:
     !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
 
-Section "RDOFF" SecRdoff
-    File "${objdir}\rdoff\ldrdf.exe"
-    File "${objdir}\rdoff\rdf2bin.exe"
-    File "${objdir}\rdoff\rdf2com.exe"
-    File "${objdir}\rdoff\rdf2ith.exe"
-    File "${objdir}\rdoff\rdf2ihx.exe"
-    File "${objdir}\rdoff\rdf2srec.exe"
-    File "${objdir}\rdoff\rdfdump.exe"
-    File "${objdir}\rdoff\rdflib.exe"
-SectionEnd
-
 Section "Manual" SecManual
     SetOutPath "$INSTDIR"
     File "${objdir}\doc\nasmdoc.pdf"
@@ -172,13 +161,11 @@ SectionEnd
     ;Language strings
     LangString DESC_SecNasm ${LANG_ENGLISH}     "NASM assembler and disassember modules"
     LangString DESC_SecManual ${LANG_ENGLISH}   "Complete NASM manual (pdf file)"
-    LangString DESC_SecRdoff ${LANG_ENGLISH}    "RDOFF utilities (you may not need it if you don't know what is it)"
     LangString DESC_SecVS8 ${LANG_ENGLISH}      "Visual Studio 2008 NASM integration (rules file)"
 
     ;Assign language strings to sections
     !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${SecNasm} $(DESC_SecNasm)
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecRdoff} $(DESC_SecRdoff)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecManual} $(DESC_SecManual)
     !insertmacro MUI_DESCRIPTION_TEXT ${SecVS8} $(DESC_SecVS8)
     !insertmacro MUI_FUNCTION_DESCRIPTION_END
