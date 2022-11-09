@@ -30,7 +30,7 @@
 	mov [rax],dword 0_11223344_8899aabbh	; 32-bit operation
 	mov qword [rax],0_11223344_8899aabbh
 	mov qword [rax],dword 0_11223344_8899aabbh
-	
+
 	mov rax,strict 11223344h
 	mov rax,strict dword 11223344h
 	mov eax,strict 11223344h
@@ -58,4 +58,4 @@
 	mov [rax],strict dword 0_11223344_8899aabbh	; 32-bit operation
 	mov qword [rax],strict 0_11223344_8899aabbh
 	mov qword [rax],strict dword 0_11223344_8899aabbh
-	
+

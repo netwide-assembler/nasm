@@ -6,7 +6,7 @@
 ; To test:
 ;    objexe
 ; (should print `hello, world')
-	  
+
 	  segment code
 
 ..start:  mov ax,data

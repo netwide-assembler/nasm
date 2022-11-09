@@ -8,7 +8,7 @@ _start:
 	mov	rax, 1	; write syscall
 	mov	rdi, 1
 	mov	rsi, msg
-	mov	rdx, msglen 
+	mov	rdx, msglen
 	syscall
 
 	mov	rax, 60	; exit syscall

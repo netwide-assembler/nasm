@@ -42,7 +42,7 @@
 	mov eax,ul(`ab`)
 	mov ebx,ul(`\U0001abcd`)
 	mov ecx,wl(`\U0001abcd`)
-	
+
 	db `Test \u306a\U0001abcd\n`
 	dw ub(`Test \u306a\U0001abcd\n`)
 	dd wb(`Test \u306a\U0001abcd\n`)

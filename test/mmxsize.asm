@@ -33,6 +33,6 @@
 	movmskps rax,xmm1
 	movmskpd rax,xmm1
 	nop
-	
+
 	section .bss
 foo	resq 1

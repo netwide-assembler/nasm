@@ -358,7 +358,7 @@ bool process_directives(char *directive)
 
         if (!declare_label(value, type, special))
             break;
-        
+
         if (type == LBL_COMMON || type == LBL_EXTERN || type == LBL_REQUIRED)
             define_label(value, 0, size, false);
 

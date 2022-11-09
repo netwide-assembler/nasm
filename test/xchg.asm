@@ -7,7 +7,7 @@
 %endmacro
 
 	bits 16
-	
+
 	x ax,ax
 	x ax,cx
 	x ax,dx
@@ -26,7 +26,7 @@
 	x eax,edi
 
 	bits 32
-	
+
 	x ax,ax
 	x ax,cx
 	x ax,dx
@@ -45,7 +45,7 @@
 	x eax,edi
 
 	bits 64
-	
+
 	x ax,ax
 	x ax,cx
 	x ax,dx

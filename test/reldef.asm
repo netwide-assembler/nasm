@@ -25,12 +25,12 @@ start:
 	lea rcx, [rod2]
 	lea rdx, [bar]
 	lea rbx, [foo]
-	
+
 	lea rax, [rdi+rod1-$$]
 	lea rcx, [rdi+rod2-$$]
 	lea rdx, [rdi+bar-$$]
 	lea rbx, [rdi+foo-$$]
-	
+
 	mov rax, [rdi+rod1-$$]
 	mov rcx, [rdi+rod2-$$]
 	mov rdx, [rdi+bar-$$]
@@ -40,7 +40,7 @@ start:
 	mov rcx, dword rod2-$$
 	mov rdx, dword bar-$$
 	mov rbx, dword foo-$$
-	
+
 	section .data
 	dq rod1
 	dq rod2

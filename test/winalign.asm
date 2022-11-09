@@ -22,7 +22,7 @@
 	dd 90
 	dd 91
 	dd 92
-	
+
 	section .xdata
 	dd 7
 	dd 8

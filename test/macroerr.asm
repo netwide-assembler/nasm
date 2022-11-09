@@ -8,5 +8,5 @@
 	bluttan ptr
 	blej ptr
 	dd ptr, ptr
-	
+
 ptr:

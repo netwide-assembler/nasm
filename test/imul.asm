@@ -23,7 +23,7 @@
 	imul rdx
 	imul qword MEM
 %endif
-	
+
 	imul ax,cx
 	imul ax,MEM
 	imul ax,word MEM
