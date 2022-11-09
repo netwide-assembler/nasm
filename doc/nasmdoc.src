@@ -853,10 +853,6 @@ name, for example \c{label-orphan}; you can enable warnings of
 this class by the command-line option \c{-w+label-orphan} and
 disable it by \c{-w-label-orphan}.
 
-The current \i{warning classes} are:
-
-\& warnings.src
-
 Since version 2.15, NASM has group aliases for all prefixed warnings,
 so they can be used to enable or disable all warnings in the group.
 For example, -w+float enables all warnings with names starting with float-*.
@@ -877,6 +873,7 @@ of course.
 In addition, you can control warnings in the source code itself, using
 the \i\c{[WARNING]} directive.  See \k{asmdir-warning}.
 
+See \k{warnings} for the complete list of warning classes.
 
 \S{opt-v} The \i\c{-v} Option: Display \i{Version} Info
 
@@ -1353,8 +1350,13 @@ symbols.
 BSS section of a module: they declare \e{uninitialized} storage
 space. Each takes a single operand, which is the number of bytes,
 words, doublewords or whatever to reserve. The operand to a
-\c{RESB}-type pseudo-instruction is a \i\e{critical expression}: see
-\k{crit}.
+\c{RESB}-type pseudo-instruction \e{would} be a \i\e{critical
+expression} (see \k{crit}), except that for legacy compatibility
+reasons forward references are permitted, however \e{the code will be
+extremely fragile and this should be considered a severe programming
+error.} A warning will be issued; code generating this warning should
+be remedied as quickly as possible (see the \c{forward} class in
+\k{warnings}.)
 
 For example:
 
@@ -5306,7 +5308,7 @@ value can be saved away and invoked later to restore the setting.
 \H{asmdir-warning} \i\c{[WARNING]}: Enable or disable warnings
 
 The \c{[WARNING]} directive can be used to enable or disable classes
-of warnings in the same way as the \c{-w} option, see \k{opt-w} for
+of warnings in the same way as the \c{-w} option, see \k{warnings} for
 more details about warning classes.
 
 \b \c{[warning +}\e{warning-class}\c{]} enables warnings for
@@ -5324,7 +5326,7 @@ more details about warning classes.
 \b \c{[warning pop]} restores the current warning state from the stack.
 
 The \c{[WARNING]} directive also accepts the \c{all}, \c{error} and
-\c{error=}\e{warning-class} specifiers.
+\c{error=}\e{warning-class} specifiers, see \k{opt-w}.
 
 No "user form" (without the brackets) currently exists.
 
@@ -8612,6 +8614,14 @@ line in the form
 in which \c{$} and \c{$$} are offsets from the same section base,
 and so their difference is a pure number. This will solve the
 problem and generate sensible code.
+
+\A{warnings} \I{warning class}\I{warning classes, list}\i{List of Warning Classes}
+
+These are the warning classes currently defined by NASM for the
+purpose of enabling, disabling and promoting to error. See \k{opt-w}
+and \k{asmdir-warning}.
+
+\& warnings.src
 
 \A{ndisasm} \i{Ndisasm}
 

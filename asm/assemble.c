@@ -595,7 +595,8 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
         /* jmp short (opcode eb) cannot be used with bnd prefix. */
         ins->prefixes[PPS_REP] = P_none;
         /*!
-         *!bnd [on] invalid BND prefixes
+         *!prefix-bnd [on] invalid BND prefix
+         *!=bnd
          *!  warns about ineffective use of the \c{BND} prefix when the
          *!  \c{JMP} instruction is converted to the \c{SHORT} form.
          *!  This should be extremely rare since the short \c{JMP} only
@@ -603,7 +604,7 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
          *!  it is legitimate, it may be necessary to use
          *!  \c{bnd jmp dword}.
          */
-        nasm_warn(WARN_BND | ERR_PASS2 ,
+        nasm_warn(WARN_PREFIX_BND|ERR_PASS2 ,
                    "jmp short does not init bnd regs - bnd prefix dropped");
     }
 
@@ -1203,7 +1204,8 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
         ww = w_inval;           /* HLE requires operand 0 to be memory */
 
     /*!
-     *!hle [on] invalid HLE prefixes
+     *!prefix-hle [on] invalid HLE prefix
+     *!=hle
      *!  warns about invalid use of the HLE \c{XACQUIRE} or \c{XRELEASE}
      *!  prefixes.
      */
@@ -1213,14 +1215,14 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
 
     case w_lock:
         if (ins->prefixes[PPS_LOCK] != P_LOCK) {
-            nasm_warn(WARN_HLE | ERR_PASS2,
+            nasm_warn(WARN_PREFIX_HLE|ERR_PASS2,
                        "%s with this instruction requires lock",
                        prefix_name(rep_pfx));
         }
         break;
 
     case w_inval:
-        nasm_warn(WARN_HLE | ERR_PASS2,
+        nasm_warn(WARN_PREFIX_HLE|ERR_PASS2,
                    "%s invalid with this instruction",
                    prefix_name(rep_pfx));
         break;
@@ -1423,11 +1425,17 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
 
         case 0320:
         {
+            /*! prefix-opsize [on] invalid operand size prefix
+             *!   warns that an operand prefix (\c{o16}, \c{o32}, \c{o64},
+             *!   \c{osp}) invalid for the specified instruction has been specified.
+             *!   The operand prefix will be ignored by the assembler.
+             */
             enum prefixes pfx = ins->prefixes[PPS_OSIZE];
             if (pfx == P_O16)
                 break;
             if (pfx != P_none)
-                nasm_warn(WARN_OTHER|ERR_PASS2, "invalid operand size prefix");
+                nasm_warn(WARN_PREFIX_OPSIZE|ERR_PASS2,
+                          "invalid operand size prefix, must be o16");
             else
                 ins->prefixes[PPS_OSIZE] = P_O16;
             break;
@@ -1439,7 +1447,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             if (pfx == P_O32)
                 break;
             if (pfx != P_none)
-                nasm_warn(WARN_OTHER|ERR_PASS2, "invalid operand size prefix");
+                nasm_warn(WARN_PREFIX_OPSIZE|ERR_PASS2,
+                          "invalid operand size prefix, must be o32");
             else
                 ins->prefixes[PPS_OSIZE] = P_O32;
             break;
@@ -1493,11 +1502,22 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0340:
+            /*!
+             *!forward [on] forward reference may have unpredictable results
+             *!  warns that a forward reference is used which may have
+             *!  unpredictable results, notably in a \c{RESB}-type
+             *!  pseudo-instruction. These would be \i\e{critical
+             *!  expressions} (see \k{crit}) but are permitted in a
+             *!  handful of cases for compatibility with older
+             *!  versions of NASM. This warning should be treated as a
+             *!  severe programming error as the code could break at
+             *!  any time for any number of reasons.
+             */
             if (!absolute_op(&ins->oprs[0]))
                 nasm_nonfatal("attempt to reserve non-constant"
                               " quantity of BSS space");
             else if (ins->oprs[0].opflags & OPFLAG_FORWARD)
-                nasm_warn(WARN_OTHER, "forward reference in RESx "
+                nasm_warn(WARN_FORWARD, "forward reference in RESx "
                            "can have unpredictable results");
             else
                 length += ins->oprs[0].offset * resb_bytes(ins->opcode);
@@ -1723,10 +1743,11 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     if (has_prefix(ins, PPS_LOCK, P_LOCK) && lockcheck &&
         (!itemp_has(temp,IF_LOCK) || !is_class(MEMORY, ins->oprs[0].type))) {
         /*!
-         *!lock [on] LOCK prefix on unlockable instructions
+         *!prefix-lock [on] LOCK prefix on unlockable instructions
+         *!=lock
          *!  warns about \c{LOCK} prefixes on unlockable instructions.
          */
-        nasm_warn(WARN_LOCK | ERR_PASS2 , "instruction is not lockable");
+        nasm_warn(WARN_PREFIX_LOCK|ERR_PASS2 , "instruction is not lockable");
     }
 
     bad_hle_warn(ins, hleok);
@@ -1788,20 +1809,26 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
             c = 0xF3;
             break;
         case R_CS:
+            /*!
+             *!prefix-seg [on] segment prefix ignored in 64-bit mode
+             *!  warns that an \c{es}, \c{cs}, \c{ss} or \c{ds} segment override
+             *!  prefix has no effect in 64-bit mode. The prefix will still be
+             *!  generated as requested.
+             */
             if (bits == 64)
-                nasm_warn(WARN_OTHER|ERR_PASS2, "cs segment base generated, "
+                nasm_warn(WARN_PREFIX_SEG|ERR_PASS2, "cs segment base generated, "
                            "but will be ignored in 64-bit mode");
             c = 0x2E;
             break;
         case R_DS:
             if (bits == 64)
-                nasm_warn(WARN_OTHER|ERR_PASS2, "ds segment base generated, "
+                nasm_warn(WARN_PREFIX_SEG|ERR_PASS2, "ds segment base generated, "
                            "but will be ignored in 64-bit mode");
             c = 0x3E;
             break;
         case R_ES:
             if (bits == 64)
-                nasm_warn(WARN_OTHER|ERR_PASS2, "es segment base generated, "
+                nasm_warn(WARN_PREFIX_SEG|ERR_PASS2, "es segment base generated, "
                            "but will be ignored in 64-bit mode");
             c = 0x26;
             break;
@@ -1813,7 +1840,7 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
             break;
         case R_SS:
             if (bits == 64) {
-                nasm_warn(WARN_OTHER|ERR_PASS2, "ss segment base generated, "
+                nasm_warn(WARN_PREFIX_SEG|ERR_PASS2, "ss segment base generated, "
                            "but will be ignored in 64-bit mode");
             }
             c = 0x36;
@@ -2013,7 +2040,7 @@ static void gencode(struct out_data *data, insn *ins)
                 nasm_nonfatal("non-absolute expression not permitted "
                               "as argument %d", c & 7);
             else if (opy->offset & ~mask)
-                nasm_warn(ERR_PASS2 | WARN_NUMBER_OVERFLOW,
+                nasm_warn(ERR_PASS2|WARN_NUMBER_OVERFLOW,
                            "is4 argument exceeds bounds");
             c = opy->offset & mask;
             goto emit_is4;
@@ -2035,7 +2062,7 @@ static void gencode(struct out_data *data, insn *ins)
         case4(0254):
             if (absolute_op(opx) &&
                 (int32_t)opx->offset != (int64_t)opx->offset) {
-                nasm_warn(ERR_PASS2 | WARN_NUMBER_OVERFLOW,
+                nasm_warn(ERR_PASS2|WARN_NUMBER_OVERFLOW,
                            "signed dword immediate exceeds bounds");
             }
             out_imm(data, opx, 4, OUT_SIGNED);
@@ -2105,7 +2132,7 @@ static void gencode(struct out_data *data, insn *ins)
                     /* If this wasn't explicitly byte-sized, warn as though we
                      * had fallen through to the imm16/32/64 case.
                      */
-                    nasm_warn(ERR_PASS2 | WARN_NUMBER_OVERFLOW,
+                    nasm_warn(ERR_PASS2|WARN_NUMBER_OVERFLOW,
                                "%s value exceeds bounds",
                                (opx->type & BITS8) ? "signed byte" :
                                s == 16 ? "word" :
@@ -2847,9 +2874,15 @@ static int process_ea(operand *input, ea *output, int bits,
                         input->type |= IP_REL;
                 }
                 if ((input->type & IP_REL) == IP_REL) {
+                    /*!
+                     *!ea-absolute [on] absolute address cannot be RIP-relative
+                     *!  warns that an address that is inherently absolute cannot
+                     *!  be generated with RIP-relative encoding using \c{REL},
+                     *!  see \k{REL & ABS}.
+                     */
                     if (input->segment == NO_SEG ||
                         (input->opflags & OPFLAG_RELATIVE)) {
-                        nasm_warn(WARN_OTHER|ERR_PASS2,
+                        nasm_warn(WARN_EA_ABSOLUTE|ERR_PASS2,
                                   "absolute address can not be RIP-relative");
                         input->type &= ~IP_REL;
                         input->type |= MEMORY;
@@ -2864,8 +2897,15 @@ static int process_ea(operand *input, ea *output, int bits,
 
             if (eaflags & EAF_BYTEOFFS ||
                 (eaflags & EAF_WORDOFFS &&
-                 input->disp_size != (addrbits != 16 ? 32 : 16)))
-                nasm_warn(WARN_OTHER, "displacement size ignored on absolute address");
+                 input->disp_size != (addrbits != 16 ? 32 : 16))) {
+                /*!
+                 *!ea-dispsize [on] displacement size ignored on absolute address
+                 *!  warns that NASM does not support generating displacements for
+                 *!  inherently absolute addresses that do not match the address size
+                 *!  of the instruction.
+                 */
+                nasm_warn(WARN_EA_DISPSIZE, "displacement size ignored on absolute address");
+            }
 
             if ((eaflags & EAF_SIB) || (bits == 64 && (~input->type & IP_REL))) {
                 output->sib_present = true;

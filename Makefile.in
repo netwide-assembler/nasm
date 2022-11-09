@@ -275,7 +275,7 @@ x86/regs.h: x86/regs.dat x86/regs.pl
 WARNFILES = asm/warnings.c include/warnings.h doc/warnings.src
 
 warnings:
-	$(RM_F) $(WARNFILES)
+	$(RM_F) $(WARNFILES) $(WARNFILES:=.time)
 	$(MAKE) asm/warnings.time
 
 asm/warnings.time: $(ALLOBJ_NW:.$(O)=.c)
