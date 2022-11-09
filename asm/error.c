@@ -37,7 +37,6 @@
 
 #include "compiler.h"
 
-
 #include "nasmlib.h"
 #include "error.h"
 
@@ -52,7 +51,6 @@
 	va_end(ap);						\
 	if ((_sev) >= ERR_FATAL)                                \
 		abort();
-
 
 void nasm_error(errflags severity, const char *fmt, ...)
 {
@@ -96,7 +94,6 @@ fatal_func nasm_assert_failed(const char *file, int line, const char *msg)
 {
 	nasm_panic("assertion %s failed at %s:%d", msg, file, line);
 }
-
 
 /*
  * Warning stack management. Note that there is an implicit "push"
@@ -146,7 +143,6 @@ void init_warnings(void)
 	push_warnings();
 	warning_state_init = warning_stack;
 }
-
 
 /* Call after each pass */
 void reset_warnings(void)

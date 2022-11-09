@@ -60,7 +60,6 @@ extern int const_func alignlog2_64(uint64_t v);
         }                                               \
     } while (0)
 
-
 #if defined(HAVE___BUILTIN_CLZ) && INT_MAX == 2147483647
 
 extern_inline unsigned int const_func ilog2_32(uint32_t v)

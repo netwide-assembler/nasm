@@ -197,7 +197,6 @@ static void as86_deflabel(char *name, int32_t segment, int64_t offset,
         nasm_nonfatal("as86 format does not support any"
                       " special symbol types");
 
-
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
 	if (strcmp(name, "..start")) {
 	    nasm_nonfatal("unrecognised special symbol `%s'", name);

@@ -71,7 +71,6 @@ static int *opflags;
 static struct eval_hints *hint;
 static int64_t deadman;
 
-
 /*
  * Unimportant cleanup is done to avoid confusing people who are trying
  * to debug real memory leaks

@@ -520,7 +520,6 @@ static void dbgdbg_debug_directive(const char *id, const char *value)
             id, value, pass_count(), pass_type_name());
 }
 
-
 static const struct pragma_facility dbgdbg_pragma_list[] = {
     { "dbgdbg", dbg_pragma },
     { NULL, dbg_pragma }        /* Won't trigger, "debug" is a reserved ns */

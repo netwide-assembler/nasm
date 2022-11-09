@@ -40,7 +40,6 @@
 
 #include "compiler.h"
 
-
 #define BUILD_DRIVERS_ARRAY
 #include "outform.h"
 #include "outlib.h"

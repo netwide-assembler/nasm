@@ -44,7 +44,6 @@
 
 #include "compiler.h"
 
-
 #include "nasmlib.h"
 #include "hashtbl.h"
 #include "srcfile.h"

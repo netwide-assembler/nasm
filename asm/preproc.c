@@ -297,7 +297,6 @@ struct MMacro {
     } dbg;
 };
 
-
 /* Store the definition of a multi-line macro, as defined in a
  * previous recursive macro expansion.
  */
@@ -325,7 +324,6 @@ struct Context {
     uint64_t number;
     unsigned int depth;
 };
-
 
 static inline const char *tok_text(const struct Token *t)
 {
@@ -3295,7 +3293,6 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
     return true;
 }
 
-
 /*
  * Decode a size directive
  */
@@ -3527,7 +3524,6 @@ static void define_stack_smacro(const char *name, int offset)
 
     define_smacro(name, true, tt, NULL);
 }
-
 
 /*
  * This implements the %assign directive: expand an smacro expression,
@@ -4905,7 +4901,6 @@ struct concat_mask {
     enum concat_flags mask_head;
     enum concat_flags mask_tail;
 };
-
 
 static inline bool pp_concat_match(const Token *t, enum concat_flags mask)
 {
@@ -6285,7 +6280,6 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
     return NULL;
 }
 
-
 #if 0
 
 /*
@@ -6307,7 +6301,6 @@ static void push_mmacro(MMacro *m)
     i->condcnt = m->condcnt;
     m->prev = i;
 }
-
 
 /*
  * Restore MMacro invocation specific fields that were
