@@ -8791,17 +8791,6 @@ data section which wouldn't contain anything you wanted to see
 anyway.
 
 
-\A{inslist} \i{Instruction List}
-
-\H{inslistintro} Introduction
-
-The following sections show the instructions which NASM currently supports. For each
-instruction, there is a separate entry for each supported addressing mode. The third
-column shows the processor type in which the instruction was introduced and,
- when appropriate, one or more usage flags.
-
-\& inslist.src
-
 \A{changelog} \i{NASM Version History}
 
 \& changes.src
@@ -8968,3 +8957,14 @@ for example, the problem involves NASM failing to generate an object
 file while TASM can generate an equivalent file without trouble,
 then send us \e{both} object files, so we can see what TASM is doing
 differently from us.
+
+\A{inslist} \i{Instruction List}
+
+\H{inslistintro} Introduction
+
+The following sections show the instructions which NASM currently supports. For each
+instruction, there is a separate entry for each supported addressing mode. The third
+column shows the processor type in which the instruction was introduced and,
+ when appropriate, one or more usage flags.
+
+\& inslist.src
