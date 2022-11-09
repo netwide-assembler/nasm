@@ -3383,7 +3383,7 @@ static void add_asp(insn *ins, int addrbits)
         ins->addr_size = addrbits;
     } else if (valid & ((addrbits == 32) ? 16 : 32)) {
         /* Add an address size prefix */
-        ins->prefixes[PPS_ASIZE] = (addrbits == 32) ? P_A16 : P_A32;;
+        ins->prefixes[PPS_ASIZE] = (addrbits == 32) ? P_A16 : P_A32;
         ins->addr_size = (addrbits == 32) ? 16 : 32;
     } else {
         /* Impossible... */
