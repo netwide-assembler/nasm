@@ -1024,10 +1024,17 @@ sub html_index {
     push @a, "n :";
     $sep = 0;
     foreach $node (@nodes) {
-      next if !$idxnodes{$node,$itag};
-      push @a, "n ," if $sep;
-      push @a, "sp", "x $xrefnodes{$node}", "n $node", "xe$xrefnodes{$node}";
-      $sep = 1;
+	next if !$idxnodes{$node,$itag};
+	my $xn = $xrefnodes{$node};
+	my $nn = $node;
+
+	# Text like "chapter", "appendix", "section", etc in the index
+	# makes it unnecessarily wide
+	$nn =~ s/^.*\s+//g;	# Remove all but the actual index information
+
+	push @a, "n ," if $sep;
+	push @a, "sp", "x $xn", "n $nn", "xe$xn";
+	$sep = 1;
     }
     print "<li class=\"index\">\n";
     $line = '';
