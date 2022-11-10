@@ -969,9 +969,9 @@ sub write_html {
   select TEXT;
   &html_preamble(0);
   print "<h2 class=\"index\">Index</h2>\n";
-  print "<ul class=\"index\">\n";
+  print "<div class=\"index\">\n";
   &html_index;
-  print "</ul>\n</body>\n</html>\n";
+  print "</div>\n\n</body>\n</html>\n";
   select STDOUT;
   close TEXT;
 }
@@ -982,6 +982,7 @@ sub html_preamble {
     print "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n";
     print "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n";
     print "<head>\n";
+    print "<meta charset=\"UTF-8\" />\n";
     print "<title>", $metadata{'title'}, "</title>\n";
     print "<link href=\"nasmdoc.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
     print "<link href=\"local.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
@@ -1017,11 +1018,12 @@ sub html_postamble {
 sub html_index {
   my $itag, $a, @ientry, $sep, $w, $wd, $wprev, $line;
 
+  print "<ul>\n";
+
   $chapternode = '';
   foreach $itag (@itags) {
     $ientry = $idxmap{$itag};
-    @a = @$ientry;
-    push @a, "n :";
+    my @a = ('HDterm', @$ientry, 'HDref');
     $sep = 0;
     foreach $node (@nodes) {
 	next if !$idxnodes{$node,$itag};
@@ -1032,33 +1034,36 @@ sub html_index {
 	# makes it unnecessarily wide
 	$nn =~ s/^.*\s+//g;	# Remove all but the actual index information
 
-	push @a, "n ," if $sep;
-	push @a, "sp", "x $xn", "n $nn", "xe$xn";
+	push @a, 'n ,', 'sp' if $sep;
+	push @a, "x $xn", "n $nn", "xe$xn";
 	$sep = 1;
     }
-    print "<li class=\"index\">\n";
-    $line = '';
-    do {
-      do { $w = &word_html(shift @a) } while $w eq "\001"; # nasty hack
-      $wd .= $wprev;
-      if ($w eq ' ' || $w eq '' || $w eq undef) {
-        if (length ($line . $wd) > 75) {
-	  $line =~ s/\s*$//; # trim trailing spaces
-	  print "$line\n";
-	  $line = '';
-	  $wd =~ s/^\s*//; # trim leading spaces
+    print "<li>\n";
+    while (defined($w = shift(@a))) {
+	die unless ($w =~ /^HD(.*)$/);
+	print "<div class=\"$1\">\n";
+
+	$line = '';
+	while ($w ne '' && $a[0] !~ /^HD/) {
+	    $w = &word_html(shift @a);
+	    next if ($w eq "\001"); # Nasty hack
+
+	    if ($w =~ /^\s*$/ && length($line.$w) > 75) {
+		$line =~ s/\s*$//; # trim trailing spaces
+		print $line, "\n"; $line = '';
+	    }
+	    $line .= $w;
 	}
-	$line .= $wd;
-	$wd = '';
-      }
-      $wprev = $w;
-    } while ($w ne '' && $w ne undef);
-    if ($line =~ /\S/) {
-      $line =~ s/\s*$//; # trim trailing spaces
-      print $line, "\n";
+	if ($line =~ /\S/) {
+	    $line =~ s/\s*$//; # trim trailing spaces
+	    print $line, "\n"; $line = '';
+	}
+	print "</div>\n";
     }
     print "</li>\n";
   }
+
+  print "</ul>\n";
 }
 
 sub word_html {
