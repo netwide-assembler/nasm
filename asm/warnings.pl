@@ -244,7 +244,8 @@ if ($what eq 'c') {
 		    "prefixed by \\c{$pfx-}; currently\n");
 	    # Just commas is bad grammar to be sure, but it is more
 	    # legible than the alternative.
-	    push(@doc, join(scalar(@plist) < 3 ? ' and ' : ',', @plist).".\n");
+	    push(@doc, join(scalar(@plist) < 3 ? ' and ' : ', ',
+			    map { "\\c{$_}" } @plist).".\n");
 	} elsif ($pfx ne $warn->{name}) {
 	    my $awarn = $aliases{$warn->{name}};
 	    @doc = ($awarn->{help}."\n\n",
