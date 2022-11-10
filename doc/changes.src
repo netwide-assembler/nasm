@@ -7,6 +7,20 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.16} Version 2.16
+
+\b Support for the \c{rdf} format has been discontinued and all the
+RDOFF utilities has been removed.
+
+\b The \c{--reproducible} option now leaves the filename field in the
+COFF object format blank. This was always rather useless since it is
+only 18 characters long; as such debug formats have to carry their own
+filename information anyway.
+
+\b Fix handling of MASM-syntax reserved memory (e.g. \c{dw ?}) when
+used in structure definitions.
+
+
 \S{cl-2.15.06} Version 2.15.06
 
 \b Fix object and header length in \c{rdf} format.
