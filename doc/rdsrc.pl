@@ -157,7 +157,7 @@ $MAXLEVEL = 10;  # really 3, but play safe ;-)
 
 # Read the file; pass a paragraph at a time to the paragraph processor.
 print "Reading input...";
-$pname = "para000000";
+$pname = [];
 @pnames = @pflags = ();
 $para = undef;
 foreach $file (@files) {
@@ -268,9 +268,9 @@ sub include {
 sub got_para {
   local ($_) = @_;
   my $pflags = "", $i, $w, $l, $t;
-  return if !/\S/;
+  my @para = ();
 
-  @$pname = ();
+  return if !/\S/;
 
   # Replace metadata macros
   while (/^(.*)\\m\{([^\}]*)\}(.*)$/) {
@@ -294,7 +294,7 @@ sub got_para {
       $l =~ s/\\\{/\{/g;
       $l =~ s/\\\}/}/g;
       $l =~ s/\\\\/\\/g;
-      push @$pname, $l;
+      push @para, $l;
     }
     $_ = ''; # suppress word-by-word code
   } elsif (/^\\C/) {
@@ -389,11 +389,11 @@ sub got_para {
     $pflags = "norm";
   }
 
-  # The word-by-word code: unless @$pname is already defined (which it
+  # The word-by-word code: unless @para is already defined (which it
   # will be in the case of a code paragraph), split the paragraph up
-  # into words and push each on @$pname.
+  # into words and push each on @para.
   #
-  # Each thing pushed on @$pname should have a two-character type
+  # Each thing pushed on @para should have a two-character type
   # code followed by the text.
   #
   # Type codes are:
@@ -416,7 +416,7 @@ sub got_para {
   #      index-items arrays
   # "sp" for space
   while (/\S/) {
-    s/^\s*//, push @$pname, "sp" if /^\s/;
+    s/^\s*//, push @para, "sp" if /^\s/;
     $indexing = $qindex = 0;
     if (/^(\\[iI])?\\c/) {
       $qindex = 1 if $1 eq "\\I";
@@ -429,9 +429,8 @@ sub got_para {
       $w =~ s/\\\}/\}/g;
       $w =~ s/\\-/-/g;
       $w =~ s/\\\\/\\/g;
-      (push @$pname,"i"),$lastp = $#$pname if $indexing;
-      push @$pname,"c $w" if !$qindex;
-      $$pname[$lastp] = &addidx($node, $w, "c $w") if $indexing;
+      push(@para, addidx($node, $w, "c $w")) if ($indexing);
+      push(@para, "c $w") if (!$qindex);
     } elsif (/^\\[iIe]/) {
       /^(\\[iI])?(\\e)?/;
       $emph = 0;
@@ -448,19 +447,25 @@ sub got_para {
       $w =~ s/\\\\/\\/g;
       $t = $emph ? "es" : "n ";
       @ientry = ();
-      (push @$pname,"i"),$lastp = $#$pname if $indexing;
+      @pentry = ();
       foreach $i (split /\s+/,$w) {  # \e and \i can be multiple words
-        push @$pname,"$t$i","sp" if !$qindex;
-	($ii=$i) =~ tr/A-Z/a-z/, push @ientry,"n $ii","sp" if $indexing;
+        push @pentry, "$t$i","sp";
+	($ii=$i) =~ tr/A-Z/a-z/, push @ientry,"n $ii","sp";
 	$t = $emph ? "e " : "n ";
       }
-      $w =~ tr/A-Z/a-z/, pop @ientry if $indexing;
-      $$pname[$lastp] = &addidx($node, $w, @ientry) if $indexing;
-      pop @$pname if !$qindex; # remove final space
-      if (substr($$pname[$#$pname],0,2) eq "es" && !$qindex) {
-        substr($$pname[$#$pname],0,2) = "eo";
-      } elsif ($emph && !$qindex) {
-        substr($$pname[$#$pname],0,2) = "ee";
+      if ($indexing) {
+	  $w =~ tr/A-Z/a-z/;
+	  pop @ientry;		# remove final space
+	  push(@para, addidx($node, $w, @ientry));
+      }
+      if (!$qindex) {
+	  pop @pentry;		# remove final space
+	  if (substr($pentry[-1],0,2) eq 'es') {
+	      substr($pentry[-1],0,2) = 'eo';
+	  } elsif ($emph) {
+	      substr($pentry[-1],0,2) = 'ee';
+	  }
+	  push(@para, @pentry);
       }
     } elsif (/^\\[kK]/) {
       $t = "k ";
@@ -468,7 +473,7 @@ sub got_para {
       s/^\\[kK]//;
       die "badly formatted \\k: \\k$_\n" if !/\{([^\}]*)\}(.*)$/;
       $_ = $2;
-      push @$pname,"$t$1";
+      push @para,"$t$1";
     } elsif (/^\\W/) {
       s/^\\W//;
       die "badly formatted \\W: \\W$_\n"
@@ -483,9 +488,8 @@ sub got_para {
       $w =~ s/\\\}/\}/g;
       $w =~ s/\\-/-/g;
       $w =~ s/\\\\/\\/g;
-      (push @$pname,"i"),$lastp = $#$pname if $indexing;
-      push @$pname,"$t<$l>$w";
-      $$pname[$lastp] = &addidx($node, $w, "c $w") if $indexing;
+      push(@para, addidx($node, $w, "c $w")) if $indexing;
+      push(@para, "$t<$l>$w");
     } else {
       die "what the hell? $_\n" if !/^(([^\s\\\-]|\\[\\{}\-])*-?)(.*)$/;
       die "painful death! $_\n" if !length $1;
@@ -496,53 +500,71 @@ sub got_para {
       $w =~ s/\\-/-/g;
       $w =~ s/\\\\/\\/g;
       if ($w eq '--') {
-	  push @$pname, 'dm';
+	  push @para, 'dm';
       } elsif ($w eq '-') {
-        push @$pname, 'da';
+        push @para, 'da';
       } else {
-        push @$pname,"n $w";
+        push @para,"n $w";
       }
     }
   }
   if ($irewrite ne undef) {
-    &addidx(undef, $irewrite, @$pname);
-    @$pname = ();
+    addidx(undef, $irewrite, @para);
   } else {
-    push @pnames, $pname;
+    push @pnames, [@para];
     push @pflags, $pflags;
-    $pname++;
   }
 }
 
-sub addidx {
-  my ($node, $text, @ientry) = @_;
+sub addidx($$@) {
+  my($node, $text, @ientry) = @_;
   $text = $idxalias{$text} || $text;
-  if ($node eq undef || !$idxmap{$text}) {
-    @$ientry = @ientry;
-    $idxmap{$text} = $ientry;
-    $ientry++;
+  if (!exists($idxmap{$text})) {
+      $idxmap{$text} = [@ientry];
+      $idxdup{$text} = [$text];
+  } elsif (!defined($node)) {
+      my $dummy = sprintf('%s    #%05d', $text, $#{$idxdup{$text}} + 2);
+      $idxmap{$dummy} = [@ientry];
+      push(@{$idxdup{$text}}, $dummy);
   }
-  if ($node) {
-    $idxnodes{$node,$text} = 1;
-    return "i $text";
-  }
+
+  return undef if (!defined($node));
+
+  return map { $idxnodes{$node,$_} = 1; "i $_" } @{$idxdup{$text}};
 }
 
 sub indexsort {
   my $iitem, $ientry, $i, $piitem, $pcval, $cval, $clrcval;
 
   @itags = map { # get back the original data as the 1st elt of each list
-             $_->[0]
-	   } sort { # compare auxiliary (non-first) elements of lists
-	     $a->[1] cmp $b->[1] ||
-	     $a->[2] cmp $b->[2] ||
-	     $a->[0] cmp $b->[0]
-           } map { # transform array into list of 3-element lists
-	     my $ientry = $idxmap{$_};
-	     my $a = substr($$ientry[0],2);
-	     $a =~ tr/A-Za-z0-9//cd;
-	     [$_, uc($a), substr($$ientry[0],0,2)]
-	   } keys %idxmap;
+      $_->[0]
+  } sort { # compare auxiliary (non-first) elements of lists
+      my $d = 0;
+      for (my $i = 1; defined($a->[$i]) || defined($b->[$i]); $i++) {
+	  $d = $a->[$i] cmp $b->[$i];
+	  last if ($d);
+      }
+      $d
+  } map { # transform array into list of 3-element lists
+      my $ientry = $idxmap{$_};
+      my $b = lc(join(' ', map { substr($_,2) } @$ientry));
+      $b =~ s/([][(){}]+|\B,)//g;
+      $b =~ s/\s+/ /g;
+      my $a = $b;
+      $a =~ s/([[:alpha:]])/Z$1/g;
+      # From this point on [A-Z] means an already classed character
+	  # Try to sort numbers in numerical order (e.g. 8 before 16)
+      while ($a =~ /^(|.*?[^A-Z])(\d+)(\.\d+)?(.*)$/) {
+	  my $p = $1; my $s = $4;
+	  my $nn = ('0' x (24 - length($2))) . $2 . $3;
+	  $nn =~ s/(.)/D$1/g;
+	  $a = $p . $nn . $s;
+      }
+      $a =~ s/([^A-Z\s])/A$1/g;
+      my $c = join(' ', map { substr($_,0,2) } @$ientry);
+      my $v = [$_, $a, $b, $_, $c];
+      $v
+  } keys %idxmap;
 
   # Having done that, check for comma-hood.
   $cval = 0;
@@ -594,8 +616,8 @@ sub fixup_xrefs {
     next if $pflags[$p] eq "code";
     $pname = $pnames[$p];
     for ($i=$#$pname; $i >= 0; $i--) {
-      if ($$pname[$i] =~ /^k/) {
-        $k = $$pname[$i];
+	$k = $$pname[$i];
+      if ($k =~ /^k/) {
         $caps = ($k =~ /^kK/);
 	$k = substr($k,2);
         $repl = $refs{$k};
