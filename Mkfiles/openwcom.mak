@@ -247,7 +247,7 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 WARNFILES = asm\warnings.c include\warnings.h doc\warnings.src
 
 warnings:
-	$(RM_F) $(WARNFILES)
+	$(RM_F) $(WARNFILES) $(WARNFILES:=.time)
 	$(MAKE) asm\warnings.time
 
 asm\warnings.time: $(ALLOBJ_NW:.$(O)=.c)
@@ -276,17 +276,17 @@ doc\warnings.src : doc\warnings.src.time
 	@: Side effect
 
 # Assembler token hash
-asm\tokhash.c: x86\insns.dat x86\regs.dat asm\tokens.dat asm\tokhash.pl &
+asm\tokhash.c: x86\insns.dat x86\insnsn.c asm\tokens.dat asm\tokhash.pl &
 	perllib\phash.ph
 	$(RUNPERL) $(srcdir)\asm\tokhash.pl c &
-		$(srcdir)\x86\insns.dat $(srcdir)\x86\regs.dat &
+		x86\insnsn.c $(srcdir)\x86\regs.dat &
 		$(srcdir)\asm\tokens.dat > asm\tokhash.c
 
 # Assembler token metadata
-asm\tokens.h: x86\insns.dat x86\regs.dat asm\tokens.dat asm\tokhash.pl &
+asm\tokens.h: x86\insns.dat x86\insnsn.c asm\tokens.dat asm\tokhash.pl &
 	perllib\phash.ph
 	$(RUNPERL) $(srcdir)\asm\tokhash.pl h &
-		$(srcdir)\x86\insns.dat $(srcdir)\x86\regs.dat &
+		x86\insnsn.c $(srcdir)\x86\regs.dat &
 		$(srcdir)\asm\tokens.dat > asm\tokens.h
 
 # Preprocessor token hash

@@ -523,13 +523,6 @@ static inline bool is_register(int reg)
     return reg >= EXPR_REG_START && reg < REG_ENUM_LIMIT;
 }
 
-enum ccode { /* condition code names */
-    C_A, C_AE, C_B, C_BE, C_C, C_E, C_G, C_GE, C_L, C_LE, C_NA, C_NAE,
-    C_NB, C_NBE, C_NC, C_NE, C_NG, C_NGE, C_NL, C_NLE, C_NO, C_NP,
-    C_NS, C_NZ, C_O, C_P, C_PE, C_PO, C_S, C_Z,
-    C_none = -1
-};
-
 /*
  * token flags
  */
@@ -539,17 +532,6 @@ enum ccode { /* condition code names */
 #define TFLAG_BRDCAST   (1 << 2)    /* broadcasting decorator */
 #define TFLAG_WARN	(1 << 3)    /* warning only, treat as ID */
 #define TFLAG_DUP	(1 << 4)    /* valid ID but also has context-specific use */
-
-static inline uint8_t get_cond_opcode(enum ccode c)
-{
-    static const uint8_t ccode_opcodes[] = {
-        0x7, 0x3, 0x2, 0x6, 0x2, 0x4, 0xf, 0xd, 0xc, 0xe, 0x6, 0x2,
-        0x3, 0x7, 0x3, 0x5, 0xe, 0xc, 0xd, 0xf, 0x1, 0xb, 0x9, 0x5,
-        0x0, 0xa, 0xa, 0xb, 0x8, 0x4
-    };
-
-	return ccode_opcodes[(int)c];
-}
 
 /*
  * REX flags
@@ -766,7 +748,6 @@ typedef struct insn { /* an instruction itself */
     char            *label;                 /* the label defined, or NULL */
     int             prefixes[MAXPREFIX];    /* instruction prefixes, if any */
     enum opcode     opcode;                 /* the opcode - not just the string */
-    enum ccode      condition;              /* the condition code, if Jcc/SETcc */
     int             operands;               /* how many operands? 0-3 (more if db et al) */
     int             addr_size;              /* address size */
     operand         oprs[MAX_OPERANDS];     /* the operands, defined as above */

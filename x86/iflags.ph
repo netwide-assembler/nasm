@@ -98,8 +98,10 @@ if_("AMXTILE",           "AMX tile configuration instructions");
 if_("AMXBF16",           "AMX bfloat16 multiplication");
 if_("AMXINT8",           "AMX 8-bit integer multiplication");
 if_("FRED",              "Flexible Return and Exception Delivery (FRED)");
+if_("RAOINT",		 "Remote atomic operations (RAO-INT)");
+if_("UINTR",		 "User interrupts");
 
-# Put these last [hpa: why?]
+# Put these last to minimize their relevance
 if_("OBSOLETE",          "Instruction removed from architecture");
 if_("NEVER",             "Instruction never implemented");
 if_("NOP",               "Instruction is always a (nonintentional) NOP");

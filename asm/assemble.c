@@ -146,8 +146,6 @@
  * \325             nohi                        instruction which always uses spl/bpl/sil/dil
  * \326             nof3                        instruction not valid with 0xF3 REP prefix.  Hint for
                                                 disassembler only; for SSE instructions.
- * \330                                         a literal byte follows in the code stream, to be added
- *                                              to the condition code value of the instruction.
  * \331             norep                       instruction not valid with REP prefix.  Hint for
  *                                              disassembler only; for SSE instructions.
  * \332             f2i                         REP prefix (0xF2 byte) used as opcode extension.
@@ -1472,10 +1470,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0326:
             break;
 
-        case 0330:
-            codes++, length++;
-            break;
-
         case 0331:
             break;
 
@@ -2186,10 +2180,6 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         case 0326:
-            break;
-
-        case 0330:
-            out_rawbyte(data, *codes++ ^ get_cond_opcode(ins->condition));
             break;
 
         case 0331:
