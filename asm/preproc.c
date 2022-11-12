@@ -112,6 +112,13 @@ typedef struct Include Include;
 typedef struct Cond Cond;
 
 /*
+ * Map of preprocessor directives that are also preprocessor functions;
+ * if they are at the beginning of a line they are a function if and
+ * only if they are followed by a (
+ */
+static bool pp_op_may_be_function[PP_count];
+
+/*
  * This is the internal form which we break input lines up into.
  * Typically stored in linked lists.
  *
@@ -3757,7 +3764,7 @@ static int do_directive(Token *tline, Token **output)
     }
 
     switch (op) {
-    case PP_INVALID:
+    case PP_invalid:
         return NO_DIRECTIVE_FOUND;
 
     case PP_LINE:
@@ -3826,6 +3833,11 @@ static int do_directive(Token *tline, Token **output)
                 }
             }
         }
+    }
+
+    if (pp_op_may_be_function[op]) {
+        if (tok_is(skip_white(tline->next), '('))
+            return NO_DIRECTIVE_FOUND; /* Expand as a preprocessor function */
     }
 
     switch (op) {
@@ -7001,6 +7013,11 @@ static void pp_add_magic_stdmac(void)
             }
         }
         define_smacro(m->name, m->casesense, NULL, &tmpl);
+        if (m->name[0] == '%') {
+            enum preproc_token op = pp_token_hash(m->name);
+            if (op != PP_invalid)
+                pp_op_may_be_function[op] = true;
+        }
     }
 
     /* %is...() macro functions */

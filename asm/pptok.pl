@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2022 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -132,7 +132,8 @@ if ($what eq 'h') {
 	}
 	$n++;
     }
-    printf OUT "    %-24s = %3d\n", 'PP_INVALID', -1;
+    printf OUT "    %-24s = %3d,\n", 'PP_count', $n;
+    printf OUT "    %-24s = %3d\n", 'PP_invalid', -1;
     print OUT "};\n";
     print OUT "\n";
 
@@ -257,11 +258,11 @@ if ($what eq 'c') {
     print  OUT "\n";
     print  OUT "    ix = hashdata[k1] + hashdata[k2];\n";
     printf OUT "    if (ix >= %d)\n", scalar(@pptok);
-    print OUT  "        return PP_INVALID;\n";
+    print OUT  "        return PP_invalid;\n";
     print OUT  "\n";
 
     print OUT  "    if (!pp_directives[ix] || nasm_stricmp(pp_directives[ix], token))\n";
-    print OUT  "        return PP_INVALID;\n";
+    print OUT  "        return PP_invalid;\n";
     print OUT  "\n";
     print OUT  "    return ix;\n";
     print OUT  "}\n";
@@ -315,11 +316,11 @@ if ($what eq 'c') {
     # Comparing to pptok here is correct, because this hash produces
     # an enum preproc_token value directly.
     printf OUT "    if (ix >= %d)\n", scalar(@pptok);
-    print OUT  "        return PP_INVALID;\n";
+    print OUT  "        return PP_invalid;\n";
     print OUT  "\n";
 
     print OUT  "    if (!pp_directives[ix] || nasm_stricmp(pp_directives[ix]+1, token))\n";
-    print OUT  "        return PP_INVALID;\n";
+    print OUT  "        return PP_invalid;\n";
     print OUT  "\n";
     print OUT  "    return ix;\n";
     print OUT  "}\n";
