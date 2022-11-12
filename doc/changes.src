@@ -20,6 +20,10 @@ filename information anyway.
 \b Fix handling of MASM-syntax reserved memory (e.g. \c{dw ?}) when
 used in structure definitions.
 
+\b The preprocessor now supports functions, which can be less verbose
+and more convenient than the equivalent code implemented using
+directives. See \k{ppfunc}.
+
 
 \S{cl-2.15.06} Version 2.15.06
 
