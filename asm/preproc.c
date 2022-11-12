@@ -3567,6 +3567,47 @@ static void assign_smacro(const char *mname, bool casesense,
     }
 }
 
+/*
+ * Implement string concatenation as used by the %strcat directive
+ * and function.
+ */
+static Token *pp_strcat(Token *tline, const char *dname)
+{
+
+    size_t len;
+    Token *t;
+    char *q, *qbuf;
+
+    len = 0;
+    list_for_each(t, tline) {
+        switch (t->type) {
+        case TOKEN_WHITESPACE:
+        case TOKEN_COMMA:
+            break;
+        case TOKEN_STR:
+            unquote_token(t);
+            len += t->len;
+            break;
+        default:
+            nasm_nonfatal("non-string passed to `%s': %s", dname,
+                          tok_text(t));
+            free_tlist(tline);
+            return NULL;
+        }
+    }
+
+    q = qbuf = nasm_malloc(len+1);
+    list_for_each(t, tline) {
+        if (t->type == TOKEN_INTERNAL_STR)
+            q = mempcpy(q, tok_text(t), t->len);
+    }
+    *q = '\0';
+
+    return make_tok_qstr_len(NULL, qbuf, len);
+    nasm_free(qbuf);
+    return t;
+}
+
 /**
  * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
@@ -3588,7 +3629,7 @@ static int do_directive(Token *tline, Token **output)
     bool casesense;
     int offset;
     const char *p;
-    char *q, *qbuf;
+    char *q;
     const char *found_path;
     const char *mname;
     struct ppscan pps;
@@ -3601,7 +3642,6 @@ static int do_directive(Token *tline, Token **output)
     struct tokenval tokval;
     expr *evalresult;
     int64_t count;
-    size_t len;
     errflags severity;
     const char *dname;          /* Name of directive, for messages */
 
@@ -4717,38 +4757,12 @@ issue_error:
         tline = expand_smacro(tline->next);
         last->next = NULL;
 
-        len = 0;
-        list_for_each(t, tline) {
-            switch (t->type) {
-            case TOKEN_WHITESPACE:
-            case TOKEN_COMMA:
-                break;
-            case TOKEN_STR:
-		unquote_token(t);
-                len += t->len;
-                break;
-            default:
-                nasm_nonfatal("non-string passed to `%s': %s", dname,
-			      tok_text(t));
-                free_tlist(tline);
-                goto done;
-            }
-        }
-
-        q = qbuf = nasm_malloc(len+1);
-        list_for_each(t, tline) {
-            if (t->type == TOKEN_INTERNAL_STR)
-                q = mempcpy(q, tok_text(t), t->len);
-        }
-        *q = '\0';
-
+        macro_start = pp_strcat(tline, dname);
         /*
          * We now have a macro name, an implicit parameter count of
-         * zero, and a numeric token to use as an expansion. Create
+         * zero, and a string token to use as an expansion. Create
          * and store an SMacro.
          */
-        macro_start = make_tok_qstr_len(NULL, qbuf, len);
-        nasm_free(qbuf);
         define_smacro(mname, casesense, macro_start, NULL);
         free_tlist(tline);
         break;
@@ -6838,6 +6852,9 @@ stdmac_is(const SMacro *s, Token **params, int nparams)
 /*
  * Join all expanded macro arguments with commas, e.g. %eval().
  * Remember that this needs to output the tokens in reverse order.
+ *
+ * This can also be used when only single argument is already ready
+ * to be emitted, e.g. %str().
  */
 static Token *
 stdmac_join(const SMacro *s, Token **params, int nparams)
@@ -6865,6 +6882,14 @@ stdmac_join(const SMacro *s, Token **params, int nparams)
     return tline;
 }
 
+/* %strcat() function */
+static Token *
+stdmac_strcat(const SMacro *s, Token **params, int nparams)
+{
+    nasm_assert(nparams == 1);
+    return pp_strcat(expand_smacro_noreset(params[0]), s->name);
+}
+
 /* Add magic standard macros */
 struct magic_macros {
     const char *name;
@@ -6881,6 +6906,8 @@ static void pp_add_magic_stdmac(void)
         { "__?BITS?__", true, 0, 0, stdmac_bits },
         { "__?PTR?__",  true, 0, 0, stdmac_ptr },
         { "%eval",      false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
+        { "%str",       false, 1, SPARM_GREEDY|SPARM_STR, stdmac_join },
+        { "%strcat",    false, 1, SPARM_GREEDY, stdmac_strcat },
         { NULL, false, 0, 0, NULL }
     };
     const struct magic_macros *m;
