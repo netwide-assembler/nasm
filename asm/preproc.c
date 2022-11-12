@@ -6907,18 +6907,52 @@ stdmac_substr(const SMacro *s, Token **params, int nparams)
     return pp_substr(expand_smacro_noreset(params[0]), s->name);
 }
 
+/* Expand a the argument and enforce it being a single quoted string */
+static Token *expand_to_string(Token *tlist, const char *dname)
+{
+    Token *t = zap_white(expand_smacro_noreset(tlist));
+
+    if (!tok_is(t, TOKEN_STR)) {
+        nasm_nonfatal("`%s' requires string as parameter", dname);
+        return NULL;
+    }
+
+    t->next = zap_white(t->next);
+    if (t->next) {
+        nasm_nonfatal("`%s' requires exactly one string as parameter", dname);
+        return NULL;
+    }
+
+    return t;
+}
+
+/* %strlen() function */
+static Token *
+stdmac_strlen(const SMacro *s, Token **params, int nparams)
+{
+    Token *t;
+
+    (void)nparams;
+
+    t = expand_to_string(params[0], s->name);
+    if (!t)
+        return NULL;
+
+    unquote_token(t);
+    return make_tok_num(NULL, t->len);
+}
+
 /* %tok() function */
 static Token *
 stdmac_tok(const SMacro *s, Token **params, int nparams)
 {
-    Token *t = expand_smacro_noreset(params[0]);
+    Token *t;
 
     (void)nparams;
 
-    if (!tok_is(t, TOKEN_STR)) {
-        nasm_nonfatal("`%s' requires string as parameter", s->name);
+    t = expand_to_string(params[0], s->name);
+    if (!t)
         return NULL;
-    }
 
     return reverse_tokens(tokenize(unquote_token_cstr(t)));
 }
@@ -6941,6 +6975,7 @@ static void pp_add_magic_stdmac(void)
         { "%eval",      false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
         { "%str",       false, 1, SPARM_GREEDY|SPARM_STR, stdmac_join },
         { "%strcat",    false, 1, SPARM_GREEDY, stdmac_strcat },
+        { "%strlen",    false, 1, 0, stdmac_strlen },
         { "%substr",    false, 1, SPARM_GREEDY, stdmac_substr },
         { "%tok",       false, 1, 0, stdmac_tok },
         { NULL, false, 0, 0, NULL }
