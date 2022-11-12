@@ -1636,10 +1636,12 @@ XRSTORS64	mem				[m:	o64 np 0f c7 /3]			LONG,FUTURE
 ; These instructions are not SSE-specific; they are
 ;# Generic memory operations
 ; and work even if CR4.OSFXFR == 0
-PREFETCHNTA	mem8				[m:	0f 18 /0]				KATMAI
-PREFETCHT0	mem8				[m:	0f 18 /1]				KATMAI
-PREFETCHT1	mem8				[m:	0f 18 /2]				KATMAI
-PREFETCHT2	mem8				[m:	0f 18 /3]				KATMAI
+PREFETCHNTA	mem8				[m:	0f 18 /0]				KATMAI,SB
+PREFETCHT0	mem8				[m:	0f 18 /1]				KATMAI,SB
+PREFETCHT1	mem8				[m:	0f 18 /2]				KATMAI,SB
+PREFETCHT2	mem8				[m:	0f 18 /3]				KATMAI,SB
+PREFETCHIT0	mem8				[m:	0f 18 /7]				FUTURE,PREFETCHI,SB
+PREFETCHIT1	mem8				[m:	0f 18 /6]				FUTURE,PREFETCHI,SB
 SFENCE		void				[	np 0f ae f8]				KATMAI
 
 ;# New MMX instructions introduced in Katmai
@@ -6304,6 +6306,31 @@ VSUBPH		ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.np.map5.w0 5c /
 VSUBPH		zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.np.map5.w0 5c /r]	AVX512FP16,FUTURE
 VSUBSH		xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.f3.map5.w0 5c /r]	AVX512FP16,FUTURE
 VUCOMISH	xmmreg,xmmrm16|sae			[rm:t1s: evex.lig.np.map5.w0 2e /r]	AVX512FP16,FUTURE
+
+;# RAO-INT weakly ordered atomic operations
+AADD	   	mem32,reg32				[mr:	norexw np 0f 38 fc /r	]	RAOINT,FUTURE,SD
+AADD	   	mem64,reg64				[mr:	o64 np 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
+AAND	   	mem32,reg32				[mr:	norexw 66 0f 38 fc /r	]	RAOINT,FUTURE,SD
+AAND	   	mem64,reg64				[mr:	o64 66 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
+AXOR	   	mem32,reg32				[mr:	norexw f3 0f 38 fc /r	]	RAOINT,FUTURE,SD
+AXOR	   	mem64,reg64				[mr:	o64 f3 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
+
+;# User interrupts
+CLUI		void					[	f3 0f 01 ee		]	UINTR,FUTURE,LONG
+SENDUIPI	reg64					[m:	o64nw f3 0f c7 /6	]	UINTR,FUTURE,LONG
+STUI		void					[	f3 0f 01 ef		]	UINTR,FUTURE,LONG
+TESTUI		void					[	f3 0f 01 ed		]	UINTR,FUTURE,LONG
+UIRET		void					[	f3 0f 01 ec		]	UINTR,FUTURE,LONG
+
+
+;# Compare, exchange and add conditional
+CMPccXADD       mem32,reg32,reg32			[mrv:	vex.128.66.0f38.w0 e0+c /r]	CMPCCXADD,FUTURE,LONG,SD
+CMPccXADD       mem64,reg64,reg64			[mrv:	vex.128.66.0f38.w1 e0+c /r]	CMPCCXADD,FUTURE,LONG,SQ
+
+;# WRMSRNS and MSRLIST instructions
+WRMSRNS		void					[	np 0f 01 c6		]	WRMSRNS,FUTURE,PRIV,LONG
+RDMSRLIST	void					[	f2 0f 01 c6		]	MSRLIST,FUTURE,PRIV,LONG
+WRMSRLIST	void					[	f3 0f 01 c6		]	MSRLIST,FUTURE,PRIV,LONG
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file

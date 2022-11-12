@@ -100,6 +100,10 @@ if_("AMXINT8",           "AMX 8-bit integer multiplication");
 if_("FRED",              "Flexible Return and Exception Delivery (FRED)");
 if_("RAOINT",		 "Remote atomic operations (RAO-INT)");
 if_("UINTR",		 "User interrupts");
+if_("CMPCCXADD",         "CMPccXADD instructions");
+if_("PREFETCHI",         "PREFETCHI0 and PREFETCHI1");
+if_("WRMSRNS",		 "WRMSRNS");
+if_("MSRLIST",           "RDMSRLIST and WRMSRLIST");
 
 # Put these last to minimize their relevance
 if_("OBSOLETE",          "Instruction removed from architecture");
