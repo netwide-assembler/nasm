@@ -4780,10 +4780,7 @@ issue_error:
         tline = expand_smacro(tline->next);
         last->next = NULL;
 
-        if (tline) /* skip expanded id */
-            t = tline->next;
-
-        t = skip_white(t);
+        t = skip_white(tline);
 
         /* t should now point to the string */
         if (!tok_is(t, TOKEN_STR)) {
