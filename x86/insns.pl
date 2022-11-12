@@ -131,6 +131,8 @@ my %conds = ( %condd,
 	      'nbe' =>  7, 'ne'  =>  5, 'nge' => 12,  'nle' => 15,
 	      'np'  => 11, 'p'   => 10 );
 
+my @conds = sort keys(%conds);
+
 # Generate conditional form patterns if applicable
 sub conditional_forms(@) {
     my @field_list = ();
@@ -138,6 +140,7 @@ sub conditional_forms(@) {
     foreach my $fields (@_) {
 	# This is a case sensitive match!
 	if ($fields->[0] !~ /cc/) {
+	    # Not a conditional instruction pattern
 	    push(@field_list, $fields);
 	    next;
 	}
@@ -147,7 +150,7 @@ sub conditional_forms(@) {
 	    next;
 	}
 
-	foreach my $cc (keys(%conds)) {
+	foreach my $cc (@conds) {
 	    my @ff = @$fields;
 
 	    $ff[0] =~ s/cc/\U$cc/;
@@ -156,8 +159,8 @@ sub conditional_forms(@) {
 		warn "$fname:$line: invalid conditional encoding";
 		next;
 	    }
-
 	    $ff[2] = $1.sprintf('%02x', hex($2)^$conds{$cc}).$3;
+
 	    unless (defined($condd{$cc}) || $ff[3] =~ /\bND\b/) {
 		$ff[3] .= ',ND';
 	    }
