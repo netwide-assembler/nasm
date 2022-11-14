@@ -836,7 +836,8 @@ static const char *pp_getenv(const Token *t, bool warn)
     v = getenv(txt);
     if (warn && !v) {
 	/*!
-	 *!environment [on] nonexistent environment variable
+	 *!pp-environment [on] nonexistent environment variable
+         *!=environment
 	 *!  warns if a nonexistent environment variable
 	 *!  is accessed using the \c{%!} preprocessor
 	 *!  construct (see \k{getenv}.)  Such environment
@@ -845,7 +846,8 @@ static const char *pp_getenv(const Token *t, bool warn)
 	 *!  earlier versions of NASM would treat this as
 	 *!  an error.
 	 */
-	nasm_warn(WARN_ENVIRONMENT, "nonexistent environment variable `%s'", txt);
+	nasm_warn(WARN_PP_ENVIRONMENT,
+                  "nonexistent environment variable `%s'", txt);
 	v = "";
     }
 
@@ -1349,8 +1351,21 @@ static Token *tokenize(const char *line)
                      * nasm_skip_string()
                      */
                     if (!*p) {
-                        nasm_warn(WARN_OTHER, "unterminated %%%c construct",
-                                  firstchar);
+                        /*!
+                         *!pp-open-brackets [on] unterminated %[...]
+                         *!  warns that a preprocessor \c{%[...]} construct
+                         *!  lacks the terminating \c{]} character.
+                         */
+                        /*!
+                         *!pp-open-braces [on] unterminated %{...}
+                         *!  warns that a preprocessor parameter
+                         *!  enclosed in braces \c{%\{...\}} lacks the
+                         *!  terminating \c{\}} character.
+                         */
+                        nasm_warn(firstchar == '}' ?
+                                  WARN_PP_OPEN_BRACES : WARN_PP_OPEN_BRACKETS,
+                                  "unterminated %%%c...%c construct (missing `%c')",
+                                  firstchar, endchar, endchar);
                         break;
                     }
                     p++;
@@ -1406,7 +1421,14 @@ static Token *tokenize(const char *line)
             if (toklen < 2) {
                 type = '%';     /* % operator */
                 if (unlikely(*line == '{')) {
-                    nasm_warn(WARN_OTHER, "empty %%{} construct treated like the %% arithmetric operator");
+                    /*!
+                     *!pp-empty-braces [on] empty %{} construct
+                     *!  warns that an empty \c{%\{\}} was encountered.
+                     *!  This expands to a single \c{%} character, which
+                     *!  is normally the \c{%} arithmetic operator.
+                     */
+                    nasm_warn(WARN_PP_EMPTY_BRACES,
+                              "empty %%{} construct expands to the %% operator");
                 }
             } else {
                 char c0 = line[1];
@@ -1499,13 +1521,21 @@ static Token *tokenize(const char *line)
             /*
              * A string token.
              */
+            char quote = *p;
+
             type = TOKEN_STR;
             p = nasm_skip_string(p);
 
             if (*p) {
                 p++;
             } else {
-                nasm_warn(WARN_OTHER, "unterminated string");
+                /*!
+                 *!pp-open-string [on] unterminated string
+                 *!  warns that a quoted string without a closing quotation
+                 *!  mark was encountered during preprocessing.
+                 */
+                nasm_warn(WARN_PP_OPEN_STRING,
+                          "unterminated string (missing `%c')", quote);
                 type = TOKEN_ERRSTR;
             }
         } else if (p[0] == '$' && p[1] == '$') {
@@ -2095,8 +2125,17 @@ static bool pp_get_boolean_option(Token *tline, bool defval)
     if (!evalresult)
         return true;
 
-    if (tokval.t_type)
-        nasm_warn(WARN_OTHER, "trailing garbage after expression ignored");
+    if (tokval.t_type) {
+        /*!
+         *!pp-trailing [on] trailing garbage ignored
+         *!  warns that the preprocessor encountered additional text
+         *!  where no such text was expected. This can
+         *!  sometimes be the result of an incorrectly written expression,
+         *!  or arguments that are inadvertently separated.
+         */
+        nasm_warn(WARN_PP_TRAILING,
+                  "trailing garbage after expression ignored");
+    }
     if (!is_really_simple(evalresult)) {
         nasm_nonfatal("boolean flag expression must be a constant");
         return defval;
@@ -2687,8 +2726,10 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
             }
             mmac = mmac->next;
         }
-        if (tline && tline->next)
-            nasm_warn(WARN_OTHER, "trailing garbage after %%ifmacro ignored");
+        if (tline && tline->next) {
+            nasm_warn(WARN_PP_TRAILING,
+                      "trailing garbage after `%s' ignored", dname);
+        }
         nasm_free(searching.name);
         j = found;
         break;
@@ -2738,8 +2779,9 @@ iftype:
         evalresult = evaluate(ppscan, &pps, &tokval, NULL, true, NULL);
         if (!evalresult)
             return -1;
-        if (tokval.t_type)
-            nasm_warn(WARN_OTHER, "trailing garbage after expression ignored");
+        if (tokval.t_type) {
+            nasm_warn(WARN_PP_TRAILING, "trailing garbage after expression ignored");
+        }
         if (!is_simple(evalresult)) {
             nasm_nonfatal("non-constant value given to `%s'",
                           dname);
@@ -3070,7 +3112,8 @@ static SMacro *define_smacro(const char *mname, bool casesense,
 
         if (casesense ^ smac->casesense) {
             /*
-             *!macro-def-case-single [on] single-line macro defined both case sensitive and insensitive
+             *!pp-macro-def-case-single [on] single-line macro defined both case sensitive and insensitive
+             *!=macro-def-case-single
              *!  warns when a single-line macro is defined both case
              *!  sensitive and case insensitive.
              *!  The new macro
@@ -3081,7 +3124,7 @@ static SMacro *define_smacro(const char *mname, bool casesense,
              *!  insensitive one, the macro call is done with a
              *!  different case.
              */
-            nasm_warn(WARN_MACRO_DEF_CASE_SINGLE, "case %ssensitive definition of macro `%s' will shadow %ssensitive macro `%s'",
+            nasm_warn(WARN_PP_MACRO_DEF_CASE_SINGLE, "case %ssensitive definition of macro `%s' will shadow %ssensitive macro `%s'",
                       casesense ? "" : "in",
                       mname,
                       smac->casesense ? "" : "in",
@@ -3092,7 +3135,8 @@ static SMacro *define_smacro(const char *mname, bool casesense,
              * Most recent versions of NASM considered this an error,
              * so promote this warning to error by default.
              *
-             *!macro-def-param-single [err] single-line macro defined with and without parameters
+             *!pp-macro-def-param-single [err] single-line macro defined with and without parameters
+             *!=macro-def-param-single
              *!  warns if the same single-line macro is defined with and
              *!  without parameters.
              *!  The new macro
@@ -3101,13 +3145,14 @@ static SMacro *define_smacro(const char *mname, bool casesense,
              *!  be re-exposed if the new macro is deleted with
              *!  \c{%undef}.
              */
-            nasm_warn(WARN_MACRO_DEF_PARAM_SINGLE,
+            nasm_warn(WARN_PP_MACRO_DEF_PARAM_SINGLE,
                       "macro `%s' defined both with and without parameters",
                       mname);
             defined = false;
         } else if (smac->nparam < nparam) {
             /*
-             *!macro-def-greedy-single [on] single-line macro
+             *!pp-macro-def-greedy-single [on] single-line macro
+             *!=macro-def-greedy-single
              *!  definition shadows greedy macro warns when a
              *!  single-line macro is defined which would match a
              *!  previously existing greedy definition.  The new macro
@@ -3117,7 +3162,7 @@ static SMacro *define_smacro(const char *mname, bool casesense,
              *!  \c{%undef}, and will be invoked if called with a
              *!  parameter count that does not match the new definition.
              */
-            nasm_warn(WARN_MACRO_DEF_GREEDY_SINGLE,
+            nasm_warn(WARN_PP_MACRO_DEF_GREEDY_SINGLE,
                       "defining macro `%s' shadows previous greedy definition",
                       mname);
             defined = false;
@@ -3280,7 +3325,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
         if (!ppconf.sane_empty_expansion && comma) {
             *comma = NULL;
             def->ndefs--;
-            nasm_warn(WARN_MACRO_PARAMS_LEGACY,
+            nasm_warn(WARN_PP_MACRO_PARAMS_LEGACY,
                       "dropping trailing empty default parameter in definition of multi-line macro `%s'",
                       def->name);
         }
@@ -3293,11 +3338,12 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
     if (def->defaults && def->ndefs > def->nparam_max - def->nparam_min &&
         !def->plus) {
         /*
-         *!macro-defaults [on] macros with more default than optional parameters
+         *!pp-macro-defaults [on] macros with more default than optional parameters
+         *!=macro-defaults
          *!  warns when a macro has more default parameters than optional parameters.
          *!  See \k{mlmacdef} for why might want to disable this warning.
          */
-        nasm_warn(WARN_MACRO_DEFAULTS,
+        nasm_warn(WARN_PP_MACRO_DEFAULTS,
                    "too many default macro parameters in macro `%s'", def->name);
     }
 
@@ -3391,8 +3437,10 @@ get_use_pkg(Token *t, const char *dname, const char **name)
 
     t = t->next;
     t = skip_white(t);
-    if (t)
-        nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored", dname);
+    if (t) {
+        nasm_warn(WARN_PP_TRAILING,
+                  "trailing garbage after `%s' ignored", dname);
+    }
 
     return nasm_find_use_package(id);
 }
@@ -3559,9 +3607,10 @@ static void assign_smacro(const char *mname, bool casesense,
     if (!evalresult)
         return;
 
-    if (tokval.t_type)
-        nasm_warn(WARN_OTHER, "trailing garbage after expression ignored");
-
+    if (tokval.t_type) {
+        nasm_warn(WARN_PP_TRAILING,
+                  "trailing garbage after expression ignored");
+    }
     if (!is_simple(evalresult)) {
         nasm_nonfatal("non-constant value given to `%s'", dname);
     } else {
@@ -4115,8 +4164,10 @@ static int do_directive(Token *tline, Token **output)
         }
 
         t = skip_white(t);
-        if (t)
-            nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored", dname);
+        if (t) {
+            nasm_warn(WARN_PP_TRAILING,
+                      "trailing garbage after `%s' ignored", dname);
+        }
         break;
     }
 
@@ -4128,8 +4179,10 @@ static int do_directive(Token *tline, Token **output)
             nasm_nonfatal("`%s' expects a file name", dname);
             goto done;
         }
-        if (t->next)
-            nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored", dname);
+        if (skip_white(t->next)) {
+            nasm_warn(WARN_PP_TRAILING,
+                      "trailing garbage after `%s' ignored", dname);
+        }
 
         strlist_add(deplist, unquote_token_cstr(t));
         goto done;
@@ -4144,8 +4197,10 @@ static int do_directive(Token *tline, Token **output)
             nasm_nonfatal("`%s' expects a file name", dname);
             goto done;
         }
-        if (t->next)
-            nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored", dname);
+        if (skip_white(t->next)) {
+            nasm_warn(WARN_PP_TRAILING,
+                      "trailing garbage after `%s' ignored", dname);
+        }
         p = unquote_token_cstr(t);
         nasm_new(inc);
         inc->next = istk;
@@ -4218,9 +4273,10 @@ static int do_directive(Token *tline, Token **output)
                 nasm_nonfatal("`%s' expects a context identifier", dname);
                 goto done;
             }
-            if (tline->next)
-                nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored",
+            if (skip_white(tline->next)) {
+                nasm_warn(WARN_PP_TRAILING, "trailing garbage after `%s' ignored",
                            dname);
+            }
             p = tok_text(tline);
         } else {
             p = NULL; /* Anonymous */
@@ -4303,8 +4359,10 @@ issue_error:
         break;
 
     CASE_PP_ELIF:
-        if (!istk->conds)
-            nasm_fatal("`%s': no matching `%%if'", dname);
+        if (!istk->conds) {
+            nasm_nonfatal("`%s': no matching `%%if'", dname);
+            break;
+        }
         switch(istk->conds->state) {
         case COND_IF_TRUE:
             istk->conds->state = COND_DONE;
@@ -4316,8 +4374,14 @@ issue_error:
 
         case COND_ELSE_TRUE:
         case COND_ELSE_FALSE:
-            nasm_warn(WARN_OTHER|ERR_PP_PRECOND,
-                       "`%%elif' after `%%else' ignored");
+            /*!
+             *!pp-else-elif [on] %elif after %else
+             *!  warns that an \c{%%elif}-type directive was encountered
+             *!  after \c[%%else} has already been encounted. As a result, the
+             *!  content of the \c{%%elif} will never be expanded.
+             */
+            nasm_warn(WARN_PP_ELSE_ELIF|ERR_PP_PRECOND,
+                       "`%s' after `%%else', ignoring content", dname);
             istk->conds->state = COND_NEVER;
             break;
 
@@ -4339,10 +4403,12 @@ issue_error:
 
     case PP_ELSE:
         if (tline->next)
-            nasm_warn(WARN_OTHER|ERR_PP_PRECOND,
-                       "trailing garbage after `%%else' ignored");
-        if (!istk->conds)
-	    nasm_fatal("`%%else: no matching `%%if'");
+            nasm_warn(WARN_PP_TRAILING|ERR_PP_PRECOND,
+                      "trailing garbage after `%s' ignored", dname);
+        if (!istk->conds) {
+	    nasm_nonfatal("`%s': no matching `%%if'", dname);
+            break;
+        }
         switch(istk->conds->state) {
         case COND_IF_TRUE:
         case COND_DONE:
@@ -4358,19 +4424,28 @@ issue_error:
 
         case COND_ELSE_TRUE:
         case COND_ELSE_FALSE:
-            nasm_warn(WARN_OTHER|ERR_PP_PRECOND,
-                       "`%%else' after `%%else' ignored.");
+            /*!
+             *!pp-else-else [on] %else after %else
+             *!  warns that a second \c{%else} clause was found for
+             *!  the same \c{%if} statement. The content of this \c{%else}
+             *!  clause will never be expanded.
+             */
+            nasm_warn(WARN_PP_ELSE_ELSE|ERR_PP_PRECOND,
+                      "`%s' after `%%else', ignoring content", dname);
             istk->conds->state = COND_NEVER;
             break;
         }
         break;
 
     case PP_ENDIF:
-        if (tline->next)
-            nasm_warn(WARN_OTHER|ERR_PP_PRECOND,
-                       "trailing garbage after `%%endif' ignored");
-        if (!istk->conds)
-            nasm_fatal("`%%endif': no matching `%%if'");
+        if (tline->next) {
+            nasm_warn(WARN_PP_TRAILING|ERR_PP_PRECOND,
+                      "trailing garbage after `%s' ignored", dname);
+        }
+        if (!istk->conds) {
+            nasm_nonfatal("`%s': no matching `%%if'", dname);
+            break;
+        }
         cond = istk->conds;
         istk->conds = cond->next;
         nasm_free(cond);
@@ -4410,7 +4485,14 @@ issue_error:
                  || defining->plus)
                 && (defining->nparam_min <= mmac->nparam_max
                     || mmac->plus)) {
-                nasm_warn(WARN_OTHER, "redefining multi-line macro `%s'",
+                /*!
+                 *!pp-macro-redef-multi [on] redefining multi-line macro
+                 *!  warns that a multi-line macro is being redefined,
+                 *!  without first removing the old definition with
+                 *!  \c{%unmacro}.
+                 */
+                nasm_warn(WARN_PP_MACRO_REDEF_MULTI,
+                          "redefining multi-line macro `%s'",
                            defining->name);
                 break;
             }
@@ -4511,7 +4593,7 @@ issue_error:
             tline = tline->next;
         if (!tline->next) {
             free_tlist(origline);
-            nasm_nonfatal("`%%rotate' missing rotate count");
+            nasm_nonfatal("`%s' missing rotate count", dname);
             return DIRECTIVE_FOUND;
         }
         t = expand_smacro(tline->next);
@@ -4524,17 +4606,19 @@ issue_error:
         free_tlist(tline);
         if (!evalresult)
             return DIRECTIVE_FOUND;
-        if (tokval.t_type)
-            nasm_warn(WARN_OTHER, "trailing garbage after expression ignored");
+        if (tokval.t_type) {
+            nasm_warn(WARN_PP_TRAILING,
+                      "trailing garbage after expression ignored");
+        }
         if (!is_simple(evalresult)) {
-            nasm_nonfatal("non-constant value given to `%%rotate'");
+            nasm_nonfatal("non-constant value given to `%s'", dname);
             return DIRECTIVE_FOUND;
         }
         mmac = istk->mstk.mmac;
         if (!mmac) {
-            nasm_nonfatal("`%%rotate' invoked outside a macro call");
+            nasm_nonfatal("`%s' invoked outside a macro call", dname);;
         } else if (mmac->nparam == 0) {
-            nasm_nonfatal("`%%rotate' invoked within macro without parameters");
+            nasm_nonfatal("`%s' invoked within macro without parameters", dname);
         } else {
             int rotate = mmac->rotate + reloc_value(evalresult);
 
@@ -4569,30 +4653,31 @@ issue_error:
             if (!evalresult)
                 goto done;
             if (tokval.t_type)
-                nasm_warn(WARN_OTHER, "trailing garbage after expression ignored");
+                nasm_warn(WARN_PP_TRAILING, "trailing garbage after expression ignored");
             if (!is_simple(evalresult)) {
-                nasm_nonfatal("non-constant value given to `%%rep'");
+                nasm_nonfatal("non-constant value given to `%s'", dname);
                 goto done;
             }
             count = reloc_value(evalresult);
             if (count > nasm_limit[LIMIT_REP]) {
-                nasm_nonfatal("`%%rep' count %"PRId64" exceeds limit (currently %"PRId64")",
-                              count, nasm_limit[LIMIT_REP]);
+                nasm_nonfatal("`%s' count %"PRId64" exceeds limit (currently %"PRId64")",
+                              dname, count, nasm_limit[LIMIT_REP]);
                 count = 0;
             } else if (count < 0) {
                 /*!
-                 *!negative-rep [on] regative %rep count
-                 *!  warns about negative counts given to the \c{%rep}
+                 *!pp-rep-negative [on] regative %rep count
+                 *!=negative-rep
+                 *!  warns about a negative count given to the \c{%rep}
                  *!  preprocessor directive.
                  */
-                nasm_warn(ERR_PASS2|WARN_NEGATIVE_REP,
-                           "negative `%%rep' count: %"PRId64, count);
+                nasm_warn(ERR_PASS2|WARN_PP_REP_NEGATIVE,
+                          "negative `%s' count: %"PRId64, dname, count);
                 count = 0;
             } else {
                 count++;
             }
         } else {
-            nasm_nonfatal("`%%rep' expects a repeat count");
+            nasm_nonfatal("`%s' expects a repeat count", dname);
             count = 0;
         }
         tmp_defining = defining;
@@ -4685,7 +4770,7 @@ issue_error:
             tline = tline->next;
             tline = skip_white(tline);
             if (tline && tline->type) {
-                nasm_warn(WARN_OTHER,
+                nasm_warn(WARN_PP_TRAILING,
                           "trailing garbage after aliasing identifier ignored");
             }
             free_tlist(tt);
@@ -4717,7 +4802,8 @@ issue_error:
         if (!(mname = get_id(&tline, dname)))
             goto done;
         if (tline->next)
-            nasm_warn(WARN_OTHER, "trailing garbage after macro name ignored");
+            nasm_warn(WARN_PP_TRAILING,
+                      "trailing garbage after macro name ignored");
 
         undef_smacro(mname, op == PP_UNDEFALIAS);
         break;
@@ -4792,7 +4878,8 @@ issue_error:
             goto done;
         }
         if (t->next)
-            nasm_warn(WARN_OTHER, "trailing garbage after `%s' ignored", dname);
+            nasm_warn(WARN_PP_TRAILING,
+                      "trailing garbage after `%s' ignored", dname);
 
 	p = unquote_token_cstr(t);
 
@@ -5457,7 +5544,7 @@ static Token *expand_smacro_noreset(Token * tline);
 static SMacro *expand_one_smacro(Token ***tpp)
 {
     Token **params = NULL;
-    const char *mname;
+    const char *mname, *mtype;
     Token *mstart = **tpp;
     Token *tline  = mstart;
     SMacro *head, *m;
@@ -5590,11 +5677,12 @@ static SMacro *expand_one_smacro(Token ***tpp)
         while (1) {
             if (!m) {
                 /*!
-                 *!macro-params-single [on] single-line macro calls with wrong parameter count
+                 *!pp-macro-params-single [on] single-line macro calls with wrong parameter count
+                 *!=macro-params-single
                  *!  warns about \i{single-line macros} being invoked
                  *!  with the wrong number of parameters.
                  */
-                nasm_warn(WARN_MACRO_PARAMS_SINGLE|ERR_HOLD,
+                nasm_warn(WARN_PP_MACRO_PARAMS_SINGLE|ERR_HOLD,
                     "single-line macro `%s' exists, "
                     "but not taking %d parameter%s",
                     mname, nparam, (nparam == 1) ? "" : "s");
@@ -5616,6 +5704,9 @@ static SMacro *expand_one_smacro(Token ***tpp)
 
     /* Expand the macro */
     m->in_progress++;
+
+    /* Is it a macro or a preprocessor function? Used for diagnostics. */
+    mtype = m->name[0] == '%' ? "function" : "macro";
 
     if (nparam) {
         /* Extract parameters */
@@ -5642,7 +5733,8 @@ static SMacro *expand_one_smacro(Token ***tpp)
             tline = tline->next;
 
             if (!tline)
-                nasm_nonfatal("macro call expects terminating `)'");
+                nasm_nonfatal("%s `%s' call expects terminating `)'",
+                              mtype, m->name);
 
             skip = false;
 
@@ -5749,9 +5841,11 @@ static SMacro *expand_one_smacro(Token ***tpp)
                 if (!evalresult) {
                     /* Nothing meaningful to do */
                 } else if (tokval.t_type) {
-                    nasm_nonfatal("invalid expression in parameter %d of macro `%s'", i, m->name);
+                    nasm_nonfatal("invalid expression in parameter %d of %s `%s'",
+                                  i, mtype, m->name);
                 } else if (!is_simple(evalresult)) {
-                    nasm_nonfatal("non-constant expression in parameter %d of macro `%s'", i, m->name);
+                    nasm_nonfatal("non-constant expression in parameter %d of %s `%s'",
+                                  i, mtype, m->name);
                 } else {
                     params[i] = make_tok_num(NULL, reloc_value(evalresult));
                 }
@@ -6069,6 +6163,7 @@ static MMacro *use_mmacro(MMacro *m, int *nparamp, Token ***paramsp)
      */
     if (m->in_progress > m->max_depth) {
         if (m->max_depth > 0) {
+            /* Document this properly when recursive mmacros re-implemented */
             nasm_warn(WARN_OTHER, "reached maximum recursion depth of %i",
                       m->max_depth);
         }
@@ -6233,7 +6328,8 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
      *
      * %pragma preproc sane_empty_expansion yes
      *
-     *!macro-params-legacy [on] improperly calling multi-line macro for legacy support
+     *!pp-macro-params-legacy [on] improperly calling multi-line macro for legacy support
+     *!=macro-params-legacy
      *!  warns about \i{multi-line macros} being invoked
      *!  with the wrong number of parameters, but for bug-compatibility
      *!  with NASM versions older than 2.15, NASM tried to fix up the
@@ -6298,11 +6394,11 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
         if (found) {
             if (raw_nparam < found->nparam_min ||
                 (raw_nparam > found->nparam_max && !found->plus)) {
-                nasm_warn(WARN_MACRO_PARAMS_LEGACY,
+                nasm_warn(WARN_PP_MACRO_PARAMS_LEGACY,
                           "improperly calling multi-line macro `%s' with %d parameters",
                           found->name, raw_nparam);
             } else if (comma) {
-                nasm_warn(WARN_MACRO_PARAMS_LEGACY,
+                nasm_warn(WARN_PP_MACRO_PARAMS_LEGACY,
                           "dropping trailing empty parameter in call to multi-line macro `%s'", found->name);
             }
         }
@@ -6312,7 +6408,8 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
      * After all that, we didn't find one with the right number of
      * parameters. Issue a warning, and fail to expand the macro.
      *!
-     *!macro-params-multi [on] multi-line macro calls with wrong parameter count
+     *!pp-macro-params-multi [on] multi-line macro calls with wrong parameter count
+     *!=macro-params-multi
      *!  warns about \i{multi-line macros} being invoked
      *!  with the wrong number of parameters. See \k{mlmacover} for an
      *!  example of why you might want to disable this warning.
@@ -6320,7 +6417,7 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
     if (found)
         return found;
 
-    nasm_warn(WARN_MACRO_PARAMS_MULTI,
+    nasm_warn(WARN_PP_MACRO_PARAMS_MULTI,
                "multi-line macro `%s' exists, but not taking %d parameter%s",
               finding, nparam, (nparam == 1) ? "" : "s");
     nasm_free(*paramsp);
@@ -6999,16 +7096,39 @@ stdmac_cond_sel(const SMacro *s, Token **params, int nparams)
      * params[0] will have been generated by make_tok_num.
      */
     which = get_tok_num(params[0], &err);
-    if (err)
-        return NULL;            /* Nothing to expand */
+    if (err) {
+        /*
+         * Not a valid number; an error message will already have
+         * been generated by expand_one_smacro().
+         */
+        return NULL;
+    }
 
     if (s->expandpvt.u) {
         /* Booleanize (for %cond): true -> 1, false -> 2 (else) */
         which = which ? 1 : 2;
+        if (which >= nparams) {
+            /* false, and no else clause */
+            return NULL;
+        }
+    } else {
+            /*!
+             *!pp-sel-range [on] %sel() argument out of range
+             *!  warns that the %sel() preprocessor function was passed
+             *!  a value less than 1 or larger than the number of available
+             *!  arguments.
+             */
+        if (unlikely(which < 1)) {
+            nasm_warn(WARN_PP_SEL_RANGE,
+                      "%s(%"PRId64") is not a valid selector", s->name, which);
+            return NULL;
+        } else if (unlikely(which >= nparams)) {
+            nasm_warn(WARN_PP_SEL_RANGE,
+                      "%s(%"PRId64") exceeds the number of arguments",
+                      s->name, which);
+            return NULL;
+        }
     }
-
-    if (which < 1 || which >= nparams)
-        return NULL;
 
     return new_Token(NULL, tok_smac_param(which), "", 0);
 }

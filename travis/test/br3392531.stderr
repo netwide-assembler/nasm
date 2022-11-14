@@ -3,7 +3,7 @@
 ./travis/test/br3392531.asm:4: error: label or instruction expected at start of line
 ./travis/test/br3392531.asm:5: error: parser: instruction expected
 ./travis/test/br3392531.asm:7: error: `%macro' expects a parameter count
-./travis/test/br3392531.asm:11: warning: unterminated string [-w+other]
+./travis/test/br3392531.asm:11: warning: unterminated string (missing ``') [-w+pp-open-string]
 ./travis/test/br3392531.asm:14: error: parser: instruction expected
 ./travis/test/br3392531.asm:17: error: `%$LRG': context stack is empty
 ./travis/test/br3392531.asm:17: error: `%$LRG': context stack is empty
