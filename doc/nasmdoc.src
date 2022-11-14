@@ -2919,6 +2919,8 @@ expands to nothing.
 \c %define b 2
 \c %xdefine bstr %sel(b,"one","two","three") ; %define bstr "two"
 
+The arguments not selected are never expanded.
+
 
 \S{f_str} \i\c\{%str()} Function
 
