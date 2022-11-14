@@ -2904,9 +2904,9 @@ Being a function, the argument will need to have balanced parentheses
 or be escaped using \c{\{\}}.
 
 \c ; The following lines are all equivalent
-\c %define test 'TEST'
-\c %defstr test TEST
-\c %define test %str(TEST)
+\c %define  test 'TEST'
+\c %defstr  test TEST
+\c %xdefine test %str(TEST)
 
 
 \S{f_strcat} \i\c\{%strcat()} Function
@@ -2915,9 +2915,9 @@ The \c{%strcat()} function concatenates a list of quoted strings, in
 the same way the \i\c{%strcat} directive would, see \k{strcat}.
 
 \c ; The following lines are all equivalent
-\c %define alpha 'Alpha: 12" screen'
-\c %strcat alpha "Alpha: ", '12" screen'
-\c %define alpha %strcat("Alpha: ", '12" screen')
+\c %define  alpha 'Alpha: 12" screen'
+\c %strcat  alpha "Alpha: ", '12" screen'
+\c %xdefine alpha %strcat("Alpha: ", '12" screen')
 
 
 \S{f_strlen} \i\c{%strlen()} Function
@@ -2926,9 +2926,9 @@ The \c{%strlen()} function expands to the length of a quoted string,
 in the same way the \i\c{%strlen} directive would, see \k{strlen}.
 
 \c ; The following lines are all equivalent
-\c %define charcnt 9
-\c %strlen charcnt 'my string'
-\c %define charcnt %strlen('my string')
+\c %define  charcnt 9
+\c %strlen  charcnt 'my string'
+\c %xdefine charcnt %strlen('my string')
 
 
 \S{f_substr} \i\c\{%substr()} Function
@@ -2939,9 +2939,9 @@ that unlike the \c{%substr} directive, a comma is required after the
 string argument.
 
 \c ; The following lines are all equivalent
-\c %define mychar 'yzw'
-\c %substr mychar 'xyzw' 2,-1
-\c %define mychar %substr('xyzw',2,-1)
+\c %define  mychar 'yzw'
+\c %substr  mychar 'xyzw' 2,-1
+\c %xdefine mychar %substr('xyzw',2,-1)
 
 
 \S{f_tok} \i\c{%tok()} function
