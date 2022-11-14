@@ -644,6 +644,7 @@ static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
 static Context *get_ctx(const char *name, const char **namep);
 static Token *make_tok_num(Token *next, int64_t val);
+static int64_t get_tok_num(const Token *t, bool *err);
 static Token *make_tok_qstr(Token *next, const char *str);
 static Token *make_tok_qstr_len(Token *next, const char *str, size_t len);
 static Token *make_tok_char(Token *next, char op);
@@ -3584,6 +3585,7 @@ static Token *pp_strcat(Token *tline, const char *dname)
 
     size_t len;
     Token *t;
+    Token *res = NULL;
     char *q, *qbuf;
 
     len = 0;
@@ -3601,8 +3603,7 @@ static Token *pp_strcat(Token *tline, const char *dname)
         default:
             nasm_nonfatal("non-string passed to `%s': %s", dname,
                           tok_text(t));
-            free_tlist(tline);
-            return NULL;
+            goto err;
         }
     }
 
@@ -3613,9 +3614,11 @@ static Token *pp_strcat(Token *tline, const char *dname)
     }
     *q = '\0';
 
-    return make_tok_qstr_len(NULL, qbuf, len);
+    res = make_tok_qstr_len(NULL, qbuf, len);
     nasm_free(qbuf);
-    return t;
+err:
+    free_tlist(tline);
+    return res;
 }
 
 /*
@@ -3629,6 +3632,7 @@ static Token *pp_substr(Token *tline, const char *dname)
     size_t len;
     struct ppscan pps;
     Token *t;
+    Token *res = NULL;
     expr *evalresult;
     struct tokenval tokval;
 
@@ -3636,7 +3640,7 @@ static Token *pp_substr(Token *tline, const char *dname)
 
     if (!tok_is(t, TOKEN_STR)) {
         nasm_nonfatal("`%s' requires a string as parameter", dname);
-        return NULL;
+        goto err;
     }
 
     pps.tptr = skip_white(t->next);
@@ -3644,17 +3648,17 @@ static Token *pp_substr(Token *tline, const char *dname)
         pps.tptr = skip_white(pps.tptr->next);
     if (!pps.tptr) {
         nasm_nonfatal("`%s' requires a starting index", dname);
-        return NULL;
+        goto err;
     }
 
     pps.ntokens = -1;
     tokval.t_type = TOKEN_INVALID;
     evalresult = evaluate(ppscan, &pps, &tokval, NULL, true, NULL);
     if (!evalresult) {
-        return NULL;
+        goto err;
     } else if (!is_simple(evalresult)) {
         nasm_nonfatal("non-constant value given to `%s'", dname);
-        return NULL;
+        goto err;
     }
     start = evalresult->value - 1;
 
@@ -3665,10 +3669,10 @@ static Token *pp_substr(Token *tline, const char *dname)
         tokval.t_type = TOKEN_INVALID;
         evalresult = evaluate(ppscan, &pps, &tokval, NULL, true, NULL);
         if (!evalresult) {
-            return NULL;
+            goto err;
         } else if (!is_simple(evalresult)) {
             nasm_nonfatal("non-constant value given to `%s'", dname);
-            return NULL;
+            goto err;
         }
         count = evalresult->value;
     }
@@ -3687,7 +3691,10 @@ static Token *pp_substr(Token *tline, const char *dname)
         start = -1, count = 0; /* empty string */
 
     txt = (start < 0) ? "" : tok_text(t) + start;
-    return make_tok_qstr_len(NULL, txt, count);
+    res = make_tok_qstr_len(NULL, txt, count);
+err:
+    free_tlist(tline);
+    return res;
 }
 
 /**
@@ -4850,7 +4857,6 @@ issue_error:
          */
         if (macro_start)
             define_smacro(mname, casesense, macro_start, NULL);
-        free_tlist(tline);
         break;
 
     case PP_SUBSTR:
@@ -4869,7 +4875,6 @@ issue_error:
          */
         if (macro_start)
             define_smacro(mname, casesense, macro_start, NULL);
-        free_tlist(tline);
         break;
 
     case PP_ASSIGN:
@@ -6909,22 +6914,34 @@ stdmac_join(const SMacro *s, Token **params, int nparams)
 static Token *
 stdmac_strcat(const SMacro *s, Token **params, int nparams)
 {
-    nasm_assert(nparams == 1);
-    return pp_strcat(expand_smacro_noreset(params[0]), s->name);
+    Token *tline;
+    (void)nparams;
+
+    tline = params[0];
+    params[0] = NULL;           /* Don't free this later */
+    return pp_strcat(expand_smacro_noreset(tline), s->name);
 }
 
 /* %substr() function */
 static Token *
 stdmac_substr(const SMacro *s, Token **params, int nparams)
 {
-    nasm_assert(nparams == 1);
-    return pp_substr(expand_smacro_noreset(params[0]), s->name);
+    Token *tline;
+    (void)nparams;
+
+    tline = params[0];
+    params[0] = NULL;           /* Don't free this later */
+    return pp_substr(expand_smacro_noreset(tline), s->name);
 }
 
 /* Expand a the argument and enforce it being a single quoted string */
-static Token *expand_to_string(Token *tlist, const char *dname)
+static Token *expand_to_string(Token **tp, const char *dname)
 {
-    Token *t = zap_white(expand_smacro_noreset(tlist));
+    Token *tlist, *t;
+
+    tlist = *tp;
+    *tp = NULL;                 /* Don't free this later */
+    t = zap_white(expand_smacro_noreset(tlist));
 
     if (!tok_is(t, TOKEN_STR)) {
         nasm_nonfatal("`%s' requires string as parameter", dname);
@@ -6948,7 +6965,7 @@ stdmac_strlen(const SMacro *s, Token **params, int nparams)
 
     (void)nparams;
 
-    t = expand_to_string(params[0], s->name);
+    t = expand_to_string(&params[0], s->name);
     if (!t)
         return NULL;
 
@@ -6964,11 +6981,36 @@ stdmac_tok(const SMacro *s, Token **params, int nparams)
 
     (void)nparams;
 
-    t = expand_to_string(params[0], s->name);
+    t = expand_to_string(&params[0], s->name);
     if (!t)
         return NULL;
 
     return reverse_tokens(tokenize(unquote_token_cstr(t)));
+}
+
+/* %cond() or %sel() */
+static Token *
+stdmac_cond_sel(const SMacro *s, Token **params, int nparams)
+{
+    int64_t which;
+    bool err;
+
+    /*
+     * params[0] will have been generated by make_tok_num.
+     */
+    which = get_tok_num(params[0], &err);
+    if (err)
+        return NULL;            /* Nothing to expand */
+
+    if (s->expandpvt.u) {
+        /* Booleanize (for %cond): true -> 1, false -> 2 (else) */
+        which = which ? 1 : 2;
+    }
+
+    if (which < 1 || which >= nparams)
+        return NULL;
+
+    return new_Token(NULL, tok_smac_param(which), "", 0);
 }
 
 /* Add magic standard macros */
@@ -7027,9 +7069,26 @@ static void pp_add_magic_stdmac(void)
         }
     }
 
+    /* %sel() function */
+    tmpl.nparam    = 2;
+    tmpl.recursive = true;
+    tmpl.expand    = stdmac_cond_sel;
+    nasm_newn(tmpl.params, 2);
+    tmpl.params[0].flags = SPARM_EVAL;
+    tmpl.params[1].flags = SPARM_VARADIC;
+    define_smacro("%sel", false, NULL, &tmpl);
+
+    /* %cond() function, a variation on %sel */
+    tmpl.expandpvt.u = 1;         /* Booleanize */
+    for (tmpl.nparam = 2; tmpl.nparam <= 3; tmpl.nparam++) {
+        nasm_newn(tmpl.params, tmpl.nparam);
+        tmpl.params[0].flags = SPARM_EVAL;
+        define_smacro("%cond", false, NULL, &tmpl);
+    }
+
     /* %is...() macro functions */
+    nasm_zero(tmpl);
     tmpl.nparam  = 1;
-    tmpl.varadic = true;
     tmpl.expand  = stdmac_is;
     tmpl.recursive = true;
     name_buf[0]  = '%';
@@ -7642,6 +7701,29 @@ static Token *make_tok_num(Token *next, int64_t val)
         next = make_tok_char(next, '-');
 
     return next;
+}
+
+/*
+ * Do the inverse of make_tok_num(). This only needs to be able
+ * to parse the output of make_tok_num().
+ */
+static int64_t get_tok_num(const Token *t, bool *err)
+{
+    bool minus = false;
+    int64_t v;
+
+    if (tok_is(t, '-')) {
+        minus = true;
+        t = t->next;
+    }
+    if (!tok_is(t, TOKEN_NUM)) {
+        if (err)
+            *err = true;
+        return 0;
+    }
+
+    v = readnum(tok_text(t), err);
+    return minus ? -v : v;
 }
 
 /* Create a quoted string token */

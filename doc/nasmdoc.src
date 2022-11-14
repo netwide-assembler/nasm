@@ -2853,6 +2853,20 @@ arguments, and can be used in any context where single-line macro
 expansion would be performed. Preprocessor functions were introduced
 in NASM 2.16.
 
+\S{f_cond} \i\c{%cond()} Function
+
+The \c{%cond()} function evaluates its first argument as an
+expression, then expands to its second argument if true (nonzero), and
+the third, if present, if false (zero). This is in effect a specialized
+version of the \i\c{%sel()} function; \c{%cond(x,y,z)} is equivalent
+to \c{%sel(2-!(x),y,z)}.
+
+\c %define a 1
+\c %xdefine astr %cond(a,"true","false") ; %define astr "true"
+
+The argument not selected is never expanded.
+
+
 \S{f_eval} \i\c{%eval()} Function
 
 The \c{%eval()} function evaluates its argument as a numeric
@@ -2892,6 +2906,18 @@ argument to the conditional using \c{\{\}}:
 \c %if %isdef(foo) && !%isidn({foo,)})
 \c       db "foo is defined, but not as ')'"
 \c %endif
+
+
+\S{f_sel} \i\c{%sel()} Function
+
+The \c{%sel()} function evaluates its first argument as an
+expression, then expands to its second argument if 1, the third
+argument if 2, and so on. If the value is less than 1 or larger than
+the number of arguments minus one, then the \c{%sel()} function
+expands to nothing.
+
+\c %define b 2
+\c %xdefine bstr %sel(b,"one","two","three") ; %define bstr "two"
 
 
 \S{f_str} \i\c\{%str()} Function
