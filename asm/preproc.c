@@ -104,7 +104,6 @@ static enum preproc_opt ppopt;
 
 typedef struct SMacro SMacro;
 typedef struct MMacro MMacro;
-typedef struct MMacroInvocation MMacroInvocation;
 typedef struct Context Context;
 typedef struct Token Token;
 typedef struct Line Line;
@@ -226,9 +225,10 @@ struct SMacro {
     intorptr expandpvt;
     struct smac_param *params;
     int nparam;
+    int in_progress;
+    bool recursive;
     bool varadic;               /* greedy or supports > nparam arguments */
     bool casesense;
-    bool in_progress;
     bool alias;                 /* This is an alias macro */
 };
 
@@ -3059,10 +3059,10 @@ static SMacro *define_smacro(const char *mname, bool casesense,
                 /* It is an alias macro; follow the alias link */
                 SMacro *s;
 
-                smac->in_progress = true;
+                smac->in_progress++;
                 s = define_smacro(tok_text(smac->expansion), casesense,
                                   expansion, tmpl);
-                smac->in_progress = false;
+                smac->in_progress--;
                 return s;
             }
         }
@@ -3147,6 +3147,7 @@ static SMacro *define_smacro(const char *mname, bool casesense,
     if (tmpl) {
         smac->params     = tmpl->params;
         smac->alias      = tmpl->alias;
+        smac->recursive  = tmpl->recursive;
         if (tmpl->expand) {
             smac->expand    = tmpl->expand;
             smac->expandpvt = tmpl->expandpvt;
@@ -5605,11 +5606,11 @@ static SMacro *expand_one_smacro(Token ***tpp)
         }
     }
 
-    if (m->in_progress)
+    if (m->in_progress && !m->recursive)
         goto not_a_macro;
 
     /* Expand the macro */
-    m->in_progress = true;
+    m->in_progress++;
 
     if (nparam) {
         /* Extract parameters */
@@ -5874,7 +5875,8 @@ static SMacro *expand_one_smacro(Token ***tpp)
     for (t = tline; t && t != tafter; t = t->next)
         *tpp = &t->next;
 
-    m->in_progress = false;
+    /* Expansion complete */
+    m->in_progress--;
 
     /* Don't do this until after expansion or we will clobber mname */
     free_tlist(mstart);
@@ -6997,11 +6999,16 @@ static void pp_add_magic_stdmac(void)
     enum preproc_token pt;
     char name_buf[PP_TOKLEN_MAX+1];
 
-    /* Simple standard magic macros */
+    /*
+     * Simple standard magic macros and functions.
+     * Note that preprocessor functions are allowed to recurse.
+     */
     nasm_zero(tmpl);
     for (m = magic_macros; m->name; m++) {
         tmpl.nparam = m->nparam;
         tmpl.expand = m->func;
+        tmpl.recursive = m->nparam && m->name[0] == '%';
+
         if (m->nparam) {
             int i;
             enum sparmflags flags = m->flags;
@@ -7024,6 +7031,7 @@ static void pp_add_magic_stdmac(void)
     tmpl.nparam  = 1;
     tmpl.varadic = true;
     tmpl.expand  = stdmac_is;
+    tmpl.recursive = true;
     name_buf[0]  = '%';
     name_buf[1]  = 'i';
     name_buf[2]  = 's';
