@@ -7013,6 +7013,16 @@ stdmac_cond_sel(const SMacro *s, Token **params, int nparams)
     return new_Token(NULL, tok_smac_param(which), "", 0);
 }
 
+/* %count() */
+static Token *
+stdmac_count(const SMacro *s, Token **params, int nparams)
+{
+    (void)s;
+    (void)params;
+
+    return make_tok_num(NULL, nparams);
+}
+
 /* Add magic standard macros */
 struct magic_macros {
     const char *name;
@@ -7028,6 +7038,7 @@ static void pp_add_magic_stdmac(void)
         { "__?LINE?__", true, 0, 0, stdmac_line },
         { "__?BITS?__", true, 0, 0, stdmac_bits },
         { "__?PTR?__",  true, 0, 0, stdmac_ptr },
+        { "%count",     false, 1, SPARM_VARADIC, stdmac_count },
         { "%eval",      false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
         { "%str",       false, 1, SPARM_GREEDY|SPARM_STR, stdmac_join },
         { "%strcat",    false, 1, SPARM_GREEDY, stdmac_strcat },
