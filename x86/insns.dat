@@ -6012,14 +6012,14 @@ WRSSD		mem32,reg32			[mr:	o32 0f 38 f6 /r]			CET,FUTURE
 WRSSQ		mem64,reg64			[mr:	o64 0f 38 f6 /r]			CET,FUTURE,LONG
 
 ;# Instructions from ISE doc 319433-040, June 2020
-ENQCMD		reg16,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE
-ENQCMD		reg32,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE,ND
-ENQCMD		reg32,mem512			[rm:	a32 f2 0f 38 f8 /r]			ENQCMD,FUTURE
-ENQCMD		reg64,mem512			[rm:	a64 f2 0f 38 f8 /r]			ENQCMD,FUTURE,LONG
-ENQCMDS		reg16,mem512			[rm:	a16 f3 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV
-ENQCMDS		reg32,mem512			[rm:	a16 f3 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV,ND
-ENQCMDS		reg32,mem512			[rm:	a32 f3 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV
-ENQCMDS		reg64,mem512			[rm:	a64 f3 0f 38 f8 /r]			ENQCMD,FUTURE,PRIV,LONG
+ENQCMD		reg16,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG
+ENQCMD		reg32,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG,ND
+ENQCMD		reg32,mem512			[rm:	a32 f2 0f 38 f8 /r]			ENQCMD,FUTURE,SZ
+ENQCMD		reg64,mem512			[rm:	a64 f2 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,LONG
+ENQCMDS		reg16,mem512			[rm:	a16 f3 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG,PRIV
+ENQCMDS		reg32,mem512			[rm:	a16 f3 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG,PRIV,ND
+ENQCMDS		reg32,mem512			[rm:	a32 f3 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,PRIV
+ENQCMDS		reg64,mem512			[rm:	a64 f3 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,PRIV,LONG
 PCONFIG		void				[	np 0f 01 c5]				PCONFIG,FUTURE,PRIV
 SERIALIZE	void				[	np 0f 01 e8]				SERIALIZE,FUTURE
 WBNOINVD	void				[	f3 0f 09]				WBNOINVD,FUTURE,PRIV
