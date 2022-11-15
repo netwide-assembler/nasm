@@ -107,6 +107,7 @@ if_("MSRLIST",           "RDMSRLIST and WRMSRLIST");
 if_("AVXNECONVERT",	 "AVX exceptionless floating-point conversions");
 if_("AVXVNNIINT8",       "AVX Vector Neural Network 8-bit integer instructions");
 if_("AVXIFMA",           "AVX integer multiply and add");
+if_("HRESET",            "History reset");
 
 # Put these last to minimize their relevance
 if_("OBSOLETE",          "Instruction removed from architecture");

@@ -6358,7 +6358,6 @@ STUI		void					[	f3 0f 01 ef		]	UINTR,FUTURE,LONG
 TESTUI		void					[	f3 0f 01 ed		]	UINTR,FUTURE,LONG
 UIRET		void					[	f3 0f 01 ec		]	UINTR,FUTURE,LONG
 
-
 ;# Compare, exchange and add conditional
 CMPccXADD       mem32,reg32,reg32			[mrv:	vex.128.66.0f38.w0 e0+c /r]	CMPCCXADD,FUTURE,LONG,SD
 CMPccXADD       mem64,reg64,reg64			[mrv:	vex.128.66.0f38.w1 e0+c /r]	CMPCCXADD,FUTURE,LONG,SQ
@@ -6367,6 +6366,10 @@ CMPccXADD       mem64,reg64,reg64			[mrv:	vex.128.66.0f38.w1 e0+c /r]	CMPCCXADD,
 WRMSRNS		void					[	np 0f 01 c6		]	WRMSRNS,FUTURE,PRIV,LONG
 RDMSRLIST	void					[	f2 0f 01 c6		]	MSRLIST,FUTURE,PRIV,LONG
 WRMSRLIST	void					[	f3 0f 01 c6		]	MSRLIST,FUTURE,PRIV,LONG
+
+;# History reset
+HRESET		imm,reg_eax				[i-:	f3 0f 3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB
+HRESET		imm					[i:	f3 0f 3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB,ND
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
