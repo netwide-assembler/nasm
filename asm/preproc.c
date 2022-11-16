@@ -7143,6 +7143,80 @@ stdmac_count(const SMacro *s, Token **params, int nparams)
     return make_tok_num(NULL, nparams);
 }
 
+/* %num() */
+static Token *
+stdmac_num(const SMacro *s, Token **params, int nparams)
+{
+    static const char num_digits[] =
+        "0123456789"
+        "abcdefghijklmnopqrstuvwxyz"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "@_";                   /* Compatible with bash */
+    int64_t parm[3];
+    uint64_t n;
+    int64_t dparm, bparm;
+    int i, nd;
+    unsigned int base;
+    char numstr[256];
+    char * const endstr = numstr + sizeof numstr - 1;
+    const int maxlen = sizeof numstr - 3;
+    const int maxbase = sizeof num_digits - 1;
+    char *p;
+    bool moredigits;
+
+    if (nparams < 1 || nparams > (int)ARRAY_SIZE(parm)) {
+        nasm_nonfatal("invalid number of parameters to %s()", s->name);
+        return NULL;
+    }
+
+    parm[1] = 10;               /* Default base */
+    parm[2] = -1;               /* Default digits */
+
+    for (i = 0; i < nparams; i++) {
+        bool err;
+        parm[i] = get_tok_num(params[i], &err);
+        if (err)
+            return NULL;
+    }
+
+    n      = parm[0];
+    bparm  = parm[1];
+    dparm  = parm[2];
+
+    if (bparm < 2 || bparm > maxbase) {
+        nasm_nonfatal("invalid base %"PRId64" given to %s()",
+                      bparm, s->name);
+        return NULL;
+    }
+
+    base = bparm;
+    
+    if (dparm < -maxlen || dparm > maxlen) {
+        nasm_nonfatal("digit count %"PRId64" specified to %s() too large",
+                      dparm, s->name);
+        moredigits = true;
+        nd = 1;
+    } else if (dparm <= 0) {
+        moredigits = true;
+        nd = -dparm;
+    } else {
+        moredigits = false;
+        nd = dparm;
+    }
+
+    p = endstr;
+    *p = '\0';
+    *--p = '\'';
+
+    while (nd-- > 0 || (moredigits && n)) {
+        *--p = num_digits[n % base];
+        n /= base;
+    }
+    *--p = '\'';
+
+    return new_Token(NULL, TOKEN_STR, p, endstr - p);
+}
+
 /* Add magic standard macros */
 struct magic_macros {
     const char *name;
@@ -7151,6 +7225,13 @@ struct magic_macros {
     enum sparmflags flags;
     ExpandSMacro func;
 };
+
+struct num_macros {
+    const char name[6];
+    uint8_t base;
+    char prefix;
+};
+
 static void pp_add_magic_stdmac(void)
 {
     static const struct magic_macros magic_macros[] = {
@@ -7160,6 +7241,7 @@ static void pp_add_magic_stdmac(void)
         { "__?PTR?__",  true, 0, 0, stdmac_ptr },
         { "%count",     false, 1, SPARM_VARADIC, stdmac_count },
         { "%eval",      false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
+        { "%num",       false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_num },
         { "%str",       false, 1, SPARM_GREEDY|SPARM_STR, stdmac_join },
         { "%strcat",    false, 1, SPARM_GREEDY, stdmac_strcat },
         { "%strlen",    false, 1, 0, stdmac_strlen },
