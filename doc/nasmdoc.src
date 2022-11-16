@@ -2255,6 +2255,17 @@ and \i{detokenization} are performed for the arguments of the
 directives.
 
 
+\S{pcdirect} \i{Directives} processing
+
+Remaining preprocessor \i{directives} are processed. It is specific
+to each directive to what extend the above expansions or the ones
+specified in \k{pcfinal} are performed on their arguments.
+
+It is specific to each directive to what extent \i{inline expansions}
+and \i{detokenization} are performed for the arguments of the
+directives.
+
+
 \S{pcsmacro} \i{Inline expansions} and other \I{preprocessor directives}directives
 
 In this step, the following expansions are performed on each line:
@@ -2275,10 +2286,6 @@ below), the parameters to that macro are expanded at this time. See
 
 \b \i{Macro-local labels} are converted into unique strings, see
 \k{maclocal}.
-
-\b Remaining preprocessor \i{directives} are processed. It is specific
-to each directive to what extend the above expansions or the ones
-specified in \k{pcfinal} are performed on their arguments.
 
 
 \S{pcmmacro} \i{Multi-Line Macro Expansion}
@@ -2921,6 +2928,26 @@ argument to the conditional using \c{\{\}}:
 \c %if %isdef(foo) && !%isidn({foo,)})
 \c       db "foo is defined, but not as ')'"
 \c %endif
+
+
+\S{f_num} \i\c{%num()} Function
+
+The \c{%num()} function evaluates its arguments as expressions, and
+then produces a quoted string encoding the first argument as an
+\e{unsigned} integer. The second argument is the encoding base (from 2
+to 64, default 10) and the third argument is the desired number of
+digits (max 253, default -1).
+
+Only the first argument is required.
+
+If the number of digits is negative, NASM will add additional digits
+if needed, if positive the string is truncated to the number of digits
+specified. 0 is treated as -1, except that the input number 0
+generates an empty string (thus, the first digit will never be zero.)
+
+The full 64-symbol set used is, in order:
+
+\c 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@_
 
 
 \S{f_sel} \i\c{%sel()} Function
