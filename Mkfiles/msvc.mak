@@ -154,6 +154,7 @@ PERLREQ = config\unconfig.h \
 	  macros\macros.c \
 	  asm\pptok.ph asm\directbl.c asm\directiv.h \
 	  asm\warnings.c include\warnings.h doc\warnings.src \
+	  misc\nasmtok.el \
 	  version.h version.mac version.mak nsis\version.nsh
 
 INSDEP = x86\insns.dat x86\insns.pl x86\insns-iflags.ph x86\iflags.ph
@@ -294,6 +295,11 @@ asm\directiv.h: asm\directiv.dat nasmlib\perfhash.pl perllib\phash.ph
 asm\directbl.c: asm\directiv.dat nasmlib\perfhash.pl perllib\phash.ph
 	$(RUNPERL) $(srcdir)\nasmlib\perfhash.pl c \
 		$(srcdir)\asm\directiv.dat asm\directbl.c
+
+# Emacs token files
+misc\nasmtok.el: misc\emacstbl.pl asm\tokhash.c asm\pptok.c \
+		 asm\directiv.dat version
+	$(RUNPERL) $< $@ "$(srcdir)" "$(objdir)"
 
 #-- End Generated File Rules --#
 

@@ -31,6 +31,8 @@ my %override = ( 'id' => 'special',
 		 'floatize' => 'function',
 		 'strfunc' => 'function',
 		 'ifunc' => 'function',
+		 'insn' => 'instruction',
+		 'reg' => 'register',
 		 'seg' => 'special',
 		 'wrt' => 'special' );
 
@@ -124,6 +126,18 @@ sub read_directiv_dat($) {
     close($dd);
 }
 
+my $version;
+sub read_version($) {
+    my($vfile) = @_;
+    open(my $v, '<', $vfile)
+	or die "$0:$vfile: $!\n";
+
+    $version = <$v>;
+    chomp $version;
+
+    close($v);
+}
+
 sub make_lines($$@) {
     my $maxline = shift @_;
     my $indent  = shift @_;
@@ -171,12 +185,23 @@ sub write_output($) {
     open(my $out, '>', $outfile)
 	or die "$0:$outfile: $!\n";
 
+    my($vol,$dir,$file) = File::Spec->splitpath($outfile);
+
+    print $out ";;; ${file} --- lists of NASM assembler tokens\n";
+    print $out ";;;\n";
+    print $out ";;; This file contains list of tokens from the NASM x86\n";
+    print $out ";;; assembler, automatically extracted from NASM ${version}.\n";
+    print $out ";;;\n";
+    print $out ";;; This file is intended to be (require)d from a `nasm-mode\'\n";
+    print $out ";;; major mode definition.\n";
+
     foreach my $type (sort keys(%tokens)) {
-	print $out "(defconst nasm-${type}\n";
+	print $out "\n(defconst nasm-${type}\n";
 	print $out "  \'(";
 
 	print $out make_lines(78, 4, quote_for_emacs(sort @{$tokens{$type}}));
-	print $out "))\n";
+	print $out ")\n";
+	print $out "  \"NASM ${version} ${type} tokens for `nasm-mode\'.\")\n";
     }
 
     close($out);
@@ -185,5 +210,6 @@ sub write_output($) {
 read_tokhash_c(File::Spec->catfile($objdir, 'asm', 'tokhash.c'));
 read_pptok_c(File::Spec->catfile($objdir, 'asm', 'pptok.c'));
 read_directiv_dat(File::Spec->catfile($srcdir, 'asm', 'directiv.dat'));
+read_version(File::Spec->catfile($srcdir, 'version'));
 
 write_output($outfile);
