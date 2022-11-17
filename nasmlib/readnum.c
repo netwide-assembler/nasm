@@ -75,7 +75,8 @@ int64_t readnum(const char *str, bool *error)
     bool warn = false;
     int sign = 1;
 
-    *error = false;
+    if (error)
+        *error = true;
 
     while (nasm_isspace(*r))
         r++;                    /* find start of number */
@@ -97,8 +98,7 @@ int64_t readnum(const char *str, bool *error)
     len = q-r;
     if (!len) {
 	/* Not numeric */
-	*error = true;
-	return 0;
+        return 0;
     }
 
     /*
@@ -150,8 +150,7 @@ int64_t readnum(const char *str, bool *error)
 	if (*r != '_') {
 	    if (*r < '0' || (*r > '9' && *r < 'A')
 		|| (digit = numvalue(*r)) >= radix) {
-		*error = true;
-		return 0;
+                return 0;
 	    }
 	    if (result > checklimit ||
 		(result == checklimit && digit >= last)) {
@@ -174,5 +173,7 @@ int64_t readnum(const char *str, bool *error)
 		   str);
     }
 
+    if (error)
+        *error = false;
     return result * sign;
 }

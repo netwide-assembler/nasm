@@ -2860,6 +2860,13 @@ arguments, and can be used in any context where single-line macro
 expansion would be performed. Preprocessor functions were introduced
 in NASM 2.16.
 
+\S{f_abs} \i\c{%abs()} Function
+
+The \c{%abs()} function evaluates its first argument as an expression,
+and then emits the absolute value. This will always be emitted as a
+single token containing a decimal number; no minus sign will be
+emitted even if the input value is the maximum negative number.
+
 \S{f_cond} \i\c{%cond()} Function
 
 The \c{%cond()} function evaluates its first argument as an
@@ -2934,9 +2941,9 @@ argument to the conditional using \c{\{\}}:
 
 The \c{%num()} function evaluates its arguments as expressions, and
 then produces a quoted string encoding the first argument as an
-\e{unsigned} integer. The second argument is the encoding base (from 2
-to 64, default 10) and the third argument is the desired number of
-digits (max 253, default -1).
+\e{unsigned} integer. The second argument is the desired number of
+digits (max 253, default -1), and the second argument is the encoding
+base (from 2 to 64, default 10.)
 
 Only the first argument is required.
 
@@ -2948,6 +2955,10 @@ generates an empty string (thus, the first digit will never be zero.)
 The full 64-symbol set used is, in order:
 
 \c 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@_
+
+If a \e{signed} number needs to be converted to a string, use
+\c{%abs()}, \c{%cond()}, and \c{%strcat()} to format the signed number
+string to your specific output requirements.
 
 
 \S{f_sel} \i\c{%sel()} Function

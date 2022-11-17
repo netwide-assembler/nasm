@@ -201,20 +201,24 @@ typedef Token *(*ExpandSMacro)(const SMacro *s, Token **params, int nparams);
 /*
  * Store the definition of a single-line macro.
  *
- * Note: SPARM_VARADIC is only used by internal "magic" macros.
+ * Note: for user-defined macros, SPARM_VARADIC and SPARM_DEFAULT are
+ * currently never set, and SPARM_OPTIONAL is set if and only
+ * if SPARM_GREEDY is set.
  */
 enum sparmflags {
-    SPARM_PLAIN   = 0,
-    SPARM_EVAL    = 1,      /* Evaluate as a numeric expression (=) */
-    SPARM_STR     = 2,      /* Convert to quoted string ($) */
-    SPARM_NOSTRIP = 4,      /* Don't strip braces (!) */
-    SPARM_GREEDY  = 8,      /* Greedy final parameter (+) */
-    SPARM_VARADIC = 16      /* Zero or more individual arguments (...) */
+    SPARM_PLAIN    =  0,
+    SPARM_EVAL     =  1,     /* Evaluate as a numeric expression (=) */
+    SPARM_STR      =  2,     /* Convert to quoted string ($) */
+    SPARM_NOSTRIP  =  4,     /* Don't strip braces (!) */
+    SPARM_GREEDY   =  8,     /* Greedy final parameter (+) */
+    SPARM_VARADIC  = 16,     /* Any number of separate arguments */
+    SPARM_OPTIONAL = 32      /* Optional argument */
 };
 
 struct smac_param {
     Token name;
     enum sparmflags flags;
+    const Token *def;           /* Default, if any */
 };
 
 struct SMacro {
@@ -224,7 +228,8 @@ struct SMacro {
     ExpandSMacro expand;
     intorptr expandpvt;
     struct smac_param *params;
-    int nparam;
+    int nparam;                 /* length of the params structure */
+    int nparam_min;             /* allows < nparam arguments */
     int in_progress;
     bool recursive;
     bool varadic;               /* greedy or supports > nparam arguments */
@@ -978,6 +983,8 @@ static void free_smacro_members(SMacro *s)
         for (i = 0; i < s->nparam; i++) {
 	    if (s->params[i].name.len > INLINE_TEXT)
 		nasm_free(s->params[i].name.text.p.ptr);
+            if (s->params[i].def)
+                free_tlist((Token *)s->params[i].def);
 	}
         nasm_free(s->params);
     }
@@ -2404,8 +2411,9 @@ restart:
 
     while (m) {
         if (!mstrcmp(m->name, name, m->casesense && nocase) &&
-            (nparam <= 0 || m->nparam == 0 || nparam == m->nparam ||
-             (m->varadic && nparam >= m->nparam-1))) {
+            (nparam <= 0 || m->nparam == 0 ||
+             (nparam >= m->nparam_min &&
+              (m->varadic || nparam <= m->nparam)))) {
             if (m->alias && !find_alias) {
                 if (!ppconf.noaliases) {
                     name = tok_text(m->expansion);
@@ -3015,7 +3023,7 @@ static int parse_smacro_template(Token ***tpp, SMacro *tmpl)
             flags |= SPARM_NOSTRIP;
             break;
         case '+':
-            flags |= SPARM_GREEDY;
+            flags |= SPARM_GREEDY|SPARM_OPTIONAL;
             greedy = true;
             break;
         case ',':
@@ -3058,9 +3066,9 @@ finish:
     }
     *tpp = tn;
     if (tmpl) {
-        tmpl->nparam  = nparam;
-        tmpl->varadic = greedy;
-        tmpl->params  = params;
+        tmpl->nparam     = nparam;
+        tmpl->varadic    = greedy;
+        tmpl->params     = params;
     }
     return nparam;
 }
@@ -3185,11 +3193,12 @@ static SMacro *define_smacro(const char *mname, bool casesense,
         *smhead = smac;
     }
 
-    smac->name      = nasm_strdup(mname);
-    smac->casesense = casesense;
-    smac->expansion = reverse_tokens(expansion);
-    smac->expand    = smacro_expand_default;
-    smac->nparam    = nparam;
+    smac->name       = nasm_strdup(mname);
+    smac->casesense  = casesense;
+    smac->expansion  = reverse_tokens(expansion);
+    smac->expand     = smacro_expand_default;
+    smac->nparam     = nparam;
+    smac->nparam_min = nparam;
     if (tmpl) {
         smac->params     = tmpl->params;
         smac->alias      = tmpl->alias;
@@ -3198,9 +3207,21 @@ static SMacro *define_smacro(const char *mname, bool casesense,
             smac->expand    = tmpl->expand;
             smac->expandpvt = tmpl->expandpvt;
         }
-        if (nparam && (tmpl->params[nparam-1].flags &
-                       (SPARM_GREEDY|SPARM_VARADIC)))
-            smac->varadic = true;
+        if (nparam) {
+            int nparam_min = nparam;
+
+            smac->varadic =
+                !!(tmpl->params[nparam-1].flags &
+                   (SPARM_GREEDY|SPARM_VARADIC));
+
+            while (nparam_min > 1) {
+                if (!(tmpl->params[nparam_min-1].flags & SPARM_OPTIONAL))
+                    break;
+                nparam_min--;
+            }
+
+            smac->nparam_min = nparam_min;
+        }
     }
     if (ppdbg & (PDBG_SMACROS|PDBG_LIST_SMACROS)) {
         list_smacro_def((smac->alias ? PP_DEFALIAS : PP_DEFINE)
@@ -5690,10 +5711,9 @@ static SMacro *expand_one_smacro(Token ***tpp)
             }
 
             if (!mstrcmp(m->name, mname, m->casesense)) {
-                if (nparam == m->nparam)
+                if (nparam >= m->nparam_min &&
+                    (m->varadic || nparam <= m->nparam))
                     break;      /* It's good */
-                if (m->varadic && nparam >= m->nparam-1)
-                    break;      /* Also good */
             }
             m = m->next;
         }
@@ -5717,13 +5737,19 @@ static SMacro *expand_one_smacro(Token ***tpp)
         bool bracketed = false;
         bool bad_bracket = false;
         enum sparmflags flags;
+        const struct smac_param *mparm;
 
-        if (m->params[m->nparam-1].flags & SPARM_GREEDY)
-            nparam = m->nparam;
+        if (nparam > m->nparam) {
+            if (m->params[m->nparam-1].flags & SPARM_GREEDY)
+                nparam = m->nparam;
+        } else if (nparam < m->nparam) {
+            nparam = m->nparam; /* Missing optional arguments = empty */
+        }
         paren = 1;
         nasm_newn(params, nparam);
         i = 0;
-        flags = m->params[i].flags;
+        mparm = m->params;
+        flags = mparm->flags;
         phead = pep = &params[i];
         *pep = NULL;
 
@@ -5755,8 +5781,10 @@ static SMacro *expand_one_smacro(Token ***tpp)
                     *pep = NULL;
                     bracketed = false;
                     skip = true;
-                    if (!(flags & SPARM_VARADIC))
-                        flags = m->params[i].flags;
+                    if (!(flags & SPARM_VARADIC)) {
+                        mparm++;
+                        flags = mparm->flags;
+                    }
                 }
                 break;
 
@@ -5812,11 +5840,15 @@ static SMacro *expand_one_smacro(Token ***tpp)
         /*
          * Possible further processing of parameters. Note that the
          * ordering matters here.
+         *
+         * mparm points to the current parameter specification
+         * structure (struct smac_param); this may not match the index
+         * i in the case of varadic parameters.
          */
-        flags = 0;
-        for (i = 0; i < nparam; i++) {
-            if (!(flags & SPARM_VARADIC))
-                flags = m->params[i].flags;
+        for (i = 0, mparm = m->params;
+             i < nparam;
+             i++, mparm += !(flags & SPARM_VARADIC)) {
+            const enum sparmflags flags = mparm->flags;
 
             if (flags & SPARM_EVAL) {
                 /* Evaluate this parameter as a number */
@@ -5828,8 +5860,16 @@ static SMacro *expand_one_smacro(Token ***tpp)
                 eval_param = zap_white(expand_smacro_noreset(params[i]));
                 params[i] = NULL;
 
-                if ((flags & (SPARM_GREEDY|SPARM_VARADIC)) && !eval_param)
-                    continue;
+                if (!eval_param) {
+                    /* empty argument */
+                    if (mparm->def) {
+                        params[i] = dup_tlist(mparm->def, NULL);
+                        continue;
+                    } else if (flags & SPARM_OPTIONAL) {
+                        continue;
+                    }
+                    /* otherwise, allow evaluate() to generate an error */
+                }
 
                 pps.tptr = eval_param;
                 pps.ntokens = -1;
@@ -7090,19 +7130,11 @@ static Token *
 stdmac_cond_sel(const SMacro *s, Token **params, int nparams)
 {
     int64_t which;
-    bool err;
 
     /*
      * params[0] will have been generated by make_tok_num.
      */
-    which = get_tok_num(params[0], &err);
-    if (err) {
-        /*
-         * Not a valid number; an error message will already have
-         * been generated by expand_one_smacro().
-         */
-        return NULL;
-    }
+    which = get_tok_num(params[0], NULL);
 
     if (s->expandpvt.u) {
         /* Booleanize (for %cond): true -> 1, false -> 2 (else) */
@@ -7133,7 +7165,7 @@ stdmac_cond_sel(const SMacro *s, Token **params, int nparams)
     return new_Token(NULL, tok_smac_param(which), "", 0);
 }
 
-/* %count() */
+/* %count() function */
 static Token *
 stdmac_count(const SMacro *s, Token **params, int nparams)
 {
@@ -7143,9 +7175,9 @@ stdmac_count(const SMacro *s, Token **params, int nparams)
     return make_tok_num(NULL, nparams);
 }
 
-/* %num() */
+/* %num() function */
 static Token *
-stdmac_num(const SMacro *s, Token **params, int nparams)
+stdmac_num(const SMacro *s, Token **params, int nparam)
 {
     static const char num_digits[] =
         "0123456789"
@@ -7155,7 +7187,8 @@ stdmac_num(const SMacro *s, Token **params, int nparams)
     int64_t parm[3];
     uint64_t n;
     int64_t dparm, bparm;
-    int i, nd;
+    unsigned int i;
+    int nd;
     unsigned int base;
     char numstr[256];
     char * const endstr = numstr + sizeof numstr - 1;
@@ -7164,24 +7197,14 @@ stdmac_num(const SMacro *s, Token **params, int nparams)
     char *p;
     bool moredigits;
 
-    if (nparams < 1 || nparams > (int)ARRAY_SIZE(parm)) {
-        nasm_nonfatal("invalid number of parameters to %s()", s->name);
-        return NULL;
-    }
+    (void)nparam;
 
-    parm[1] = 10;               /* Default base */
-    parm[2] = -1;               /* Default digits */
-
-    for (i = 0; i < nparams; i++) {
-        bool err;
-        parm[i] = get_tok_num(params[i], &err);
-        if (err)
-            return NULL;
-    }
+    for (i = 0; i < (int)ARRAY_SIZE(parm); i++)
+        parm[i] = get_tok_num(params[i], NULL);
 
     n      = parm[0];
-    bparm  = parm[1];
-    dparm  = parm[2];
+    dparm  = parm[1];
+    bparm  = parm[2];
 
     if (bparm < 2 || bparm > maxbase) {
         nasm_nonfatal("invalid base %"PRId64" given to %s()",
@@ -7190,7 +7213,7 @@ stdmac_num(const SMacro *s, Token **params, int nparams)
     }
 
     base = bparm;
-    
+
     if (dparm < -maxlen || dparm > maxlen) {
         nasm_nonfatal("digit count %"PRId64" specified to %s() too large",
                       dparm, s->name);
@@ -7217,6 +7240,29 @@ stdmac_num(const SMacro *s, Token **params, int nparams)
     return new_Token(NULL, TOKEN_STR, p, endstr - p);
 }
 
+/* %abs() function */
+static Token *
+stdmac_abs(const SMacro *s, Token **params, int nparam)
+{
+    char numbuf[24];
+    int len;
+    int64_t v;
+    uint64_t u;
+
+    (void)s;
+    (void)nparam;
+
+    v = get_tok_num(params[0], NULL);
+    u = v < 0 ? -v : v;
+
+    /*
+     * Don't use make_tok_num() here, to make sure we don't emit
+     * a minus sign for the case of v = -2^63
+     */
+    len = snprintf(numbuf, sizeof numbuf, "%"PRIu64, u);
+    return new_Token(NULL, TOKEN_NUM, numbuf, len);
+}
+
 /* Add magic standard macros */
 struct magic_macros {
     const char *name;
@@ -7239,9 +7285,9 @@ static void pp_add_magic_stdmac(void)
         { "__?LINE?__", true, 0, 0, stdmac_line },
         { "__?BITS?__", true, 0, 0, stdmac_bits },
         { "__?PTR?__",  true, 0, 0, stdmac_ptr },
+        { "%abs",       false, 1, SPARM_EVAL, stdmac_abs },
         { "%count",     false, 1, SPARM_VARADIC, stdmac_count },
         { "%eval",      false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
-        { "%num",       false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_num },
         { "%str",       false, 1, SPARM_GREEDY|SPARM_STR, stdmac_join },
         { "%strcat",    false, 1, SPARM_GREEDY, stdmac_strcat },
         { "%strlen",    false, 1, 0, stdmac_strlen },
@@ -7271,7 +7317,8 @@ static void pp_add_magic_stdmac(void)
             nasm_newn(tmpl.params, m->nparam);
             for (i = m->nparam-1; i >= 0; i--) {
                 tmpl.params[i].flags = flags;
-                flags &= ~(SPARM_GREEDY|SPARM_VARADIC); /* Last arg only */
+                /* These flags for the last arg only */
+                flags &= ~(SPARM_GREEDY|SPARM_VARADIC|SPARM_OPTIONAL);
             }
         }
         define_smacro(m->name, m->casesense, NULL, &tmpl);
@@ -7283,21 +7330,36 @@ static void pp_add_magic_stdmac(void)
     }
 
     /* %sel() function */
+    nasm_zero(tmpl);
     tmpl.nparam    = 2;
     tmpl.recursive = true;
     tmpl.expand    = stdmac_cond_sel;
-    nasm_newn(tmpl.params, 2);
+    nasm_newn(tmpl.params, tmpl.nparam);
     tmpl.params[0].flags = SPARM_EVAL;
     tmpl.params[1].flags = SPARM_VARADIC;
     define_smacro("%sel", false, NULL, &tmpl);
 
     /* %cond() function, a variation on %sel */
+    tmpl.nparam = 3;
     tmpl.expandpvt.u = 1;         /* Booleanize */
-    for (tmpl.nparam = 2; tmpl.nparam <= 3; tmpl.nparam++) {
-        nasm_newn(tmpl.params, tmpl.nparam);
-        tmpl.params[0].flags = SPARM_EVAL;
-        define_smacro("%cond", false, NULL, &tmpl);
-    }
+    nasm_newn(tmpl.params, tmpl.nparam);
+    tmpl.params[0].flags = SPARM_EVAL;
+    tmpl.params[1].flags = 0;
+    tmpl.params[2].flags = SPARM_OPTIONAL;
+    define_smacro("%cond", false, NULL, &tmpl);
+
+    /* %num() function */
+    nasm_zero(tmpl);
+    tmpl.nparam = 3;
+    tmpl.expand = stdmac_num;
+    tmpl.recursive = true;
+    nasm_newn(tmpl.params, tmpl.nparam);
+    tmpl.params[0].flags = SPARM_EVAL;
+    tmpl.params[1].flags = SPARM_EVAL|SPARM_OPTIONAL;
+    tmpl.params[1].def   = make_tok_num(NULL, -1);
+    tmpl.params[2].flags = SPARM_EVAL|SPARM_OPTIONAL;
+    tmpl.params[2].def   = make_tok_num(NULL, 10);
+    define_smacro("%num", false, NULL, &tmpl);
 
     /* %is...() macro functions */
     nasm_zero(tmpl);
