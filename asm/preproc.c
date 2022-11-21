@@ -1819,7 +1819,7 @@ static void delete_Blocks(void)
 static inline Token *alloc_Token(void)
 {
     Token *t;
-    nasm_new(*t);
+    nasm_new(t);
     return t;
 }
 
