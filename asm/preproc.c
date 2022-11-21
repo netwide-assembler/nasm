@@ -963,6 +963,21 @@ static Token *dup_tlist_reverse(const Token *list, Token *tail)
 }
 
 /*
+ * Append an existing tlist to a tail pointer and returns the
+ * updated tail pointer.
+ */
+static Token **steal_tlist(Token *tlist, Token **tailp)
+{
+    *tailp = tlist;
+
+    if (!tlist)
+        return tailp;
+
+    list_last(tlist, tlist);
+    return &tlist->next;
+}
+
+/*
  * Free an MMacro
  */
 static void free_mmacro(MMacro * m)
@@ -5517,8 +5532,7 @@ static Token *expand_mmac_params(Token * tline)
             tt = tokenize(tok_text(t));
             tt = expand_mmac_params(tt);
             tt = expand_smacro(tt);
-            /* Why dup_tlist() here? We should own tt... */
-            dup_tlist(tt, &tail);
+            tail = steal_tlist(tt, tail);
             text = NULL;
             change = true;
             break;
