@@ -7765,7 +7765,7 @@ static Token *pp_tokline(void)
             if (mmac) {
                 const Token *t;
                 list_for_each(t, tline) {
-                    if (t->type == TOKEN_PREPROC_ID &&
+                    if (t->type == TOKEN_MMACRO_PARAM &&
                         !memcmp(t->text.a, "%00", 4))
                         mmac->capture_label = true;
                 }
