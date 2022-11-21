@@ -2424,17 +2424,22 @@ A single pair of parentheses is a subcase of a single, unused argument:
 
 This is similar to the behavior of the C preprocessor.
 
-\b If declared with an \c{=}, NASM will evaluate the argument as an
-expression after expansion.
+\b If declared with an \c{=}, NASM will expand the argument and then
+evaluate it as a numeric expression.
 
-\b If an argument declared with an \c{&}, a macro parameter will be
-turned into a quoted string after expansion.
+\b If declared with an \c{&}, NASM will expand the argument and then
+turn into a quoted string; if the argument already \e{is} a quoted
+string, it will be quoted again.
+
+\b If declared with \c{&&}, NASM will expand the argument and then
+turn it into a quoted string, but if the argument already is a quoted
+string, it will \e{not} be re-quoted.
 
 \b If declared with a \c{+}, it is a greedy or variadic parameter; it
-includes any subsequent commas and parameters.
+will include any subsequent commas and parameters.
 
 \b If declared with an \c{!}, NASM will not strip whitespace and
-braces (useful in conjunction with \c{&}).
+braces (potentially useful in conjunction with \c{&} or \c{&&}.)
 
 For example:
 
@@ -2849,7 +2854,9 @@ means "until N-1 characters before the end of string", i.e. \c{-1}
 means until end of string, \c{-2} until one character before, etc.
 
 The corresponding preprocessor function is \c{%substr()}, see
-\k{f_substr}.
+\k{f_substr}, however please note that the default value for the
+length parameter, if omitted, is \c{-1} rather than \c{1} for
+\c{%substr()}.
 
 
 \H{ppfunc} \i{Preprocessor Functions}
@@ -3016,13 +3023,17 @@ in the same way the \i\c{%strlen} directive would, see \k{strlen}.
 
 The \c{%substr()} function extracts a substring of a quoted string, in
 the same way the \i\c{%substr} directive would, see \k{substr}. Note
-that unlike the \c{%substr} directive, a comma is required after the
-string argument.
+that unlike the \c{%substr} directive, commas are required between all
+parameters, is required after the string argument, and that the
+default for the length argument, if omitted, is \c{-1} (i.e. the
+remainder of the string) rather than \c{1}.
 
 \c ; The following lines are all equivalent
 \c %define  mychar 'yzw'
 \c %substr  mychar 'xyzw' 2,-1
+\c %xdefine mychar %substr('xyzw',2,3)
 \c %xdefine mychar %substr('xyzw',2,-1)
+\c %xdefine mychar %substr('xyzw',2)
 
 
 \S{f_tok} \i\c{%tok()} function
