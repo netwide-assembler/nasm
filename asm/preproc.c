@@ -4570,6 +4570,10 @@ issue_error:
              */
             for ( ; l->finishes->condcnt > 0; l->finishes->condcnt --) {
                 cond = istk->conds;
+                if (!cond) {
+                    l->finishes->condcnt = 0;
+                    break;      /* Possible in case of invalid nesting */
+                }
                 istk->conds = cond->next;
                 nasm_free(cond);
             }
