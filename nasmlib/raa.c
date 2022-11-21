@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -195,4 +195,64 @@ struct RAA *raa_write_ptr(struct RAA *r, raaindex posn, void *value)
 
     ip.p = value;
     return real_raa_write(r, posn, ip);
+}
+
+/* Test to see if an entire RAA (level) is all zero */
+static bool raa_is_zero(const struct RAA *top)
+{
+    size_t i;
+
+    if (!top)
+        return true;
+
+    if (!top->layers) {
+        for (i = 0; i < RAA_LAYERSIZE; i++) {
+            if (intorptr_bool(top->u.l.data[i]))
+                return false;
+        }
+    } else {
+        for (i = 0; i < RAA_LAYERSIZE; i++) {
+            if (!raa_is_zero(top->u.b.data[i]))
+                return false;
+        }
+    }
+    return true;
+}
+
+/* Return true if and only if both RAAs (which may be NULL) are identical */
+bool raa_equal(const struct RAA *r1, const struct RAA *r2)
+{
+    size_t i;
+
+    if (!r1)
+        return raa_is_zero(r2);
+    if (!r2)
+        return raa_is_zero(r1);
+
+    if (r1->layers < r2->layers) {
+        /* Swap so r1 is the "larger" RAA if necessary */
+        const struct RAA *rtmp = r2;
+        r2 = r1;
+        r1 = rtmp;
+    }
+
+    while (r1->layers > r2->layers) {
+        for (i = 1; i < RAA_LAYERSIZE; i++) {
+            if (!raa_is_zero(r1->u.b.data[i]))
+                return false;
+        }
+        r1 = r1->u.b.data[0];
+        if (!r1)
+            return raa_is_zero(r2);
+    }
+
+    if (!r1->layers) {
+        return !memcmp(&r1->u.l, &r2->u.l, sizeof r1->u.l);
+    } else {
+        for (i = 0; i < RAA_LAYERSIZE; i++) {
+            if (!raa_equal(r1->u.b.data[i], r2->u.b.data[i]))
+                return false;
+        }
+        return true;
+    }
 }

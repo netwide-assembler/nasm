@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -53,6 +53,14 @@ union intorptr {
     uintptr_t up;
 };
 typedef union intorptr intorptr;
+
+static inline bool intorptr_bool(intorptr iop)
+{
+    if (sizeof(int64_t) >= sizeof(void *))
+        return !!iop.i;
+    else
+        return !!iop.p;
+}
 
 /*
  * Wrappers around malloc, realloc, free and a few more. nasm_malloc
