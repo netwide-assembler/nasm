@@ -24,11 +24,60 @@ used in structure definitions.
 and more convenient than the equivalent code implemented using
 directives. See \k{ppfunc}.
 
+\b Fix the handling of \c{%00} in the preprocessor.
 
-\S{cl-2.15.06} Version 2.15.06
+\b Fix incorrect handling of path names affecting error messages,
+dependency generation, and debug format output.
 
-\b Fix object and header length in \c{rdf} format.
-It is been broken in 2.13.xx series.
+\b Support for the RDOFF output format and the RDOFF tools have been
+removed. The RDOFF tools had already been broken since at least NASM
+2.14. For flat code the ELF output format recommended; for segmented
+code the \c{obj} (OMF) output format.
+
+\b New facility: preprocessor functions. Preprocessor functions, which
+are expanded similarly to single-line macros, can greatly simplify
+code that in the past would have required a lengthy list of directives
+and intermediate macros. See \k{ppfunc}.
+
+\b Single-line macros can now declare parameters (using a \c{&&}
+prefix) that creates a quoted string, but does \e{not} requote an
+already quoted string. See \k{define}.
+
+\b Instruction table updated per public information available as of
+November 2022.
+
+\b All warnings in the preprocessor have now been assigned warning
+classes. See \k{warnings}.
+
+\b Fix the invalid use of \c{RELA}-type relocations instead of
+\c{REL}-type relocations when generating DWARF debug information for
+the \c{elf32} output format.
+
+\b Fix the handling \c{at} in \c{istruc} when the structure contains
+local labels. See \k{istruc}.
+
+\b When assembling with \c{--reproducible}, don't encode the filename
+in the COFF header for the \c{coff}, \c{win32} or \c{win64} output
+formats. The COFF header only has space for an 18-character filename,
+which makes this field rather useless in the first place. Debug output
+data, if enabled, is not affected.
+
+\b Fix incorrect size calculation when using MASM syntax for non-byte
+reservations (e.g. \c{dw ?}.)
+
+\b Allow forcing an instruction in 64-bit mode to have a (possibly
+redundant) REX prefix, using the syntax \i\c{\{rex\}} as a prefix.
+
+\b Document the already existing \c{%unimacro} directive. See \k{unmacro}.
+
+\b Fix a code range generation bug in the DWARF debug format
+(incorrect information in the \c{DW_AT_high_pc} field) for the ELF
+output formats. This bug happened to cancel out with a bug in older
+versions of the GNU binutils linker, but breaks with other linkers and
+updated or other linkers that expect the spec to be followed.
+
+\b Fix various crashes and hangs on invalid input.
+
 
 \S{cl-2.15.05} Version 2.15.05
 
