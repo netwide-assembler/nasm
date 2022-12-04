@@ -5852,8 +5852,8 @@ CLZERO		reg_eax				[-:	a32 0f 01 fc]				FUTURE,AMD,ND
 CLZERO		reg_rax				[-:	a64 0f 01 fc]				FUTURE,AMD,ND,LONG
 
 ;# Processor trace write
-PTWRITE		rm32				[m:	np 0f ae /4]				FUTURE
-PTWRITE		rm64				[m:	o64 np 0f ae /4]			LONG,FUTURE
+PTWRITE		rm32				[m:	f3 0f ae /4]				FUTURE
+PTWRITE		rm64				[m:	o64 f3 0f ae /4]			LONG,FUTURE
 
 ;# Instructions from the Intel Instruction Set Extensions,
 ;# doc 319433-034 May 2018
