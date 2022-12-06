@@ -131,8 +131,7 @@ struct optimization optimizing =
     { MAX_OPTIMIZE, OPTIM_ALL_ENABLED }; /* number of optimization passes to take */
 static int cmd_sb = 16;    /* by default */
 
-iflag_t cpu;
-static iflag_t cmd_cpu;
+iflag_t cpu, cmd_cpu;
 
 struct location location;
 bool in_absolute;                 /* Flag we are in ABSOLUTE seg */
@@ -525,8 +524,8 @@ int main(int argc, char **argv)
 
     timestamp();
 
-    iflag_set_default_cpu(&cpu);
-    iflag_set_default_cpu(&cmd_cpu);
+    set_cpu(NULL);
+    cmd_cpu = cpu;
 
     set_default_limits();
 

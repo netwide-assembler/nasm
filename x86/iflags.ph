@@ -23,6 +23,7 @@ if_("AR2",               "SB, SW, SD applies to argument 2");
 if_("AR3",               "SB, SW, SD applies to argument 3");
 if_("AR4",               "SB, SW, SD applies to argument 4");
 if_("OPT",               "Optimizing assembly only");
+if_("LATEVEX",            "Only if EVEX instructions are disabled");
 
 #
 # dword bound - instruction feature filtering flags
@@ -141,8 +142,11 @@ if_("SANDYBRIDGE",       "Sandy Bridge");
 if_("FUTURE",            "Ivy Bridge or newer");
 if_("IA64",              "IA64 (in x86 mode)");
 
+# Default CPU level
+if_("DEFAULT",           "Default CPU level");
+
 # Must be the last CPU definition
-if_("ANY",               "Any x86 CPU");
+if_("ANY",               "Allow any known instruction");
 
 # These must come after the CPU definitions proper
 if_("CYRIX",             "Cyrix-specific");

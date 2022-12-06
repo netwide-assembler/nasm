@@ -85,7 +85,6 @@ IF_GEN_HELPER(xor, ^)
 /*
  * IF_ANY is the highest CPU level by definition
  */
-#define IF_PLEVEL              IF_ANY /* Default CPU level */
 #define IF_CPU_LEVEL_MASK      ((IFM_ANY << 1) - 1)
 
 static inline int iflag_cmp_cpu(const iflag_t *a, const iflag_t *b)
@@ -114,19 +113,6 @@ static inline void iflag_set_all_features(iflag_t *a)
     uint32_t *p = &a->field[IF_FEATURE_FIELD];
 
     memset(p, -1, IF_FEATURE_NFIELDS * sizeof(uint32_t));
-}
-
-static inline void iflag_set_cpu(iflag_t *a, unsigned int cpu)
-{
-    a->field[0] = 0;     /* Not applicable to the CPU type */
-    iflag_set_all_features(a);    /* All feature masking bits set for now */
-    a->field[IF_CPU_FIELD] &= ~IF_CPU_LEVEL_MASK;
-    iflag_set(a, cpu);
-}
-
-static inline void iflag_set_default_cpu(iflag_t *a)
-{
-    iflag_set_cpu(a, IF_PLEVEL);
 }
 
 static inline iflag_t _iflag_pfmask(const iflag_t *a)

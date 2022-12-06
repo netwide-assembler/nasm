@@ -2552,6 +2552,10 @@ static enum match_result matches(const struct itemplate *itemp,
             return MERR_ENCMISMATCH;
         break;
     default:
+        if (itemp_has(itemp, IF_LATEVEX)) {
+            if (!iflag_test(&cpu, IF_LATEVEX))
+                return MERR_ENCMISMATCH;
+        }
         break;
     }
 
