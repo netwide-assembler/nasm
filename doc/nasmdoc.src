@@ -5594,47 +5594,87 @@ are excluded from the symbol mangling and also not marked as global.
 \H{CPU} \i\c{CPU}: Defining CPU Dependencies
 
 The \i\c{CPU} directive restricts assembly to those instructions which
-are available on the specified CPU.
+are available on the specified CPU. At the moment, it is primarily
+used to enforce unavailable \e{encodings} of instructions, such as
+5-byte jumps on the 8080.
 
-Options are:
+(If someone would volunteer to work through the database and add
+proper annotations to each instruction, this could be greatly
+improved. Please contact the developers to volunteer, see \{contact}.)
 
-\b\c{CPU 8086}          Assemble only 8086 instruction set
+Current CPU keywords are:
 
-\b\c{CPU 186}           Assemble instructions up to the 80186 instruction set
+\b\c{CPU 8086}        - Assemble only 8086 instruction set
 
-\b\c{CPU 286}           Assemble instructions up to the 286 instruction set
+\b\c{CPU 186}         - Assemble instructions up to the 80186 instruction set
 
-\b\c{CPU 386}           Assemble instructions up to the 386 instruction set
+\b\c{CPU 286}         - Assemble instructions up to the 286 instruction set
 
-\b\c{CPU 486}           486 instruction set
+\b\c{CPU 386}         - Assemble instructions up to the 386 instruction set
 
-\b\c{CPU 586}           Pentium instruction set
+\b\c{CPU 486}         - 486 instruction set
 
-\b\c{CPU PENTIUM}       Same as 586
+\b\c{CPU 586}         - Pentium instruction set
 
-\b\c{CPU 686}           P6 instruction set
+\b\c{CPU PENTIUM}     - Same as 586
 
-\b\c{CPU PPRO}          Same as 686
+\b\c{CPU 686}         - P6 instruction set
 
-\b\c{CPU P2}            Same as 686
+\b\c{CPU PPRO}        - Same as 686
 
-\b\c{CPU P3}            Pentium III (Katmai) instruction sets
+\b\c{CPU P2}          - Same as 686
 
-\b\c{CPU KATMAI}        Same as P3
+\b\c{CPU P3}          - Pentium III (Katmai) instruction sets
 
-\b\c{CPU P4}            Pentium 4 (Willamette) instruction set
+\b\c{CPU KATMAI}      - Same as P3
 
-\b\c{CPU WILLAMETTE}    Same as P4
+\b\c{CPU P4}          - Pentium 4 (Willamette) instruction set
 
-\b\c{CPU PRESCOTT}      Prescott instruction set
+\b\c{CPU WILLAMETTE}  - Same as P4
 
-\b\c{CPU X64}           x86-64 (x64/AMD64/Intel 64) instruction set
+\b\c{CPU PRESCOTT}    - Prescott instruction set
 
-\b\c{CPU IA64}          IA64 CPU (in x86 mode) instruction set
+\b\c{CPU X64}         - x86-64 (x64/AMD64/Intel 64) instruction set
 
-All options are case insensitive.  All instructions will be selected
-only if they apply to the selected CPU or lower.  By default, all
-instructions are available.
+\b\c{CPU IA64}        - IA64 CPU (in x86 mode) instruction set
+
+\b\c{CPU DEFAULT}     - All available instructions
+
+\b\c{CPU ALL}	      - All available instructions \e{and flags}
+
+All options are case insensitive.
+
+In addition, optional flags can be specified to modify the instruction
+selections. These can be combined with a CPU declaration or specified
+alone. They can be prefixed by \c{+} (add flag, default), \c{-}
+(remove flag) or \c{*} (set flag to default); these prefixes are
+"sticky", so:
+
+\c      cpu -foo,bar
+
+means remove both the \c{foo} and \c{bar} options.
+
+If prefixed with \c{no}, it inverts the meaning of the flag, but this
+is not sticky, so:
+
+\c      cpu nofoo,bar
+
+means remove the \c{foo} flag but add the \c{bar} flag.
+
+Currently available flags are:
+
+\b\c{EVEX} - Enable generation of EVEX (AVX-512) encoded instructions
+without an explicit \c{\{evex\}} prefix. Default on.
+
+\b\c\{VEX} - Enable generation of VEX (AVX) or XOP encoded
+instructions without an explict \c{\{vex\}} prefix. Default on.
+
+\b\c{LATEVEX} - Enable generation of VEX (AVX) encoding of
+instructions where the VEX instructions forms were introduced
+\e{after} the corresponding EVEX (AVX-512) instruction forms without
+requiring an explicit \c{\{vex\}} prefix. This is implicit if the
+\c{EVEX} flag is disabled and the \c{VEX} flag is enabled. Default
+off.
 
 
 \H{FLOAT} \i\c{FLOAT}: Handling of \I{floating-point, constants}floating-point constants
@@ -5643,19 +5683,19 @@ By default, floating-point constants are rounded to nearest, and IEEE
 denormals are supported.  The following options can be set to alter
 this behaviour:
 
-\b\c{FLOAT DAZ}         Flush denormals to zero
+\b\c{FLOAT DAZ}       - Flush denormals to zero
 
-\b\c{FLOAT NODAZ}       Do not flush denormals to zero (default)
+\b\c{FLOAT NODAZ}     - Do not flush denormals to zero (default)
 
-\b\c{FLOAT NEAR}        Round to nearest (default)
+\b\c{FLOAT NEAR}      - Round to nearest (default)
 
-\b\c{FLOAT UP}          Round up (toward +Infinity)
+\b\c{FLOAT UP}        - Round up (toward +Infinity)
 
-\b\c{FLOAT DOWN}        Round down (toward -Infinity)
+\b\c{FLOAT DOWN}      - Round down (toward -Infinity)
 
-\b\c{FLOAT ZERO}        Round toward zero
+\b\c{FLOAT ZERO}      - Round toward zero
 
-\b\c{FLOAT DEFAULT}     Restore default settings
+\b\c{FLOAT DEFAULT}   - Restore default settings
 
 The standard macros \i\c{__?FLOAT_DAZ?__}, \i\c{__?FLOAT_ROUND?__}, and
 \i\c{__?FLOAT?__} contain the current state, as long as the programmer

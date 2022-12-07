@@ -111,7 +111,9 @@ void set_cpu(const char *value)
         { "any", IF_ANY },
         { "all", IF_ANY },
         { "latevex", IF_LATEVEX },
-        { NULL, IF_DEFAULT }    /* End of list */
+        { "evex", IF_EVEX },
+        { "vex", IF_VEX },
+        { NULL, 0 }
     };
 
     if (!value) {
