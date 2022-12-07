@@ -90,6 +90,10 @@ output formats. This bug happened to cancel out with a bug in older
 versions of the GNU binutils linker, but breaks with other linkers and
 updated or other linkers that expect the spec to be followed.
 
+\b Fix segment symbols with addends, e.g. \c{jmp _TEXT+10h:0} in
+output formats that support segment relocations, e.g. the \c{obj}
+format.
+
 \b Fix various crashes and hangs on invalid input.
 
 
