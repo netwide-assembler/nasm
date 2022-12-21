@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -936,7 +936,7 @@ static void ieee_write_file(void)
      * Write the section headers
      */
     seg = seghead;
-    if (!debuginfo && !strcmp(seg->name, "??LINE"))
+    if (!debuginfo && seg && !strcmp(seg->name, "??LINE"))
         seg = seg->next;
     while (seg) {
         char buf[256];
@@ -971,7 +971,7 @@ static void ieee_write_file(void)
     /*
      * write the start address if there is one
      */
-    if (ieee_entry_seg) {
+    if (ieee_entry_seg && seghead) {
         for (seg = seghead; seg; seg = seg->next)
             if (seg->index == ieee_entry_seg)
                 break;
@@ -1084,7 +1084,7 @@ static void ieee_write_file(void)
      *  put out section data;
      */
     seg = seghead;
-    if (!debuginfo && !strcmp(seg->name, "??LINE"))
+    if (!debuginfo && seg && !strcmp(seg->name, "??LINE"))
         seg = seg->next;
     while (seg) {
         if (seg->currentpos) {

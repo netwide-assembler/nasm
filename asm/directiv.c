@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -59,11 +59,25 @@ struct cpunames {
     /* Eventually a table of features */
 };
 
-static iflag_t get_cpu(const char *value)
+static void iflag_set_cpu(iflag_t *a, unsigned int lvl)
 {
-    iflag_t r;
-    const struct cpunames *cpu;
+    a->field[0] = 0;     /* Not applicable to the CPU type */
+    iflag_set_all_features(a);    /* All feature masking bits set for now */
+    if (lvl >= IF_ANY) {
+        /* This is a hack for now */
+        iflag_set(a, IF_LATEVEX);
+    }
+    a->field[IF_CPU_FIELD] &= ~IF_CPU_LEVEL_MASK;
+    iflag_set(a, lvl);
+}
+
+void set_cpu(const char *value)
+{
+    const char *p;
+    char modifier;
+    const struct cpunames *cpuflag;
     static const struct cpunames cpunames[] = {
+        { "default", IF_DEFAULT }, /* Must be first */
         { "8086", IF_8086 },
         { "186",  IF_186  },
         { "286",  IF_286  },
@@ -96,22 +110,71 @@ static iflag_t get_cpu(const char *value)
         { "ivybridge", IF_FUTURE },
         { "any", IF_ANY },
         { "all", IF_ANY },
-        { "default", IF_PLEVEL },
-        { NULL, IF_PLEVEL }     /* Error and final default entry */
+        { "latevex", IF_LATEVEX },
+        { "evex", IF_EVEX },
+        { "vex", IF_VEX },
+        { NULL, 0 }
     };
 
-    iflag_clear_all(&r);
-
-    for (cpu = cpunames; cpu->name; cpu++) {
-        if (!nasm_stricmp(value, cpu->name))
-            break;
+    if (!value) {
+        iflag_set_cpu(&cpu, cpunames[0].level);
+        return;
     }
 
-    if (!cpu->name)
-        nasm_nonfatal("unknown 'cpu' type '%s'", value);
+    p = value;
+    modifier = '+';
+    while (*p) {
+        int len = strcspn(p, " ,");
 
-    iflag_set_cpu(&r, cpu->level);
-    return r;
+        while (len && (*p == '+' || *p == '-' || *p == '*')) {
+            modifier = *p++;
+            len--;
+            if (!len && modifier == '*')
+                cpu = cmd_cpu;
+        }
+
+        if (len) {
+            bool invert_flag = false;
+
+            if (len >= 3 && !nasm_memicmp(p, "no", 2)) {
+                invert_flag = true;
+                p += 2;
+                len -= 2;
+            }
+
+            for (cpuflag = cpunames; cpuflag->name; cpuflag++)
+                if (!nasm_strnicmp(p, cpuflag->name, len))
+                    break;
+
+            if (!cpuflag->name) {
+                nasm_nonfatal("unknown CPU type or flag '%.*s'", len, p);
+                return;
+            }
+
+            if (cpuflag->level >= IF_CPU_FIRST && cpuflag->level <= IF_ANY) {
+                iflag_set_cpu(&cpu, cpuflag->level);
+            } else {
+                switch (modifier) {
+                case '-':
+                    invert_flag = !invert_flag;
+                    break;
+                case '*':
+                    invert_flag ^= iflag_test(&cmd_cpu, cpuflag->level);
+                    break;
+                default:
+                    break;
+                }
+
+                iflag_set(&cpu, cpuflag->level);
+                if (invert_flag)
+                    iflag_clear(&cpu, cpuflag->level);
+            }
+        }
+        p += len;
+        if (!*p)
+            break;
+        p++;                /* Skip separator */
+    }
 }
 
 static int get_bits(const char *value)
@@ -358,11 +421,11 @@ bool process_directives(char *directive)
 
         if (!declare_label(value, type, special))
             break;
-        
+
         if (type == LBL_COMMON || type == LBL_EXTERN || type == LBL_REQUIRED)
             define_label(value, 0, size, false);
 
-    	break;
+	break;
     }
 
     case D_ABSOLUTE:        /* [ABSOLUTE address] */
@@ -440,7 +503,7 @@ bool process_directives(char *directive)
         break;
 
     case D_CPU:         /* [CPU] */
-        cpu = get_cpu(value);
+        set_cpu(value);
         break;
 
     case D_LIST:        /* [LIST {+|-}] */

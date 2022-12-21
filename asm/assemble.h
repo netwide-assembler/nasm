@@ -41,7 +41,9 @@
 #include "nasm.h"
 #include "iflag.h"
 
-extern iflag_t cpu;
+extern iflag_t cpu, cmd_cpu;
+void set_cpu(const char *cpuspec);
+
 extern bool in_absolute;        /* Are we in an absolute segment? */
 extern struct location absolute;
 

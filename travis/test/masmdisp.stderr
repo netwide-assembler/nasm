@@ -1,8 +1,4 @@
-./travis/test/masmdisp.asm:19: error: label `fproc' inconsistently redefined
-./travis/test/masmdisp.asm:9: info: label `fproc' originally defined here
-./travis/test/masmdisp.asm:28: error: label `nproc' inconsistently redefined
-./travis/test/masmdisp.asm:21: info: label `nproc' originally defined here
-./travis/test/masmdisp.asm:30: error: label `_TEXT' inconsistently redefined
-./travis/test/masmdisp.asm:7: info: label `_TEXT' originally defined here
-./travis/test/masmdisp.asm:35: error: label `_DATA' inconsistently redefined
-./travis/test/masmdisp.asm:32: info: label `_DATA' originally defined here
+./travis/test/masmdisp.asm:11: warning: 64-bit unsigned relocation zero-extended from 32 bits [-w+zext-reloc]
+./travis/test/masmdisp.asm:23: warning: 64-bit unsigned relocation zero-extended from 32 bits [-w+zext-reloc]
+./travis/test/masmdisp.asm:38: warning: uninitialised space declared in non-BSS section `_BSS': zeroing [-w+zeroing]
+./travis/test/masmdisp.asm:39: warning: uninitialised space declared in non-BSS section `_BSS': zeroing [-w+zeroing]

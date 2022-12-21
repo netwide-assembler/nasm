@@ -68,6 +68,20 @@ reservations (e.g. \c{dw ?}.)
 \b Allow forcing an instruction in 64-bit mode to have a (possibly
 redundant) REX prefix, using the syntax \i\c{\{rex\}} as a prefix.
 
+\b Add a \c{\{vex\}} prefix to enforce VEX (AVX) encoding of an
+instruction, either using the 2- or 3-byte VEX prefixes.
+
+\b The \c{CPU} directive has been augmented to allow control of
+generation of VEX (AVX) versus EVEX (AVX-512) instruction formats, see
+\k{CPU}.
+
+\b Some recent instructions that previously have been only available
+using EVEX encodings are now also encodable using VEX (AVX)
+encodings. For backwards compatibility these encodings are not enabled
+by default, but can be generated either via an explicit \c{\{vex\}}
+prefix or by specifying either \c{CPU LATEVEX} or \c{CPU NOEVEX}; see
+\k{CPU}.
+
 \b Document the already existing \c{%unimacro} directive. See \k{unmacro}.
 
 \b Fix a code range generation bug in the DWARF debug format
@@ -75,6 +89,10 @@ redundant) REX prefix, using the syntax \i\c{\{rex\}} as a prefix.
 output formats. This bug happened to cancel out with a bug in older
 versions of the GNU binutils linker, but breaks with other linkers and
 updated or other linkers that expect the spec to be followed.
+
+\b Fix segment symbols with addends, e.g. \c{jmp _TEXT+10h:0} in
+output formats that support segment relocations, e.g. the \c{obj}
+format.
 
 \b Fix various crashes and hangs on invalid input.
 
@@ -767,9 +785,10 @@ options to indicate whether all relevant branches should be getting
 \c{BND} prefixes.  This is expected to be the normal for use in MPX
 code.
 
-\b Add \c{{evex}}, \c{{vex3}} and \c{{vex2}} instruction prefixes to
-have NASM encode the corresponding instruction, if possible, with an EVEX,
-3-byte VEX, or 2-byte VEX prefix, respectively.
+\b Add \c{\{evex\}}, \c{\{vex3\}} and \c{\{vex2\}} instruction
+prefixes to have NASM encode the corresponding instruction, if
+possible, with an EVEX, 3-byte VEX, or 2-byte VEX prefix,
+respectively.
 
 \b Support for section names longer than 8 bytes in Win32/Win64 COFF.
 

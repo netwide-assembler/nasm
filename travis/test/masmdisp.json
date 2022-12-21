@@ -7,7 +7,6 @@
 		"option": "-Ox",
 		"target": [
 			{ "stderr": "masmdisp.stderr" }
-		],
-		"error": "expected"
+		]
 	}
 ]
