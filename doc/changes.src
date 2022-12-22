@@ -7,6 +7,13 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.16.01} Version 2.16.01
+
+\e{This is a documentation update release only.}
+
+\b Fix the creation of the table of contents in the HTML version of
+the documentation.
+
 \S{cl-2.16} Version 2.16
 
 \b Support for the \c{rdf} format has been discontinued and all the
