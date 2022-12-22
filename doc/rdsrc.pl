@@ -769,6 +769,15 @@ sub word_txt {
   }
 }
 
+sub html_filename($) {
+    my($node) = @_;
+
+    (my $number = lc($xrefnodes{$node})) =~ s/.*-//;
+    my $fname="nasmdocx.html";
+    substr($fname,8 - length $number, length $number) = $number;
+    return $fname;
+}
+
 sub write_html {
   # This is called from the top level, so I won't bother using
   # my or local.
@@ -778,6 +787,8 @@ sub write_html {
   print "writing contents file...";
   open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoc0.html');
   select TEXT;
+  undef $html_nav_last;
+  $html_nav_next = $tstruct_next{'Top'};
   &html_preamble(0);
   print "<p>This manual documents NASM, the Netwide Assembler: an assembler\n";
   print "targeting the Intel x86 series of processors, with portable source.\n</p>";
@@ -797,12 +808,7 @@ sub write_html {
       }
       $level = $tstruct_level{$node};
       if ($level == 1) {
-      # Invent a file name.
-	  ($number = lc($xrefnodes{$node})) =~ s/.*-//;
-	  $fname="nasmdocx.html";
-	  substr($fname,8 - length $number, length $number) = $number;
-	  $html_fnames{$node} = $fname;
-	  $link = $fname;
+	  $link = $fname = html_filename($node);
       } else {
 	  # Use the preceding filename plus a marker point.
 	  $link = $fname . "#$xrefnodes{$node}";
@@ -853,7 +859,7 @@ sub write_html {
       $html_nav_last = $chapternode;
       $chapternode = $nodexrefs{$xref};
       $html_nav_next = $tstruct_mnext{$chapternode};
-      open(TEXT, '>', File::Spec->catfile($out_path, $html_fnames{$chapternode}));
+      open(TEXT, '>', File::Spec->catfile($out_path, html_filename($chapternode)));
       select TEXT;
       &html_preamble(1);
       foreach $i (@$pname) {
@@ -871,7 +877,7 @@ sub write_html {
       $html_nav_last = $chapternode;
       $chapternode = $nodexrefs{$xref};
       $html_nav_next = $tstruct_mnext{$chapternode};
-      open(TEXT, '>', File::Spec->catfile($out_path, $html_fnames{$chapternode}));
+      open(TEXT, '>', File::Spec->catfile($out_path, html_filename($chapternode)));
       select TEXT;
       &html_preamble(1);
       foreach $i (@$pname) {
@@ -988,11 +994,11 @@ sub html_preamble {
     # Navigation bar
     print "<ul class=\"navbar\">\n";
     if (defined($html_nav_last)) {
-	my $lastf = $html_fnames{$html_nav_last};
+	my $lastf = html_filename($html_nav_last);
 	print "<li class=\"first\"><a class=\"prev\" href=\"$lastf\">$html_nav_last</a></li>\n";
     }
     if (defined($html_nav_next)) {
-	my $nextf = $html_fnames{$html_nav_next};
+	my $nextf = html_filename($html_nav_next);
 	print "<li><a class=\"next\" href=\"$nextf\">$html_nav_next</a></li>\n";
     }
     print "<li><a class=\"toc\" href=\"nasmdoc0.html\">Contents</a></li>\n";
@@ -1114,7 +1120,7 @@ sub word_html($) {
     my $level = $tstruct_level{$node}; # and its level
     my $up = $node, $uplev = $level-1;
     $up = $tstruct_up{$up} while $uplev--; # get top node of containing file
-    my $file = ($up ne $chapternode) ? $html_fnames{$up} : "";
+    my $file = ($up ne $chapternode) ? html_filename($up) : "";
     my $marker = ($level == 1 and $file) ? "" : "#$w";
     return "<a href=\"$file$marker\">";
   } elsif ($wtype eq "xe") {
