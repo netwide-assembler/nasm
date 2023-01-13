@@ -28,3 +28,6 @@ BITS 64
 	sha256msg2 xmm2, [rax]
 	sha256msg2 xmm3, [rax+0x12]
 	sha256msg2 xmm4, [rax+rbx*2]
+	vsha512rnds2 ymm1, ymm2, xmm0
+	vsha512msg1 ymm1, xmm2
+	vsha512msg2 ymm1, ymm2

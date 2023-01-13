@@ -3587,6 +3587,9 @@ SHA256MSG1      xmmreg,xmmrm128                     [rm: 0f 38 cc /r ] SHA,FUTUR
 SHA256MSG2      xmmreg,xmmrm128                     [rm: 0f 38 cd /r ] SHA,FUTURE
 SHA256RNDS2     xmmreg,xmmrm128,xmm0                [rm-: 0f 38 cb /r ] SHA,FUTURE
 SHA256RNDS2     xmmreg,xmmrm128                     [rm:  0f 38 cb /r ] SHA,FUTURE
+VSHA512MSG1     ymmreg,xmmreg                       [rm: vex.256.f2.0f38.w0 cc /r] SHA512,AVX,FUTURE
+VSHA512MSG2     ymmreg,ymmreg                       [rm: vex.256.f2.0f38.w0 cd /r] SHA512,AVX,FUTURE
+VSHA512RNDS2    ymmreg,ymmreg,xmmreg                [rvm: vex.nds.256.f2.0f38.w0 cb /r] SHA512,AVX,FUTURE
 
 ;# AVX no exception conversions
 ; Must precede AVX-512 versions

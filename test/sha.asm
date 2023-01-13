@@ -29,3 +29,6 @@ BITS 32
 	sha256msg2 xmm2, [eax]
 	sha256msg2 xmm3, [eax+0x12]
 	sha256msg2 xmm4, [eax+ebx*2]
+	vsha512rnds2 ymm1, ymm2, xmm0
+	vsha512msg1 ymm1, xmm2
+	vsha512msg2 ymm1, ymm2
