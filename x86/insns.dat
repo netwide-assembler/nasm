@@ -3596,6 +3596,12 @@ VSM3MSG1        xmmreg,xmmreg,xmmreg                [rvm: vex.nds.128.p0.0f38.w0
 VSM3MSG2        xmmreg,xmmreg,xmmreg                [rvm: vex.nds.128.66.0f38.w0 da /r] SM3,AVX,FUTURE
 VSM3RNDS2       xmmreg,xmmreg,xmmreg,imm8           [rvmi: vex.nds.128.66.0f3a.w0 de /r ib] SM3,AVX,FUTURE
 
+;# SM4
+VSM4KEY4        xmmreg,xmmreg,xmmrm128              [rvm: vex.nds.128.f3.0f38.w0 da /r] SM4,AVX,FUTURE
+VSM4KEY4        ymmreg,ymmreg,ymmrm128              [rvm: vex.nds.256.f3.0f38.w0 da /r] SM4,AVX,FUTURE
+VSM4RNDS4       xmmreg,xmmreg,xmmrm128              [rvm: vex.nds.128.f2.0f38.w0 da /r] SM4,AVX,FUTURE
+VSM4RNDS4       ymmreg,ymmreg,ymmrm128              [rvm: vex.nds.256.f2.0f38.w0 da /r] SM4,AVX,FUTURE
+
 ;# AVX no exception conversions
 ; Must precede AVX-512 versions
 VBCSTNEBF16PS	xmmreg,mem16				[rm:	vex.128.f3.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,LATEVEX,SW

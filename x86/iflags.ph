@@ -114,6 +114,7 @@ if_("HRESET",            "History reset");
 if_("SMAP",		 "Supervisor Mode Access Prevention (SMAP)");
 if_("SHA512",            "SHA512 instructions");
 if_("SM3",               "SM3 instructions");
+if_("SM4",               "SM4 instructions");
 
 # Put these last to minimize their relevance
 if_("OBSOLETE",          "Instruction removed from architecture");
