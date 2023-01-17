@@ -380,22 +380,22 @@ clean:
 	$(RM_F) perlbreq.si
 
 distclean: clean
-	$(RM_F) config.log config.status config/config.h
 	for d in . $(SUBDIRS) $(XSUBDIRS); do \
 		$(RM_F) "$$d"/.\# "$$d"/\# "$$d"/*~ "$$d"/*.bak \
 			"$$d"/*.lst "$$d"/*.bin ; \
 	done
 	$(RM_F) test/*.$(O)
-	$(RM_RF) autom4te*.cache
-	$(RM_F) Makefile *.dep
+	$(RM_F) *.dep
 
 cleaner: clean
 	$(RM_F) $(PERLREQ) *.1 nasm.spec
 	$(MAKE) -C doc clean
 	$(RM_F) *.dep */*.time
 
-spotless: distclean cleaner
-	$(RM_F) doc/Makefile
+makefile-clean:
+	./autogen.sh
+
+spotless: distclean cleaner makefile-clean
 
 strip:
 	$(STRIP) --strip-unneeded $(PROGS)
@@ -431,11 +431,10 @@ everything: always_everything
 install_everything: everything install install_doc
 
 dist:
+	$(MAKE) distclean
 	$(MAKE) alldeps
-	$(MAKE) spotless perlreq manpages spec $(MANPAGES)
-	autoheader
-	autoconf
-	$(RM_RF) ./autom4te*.cache
+	$(MAKE) perlreq manpages spec $(MANPAGES)
+	./autogen.sh
 
 tar: dist
 	tar -cv --exclude CVS -C .. -f - | \
