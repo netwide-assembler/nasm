@@ -50,7 +50,7 @@ TAGS
 /asm/pptok.ph
 /asm/tokens.h
 /asm/tokhash.c
-/asm/warnings.c
+/asm/warnings_c.h
 /config/config.h.in
 /config/config.h
 /config.log
