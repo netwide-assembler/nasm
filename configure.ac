@@ -1,4 +1,4 @@
-dnl Process this file with autoconf 2.69 or later to produce
+dnl Process this file with autoconf 2.71 or later to produce
 dnl a configure script.
 AC_PREREQ([2.71])
 AC_INIT
