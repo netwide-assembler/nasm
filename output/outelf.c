@@ -558,7 +558,7 @@ static void elf_init(void)
     saa_wbytes(strs, elf_module, strlen(elf_module)+1);
     strslen = 2 + strlen(elf_module);
     shstrtab = NULL;
-    shstrtablen = shstrtabsize = 0;;
+    shstrtablen = shstrtabsize = 0;
     add_sectname("", "");       /* SHN_UNDEF */
 
     fwds = NULL;
