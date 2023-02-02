@@ -51,7 +51,7 @@
 		nasm_verror((_sev)|(_flags), fmt, ap);		\
 	va_end(ap);						\
 	if ((_sev) >= ERR_FATAL)                                \
-		abort();
+		abort()
 
 
 void nasm_error(errflags severity, const char *fmt, ...)
