@@ -194,7 +194,7 @@ static ObjRecord *obj_clear(ObjRecord * orp)
     orp->child = NULL;
     orp->up = NULL;
     orp->back = NULL;
-    return (orp);
+    return orp;
 }
 
 /*
@@ -219,7 +219,7 @@ static ObjRecord *obj_emit(ObjRecord * orp)
         nasm_free(orp->child);
     }
 
-    return (obj_clear(orp));
+    return obj_clear(orp);
 }
 
 /*
@@ -228,7 +228,7 @@ static ObjRecord *obj_emit(ObjRecord * orp)
 static ObjRecord *obj_emit2(ObjRecord * orp)
 {
     obj_commit(orp);
-    return (obj_emit(orp));
+    return obj_emit(orp);
 }
 
 /*
@@ -240,7 +240,7 @@ static ObjRecord *obj_new(void)
 
     orp = obj_clear(nasm_malloc(sizeof(ObjRecord)));
     orp->ori = ori_null;
-    return (orp);
+    return orp;
 }
 
 /*
@@ -273,7 +273,7 @@ static ObjRecord *obj_bump(ObjRecord * orp)
         nxt->used = nxt->committed + used;
     }
 
-    return (nxt);
+    return nxt;
 }
 
 /*
@@ -290,7 +290,7 @@ static ObjRecord *obj_check(ObjRecord * orp, int size)
         orp->committed = orp->used;
     }
 
-    return (orp);
+    return orp;
 }
 
 /*
@@ -300,7 +300,7 @@ static ObjRecord *obj_check(ObjRecord * orp, int size)
 static ObjRecord *obj_commit(ObjRecord * orp)
 {
     orp->committed = orp->used;
-    return (orp);
+    return orp;
 }
 
 /*
@@ -311,7 +311,7 @@ static ObjRecord *obj_byte(ObjRecord * orp, uint8_t val)
     orp = obj_check(orp, 1);
     orp->buf[orp->used] = val;
     orp->used++;
-    return (orp);
+    return orp;
 }
 
 /*
@@ -323,7 +323,7 @@ static ObjRecord *obj_word(ObjRecord * orp, unsigned int val)
     orp->buf[orp->used] = val;
     orp->buf[orp->used + 1] = val >> 8;
     orp->used += 2;
-    return (orp);
+    return orp;
 }
 
 /*
@@ -335,7 +335,7 @@ static ObjRecord *obj_rword(ObjRecord * orp, unsigned int val)
     orp->buf[orp->used] = val >> 8;
     orp->buf[orp->used + 1] = val;
     orp->used += 2;
-    return (orp);
+    return orp;
 }
 
 /*
@@ -349,7 +349,7 @@ static ObjRecord *obj_dword(ObjRecord * orp, uint32_t val)
     orp->buf[orp->used + 2] = val >> 16;
     orp->buf[orp->used + 3] = val >> 24;
     orp->used += 4;
-    return (orp);
+    return orp;
 }
 
 /*
@@ -367,7 +367,7 @@ static ObjRecord *obj_force(ObjRecord * orp, int x)
     if (orp->x_size == (x ^ 48))
         orp = obj_bump(orp);
     orp->x_size = x;
-    return (orp);
+    return orp;
 }
 
 /*
@@ -386,7 +386,7 @@ static ObjRecord *obj_x(ObjRecord * orp, uint32_t val)
 	return nxt;
     }
     orp->x_size = 16;
-    return (obj_word(orp, val));
+    return obj_word(orp, val);
 }
 
 /*
@@ -395,8 +395,8 @@ static ObjRecord *obj_x(ObjRecord * orp, uint32_t val)
 static ObjRecord *obj_index(ObjRecord * orp, unsigned int val)
 {
     if (val < 128)
-        return (obj_byte(orp, val));
-    return (obj_word(orp, (val >> 8) | (val << 8) | 0x80));
+        return obj_byte(orp, val);
+    return obj_word(orp, (val >> 8) | (val << 8) | 0x80);
 }
 
 /*
@@ -405,15 +405,15 @@ static ObjRecord *obj_index(ObjRecord * orp, unsigned int val)
 static ObjRecord *obj_value(ObjRecord * orp, uint32_t val)
 {
     if (val <= 128)
-        return (obj_byte(orp, val));
+        return obj_byte(orp, val);
     if (val <= 0xFFFF) {
         orp = obj_byte(orp, 129);
-        return (obj_word(orp, val));
+        return obj_word(orp, val);
     }
     if (val <= 0xFFFFFF)
-        return (obj_dword(orp, (val << 8) + 132));
+        return obj_dword(orp, (val << 8) + 132);
     orp = obj_byte(orp, 136);
-    return (obj_dword(orp, val));
+    return obj_dword(orp, val);
 }
 
 /*
@@ -440,7 +440,7 @@ static ObjRecord *obj_name(ObjRecord * orp, const char *name)
             name++;
     } else
         memcpy(ptr, name, len);
-    return (orp);
+    return orp;
 }
 
 /*

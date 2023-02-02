@@ -1124,7 +1124,7 @@ extern macros_t macho_stdmac[];
 static int layout_compare (const struct symbol **s1,
 			   const struct symbol **s2)
 {
-    return (strcmp ((*s1)->name, (*s2)->name));
+    return strcmp ((*s1)->name, (*s2)->name);
 }
 
 /* The native assembler does a few things in a similar function
