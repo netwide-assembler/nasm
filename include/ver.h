@@ -46,10 +46,10 @@ extern const char nasm_compile_options[];
 
 extern bool reproducible;
 
-extern const char *nasm_comment(void);
-extern size_t nasm_comment_len(void);
+const char *nasm_comment(void);
+size_t nasm_comment_len(void);
 
-extern const char *nasm_signature(void);
-extern size_t nasm_signature_len(void);
+const char *nasm_signature(void);
+size_t nasm_signature_len(void);
 
 #endif /* NASM_VER_H */

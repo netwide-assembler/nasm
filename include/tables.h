@@ -55,7 +55,7 @@ struct use_package {
     const unsigned char *macros;
     int index;
 };
-extern const struct use_package *nasm_find_use_package(const char *);
+const struct use_package *nasm_find_use_package(const char *);
 extern const int use_package_count;
 
 /* --- From insns.dat via insns.pl: --- */

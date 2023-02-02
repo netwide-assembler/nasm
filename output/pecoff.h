@@ -536,7 +536,7 @@ extern bool win32, win64;
 extern char coff_infile[FILENAME_MAX];
 extern char coff_outfile[FILENAME_MAX];
 
-extern int coff_make_section(char *name, uint32_t flags);
+int coff_make_section(char *name, uint32_t flags);
 
 
 #endif /* PECOFF_H */
