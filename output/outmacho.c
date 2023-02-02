@@ -470,7 +470,7 @@ static int64_t add_reloc(struct section *sect, int32_t section,
 
     case RL_SUB: /* obsolete */
 	nasm_warn(WARN_OTHER, "relcation with subtraction"
-		   "becomes to be obsolete");
+		   " becomes to be obsolete");
 	r->ext = 0;
 	r->type = X86_64_RELOC_SUBTRACTOR;
 	break;
@@ -582,7 +582,7 @@ static void macho_output(int32_t secto, const void *data,
               "BSS section: ignored");
         /* FIXME */
         nasm_warn(WARN_OTHER, "section size may be negative"
-            "with address symbols");
+            " with address symbols");
         s->size += realsize(type, size);
         return;
     }
