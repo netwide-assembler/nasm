@@ -2078,7 +2078,7 @@ static void obj_write_file(void)
 
         /* A field */
         if (seg->align >= SEG_ABS)
-            /* acbp |= 0x00 */ ;
+            /* acbp |= 0x00 */;
         else if (seg->align >= 4096) {
             if (seg->align > 4096)
                 nasm_nonfatal("segment `%s' requires more alignment"
