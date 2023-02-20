@@ -1,23 +1,39 @@
 dnl --------------------------------------------------------------------------
-dnl PA_ADD_FLAGS(variable, flag [,actual_flag [,success [,failure]]])
+dnl PA_ADD_FLAGS(flagvar, flags)
 dnl
-dnl Attempt to add the given option to CPPFLAGS, if it doesn't break
-dnl compilation.  If the option to be tested is different than the
-dnl option that should actually be added, add the option to be
-dnl actually added as a second argument.
+dnl  Add [flags] to the variable [flagvar] if and only if it is accepted
+dnl  by all languages affected by [flagvar], if those languages have
+dnl  been previously seen in the script.
 dnl --------------------------------------------------------------------------
 AC_DEFUN([PA_ADD_FLAGS],
-[AC_MSG_CHECKING([if $CC accepts $2])
- pa_add_flags__old_flags="$$1"
- $1="$$1 $2"
- AC_LINK_IFELSE(
-  [AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
-   [printf("Hello, World!\n");])],
-  [AC_MSG_RESULT([yes])
-   $1="$pa_add_flags__old_flags ifelse([$3],[],[$2],[$3])"
-   AC_DEFINE(PA_SYM([$1_],[$2]), 1,
-    [Define to 1 if compiled with the `$2' compiler flag])
+[
+  AS_VAR_PUSHDEF([old], [_$0_$1_orig])
+  AS_VAR_PUSHDEF([ok], [_$0_$1_ok])
+  AS_VAR_PUSHDEF([flags], [$1])
+
+  AS_VAR_COPY([old], [flags])
+  AS_VAR_SET([flags], ["$flags $2"])
+  AS_VAR_SET([ok], [yes])
+
+  PA_LANG_FOREACH(PA_FLAGS_LANGLIST($1),
+    [AS_VAR_IF([ok], [yes],
+     [AC_MSG_CHECKING([if $]_AC_CC[ accepts $2])
+      PA_BUILD_IFELSE([],
+      [AC_MSG_RESULT([yes])],
+      [AC_MSG_RESULT([no])
+       AS_VAR_SET([ok], [no])])])
+     ])
+
+ AS_VAR_IF([ok], [yes],
+  [m4_ifnblank([$3],[AS_VAR_SET([flags], ["$old $3"])])
+   m4_foreach_w([_pa_add_flags_flag], [m4_ifblank([$3],[$2],[$3])],
+   [AC_DEFINE(PA_SYM([$1_]_pa_add_flags_flag), 1,
+    [Define to 1 if compiled with the ]_pa_add_flags_flag[ compiler flag])])
    $4],
-  [AC_MSG_RESULT([no])
-   $1="$pa_add_flags__old_flags"
-   $5])])
+  [AS_VAR_SET([flags], ["$old"])
+   $5])
+
+  AS_VAR_POPDEF([flags])
+  AS_VAR_POPDEF([ok])
+  AS_VAR_POPDEF([old])
+])

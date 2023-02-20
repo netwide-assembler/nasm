@@ -12,9 +12,6 @@ dnl start; this is used to generate config/unconfig.h.
 AH_BOTTOM([
 /* Begin unconfig.h */])
 
-dnl Save initial CFLAGS, to see if -g -O2 came from configure or not
-pa_init_cflags="$CFLAGS"
-
 dnl This prevents us from running Wine and thinking we are not
 dnl cross-compiling when in fact we are; running Wine here is at
 dnl the best very slow and doesn't buy us a single thing at all.
@@ -27,34 +24,28 @@ AC_CANONICAL_HOST
 dnl Enable any available C extensions
 AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
-AC_SYS_LARGEFILE
-PA_ADD_CFLAGS([-std=c17], [], [],
-[PA_ADD_CFLAGS([-std=c11], [], [],
- [PA_ADD_CFLAGS([-std=c99])])])
+PA_ADD_CPPFLAGS([-std=c17], [], [],
+[PA_ADD_CPPFLAGS([-std=c11], [], [],
+ [PA_ADD_CPPFLAGS([-std=c99])])])
 
-dnl If the user did not specify a CFLAGS default, change default
-dnl to -O0 for debugging
+dnl Compile and link with gdb debug extensions
+PA_ARG_ENABLED([gdb],
+ [compile with extra debug information for GDB debugger],
+ [PA_ADD_CFLAGS([-ggdb3])])
+
+dnl Disable optimization
 PA_ARG_DISABLED([optimization],
  [compile without optimization (-O0) to help debugging],
- [pa_no_optimize=true])
-
-dnl Other programs
-pa_no_optimize=false
-
-dnl Compile and link with dwarf debug
-PA_ARG_ENABLED([gdb],
- [disable optimization and compile with extra debug information for GDB debugger],
- [PA_ADD_CFLAGS([-ggdb3])
-  pa_no_optimize=true])
-
-AS_IF([$pa_no_optimize],
-      [PA_ADD_CFLAGS([-O0])
-       PA_ADD_CFLAGS([-fno-omit-frame-pointer])])
+ [PA_ADD_CFLAGS([-O0])
+  PA_ADD_CFLAGS([-fno-omit-frame-pointer])])
 
 dnl Profiling
 PA_ARG_ENABLED([profiling],
  [compile with profiling (-pg option)],
  [PA_ADD_CFLAGS([-pg])])
+
+dnl Large files
+AC_SYS_LARGEFILE
 
 dnl Abort on panic
 PA_ARG_ENABLED([panic-abort],
@@ -104,10 +95,10 @@ AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AC_PROG_MKDIR_P
 
-AC_CHECK_PROGS(NROFF,    nroff,    false)
-AC_CHECK_PROGS(ASCIIDOC, asciidoc, false)
-AC_CHECK_PROGS(XMLTO,    xmlto,    false)
-AC_CHECK_PROGS(XZ,       xz,       false)
+AC_CHECK_PROGS([NROFF],    nroff,    false)
+AC_CHECK_PROGS([ASCIIDOC], asciidoc, false)
+AC_CHECK_PROGS([XMLTO],    xmlto,    false)
+AC_CHECK_PROGS([XZ],       xz,       false)
 
 dnl Check for progs needed for manpage generation
 MANPAGES=manpages
