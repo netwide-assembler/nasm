@@ -27,7 +27,7 @@ if [ x`cat version` != x"${version}" ]; then
     git update-index version
     git commit -m "Version ${version}" -- version
 fi
-git tag -m "NASM version ${version}" -f "nasm-${version}" 
+git tag -m "NASM version ${version}" -f "nasm-${version}"
 
 cd "$WHERE"
 rm -rf nasm-release.*
@@ -43,7 +43,7 @@ makej="${makej:-make}"
 
 # Create files which are in the release but automatically generated
 cd nasm
-./autogen.sh
+./autogen.sh --clearenv
 ./configure --prefix=/usr/local
 $makej perlreq spec manpages
 $makej alldeps

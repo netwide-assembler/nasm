@@ -3,10 +3,20 @@
 # Run this script to regenerate autoconf files
 #
 recheck=false
-if [ x"$1" = x--recheck ]; then
-    recheck=true
-    config=$(sh config.status --config 2>/dev/null)
-fi
+for arg; do
+    case x"$arg" in
+	x--recheck)
+	    recheck=true
+	    config=$(sh config.status --config 2>/dev/null)
+	    ;;
+	x--clearenv)
+	    unset AUTOCONF AUTOMAKE ACLOCAL AUTOHEADER ACLOCAL_PATH
+	    ;;
+	*)
+	    echo "$0: unknown option: $arg" 1>&2
+	    ;;
+    esac
+done
 
 # This allows for overriding the default autoconf programs
 AUTOCONF="${AUTOCONF:-${AUTOTOOLS_PREFIX}autoconf}"
