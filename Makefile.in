@@ -37,8 +37,10 @@ AR		= @AR@
 RANLIB		= @RANLIB@
 STRIP		= @STRIP@
 
+tools		= $(top_srcdir)/tools
+
 PERL		= perl
-PERLFLAGS	= -I$(srcdir)/perllib -I$(srcdir)
+PERLFLAGS	= -I$(top_srcdir)/perllib -I$(srcdir)
 RUNPERL         = $(PERL) $(PERLFLAGS)
 
 PYTHON3		= python3
@@ -65,8 +67,8 @@ LN_S		= @LN_S@
 FIND		= find
 
 # Binary suffixes
-O              	= @OBJEXT@
-X              	= @EXEEXT@
+O		= @OBJEXT@
+X		= @EXEEXT@
 A		= @LIBEXT@
 
 # Debug stuff
@@ -194,14 +196,14 @@ PERLREQ = config/unconfig.h \
 	  x86/iflag.c x86/iflaggen.h \
 	  macros/macros.c \
 	  asm/pptok.ph asm/directbl.c asm/directiv.h \
-	  asm/warnings.c include/warnings.h doc/warnings.src \
+	  $(WARNFILES) \
 	  misc/nasmtok.el \
 	  version.h version.mac version.mak nsis/version.nsh
 
 INSDEP = x86/insns.dat x86/insns.pl x86/insns-iflags.ph x86/iflags.ph
 
 config/unconfig.h: config/config.h.in
-	$(RUNPERL) $(srcdir)/tools/unconfig.pl \
+	$(RUNPERL) $(tools)/unconfig.pl \
 		'$(srcdir)' config/config.h.in config/unconfig.h
 
 x86/iflag.c: $(INSDEP)
@@ -273,7 +275,7 @@ x86/regs.h: x86/regs.dat x86/regs.pl
 # reasonable, but doesn't update the time stamp if the files aren't
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm/warnings.time.
-WARNFILES = asm/warnings.c include/warnings.h doc/warnings.src
+WARNFILES = asm/warnings_c.h include/warnings.h doc/warnings.src
 
 warnings:
 	$(RM_F) $(WARNFILES) $(WARNFILES:=.time)
@@ -283,11 +285,11 @@ asm/warnings.time: $(ALLOBJ_NW:.$(O)=.c)
 	: > asm/warnings.time
 	$(MAKE) $(WARNFILES:=.time)
 
-asm/warnings.c.time: asm/warnings.pl asm/warnings.time
-	$(RUNPERL) $(srcdir)/asm/warnings.pl c asm/warnings.c $(srcdir)
-	: > asm/warnings.c.time
+asm/warnings_c.h.time: asm/warnings.pl asm/warnings.time
+	$(RUNPERL) $(srcdir)/asm/warnings.pl c asm/warnings_c.h $(srcdir)
+	: > asm/warnings_c.h.time
 
-asm/warnings.c: asm/warnings.c.time
+asm/warnings_c.h: asm/warnings_c.h.time
 	@: Side effect
 
 include/warnings.h.time: asm/warnings.pl asm/warnings.time
@@ -380,22 +382,22 @@ clean:
 	$(RM_F) perlbreq.si
 
 distclean: clean
-	$(RM_F) config.log config.status config/config.h
 	for d in . $(SUBDIRS) $(XSUBDIRS); do \
 		$(RM_F) "$$d"/.\# "$$d"/\# "$$d"/*~ "$$d"/*.bak \
 			"$$d"/*.lst "$$d"/*.bin ; \
 	done
 	$(RM_F) test/*.$(O)
-	$(RM_RF) autom4te*.cache
-	$(RM_F) Makefile *.dep
+	$(RM_F) *.dep
 
 cleaner: clean
 	$(RM_F) $(PERLREQ) *.1 nasm.spec
 	$(MAKE) -C doc clean
 	$(RM_F) *.dep */*.time
 
-spotless: distclean cleaner
-	$(RM_F) doc/Makefile
+makefile-clean:
+	./autogen.sh
+
+spotless: distclean cleaner makefile-clean
 
 strip:
 	$(STRIP) --strip-unneeded $(PROGS)
@@ -431,11 +433,10 @@ everything: always_everything
 install_everything: everything install install_doc
 
 dist:
+	$(MAKE) distclean
 	$(MAKE) alldeps
-	$(MAKE) spotless perlreq manpages spec $(MANPAGES)
-	autoheader
-	autoconf
-	$(RM_RF) ./autom4te*.cache
+	$(MAKE) perlreq manpages spec $(MANPAGES)
+	./autogen.sh
 
 tar: dist
 	tar -cv --exclude CVS -C .. -f - | \
@@ -507,8 +508,8 @@ EXTERNAL_DEPENDENCIES = 1
 # the dependency information will remain external, so it doesn't
 # pollute the git logs.
 #
-Makefile.dep: $(PERLREQ) tools/mkdep.pl config.status
-	$(RUNPERL) tools/mkdep.pl -M Makefile.in -- $(DEPDIRS)
+Makefile.dep: $(PERLREQ) $(tools)/mkdep.pl config.status
+	$(RUNPERL) $(tools)/mkdep.pl -M Makefile.in -- $(DEPDIRS)
 
 dep: Makefile.dep
 
@@ -518,9 +519,9 @@ dep: Makefile.dep
 # be invoked manually or via "make dist".  It should be run before
 # creating release archives.
 #
-alldeps: $(PERLREQ) tools/syncfiles.pl tools/mkdep.pl
-	$(RUNPERL) tools/syncfiles.pl Makefile.in Mkfiles/*.mak
-	$(RUNPERL) tools/mkdep.pl -i -M Makefile.in Mkfiles/*.mak -- \
+alldeps: $(PERLREQ) $(tools)/syncfiles.pl $(tools)/mkdep.pl
+	$(RUNPERL) $(tools)/syncfiles.pl Makefile.in Mkfiles/*.mak
+	$(RUNPERL) $(tools)/mkdep.pl -i -M Makefile.in Mkfiles/*.mak -- \
 		$(DEPDIRS)
 	$(RM_F) *.dep
 	if [ -f config.status ]; then \
@@ -529,9 +530,9 @@ alldeps: $(PERLREQ) tools/syncfiles.pl tools/mkdep.pl
 
 # Strip internal dependency information from all Makefiles; this makes
 # the output good for git checkin
-cleandeps: $(PERLREQ) tools/syncfiles.pl tools/mkdep.pl
-	$(RUNPERL) tools/syncfiles.pl Makefile.in Mkfiles/*.mak
-	$(RUNPERL) tools/mkdep.pl -e -M Makefile.in Mkfiles/*.mak -- \
+cleandeps: $(PERLREQ) $(tools)/syncfiles.pl $(tools)/mkdep.pl
+	$(RUNPERL) $(tools)/syncfiles.pl Makefile.in Mkfiles/*.mak
+	$(RUNPERL) $(tools)/mkdep.pl -e -M Makefile.in Mkfiles/*.mak -- \
 		$(DEPDIRS)
 	$(RM_F) *.dep
 	if [ -f config.status ]; then \

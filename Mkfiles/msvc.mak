@@ -153,14 +153,14 @@ PERLREQ = config\unconfig.h \
 	  x86\iflag.c x86\iflaggen.h \
 	  macros\macros.c \
 	  asm\pptok.ph asm\directbl.c asm\directiv.h \
-	  asm\warnings.c include\warnings.h doc\warnings.src \
+	  $(WARNFILES) \
 	  misc\nasmtok.el \
 	  version.h version.mac version.mak nsis\version.nsh
 
 INSDEP = x86\insns.dat x86\insns.pl x86\insns-iflags.ph x86\iflags.ph
 
 config\unconfig.h: config\config.h.in
-	$(RUNPERL) $(srcdir)\tools\unconfig.pl \
+	$(RUNPERL) $(tools)\unconfig.pl \
 		'$(srcdir)' config\config.h.in config\unconfig.h
 
 x86\iflag.c: $(INSDEP)
@@ -232,7 +232,7 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 # reasonable, but doesn't update the time stamp if the files aren't
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm\warnings.time.
-WARNFILES = asm\warnings.c include\warnings.h doc\warnings.src
+WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
 
 warnings:
 	$(RM_F) $(WARNFILES) $(WARNFILES:=.time)
@@ -242,11 +242,11 @@ asm\warnings.time: $(ALLOBJ_NW:.$(O)=.c)
 	: > asm\warnings.time
 	$(MAKE) $(WARNFILES:=.time)
 
-asm\warnings.c.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings.c $(srcdir)
-	: > asm\warnings.c.time
+asm\warnings_c.h.time: asm\warnings.pl asm\warnings.time
+	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings_c.h $(srcdir)
+	: > asm\warnings_c.h.time
 
-asm\warnings.c: asm\warnings.c.time
+asm\warnings_c.h: asm\warnings_c.h.time
 	@: Side effect
 
 include\warnings.h.time: asm\warnings.pl asm\warnings.time
