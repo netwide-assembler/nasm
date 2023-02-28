@@ -5555,7 +5555,7 @@ static Token *expand_mmac_params(Token * tline)
             } else {
                 *tail = t;
                 tail = &t->next;
-		set_text(t, text, tok_strlen(text));
+                set_text_free(t, text, tok_strlen(text));
                 t->type = type;
             }
             changed = true;
