@@ -747,7 +747,6 @@ restart_parse:
     }
 
     result->opcode = tokval.t_integer;
-    result->condition = tokval.t_inttwo;
 
     /*
      * INCBIN cannot be satisfied with incorrectly

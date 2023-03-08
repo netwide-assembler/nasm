@@ -23,6 +23,7 @@ if_("AR2",               "SB, SW, SD applies to argument 2");
 if_("AR3",               "SB, SW, SD applies to argument 3");
 if_("AR4",               "SB, SW, SD applies to argument 4");
 if_("OPT",               "Optimizing assembly only");
+if_("LATEVEX",            "Only if EVEX instructions are disabled");
 
 #
 # dword bound - instruction feature filtering flags
@@ -98,8 +99,18 @@ if_("AMXTILE",           "AMX tile configuration instructions");
 if_("AMXBF16",           "AMX bfloat16 multiplication");
 if_("AMXINT8",           "AMX 8-bit integer multiplication");
 if_("FRED",              "Flexible Return and Exception Delivery (FRED)");
+if_("RAOINT",		 "Remote atomic operations (RAO-INT)");
+if_("UINTR",		 "User interrupts");
+if_("CMPCCXADD",         "CMPccXADD instructions");
+if_("PREFETCHI",         "PREFETCHI0 and PREFETCHI1");
+if_("WRMSRNS",		 "WRMSRNS");
+if_("MSRLIST",           "RDMSRLIST and WRMSRLIST");
+if_("AVXNECONVERT",	 "AVX exceptionless floating-point conversions");
+if_("AVXVNNIINT8",       "AVX Vector Neural Network 8-bit integer instructions");
+if_("AVXIFMA",           "AVX integer multiply and add");
+if_("HRESET",            "History reset");
 
-# Put these last [hpa: why?]
+# Put these last to minimize their relevance
 if_("OBSOLETE",          "Instruction removed from architecture");
 if_("NEVER",             "Instruction never implemented");
 if_("NOP",               "Instruction is always a (nonintentional) NOP");
@@ -131,8 +142,11 @@ if_("SANDYBRIDGE",       "Sandy Bridge");
 if_("FUTURE",            "Ivy Bridge or newer");
 if_("IA64",              "IA64 (in x86 mode)");
 
+# Default CPU level
+if_("DEFAULT",           "Default CPU level");
+
 # Must be the last CPU definition
-if_("ANY",               "Any x86 CPU");
+if_("ANY",               "Allow any known instruction");
 
 # These must come after the CPU definitions proper
 if_("CYRIX",             "Cyrix-specific");

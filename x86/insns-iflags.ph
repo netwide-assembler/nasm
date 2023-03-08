@@ -189,22 +189,32 @@ sub write_iflaggen_h() {
     }
     print N "\n";
 
-    # The names of fields
+    # The names of flag groups
 
     for ($i = 0; $i <= $#flag_fields; $i++) {
-	printf N "#define %-19s %3d /* %-64s */\n",
-	    'IF_'.$flag_fields[$i]->[0].'_FIELD',
-	    $flag_fields[$i]->[1] >> 5,
-	    sprintf("IF_%s (%d) ... IF_%s (%d)",
+	printf N "/* IF_%s (%d) ... IF_%s (%d) */\n",
 		    $flag_bynum[$flag_fields[$i]->[1]]->[1],
 		    $flag_bynum[$flag_fields[$i]->[1]]->[0],
 		    $flag_bynum[$flag_fields[$i]->[2]]->[1],
-		    $flag_bynum[$flag_fields[$i]->[2]]->[0]);
+		    $flag_bynum[$flag_fields[$i]->[2]]->[0];
+
+	# Bit definitions
+	printf N "#define %-19s %3d\n",
+	    'IF_'.$flag_fields[$i]->[0].'_FIRST',
+	    $flag_fields[$i]->[1];
+	printf N "#define %-19s %3d\n",
+	    'IF_'.$flag_fields[$i]->[0].'_COUNT',
+	    ($flag_fields[$i]->[2] - $flag_fields[$i]->[1] + 1);
+
+	# Field (uint32) definitions
+	printf N "#define %-19s %3d\n",
+	    'IF_'.$flag_fields[$i]->[0].'_FIELD',
+	    $flag_fields[$i]->[1] >> 5;
 	printf N "#define %-19s %3d\n",
 	    'IF_'.$flag_fields[$i]->[0].'_NFIELDS',
 	    ($flag_fields[$i]->[2] - $flag_fields[$i]->[1] + 31) >> 5;
+	print N "\n";
     }
-    print N "\n";
 
     printf N "#define IF_FIELD_COUNT %d\n", $iflag_words;
     print N "typedef struct {\n";

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2012 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -503,7 +503,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
         ins->oprs[i].segment = ins->oprs[i].disp_size =
             (segsize == 64 ? SEG_64BIT : segsize == 32 ? SEG_32BIT : 0);
     }
-    ins->condition = -1;
     ins->evex_tuple = 0;
     ins->rex = prefix->rex;
     memset(ins->prefixes, 0, sizeof ins->prefixes);
@@ -954,16 +953,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
             ins->rex |= REX_NH;
             break;
 
-        case 0330:
-        {
-            int t = *r++, d = *data++;
-            if (d < t || d > t + 15)
-                return 0;
-            else
-                ins->condition = d - t;
-            break;
-        }
-
         case 0326:
             if (prefix->rep == 0xF3)
                 return 0;
@@ -1122,12 +1111,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
     return data - origdata;
 }
-
-/* Condition names for disassembly, sorted by x86 code */
-static const char * const condition_name[16] = {
-    "o", "no", "c", "nc", "z", "nz", "na", "a",
-    "s", "ns", "pe", "po", "l", "nl", "ng", "g"
-};
 
 int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, int segsize,
                int64_t offset, int autosync, iflag_t *prefer)
@@ -1421,12 +1404,8 @@ int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, i
     }
 
     i = (*p)->opcode;
-    if (i >= FIRST_COND_OPCODE)
-        slen += snprintf(output + slen, outbufsize - slen, "%s%s",
-                        nasm_insn_names[i], condition_name[ins.condition]);
-    else
-        slen += snprintf(output + slen, outbufsize - slen, "%s",
-                        nasm_insn_names[i]);
+    slen += snprintf(output + slen, outbufsize - slen, "%s",
+                     nasm_insn_names[i]);
 
     colon = false;
     is_evex = !!(ins.rex & REX_EV);

@@ -59,9 +59,117 @@ for ($c = 0; $c < $vex_classes; $c++) {
         }
     }
 }
-@disasm_prefixes = (@vexlist, @disasm_prefixes);
+@disasm_prefixes = (@vexlist, @disasm_prefixes, '');
+%disasm_prefixes = map { $_ => 1 } @disasm_prefixes;
 
 @bytecode_count = (0) x 256;
+
+# Push to an array reference, creating the array if needed
+sub xpush($@) {
+    my $ref = shift @_;
+
+    $$ref = [] unless (defined($$ref));
+    return push(@$$ref, @_);
+}
+
+# Generate relaxed form patterns if applicable
+sub relaxed_forms(@) {
+    my @field_list = @_;
+
+    foreach my $fields (@_) {
+	next unless ($fields->[1] =~ /\*/);
+
+	# This instruction has relaxed form(s)
+	if ($fields->[2] !~ /^\[/) {
+	    warn "$fname:$line: has an * operand but uses raw bytecodes\n";
+	    next;
+	}
+
+	my $opmask = 0;
+	my @ops = split(/,/, $fields->[1]);
+	for (my $oi = 0; $oi < scalar @ops; $oi++) {
+	    if ($ops[$oi] =~ /\*$/) {
+		if ($oi == 0) {
+		    warn "$fname:$line: has a first operand with a *\n";
+		    next;
+		}
+		$opmask |= 1 << $oi;
+	    }
+	}
+
+	for (my $oi = 1; $oi < (1 << scalar @ops); $oi++) {
+	    if (($oi & ~$opmask) == 0) {
+		my @xops = ();
+		my $omask = ~$oi;
+		for ($oj = 0; $oj < scalar(@ops); $oj++) {
+		    if ($omask & 1) {
+			push(@xops, $ops[$oj]);
+		    }
+		    $omask >>= 1;
+		}
+		my @ff = @$fields;
+		$ff[1] = join(',', @xops);
+		$ff[4] = $oi;
+		push(@field_list, [@ff]);
+	    }
+	}
+    }
+
+    return @field_list;
+}
+
+# Condition codes used by the disassembler
+my %condd = ( 'o'   =>  0, 'no'  =>  1, 'c'   =>  2,  'nc'  =>  3,
+	      'z'   =>  4, 'nz'  =>  5, 'na'  =>  6,  'a'   =>  7,
+	      's'   =>  8, 'ns'  =>  9, 'pe'  => 10,  'po'  => 11,
+	      'l'   => 12, 'nl'  => 13, 'ng'  => 14,  'g'   => 15 );
+
+# All condition code aliases
+my %conds = ( %condd,
+	      'ae'  =>  3, 'b'   =>  2, 'be'  =>  6,  'e'   =>  4,
+	      'ge'  => 13, 'le'  => 14, 'nae' =>  2,  'nb'  =>  3,
+	      'nbe' =>  7, 'ne'  =>  5, 'nge' => 12,  'nle' => 15,
+	      'np'  => 11, 'p'   => 10 );
+
+my @conds = sort keys(%conds);
+
+# Generate conditional form patterns if applicable
+sub conditional_forms(@) {
+    my @field_list = ();
+
+    foreach my $fields (@_) {
+	# This is a case sensitive match!
+	if ($fields->[0] !~ /cc/) {
+	    # Not a conditional instruction pattern
+	    push(@field_list, $fields);
+	    next;
+	}
+
+	if ($fields->[2] !~ /^\[/) {
+	    warn "$fname:$line: conditional instruction using raw bytecodes\n";
+	    next;
+	}
+
+	foreach my $cc (@conds) {
+	    my @ff = @$fields;
+
+	    $ff[0] =~ s/cc/\U$cc/;
+
+	    unless ($ff[2] =~ /^(\[.*?)\b([0-9a-f]{2})\+c\b(.*\])$/) {
+		warn "$fname:$line: invalid conditional encoding";
+		next;
+	    }
+	    $ff[2] = $1.sprintf('%02x', hex($2)^$conds{$cc}).$3;
+
+	    unless (defined($condd{$cc}) || $ff[3] =~ /\bND\b/) {
+		$ff[3] .= ',ND';
+	    }
+
+	    push(@field_list, [@ff]);
+	}
+    }
+    return @field_list;
+}
 
 print STDERR "Reading insns.dat...\n";
 
@@ -86,10 +194,13 @@ open(F, '<', $fname) || die "unable to open $fname";
 
 %dinstables = ();
 @bytecode_list = ();
+%aname = ();
 
 $line = 0;
 $insns = 0;
-$n_opcodes = $n_opcodes_cc = 0;
+$n_opcodes = 0;
+my @allpatterns = ();
+
 while (<F>) {
     $line++;
     chomp;
@@ -99,71 +210,24 @@ while (<F>) {
         warn "line $line does not contain four fields\n";
         next;
     }
-    @fields = ($1, $2, $3, $4);
-    @field_list = ([@fields, 0]);
+    my @field_list = ([$1, $2, $3, $4, 0]);
+    @field_list = relaxed_forms(@field_list);
+    @field_list = conditional_forms(@field_list);
 
-    if ($fields[1] =~ /\*/) {
-        # This instruction has relaxed form(s)
-        if ($fields[2] !~ /^\[/) {
-            warn "line $line has an * operand but uses raw bytecodes\n";
-            next;
-        }
-
-        $opmask = 0;
-        @ops = split(/,/, $fields[1]);
-        for ($oi = 0; $oi < scalar @ops; $oi++) {
-            if ($ops[$oi] =~ /\*$/) {
-                if ($oi == 0) {
-                    warn "line $line has a first operand with a *\n";
-                    next;
-                }
-                $opmask |= 1 << $oi;
-            }
-        }
-
-        for ($oi = 1; $oi < (1 << scalar @ops); $oi++) {
-            if (($oi & ~$opmask) == 0) {
-                my @xops = ();
-                my $omask = ~$oi;
-                for ($oj = 0; $oj < scalar(@ops); $oj++) {
-                    if ($omask & 1) {
-                        push(@xops, $ops[$oj]);
-                    }
-                    $omask >>= 1;
-                }
-                push(@field_list, [$fields[0], join(',', @xops),
-                     $fields[2], $fields[3], $oi]);
-            }
-        }
-    }
-
-    foreach $fptr (@field_list) {
-        @fields = @$fptr;
-        ($formatted, $nd) = format_insn(@fields);
+    foreach my $fields (@field_list) {
+        ($formatted, $nd) = format_insn(@$fields);
         if ($formatted) {
             $insns++;
-            $aname = "aa_$fields[0]";
-            push @$aname, $formatted;
+	    xpush(\$aname{$fields->[0]}, $formatted);
         }
-        if ( $fields[0] =~ /cc$/ ) {
-            # Conditional instruction
-	    if (!defined($k_opcodes_cc{$fields[0]})) {
-		$k_opcodes_cc{$fields[0]} = $n_opcodes_cc++;
-	    }
-        } else {
-            # Unconditional instruction
-	    if (!defined($k_opcodes{$fields[0]})) {
-		$k_opcodes{$fields[0]} = $n_opcodes++;
-	    }
-        }
+	if (!defined($k_opcodes{$fields->[0]})) {
+	    $k_opcodes{$fields->[0]} = $n_opcodes++;
+	}
         if ($formatted && !$nd) {
             push @big, $formatted;
-            my @sseq = startseq($fields[2], $fields[4]);
-            foreach $i (@sseq) {
-                if (!defined($dinstables{$i})) {
-                    $dinstables{$i} = [];
-                }
-                push(@{$dinstables{$i}}, $#big);
+            my @sseq = startseq($fields->[2], $fields->[4]);
+            foreach my $i (@sseq) {
+                xpush(\$dinstables{$i}, $#big);
             }
         }
     }
@@ -194,8 +258,7 @@ foreach $bl (@bytecode_list) {
 }
 undef @bytecode_list;
 
-@opcodes    = sort { $k_opcodes{$a} <=> $k_opcodes{$b} } keys(%k_opcodes);
-@opcodes_cc = sort { $k_opcodes_cc{$a} <=> $k_opcodes_cc{$b} } keys(%k_opcodes_cc);
+@opcodes = sort { $k_opcodes{$a} <=> $k_opcodes{$b} } keys(%k_opcodes);
 
 if ( $output eq 'b') {
     print STDERR "Writing $oname...\n";
@@ -249,16 +312,15 @@ if ( $output eq 'a' ) {
     print A "#include \"nasm.h\"\n";
     print A "#include \"insns.h\"\n\n";
 
-    foreach $i (@opcodes, @opcodes_cc) {
+    foreach $i (@opcodes) {
         print A "static const struct itemplate instrux_${i}[] = {\n";
-        $aname = "aa_$i";
-        foreach $j (@$aname) {
+        foreach $j (@{$aname{$i}}) {
             print A "    ", codesubst($j), "\n";
         }
         print A "    ITEMPLATE_END\n};\n\n";
     }
     print A "const struct itemplate * const nasm_instructions[] = {\n";
-    foreach $i (@opcodes, @opcodes_cc) {
+    foreach $i (@opcodes) {
         print A "    instrux_${i},\n";
     }
     print A "};\n";
@@ -286,7 +348,7 @@ if ( $output eq 'd' ) {
 
     foreach $h (sort(keys(%dinstables))) {
         next if ($h eq ''); # Skip pseudo-instructions
-            print D "\nstatic const struct itemplate * const itable_${h}[] = {\n";
+	print D "\nstatic const struct itemplate * const itable_${h}[] = {\n";
         foreach $j (@{$dinstables{$h}}) {
             print D "    instrux + $j,\n";
         }
@@ -294,7 +356,7 @@ if ( $output eq 'd' ) {
     }
 
     @prefix_list = ();
-    foreach $h (@disasm_prefixes, '') {
+    foreach $h (@disasm_prefixes) {
         for ($c = 0; $c < 256; $c++) {
             $nn = sprintf("%s%02X", $h, $c);
             if ($is_prefix{$nn} || defined($dinstables{$nn})) {
@@ -315,10 +377,15 @@ if ( $output eq 'd' ) {
         for ($c = 0; $c < 256; $c++) {
             $nn = sprintf("%s%02X", $h, $c);
             if ($is_prefix{$nn}) {
-                die "$fname:$line: ambiguous decoding of $nn\n"
-                    if (defined($dinstables{$nn}));
+		if ($dinstables{$nn}) {
+		    print STDERR "$fname: ambiguous decoding, prefix $nn aliases:\n";
+		    foreach my $dc (@{$dinstables{$nn}}) {
+			print STDERR codesubst($big[$dc]), "\n";
+		    }
+		    exit 1;
+		}
                 printf D "    /* 0x%02x */ { itable_%s, -1 },\n", $c, $nn;
-            } elsif (defined($dinstables{$nn})) {
+            } elsif ($dinstables{$nn}) {
                 printf D "    /* 0x%02x */ { itable_%s, %u },\n", $c,
                        $nn, scalar(@{$dinstables{$nn}});
             } else {
@@ -362,10 +429,9 @@ if ( $output eq 'i' ) {
     print I "#define NASM_INSNSI_H 1\n\n";
     print I "enum opcode {\n";
     $maxlen = 0;
-    foreach $i (@opcodes, @opcodes_cc) {
+    foreach $i (@opcodes) {
         print I "\tI_${i},\n";
         $len = length($i);
-        $len++ if ( $i =~ /cc$/ ); # Condition codes can be 3 characters long
         $maxlen = $len if ( $len > $maxlen );
     }
     print I "\tI_none = -1\n";
@@ -373,7 +439,6 @@ if ( $output eq 'i' ) {
     print I "#define MAX_INSLEN ", $maxlen, "\n";
     print I "#define NASM_VEX_CLASSES ", $vex_classes, "\n";
     print I "#define NO_DECORATOR\t{", join(',',(0) x $MAX_OPERANDS), "}\n";
-    print I "#define FIRST_COND_OPCODE I_", $opcodes_cc[0], "\n\n";
     print I "#endif /* NASM_INSNSI_H */\n";
 
     close I;
@@ -389,14 +454,9 @@ if ( $output eq 'n' ) {
     print N "#include \"tables.h\"\n\n";
 
     print N "const char * const nasm_insn_names[] = {";
-    $first = 1;
-    foreach $i (@opcodes, @opcodes_cc) {
-        print N "," if ( !$first );
-        $first = 0;
-        $ilower = $i;
-        $ilower =~ s/cc$//;             # Remove conditional cc suffix
-        $ilower =~ tr/A-Z/a-z/;         # Change to lower case (Perl 4 compatible)
-        print N "\n\t\"${ilower}\"";
+    foreach $i (@opcodes) {
+        print N "\n\t\"\L$i\"";
+	print N ',' if ($i < $#opcodes);
     }
     print N "\n};\n";
     close N;
@@ -658,7 +718,6 @@ sub hexstr(@) {
 # instruction. We need only consider the codes:
 # \[1234]      mean literal bytes, of course
 # \1[0123]     mean byte plus register value
-# \330         means byte plus condition code
 # \0 or \340   mean give up and return empty set
 # \34[4567]    mean PUSH/POP of segment registers: special case
 # \17[234]     skip is4 control byte
@@ -691,15 +750,16 @@ sub startseq($$) {
             }
 
             foreach $pfx (@disasm_prefixes) {
-                if (substr($fbs, 0, length($pfx)) eq $pfx) {
+		my $len = length($pfx);
+                if (substr($fbs, 0, $len) eq $pfx) {
                     $prefix = $pfx;
-                    $fbs = substr($fbs, length($pfx));
+                    $fbs = substr($fbs, $len, 2);
                     last;
                 }
             }
 
             if ($fbs ne '') {
-                return ($prefix.substr($fbs,0,2));
+                return ($prefix.$fbs);
             }
 
             unshift(@codes, $c0);
@@ -707,8 +767,6 @@ sub startseq($$) {
             return addprefix($prefix, $c1..($c1+7));
         } elsif (($c0 & ~013) == 0144) {
             return addprefix($prefix, $c1, $c1|2);
-        } elsif ($c0 == 0330) {
-            return addprefix($prefix, $c1..($c1+15));
         } elsif ($c0 == 0 || $c0 == 0340) {
             return $prefix;
         } elsif (($c0 & ~3) == 0260 || $c0 == 0270 ||
@@ -729,7 +787,7 @@ sub startseq($$) {
             # and "ignorable" codes here
         }
     }
-    return $prefix;
+    return ();
 }
 
 # EVEX tuple types offset is 0300. e.g. 0301 is for full vector(fv).
@@ -1089,9 +1147,6 @@ sub byte_code_compile($$) {
                 die "$fname:$line: invalid imm4 value for $op: $imm\n";
             }
             push(@codes, 0173, ($oppos{'s'} << 4) + $imm);
-            $prefix_ok = 0;
-        } elsif ($op =~ /^([0-9a-f]{2})\+c$/) {
-            push(@codes, 0330, hex $1);
             $prefix_ok = 0;
         } elsif ($op =~ /^([0-9a-f]{2})\+r$/) {
             if (!defined($oppos{'r'})) {

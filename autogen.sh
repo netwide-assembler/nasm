@@ -47,7 +47,8 @@ fi
 rm -rf autoconf/*m4.old
 "$AUTOHEADER" -B autoconf
 "$AUTOCONF" -B autoconf
-rm -rf autom4te.cache config.log config.status config/config.h Makefile
+rm -rf autom4te.cache config.log config.status \
+   config/config.h Makefile doc/Makefile
 
 if $recheck; then
     # This bizarre statement has to do with how config.status quotes its output

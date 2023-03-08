@@ -40,7 +40,7 @@
 
 require 'phash.ph';
 
-my($output, $insns_dat, $regs_dat, $tokens_dat) = @ARGV;
+my($output, $insnsn_c, $regs_dat, $tokens_dat) = @ARGV;
 
 %tokens = ();
 @tokendata = ();
@@ -53,33 +53,18 @@ my($output, $insns_dat, $regs_dat, $tokens_dat) = @ARGV;
 	       'nle', 'no', 'np', 'ns', 'nz', 'o', 'p', 'pe', 'po', 's', 'z');
 
 #
-# Read insns.dat
+# Read insnsn.c
 #
-open(ID, '<', $insns_dat) or die "$0: cannot open $insns_dat: $!\n";
+open(ID, '<', $insnsn_c) or die "$0: cannot open $insnsn_c: $!\n";
 while (defined($line = <ID>)) {
-    if ($line =~ /^([\?\@A-Z0-9_]+)(|cc)\s/) {
-	$insn = $1.$2;
-	($token = $1) =~ tr/A-Z/a-z/;
+    next unless ($line =~ /^\s*\"([\?\@a-z0-9_]+)\"/);
 
-	if ($2 eq '') {
-	    # Single instruction token
-	    if (!defined($tokens{$token})) {
-		$tokens{$token} = scalar @tokendata;
-		push(@tokendata, "\"${token}\", ".length($token).
-		     ", TOKEN_INSN, C_none, 0, I_${insn}");
-	    }
-	} else {
-	    # Conditional instruction
-	    foreach $cc (@conditions) {
-		my $etok = $token.$cc;
-		if (!defined($tokens{$etok})) {
-		    $tokens{$etok} = scalar @tokendata;
-		    push(@tokendata, "\"${etok}\", ".length($etok).
-			 ", TOKEN_INSN, C_\U$cc\E, 0, I_${insn}");
-		}
-	    }
-	}
-    }
+    my $token = $1;
+    next if (defined($tokens{$token}));	# This should never happen
+
+    $tokens{$token} = scalar @tokendata;
+    push(@tokendata, "\"${token}\", ".length($token).
+	 ", TOKEN_INSN, 0, 0, I_\U${token}");
 }
 close(ID);
 

@@ -20,7 +20,7 @@ INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 
-PERL		= perl -I$(srcdir)
+PERL		= perl -I$(top_srcdir)/perllib -I$(srcdir)
 
 PDFOPT		= @PDFOPT@
 

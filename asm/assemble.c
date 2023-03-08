@@ -146,8 +146,6 @@
  * \325             nohi                        instruction which always uses spl/bpl/sil/dil
  * \326             nof3                        instruction not valid with 0xF3 REP prefix.  Hint for
                                                 disassembler only; for SSE instructions.
- * \330                                         a literal byte follows in the code stream, to be added
- *                                              to the condition code value of the instruction.
  * \331             norep                       instruction not valid with REP prefix.  Hint for
  *                                              disassembler only; for SSE instructions.
  * \332             f2i                         REP prefix (0xF2 byte) used as opcode extension.
@@ -935,8 +933,12 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                 nasm_nonfatal("instruction not supported in %d-bit mode", bits);
                 break;
             case MERR_ENCMISMATCH:
-                nasm_nonfatal("instruction not encodable with %s prefix",
-                              prefix_name(instruction->prefixes[PPS_REX]));
+                if (!instruction->prefixes[PPS_REX]) {
+                    nasm_nonfatal("instruction not encodable without explicit prefix");
+                } else {
+                    nasm_nonfatal("instruction not encodable with %s prefix",
+                                  prefix_name(instruction->prefixes[PPS_REX]));
+                }
                 break;
             case MERR_BADBND:
             case MERR_BADREPNE:
@@ -1468,10 +1470,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0326:
-            break;
-
-        case 0330:
-            codes++, length++;
             break;
 
         case 0331:
@@ -2185,10 +2183,6 @@ static void gencode(struct out_data *data, insn *ins)
         case 0326:
             break;
 
-        case 0330:
-            out_rawbyte(data, *codes++ ^ get_cond_opcode(ins->condition));
-            break;
-
         case 0331:
             break;
 
@@ -2559,6 +2553,17 @@ static enum match_result matches(const struct itemplate *itemp,
             return MERR_ENCMISMATCH;
         break;
     default:
+        if (itemp_has(itemp, IF_EVEX)) {
+            if (!iflag_test(&cpu, IF_EVEX))
+                return MERR_ENCMISMATCH;
+        } else if (itemp_has(itemp, IF_VEX)) {
+            if (!iflag_test(&cpu, IF_VEX)) {
+                return MERR_ENCMISMATCH;
+            } else if (itemp_has(itemp, IF_LATEVEX)) {
+                if (!iflag_test(&cpu, IF_LATEVEX) && iflag_test(&cpu, IF_EVEX))
+                    return MERR_ENCMISMATCH;
+            }
+        }
         break;
     }
 

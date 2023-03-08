@@ -7,10 +7,115 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
-\S{cl-2.15.06} Version 2.15.06
+\S{cl-2.17} Version 2.17
 
-\b Fix object and header length in \c{rdf} format.
-It is been broken in 2.13.xx series.
+\b ... here goes release notes not intended to be included in the
+2.16.xx stable series ...
+
+\S{cl-2.16.02} Version 2.16.02
+
+\b Fix building from the source distribution in a separate directory
+from the source.
+
+\b Update broken \c{autoconf} macros.
+
+\S{cl-2.16.01} Version 2.16.01
+
+\e{This is a documentation update release only.}
+
+\b Fix the creation of the table of contents in the HTML version of
+the documentation.
+
+
+\S{cl-2.16} Version 2.16
+
+\b Support for the \c{rdf} format has been discontinued and all the
+RDOFF utilities has been removed.
+
+\b The \c{--reproducible} option now leaves the filename field in the
+COFF object format blank. This was always rather useless since it is
+only 18 characters long; as such debug formats have to carry their own
+filename information anyway.
+
+\b Fix handling of MASM-syntax reserved memory (e.g. \c{dw ?}) when
+used in structure definitions.
+
+\b The preprocessor now supports functions, which can be less verbose
+and more convenient than the equivalent code implemented using
+directives. See \k{ppfunc}.
+
+\b Fix the handling of \c{%00} in the preprocessor.
+
+\b Fix incorrect handling of path names affecting error messages,
+dependency generation, and debug format output.
+
+\b Support for the RDOFF output format and the RDOFF tools have been
+removed. The RDOFF tools had already been broken since at least NASM
+2.14. For flat code the ELF output format recommended; for segmented
+code the \c{obj} (OMF) output format.
+
+\b New facility: preprocessor functions. Preprocessor functions, which
+are expanded similarly to single-line macros, can greatly simplify
+code that in the past would have required a lengthy list of directives
+and intermediate macros. See \k{ppfunc}.
+
+\b Single-line macros can now declare parameters (using a \c{&&}
+prefix) that creates a quoted string, but does \e{not} requote an
+already quoted string. See \k{define}.
+
+\b Instruction table updated per public information available as of
+November 2022.
+
+\b All warnings in the preprocessor have now been assigned warning
+classes. See \k{warnings}.
+
+\b Fix the invalid use of \c{RELA}-type relocations instead of
+\c{REL}-type relocations when generating DWARF debug information for
+the \c{elf32} output format.
+
+\b Fix the handling \c{at} in \c{istruc} when the structure contains
+local labels. See \k{istruc}.
+
+\b When assembling with \c{--reproducible}, don't encode the filename
+in the COFF header for the \c{coff}, \c{win32} or \c{win64} output
+formats. The COFF header only has space for an 18-character filename,
+which makes this field rather useless in the first place. Debug output
+data, if enabled, is not affected.
+
+\b Fix incorrect size calculation when using MASM syntax for non-byte
+reservations (e.g. \c{dw ?}.)
+
+\b Allow forcing an instruction in 64-bit mode to have a (possibly
+redundant) REX prefix, using the syntax \i\c{\{rex\}} as a prefix.
+
+\b Add a \c{\{vex\}} prefix to enforce VEX (AVX) encoding of an
+instruction, either using the 2- or 3-byte VEX prefixes.
+
+\b The \c{CPU} directive has been augmented to allow control of
+generation of VEX (AVX) versus EVEX (AVX-512) instruction formats, see
+\k{CPU}.
+
+\b Some recent instructions that previously have been only available
+using EVEX encodings are now also encodable using VEX (AVX)
+encodings. For backwards compatibility these encodings are not enabled
+by default, but can be generated either via an explicit \c{\{vex\}}
+prefix or by specifying either \c{CPU LATEVEX} or \c{CPU NOEVEX}; see
+\k{CPU}.
+
+\b Document the already existing \c{%unimacro} directive. See \k{unmacro}.
+
+\b Fix a code range generation bug in the DWARF debug format
+(incorrect information in the \c{DW_AT_high_pc} field) for the ELF
+output formats. This bug happened to cancel out with a bug in older
+versions of the GNU binutils linker, but breaks with other linkers and
+updated or other linkers that expect the spec to be followed.
+
+\b Fix segment symbols with addends, e.g. \c{jmp _TEXT+10h:0} in
+output formats that support segment relocations, e.g. the \c{obj}
+format.
+
+\b Fix various crashes and hangs on invalid input.
+
 
 \S{cl-2.15.05} Version 2.15.05
 
@@ -700,9 +805,10 @@ options to indicate whether all relevant branches should be getting
 \c{BND} prefixes.  This is expected to be the normal for use in MPX
 code.
 
-\b Add \c{{evex}}, \c{{vex3}} and \c{{vex2}} instruction prefixes to
-have NASM encode the corresponding instruction, if possible, with an EVEX,
-3-byte VEX, or 2-byte VEX prefix, respectively.
+\b Add \c{\{evex\}}, \c{\{vex3\}} and \c{\{vex2\}} instruction
+prefixes to have NASM encode the corresponding instruction, if
+possible, with an EVEX, 3-byte VEX, or 2-byte VEX prefix,
+respectively.
 
 \b Support for section names longer than 8 bytes in Win32/Win64 COFF.
 

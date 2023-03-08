@@ -49,8 +49,24 @@ li.toc1 {
 li.toc2 {
     padding-top: 0.3em;
 }
-ul.index {
+.index li {
     list-style-type: none;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.index .term {
+    display: inline-block;
+    text-align: left;
+    vertical-align: top;
+    flex: 3 3 0;
+}
+.index .ref {
+    width: 30%;
+    display: inline-block;
+    text-align: right;
+    vertical-align: top;
+    flex: 1 1 0;
 }
 @media not screen {
     ul.navbar {
@@ -147,5 +163,9 @@ ul.index {
     }
     ul.navbar a:hover {
 	background-color: #448;
+    }
+
+    .index li:hover {
+	background: #eef;
     }
 }

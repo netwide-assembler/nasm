@@ -1,8 +1,8 @@
 dnl --------------------------------------------------------------------------
-dnl PA_HAVE_FUNC(func_name)
+dnl PA_HAVE_FUNC(func_name, arguments)
 dnl
 dnl Look for a function with the specified arguments which could be
-dnl a builtin/intrinsic function.
+dnl a macro/builtin/intrinsic function.
 dnl --------------------------------------------------------------------------
 AC_DEFUN([PA_HAVE_FUNC],
 [AC_MSG_CHECKING([for $1])

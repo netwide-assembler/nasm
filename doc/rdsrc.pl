@@ -157,7 +157,7 @@ $MAXLEVEL = 10;  # really 3, but play safe ;-)
 
 # Read the file; pass a paragraph at a time to the paragraph processor.
 print "Reading input...";
-$pname = "para000000";
+$pname = [];
 @pnames = @pflags = ();
 $para = undef;
 foreach $file (@files) {
@@ -268,9 +268,9 @@ sub include {
 sub got_para {
   local ($_) = @_;
   my $pflags = "", $i, $w, $l, $t;
-  return if !/\S/;
+  my $para = [];
 
-  @$pname = ();
+  return if !/\S/;
 
   # Replace metadata macros
   while (/^(.*)\\m\{([^\}]*)\}(.*)$/) {
@@ -294,7 +294,7 @@ sub got_para {
       $l =~ s/\\\{/\{/g;
       $l =~ s/\\\}/}/g;
       $l =~ s/\\\\/\\/g;
-      push @$pname, $l;
+      push @$para, $l;
     }
     $_ = ''; # suppress word-by-word code
   } elsif (/^\\C/) {
@@ -308,7 +308,7 @@ sub got_para {
     die "badly formatted chapter heading: $_\n" if !/^\\C\{([^\}]*)\}\s*(.*)$/;
     $refs{$1} = "chapter $cnum";
     $node = "Chapter $cnum";
-    &add_item($node, 1);
+    &add_item($node, 1, $para);
     $xrefnodes{$node} = $xref; $nodexrefs{$xref} = $node;
     $xrefs{$1} = $xref;
     $_ = $2;
@@ -325,7 +325,7 @@ sub got_para {
     die "badly formatted appendix heading: $_\n" if !/^\\A\{([^\}]*)}\s*(.*)$/;
     $refs{$1} = "appendix $cnum";
     $node = "Appendix $cnum";
-    &add_item($node, 1);
+    &add_item($node, 1, $para);
     $xrefnodes{$node} = $xref; $nodexrefs{$xref} = $node;
     $xrefs{$1} = $xref;
     $_ = $2;
@@ -339,7 +339,7 @@ sub got_para {
     die "badly formatted heading: $_\n" if !/^\\[HP]\{([^\}]*)\}\s*(.*)$/;
     $refs{$1} = "section $cnum.$hnum";
     $node = "Section $cnum.$hnum";
-    &add_item($node, 2);
+    &add_item($node, 2, $para);
     $xrefnodes{$node} = $xref; $nodexrefs{$xref} = $node;
     $xrefs{$1} = $xref;
     $_ = $2;
@@ -352,7 +352,7 @@ sub got_para {
     die "badly formatted subheading: $_\n" if !/^\\S\{([^\}]*)\}\s*(.*)$/;
     $refs{$1} = "section $cnum.$hnum.$snum";
     $node = "Section $cnum.$hnum.$snum";
-    &add_item($node, 3);
+    &add_item($node, 3, $para);
     $xrefnodes{$node} = $xref; $nodexrefs{$xref} = $node;
     $xrefs{$1} = $xref;
     $_ = $2;
@@ -389,11 +389,11 @@ sub got_para {
     $pflags = "norm";
   }
 
-  # The word-by-word code: unless @$pname is already defined (which it
+  # The word-by-word code: unless @$para is already defined (which it
   # will be in the case of a code paragraph), split the paragraph up
-  # into words and push each on @$pname.
+  # into words and push each on @$para.
   #
-  # Each thing pushed on @$pname should have a two-character type
+  # Each thing pushed on @$para should have a two-character type
   # code followed by the text.
   #
   # Type codes are:
@@ -416,7 +416,7 @@ sub got_para {
   #      index-items arrays
   # "sp" for space
   while (/\S/) {
-    s/^\s*//, push @$pname, "sp" if /^\s/;
+    s/^\s*//, push @$para, "sp" if /^\s/;
     $indexing = $qindex = 0;
     if (/^(\\[iI])?\\c/) {
       $qindex = 1 if $1 eq "\\I";
@@ -429,9 +429,8 @@ sub got_para {
       $w =~ s/\\\}/\}/g;
       $w =~ s/\\-/-/g;
       $w =~ s/\\\\/\\/g;
-      (push @$pname,"i"),$lastp = $#$pname if $indexing;
-      push @$pname,"c $w" if !$qindex;
-      $$pname[$lastp] = &addidx($node, $w, "c $w") if $indexing;
+      push(@$para, addidx($node, $w, "c $w")) if ($indexing);
+      push(@$para, "c $w") if (!$qindex);
     } elsif (/^\\[iIe]/) {
       /^(\\[iI])?(\\e)?/;
       $emph = 0;
@@ -448,19 +447,25 @@ sub got_para {
       $w =~ s/\\\\/\\/g;
       $t = $emph ? "es" : "n ";
       @ientry = ();
-      (push @$pname,"i"),$lastp = $#$pname if $indexing;
+      @pentry = ();
       foreach $i (split /\s+/,$w) {  # \e and \i can be multiple words
-        push @$pname,"$t$i","sp" if !$qindex;
-	($ii=$i) =~ tr/A-Z/a-z/, push @ientry,"n $ii","sp" if $indexing;
+        push @pentry, "$t$i","sp";
+	($ii=$i) =~ tr/A-Z/a-z/, push @ientry,"n $ii","sp";
 	$t = $emph ? "e " : "n ";
       }
-      $w =~ tr/A-Z/a-z/, pop @ientry if $indexing;
-      $$pname[$lastp] = &addidx($node, $w, @ientry) if $indexing;
-      pop @$pname if !$qindex; # remove final space
-      if (substr($$pname[$#$pname],0,2) eq "es" && !$qindex) {
-        substr($$pname[$#$pname],0,2) = "eo";
-      } elsif ($emph && !$qindex) {
-        substr($$pname[$#$pname],0,2) = "ee";
+      if ($indexing) {
+	  $w =~ tr/A-Z/a-z/;
+	  pop @ientry;		# remove final space
+	  push(@$para, addidx($node, $w, @ientry));
+      }
+      if (!$qindex) {
+	  pop @pentry;		# remove final space
+	  if (substr($pentry[-1],0,2) eq 'es') {
+	      substr($pentry[-1],0,2) = 'eo';
+	  } elsif ($emph) {
+	      substr($pentry[-1],0,2) = 'ee';
+	  }
+	  push(@$para, @pentry);
       }
     } elsif (/^\\[kK]/) {
       $t = "k ";
@@ -468,7 +473,7 @@ sub got_para {
       s/^\\[kK]//;
       die "badly formatted \\k: \\k$_\n" if !/\{([^\}]*)\}(.*)$/;
       $_ = $2;
-      push @$pname,"$t$1";
+      push @$para,"$t$1";
     } elsif (/^\\W/) {
       s/^\\W//;
       die "badly formatted \\W: \\W$_\n"
@@ -483,9 +488,8 @@ sub got_para {
       $w =~ s/\\\}/\}/g;
       $w =~ s/\\-/-/g;
       $w =~ s/\\\\/\\/g;
-      (push @$pname,"i"),$lastp = $#$pname if $indexing;
-      push @$pname,"$t<$l>$w";
-      $$pname[$lastp] = &addidx($node, $w, "c $w") if $indexing;
+      push(@$para, addidx($node, $w, "c $w")) if $indexing;
+      push(@$para, "$t<$l>$w");
     } else {
       die "what the hell? $_\n" if !/^(([^\s\\\-]|\\[\\{}\-])*-?)(.*)$/;
       die "painful death! $_\n" if !length $1;
@@ -496,53 +500,71 @@ sub got_para {
       $w =~ s/\\-/-/g;
       $w =~ s/\\\\/\\/g;
       if ($w eq '--') {
-	  push @$pname, 'dm';
+	  push @$para, 'dm';
       } elsif ($w eq '-') {
-        push @$pname, 'da';
+        push @$para, 'da';
       } else {
-        push @$pname,"n $w";
+        push @$para,"n $w";
       }
     }
   }
   if ($irewrite ne undef) {
-    &addidx(undef, $irewrite, @$pname);
-    @$pname = ();
+    addidx(undef, $irewrite, @$para);
   } else {
-    push @pnames, $pname;
+    push @pnames, $para;
     push @pflags, $pflags;
-    $pname++;
   }
 }
 
-sub addidx {
-  my ($node, $text, @ientry) = @_;
+sub addidx($$@) {
+  my($node, $text, @ientry) = @_;
   $text = $idxalias{$text} || $text;
-  if ($node eq undef || !$idxmap{$text}) {
-    @$ientry = @ientry;
-    $idxmap{$text} = $ientry;
-    $ientry++;
+  if (!exists($idxmap{$text})) {
+      $idxmap{$text} = [@ientry];
+      $idxdup{$text} = [$text];
+  } elsif (!defined($node)) {
+      my $dummy = sprintf('%s    #%05d', $text, $#{$idxdup{$text}} + 2);
+      $idxmap{$dummy} = [@ientry];
+      push(@{$idxdup{$text}}, $dummy);
   }
-  if ($node) {
-    $idxnodes{$node,$text} = 1;
-    return "i $text";
-  }
+
+  return undef if (!defined($node));
+
+  return map { $idxnodes{$node,$_} = 1; "i $_" } @{$idxdup{$text}};
 }
 
 sub indexsort {
   my $iitem, $ientry, $i, $piitem, $pcval, $cval, $clrcval;
 
   @itags = map { # get back the original data as the 1st elt of each list
-             $_->[0]
-	   } sort { # compare auxiliary (non-first) elements of lists
-	     $a->[1] cmp $b->[1] ||
-	     $a->[2] cmp $b->[2] ||
-	     $a->[0] cmp $b->[0]
-           } map { # transform array into list of 3-element lists
-	     my $ientry = $idxmap{$_};
-	     my $a = substr($$ientry[0],2);
-	     $a =~ tr/A-Za-z0-9//cd;
-	     [$_, uc($a), substr($$ientry[0],0,2)]
-	   } keys %idxmap;
+      $_->[0]
+  } sort { # compare auxiliary (non-first) elements of lists
+      my $d = 0;
+      for (my $i = 1; defined($a->[$i]) || defined($b->[$i]); $i++) {
+	  $d = $a->[$i] cmp $b->[$i];
+	  last if ($d);
+      }
+      $d
+  } map { # transform array into list of 3-element lists
+      my $ientry = $idxmap{$_};
+      my $b = lc(join(' ', map { substr($_,2) } @$ientry));
+      $b =~ s/([][(){}]+|\B,)//g;
+      $b =~ s/\s+/ /g;
+      my $a = $b;
+      $a =~ s/([[:alpha:]])/Z$1/g;
+      # From this point on [A-Z] means an already classed character
+	  # Try to sort numbers in numerical order (e.g. 8 before 16)
+      while ($a =~ /^(|.*?[^A-Z])(\d+)(\.\d+)?(.*)$/) {
+	  my $p = $1; my $s = $4;
+	  my $nn = ('0' x (24 - length($2))) . $2 . $3;
+	  $nn =~ s/(.)/D$1/g;
+	  $a = $p . $nn . $s;
+      }
+      $a =~ s/([^A-Z\s])/A$1/g;
+      my $c = join(' ', map { substr($_,0,2) } @$ientry);
+      my $v = [$_, $a, $b, $_, $c];
+      $v
+  } keys %idxmap;
 
   # Having done that, check for comma-hood.
   $cval = 0;
@@ -594,8 +616,8 @@ sub fixup_xrefs {
     next if $pflags[$p] eq "code";
     $pname = $pnames[$p];
     for ($i=$#$pname; $i >= 0; $i--) {
-      if ($$pname[$i] =~ /^k/) {
-        $k = $$pname[$i];
+	$k = $$pname[$i];
+      if ($k =~ /^k/) {
         $caps = ($k =~ /^kK/);
 	$k = substr($k,2);
         $repl = $refs{$k};
@@ -747,6 +769,15 @@ sub word_txt {
   }
 }
 
+sub html_filename($) {
+    my($node) = @_;
+
+    (my $number = lc($xrefnodes{$node})) =~ s/.*-//;
+    my $fname="nasmdocx.html";
+    substr($fname,8 - length $number, length $number) = $number;
+    return $fname;
+}
+
 sub write_html {
   # This is called from the top level, so I won't bother using
   # my or local.
@@ -756,6 +787,8 @@ sub write_html {
   print "writing contents file...";
   open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoc0.html');
   select TEXT;
+  undef $html_nav_last;
+  $html_nav_next = $tstruct_next{'Top'};
   &html_preamble(0);
   print "<p>This manual documents NASM, the Netwide Assembler: an assembler\n";
   print "targeting the Intel x86 series of processors, with portable source.\n</p>";
@@ -775,22 +808,13 @@ sub write_html {
       }
       $level = $tstruct_level{$node};
       if ($level == 1) {
-      # Invent a file name.
-	  ($number = lc($xrefnodes{$node})) =~ s/.*-//;
-	  $fname="nasmdocx.html";
-	  substr($fname,8 - length $number, length $number) = $number;
-	  $html_fnames{$node} = $fname;
-	  $link = $fname;
+	  $link = $fname = html_filename($node);
       } else {
 	  # Use the preceding filename plus a marker point.
 	  $link = $fname . "#$xrefnodes{$node}";
       }
-      $title = '';
       $pname = $tstruct_pname{$node};
-      foreach $i (@$pname) {
-	  $ww = &word_html($i);
-	  $title .= $ww unless $ww eq "\001";
-      }
+      $title = plist_to_html(@$pname);
       print "<li class=\"toc${level}\">\n";
       print "<span class=\"node\">$node: </span><a href=\"$link\">$title</a>\n";
   }
@@ -835,7 +859,7 @@ sub write_html {
       $html_nav_last = $chapternode;
       $chapternode = $nodexrefs{$xref};
       $html_nav_next = $tstruct_mnext{$chapternode};
-      open(TEXT, '>', File::Spec->catfile($out_path, $html_fnames{$chapternode}));
+      open(TEXT, '>', File::Spec->catfile($out_path, html_filename($chapternode)));
       select TEXT;
       &html_preamble(1);
       foreach $i (@$pname) {
@@ -853,7 +877,7 @@ sub write_html {
       $html_nav_last = $chapternode;
       $chapternode = $nodexrefs{$xref};
       $html_nav_next = $tstruct_mnext{$chapternode};
-      open(TEXT, '>', File::Spec->catfile($out_path, $html_fnames{$chapternode}));
+      open(TEXT, '>', File::Spec->catfile($out_path, html_filename($chapternode)));
       select TEXT;
       &html_preamble(1);
       foreach $i (@$pname) {
@@ -947,9 +971,9 @@ sub write_html {
   select TEXT;
   &html_preamble(0);
   print "<h2 class=\"index\">Index</h2>\n";
-  print "<ul class=\"index\">\n";
+  print "<div class=\"index\">\n";
   &html_index;
-  print "</ul>\n</body>\n</html>\n";
+  print "</div>\n\n</body>\n</html>\n";
   select STDOUT;
   close TEXT;
 }
@@ -960,6 +984,7 @@ sub html_preamble {
     print "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n";
     print "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n";
     print "<head>\n";
+    print "<meta charset=\"UTF-8\" />\n";
     print "<title>", $metadata{'title'}, "</title>\n";
     print "<link href=\"nasmdoc.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
     print "<link href=\"local.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
@@ -969,11 +994,11 @@ sub html_preamble {
     # Navigation bar
     print "<ul class=\"navbar\">\n";
     if (defined($html_nav_last)) {
-	my $lastf = $html_fnames{$html_nav_last};
+	my $lastf = html_filename($html_nav_last);
 	print "<li class=\"first\"><a class=\"prev\" href=\"$lastf\">$html_nav_last</a></li>\n";
     }
     if (defined($html_nav_next)) {
-	my $nextf = $html_fnames{$html_nav_next};
+	my $nextf = html_filename($html_nav_next);
 	print "<li><a class=\"next\" href=\"$nextf\">$html_nav_next</a></li>\n";
     }
     print "<li><a class=\"toc\" href=\"nasmdoc0.html\">Contents</a></li>\n";
@@ -995,44 +1020,67 @@ sub html_postamble {
 sub html_index {
   my $itag, $a, @ientry, $sep, $w, $wd, $wprev, $line;
 
+  print "<ul>\n";
+
   $chapternode = '';
   foreach $itag (@itags) {
     $ientry = $idxmap{$itag};
-    @a = @$ientry;
-    push @a, "n :";
+    my @a = ('HDterm', @$ientry, 'HDref');
     $sep = 0;
     foreach $node (@nodes) {
-      next if !$idxnodes{$node,$itag};
-      push @a, "n ," if $sep;
-      push @a, "sp", "x $xrefnodes{$node}", "n $node", "xe$xrefnodes{$node}";
-      $sep = 1;
+	next if !$idxnodes{$node,$itag};
+	my $xn = $xrefnodes{$node};
+	my $nn = $node;
+
+	# Text like "chapter", "appendix", "section", etc in the index
+	# makes it unnecessarily wide
+	$nn =~ s/^.*\s+//g;	# Remove all but the actual index information
+
+	push @a, 'n ,', 'sp' if $sep;
+	push @a, "x $xn", "n $nn", "xe$xn";
+	$sep = 1;
     }
-    print "<li class=\"index\">\n";
-    $line = '';
-    do {
-      do { $w = &word_html(shift @a) } while $w eq "\001"; # nasty hack
-      $wd .= $wprev;
-      if ($w eq ' ' || $w eq '' || $w eq undef) {
-        if (length ($line . $wd) > 75) {
-	  $line =~ s/\s*$//; # trim trailing spaces
-	  print "$line\n";
-	  $line = '';
-	  $wd =~ s/^\s*//; # trim leading spaces
+    print "<li>\n";
+    while (defined($w = shift(@a))) {
+	die unless ($w =~ /^HD(.*)$/);
+	print "<div class=\"$1\">\n";
+
+	$line = '';
+	while ($w ne '' && $a[0] !~ /^HD/) {
+	    $w = &word_html(shift @a);
+	    next if ($w eq "\001"); # Nasty hack
+
+	    if ($w =~ /^\s*$/ && length($line.$w) > 75) {
+		$line =~ s/\s*$//; # trim trailing spaces
+		print $line, "\n"; $line = '';
+	    }
+	    $line .= $w;
 	}
-	$line .= $wd;
-	$wd = '';
-      }
-      $wprev = $w;
-    } while ($w ne '' && $w ne undef);
-    if ($line =~ /\S/) {
-      $line =~ s/\s*$//; # trim trailing spaces
-      print $line, "\n";
+	if ($line =~ /\S/) {
+	    $line =~ s/\s*$//; # trim trailing spaces
+	    print $line, "\n"; $line = '';
+	}
+	print "</div>\n";
     }
     print "</li>\n";
   }
+
+  print "</ul>\n";
 }
 
-sub word_html {
+sub plist_to_html(@) {
+    my $ws = '';
+
+    foreach my $w (@_) {
+	my $ww = word_html($w);
+	next if ($ww eq "\001");
+	$ws .= $ww;
+    }
+
+    return $ws;
+}
+
+sub word_html($) {
   my ($w) = @_;
   my $wtype, $wmajt, $pfx, $sfx;
 
@@ -1072,7 +1120,7 @@ sub word_html {
     my $level = $tstruct_level{$node}; # and its level
     my $up = $node, $uplev = $level-1;
     $up = $tstruct_up{$up} while $uplev--; # get top node of containing file
-    my $file = ($up ne $chapternode) ? $html_fnames{$up} : "";
+    my $file = ($up ne $chapternode) ? html_filename($up) : "";
     my $marker = ($level == 1 and $file) ? "" : "#$w";
     return "<a href=\"$file$marker\">";
   } elsif ($wtype eq "xe") {
@@ -1085,11 +1133,11 @@ sub word_html {
 }
 
 # Make tree structures. $tstruct_* is top-level and global.
-sub add_item {
-  my ($item, $level) = @_;
+sub add_item($$$) {
+  my ($item, $level, $para) = @_;
   my $i;
 
-  $tstruct_pname{$item} = $pname;
+  $tstruct_pname{$item} = $para;
   $tstruct_next{$tstruct_previtem} = $item;
   $tstruct_prev{$item} = $tstruct_previtem;
   $tstruct_level{$item} = $level;
