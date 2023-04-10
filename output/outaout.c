@@ -466,6 +466,11 @@ static int32_t aout_add_gsym_reloc(struct Section *sect,
         list_for_each(sym, shead)
             if (sym->value == offset)
                 break;
+        if (!sym) {
+            nasm_nonfatal("unable to find a suitable global symbol"
+                          " for this reference");
+            return 0;
+        }
     } else {
         /*
          * Find the nearest symbol below this one.
@@ -474,11 +479,11 @@ static int32_t aout_add_gsym_reloc(struct Section *sect,
         list_for_each(sm, shead)
             if (sm->value <= offset && (!sym || sm->value > sym->value))
                 sym = sm;
-    }
-    if (!sym && exact) {
-        nasm_nonfatal("unable to find a suitable global symbol"
-                      " for this reference");
-        return 0;
+        if (!sym) {
+            nasm_nonfatal("unable to find a suitable nearest symbol"
+                          " below this reference");
+            return 0;
+        }
     }
 
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
@@ -522,9 +527,11 @@ static int32_t aout_add_gotoff_reloc(struct Section *sect, int32_t segment,
         asym = sdata.asym;
     else if (segment == sbss.index)
         asym = sbss.asym;
-    if (!asym)
+    if (!asym) {
         nasm_nonfatal("`..gotoff' relocations require a non-global"
                       " symbol in the section");
+        return 0;
+    }
 
     r = *sect->tail = nasm_malloc(sizeof(struct Reloc));
     sect->tail = &r->next;
