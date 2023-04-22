@@ -1042,8 +1042,8 @@ static void coff_write(void)
     /* fill in the .drectve section with -export's */
     BuildExportTable(&Exports);
 
-    if (win32) {
-        /* add default value for @feat.00, this allows to 'link /safeseh' */
+    /* Emit an absolute @feat.00 symbol */
+    {
         uint32_t n;
 
         saa_rewind(coff_syms);
@@ -1052,8 +1052,15 @@ static void coff_write(void)
             if (sym->strpos == -1 && !strcmp("@feat.00",sym->name))
                 break;
         }
-        if (n == coff_nsyms)
-            coff_deflabel("@feat.00", NO_SEG, 1, 0, NULL);
+        if (n == coff_nsyms) {
+            int64_t feat00_flags = 0;
+            if (win32)
+            	/* marks the object for "registered SEH". this allows to 'link /safeseh' */
+              feat00_flags |= 1; 
+
+            feat00_flags |= 0x800; /* object is CFG-aware */
+            coff_deflabel("@feat.00", NO_SEG, feat00_flags, 0, NULL);
+        }
     }
 
     /*
