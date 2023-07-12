@@ -2360,12 +2360,12 @@ static FILE *inc_fopen(const char *file,
                 fhe->full = full;
             }
         }
-
-        /*
-         * Add file to dependency path.
-         */
-        strlist_add(dhead, path ? path : file);
     }
+
+    /*
+     * Add file to dependency path.
+     */
+    strlist_add(dhead, path ? path : file);
 
     if (path && !fp && omode != INC_PROBE)
         fp = nasm_open_read(path, fmode);
