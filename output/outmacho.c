@@ -1973,7 +1973,7 @@ static void macho_dbg_generate(void)
         saa_write8(p_info, 1);   /* abbrev entry number  */
 
         saa_write32(p_info, producer_str_offset); /* offset from string table for DW_AT_producer  */
-        saa_write16(p_info, DW_LANG_Mips_Assembler); /* DW_AT_language  */
+        saa_write16(p_info, DW_LANG_Assembly); /* DW_AT_language  */
         saa_write32(p_info, module_str_offset); /* offset from string table for DW_AT_name  */
         saa_write32(p_info, dir_str_offset); /* offset from string table for DW_AT_comp_dir */
         saa_write32(p_info, 0); /* DW_AT_stmt_list  */

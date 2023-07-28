@@ -521,12 +521,8 @@ enum dwarf_language {
 	DW_LANG_C_sharp		= 0x0032,
 	DW_LANG_Mojo		= 0x0033,
 
-	DW_LANG_Mips_Assembler	= 0x8001,
-
 	DW_LANG_lo_user		= 0x8000,
-	DW_LANG_hi_user		= 0xffff,
-
-	DW_LANG_Rust_old	= 0x9000
+	DW_LANG_hi_user		= 0xffff
 };
 
 enum dwarf_identifier_case {
