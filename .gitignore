@@ -53,6 +53,7 @@ TAGS
 /asm/warnings_c.h
 /config/config.h.in
 /config/config.h
+/config/unconfig.h
 /config.log
 /config.status
 /configure
