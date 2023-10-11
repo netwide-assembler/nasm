@@ -404,7 +404,7 @@ static void out(struct out_data *data)
              *!  not be resolved at assembly time was generated in
              *!  the output format.
              *!
-             *!  This usually normal, but may not be handled by all
+             *!  This is usually normal, but may not be handled by all
              *!  possible target environments
              */
             /*!
@@ -413,7 +413,7 @@ static void out(struct out_data *data)
              *!  not be resolved at assembly time was generated in
              *!  the output format.
              *!
-             *!  This usually normal, but may not be handled by all
+             *!  This is usually normal, but may not be handled by all
              *!  possible target environments
              */
             /*!
@@ -422,7 +422,7 @@ static void out(struct out_data *data)
              *!  not be resolved at assembly time was generated in
              *!  the output format.
              *!
-             *!  This usually normal, but may not be handled by all
+             *!  This is usually normal, but may not be handled by all
              *!  possible target environments
              */
             /*!
@@ -431,7 +431,7 @@ static void out(struct out_data *data)
              *!  not be resolved at assembly time was generated in
              *!  the output format.
              *!
-             *!  This usually normal, but may not be handled by all
+             *!  This is usually normal, but may not be handled by all
              *!  possible target environments
              */
             /*!
@@ -440,7 +440,7 @@ static void out(struct out_data *data)
              *!  not be resolved at assembly time was generated in
              *!  the output format.
              *!
-             *!  This usually normal, but may not be handled by all
+             *!  This is usually normal, but may not be handled by all
              *!  possible target environments
              */
             /*!
@@ -449,7 +449,7 @@ static void out(struct out_data *data)
              *!  not be resolved at assembly time was generated in
              *!  the output format.
              *!
-             *!  This usually normal, but may not be handled by all
+             *!  This is usually normal, but may not be handled by all
              *!  possible target environments
              */
             /*!
@@ -458,7 +458,7 @@ static void out(struct out_data *data)
              *!  not be resolved at assembly time was generated in
              *!  the output format.
              *!
-             *!  This usually normal, but may not be handled by all
+             *!  This is usually normal, but may not be handled by all
              *!  possible target environments
              */
             /*!
@@ -467,7 +467,7 @@ static void out(struct out_data *data)
              *!  not be resolved at assembly time was generated in
              *!  the output format.
              *!
-             *!  This usually normal, but may not be handled by all
+             *!  This is usually normal, but may not be handled by all
              *!  possible target environments
              */
             int warn;
