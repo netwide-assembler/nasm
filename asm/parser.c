@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -54,6 +54,21 @@
 static int end_expression_next(void);
 
 static struct tokenval tokval;
+
+/*
+ * Human-readable description of a token, intended for error messages.
+ * The resulting string needs to be freed.
+ */
+static char *tokstr(const struct tokenval *tok)
+{
+    if (tok->t_type == TOKEN_EOS) {
+        return nasm_strdup("end of line");
+    } else if (tok->t_len) {
+        return nasm_asprintf("`%.*s'", tok->t_len, tok->t_start);
+    } else {
+        return nasm_strdup("invalid token");
+    }
+}
 
 static void process_size_override(insn *result, operand *op)
 {
@@ -384,6 +399,7 @@ static int parse_eops(extop **result, bool critical, int elem)
 
     /* End of string is obvious; ) ends a sub-expression list e.g. DUP */
     for (i = tokval.t_type; i != TOKEN_EOS; i = stdscan(NULL, &tokval)) {
+        bool skip;
         char endparen = ')';   /* Is a right paren the end of list? */
 
         if (i == ')')
@@ -397,12 +413,9 @@ static int parse_eops(extop **result, bool critical, int elem)
         }
         sign = +1;
 
-        /*
-         * end_expression_next() here is to distinguish this from
-         * a string used as part of an expression...
-         */
         if (i == TOKEN_QMARK) {
             eop->type = EOT_DB_RESERVE;
+            skip = true;
         } else if (do_subexpr && i == '(') {
             extop *subexpr;
 
@@ -432,12 +445,13 @@ static int parse_eops(extop **result, bool critical, int elem)
 
             /* We should have ended on a closing paren */
             if (tokval.t_type != ')') {
-                nasm_nonfatal("expected `)' after subexpression, got `%s'",
-                              i == TOKEN_EOS ?
-                              "end of line" : tokval.t_charptr);
+                char *tp = tokstr(&tokval);
+                nasm_nonfatal("expected `)' after subexpression, got %s", tp);
+                nasm_free(tp);
                 goto fail;
             }
             endparen = 0;       /* This time the paren is not the end */
+            skip = true;
         } else if (i == '%') {
             /* %(expression_list) */
             do_subexpr = true;
@@ -448,9 +462,14 @@ static int parse_eops(extop **result, bool critical, int elem)
             do_subexpr = true;
             continue;
         } else if (i == TOKEN_STR && end_expression_next()) {
+            /*
+             * end_expression_next() is to distinguish this from
+             * a string used as part of an expression...
+             */
             eop->type            = EOT_DB_STRING;
             eop->val.string.data = tokval.t_charptr;
             eop->val.string.len  = tokval.t_inttwo;
+            skip = true;
         } else if (i == TOKEN_STRFUNC) {
             bool parens = false;
             const char *funcname = tokval.t_charptr;
@@ -463,8 +482,10 @@ static int parse_eops(extop **result, bool critical, int elem)
                 i = stdscan(NULL, &tokval);
             }
             if (i != TOKEN_STR) {
-                nasm_nonfatal("%s must be followed by a string constant",
-                              funcname);
+                char *tp = tokstr(&tokval);
+                nasm_nonfatal("%s must be followed by a string constant, got %s",
+                              funcname, tp);
+                nasm_free(tp);
                 eop->type = EOT_NOTHING;
             } else {
                 eop->type = EOT_DB_STRING_FREE;
@@ -481,6 +502,7 @@ static int parse_eops(extop **result, bool critical, int elem)
                 if (i != ')')
                     nasm_nonfatal("unterminated %s function", funcname);
             }
+            skip = i != ',';
         } else if (i == '-' || i == '+') {
             char *save = stdscan_get();
             struct tokenval tmptok;
@@ -522,6 +544,7 @@ static int parse_eops(extop **result, bool critical, int elem)
             }
             if (!eop->val.string.len)
                 eop->type = EOT_NOTHING;
+            skip = true;
         } else {
             /* anything else, assume it is an expression */
             expr *value;
@@ -548,6 +571,7 @@ static int parse_eops(extop **result, bool critical, int elem)
             if (value_to_extop(value, eop, location.segment)) {
                 nasm_nonfatal("expression is not simple or relocatable");
             }
+            skip = false;
         }
 
         if (eop->dup == 0 || eop->type == EOT_NOTHING) {
@@ -568,6 +592,11 @@ static int parse_eops(extop **result, bool critical, int elem)
         oper_num++;
         eop = NULL;             /* Done with this operand */
 
+        if (skip) {
+            /* Consume the (last) token if that didn't happen yet */
+            i = stdscan(NULL, &tokval);
+        }
+
         /*
          * We're about to call stdscan(), which will eat the
          * comma that we're currently sitting on between
@@ -577,13 +606,10 @@ static int parse_eops(extop **result, bool critical, int elem)
         if (i == TOKEN_EOS || i == endparen)	/* Already at end? */
             break;
         if (i != ',') {
-            i = stdscan(NULL, &tokval);		/* eat the comma or final paren */
-            if (i == TOKEN_EOS || i == ')')	/* got end of expression */
-                break;
-            if (i != ',') {
-                nasm_nonfatal("comma expected after operand");
-                goto fail;
-            }
+            char *tp = tokstr(&tokval);
+            nasm_nonfatal("comma expected after operand, got %s", tp);
+            nasm_free(tp);
+            goto fail;
         }
     }
 

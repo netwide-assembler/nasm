@@ -316,6 +316,8 @@ struct tokenval {
     int64_t             t_inttwo;
     enum token_type     t_type;
     int8_t              t_flag;
+    const char		*t_start; /* Pointer to token in input buffer */
+    int			t_len;    /* Length of token in input buffer */
 };
 typedef int (*scanner)(void *private_data, struct tokenval *tv);
 
