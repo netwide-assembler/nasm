@@ -7640,10 +7640,12 @@ static Token *pp_tokline(void)
 #endif
                     {
                         nasm_free(m->params);
+                        nasm_free(m->iname);
                         free_tlist(m->iline);
                         nasm_free(m->paramlen);
                         fm->in_progress = 0;
 			m->params = NULL;
+                        m->iname = NULL;
 			m->iline = NULL;
 			m->paramlen = NULL;
                     }
@@ -7667,16 +7669,8 @@ static Token *pp_tokline(void)
 
                 istk->where = l->where;
 
-                /*
-                 * FIXME It is incorrect to always free_mmacro here.
-                 * It leads to usage-after-free.
-                 *
-                 * https://bugzilla.nasm.us/show_bug.cgi?id=3392414
-                 */
-#if 0
-                else
+                if (!m->name)
                     free_mmacro(m);
-#endif
             }
             istk->expansion = l->next;
             nasm_free(l);
