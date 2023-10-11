@@ -992,6 +992,7 @@ sub html_preamble {
     print "<body>\n";
 
     # Navigation bar
+    print "<div class=\"header\">\n";
     print "<ul class=\"navbar\">\n";
     if (defined($html_nav_last)) {
 	my $lastf = html_filename($html_nav_last);
@@ -1009,7 +1010,8 @@ sub html_preamble {
     print "<h1>", $metadata{'title'}, "</h1>\n";
     print '<span class="subtitle">', $metadata{'subtitle'}, "</span>\n";
     print "</div>\n";
-    print "<div class=\"contents\"\n>\n";
+    print "</div>\n";
+    print "<div class=\"contents\">\n";
 }
 
 sub html_postamble {
