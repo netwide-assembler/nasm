@@ -2441,7 +2441,7 @@ static enum match_result find_match(const struct itemplate **tempp,
                     xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
             opsizemissing = true;
         }
-        if (m > merr)
+        if (m)
             merr = m;
         if (merr == MOK_GOOD)
             goto done;
@@ -2482,7 +2482,7 @@ static enum match_result find_match(const struct itemplate **tempp,
             else
                 m = MERR_INVALOP;
         }
-        if (m > merr)
+        if (m)
             merr = m;
         if (merr == MOK_GOOD)
             goto done;
