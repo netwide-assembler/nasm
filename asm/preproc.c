@@ -7594,6 +7594,7 @@ static Token *pp_tokline(void)
                 break;
             } else {
                 MMacro *m = istk->mstk.mstk;
+                bool should_free_mmacro = false;
 
                 /*
                  * Check whether a `%rep' was started and not ended
@@ -7648,6 +7649,8 @@ static Token *pp_tokline(void)
 			m->paramlen = NULL;
                     }
                 }
+                else
+                    should_free_mmacro = true;
 
                 if (fm->nolist & NL_LINE) {
                     istk->noline--;
@@ -7667,16 +7670,8 @@ static Token *pp_tokline(void)
 
                 istk->where = l->where;
 
-                /*
-                 * FIXME It is incorrect to always free_mmacro here.
-                 * It leads to usage-after-free.
-                 *
-                 * https://bugzilla.nasm.us/show_bug.cgi?id=3392414
-                 */
-#if 0
-                else
+                if (should_free_mmacro)
                     free_mmacro(m);
-#endif
             }
             istk->expansion = l->next;
             nasm_free(l);
