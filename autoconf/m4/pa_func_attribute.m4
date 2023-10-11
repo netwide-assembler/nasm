@@ -20,7 +20,9 @@ AC_DEFUN([_PA_FUNC_ATTRIBUTE],
  AC_MSG_CHECKING([if $CC supports the $1]_pa_faa[ function attribute])
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
-extern ifelse([$3],[],[void *],[$3])  __attribute__(([$1]_pa_faa))
+PA_ATTRIBUTE_SYNTAX
+
+extern ifelse([$3],[],[void *],[$3]) ATTRIBUTE([$1]_pa_faa)
   bar(ifelse([$4],[],[int],[$4]));
 ifelse([$3],[],[void *],[$3]) foo(void);
 ifelse([$3],[],[void *],[$3]) foo(void)
@@ -31,12 +33,12 @@ ifelse([$3],[],[void *],[$3]) foo(void)
  ])],
  [AC_MSG_RESULT([yes])
   AC_DEFINE(PA_SYM([HAVE_FUNC_ATTRIBUTE],_pa_suf,[_$1]), 1,
-    [Define to 1 if your compiler supports __attribute__(($1)) on functions])],
+    [Define to 1 if your compiler supports the $1 function attribute])],
  [AC_MSG_RESULT([no])])
  AH_BOTTOM(m4_quote(m4_join([],
  [#ifndef ],_pa_mac,[
 # ifdef ],PA_SYM([HAVE_FUNC_ATTRIBUTE],_pa_suf,[_$1]),[
-#  define ],_pa_mac,m4_quote(_pa_fam),[ __attribute__(($1],m4_quote(_pa_fam),[))
+#  define ],_pa_mac,m4_quote(_pa_fam),[ ATTRIBUTE($1],m4_quote(_pa_fam),[)
 # else
 #  define ],_pa_mac,m4_quote(_pa_fam),[
 # endif
@@ -51,7 +53,9 @@ AC_DEFUN([_PA_FUNC_PTR_ATTRIBUTE],
  AC_MSG_CHECKING([if $CC supports the $1]_pa_faa[ function attribute on pointers])
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
-extern ifelse([$3],[],[void *],[$3])  __attribute__(([$1]_pa_faa))
+PA_ATTRIBUTE_SYNTAX
+
+extern ifelse([$3],[],[void *],[$3]) ATTRIBUTE([$1]_pa_faa)
   (*bar1)(ifelse([$4],[],[int],[$4]));
 ifelse([$3],[],[void *],[$3]) foo1(void);
 ifelse([$3],[],[void *],[$3]) foo1(void)
@@ -60,7 +64,7 @@ ifelse([$3],[],[void *],[$3]) foo1(void)
 		bar1(ifelse([$5],[],[1],[$5]));
 }
 
-typedef ifelse([$3],[],[void *],[$3])  __attribute__(([$1]_pa_faa))
+typedef ifelse([$3],[],[void *],[$3]) ATTRIBUTE([$1]_pa_faa)
   (*bar_t)(ifelse([$4],[],[int],[$4]));
 extern bar_t bar2;
 ifelse([$3],[],[void *],[$3]) foo2(void);
@@ -72,12 +76,12 @@ ifelse([$3],[],[void *],[$3]) foo2(void)
  ])],
  [AC_MSG_RESULT([yes])
   AC_DEFINE(PA_SYM([HAVE_FUNC_PTR_ATTRIBUTE],_pa_suf,[_$1]), 1,
-    [Define to 1 if your compiler supports __attribute__(($1)) on function pointers])],
+    [Define to 1 if your compiler supports the $1 attribute on function pointers])],
  [AC_MSG_RESULT([no])])
  AH_BOTTOM(m4_quote(m4_join([],
  [#ifndef ],_pa_mac,[
 # ifdef ],PA_SYM([HAVE_FUNC_PTR_ATTRIBUTE],_pa_suf,[_$1]),[
-#  define ],_pa_mac,m4_quote(_pa_fam),[ __attribute__(($1],m4_quote(_pa_fam),[))
+#  define ],_pa_mac,m4_quote(_pa_fam),[ ATTRIBUTE($1],m4_quote(_pa_fam),[)
 # else
 #  define ],_pa_mac,m4_quote(_pa_fam),[
 # endif
