@@ -1712,7 +1712,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
             location.known = true;
         ofmt->reset();
         switch_segment(ofmt->section(NULL, &globalbits));
-        pp_reset(fname, PP_NORMAL, pass_final() ? depend_list : NULL);
+        pp_reset(fname, PP_NORMAL, depend_list);
 
         globallineno = 0;
 
