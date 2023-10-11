@@ -81,8 +81,11 @@ nasm_err_helpers(fatal_func, panic,    ERR_PANIC)
  * Strongly discourage warnings without level by require flags on warnings.
  * This means nasm_warn() is the equivalent of the -f variants of the
  * other ones.
+ *
+ * This is wrapped in a macro to be able to elide it if the warning is
+ * disabled, hence the extra underscore.
  */
-void nasm_warn(errflags flags, const char *fmt, ...)
+void nasm_warn_(errflags flags, const char *fmt, ...)
 {
 	nasm_do_error(ERR_WARNING, flags);
 }

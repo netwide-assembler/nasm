@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -60,7 +60,7 @@ void printf_func(1, 2) nasm_debug(const char *fmt, ...);
 void printf_func(2, 3) nasm_debugf(errflags flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_info(const char *fmt, ...);
 void printf_func(2, 3) nasm_infof(errflags flags, const char *fmt, ...);
-void printf_func(2, 3) nasm_warn(errflags flags, const char *fmt, ...);
+void printf_func(2, 3) nasm_warn_(errflags flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_nonfatal(const char *fmt, ...);
 void printf_func(2, 3) nasm_nonfatalf(errflags flags, const char *fmt, ...);
 fatal_func printf_func(1, 2) nasm_fatal(const char *fmt, ...);
@@ -144,6 +144,27 @@ void nasm_error_hold_pop(errhold hold, bool issue);
 
 /* Should be included from within error.h only */
 #include "warnings.h"
+
+/* True if a warning is enabled, either as a warning or an error */
+static inline bool warn_active(errflags warn)
+{
+    enum warn_index wa = WARN_IDX(warn);
+    return unlikely(warning_state[wa] & WARN_ST_ENABLED);
+}
+
+#ifdef HAVE_VARIADIC_MACROS
+
+#define nasm_warn(w, ...) \
+    do { \
+        if (unlikely(warn_active(w))) \
+            nasm_warn_(w, __VA_ARGS__); \
+    } while (0)
+
+#else
+
+#define nasm_warn nasm_warn_
+
+#endif
 
 /* By defining MAX_DEBUG, we can compile out messages entirely */
 #ifndef MAX_DEBUG
