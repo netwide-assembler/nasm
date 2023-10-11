@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -385,18 +385,123 @@ static void out(struct out_data *data)
         nasm_assert(data->size <= 8);
         asize = data->size;
         amax = ofmt->maxbits >> 3; /* Maximum address size in bytes */
-        if (!(ofmt->flags & OFMT_KEEP_ADDR) &&
-            data->tsegment == fixseg &&
-            data->twrt == NO_SEG) {
-            if (asize >= (size_t)(data->bits >> 3)) {
-                 /* Support address space wrapping for low-bit modes */
-                data->flags &= ~OUT_SIGNMASK;
+        if (data->tsegment == fixseg && data->twrt == NO_SEG) {
+            if (!(ofmt->flags & OFMT_KEEP_ADDR)) {
+                if (asize >= (size_t)(data->bits >> 3)) {
+                    /* Support address space wrapping for low-bit modes */
+                    data->flags &= ~OUT_SIGNMASK;
+                }
+                warn_overflow_out(addrval, asize, data->flags);
+                xdata.q = cpu_to_le64(addrval);
+                data->data = xdata.b;
+                data->type = OUT_RAWDATA;
+                asize = amax = 0;   /* No longer an address */
             }
-            warn_overflow_out(addrval, asize, data->flags);
-            xdata.q = cpu_to_le64(addrval);
-            data->data = xdata.b;
-            data->type = OUT_RAWDATA;
-            asize = amax = 0;   /* No longer an address */
+        } else {
+            /*!
+             *!reloc-abs-byte [off] 8-bit absolute section-crossing relocation
+             *!  warns that an 8-bit absolute relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-abs-word [off] 16-bit absolute section-crossing relocation
+             *!  warns that a 16-bit absolute relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-abs-dword [off] 32-bit absolute section-crossing relocation
+             *!  warns that a 32-bit absolute relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-abs-qword [off] 64-bit absolute section-crossing relocation
+             *!  warns that a 64-bit absolute relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-rel-byte [off] 8-bit relative section-crossing relocation
+             *!  warns that an 8-bit relative relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-rel-word [off] 16-bit relative section-crossing relocation
+             *!  warns that a 16-bit relative relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-rel-dword [off] 32-bit relative section-crossing relocation
+             *!  warns that a 32-bit relative relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-rel-qword [off] 64-bit relative section-crossing relocation
+             *!  warns that an 64-bit relative relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            int warn;
+            const char *type;
+
+            switch (data->type) {
+            case OUT_ADDRESS:
+                type = "absolute";
+                switch (asize) {
+                case 1: warn = WARN_RELOC_ABS_BYTE; break;
+                case 2: warn = WARN_RELOC_ABS_WORD; break;
+                case 4: warn = WARN_RELOC_ABS_DWORD; break;
+                case 8: warn = WARN_RELOC_ABS_QWORD; break;
+                default: panic();
+                }
+                break;
+            case OUT_RELADDR:
+                type = "relative";
+                switch (asize) {
+                case 1: warn = WARN_RELOC_REL_BYTE; break;
+                case 2: warn = WARN_RELOC_REL_WORD; break;
+                case 4: warn = WARN_RELOC_REL_DWORD; break;
+                case 8: warn = WARN_RELOC_REL_QWORD; break;
+                default: panic();
+                }
+                break;
+            default:
+                warn = 0;
+            }
+
+            if (warn) {
+                nasm_warn(warn, "%u-bit %s section-crossing relocation",
+                          (unsigned int)(asize << 3), type);
+            }
         }
         break;
 
