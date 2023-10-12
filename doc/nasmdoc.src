@@ -1865,20 +1865,20 @@ characters.
 
 \S{expbor}: \i\c{||}: \i{Boolean OR} Operator
 
-The \c{||} operator gives a boolean OR: it evaluates to 1 if both sides of
-the expression are nonzero, otherwise 0.
+The \c{||} operator gives a boolean OR: it evaluates to 1 if at least one side of
+the expression is nonzero, otherwise 0.
 
 
 \S{expbxor}: \i\c{^^}: \i{Boolean XOR} Operator
 
-The \c{^^} operator gives a boolean XOR: it evaluates to 1 if any one side of
+The \c{^^} operator gives a boolean XOR: it evaluates to 1 only if exactly one side of
 the expression is nonzero, otherwise 0.
 
 
 \S{expband}: \i\c{&&}: \i{Boolean AND} Operator
 
 The \c{&&} operator gives a boolean AND: it evaluates to 1 if both sides of
-the expression is nonzero, otherwise 0.
+the expression are nonzero, otherwise 0.
 
 
 \S{exprel}: \i{Comparison Operators}
