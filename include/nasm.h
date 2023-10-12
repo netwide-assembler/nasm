@@ -262,6 +262,7 @@ enum token_type { /* token types, other than chars */
     TOKEN_PASTE,           /* %+ */
     TOKEN_COND_COMMA,      /* %, */
     TOKEN_INDIRECT,        /* %[...] */
+    TOKEN_INDIRECT_ID,     /* %%[ */
     TOKEN_XDEF_PARAM,      /* Used during %xdefine processing */
     /* smacro parameters starting here; an arbitrary number. */
     TOKEN_SMAC_START_PARAMS,    /* MUST BE LAST IN THE LIST!!! */
