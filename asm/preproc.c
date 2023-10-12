@@ -986,6 +986,7 @@ static void free_mmacro(MMacro * m)
     free_tlist(m->dlist);
     nasm_free(m->defaults);
     free_llist(m->expansion);
+    nasm_free(m->iname);
     nasm_free(m);
 }
 
@@ -6899,6 +6900,7 @@ static int expand_mmacro(Token * tline)
     m->in_progress ++;
     m->params = params;
     m->iline = tline;
+    nasm_assert(!m->iname);
     m->iname = nasm_strdup(mname);
     m->nparam = nparam;
     m->rotate = 0;
@@ -7642,10 +7644,12 @@ static Token *pp_tokline(void)
                         nasm_free(m->params);
                         free_tlist(m->iline);
                         nasm_free(m->paramlen);
+                        nasm_free(m->iname);
                         fm->in_progress = 0;
-			m->params = NULL;
-			m->iline = NULL;
-			m->paramlen = NULL;
+                        m->params = NULL;
+                        m->iline = NULL;
+                        m->paramlen = NULL;
+                        m->iname = NULL;
                     }
                 }
 
