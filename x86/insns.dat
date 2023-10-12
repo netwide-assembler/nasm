@@ -1455,22 +1455,18 @@ XCHG		reg64,reg_rax			[r-:	o64 90+r]				X86_64,LONG
 ; This must be NOLONG since opcode 90 is NOP, and in 64-bit mode
 ; "xchg eax,eax" is *not* a NOP.
 XCHG		reg_eax,reg_eax			[--:	o32 90]					386,NOLONG
-XCHG		reg8,mem			[rm:	hlenl 86 /r]				8086,SM,LOCK
-XCHG		reg8,reg8			[rm:	86 /r]					8086
-XCHG		reg16,mem			[rm:	hlenl o16 87 /r]			8086,SM,LOCK
-XCHG		reg16,reg16			[rm:	o16 87 /r]				8086
-XCHG		reg32,mem			[rm:	hlenl o32 87 /r]			386,SM,LOCK
-XCHG		reg32,reg32			[rm:	o32 87 /r]				386
-XCHG		reg64,mem			[rm:	hlenl o64 87 /r]			X86_64,LONG,SM,LOCK
-XCHG		reg64,reg64			[rm:	o64 87 /r]				X86_64,LONG
-XCHG		mem,reg8			[mr:	hlenl 86 /r]				8086,SM,LOCK
 XCHG		reg8,reg8			[mr:	86 /r]					8086
-XCHG		mem,reg16			[mr:	hlenl o16 87 /r]			8086,SM,LOCK
 XCHG		reg16,reg16			[mr:	o16 87 /r]				8086
-XCHG		mem,reg32			[mr:	hlenl o32 87 /r]			386,SM,LOCK
 XCHG		reg32,reg32			[mr:	o32 87 /r]				386
-XCHG		mem,reg64			[mr:	hlenl o64 87 /r]			X86_64,LONG,SM,LOCK
 XCHG		reg64,reg64			[mr:	o64 87 /r]				X86_64,LONG
+XCHG		mem,reg8			[mr:	hlenl 86 /r]				8086,SM,LOCK
+XCHG		mem,reg16			[mr:	hlenl o16 87 /r]			8086,SM,LOCK
+XCHG		mem,reg32			[mr:	hlenl o32 87 /r]			386,SM,LOCK
+XCHG		mem,reg64			[mr:	hlenl o64 87 /r]			X86_64,LONG,SM,LOCK
+XCHG		reg8,mem			[rm:	hlenl 86 /r]				8086,SM,LOCK1
+XCHG		reg16,mem			[rm:	hlenl o16 87 /r]			8086,SM,LOCK1
+XCHG		reg32,mem			[rm:	hlenl o32 87 /r]			386,SM,LOCK1
+XCHG		reg64,mem			[rm:	hlenl o64 87 /r]			X86_64,LONG,SM,LOCK1
 XLATB		void				[	d7]					8086
 XLAT		void				[	d7]					8086
 XOR		mem,reg8			[mr:	hle 30 /r]				8086,SM,LOCK

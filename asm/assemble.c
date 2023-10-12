@@ -1843,14 +1843,27 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         }
     }
 
-    if (has_prefix(ins, PPS_LOCK, P_LOCK) && lockcheck &&
-        (!itemp_has(temp,IF_LOCK) || !is_class(MEMORY, ins->oprs[0].type))) {
-        /*!
-         *!prefix-lock [on] LOCK prefix on unlockable instructions
-         *!=lock
-         *!  warns about \c{LOCK} prefixes on unlockable instructions.
-         */
-        nasm_warn(WARN_PREFIX_LOCK|ERR_PASS2 , "instruction is not lockable");
+    if (lockcheck && has_prefix(ins, PPS_LOCK, P_LOCK)) {
+        if ((!itemp_has(temp,IF_LOCK)  || !is_class(MEMORY, ins->oprs[0].type)) &&
+            (!itemp_has(temp,IF_LOCK1) || !is_class(MEMORY, ins->oprs[1].type))) {
+            /*!
+             *!prefix-lock-error [on] LOCK prefix on unlockable instruction
+             *!=lock
+             *!  warns about \c{LOCK} prefixes on unlockable instructions.
+             */
+            nasm_warn(WARN_PREFIX_LOCK_ERROR|ERR_PASS2 , "instruction is not lockable");
+        } else if (temp->opcode == I_XCHG) {
+            /*!
+             *!prefix-lock-xchg [on] superfluous LOCK prefix on XCHG instruction
+             *!  warns about a \c{LOCK} prefix added to an \c{XCHG} instruction.
+             *!  The \c{XCHG} instruction is \e{always} locking, and so this
+             *!  prefix is not necessary; however, NASM will generate it if
+             *!  explicitly provided by the user, so this warning indicates that
+             *!  suboptimal code is being generated.
+             */
+            nasm_warn(WARN_PREFIX_LOCK_XCHG|ERR_PASS2,
+                      "superfluous LOCK prefix on XCHG instruction");
+        }
     }
 
     bad_hle_warn(ins, hleok);

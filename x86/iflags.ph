@@ -34,6 +34,7 @@ if_("PRIV",              "Privileged instruction");
 if_("SMM",               "Only valid in SMM");
 if_("PROT",              "Protected mode only");
 if_("LOCK",              "Lockable if operand 0 is memory");
+if_("LOCK1",             "Lockable if operand 1 is memory");
 if_("NOLONG",            "Not available in long mode");
 if_("LONG",              "Long mode");
 if_("NOHLE",             "HLE prefixes forbidden");
