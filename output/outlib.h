@@ -179,8 +179,7 @@ void ol_init(void);
 void ol_cleanup(void);
 
 /* Convert offs:seg to a location structure */
-extern void
-ol_mkloc(struct ol_loc *loc, int64_t offs, int32_t seg);
+void ol_mkloc(struct ol_loc *loc, int64_t offs, int32_t seg);
 
 /* Get the section or external symbol from a struct ol_seg */
 static inline O_Section *seg_sect(struct ol_seg *seg)
@@ -217,14 +216,14 @@ static inline O_Section *ol_get_sect(const char *name)
 }
 
 /* Find a section by name without creating one */
-extern struct ol_sect *_ol_sect_by_name(const char *);
+struct ol_sect *_ol_sect_by_name(const char *);
 static inline O_Section *ol_sect_by_name(const char *name)
 {
     return (O_Section *)_ol_sect_by_name(name);
 }
 
 /* Find a section or external symbol by index; NULL if not valid */
-extern struct ol_sect *_ol_sect_by_index(int32_t index);
+struct ol_sect *_ol_sect_by_index(int32_t index);
 static inline O_Section *ol_sect_by_index(int32_t index)
 {
     return (O_Section *)_ol_sect_by_index(index);
@@ -251,7 +250,7 @@ static inline uint64_t ol_nsects(void)
  * structure. Returns the new section index.  This is used to prevent
  * the front end from optimizing across subsection boundaries.
  */
-extern int32_t _ol_new_subsection(struct ol_sect *sect);
+int32_t _ol_new_subsection(struct ol_sect *sect);
 static inline int32_t ol_new_subsection(O_Section *sect)
 {
     return _ol_new_subsection((struct ol_sect *)sect);
@@ -268,7 +267,7 @@ static inline int32_t ol_new_subsection(O_Section *sect)
  * containing section. If flags has OF_IMPSEC set, allocate a segment
  * index for it via seg_alloc() and add it to the section by index list.
  */
-extern struct ol_sym *_ol_new_sym(const char *name, const struct ol_loc *v,
+struct ol_sym *_ol_new_sym(const char *name, const struct ol_loc *v,
                                   uint32_t flags, size_t size);
 static inline O_Symbol *ol_new_sym(const char *name, const struct ol_loc *v,
                                    uint32_t flags)
@@ -277,7 +276,7 @@ static inline O_Symbol *ol_new_sym(const char *name, const struct ol_loc *v,
 }
 
 /* Find a symbol by name in the global namespace */
-extern struct ol_sym *_ol_sym_by_name(const char *name);
+struct ol_sym *_ol_sym_by_name(const char *name);
 static inline O_Symbol *ol_sym_by_name(const char *name)
 {
     return (O_Symbol *)_ol_sym_by_name(name);
@@ -288,7 +287,7 @@ static inline O_Symbol *ol_sym_by_name(const char *name)
  * at that exact address, return the immediately previously defined one.
  * If global is set, then only return global symbols.
  */
-extern struct ol_sym *_ol_sym_by_address(struct ol_sect *sect, int64_t addr,
+struct ol_sym *_ol_sym_by_address(struct ol_sect *sect, int64_t addr,
                                          bool global);
 static inline O_Symbol *ol_sym_by_address(O_Section *sect, int64_t addr,
                                           bool global)
