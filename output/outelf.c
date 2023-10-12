@@ -761,8 +761,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
     const struct elf_section *sec = NULL;
 
     if (debug_level(2)) {
-        nasm_debug(" elf_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
-                   name, segment, offset, is_global, special);
+        nasm_debug(" %s: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
+                   __func__, name, segment, offset, is_global, special);
     }
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {

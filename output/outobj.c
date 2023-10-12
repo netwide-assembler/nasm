@@ -778,8 +778,8 @@ static void obj_deflabel(char *name, int32_t segment,
     bool used_special = false;   /* have we used the special text? */
 
     if (debug_level(2))
-        nasm_debug(" obj_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
-                   name, segment, offset, is_global, special);
+        nasm_debug(" %s: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
+                   __func__, name, segment, offset, is_global, special);
 
     /*
      * If it's a special-retry from pass two, discard it.
@@ -1314,7 +1314,7 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
                 if (eb)
                     method |= 0x20, fidx = eb->exts[i]->index;
                 else
-                    nasm_panic("unrecognised WRT value in obj_write_fixup");
+                    nasm_panic("unrecognised WRT value in %s", __func__);
             }
         }
     }
@@ -1336,7 +1336,7 @@ static int32_t obj_segment(char *name, int *bits)
      * by sponging off the label manager.
      */
     if (debug_level(3))
-        nasm_debug(" obj_segment: < %s >, *bits=%d\n", name, *bits);
+        nasm_debug(" %s: < %s >, *bits=%d\n", __func__, name, *bits);
 
     if (!name) {
         *bits = 16;
