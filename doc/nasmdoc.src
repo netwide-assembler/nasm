@@ -2919,7 +2919,7 @@ The expressions passed to \c{%eval()} are \i{critical expressions},
 see \k{crit}.
 
 
-\C{f_hex} \i\c{%hex()} Function
+\S{f_hex} \i\c{%hex()} Function
 
 Equivalent to \i\c\{%eval()}, except that the results generated are
 given as hexadecimal. A \c{0x} prefix is added unless the value is
