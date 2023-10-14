@@ -4750,7 +4750,7 @@ Include Test
 
 When a standard macro package (see \k{macropkg}) is included with the
 \c{%use} directive (see \k{use}), a single-line macro of the form
-\c{__USE_}\e{package}\c{__} is automatically defined.  This allows
+\c{__?USE_}\e{package}\c{?__} is automatically defined.  This allows
 testing if a particular package is invoked or not.
 
 For example, if the \c{altreg} package is included (see
