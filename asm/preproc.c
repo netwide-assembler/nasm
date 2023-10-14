@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -5919,10 +5919,10 @@ static SMacro *expand_one_smacro(Token ***tpp)
                     /* Nothing meaningful to do */
                 } else if (tokval.t_type) {
                     nasm_nonfatal("invalid expression in parameter %d of %s `%s'",
-                                  i, mtype, m->name);
+                                  i+1, mtype, m->name);
                 } else if (!is_simple(evalresult)) {
                     nasm_nonfatal("non-constant expression in parameter %d of %s `%s'",
-                                  i, mtype, m->name);
+                                  i+1, mtype, m->name);
                 } else {
                     params[i] = make_tok_num(NULL, reloc_value(evalresult));
                 }
