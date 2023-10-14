@@ -1310,7 +1310,7 @@ keywords:
 \c      parlist := '(' value [, value ...] ')'
 \c      duplist := expression DUP [type] ['%'] parlist
 \c      list    := duplist | '%' parlist | type ['%'] parlist
-\c      value   := atom | type value | list
+\c      value   := [type] atom | list
 \c
 \c      stmt    := dx value [, value...]
 
