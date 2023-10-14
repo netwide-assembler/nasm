@@ -1307,12 +1307,12 @@ keywords:
 \c      dx      := DB | DW | DD | DQ | DT | DO | DY | DZ
 \c      type    := BYTE | WORD | DWORD | QWORD | TWORD | OWORD | YWORD | ZWORD
 \c      atom    := expression | string | float | '?'
-\c      parlist := '(' value [, value ...] ')'
+\c      parlist := '(' value [',' value ...] ')'
 \c      duplist := expression DUP [type] ['%'] parlist
 \c      list    := duplist | '%' parlist | type ['%'] parlist
 \c      value   := [type] atom | list
 \c
-\c      stmt    := dx value [, value...]
+\c      stmt    := dx value [',' value ...]
 
 \> Note that a \e{list} needs to be prefixed with a \I{%db}\c{%} sign unless
 prefixed by either \c{DUP} or a \e{type} in order to avoid confusing it with
