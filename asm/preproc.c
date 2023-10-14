@@ -206,14 +206,15 @@ typedef Token *(*ExpandSMacro)(const SMacro *s, Token **params, int nparams);
  * if SPARM_GREEDY is set.
  */
 enum sparmflags {
-    SPARM_PLAIN     =  0,
-    SPARM_EVAL      =  1,   /* Evaluate as a numeric expression (=) */
-    SPARM_STR       =  2,   /* Convert to quoted string ($) */
-    SPARM_NOSTRIP   =  4,   /* Don't strip braces (!) */
-    SPARM_GREEDY    =  8,   /* Greedy final parameter (+) */
-    SPARM_VARADIC   = 16,   /* Any number of separate arguments */
-    SPARM_OPTIONAL  = 32,   /* Optional argument */
-    SPARM_CONDQUOTE = 64    /* With SPARM_STR, don't re-quote a string */
+    SPARM_PLAIN     =   0,
+    SPARM_EVAL      =   1,  /* Evaluate as a numeric expression (=) */
+    SPARM_STR       =   2,  /* Convert to quoted string ($) */
+    SPARM_NOSTRIP   =   4,  /* Don't strip braces (!) */
+    SPARM_GREEDY    =   8,  /* Greedy final parameter (+) */
+    SPARM_VARADIC   =  16,  /* Any number of separate arguments */
+    SPARM_OPTIONAL  =  32,  /* Optional argument */
+    SPARM_CONDQUOTE =  64,  /* With SPARM_STR, don't re-quote a string */
+    SPARM_HEX       = 128   /* With SPARM_EVAL, generate hexadecimal numbers */
 };
 
 struct smac_param {
@@ -650,6 +651,7 @@ static Token *expand_smacro(Token * tline);
 static Token *expand_id(Token * tline);
 static Context *get_ctx(const char *name, const char **namep);
 static Token *make_tok_num(Token *next, int64_t val);
+static Token *make_tok_hex(Token *next, int64_t val);
 static int64_t get_tok_num(const Token *t, bool *err);
 static Token *make_tok_qstr(Token *next, const char *str);
 static Token *make_tok_qstr_len(Token *next, const char *str, size_t len);
@@ -5924,7 +5926,11 @@ static SMacro *expand_one_smacro(Token ***tpp)
                     nasm_nonfatal("non-constant expression in parameter %d of %s `%s'",
                                   i+1, mtype, m->name);
                 } else {
-                    params[i] = make_tok_num(NULL, reloc_value(evalresult));
+                    int64_t v = reloc_value(evalresult);
+                    if (flags & SPARM_HEX)
+                        params[i] = make_tok_hex(NULL, v);
+                    else
+                        params[i] = make_tok_num(NULL, v);
                 }
             }
 
@@ -7215,12 +7221,13 @@ stdmac_num(const SMacro *s, Token **params, int nparam)
     unsigned int i;
     int nd;
     unsigned int base;
-    char numstr[256];
+    char numstr[262];
     char * const endstr = numstr + sizeof numstr - 1;
-    const int maxlen = sizeof numstr - 3;
+    const int maxlen = sizeof numstr - 5;
     const int maxbase = sizeof num_digits - 1;
     char *p;
     bool moredigits;
+    char decorate;
 
     (void)nparam;
 
@@ -7230,6 +7237,28 @@ stdmac_num(const SMacro *s, Token **params, int nparam)
     n      = parm[0];
     dparm  = parm[1];
     bparm  = parm[2];
+
+    decorate = 0;
+    if (bparm < 0) {
+        bparm = -bparm;
+        switch (bparm) {
+        case 2:
+            decorate = 'b';
+            break;
+        case 8:
+            decorate = 'q';
+            break;
+        case 10:
+            decorate = 'd';
+            break;
+        case 16:
+            decorate = 'x';
+            break;
+        default:
+            bparm = -bparm;     /* Error out below */
+            break;
+        }
+    }
 
     if (bparm < 2 || bparm > maxbase) {
         nasm_nonfatal("invalid base %"PRId64" given to %s()",
@@ -7252,13 +7281,25 @@ stdmac_num(const SMacro *s, Token **params, int nparam)
         nd = dparm;
     }
 
+    /* Are we supposed to generate an empty string for zero? */
+    if (!nd && !n)
+        decorate = 0;
+
     p = endstr;
     *p = '\0';
     *--p = '\'';
 
+    /*
+     * Note that the actual maximum number of digits can never exceed 64,
+     * so even if moredigits is set it cannot cause string overrun.
+     */
     while (nd-- > 0 || (moredigits && n)) {
         *--p = num_digits[n % base];
         n /= base;
+    }
+    if (decorate) {
+        *--p = decorate;
+        *--p = '0';
     }
     *--p = '\'';
 
@@ -7307,6 +7348,7 @@ static void pp_add_magic_stdmac(void)
         { "%abs",       false, 1, SPARM_EVAL, stdmac_abs },
         { "%count",     false, 1, SPARM_VARADIC, stdmac_count },
         { "%eval",      false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
+        { "%hex",       false, 1, SPARM_EVAL|SPARM_HEX|SPARM_VARADIC, stdmac_join },
         { "%str",       false, 1, SPARM_GREEDY|SPARM_STR, stdmac_join },
         { "%strcat",    false, 1, SPARM_STR|SPARM_CONDQUOTE|SPARM_VARADIC, stdmac_strcat },
         { "%strlen",    false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_strlen },
@@ -8002,9 +8044,22 @@ static Token *make_tok_num(Token *next, int64_t val)
     return next;
 }
 
+/* Create a numeric token as unsigned hexadecimal */
+static Token *make_tok_hex(Token *next, int64_t val)
+{
+    char numbuf[32];
+    int len;
+    uint64_t uval = val;
+
+    len = snprintf(numbuf, sizeof numbuf, "%#"PRIx64, uval);
+    next = new_Token(next, TOKEN_NUM, numbuf, len);
+
+    return next;
+}
+
 /*
  * Do the inverse of make_tok_num(). This only needs to be able
- * to parse the output of make_tok_num().
+ * to parse the output of make_tok_num() or make_tok_hex().
  */
 static int64_t get_tok_num(const Token *t, bool *err)
 {

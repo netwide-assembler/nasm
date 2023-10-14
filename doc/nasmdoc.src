@@ -2919,6 +2919,14 @@ The expressions passed to \c{%eval()} are \i{critical expressions},
 see \k{crit}.
 
 
+\C{f_hex} \i\c{%hex()} Function
+
+Equivalent to \i\c\{%eval()}, except that the results generated are
+given as hexadecimal. A \c{0x} prefix is added unless the value is
+zero, equivalent to the C \c{printf("%#x")} format. See also the
+\c{%num()} function, (\k{f_num}).
+
+
 \S{f_is} \i\c{%is()} Family Functions
 
 Each \i\c{%if} family directive (see \k{condasm}) has an equivalent
@@ -2948,16 +2956,23 @@ argument to the conditional using \c{\{\}}:
 
 The \c{%num()} function evaluates its arguments as expressions, and
 then produces a quoted string encoding the first argument as an
-\e{unsigned} integer. The second argument is the desired number of
-digits (max 253, default -1), and the second argument is the encoding
-base (from 2 to 64, default 10.)
+\e{unsigned} 64-bit integer.
+
+The second argument is the desired number of digits (max 255, default
+-1).
+
+The third argument is the encoding base (from 2 to 64, default 10); if
+the base is given as -2, -8, -10, or -16, then \c{0b}, \c{0q}, \c{0d}
+or \c{0x} is prepended, respectively; all other negative values are
+disallowed.
 
 Only the first argument is required.
 
 If the number of digits is negative, NASM will add additional digits
-if needed, if positive the string is truncated to the number of digits
+if needed; if positive the string is truncated to the number of digits
 specified. 0 is treated as -1, except that the input number 0
-generates an empty string (thus, the first digit will never be zero.)
+always generates an empty string (thus, the first digit will never be
+zero), even if the base given is negative.
 
 The full 64-symbol set used is, in order:
 
@@ -2966,7 +2981,6 @@ The full 64-symbol set used is, in order:
 If a \e{signed} number needs to be converted to a string, use
 \c{%abs()}, \c{%cond()}, and \c{%strcat()} to format the signed number
 string to your specific output requirements.
-
 
 \S{f_sel} \i\c{%sel()} Function
 
