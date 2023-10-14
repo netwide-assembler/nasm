@@ -5564,19 +5564,19 @@ private extensions mentioned in \k{global}.
 \c{LPOSTFIX} directives can prepend or append a string to a certain
 type of symbols, normally to fit specific ABI conventions
 
-\b\c{PREFIX}|\c{GPREFIX}: Prepend the argument to all \c{EXTERN}
+\b\c{PREFIX}|\c{GPREFIX}: Prepend the argument to all \c{EXTERN},
 \c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols.
 
 \b\c{LPREFIX}: Prepend the argument to all other symbols
 such as local labels and backend defined symbols.
 
-\b\c{POSTFIX}|\c{GPOSTFIX}: Append the argument to all \c{EXTERN}
+\b\c{POSTFIX}|\c{GPOSTFIX}: Append the argument to all \c{EXTERN},
 \c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols.
 
 \b\c{LPOSTFIX}: Append the argument to all other symbols
 such as local labels and backend defined symbols.
 
-These a macros implemented as pragmas, and using \c{%pragma} syntax
+These are macros implemented as pragmas, and using \c{%pragma} syntax
 can be restricted to specific backends (see \k{pragma}):
 
 \c %pragma macho lprefix L_
@@ -5592,17 +5592,19 @@ One example which supports many ABIs:
 \c %pragma elf    gprefix			; empty
 \c %pragma elf    lprefix .L
 
-Some toolchains is aware of a particular prefix for its own optimization
-options, such as code elimination. For instance, Mach-O backend has a
-linker that uses a simplistic naming scheme to chunk up sections into a
-meta section. When the \c{subsections_via_symbols} directive
-(\k{macho-ssvs}) is declared, each symbol is the start of a
-separate block. The meta section is, then, defined to include sections
-before the one that starts with a 'L'. \c{LPREFIX} is useful here to mark
-all local symbols with the 'L' prefix to be excluded to the meta section.
-It converts local symbols compatible with the particular toolchain.
-Note that local symbols declared with \c{STATIC} (\k{static})
-are excluded from the symbol mangling and also not marked as global.
+Some toolchains is aware of a particular prefix for its own
+optimization options, such as dead code elimination. For instance, the
+Mach-O binary format has a linker convention that uses a simplistic
+naming scheme to chunk up sections into smaller subsections, each of
+which may be eliminated. When the \c{subsections_via_symbols}
+directive (\k{macho-ssvs}) is declared, each symbol is the start of a
+separate block. The subsection is, then, defined to include sections
+before the one that starts with a 'L'. \c{LPREFIX} is useful here to
+mark all local symbols with the 'L' prefix to be excluded to the meta
+section.  It converts local symbols compatible with the particular
+toolchain.  Note that local symbols declared with \c{STATIC}
+(\k{static}) are excluded from the symbol mangling and also not marked
+as global.
 
 
 \H{CPU} \i\c{CPU}: Defining CPU Dependencies
@@ -5614,7 +5616,7 @@ used to enforce unavailable \e{encodings} of instructions, such as
 
 (If someone would volunteer to work through the database and add
 proper annotations to each instruction, this could be greatly
-improved. Please contact the developers to volunteer, see \{contact}.)
+improved. Please contact the developers to volunteer, see \k{contact}.)
 
 Current CPU keywords are:
 
