@@ -7633,7 +7633,8 @@ static Token *pp_tokline(void)
                     ll->where = l->where;
                     istk->expansion = ll;
                 }
-                break;
+                l = istk->expansion;
+                continue;
             } else {
                 MMacro *m = istk->mstk.mstk;
 
