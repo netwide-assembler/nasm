@@ -5772,10 +5772,10 @@ into a binary file called \c{binprog}.
 
 It is extremely important to understand that the binary output format
 is simply nothing other than \e{a linker built into the NASM
-executable.} As such, NASM behaves just as it does when given any
-other output format; notably the list file reflects the code output
-\e{before} relocation, and addresses in the list file are addresses
-relative to the start of the output section.
+executable.} As such, NASM behaves just as it does when producing any
+other output format: notably the list file reflects the code output
+\e{before} relocation, and the addresses in the list file are
+addresses relative to the start of the current output section.
 
 
 \S{org} \i\c{ORG}: Binary File \i{Program Origin}
