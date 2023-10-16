@@ -5862,6 +5862,198 @@ expand_smacro_with_params(SMacro *m, Token *mstart, Token **params,
 }
 
 /*
+ * Count the arguments to an smacro call. Returns 0 if the token following
+ * is not a left paren.
+ */
+static int count_smacro_args(Token *t)
+{
+    int nparam;
+    int paren, brackets;
+
+    t = skip_white(t);
+
+    if (!tok_is(t, '('))
+        return 0;
+
+    paren = 1;
+    nparam = 1;
+    brackets = 0;
+
+    while (paren) {
+        t = t->next;
+
+        if (!t) {
+            nasm_nonfatal("macro call expects terminating `)'");
+            return 0;
+        }
+
+        switch (t->type) {
+        case ',':
+            if (!brackets && paren == 1)
+                nparam++;
+            break;
+
+        case '{':
+            brackets++;
+            break;
+
+        case '}':
+            if (brackets > 0)
+                brackets--;
+            break;
+
+        case '(':
+            if (!brackets)
+                paren++;
+            break;
+
+        case ')':
+            if (!brackets)
+                paren--;
+            break;
+
+        default:
+            break;          /* Normal token */
+        }
+    }
+
+    return nparam;
+}
+
+/*
+ * Collect the arguments to an smacro call. The size of the array must have
+ * been previously counted. It *is* permitted to call this with an nparam
+ * value that is too small for the macro in question; in that case the
+ * parameters are treated as missing optional arguments, even if they
+ * are not optional in the macro specification.
+ *
+ * *nparamp is adjusted if some arguments got merged as greedy or entered
+ * as optional/empty.
+ *
+ * Moves *tp to point to the final ) token.
+ */
+static Token **parse_smacro_args(Token **tp, int *nparamp, const SMacro *m)
+{
+    Token **phead, **pep;
+    int white = 0;
+    int brackets = 0;
+    int paren;
+    bool bracketed = false;
+    bool bad_bracket = false;
+    int i;
+    enum sparmflags flags;
+    const struct smac_param *mparm;
+    Token *t = *tp;
+    int nparam = *nparamp;
+    Token **params;
+    /* Is it a macro or a preprocessor function? Used for diagnostics. */
+    const char * const mtype = m->name[0] == '%' ? "function" : "macro";
+
+    nasm_assert(tok_is(t, '('));
+
+    if (nparam > m->nparam) {
+        if (m->params[m->nparam-1].flags & SPARM_GREEDY)
+            *nparamp = nparam = m->nparam;
+    } else if (nparam < m->nparam) {
+        *nparamp = nparam = m->nparam; /* Missing optional arguments = empty */
+    }
+    paren = 1;
+    nasm_newn(params, nparam);
+    i = 0;
+    mparm = m->params;
+    flags = mparm->flags;
+    phead = pep = &params[i];
+    *pep = NULL;
+
+    while (paren) {
+        bool skip;
+
+        t = t->next;
+
+        if (!t)
+            nasm_nonfatal("%s `%s' call expects terminating `)'",
+                          mtype, m->name);
+
+        skip = false;
+
+        switch (t->type) {
+        case TOKEN_WHITESPACE:
+            if (!(flags & SPARM_NOSTRIP)) {
+                if (brackets || *phead)
+                    white++;    /* Keep interior whitespace */
+                skip = true;
+            }
+            break;
+
+        case ',':
+            if (!brackets && paren == 1 && !(flags & SPARM_GREEDY)) {
+                i++;
+                nasm_assert(i < nparam);
+                phead = pep = &params[i];
+                *pep = NULL;
+                bracketed = false;
+                skip = true;
+                if (!(flags & SPARM_VARADIC)) {
+                    mparm++;
+                    flags = mparm->flags;
+                }
+            }
+            break;
+
+        case '{':
+            if (!bracketed) {
+                bracketed = !*phead && !(flags & SPARM_NOSTRIP);
+                skip = bracketed;
+            }
+            brackets++;
+            break;
+
+        case '}':
+            if (brackets > 0) {
+                if (!--brackets)
+                    skip = bracketed;
+            }
+            break;
+
+        case '(':
+            if (!brackets)
+                paren++;
+            break;
+
+        case ')':
+            if (!brackets) {
+                paren--;
+                if (!paren) {
+                    skip = true;
+                    i++;    /* Found last argument */
+                }
+            }
+            break;
+
+        default:
+            break;          /* Normal token */
+        }
+
+        if (!skip) {
+            Token *tt;
+
+            bad_bracket |= bracketed && !brackets;
+
+            if (white) {
+                *pep = tt = new_White(NULL);
+                pep = &tt->next;
+                white = 0;
+            }
+            *pep = tt = dup_Token(NULL, t);
+            pep = &tt->next;
+        }
+    }
+
+    *tp = t;
+    return params;
+}
+
+/*
  * Expand *one* single-line macro instance. If the first token is not
  * a macro at all, it is simply copied to the output and the pointer
  * advanced.  tpp should be a pointer to a pointer (usually the next
@@ -5877,11 +6069,10 @@ expand_smacro_with_params(SMacro *m, Token *mstart, Token **params,
 static SMacro *expand_one_smacro(Token ***tpp)
 {
     Token **params = NULL;
-    const char *mname, *mtype;
+    const char *mname;
     Token *mstart = **tpp;
     Token *tline  = mstart;
     SMacro *head, *m;
-    int i;
     Token *tafter, **tep;
     int nparam = 0;
 
@@ -5944,61 +6135,12 @@ static SMacro *expand_one_smacro(Token ***tpp)
          * substitute for the parameters when we expand. What a
          * pain.
          */
-        Token *t;
-        int paren, brackets;
 
         tline = tline->next;
         tline = skip_white(tline);
-        if (!tok_is(tline, '(')) {
-            /*
-             * This macro wasn't called with parameters: ignore
-             * the call. (Behaviour borrowed from gnu cpp.)
-             */
+        nparam = count_smacro_args(tline);
+        if (!nparam)
             goto not_a_macro;
-        }
-
-        paren = 1;
-        nparam = 1;
-        brackets = 0;
-        t = tline;              /* tline points to leading ( */
-
-        while (paren) {
-            t = t->next;
-
-            if (!t) {
-                nasm_nonfatal("macro call expects terminating `)'");
-                goto not_a_macro;
-            }
-
-            switch (t->type) {
-            case ',':
-                if (!brackets && paren == 1)
-                    nparam++;
-                break;
-
-            case '{':
-                brackets++;
-                break;
-
-            case '}':
-                if (brackets > 0)
-                    brackets--;
-                break;
-
-            case '(':
-                if (!brackets)
-                    paren++;
-                break;
-
-            case ')':
-                if (!brackets)
-                    paren--;
-                break;
-
-            default:
-                break;          /* Normal token */
-            }
-        }
 
         /*
          * Look for a macro matching in both name and parameter count.
@@ -6033,117 +6175,8 @@ static SMacro *expand_one_smacro(Token ***tpp)
     if (m->in_progress && !m->recursive)
         goto not_a_macro;
 
-    /* Is it a macro or a preprocessor function? Used for diagnostics. */
-    mtype = m->name[0] == '%' ? "function" : "macro";
-
     if (nparam) {
-        /* Extract parameters */
-        Token **phead, **pep;
-        int white = 0;
-        int brackets = 0;
-        int paren;
-        bool bracketed = false;
-        bool bad_bracket = false;
-        enum sparmflags flags;
-        const struct smac_param *mparm;
-
-        if (nparam > m->nparam) {
-            if (m->params[m->nparam-1].flags & SPARM_GREEDY)
-                nparam = m->nparam;
-        } else if (nparam < m->nparam) {
-            nparam = m->nparam; /* Missing optional arguments = empty */
-        }
-        paren = 1;
-        nasm_newn(params, nparam);
-        i = 0;
-        mparm = m->params;
-        flags = mparm->flags;
-        phead = pep = &params[i];
-        *pep = NULL;
-
-        while (paren) {
-            bool skip;
-
-            tline = tline->next;
-
-            if (!tline)
-                nasm_nonfatal("%s `%s' call expects terminating `)'",
-                              mtype, m->name);
-
-            skip = false;
-
-            switch (tline->type) {
-            case TOKEN_WHITESPACE:
-                if (!(flags & SPARM_NOSTRIP)) {
-                    if (brackets || *phead)
-                        white++;    /* Keep interior whitespace */
-                    skip = true;
-                }
-                break;
-
-            case ',':
-                if (!brackets && paren == 1 && !(flags & SPARM_GREEDY)) {
-                    i++;
-                    nasm_assert(i < nparam);
-                    phead = pep = &params[i];
-                    *pep = NULL;
-                    bracketed = false;
-                    skip = true;
-                    if (!(flags & SPARM_VARADIC)) {
-                        mparm++;
-                        flags = mparm->flags;
-                    }
-                }
-                break;
-
-            case '{':
-                if (!bracketed) {
-                    bracketed = !*phead && !(flags & SPARM_NOSTRIP);
-                    skip = bracketed;
-                }
-                brackets++;
-                break;
-
-            case '}':
-                if (brackets > 0) {
-                    if (!--brackets)
-                        skip = bracketed;
-                }
-                break;
-
-            case '(':
-                if (!brackets)
-                    paren++;
-                break;
-
-            case ')':
-                if (!brackets) {
-                    paren--;
-                    if (!paren) {
-                        skip = true;
-                        i++;    /* Found last argument */
-                    }
-                }
-                break;
-
-            default:
-                break;          /* Normal token */
-            }
-
-            if (!skip) {
-                Token *t;
-
-                bad_bracket |= bracketed && !brackets;
-
-                if (white) {
-                    *pep = t = new_White(NULL);
-                    pep = &t->next;
-                    white = 0;
-                }
-                *pep = t = dup_Token(NULL, tline);
-                pep = &t->next;
-            }
-        }
+        params = parse_smacro_args(&tline, &nparam, m);
     }
 
     tafter = tline->next;   /* Skip past the macro call */
