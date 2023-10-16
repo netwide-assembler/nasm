@@ -7449,7 +7449,6 @@ stdmac_map(const SMacro *s, Token **params, int nparam)
     if (nparam % mparams) {
         nasm_nonfatal("%s expected a multiple of %d expansion parameters, got %d\n",
                       s->name, mparams, nparam);
-        nparam -= nparam % mparams;
     }
 
     ctx = get_ctx(mname, &ctxname);
@@ -7459,6 +7458,9 @@ stdmac_map(const SMacro *s, Token **params, int nparam)
                       mname, mparams, s->name);
         return NULL;
     }
+
+    if (nparam < mparams)
+        return NULL;            /* Empty expansion */
 
     greedify = 0;
     if (unlikely(mparams > smac->nparam)) {
@@ -7493,7 +7495,7 @@ stdmac_map(const SMacro *s, Token **params, int nparam)
         }
 
         nparam -= mparams;
-        if (!nparam)
+        if (nparam < mparams)
             break;
 
         params += mparams;
