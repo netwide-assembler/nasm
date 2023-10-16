@@ -5863,9 +5863,10 @@ expand_smacro_with_params(SMacro *m, Token *mstart, Token **params,
 
 /*
  * Count the arguments to an smacro call. Returns 0 if the token following
- * is not a left paren.
+ * is not a left paren. *tp is set to point to the final ) if non-NULL;
+ * it is left unchanged for the zero-argument case.
  */
-static int count_smacro_args(Token *t)
+static int count_smacro_args(Token *t, Token **tp)
 {
     int nparam;
     int paren, brackets;
@@ -5917,6 +5918,8 @@ static int count_smacro_args(Token *t)
         }
     }
 
+    if (tp)
+        *tp = t;
     return nparam;
 }
 
@@ -5949,6 +5952,7 @@ static Token **parse_smacro_args(Token **tp, int *nparamp, const SMacro *m)
     /* Is it a macro or a preprocessor function? Used for diagnostics. */
     const char * const mtype = m->name[0] == '%' ? "function" : "macro";
 
+    t = skip_white(t);
     nasm_assert(tok_is(t, '('));
 
     if (nparam > m->nparam) {
@@ -6135,10 +6139,8 @@ static SMacro *expand_one_smacro(Token ***tpp)
          * substitute for the parameters when we expand. What a
          * pain.
          */
-
-        tline = tline->next;
-        tline = skip_white(tline);
-        nparam = count_smacro_args(tline);
+        tline = skip_white(tline->next);
+        nparam = count_smacro_args(tline, NULL);
         if (!nparam)
             goto not_a_macro;
 
@@ -6175,7 +6177,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
     if (m->in_progress && !m->recursive)
         goto not_a_macro;
 
-    if (nparam) {
+   if (nparam) {
         params = parse_smacro_args(&tline, &nparam, m);
     }
 
@@ -7435,8 +7437,14 @@ stdmac_map(const SMacro *s, Token **params, int nparam)
     SMacro *smac;
     Context *ctx;
     Token *t, *tline, *mstart;
-    int mparams;
-    int greedify;
+    int i;
+    Token *fixargs;
+    int fixparams;              /* Number of fixed parameters */
+    int mparams;                /* Number of variable parameters */
+    int tparams;                /* Total number of parameters */
+    int greedify;               /* Number of parameters that must be joined */
+    Token **fparam;             /* Fixed parameters */
+    Token **cparam;             /* Final list of macro call parameters */
 
     t = params[0];
     mname = get_id_noskip(&t, "%map");
@@ -7444,8 +7452,16 @@ stdmac_map(const SMacro *s, Token **params, int nparam)
         return NULL;
 
     mstart = t;
-    t = t->next;
 
+    fixargs = NULL;
+    fixparams = 0;
+    t = skip_white(t->next);
+    if (tok_is(t, ':')) {
+        fixargs = t->next;
+        fixparams = count_smacro_args(fixargs, &t);
+        if (fixparams)
+            t = skip_white(t->next);
+    }
     mparams = 1;
     if (tok_is(t, ':')) {
         struct ppscan pps;
@@ -7484,56 +7500,91 @@ stdmac_map(const SMacro *s, Token **params, int nparam)
                       s->name, mparams, nparam);
     }
 
+    tparams = fixparams + mparams;
+
     ctx = get_ctx(mname, &ctxname);
-    if (!smacro_defined(ctx, ctxname, mparams, &smac, true, false) ||
-        smac->nparam == 0 || (smac->in_progress && !smac->recursive)) {
-        nasm_nonfatal("macro `%s' taking %d parameters not found in function %s",
-                      mname, mparams, s->name);
+    if (!smacro_defined(ctx, ctxname, tparams, &smac, true, false)
+        || smac->nparam == 0 || (smac->in_progress && !smac->recursive)) {
+        nasm_nonfatal("macro `%s' taking %d parameter%s not found in function %s",
+                      mname, tparams, tparams == 1 ? "" : "s", s->name);
         return NULL;
     }
 
     if (nparam < mparams)
         return NULL;            /* Empty expansion */
 
+    fparam = NULL;
+    if (fixparams) {
+        int nfp = fixparams;
+        fparam = parse_smacro_args(&fixargs, &nfp, smac);
+        if (nfp < fixparams) {
+            fixparams = nfp;
+            tparams = fixparams + mparams;
+        }
+    }
+
     greedify = 0;
-    if (unlikely(mparams > smac->nparam)) {
+    if (unlikely(tparams > smac->nparam)) {
         if (smac->params[smac->nparam-1].flags & SPARM_GREEDY)
             greedify = smac->nparam;
     }
 
+    nasm_newn(cparam, tparams);
+
     tline = NULL;
     while (1) {
-        int xparams = mparams;
+        int xparams;
+
+        for (i = 0; i < fixparams; i++) {
+            /* expand_smacro_with_params() is allowed to clobber the
+             * parameter array, so we need to give it its own copy.
+             */
+            cparam[i] = dup_tlist(fparam[i], NULL);
+        }
+
+        for (i = fixparams; i < tparams; i++) {
+            cparam[i] = *params;
+            *params = NULL;     /* Taking over ownership */
+            params++;
+        }
+
         if (unlikely(greedify)) {
             /* Need to re-concatenate some number of arguments as
                comma-separated lists... */
             int i;
-            Token **tp = &params[greedify-1];
+            Token **tp = &cparam[greedify-1];
             while (*tp)
                 tp = &(*tp)->next;
 
-            for (i = greedify; i < mparams; i++) {
+            for (i = greedify; i < tparams; i++) {
                 *tp = make_tok_char(NULL, ',');
-                tp = steal_tlist(params[i], &(*tp)->next);
-                params[i] = NULL;
+                tp = steal_tlist(cparam[i], &(*tp)->next);
+                cparam[i] = NULL;
             }
             xparams = greedify;
+        } else {
+            xparams = tparams;
         }
 
-        t = expand_smacro_with_params(smac, mstart, params, xparams, NULL);
+        t = expand_smacro_with_params(smac, mstart, cparam, xparams, NULL);
         if (t) {
             Token *rt = reverse_tokens(t);
             t->next = tline;
             tline = rt;
         }
 
+        for (i = 0; i < xparams; i++)
+            free_tlist(cparam[i]);
+
         nparam -= mparams;
         if (nparam < mparams)
             break;
 
-        params += mparams;
         tline = make_tok_char(tline, ',');
     }
+
+    nasm_free(fparam);
+    nasm_free(cparam);
 
     return tline;
 }
