@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -49,22 +49,13 @@ int64_t readstrnum(char *str, int length, bool *warn)
     int i;
 
     *warn = false;
-
-    str += length;
-    if (globalbits == 64) {
-        for (i = 0; i < length; i++) {
-            if (charconst & UINT64_C(0xFF00000000000000))
-                *warn = true;
-            charconst &= ~UINT64_C(0xFF00000000000000);
-            charconst = (charconst << 8) + (uint8_t)*--str;
-        }
-    } else {
-        for (i = 0; i < length; i++) {
-            if (charconst & UINT32_C(0xFF000000))
-                *warn = true;
-            charconst &= ~UINT32_C(0xFF000000);
-            charconst = (charconst << 8) + (uint8_t)*--str;
-        }
+    if (length > 8) {
+        *warn = true;
+        length = 8;
     }
+
+    for (i = 0; i < length; i++)
+        charconst += (uint64_t)((uint8_t)(*str++)) << (i*8);
+
     return charconst;
 }
