@@ -7455,41 +7455,41 @@ stdmac_map(const SMacro *s, Token **params, int nparam)
 
     fixargs = NULL;
     fixparams = 0;
+    mparams = 1;
     t = skip_white(t->next);
     if (tok_is(t, ':')) {
         fixargs = t->next;
         fixparams = count_smacro_args(fixargs, &t);
-        if (fixparams)
-            t = skip_white(t->next);
-    }
-    mparams = 1;
-    if (tok_is(t, ':')) {
-        struct ppscan pps;
-        struct tokenval tokval;
-        expr *evalresult;
-        Token *ep;
+        t = skip_white(t->next);
 
-        pps.tptr = ep = zap_white(expand_smacro_noreset(t->next));
-        t->next = NULL;
-        pps.ntokens = -1;
-        tokval.t_type = TOKEN_INVALID;
-        evalresult = evaluate(ppscan, &pps, &tokval, NULL, true, NULL);
-        free_tlist(ep);
+        if (tok_is(t, ':')) {
+            struct ppscan pps;
+            struct tokenval tokval;
+            expr *evalresult;
+            Token *ep;
 
-        if (!evalresult || tokval.t_type) {
-            nasm_nonfatal("invalid expression in parameter count for `%s' in function %s",
-                          mname, s->name);
-            return NULL;
-        } else if (!is_simple(evalresult)) {
-            nasm_nonfatal("non-constant expression in parameter count for `%s' in function %s",
-                          mname, s->name);
-            return NULL;
-        }
-        mparams = reloc_value(evalresult);
-        if (mparams < 1) {
-            nasm_nonfatal("invalid parameter count for `%s' in function %s",
-                          mname, s->name);
-            return NULL;
+            pps.tptr = ep = zap_white(expand_smacro_noreset(t->next));
+            t->next = NULL;
+            pps.ntokens = -1;
+            tokval.t_type = TOKEN_INVALID;
+            evalresult = evaluate(ppscan, &pps, &tokval, NULL, true, NULL);
+            free_tlist(ep);
+
+            if (!evalresult || tokval.t_type) {
+                nasm_nonfatal("invalid expression in parameter count for `%s' in function %s",
+                              mname, s->name);
+                return NULL;
+            } else if (!is_simple(evalresult)) {
+                nasm_nonfatal("non-constant expression in parameter count for `%s' in function %s",
+                              mname, s->name);
+                return NULL;
+            }
+            mparams = reloc_value(evalresult);
+            if (mparams < 1) {
+                nasm_nonfatal("invalid parameter count for `%s' in function %s",
+                              mname, s->name);
+                return NULL;
+            }
         }
     }
 

@@ -2901,7 +2901,7 @@ the macro. Note that just as for single-line macros, \c{%count()}
 treats an empty argument list as a single empty argument.
 
 \c %xdefine empty %count()        ; %define empty 1
-\c %xdefine one   %count(1) 	  ; %define one 1
+\c %xdefine one   %count(1)	  ; %define one 1
 \c %xdefine two   %count(5,q)	  ; %define two 2
 \c %define  list  a,b,46
 \c %xdefine lc1   %count(list)	  ; %define lc 1 (just one argument)
@@ -2959,22 +2959,60 @@ argument to the conditional using \c{\{\}}:
 \S{f_map} \i\c{%map()} Function
 
 The \c{%map()} function takes as its first parameter the name of a
-single-line macro, optionally followed by a colon and an integer
-expression (default 1), specifying the number of parameter to the
-macro, \e{n}.
+single-line macro, followed by up to two optional colon-separated
+subparameters:
 
-The following parameters are then passed as parameters to the given
-macro for expansion, in groups of \e{n}, and the results turned into a
-comma-separated list.
+\b The first subparameter, if present, should be a list of macro
+parameters enclosed in parentheses. Note that \c{()} represents a
+one-argument list containing an empty parameter; omit the parentheses
+to specify no parameters.
+
+\b The second subparameter, if present, represent the number of
+group size for additional parameters to the macro (default 1).
+
+Further parameters, if any, are then passed as additional parameters to the
+given macro for expansion, in sets given by the specified group size,
+and the results turned into a comma-separated list. If no additional
+parameters are given, \c{%map()} expands to nothing.
 
 For example:
 
-\c %define alpha(&x,y) y dup (x)
-\c       db %map(alpha:2,foo,bar,baz,quux)
+\c %define alpha(&x)     x
+\c %define alpha(&x,y)	 y dup (x)
+\c %define alpha(s,&x,y) y dup (x,s)
+\c ; 0 fixed + 1 grouped parameters per call, calls alpha(&x)
+\c       db %map(alpha,foo,bar,baz,quux)
+\c ; 0 fixed + 2 grouped parameters per call, calls alpha(&x,y)
+\c	 db %map(alpha::2,foo,bar,baz,quux)
+\c ; 1 fixed + 2 grouped parameters per call, calls alpha(s,&x,y)
+\c       db %map(alpha:("!"):2,foo,bar,baz,quux)
 
 ... expands to:
 
-\c       db bar dup ("foo"),quux dup ("baz")
+\c       db 'foo','bar','baz','quux'
+\c       db bar dup ('foo'),quux dup ('baz')
+\c       db bar dup ('foo',"!"),quux dup ('baz',"!")
+
+As a more complex example, a macro that joins quoted strings together
+with a user-specified delimiter string:
+
+\c %define join(sep)        ''      ; handle the case of zero strings
+\c %define _join(sep,str)   sep,str ; helper macro
+\c %define join(sep,s1,sn+) %strcat(s1, %map(_join:(sep) %, sn))
+\c
+\c       db join(':')
+\c       db join(':','a')
+\c       db join(':','a','b')
+\c       db join(':','a','b','c')
+\c       db join(':','a','b','c','d')
+
+... expands to:
+
+\c       db ''
+\c       db 'a'
+\c       db 'a:b'
+\c       db 'a:b:c'
+\c       db 'a:b:c:d'
 
 
 \S{f_num} \i\c{%num()} Function
