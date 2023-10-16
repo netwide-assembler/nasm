@@ -45,26 +45,6 @@
 
 #define lib_isnumchar(c)    (nasm_isalnum(c) || (c) == '$' || (c) == '_')
 
-static int radix_letter(char c)
-{
-    switch (c) {
-    case 'b': case 'B':
-    case 'y': case 'Y':
-	return 2;		/* Binary */
-    case 'o': case 'O':
-    case 'q': case 'Q':
-	return 8;		/* Octal */
-    case 'h': case 'H':
-    case 'x': case 'X':
-	return 16;		/* Hexadecimal */
-    case 'd': case 'D':
-    case 't': case 'T':
-	return 10;		/* Decimal */
-    default:
-	return 0;		/* Not a known radix letter */
-    }
-}
-
 int64_t readnum(const char *str, bool *error)
 {
     const char *r = str, *q;

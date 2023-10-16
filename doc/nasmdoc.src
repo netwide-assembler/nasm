@@ -2425,7 +2425,13 @@ A single pair of parentheses is a subcase of a single, unused argument:
 This is similar to the behavior of the C preprocessor.
 
 \b If declared with an \c{=}, NASM will expand the argument and then
-evaluate it as a numeric expression.
+evaluate it as a numeric expression. The name of the argument may
+optionally be followed by \c{/} followed by a numeric radix character
+(\c{b}, \c{y}, \c{o}, \c{q}, \c{d}, \c{t}, \c{h} or \c{x}) and/or the
+letters \c{u} (unsigned) or \c{s} (signed), in which the number is
+formatted accordingly, with a radix prefix if a radix letter is
+specified. For the case of hexadecimal, if the radix letter is in
+upper case, alphabetic hex digits will be in upper case.
 
 \b If declared with an \c{&}, NASM will expand the argument and then
 turn into a quoted string; if the argument already \e{is} a quoted
@@ -2443,9 +2449,9 @@ braces (potentially useful in conjunction with \c{&} or \c{&&}.)
 
 For example:
 
-\c     %define xyzzy(=expr,&val) expr, str
-\c     %define plugh(x) xyzzy(x,x)
-\c     db plugh(3+5), `\0` ; Expands to: db 8, "3+5", `\0`
+\c     %define xyzzy(=expr,&val,=hex/x) expr, str, hex
+\c     %define plugh(x) xyzzy(x,x,x)
+\c     db plugh(13+5), `\0` ; Expands to: db 18, "13+5", 0x12, `\0`
 
 You can \i{pre-define} single-line macros using the `-d' option on
 the NASM command line: see \k{opt-d}.
@@ -2922,9 +2928,7 @@ see \k{crit}.
 \S{f_hex} \i\c{%hex()} Function
 
 Equivalent to \i\c\{%eval()}, except that the results generated are
-given as hexadecimal. A \c{0x} prefix is added unless the value is
-zero, equivalent to the C \c{printf("%#x")} format. See also the
-\c{%num()} function, (\k{f_num}).
+given as unsigned hexadecimal, with a \c{0x} prefix.
 
 
 \S{f_is} \i\c{%is()} Family Functions
@@ -2950,6 +2954,27 @@ argument to the conditional using \c{\{\}}:
 \c %if %isdef(foo) && !%isidn({foo,)})
 \c       db "foo is defined, but not as ')'"
 \c %endif
+
+
+\S{f_map} \i\c{%map()} Function
+
+The \c{%map()} function takes as its first parameter the name of a
+single-line macro, optionally followed by a colon and an integer
+expression (default 1), specifying the number of parameter to the
+macro, \e{n}.
+
+The following parameters are then passed as parameters to the given
+macro for expansion, in groups of \e{n}, and the results turned into a
+comma-separated list.
+
+For example:
+
+\c %define alpha(&x,y) y dup (x)
+\c       db %map(alpha:2,foo,bar,baz,quux)
+
+... expands to:
+
+\c       db bar dup ("foo"),quux dup ("baz")
 
 
 \S{f_num} \i\c{%num()} Function
