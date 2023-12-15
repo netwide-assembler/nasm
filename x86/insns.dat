@@ -3039,9 +3039,9 @@ RDSEED		reg16				[m:	o16 0f c7 /7]				FUTURE
 RDSEED		reg32				[m:	o32 0f c7 /7]				FUTURE
 RDSEED		reg64				[m:	o64 0f c7 /7]				LONG,FUTURE
 
-; Per AVX spec revision 14, document 319433-014
-CLAC		void				[	0f 01 ca]				PRIV,FUTURE
-STAC		void				[	0f 01 cb]				PRIV,FUTURE
+;# Supervisor Mode Access Prevention (SMAP)
+CLAC		void				[	np 0f 01 ca]				SMAP,PRIV,FUTURE
+STAC		void				[	np 0f 01 cb]				SMAP,PRIV,FUTURE
 
 ;# VIA (Centaur) security instructions
 XSTORE		void				[	0f a7 c0]				PENT,CYRIX
