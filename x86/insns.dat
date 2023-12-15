@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2022 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2023 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -6360,6 +6360,15 @@ UIRET		void					[	f3 0f 01 ec		]	UINTR,FUTURE,LONG
 ;# Compare, exchange and add conditional
 CMPccXADD       mem32,reg32,reg32			[mrv:	vex.128.66.0f38.w0 e0+c /r]	CMPCCXADD,FUTURE,LONG,SD
 CMPccXADD       mem64,reg64,reg64			[mrv:	vex.128.66.0f38.w1 e0+c /r]	CMPCCXADD,FUTURE,LONG,SQ
+
+;# Flexible Return and Exception Delivery
+ERETS           void					[	f2 0f 01 ca		]	FRED,FUTURE,PRIV,LONG
+ERETU		void					[	f3 0f 01 ca		]	FRED,FUTURE,PRIV,LONG
+LKGS		mem					[m:	f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG,SW
+LKGS		reg16					[m:	f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG
+LKGS		reg32					[m:	f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG,ND
+LKGS		reg64					[m:	o64nw f2 0f 00 /6	]	LKGS,FUTURE,PRIV,LONG,ND,OPT
+LKGS		reg64					[m:	o64 f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG
 
 ;# WRMSRNS and MSRLIST instructions
 WRMSRNS		void					[	np 0f 01 c6		]	WRMSRNS,FUTURE,PRIV,LONG
