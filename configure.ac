@@ -15,8 +15,7 @@ AH_BOTTOM([
 dnl This prevents us from running Wine and thinking we are not
 dnl cross-compiling when in fact we are; running Wine here is at
 dnl the best very slow and doesn't buy us a single thing at all.
-WINELOADER=/dev/null
-export WINELOADER
+PA_CROSS_COMPILE
 
 dnl Get the canonical target system name
 AC_CANONICAL_HOST
