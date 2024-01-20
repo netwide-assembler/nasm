@@ -3,7 +3,7 @@
 
 ;
 ; Simple test of a 64-bit org directive
-; 
+;
 		bits 64
 		org 0xffffffffffff0000
 

@@ -456,7 +456,7 @@ static void ieee_data_new(struct ieeeSection *segto)
 /*
  * this routine is unalduterated bloatware.  I usually don't do this
  * but I might as well see what it is like on a harmless program.
- * If anyone wants to optimize this is a good canditate!
+ * If anyone wants to optimize this is a good candidate!
  */
 static void ieee_write_fixup(int32_t segment, int32_t wrt,
                              struct ieeeSection *segto, int size,

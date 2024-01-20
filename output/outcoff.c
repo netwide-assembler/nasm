@@ -1369,7 +1369,6 @@ const struct ofmt of_coff = {
 
 #endif
 
-
 #ifdef OF_WIN32
 
 static const struct pragma_facility coff_win_pragma_list[] = {

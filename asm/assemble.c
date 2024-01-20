@@ -175,7 +175,6 @@
 
 #include "compiler.h"
 
-
 #include "nasm.h"
 #include "nasmlib.h"
 #include "error.h"
@@ -1059,7 +1058,6 @@ static void debug_set_type(insn *instruction)
     dfmt->debug_typevalue(typeinfo);
 }
 
-
 /* Proecess an EQU directive */
 static void define_equ(insn * instruction)
 {
@@ -1925,7 +1923,6 @@ static void gencode(struct out_data *data, insn *ins)
         op2 = ((c >> 3) & 3) + ((opex & 2) << 1);
         opx = &ins->oprs[op1];
         opex = 0;                /* For the next iteration */
-
 
         switch (c) {
         case 01:
@@ -3388,7 +3385,7 @@ static void add_asp(insn *ins, int addrbits)
         ins->addr_size = addrbits;
     } else if (valid & ((addrbits == 32) ? 16 : 32)) {
         /* Add an address size prefix */
-        ins->prefixes[PPS_ASIZE] = (addrbits == 32) ? P_A16 : P_A32;;
+        ins->prefixes[PPS_ASIZE] = (addrbits == 32) ? P_A16 : P_A32;
         ins->addr_size = (addrbits == 32) ? 16 : 32;
     } else {
         /* Impossible... */

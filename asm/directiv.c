@@ -557,7 +557,6 @@ bool process_directives(char *directive)
         break;
     }
 
-
     /* A common error message */
     if (bad_param) {
         nasm_nonfatal("invalid parameter to [%s] directive", directive);

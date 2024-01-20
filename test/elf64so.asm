@@ -53,7 +53,7 @@ lrotate:			; [1]
 	  ret
 
 ;; prototype: void greet_*(void);
-;; 
+;;
 ;;  Arguments are:	rdi - rsi - rdx - rcx - r8 - r9
 ;;  Registers:		rbx, rbp, r12-r15 are saved
 ;; greet_s() is Small PIC model, greet_m() is Medium PIC model
@@ -88,7 +88,7 @@ greet_m:
 	  mov rax,[rax+r15]	 ; localptr
 	  mov rdx,[rax]		 ; *localptr = localint
 	  mov rdi,printfstr wrt ..gotoff ; &printfstr - r15
-	  add rdi,r15		; &printfstr 
+	  add rdi,r15		; &printfstr
 	  xor eax,eax		; No fp arguments
 	  pop r15
 	  jmp printf wrt ..plt	; [10]
@@ -110,7 +110,7 @@ selfptr	  dq selfptr wrt ..sym	; [16]
 	  SECTION .bss
 ; a useless symbol
 useless	  resq 1
-	
+
 ; an integer
 integer	  resq 1		; [3]
 

@@ -4,7 +4,6 @@
 #include "compiler.h"
 #include "ilog2.h"
 
-
 #include "iflaggen.h"
 
 #define IF_GENBIT(bit)          (UINT32_C(1) << ((bit) & 31))

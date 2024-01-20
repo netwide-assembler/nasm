@@ -37,7 +37,6 @@
 
 #include "compiler.h"
 
-
 #include "nasmlib.h"
 #include "sync.h"
 

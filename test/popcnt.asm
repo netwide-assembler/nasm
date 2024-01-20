@@ -29,4 +29,5 @@
 	popcnt rax,rcx
 	popcnt rax,[rsi]
 	popcnt rax,qword [rsi]
-	
+
+\ Pas de fin de ligne à la fin du fichier

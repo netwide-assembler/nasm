@@ -84,7 +84,7 @@
 [global %1]
 %endmacro
 
-%define CODE_SEG .text                         
+%define CODE_SEG .text
 %endif
 
 
@@ -886,9 +886,9 @@ R_DrawSpan_8:
         push    edi
         push    ebx
 ;;
-;; initilise registers
+;; initialise registers
 ;;
-  
+
         mov     edx, [ds_xfrac]
         mov     eax, [ds_ystep]
         ror     edx, 14
@@ -925,7 +925,7 @@ R_DrawSpan_8:
 
 ;   summary
 ; edx = high16bit xfrac[0..13], ah=ystep[16..24] al=xtep[14..21]
-; ebx = high16bit =0, bh=yfrac[16..24], bl=xfrac[14..21] 
+; ebx = high16bit =0, bh=yfrac[16..24], bl=xfrac[14..21]
 ; ecx = colormap table cl=0 (colormap is aligned 8 bits)
 ; eax = high16bit yfrac[0..15], dx = count
 ; esi = flat texture source
@@ -940,9 +940,9 @@ align 4
          mov      cl, [esi+ebp]
         adc      bh, dh
          mov      cl, [ecx]
-        and      bh, 0x3f 
+        and      bh, 0x3f
          mov   [edi], cl
-        mov     ebp, ebx        
+        mov     ebp, ebx
          inc     edi
          shr     ebp, 2
 
@@ -951,7 +951,7 @@ align 4
          mov      cl, [esi+ebp]
         adc      bl, dl
          mov      cl, [ecx]
-        mov     ebp, ebx 
+        mov     ebp, ebx
          mov   [edi], cl
         inc     edi
          shr     ebp, 2

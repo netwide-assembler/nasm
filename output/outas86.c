@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,7 +31,7 @@
  *
  * ----------------------------------------------------------------------- */
 
-/* 
+/*
  * outas86.c	output routines for the Netwide Assembler to produce
  *		Linux as86 (bin86-0.3) object files
  */
@@ -196,7 +196,6 @@ static void as86_deflabel(char *name, int32_t segment, int64_t offset,
     if (special)
         nasm_nonfatal("as86 format does not support any"
                       " special symbol types");
-
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
 	if (strcmp(name, "..start")) {

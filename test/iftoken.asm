@@ -4,12 +4,12 @@
 %define NMACRO 1
 %define TMACRO 1 2
 	db 'N "":'
-%iftoken 
+%iftoken
 	db ' token'
 %else
 	db ' ntoken'
 %endif
-%ifempty 
+%ifempty
 	db ' empty'
 %else
 	db ' nempty'

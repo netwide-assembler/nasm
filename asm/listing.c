@@ -214,7 +214,6 @@ static void list_output(const struct out_data *data)
     uint64_t offset = data->offset;
     const uint8_t *p = data->data;
 
-
     if (!listfp || suppress || user_nolist)
         return;
 

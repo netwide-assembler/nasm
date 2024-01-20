@@ -38,7 +38,6 @@
 #include "version.h"
 #include "compiler.h"
 
-
 #include "nasm.h"
 #include "nasmlib.h"
 #include "error.h"
@@ -146,7 +145,6 @@ struct cv8_state {
     struct hash_table file_hash;
     unsigned num_files;
     uint32_t total_filename_len;
-
 
     unsigned total_lines;
 

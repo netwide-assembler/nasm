@@ -538,5 +538,4 @@ extern char coff_outfile[FILENAME_MAX];
 
 extern int coff_make_section(char *name, uint32_t flags);
 
-
 #endif /* PECOFF_H */

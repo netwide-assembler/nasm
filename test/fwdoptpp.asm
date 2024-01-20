@@ -9,7 +9,7 @@
     %endif
   %endif
 %endif
-	
+
 n0:	jmp n1
 n1:	jmp n2
 n2:	jmp n3
@@ -138,7 +138,7 @@ n124:	jmp n125
 n125:	jmp n126
 n126:	jmp n127
 n127:	jmp n0
-	
+
 %if ($-$$) > 257
   %ifdef FATAL
     %fatal "Out of space!"

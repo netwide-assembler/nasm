@@ -20,7 +20,7 @@ while ($line = <STDIN>) {
 		if ($i > 0 && $c >= $cols[$i]) {
 		    $line .= ' ';
 		    $c++;
-		}	
+		}
 		while ($c < $cols[$i]) {
 		    $line .= "\t";
 		    $c = ($c+8)	& ~7;

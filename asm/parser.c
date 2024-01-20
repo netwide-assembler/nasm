@@ -50,7 +50,6 @@
 #include "assemble.h"
 #include "tables.h"
 
-
 static int end_expression_next(void);
 
 static struct tokenval tokval;

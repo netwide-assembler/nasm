@@ -36,7 +36,7 @@
 	db 0hb			; Hex
 	db 0xd			; Hex
 	db 0xb			; Hex
-	
+
 	;; Floating-point constants
 	;; All of these should output B4A21147
 	dd 3.7282705e+4		; Decimal
@@ -46,7 +46,7 @@
 
 	dd 0x1.23456789p+15	; Hex
 	dd 0h1.23456789p+15	; Hex
-	
+
 	dd 0o1.10642547422p+15	; Octal
 	dd 0q1.10642547422p+15	; Octal
 

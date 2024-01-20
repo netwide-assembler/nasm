@@ -37,7 +37,6 @@
 
 #include "compiler.h"
 
-
 #include "nasm.h"
 #include "nasmlib.h"
 #include "error.h"
@@ -558,7 +557,7 @@ static void elf_init(void)
     saa_wbytes(strs, elf_module, strlen(elf_module)+1);
     strslen = 2 + strlen(elf_module);
     shstrtab = NULL;
-    shstrtablen = shstrtabsize = 0;;
+    shstrtablen = shstrtabsize = 0;
     add_sectname("", "");       /* SHN_UNDEF */
 
     fwds = NULL;
@@ -2422,7 +2421,6 @@ static const struct pragma_facility elf_pragma_list[] =
     { NULL, NULL }          /* Implements the canonical output name */
 };
 
-
 static const struct dfmt elf32_df_dwarf = {
     "ELF32 (i386) dwarf (newer)",
     "dwarf",
@@ -3108,7 +3106,6 @@ static void dwarf_output(int type, void *param)
     /* show change handled */
     debug_immcall = 0;
 }
-
 
 static void dwarf_generate(void)
 {

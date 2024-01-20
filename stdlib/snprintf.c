@@ -6,7 +6,6 @@
 
 #include "compiler.h"
 
-
 #include "nasmlib.h"
 
 #if !defined(HAVE_SNPRINTF) && !defined(HAVE__SNPRINTF)

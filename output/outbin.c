@@ -1596,7 +1596,6 @@ static void do_output_srec(void)
     write_srecord(0, alen, 0, etype, NULL);
 }
 
-
 const struct ofmt of_bin = {
     "Flat raw binary (MS-DOS, embedded, ...)",
     "bin",

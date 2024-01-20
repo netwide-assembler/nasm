@@ -73,7 +73,7 @@ galog2:
 ; Sbyte tests...
 onetwentysix	equ 126
 onetwentynine	equ 129
-	
+
 add eax,onetwentyseven		; sbyte (forward)
 add eax,onetwentyeight		; not sbyte (forward)
 add eax,onetwentyseven		; sbyte (forward)
@@ -84,7 +84,7 @@ add ecx,onetwentyeight		; not sbyte (forward)
 add ecx,onetwentyseven		; sbyte (forward)
 add ecx,onetwentysix		; sbyte (backward)
 add ecx,onetwentynine		; not sbyte (backward)
-	
+
 onetwentyseven	equ 127
 onetwentyeight	equ 128
 
@@ -99,6 +99,6 @@ ialog1:
 add eax, ialog2-ialog1
 times 127 - 3 nop
 ialog2:
-	
+
 ; Do not confuse forward references and segmentless addresses!
 jmp 12345

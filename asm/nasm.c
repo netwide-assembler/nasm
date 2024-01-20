@@ -37,7 +37,6 @@
 
 #include "compiler.h"
 
-
 #include "nasm.h"
 #include "nasmlib.h"
 #include "nctype.h"
@@ -2338,7 +2337,6 @@ static void help(FILE *out)
         "\n"
         "   --limit-X val  set execution limit X\n"
         , out);
-
 
     for (i = 0; i <= LIMIT_MAX; i++) {
         fprintf(out, "       %-20s %s [",

@@ -213,7 +213,7 @@
 ;
 ; Test hexadecimal floating-point numbers
 ;
- 
+
 ; 16-bit
 	mov ax,__float16__(1.0)
 	mov ax,__float16__(0x1.0)
@@ -284,7 +284,7 @@
 	mov rax,__float64__(0x0000123456789.0)
 	mov rax,__float64__(0x123456789.0p+0)
 	mov rax,__float64__(0x123456789.0p+300)
-	
+
 ; 80-bit
 	mov rax,__float80m__(1.0)
 	mov ax,__float80e__(1.0)

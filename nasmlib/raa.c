@@ -146,7 +146,6 @@ void *raa_read_ptr(struct RAA *r, raaindex pos)
     return ip ? ip->p : NULL;
 }
 
-
 static struct RAA *
 real_raa_write(struct RAA *r, raaindex posn, union intorptr value)
 {

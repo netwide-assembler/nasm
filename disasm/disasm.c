@@ -37,7 +37,6 @@
 
 #include "compiler.h"
 
-
 #include "nasm.h"
 #include "disasm.h"
 #include "sync.h"
@@ -271,7 +270,6 @@ static uint32_t append_evex_mem_deco(char *buf, uint32_t num, opflags_t type,
         }
     }
 
-
     return num_chars;
 }
 
@@ -411,7 +409,6 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
             op->basereg = -1;
             mod = 2;            /* fake disp32 */
         }
-
 
         if (rm == 4) {          /* process SIB */
             uint8_t vsib_hi = 0;
@@ -1575,7 +1572,6 @@ int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, i
                                 o->scale);
                 started = true;
             }
-
 
             if (o->segment & SEG_DISP8) {
                 if (is_evex) {
