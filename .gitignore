@@ -108,3 +108,4 @@ TAGS
 /autoconf/compile
 /autoconf/config.*
 /autoconf/install-sh
+/autoconf/clean.sh

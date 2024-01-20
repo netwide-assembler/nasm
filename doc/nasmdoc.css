@@ -73,9 +73,20 @@ li.toc2 {
 	display: none;
     }
 }
-@media print {
+@media only print {
     a {
 	color: inherit;
+    }
+    ul.navbar div.title {
+	display: none !important;
+    }
+    div.index {
+	-webkit-column-gap: 2em;
+	-moz-column-gap: 2em;
+	column-gap: 2em;
+	-webkit-column-count: 2;
+	-moz-column-count: 2;
+	column-count: 2;
     }
 }
 @media only screen {
