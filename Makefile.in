@@ -43,6 +43,8 @@ PERL		= perl
 PERLFLAGS	= -I$(top_srcdir)/perllib -I$(srcdir)
 RUNPERL         = $(PERL) $(PERLFLAGS)
 
+EMPTY		= : >
+
 PYTHON3		= python3
 
 INSTALL		= @INSTALL@
@@ -157,6 +159,7 @@ LIBOBJ_NW = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 
 # Warnings depend on all source files, so handle them separately
 WARNOBJ   = asm/warnings.$(O)
+WARNFILES = asm/warnings_c.h include/warnings.h doc/warnings.src
 
 LIBOBJ    = $(LIBOBJ_NW) $(WARNOBJ)
 ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
@@ -185,6 +188,10 @@ nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
 
 ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB)
 	$(CC) $(ALL_LDFLAGS) -o ndisasm$(X) $^ $(LIBS)
+
+# These are specific to certain Makefile syntaxes...
+WARNTIMES = $(WARNFILES:=.time)
+WARNSRCS  = $(LIBOBJ_NW:.$(O)=.c)
 
 #-- Begin Generated File Rules --#
 
@@ -279,33 +286,31 @@ x86/regs.h: x86/regs.dat x86/regs.pl
 # reasonable, but doesn't update the time stamp if the files aren't
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm/warnings.time.
-WARNFILES = asm/warnings_c.h include/warnings.h doc/warnings.src
-
 warnings:
-	$(RM_F) $(WARNFILES) $(WARNFILES:=.time)
+	$(RM_F) $(WARNFILES) $(WARNTIMES)
 	$(MAKE) asm/warnings.time
 
 asm/warnings.time: $(ALLOBJ_NW:.$(O)=.c)
-	: > asm/warnings.time
-	$(MAKE) $(WARNFILES:=.time)
+	$(EMPTY) asm/warnings.time
+	$(MAKE) $(WARNTIMES)
 
 asm/warnings_c.h.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl c asm/warnings_c.h $(srcdir)
-	: > asm/warnings_c.h.time
+	$(EMPTY) asm/warnings_c.h.time
 
 asm/warnings_c.h: asm/warnings_c.h.time
 	@: Side effect
 
 include/warnings.h.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl h include/warnings.h $(srcdir)
-	: > include/warnings.h.time
+	$(EMPTY) include/warnings.h.time
 
 include/warnings.h: include/warnings.h.time
 	@: Side effect
 
 doc/warnings.src.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl doc doc/warnings.src $(srcdir)
-	: > doc/warnings.src.time
+	$(EMPTY) doc/warnings.src.time
 
 doc/warnings.src : doc/warnings.src.time
 	@: Side effect

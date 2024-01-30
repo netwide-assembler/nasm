@@ -22,17 +22,16 @@ MANIFEST_FLAGS  = /MANIFEST:EMBED /MANIFESTFILE:$(MANIFEST)
 
 !IF "$(DEBUG)" == "1"
 CFLAGS		= /Od /Zi
-LDFLAGS		= /DEBUG $(MANIFEST_FLAGS)
+LDFLAGS		= /DEBUG
 !ELSE
 CFLAGS		= /O2 /Zi
  # /OPT:REF and /OPT:ICF two undo /DEBUG harm
-LDFLAGS		= /DEBUG /OPT:REF /OPT:ICF $(MANIFEST_FLAGS)
+LDFLAGS		= /DEBUG /OPT:REF /OPT:ICF
 !ENDIF
 
 CC		= cl
 AR		= lib
-CFLAGS		= $(CFLAGS) /W2
-BUILD_CFLAGS	= $(CFLAGS)
+BUILD_CFLAGS	= $(CFLAGS) /W2
 INTERNAL_CFLAGS = /I$(srcdir) /I. \
 		  /I$(srcdir)/include /I./include \
 		  /I$(srcdir)/x86 /I./x86 \
@@ -40,7 +39,8 @@ INTERNAL_CFLAGS = /I$(srcdir) /I. \
 		  /I$(srcdir)/disasm /I./disasm \
 		  /I$(srcdir)/output /I./output
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
-LDFLAGS		= /link $(LINKFLAGS) /SUBSYSTEM:CONSOLE /RELEASE
+MANIFEST_FLAGS  = /MANIFEST:EMBED /MANIFESTINPUT:$(MANIFEST)
+ALL_LDFLAGS	= /link $(LDFLAGS) $(MANIFEST_FLAGS) /SUBSYSTEM:CONSOLE /RELEASE
 LIBS		=
 
 PERL		= perl
@@ -57,7 +57,7 @@ O               = obj
 A		= lib
 X               = .exe
 .SUFFIXES:
-.SUFFIXES: $(X) .$(A) .$(O) .c .i .s .1 .man
+.SUFFIXES: $(X) .$(A) .obj .c .i .s .1 .man
 
 .c.obj:
 	$(CC) /c $(ALL_CFLAGS) /Fo$@ $<
@@ -66,61 +66,62 @@ MANIFEST = win/manifest.xml
 
 #-- Begin File Lists --#
 # Edit in Makefile.in, not here!
-NASM    = asm\nasm.$(O)
-NDISASM = disasm\ndisasm.$(O)
+NASM    = asm\nasm.obj
+NDISASM = disasm\ndisasm.obj
 
 PROGOBJ = $(NASM) $(NDISASM)
 PROGS   = nasm$(X) ndisasm$(X)
 
-LIBOBJ_NW = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) \
-	stdlib\strnlen.$(O) stdlib\strrchrnul.$(O) \
+LIBOBJ_NW = stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj \
+	stdlib\strnlen.obj stdlib\strrchrnul.obj \
 	\
-	nasmlib\ver.$(O) \
-	nasmlib\alloc.$(O) nasmlib\asprintf.$(O) nasmlib\errfile.$(O) \
-	nasmlib\crc32.$(O) nasmlib\crc64.$(O) nasmlib\md5c.$(O) \
-	nasmlib\string.$(O) nasmlib\nctype.$(O) \
-	nasmlib\file.$(O) nasmlib\mmap.$(O) nasmlib\ilog2.$(O) \
-	nasmlib\realpath.$(O) nasmlib\path.$(O) \
-	nasmlib\filename.$(O) nasmlib\rlimit.$(O) \
-	nasmlib\readnum.$(O) nasmlib\numstr.$(O) \
-	nasmlib\zerobuf.$(O) nasmlib\bsi.$(O) \
-	nasmlib\rbtree.$(O) nasmlib\hashtbl.$(O) \
-	nasmlib\raa.$(O) nasmlib\saa.$(O) \
-	nasmlib\strlist.$(O) \
-	nasmlib\perfhash.$(O) nasmlib\badenum.$(O) \
+	nasmlib\ver.obj \
+	nasmlib\alloc.obj nasmlib\asprintf.obj nasmlib\errfile.obj \
+	nasmlib\crc32.obj nasmlib\crc64.obj nasmlib\md5c.obj \
+	nasmlib\string.obj nasmlib\nctype.obj \
+	nasmlib\file.obj nasmlib\mmap.obj nasmlib\ilog2.obj \
+	nasmlib\realpath.obj nasmlib\path.obj \
+	nasmlib\filename.obj nasmlib\rlimit.obj \
+	nasmlib\readnum.obj nasmlib\numstr.obj \
+	nasmlib\zerobuf.obj nasmlib\bsi.obj \
+	nasmlib\rbtree.obj nasmlib\hashtbl.obj \
+	nasmlib\raa.obj nasmlib\saa.obj \
+	nasmlib\strlist.obj \
+	nasmlib\perfhash.obj nasmlib\badenum.obj \
 	\
-	common\common.$(O) \
+	common\common.obj \
 	\
-	x86\insnsa.$(O) x86\insnsb.$(O) x86\insnsd.$(O) x86\insnsn.$(O) \
-	x86\regs.$(O) x86\regvals.$(O) x86\regflags.$(O) x86\regdis.$(O) \
-	x86\disp8.$(O) x86\iflag.$(O) \
+	x86\insnsa.obj x86\insnsb.obj x86\insnsd.obj x86\insnsn.obj \
+	x86\regs.obj x86\regvals.obj x86\regflags.obj x86\regdis.obj \
+	x86\disp8.obj x86\iflag.obj \
 	\
-	asm\error.$(O) \
-	asm\floats.$(O) \
-	asm\directiv.$(O) asm\directbl.$(O) \
-	asm\pragma.$(O) \
-	asm\assemble.$(O) asm\labels.$(O) asm\parser.$(O) \
-	asm\preproc.$(O) asm\quote.$(O) asm\pptok.$(O) \
-	asm\listing.$(O) asm\eval.$(O) asm\exprlib.$(O) asm\exprdump.$(O) \
-	asm\stdscan.$(O) \
-	asm\strfunc.$(O) asm\tokhash.$(O) \
-	asm\segalloc.$(O) \
-	asm\rdstrnum.$(O) \
-	asm\srcfile.$(O) \
-	macros\macros.$(O) \
+	asm\error.obj \
+	asm\floats.obj \
+	asm\directiv.obj asm\directbl.obj \
+	asm\pragma.obj \
+	asm\assemble.obj asm\labels.obj asm\parser.obj \
+	asm\preproc.obj asm\quote.obj asm\pptok.obj \
+	asm\listing.obj asm\eval.obj asm\exprlib.obj asm\exprdump.obj \
+	asm\stdscan.obj \
+	asm\strfunc.obj asm\tokhash.obj \
+	asm\segalloc.obj \
+	asm\rdstrnum.obj \
+	asm\srcfile.obj \
+	macros\macros.obj \
 	\
-	output\outform.$(O) output\outlib.$(O) output\legacy.$(O) \
-	output\nulldbg.$(O) output\nullout.$(O) \
-	output\outbin.$(O) output\outaout.$(O) output\outcoff.$(O) \
-	output\outelf.$(O) \
-	output\outobj.$(O) output\outas86.$(O) \
-	output\outdbg.$(O) output\outieee.$(O) output\outmacho.$(O) \
-	output\codeview.$(O) \
+	output\outform.obj output\outlib.obj output\legacy.obj \
+	output\nulldbg.obj output\nullout.obj \
+	output\outbin.obj output\outaout.obj output\outcoff.obj \
+	output\outelf.obj \
+	output\outobj.obj output\outas86.obj \
+	output\outdbg.obj output\outieee.obj output\outmacho.obj \
+	output\codeview.obj \
 	\
-	disasm\disasm.$(O) disasm\sync.$(O)
+	disasm\disasm.obj disasm\sync.obj
 
 # Warnings depend on all source files, so handle them separately
-WARNOBJ   = asm\warnings.$(O)
+WARNOBJ   = asm\warnings.obj
+WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
 
 LIBOBJ    = $(LIBOBJ_NW) $(WARNOBJ)
 ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
@@ -136,13 +137,17 @@ NASMLIB = libnasm.$(A)
 all: nasm$(X) ndisasm$(X)
 
 nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
-	$(CC) /Fe$@ $(NASM) $(LDFLAGS) $(NASMLIB) $(LIBS)
+	$(CC) /Fe$@ $(NASM) $(ALL_LDFLAGS) $(NASMLIB) $(LIBS)
 
 ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB)
-	$(CC) /Fe$@ $(NDISASM) $(LDFLAGS) $(NASMLIB) $(LIBS)
+	$(CC) /Fe$@ $(NDISASM) $(ALL_LDFLAGS) $(NASMLIB) $(LIBS)
 
 $(NASMLIB): $(LIBOBJ)
 	$(AR) $(ARFLAGS) /OUT:$@ $**
+
+# These are specific to certain Makefile syntaxes...
+WARNTIMES = $(patsubst %,%.time,$(WARNFILES))
+WARNSRCS  = $(patsubst %.obj,%.c,$(LIBOBJ_NW))
 
 #-- Begin Generated File Rules --#
 # Edit in Makefile.in, not here!
@@ -238,33 +243,31 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 # reasonable, but doesn't update the time stamp if the files aren't
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm\warnings.time.
-WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
-
 warnings:
-	$(RM_F) $(WARNFILES) $(WARNFILES:=.time)
+	$(RM_F) $(WARNFILES) $(WARNTIMES)
 	$(MAKE) asm\warnings.time
 
 asm\warnings.time: $(ALLOBJ_NW:.$(O)=.c)
-	: > asm\warnings.time
-	$(MAKE) $(WARNFILES:=.time)
+	$(EMPTY) asm\warnings.time
+	$(MAKE) $(WARNTIMES)
 
 asm\warnings_c.h.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings_c.h $(srcdir)
-	: > asm\warnings_c.h.time
+	$(EMPTY) asm\warnings_c.h.time
 
 asm\warnings_c.h: asm\warnings_c.h.time
 	@: Side effect
 
 include\warnings.h.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h $(srcdir)
-	: > include\warnings.h.time
+	$(EMPTY) include\warnings.h.time
 
 include\warnings.h: include\warnings.h.time
 	@: Side effect
 
 doc\warnings.src.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src $(srcdir)
-	: > doc\warnings.src.time
+	$(EMPTY) doc\warnings.src.time
 
 doc\warnings.src : doc\warnings.src.time
 	@: Side effect
@@ -326,7 +329,7 @@ nsis: nsis\nasm.nsi nsis\arch.nsh nsis\version.nsh
 #-- End NSIS Rules --#
 
 clean:
-	-del /f /s *.$(O)
+	-del /f /s *.obj
 	-del /f /s *.pdb
 	-del /f /s *.s
 	-del /f /s *.i
@@ -348,7 +351,7 @@ distclean: clean
 	-del /f output\*.bak
 	-del /f test\*.lst
 	-del /f test\*.bin
-	-del /f test\*.$(O)
+	-del /f test\*.obj
 	-del /f test\*.bin
 	-del /f/s autom4te*.cache
 
@@ -403,7 +406,7 @@ MKDEP=0
 !ENDIF
 
 #-- Magic hints to mkdep.pl --#
-# @object-ending: ".$(O)"
+# @object-ending: ".obj"
 # @path-separator: "\"
 # @exclude: "config/config.h"
 # @external: "msvc.dep"
