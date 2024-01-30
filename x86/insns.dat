@@ -3591,7 +3591,7 @@ VSHA512MSG1     ymmreg,xmmreg                       [rm: vex.256.f2.0f38.w0 cc /
 VSHA512MSG2     ymmreg,ymmreg                       [rm: vex.256.f2.0f38.w0 cd /r] SHA512,AVX,FUTURE
 VSHA512RNDS2    ymmreg,ymmreg,xmmreg                [rvm: vex.nds.256.f2.0f38.w0 cb /r] SHA512,AVX,FUTURE
 
-# SM3
+;# SM3
 VSM3MSG1        xmmreg,xmmreg,xmmreg                [rvm: vex.nds.128.p0.0f38.w0 da /r] SM3,AVX,FUTURE
 VSM3MSG2        xmmreg,xmmreg,xmmreg                [rvm: vex.nds.128.66.0f38.w0 da /r] SM3,AVX,FUTURE
 VSM3RNDS2       xmmreg,xmmreg,xmmreg,imm8           [rvmi: vex.nds.128.66.0f3a.w0 de /r ib] SM3,AVX,FUTURE
