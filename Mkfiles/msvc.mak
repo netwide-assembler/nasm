@@ -247,7 +247,7 @@ warnings:
 	$(RM_F) $(WARNFILES) $(WARNTIMES)
 	$(MAKE) asm\warnings.time
 
-asm\warnings.time: $(ALLOBJ_NW:.$(O)=.c)
+asm\warnings.time: $(WARNSRCS)
 	$(EMPTY) asm\warnings.time
 	$(MAKE) $(WARNTIMES)
 
