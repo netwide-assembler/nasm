@@ -17,9 +17,6 @@ dnl cross-compiling when in fact we are; running Wine here is at
 dnl the best very slow and doesn't buy us a single thing at all.
 PA_CROSS_COMPILE
 
-dnl Get the canonical target system name
-AC_CANONICAL_HOST
-
 dnl Enable any available C extensions
 AC_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
@@ -150,6 +147,13 @@ AC_CHECK_INCLUDES_DEFAULT
 
 dnl Check for variadic macro support
 PA_VARIADIC_MACROS
+
+dnl Handle Windows embedded manifests
+AS_CASE([$host],
+	[*-win* | *-mingw*],
+	[AC_CHECK_TOOL(WINDRES, windres, false)
+	 AS_IF([test x"$WINDRES" != xfalse],
+	 [AC_SUBST(MANIFEST, ['win/manifest.$(O)'])])])
 
 PA_ADD_HEADERS(string.h)
 PA_ADD_HEADERS(stdarg.h)

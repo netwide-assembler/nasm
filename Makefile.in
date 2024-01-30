@@ -55,6 +55,7 @@ ASCIIDOC	= @ASCIIDOC@
 XMLTO		= @XMLTO@
 MAKENSIS	= @MAKENSIS@
 XZ              = @XZ@
+WINDRES         = @WINDRES@
 
 # Optional targets
 MANPAGES        = @MANPAGES@
@@ -97,6 +98,8 @@ endif
 
 .xml.1:
 	$(XMLTO) man --skip-validation $< 2>/dev/null
+
+MANIFEST = @MANIFEST@
 
 #-- Begin File Lists --#
 NASM    = asm/nasm.$(O)
@@ -159,7 +162,7 @@ LIBOBJ    = $(LIBOBJ_NW) $(WARNOBJ)
 ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 
-SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
+SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros win
 XSUBDIRS = test doc nsis
 DEPDIRS  = . include config x86 $(SUBDIRS)
 #-- End File Lists --#
@@ -177,11 +180,11 @@ $(NASMLIB): $(LIBOBJ)
 	$(AR) cq $(NASMLIB) $(LIBOBJ)
 	$(RANLIB) $(NASMLIB)
 
-nasm$(X): $(NASM) $(NASMLIB)
-	$(CC) $(ALL_LDFLAGS) -o nasm$(X) $(NASM) $(NASMLIB) $(LIBS)
+nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
+	$(CC) $(ALL_LDFLAGS) -o nasm$(X) $^ $(LIBS)
 
-ndisasm$(X): $(NDISASM) $(NASMLIB)
-	$(CC) $(ALL_LDFLAGS) -o ndisasm$(X) $(NDISASM) $(NASMLIB) $(LIBS)
+ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB)
+	$(CC) $(ALL_LDFLAGS) -o ndisasm$(X) $^ $(LIBS)
 
 #-- Begin Generated File Rules --#
 
@@ -361,6 +364,11 @@ nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
 	$(MAKENSIS) -Dsrcdir="$(srcdir)" -Dobjdir="$(objdir)" - < nsis/nasm.nsi
 
 #-- End NSIS Rules --#
+
+# Windows embedded manifest
+MANIFEST_RC = win/manifest.rc
+win/manifest.$(O): win/manifest.xml $(MANIFEST_RC)
+	$(WINDRES) -I. -Iwin -DMANIFEST_FILE='\"$<\"' -i $(MANIFEST_RC) -o $@
 
 # Generated manpages, also pregenerated for distribution
 manpages: nasm.1 ndisasm.1

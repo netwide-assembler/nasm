@@ -18,12 +18,15 @@ exec_prefix	= $(prefix)
 bindir		= $(prefix)/bin
 mandir		= $(prefix)/man
 
+MANIFEST_FLAGS  = /MANIFEST:EMBED /MANIFESTFILE:$(MANIFEST)
+
 !IF "$(DEBUG)" == "1"
 CFLAGS		= /Od /Zi
-LDFLAGS		= /DEBUG
+LDFLAGS		= /DEBUG $(MANIFEST_FLAGS)
 !ELSE
 CFLAGS		= /O2 /Zi
-LDFLAGS		= /DEBUG /OPT:REF /OPT:ICF # (latter two undoes /DEBUG harm)
+ # /OPT:REF and /OPT:ICF two undo /DEBUG harm
+LDFLAGS		= /DEBUG /OPT:REF /OPT:ICF $(MANIFEST_FLAGS)
 !ENDIF
 
 CC		= cl
@@ -59,6 +62,8 @@ X               = .exe
 .c.obj:
 	$(CC) /c $(ALL_CFLAGS) /Fo$@ $<
 
+MANIFEST = win/manifest.xml
+
 #-- Begin File Lists --#
 # Edit in Makefile.in, not here!
 NASM    = asm\nasm.$(O)
@@ -77,7 +82,8 @@ LIBOBJ_NW = stdlib\snprintf.$(O) stdlib\vsnprintf.$(O) stdlib\strlcpy.$(O) \
 	nasmlib\file.$(O) nasmlib\mmap.$(O) nasmlib\ilog2.$(O) \
 	nasmlib\realpath.$(O) nasmlib\path.$(O) \
 	nasmlib\filename.$(O) nasmlib\rlimit.$(O) \
-	nasmlib\zerobuf.$(O) nasmlib\readnum.$(O) nasmlib\bsi.$(O) \
+	nasmlib\readnum.$(O) nasmlib\numstr.$(O) \
+	nasmlib\zerobuf.$(O) nasmlib\bsi.$(O) \
 	nasmlib\rbtree.$(O) nasmlib\hashtbl.$(O) \
 	nasmlib\raa.$(O) nasmlib\saa.$(O) \
 	nasmlib\strlist.$(O) \
@@ -120,7 +126,7 @@ LIBOBJ    = $(LIBOBJ_NW) $(WARNOBJ)
 ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 
-SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
+SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros win
 XSUBDIRS = test doc nsis
 DEPDIRS  = . include config x86 $(SUBDIRS)
 #-- End File Lists --#
@@ -129,10 +135,10 @@ NASMLIB = libnasm.$(A)
 
 all: nasm$(X) ndisasm$(X)
 
-nasm$(X): $(NASM) $(NASMLIB)
+nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
 	$(CC) /Fe$@ $(NASM) $(LDFLAGS) $(NASMLIB) $(LIBS)
 
-ndisasm$(X): $(NDISASM) $(NASMLIB)
+ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB)
 	$(CC) /Fe$@ $(NDISASM) $(LDFLAGS) $(NASMLIB) $(LIBS)
 
 $(NASMLIB): $(LIBOBJ)
