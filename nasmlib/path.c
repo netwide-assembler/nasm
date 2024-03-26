@@ -51,20 +51,6 @@
 # define catsep '\\'
 # define leaveonclean 2         /* Leave \\ at the start alone */
 # define curdir "."
-#elif defined(unix) || defined(__unix) || defined(__unix__) ||   \
-    defined(__UNIX__) || defined(__Unix__) || \
-    defined(__MACH__) || defined(__BEOS__)
-/* Unix and Unix-like operating systems and others using
- * the equivalent syntax (slashes as only separators, no concept of volume)
- *
- * This must come after the __MSDOS__ section, since it seems that at
- * least DJGPP defines __unix__ despite not being a Unix environment at all.
- */
-# define separators "/"
-# define cleandirend "/"
-# define catsep '/'
-# define leaveonclean 1
-# define curdir "."
 #elif defined(Macintosh) || defined(macintosh)
 /* MacOS classic */
 # define separators ":"
@@ -82,8 +68,14 @@
 # define separators ":]"
 # define curdir "[]"
 #else
-/* No idea what to do here, do nothing.  Feel free to add new ones. */
-# define curdir ""
+/* If none of the previous definitions match, assume Unix-like path syntax
+ * (slashes as only separators, no concept of volume)
+ */
+# define separators "/"
+# define cleandirend "/"
+# define catsep '/'
+# define leaveonclean 1
+# define curdir "."
 #endif
 
 /*
