@@ -18,10 +18,11 @@ sub quote_for_c(@) {
     return $s;
 }
 
+# Remove a subset of nasmdoc markup
 sub remove_markup(@) {
     my $s = join('', @_);
 
-    $s =~ s/\\[\w+](\{((?:(?>[^{}]+)|(?1))*)\})?/$2/g;
+    $s =~ s/\\[\w+](?:\{((?:[^\}]|\\\})*)\})/$1/g;
     $s =~ s/\\(\W)/$1/g;
     return $s;
 }

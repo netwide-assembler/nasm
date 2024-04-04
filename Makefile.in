@@ -79,6 +79,12 @@ ifeq ($(TRACE),1)
 	CFLAGS += -DNASM_TRACE
 endif
 
+# Don't delete intermediate files
+.SECONDARY:
+
+# Delete files on error
+.DELETE_ON_ERROR:
+
 .SUFFIXES:
 .SUFFIXES: $(X) .$(O) .$(A) .xml .1 .c .i .s .txt .time
 
@@ -191,7 +197,7 @@ ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB)
 
 # These are specific to certain Makefile syntaxes...
 WARNTIMES = $(WARNFILES:=.time)
-WARNSRCS  = $(LIBOBJ_NW:.$(O)=.c)
+WARNSRCS  = $(LIBOBJ_NW:.$(O)=.c) asm/nasm.c
 
 #-- Begin Generated File Rules --#
 
@@ -286,11 +292,12 @@ x86/regs.h: x86/regs.dat x86/regs.pl
 # reasonable, but doesn't update the time stamp if the files aren't
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm/warnings.time.
+.PHONY: warnings
 warnings:
-	$(RM_F) $(WARNFILES) $(WARNTIMES)
+	$(RM_F) $(WARNFILES) $(WARNTIMES) asm/warnings.time
 	$(MAKE) asm/warnings.time
 
-asm/warnings.time: $(WARNSRCS)
+asm/warnings.time: $(WARNSRCS) asm/warnings.pl
 	$(EMPTY) asm/warnings.time
 	$(MAKE) $(WARNTIMES)
 
