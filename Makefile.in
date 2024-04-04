@@ -402,6 +402,7 @@ distclean: clean
 	done
 	$(RM_F) test/*.$(O)
 	$(RM_F) *.dep
+	$(RM_F) Makefile doc/Makefile config/config.h config.log config.status
 
 cleaner: clean
 	$(RM_F) $(PERLREQ) *.1 nasm.spec
