@@ -11,10 +11,18 @@ my %prefixes = ();
 my $err = 0;
 my $nwarn = 0;
 
-sub quote_for_c($) {
+sub quote_for_c(@) {
     my $s = join('', @_);
 
     $s =~ s/([\"\'\\])/\\$1/g;
+    return $s;
+}
+
+sub remove_markup(@) {
+    my $s = join('', @_);
+
+    $s =~ s/\\[\w+](\{((?:(?>[^{}]+)|(?1))*)\})?/$2/g;
+    $s =~ s/\\(\W)/$1/g;
     return $s;
 }
 
@@ -162,7 +170,7 @@ if ($what eq 'c') {
 	$#warnings + 2;
     print $out "\tNULL";
     foreach my $warn (@warnings) {
-	my $help = quote_for_c($warn->{help});
+	my $help = quote_for_c(remove_markup($warn->{help}));
 	print $out ",\n\t\"", $help, "\"";
     }
     print $out "\n};\n\n";
