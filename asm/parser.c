@@ -671,7 +671,7 @@ restart_parse:
             i = stdscan(NULL, &tokval);
         } else if (i == 0) {
             /*!
-             *!label-orphan [on] labels alone on lines without trailing `:'
+             *!label-orphan [on] labels alone on lines without trailing \c{:}
              *!=orphan-labels
              *!  warns about source lines which contain no instruction but define
              *!  a label without a trailing colon. This is most likely indicative
@@ -831,7 +831,7 @@ restart_parse:
             if (oper_num == 0)
                 /*!
                  *!db-empty [on] no operand for data declaration
-                 *!  warns about a \c{DB}, \c{DW}, etc declaration
+                 *!  warns about a \c{D}\e{x} declaration
                  *!  with no operands, producing no output.
                  *!  This is permitted, but often indicative of an error.
                  *!  See \k{db}.

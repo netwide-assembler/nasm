@@ -1264,14 +1264,15 @@ uninitialized}\i{uninitialized} counterparts \i\c{RESB}, \i\c{RESW},
 \i\c\{RESZ}; the \i\c{INCBIN} command, the \i\c{EQU} command, and the
 \i\c{TIMES} prefix.
 
-In this documentation, the notation "\c{Dx}" and "\c{RESx}" is used to
-indicate all the \c{DB} and \c{RESB} type directives, respectively.
+In this documentation, the notation "\c{D}\e{x}" and "\c{RES}\e{x}" is
+used to indicate all the \c{DB} and \c{RESB} type directives,
+respectively.
 
 
-\S{db} \c{Dx}: Declaring Initialized Data
+\S{db} \c{D}\e{x}: Declaring Initialized Data
 
 \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, \i\c{DO}, \i\c{DY}
-and \i\c{DZ} (collectively "\c{Dx}" in this documentation) are used,
+and \i\c{DZ} (collectively "\c{D}\e{x}" in this documentation) are used,
 much as in MASM, to declare initialized data in the output file. They
 can be invoked in a wide range of ways:
 \I{floating-point}\I{character constant}\I{string constant}
@@ -1337,7 +1338,7 @@ valid:
 \c        dd 16 dup (0xaaaa, ?, 0xbbbbbb)
 \c        dd 64 dup (?)
 
-\I{baddb} The use of \c{$} (current address) in a \c{Dx} statement is
+\I{baddb} The use of \c{$} (current address) in a \c{D}\e{x} statement is
 undefined in the current version of NASM, \e{except in the following
 cases}:
 

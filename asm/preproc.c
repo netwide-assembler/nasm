@@ -1379,12 +1379,12 @@ static Token *tokenize(const char *line)
                      */
                     if (!*p) {
                         /*!
-                         *!pp-open-brackets [on] unterminated %[...]
+                         *!pp-open-brackets [on] unterminated \c{%[...]}
                          *!  warns that a preprocessor \c{%[...]} construct
                          *!  lacks the terminating \c{]} character.
                          */
                         /*!
-                         *!pp-open-braces [on] unterminated %{...}
+                         *!pp-open-braces [on] unterminated \c{%\{...\}}
                          *!  warns that a preprocessor parameter
                          *!  enclosed in braces \c{%\{...\}} lacks the
                          *!  terminating \c{\}} character.
@@ -1449,7 +1449,7 @@ static Token *tokenize(const char *line)
                 type = '%';     /* % operator */
                 if (unlikely(*line == '{')) {
                     /*!
-                     *!pp-empty-braces [on] empty %{} construct
+                     *!pp-empty-braces [on] empty \c{%\{\}} construct
                      *!  warns that an empty \c{%\{\}} was encountered.
                      *!  This expands to a single \c{%} character, which
                      *!  is normally the \c{%} arithmetic operator.
@@ -4432,7 +4432,7 @@ static int do_directive(Token *tline, Token **output)
         goto issue_error;
     case PP_WARNING:
         /*!
-         *!user [on] %warning directives
+         *!user [on] \c{%warning} directives
          *!  controls output of \c{%warning} directives (see \k{pperror}).
          */
         severity = ERR_WARNING|WARN_USER|ERR_PASS2;
@@ -4491,10 +4491,10 @@ issue_error:
         case COND_ELSE_TRUE:
         case COND_ELSE_FALSE:
             /*!
-             *!pp-else-elif [on] %elif after %else
-             *!  warns that an \c{%%elif}-type directive was encountered
-             *!  after \c[%%else} has already been encounted. As a result, the
-             *!  content of the \c{%%elif} will never be expanded.
+             *!pp-else-elif [on] \c{%elif} after \c{%else}
+             *!  warns that an \c{%elif}-type directive was encountered
+             *!  after \c{%else} has already been encounted. As a result, the
+             *!  content of the \c{%elif} will never be expanded.
              */
             nasm_warn(WARN_PP_ELSE_ELIF|ERR_PP_PRECOND,
                        "`%s' after `%%else', ignoring content", dname);
@@ -4541,7 +4541,7 @@ issue_error:
         case COND_ELSE_TRUE:
         case COND_ELSE_FALSE:
             /*!
-             *!pp-else-else [on] %else after %else
+             *!pp-else-else [on] \c{%else} after \c{%else}
              *!  warns that a second \c{%else} clause was found for
              *!  the same \c{%if} statement. The content of this \c{%else}
              *!  clause will never be expanded.
@@ -4785,7 +4785,7 @@ issue_error:
                 count = 0;
             } else if (count < 0) {
                 /*!
-                 *!pp-rep-negative [on] regative %rep count
+                 *!pp-rep-negative [on] regative \c{%rep} count
                  *!=negative-rep
                  *!  warns about a negative count given to the \c{%rep}
                  *!  preprocessor directive.
@@ -7303,8 +7303,8 @@ stdmac_cond_sel(const SMacro *s, Token **params, int nparams)
         }
     } else {
             /*!
-             *!pp-sel-range [on] %sel() argument out of range
-             *!  warns that the %sel() preprocessor function was passed
+             *!pp-sel-range [on] \c{%sel()} argument out of range
+             *!  warns that the \c{%sel()} preprocessor function was passed
              *!  a value less than 1 or larger than the number of available
              *!  arguments.
              */

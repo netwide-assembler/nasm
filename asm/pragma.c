@@ -193,7 +193,7 @@ found_it:
         switch (pragma.opcode) {
         case D_none:
             /*!
-             *!pragma-bad [off] malformed %pragma
+             *!pragma-bad [off] malformed \c{%pragma}
              *!=bad-pragma
              *!  warns about a malformed or otherwise unparsable
              *!  \c{%pragma} directive.
@@ -203,7 +203,7 @@ found_it:
             break;
         default:
             /*!
-             *!pragma-unknown [off] unknown %pragma facility or directive
+             *!pragma-unknown [off] unknown \c{%pragma} facility or directive
              *!=unknown-pragma
              *!  warns about an unknown \c{%pragma} directive.
              *!  This is not yet implemented for most cases.
@@ -237,7 +237,7 @@ found_it:
 
 /* This warning message is intended for future use */
 /*!
- *!pragma-na [off] %pragma not applicable to this compilation
+ *!pragma-na [off] \c{%pragma} not applicable to this compilation
  *!=not-my-pragma
  *!  warns about a \c{%pragma} directive which is not applicable to
  *!  this particular assembly session.  This is not yet implemented.
@@ -245,7 +245,7 @@ found_it:
 
 /* Naked %pragma */
 /*!
- *!pragma-empty [off] empty %pragma directive
+ *!pragma-empty [off] empty \c{%pragma} directive
  *!  warns about a \c{%pragma} directive containing nothing.
  *!  This is treated identically to \c{%pragma ignore} except
  *!  for this optional warning.

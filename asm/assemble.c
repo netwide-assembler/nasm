@@ -342,8 +342,8 @@ static void debug_macro_out(const struct out_data *data)
  * This warning is currently issued by backends, but in the future
  * this code should be centralized.
  *
- *!zeroing [on] RESx in initialized section becomes zero
- *!  a \c{RESx} directive was used in a section which contains
+ *!zeroing [on] \c{RES}\e{x} in initialized section becomes zero
+ *!  a \c{RES}\e{x} directive was used in a section which contains
  *!  initialized data, and the output format does not support
  *!  this. Instead, this will be replaced with explicit zero
  *!  content, which may produce a large output file.
@@ -698,7 +698,7 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
         /* jmp short (opcode eb) cannot be used with bnd prefix. */
         ins->prefixes[PPS_REP] = P_none;
         /*!
-         *!prefix-bnd [on] invalid BND prefix
+         *!prefix-bnd [on] invalid \c{BND} prefix
          *!=bnd
          *!  warns about ineffective use of the \c{BND} prefix when the
          *!  \c{JMP} instruction is converted to the \c{SHORT} form.
@@ -1847,14 +1847,14 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         if ((!itemp_has(temp,IF_LOCK)  || !is_class(MEMORY, ins->oprs[0].type)) &&
             (!itemp_has(temp,IF_LOCK1) || !is_class(MEMORY, ins->oprs[1].type))) {
             /*!
-             *!prefix-lock-error [on] LOCK prefix on unlockable instruction
+             *!prefix-lock-error [on] \c{LOCK} prefix on unlockable instruction
              *!=lock
              *!  warns about \c{LOCK} prefixes on unlockable instructions.
              */
             nasm_warn(WARN_PREFIX_LOCK_ERROR|ERR_PASS2 , "instruction is not lockable");
         } else if (temp->opcode == I_XCHG) {
             /*!
-             *!prefix-lock-xchg [on] superfluous LOCK prefix on XCHG instruction
+             *!prefix-lock-xchg [on] superfluous \c{LOCK} prefix on \c{XCHG} instruction
              *!  warns about a \c{LOCK} prefix added to an \c{XCHG} instruction.
              *!  The \c{XCHG} instruction is \e{always} locking, and so this
              *!  prefix is not necessary; however, NASM will generate it if
