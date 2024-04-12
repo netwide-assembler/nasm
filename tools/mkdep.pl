@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2024 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -127,6 +127,11 @@ sub alldeps($$) {
 sub convert_file($$) {
     my($file,$sep) = @_;
 
+    if ($file eq '' || $file eq File::Spec->curdir() ||
+	$file eq File::Spec->rootdir()) {
+	return undef;
+    }
+
     my @fspec = (basename($file));
     while ( ($file = dirname($file)) ne File::Spec->curdir() &&
 	    $file ne File::Spec->rootdir() ) {
@@ -208,7 +213,10 @@ sub insert_deps($) {
     close($in);
 
     $is_external = $is_external && defined($external);
-    undef $external if ( !$is_external );
+    if ( !$is_external ) {
+	undef $external;
+	$selfrule = 0;
+    }
 
     my $out;
     my $outpath;
@@ -228,7 +236,6 @@ sub insert_deps($) {
 	}
 	unlink($external);
     } else {
-
 	my $e;
 
 	foreach my $dfile ($external, sort(keys(%deps)) ) {
