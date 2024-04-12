@@ -7,6 +7,18 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.16.02} Version 2.16.03
+
+\e{This is a source build machinery and documentation update
+only. There are no functionality changes.}
+
+\b Fix building from \c{git} in a separate directory from the source.
+
+\b Remove some irrelevant files from the source distribution.
+
+\b Make the documentation stronger that \c{-O0} or \c{-O1} are
+probably not what the user wants. See \k{opt-O}.
+
 \S{cl-2.16.02} Version 2.16.02
 
 \b Fix building from the source distribution in a separate directory
@@ -97,7 +109,8 @@ kinds of relocations are possible or allowed.
 
 \S{cl-2.16.01} Version 2.16.01
 
-\e{This is a documentation update release only.}
+\e{This is a documentation update release only. There are no
+functionality changes.}
 
 \b Fix the creation of the table of contents in the HTML version of
 the documentation.
