@@ -477,8 +477,8 @@ spec: nasm.spec
 ALLPERLSRC := $(shell find $(srcdir) -type f -name '*.p[lh]')
 
 perlbreq.si: $(ALLPERLSRC)
-	sed -n -r -e 's/^[[:space:]]*use[[:space:]]+([^[:space:];]+).*$$/BuildRequires: perl(\1)/p' $(ALLPERLSRC) | \
-	sed -r -e '/perl\((strict|warnings|Win32.*)\)/d' | \
+	sed -n -r -e 's/^[[:space:]]*use[[:space:]]+([[:upper:]][^[:space:];]*).*$$/BuildRequires: perl(\1)/p' $(ALLPERLSRC) | \
+	sed -r -e '/perl\((Win32.*)\)/d' | \
 	sort | uniq > perlbreq.si
 
 nasm.spec: nasm.spec.in nasm.spec.sed version.sed perlbreq.si
