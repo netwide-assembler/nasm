@@ -537,8 +537,9 @@ EXTERNAL_DEPENDENCIES = 1
 # the dependency information will remain external, so it doesn't
 # pollute the git logs.
 #
-Makefile.dep: $(PERLREQ) $(tools)/mkdep.pl config.status
-	$(RUNPERL) $(tools)/mkdep.pl -M Makefile.in -- $(DEPDIRS)
+Makefile.dep: $(tools)/mkdep.pl config.status $(PERLREQ)
+	$(RUNPERL) $(tools)/mkdep.pl -s '$(top_srcdir)' \
+		-M $(srcdir)/Makefile.in -- $(DEPDIRS)
 
 dep: Makefile.dep
 

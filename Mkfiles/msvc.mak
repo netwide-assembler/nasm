@@ -157,7 +157,7 @@ WARNSRCS  = $(patsubst %.obj,%.c,$(LIBOBJ_NW))
 # have Perl just to recompile NASM from the distribution.
 
 # Perl-generated source files
-PERLREQ = config\unconfig.h \
+PERLREQ_CLEANABLE = \
 	  x86\insnsb.c x86\insnsa.c x86\insnsd.c x86\insnsi.h x86\insnsn.c \
 	  x86\regs.c x86\regs.h x86\regflags.c x86\regdis.c x86\regdis.h \
 	  x86\regvals.c asm\tokhash.c asm\tokens.h asm\pptok.h asm\pptok.c \
@@ -168,10 +168,14 @@ PERLREQ = config\unconfig.h \
 	  misc\nasmtok.el \
 	  version.h version.mac version.mak nsis\version.nsh
 
+# Special hack to keep config\unconfig.h from getting deleted
+# by "make spotless"...
+PERLREQ = config\unconfig.h $(PERLREQ_CLEANABLE)
+
 INSDEP = x86\insns.dat x86\insns.pl x86\insns-iflags.ph x86\iflags.ph
 
-config\unconfig.h: config\config.h.in
-	$(RUNPERL) $(tools)\unconfig.pl \
+config\unconfig.h: config\config.h.in autoconf\unconfig.pl
+	$(RUNPERL) '$(srcdir)'\autoconf\unconfig.pl \
 		'$(srcdir)' config\config.h.in config\unconfig.h
 
 x86\iflag.c: $(INSDEP)
@@ -243,11 +247,12 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 # reasonable, but doesn't update the time stamp if the files aren't
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm\warnings.time.
-warnings:
-	$(RM_F) $(WARNFILES) $(WARNTIMES)
+.PHONY: warnings
+warnings: dirs
+	$(RM_F) $(WARNFILES) $(WARNTIMES) asm\warnings.time
 	$(MAKE) asm\warnings.time
 
-asm\warnings.time: $(WARNSRCS)
+asm\warnings.time: $(WARNSRCS) asm\warnings.pl
 	$(EMPTY) asm\warnings.time
 	$(MAKE) $(WARNTIMES)
 
