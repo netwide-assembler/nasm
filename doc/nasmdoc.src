@@ -823,7 +823,10 @@ e.g. \c{-Oxv}.
         actually executed.
 
 The \c{-Ox} mode is recommended for most uses, and is the default
-since NASM 2.09.
+since NASM 2.09. \e{Any other mode will generate worse quality
+output.} Use \c{-O0} or \c{-O1} only if you need the finer
+programmer-level control of output and \c{strict} is not suitable for
+your use case.
 
 Note that this is a capital \c{O}, and is different from a small \c{o}, which
 is used to specify the output file name. See \k{opt-o}.
