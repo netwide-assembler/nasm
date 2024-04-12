@@ -65,6 +65,7 @@ rm -rf autoconf/*m4.old
     echo 'rm -f config.log config.status'
     echo 'rm -rf autom4te.cache'
 ) > autoconf/clean.sh
+chmod +x autoconf/clean.sh
 sh autoconf/clean.sh
 
 # Try to regenerate unconfig.h if Perl is available and unconfig.pl
