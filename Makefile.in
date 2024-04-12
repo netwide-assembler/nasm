@@ -462,15 +462,14 @@ everything: always_everything
 install_everything: everything install install_doc
 
 dist:
-	$(MAKE) distclean
 	$(MAKE) alldeps
 	$(MAKE) perlreq manpages spec $(MANPAGES)
+	$(MAKE) distclean
 	./autogen.sh
 
 tar: dist
-	tar -cv --exclude CVS -C .. -f - | \
-		$(XZ) -9e > \
-		../nasm-`cat version`-`date +%Y%m%d`.tar.xz `basename \`pwd\``
+	tar -cv --exclude CVS --exclude .git -C .. -f - `basename \`pwd\`` | \
+		$(XZ) -9e > ../nasm-`cat version`-`date +%Y%m%d`.tar.xz
 
 spec: nasm.spec
 
