@@ -115,9 +115,10 @@ LIBOBJ    = $(LIBOBJ_NW) $(WARNOBJ)
 ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 
-SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros win
-XSUBDIRS = test doc nsis
-DEPDIRS  = . include config x86 $(SUBDIRS)
+SUBDIRS  = stdlib nasmlib include config output asm disasm x86 &
+	   common macros
+XSUBDIRS = test doc nsis win
+DEPDIRS  = . $(SUBDIRS)
 #-- End File Lists --#
 
 what:   .SYMBOLIC
