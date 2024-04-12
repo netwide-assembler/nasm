@@ -68,6 +68,8 @@ rm -rf autoconf/*m4.old
 chmod +x autoconf/clean.sh
 sh autoconf/clean.sh
 
+rm -f configure~ || true
+
 # Try to regenerate unconfig.h if Perl is available and unconfig.pl
 # is present in the autoconf directory.
 if [ -n "$(which perl)" -a -f autoconf/unconfig.pl ]; then
