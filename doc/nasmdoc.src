@@ -1,7 +1,7 @@
 \# --------------------------------------------------------------------------
 \#
-\#   Copyright 1996-2023 The NASM Authors - All Rights Reserved
-\M{year}{1996-2023}
+\#   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+\M{year}{1996-2024}
 \#   See the file AUTHORS included with the NASM distribution for
 \#   the specific copyright holders.
 \#
@@ -40,7 +40,9 @@
 \M{author}{The NASM Development Team}
 \M{copyright_tail}{-- All Rights Reserved}
 \M{license}{This document is redistributable under the license given in the section "License".}
-\M{summary}{This file documents NASM, the Netwide Assembler: an assembler targeting the Intel x86 series of processors, with portable source.}
+\M{summary}{This file documents NASM, the Netwide Assembler: an
+assembler targeting the Intel x86 series of processors, with portable
+source.}
 \M{infoname}{NASM}
 \M{infofile}{nasm}
 \M{infotitle}{The Netwide Assembler for x86}
@@ -409,7 +411,7 @@ goes wrong: you won't see any output at all, unless it gives error
 messages.
 
 
-\S{opt-o} The \i\c{-o} Option: Specifying the Output File Name
+\S{opt-o} The \i\c{-o} Option: Output File Name
 
 NASM will normally choose the name of your output file for you;
 precisely how it does this is dependent on the object file format.
@@ -440,7 +442,7 @@ Note that this is a small o, and is different from a capital O , which
 is used to specify the number of optimization passes required. See \k{opt-O}.
 
 
-\S{opt-f} The \i\c{-f} Option: Specifying the \i{Output File Format}
+\S{opt-f} The \i\c{-f} Option: \i{Output File Format}
 
 If you do not supply the \c{-f} option to NASM, it will choose an
 output file format for you itself. In the distribution versions of
@@ -569,28 +571,28 @@ specified by the \c{-o} option.
 The \c{-MQ} option acts as the \c{-MT} option, except it tries to
 quote characters that have special meaning in Makefile syntax.  This
 is not foolproof, as not all characters with special meaning are
-quotable in Make.  The default output (if no \c{-MT} or \c{-MQ} option
+quotable in \c{make}.  The default output (if no \c{-MT} or \c{-MQ} option
 is specified) is automatically quoted.
 
 
-\S{opt-MP} The \i\c{-MP} Option: Emit phony targets
+\S{opt-MP} The \i\c{-MP} Option: Emit Phony Makefile Targets
 
 When used with any of the dependency generation options, the \c{-MP}
 option causes NASM to emit a phony target without dependencies for
-each header file.  This prevents Make from complaining if a header
+each header file.  This prevents \c{make} from complaining if a header
 file has been removed.
 
 
-\S{opt-MW} The \i\c{-MW} Option: Watcom Make quoting style
+\S{opt-MW} The \i\c{-MW} Option: Watcom \c{make} quoting style
 
 This option causes NASM to attempt to quote dependencies according to
-Watcom Make conventions rather than POSIX Make conventions (also used
-by most other Make variants.)  This quotes \c{#} as \c{$#} rather than
+Watcom \c{make} conventions rather than POSIX \c{make} conventions (also used
+by most other \c{make} variants.)  This quotes \c{#} as \c{$#} rather than
 \c{\\#}, uses \c{&} rather than \c{\\} for continuation lines, and
 encloses filenames containing whitespace in double quotes.
 
 
-\S{opt-F} The \i\c{-F} Option: Selecting a \i{Debug Information Format}
+\S{opt-F} The \i\c{-F} Option: \i{Debug Information Format}
 
 This option is used to select the format of the debug information
 emitted into the output file, to be used by a debugger (or \e{will}
@@ -784,7 +786,7 @@ For compatibility with older version of NASM, this option can also be
 written \c{-e}.  \c{-E} in older versions of NASM was the equivalent
 of the current \c{-Z} option, \k{opt-Z}.
 
-\S{opt-a} The \i\c{-a} Option: Don't Preprocess At All
+\S{opt-a} The \i\c{-a} Option: Suppress Preprocessing
 
 If NASM is being used as the back end to a compiler, it might be
 desirable to \I{suppressing preprocessing}suppress preprocessing
@@ -794,7 +796,7 @@ argument, instructs NASM to replace its powerful \i{preprocessor}
 with a \i{stub preprocessor} which does nothing.
 
 
-\S{opt-O} The \i\c{-O} Option: Specifying \i{Multipass Optimization}
+\S{opt-O} The \i\c{-O} Option: \i{Multipass Optimization}
 
 Using the \c{-O} option, you can tell NASM to carry out different
 levels of optimization. Multiple flags can be specified after the
@@ -827,9 +829,9 @@ Note that this is a capital \c{O}, and is different from a small \c{o}, which
 is used to specify the output file name. See \k{opt-o}.
 
 
-\S{opt-t} The \i\c{-t} Option: Enable TASM Compatibility Mode
+\S{opt-t} The \i\c{-t} Option: \i{TASM} Compatibility Mode
 
-NASM includes a limited form of compatibility with Borland's \i\c{TASM}.
+NASM includes a limited form of compatibility with Borland's TASM.
 When NASM's \c{-t} option is used, the following changes are made:
 
 \b local labels may be prefixed with \c{@@} instead of \c{.}
@@ -5271,7 +5273,7 @@ order to control particular features of that file format. These
 documented along with the formats that implement them, in \k{outfmt}.
 
 
-\H{bits} \i\c{BITS}: Specifying Target \i{Processor Mode}
+\H{bits} \i\c{BITS}: Target \i{Processor Mode}
 
 The \c{BITS} directive specifies whether NASM should generate code
 \I{16-bit mode, versus 32-bit mode}designed to run on a processor
@@ -9150,7 +9152,7 @@ number of NDISASM you are running, and \i\c{-h} which gives a short
 summary of command line options.
 
 
-\S{ndiscom} COM Files: Specifying an Origin
+\S{ndiscom} Specifying the Input Origin
 
 To disassemble a \c{DOS .COM} file correctly, a disassembler must assume
 that the first instruction in the file is loaded at address \c{0x100},
