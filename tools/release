@@ -45,12 +45,7 @@ makej="${makej:-make}"
 cd nasm
 ./autogen.sh --clearenv
 ./configure --prefix=/usr/local
-$makej perlreq spec manpages
-$makej alldeps
-$makej distclean
-if [ -f ./autoconf/clean.sh ]; then
-    sh ./autoconf/clean.sh
-fi
+$makej dist
 cd ..
 
 # Clean up any previous attempt
