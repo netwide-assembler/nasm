@@ -53,6 +53,7 @@ if test ! -f autoconf/aclocal.m4; then
     # aclocal failed, revert to previous files
     mv -f autoconf/m4.old/*.m4 autoconf/m4/
     mv -f autoconf/aclocal.m4.old autoconf/aclocal.m4
+    exit 1
 fi
 rm -rf autoconf/*m4.old
 "$AUTOHEADER" -B autoconf

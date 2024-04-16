@@ -18,7 +18,7 @@ dnl the best very slow and doesn't buy us a single thing at all.
 PA_CROSS_COMPILE
 
 dnl Enable any available C extensions
-AC_PROG_CC
+PA_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
 PA_ADD_CPPFLAGS([-std=c17], [], [],
 [PA_ADD_CPPFLAGS([-std=c11], [], [],

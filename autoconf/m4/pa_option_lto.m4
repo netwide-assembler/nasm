@@ -10,7 +10,8 @@ AC_DEFUN([PA_OPTION_LTO],
 [PA_ARG_BOOL([lto],
  [Try to enable link-time optimization for this compiler],
  [$1],
- [PA_ADD_LANGFLAGS([-flto])
+ [PA_ADD_LANGFLAGS([-flto=auto -flto])
+PA_ADD_LANGFLAGS([-ffat-lto-objects])
 dnl Note: we use _PROG rather than _TOOL since we are prepending the full
 dnl CC name which ought to already contain the host triplet if needed
    ccbase=`echo "$CC" | awk '{ print $1; }'`
