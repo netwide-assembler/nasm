@@ -40,7 +40,7 @@ PDF formats.
 
 %build
 sh autogen.sh
-%configure --enable-sections
+%configure --enable-gc $([ -z "%{_lto_cflags}" ] || echo --enable-lto)
 make %{?_smp_mflags} everything
 
 %install
