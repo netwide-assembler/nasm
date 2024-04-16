@@ -19,6 +19,10 @@ only. There are no functionality changes.}
 \b Make the documentation stronger that \c{-O0} or \c{-O1} are
 probably not what the user wants. See \k{opt-O}.
 
+\b Fix \c{configure --enable-lto} build option.
+
+\b Update the included RPM \c{.spec} file.
+
 \S{cl-2.16.02} Version 2.16.02
 
 \b Fix building from the source distribution in a separate directory
