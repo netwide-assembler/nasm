@@ -5,7 +5,7 @@ The Makefiles are:
 
   Filename      Target		Compiler	Tested with
   ---------------------------------------------------------------------------
-  msvc.mak	Win32		MS Visual C++	Visual Visual Studio 2013-2017
+  msvc.mak	Win32		MS Visual C++	Visual Visual Studio 2013-2022
 
 	For building on a Win32 host using Microsoft Visual C++.
 
@@ -32,6 +32,11 @@ The Makefiles are:
 	installer package, run:
 
 		nmake /f Mkfiles\msvc.mak everything nsis
+
+	NOTE: the preferred way to build NASM on Windows is to use
+	the standard configure script under the MSYS2 environment.
+	See http://www.msys2.org/.
+
 
   Filename      Target		Compiler	Tested with
   ---------------------------------------------------------------------------
