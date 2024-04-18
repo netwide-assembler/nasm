@@ -17,8 +17,9 @@ BuildRequires: xmlto
 BuildRequires: perl
 BuildRequires: gcc
 BuildRequires: make
+BuildRequires: xz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Obsoletes: nasm-rdoff
+Obsoletes: %{name}-rdoff
 
 %package doc
 Summary: Detailed manual for the Netwide Assembler
@@ -27,8 +28,7 @@ BuildRequires: ghostscript
 BuildRequires: fontconfig
 BuildRequires: adobe-source-sans-pro-fonts
 BuildRequires: adobe-source-code-pro-fonts
-BuildRequires: xz
-Obsoletes: %{nasm}-doc < %{version}-%{release}
+Obsoletes: %{name}-doc < %{version}-%{release}
 
 %description
 NASM is the Netwide Assembler, a free portable assembler for the Intel
