@@ -43,6 +43,8 @@ PERL		= perl
 PERLFLAGS	= -I$(top_srcdir)/perllib -I$(srcdir)
 RUNPERL         = $(PERL) $(PERLFLAGS)
 
+EMPTY		= : >
+
 PYTHON3		= python3
 
 INSTALL		= @INSTALL@
@@ -55,6 +57,7 @@ ASCIIDOC	= @ASCIIDOC@
 XMLTO		= @XMLTO@
 MAKENSIS	= @MAKENSIS@
 XZ              = @XZ@
+WINDRES         = @WINDRES@
 
 # Optional targets
 MANPAGES        = @MANPAGES@
@@ -75,6 +78,12 @@ A		= @LIBEXT@
 ifeq ($(TRACE),1)
 	CFLAGS += -DNASM_TRACE
 endif
+
+# Don't delete intermediate files
+.SECONDARY:
+
+# Delete files on error
+.DELETE_ON_ERROR:
 
 .SUFFIXES:
 .SUFFIXES: $(X) .$(O) .$(A) .xml .1 .c .i .s .txt .time
@@ -98,6 +107,8 @@ endif
 .xml.1:
 	$(XMLTO) man --skip-validation $< 2>/dev/null
 
+MANIFEST = @MANIFEST@
+
 #-- Begin File Lists --#
 NASM    = asm/nasm.$(O)
 NDISASM = disasm/ndisasm.$(O)
@@ -115,7 +126,8 @@ LIBOBJ_NW = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) \
 	nasmlib/realpath.$(O) nasmlib/path.$(O) \
 	nasmlib/filename.$(O) nasmlib/rlimit.$(O) \
-	nasmlib/zerobuf.$(O) nasmlib/readnum.$(O) nasmlib/bsi.$(O) \
+	nasmlib/readnum.$(O) nasmlib/numstr.$(O) \
+	nasmlib/zerobuf.$(O) nasmlib/bsi.$(O) \
 	nasmlib/rbtree.$(O) nasmlib/hashtbl.$(O) \
 	nasmlib/raa.$(O) nasmlib/saa.$(O) \
 	nasmlib/strlist.$(O) \
@@ -153,14 +165,16 @@ LIBOBJ_NW = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 
 # Warnings depend on all source files, so handle them separately
 WARNOBJ   = asm/warnings.$(O)
+WARNFILES = asm/warnings_c.h include/warnings.h doc/warnings.src
 
 LIBOBJ    = $(LIBOBJ_NW) $(WARNOBJ)
 ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 
-SUBDIRS  = stdlib nasmlib output asm disasm x86 common macros
-XSUBDIRS = test doc nsis
-DEPDIRS  = . include config x86 $(SUBDIRS)
+SUBDIRS  = stdlib nasmlib include config output asm disasm x86 \
+	   common macros
+XSUBDIRS = test doc nsis win
+DEPDIRS  = . $(SUBDIRS)
 #-- End File Lists --#
 
 all: dirs
@@ -176,11 +190,15 @@ $(NASMLIB): $(LIBOBJ)
 	$(AR) cq $(NASMLIB) $(LIBOBJ)
 	$(RANLIB) $(NASMLIB)
 
-nasm$(X): $(NASM) $(NASMLIB)
-	$(CC) $(ALL_LDFLAGS) -o nasm$(X) $(NASM) $(NASMLIB) $(LIBS)
+nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
+	$(CC) $(ALL_LDFLAGS) -o nasm$(X) $^ $(LIBS)
 
-ndisasm$(X): $(NDISASM) $(NASMLIB)
-	$(CC) $(ALL_LDFLAGS) -o ndisasm$(X) $(NDISASM) $(NASMLIB) $(LIBS)
+ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB)
+	$(CC) $(ALL_LDFLAGS) -o ndisasm$(X) $^ $(LIBS)
+
+# These are specific to certain Makefile syntaxes...
+WARNTIMES = $(WARNFILES:=.time)
+WARNSRCS  = $(LIBOBJ_NW:.$(O)=.c) asm/nasm.c
 
 #-- Begin Generated File Rules --#
 
@@ -189,7 +207,7 @@ ndisasm$(X): $(NDISASM) $(NASMLIB)
 # have Perl just to recompile NASM from the distribution.
 
 # Perl-generated source files
-PERLREQ = config/unconfig.h \
+PERLREQ_CLEANABLE = \
 	  x86/insnsb.c x86/insnsa.c x86/insnsd.c x86/insnsi.h x86/insnsn.c \
 	  x86/regs.c x86/regs.h x86/regflags.c x86/regdis.c x86/regdis.h \
 	  x86/regvals.c asm/tokhash.c asm/tokens.h asm/pptok.h asm/pptok.c \
@@ -200,10 +218,14 @@ PERLREQ = config/unconfig.h \
 	  misc/nasmtok.el \
 	  version.h version.mac version.mak nsis/version.nsh
 
+# Special hack to keep config/unconfig.h from getting deleted
+# by "make spotless"...
+PERLREQ = config/unconfig.h $(PERLREQ_CLEANABLE)
+
 INSDEP = x86/insns.dat x86/insns.pl x86/insns-iflags.ph x86/iflags.ph
 
-config/unconfig.h: config/config.h.in
-	$(RUNPERL) $(tools)/unconfig.pl \
+config/unconfig.h: config/config.h.in autoconf/unconfig.pl
+	$(RUNPERL) '$(srcdir)'/autoconf/unconfig.pl \
 		'$(srcdir)' config/config.h.in config/unconfig.h
 
 x86/iflag.c: $(INSDEP)
@@ -275,33 +297,32 @@ x86/regs.h: x86/regs.dat x86/regs.pl
 # reasonable, but doesn't update the time stamp if the files aren't
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm/warnings.time.
-WARNFILES = asm/warnings_c.h include/warnings.h doc/warnings.src
-
-warnings:
-	$(RM_F) $(WARNFILES) $(WARNFILES:=.time)
+.PHONY: warnings
+warnings: dirs
+	$(RM_F) $(WARNFILES) $(WARNTIMES) asm/warnings.time
 	$(MAKE) asm/warnings.time
 
-asm/warnings.time: $(ALLOBJ_NW:.$(O)=.c)
-	: > asm/warnings.time
-	$(MAKE) $(WARNFILES:=.time)
+asm/warnings.time: $(WARNSRCS) asm/warnings.pl
+	$(EMPTY) asm/warnings.time
+	$(MAKE) $(WARNTIMES)
 
 asm/warnings_c.h.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl c asm/warnings_c.h $(srcdir)
-	: > asm/warnings_c.h.time
+	$(EMPTY) asm/warnings_c.h.time
 
 asm/warnings_c.h: asm/warnings_c.h.time
 	@: Side effect
 
 include/warnings.h.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl h include/warnings.h $(srcdir)
-	: > include/warnings.h.time
+	$(EMPTY) include/warnings.h.time
 
 include/warnings.h: include/warnings.h.time
 	@: Side effect
 
 doc/warnings.src.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl doc doc/warnings.src $(srcdir)
-	: > doc/warnings.src.time
+	$(EMPTY) doc/warnings.src.time
 
 doc/warnings.src : doc/warnings.src.time
 	@: Side effect
@@ -346,7 +367,8 @@ misc/nasmtok.el: misc/emacstbl.pl asm/tokhash.c asm/pptok.c \
 
 #-- End Generated File Rules --#
 
-perlreq: $(PERLREQ)
+perlreq: dirs
+	$(MAKE) $(PERLREQ)
 
 #-- Begin NSIS Rules --#
 
@@ -360,6 +382,11 @@ nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
 	$(MAKENSIS) -Dsrcdir="$(srcdir)" -Dobjdir="$(objdir)" - < nsis/nasm.nsi
 
 #-- End NSIS Rules --#
+
+# Windows embedded manifest
+MANIFEST_RC = win/manifest.rc
+win/manifest.$(O): win/manifest.xml $(MANIFEST_RC)
+	$(WINDRES) -I. -Iwin -DMANIFEST_FILE='\"$<\"' -i $(MANIFEST_RC) -o $@
 
 # Generated manpages, also pregenerated for distribution
 manpages: nasm.1 ndisasm.1
@@ -388,16 +415,16 @@ distclean: clean
 	done
 	$(RM_F) test/*.$(O)
 	$(RM_F) *.dep
+	-sh autoconf/clean.sh || sh '$(srcdir)'/autoconf/clean.sh
 
-cleaner: clean
-	$(RM_F) $(PERLREQ) *.1 nasm.spec
+cleaner:
+	$(RM_F) $(PERLREQ_CL) *.1 nasm.spec
 	$(MAKE) -C doc clean
-	$(RM_F) *.dep */*.time
+	$(MAKE) distclean
+	$(RM_F) */*.time
 
-makefile-clean:
-	./autogen.sh
-
-spotless: distclean cleaner makefile-clean
+spotless: cleaner
+	$(RM_F) configure autoconf/aclocal.m4 autoconf/clean.sh
 
 strip:
 	$(STRIP) --strip-unneeded $(PROGS)
@@ -433,23 +460,22 @@ everything: always_everything
 install_everything: everything install install_doc
 
 dist:
-	$(MAKE) distclean
 	$(MAKE) alldeps
-	$(MAKE) perlreq manpages spec $(MANPAGES)
+	$(MAKE) perlreq warnings spec $(MANPAGES)
+	$(MAKE) distclean
 	./autogen.sh
 
 tar: dist
-	tar -cv --exclude CVS -C .. -f - | \
-		$(XZ) -9e > \
-		../nasm-`cat version`-`date +%Y%m%d`.tar.xz `basename \`pwd\``
+	tar -cv --exclude CVS --exclude .git -C .. -f - `basename \`pwd\`` | \
+		$(XZ) -9e > ../nasm-`cat version`-`date +%Y%m%d`.tar.xz
 
 spec: nasm.spec
 
 ALLPERLSRC := $(shell find $(srcdir) -type f -name '*.p[lh]')
 
 perlbreq.si: $(ALLPERLSRC)
-	sed -n -r -e 's/^[[:space:]]*use[[:space:]]+([^[:space:];]+).*$$/BuildRequires: perl(\1)/p' $(ALLPERLSRC) | \
-	sed -r -e '/perl\((strict|warnings|Win32.*)\)/d' | \
+	sed -n -r -e 's/^[[:space:]]*use[[:space:]]+([[:upper:]][^[:space:];]*).*$$/BuildRequires: perl(\1)/p' $(ALLPERLSRC) | \
+	sed -r -e '/perl\((Win32.*)\)/d' | \
 	sort | uniq > perlbreq.si
 
 nasm.spec: nasm.spec.in nasm.spec.sed version.sed perlbreq.si
@@ -508,8 +534,9 @@ EXTERNAL_DEPENDENCIES = 1
 # the dependency information will remain external, so it doesn't
 # pollute the git logs.
 #
-Makefile.dep: $(PERLREQ) $(tools)/mkdep.pl config.status
-	$(RUNPERL) $(tools)/mkdep.pl -M Makefile.in -- $(DEPDIRS)
+Makefile.dep: $(tools)/mkdep.pl config.status $(PERLREQ)
+	$(RUNPERL) $(tools)/mkdep.pl -s '$(top_srcdir)' \
+		-M $(srcdir)/Makefile.in -- $(DEPDIRS)
 
 dep: Makefile.dep
 

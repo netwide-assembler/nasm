@@ -68,10 +68,9 @@ li.toc2 {
     vertical-align: top;
     flex: 1 1 0;
 }
-@media not screen {
-    ul.navbar {
-	display: none;
-    }
+/* This is overridden for @media screen */
+ul.navbar {
+    display: none;
 }
 @media only print {
     a {
@@ -89,7 +88,7 @@ li.toc2 {
 	column-count: 2;
     }
 }
-@media only screen {
+@media screen {
     div.contents {
 	-webkit-column-gap: 4em;
 	-webkit-column-rule: 1px dotted black;

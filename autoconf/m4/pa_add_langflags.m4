@@ -17,9 +17,11 @@ m4_defun([_PA_LANGFLAG_VAR],
  [m4_fatal([PA_ADD_LANGFLAGS: Unknown language: $1])])])
 
 AC_DEFUN([PA_ADD_LANGFLAGS],
-[m4_set_foreach(PA_LANG_SEEN_SET, [lang],
- [_pa_flag_found=no
-  m4_foreach_w([flag], [$1],
-  [AS_IF([test $_pa_flag_found = no],
-   [PA_ADD_FLAGS(_PA_LANGFLAG_VAR(lang),flag,[],[_pa_flag_found=yes])])
-   ])])])
+[m4_pushdef([_pa_langflags],m4_dquote($1))dnl
+m4_set_foreach(_PA_LANG_SEEN_SET,[_pa_lang],dnl
+[_pa_flag_found=no
+ m4_foreach_w([_pa_flag], _pa_langflags,
+ [AS_IF([test $_pa_flag_found = no],
+  [PA_ADD_FLAGS(_PA_LANGFLAG_VAR(_pa_lang),_pa_flag,[],[_pa_flag_found=yes])])
+  ])])
+m4_popdef([_pa_langflags])])

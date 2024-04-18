@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 2023 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -31,31 +31,51 @@
  *
  * ----------------------------------------------------------------------- */
 
-/*
- * rdstrnum.c
- *
- * This converts a NASM string to an integer, used when a string
- * is used in an integer constant context.  This is a binary conversion,
- * not a conversion from a numeric constant in text form.
- */
-
-#include "compiler.h"
 #include "nasmlib.h"
-#include "nasm.h"
 
-int64_t readstrnum(char *str, int length, bool *warn)
+/*
+ * Produce an unsigned integer string from a number with a specified
+ * base, digits and signedness.
+ */
+int numstr(char *buf, size_t buflen, uint64_t n,
+           int digits, unsigned int base, bool ucase)
 {
-    int64_t charconst = 0;
-    int i;
+    static const char digit_chars[2][NUMSTR_MAXBASE+1] =
+    {
+        /* Lower case version */
+        "0123456789"
+        "abcdefghijklmnopqrstuvwxyz"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "@_",
 
-    *warn = false;
-    if (length > 8) {
-        *warn = true;
-        length = 8;
+        /* Upper case version */
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "@_"
+    };
+    const char * const dchars = digit_chars[ucase];
+    bool moredigits = digits <= 0;
+    char *p;
+    int len;
+
+    if (base < 2 || base > NUMSTR_MAXBASE)
+        return -1;
+
+    if (moredigits)
+        digits = -digits;
+
+    p = buf + buflen;
+    *--p = '\0';
+
+    while (p > buf && (digits-- > 0 || (moredigits && n))) {
+        *--p = dchars[n % base];
+        n /= base;
     }
 
-    for (i = 0; i < length; i++)
-        charconst += (uint64_t)((uint8_t)(*str++)) << (i*8);
+    len = buflen - (p - buf);   /* Including final null */
+    if (p != buf)
+        memmove(buf, p, len);
 
-    return charconst;
+    return len - 1;
 }

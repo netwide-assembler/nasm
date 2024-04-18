@@ -34,6 +34,7 @@ if_("PRIV",              "Privileged instruction");
 if_("SMM",               "Only valid in SMM");
 if_("PROT",              "Protected mode only");
 if_("LOCK",              "Lockable if operand 0 is memory");
+if_("LOCK1",             "Lockable if operand 1 is memory");
 if_("NOLONG",            "Not available in long mode");
 if_("LONG",              "Long mode");
 if_("NOHLE",             "HLE prefixes forbidden");
@@ -99,6 +100,7 @@ if_("AMXTILE",           "AMX tile configuration instructions");
 if_("AMXBF16",           "AMX bfloat16 multiplication");
 if_("AMXINT8",           "AMX 8-bit integer multiplication");
 if_("FRED",              "Flexible Return and Exception Delivery (FRED)");
+if_("LKGS",              "Load User GS from Kernel (LKGS)");
 if_("RAOINT",		 "Remote atomic operations (RAO-INT)");
 if_("UINTR",		 "User interrupts");
 if_("CMPCCXADD",         "CMPccXADD instructions");
@@ -109,6 +111,10 @@ if_("AVXNECONVERT",	 "AVX exceptionless floating-point conversions");
 if_("AVXVNNIINT8",       "AVX Vector Neural Network 8-bit integer instructions");
 if_("AVXIFMA",           "AVX integer multiply and add");
 if_("HRESET",            "History reset");
+if_("SMAP",		 "Supervisor Mode Access Prevention (SMAP)");
+if_("SHA512",            "SHA512 instructions");
+if_("SM3",               "SM3 instructions");
+if_("SM4",               "SM4 instructions");
 
 # Put these last to minimize their relevance
 if_("OBSOLETE",          "Instruction removed from architecture");

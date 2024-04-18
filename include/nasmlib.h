@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -238,12 +238,43 @@ static inline unsigned int numvalue(unsigned char c)
 int64_t readnum(const char *str, bool *error);
 
 /*
+ * Get the numeric base corresponding to a character
+ */
+static inline unsigned int radix_letter(char c)
+{
+    switch (c) {
+    case 'b': case 'B':
+    case 'y': case 'Y':
+	return 2;		/* Binary */
+    case 'o': case 'O':
+    case 'q': case 'Q':
+	return 8;		/* Octal */
+    case 'h': case 'H':
+    case 'x': case 'X':
+	return 16;		/* Hexadecimal */
+    case 'd': case 'D':
+    case 't': case 'T':
+	return 10;		/* Decimal */
+    default:
+	return 0;		/* Not a known radix letter */
+    }
+}
+
+/*
  * Convert a character constant into a number. Sets
  * `*warn' to true if an overflow occurs, and false otherwise.
  * str points to and length covers the middle of the string,
  * without the quotes.
  */
 int64_t readstrnum(char *str, int length, bool *warn);
+
+/*
+ * Produce an unsigned integer string from a number with a specified
+ * base, digits and signedness
+ */
+#define NUMSTR_MAXBASE 64
+int numstr(char *buf, size_t buflen, uint64_t n,
+           int digits, unsigned int base, bool ucase);
 
 /*
  * seg_alloc: allocate a hitherto unused segment number.

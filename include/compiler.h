@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 2007-2020 The NASM Authors - All Rights Reserved
+ *   Copyright 2007-2023 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -53,6 +53,8 @@
 
 /* On Microsoft platforms we support multibyte character sets in filenames */
 #define _MBCS 1
+
+#include "autoconf/attribute.h"
 
 #ifdef HAVE_CONFIG_H
 # include "config/config.h"

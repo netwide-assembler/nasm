@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -122,19 +122,33 @@ static int stdscan_handle_brace(struct tokenval *tv)
     return tv->t_type;
 }
 
+static int stdscan_token(struct tokenval *tv);
+
 int stdscan(void *private_data, struct tokenval *tv)
 {
-    const char *r;
+    int i;
 
     (void)private_data;         /* Don't warn that this parameter is unused */
 
     nasm_zero(*tv);
 
     stdscan_bufptr = nasm_skip_spaces(stdscan_bufptr);
+    tv->t_start = stdscan_bufptr;
+
     if (!*stdscan_bufptr)
         return tv->t_type = TOKEN_EOS;
 
-    /* we have a token; either an id, a number or a char */
+    i = stdscan_token(tv);
+    tv->t_len = stdscan_bufptr - tv->t_start;
+
+    return i;
+}
+
+static int stdscan_token(struct tokenval *tv)
+{
+    const char *r;
+
+    /* we have a token; either an id, a number, operator or char */
     if (nasm_isidstart(*stdscan_bufptr) ||
         (*stdscan_bufptr == '$' && nasm_isidstart(stdscan_bufptr[1]))) {
         /* now we've got an identifier */
@@ -160,11 +174,14 @@ int stdscan(void *private_data, struct tokenval *tv)
 
         token_type = nasm_token_hash(tv->t_charptr, tv);
         if (unlikely(tv->t_flag & TFLAG_WARN)) {
-            /*!
-             *!ptr [on] non-NASM keyword used in other assemblers
-             *!  warns about keywords used in other assemblers that might
-             *!  indicate a mistake in the source code.  Currently only the MASM
-             *!  \c{PTR} keyword is recognized. See also \k{pkg_masm}.
+            /*! ptr [on] non-NASM keyword used in other assemblers
+             *!  warns about keywords used in other assemblers that
+             *!  might indicate a mistake in the source code.
+             *!  Currently only the MASM \c{PTR} keyword is
+             *!  recognized. If (limited) MASM compatibility is
+             *!  desired, the \c{%use masm} macro package is
+             *!  available, see \k{pkg_masm}; however, carefully note
+             *!  the caveats listed.
              */
             nasm_warn(WARN_PTR, "`%s' is not a NASM keyword",
                        tv->t_charptr);
@@ -341,6 +358,8 @@ int stdscan(void *private_data, struct tokenval *tv)
     } else if (stdscan_bufptr[0] == '|' && stdscan_bufptr[1] == '|') {
         stdscan_bufptr += 2;
         return tv->t_type = TOKEN_DBL_OR;
-    } else                      /* just an ordinary char */
+    } else {
+        /* just an ordinary char */
         return tv->t_type = (uint8_t)(*stdscan_bufptr++);
+    }
 }

@@ -15,14 +15,10 @@ AH_BOTTOM([
 dnl This prevents us from running Wine and thinking we are not
 dnl cross-compiling when in fact we are; running Wine here is at
 dnl the best very slow and doesn't buy us a single thing at all.
-WINELOADER=/dev/null
-export WINELOADER
-
-dnl Get the canonical target system name
-AC_CANONICAL_HOST
+PA_CROSS_COMPILE
 
 dnl Enable any available C extensions
-AC_PROG_CC
+PA_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
 PA_ADD_CPPFLAGS([-std=c17], [], [],
 [PA_ADD_CPPFLAGS([-std=c11], [], [],
@@ -149,6 +145,16 @@ AC_C_RESTRICT
 dnl Checks for header files.
 AC_CHECK_INCLUDES_DEFAULT
 
+dnl Check for variadic macro support
+PA_VARIADIC_MACROS
+
+dnl Handle Windows embedded manifests
+AS_CASE([$host],
+	[*-win* | *-mingw*],
+	[AC_CHECK_TOOL(WINDRES, windres, false)
+	 AS_IF([test x"$WINDRES" != xfalse],
+	 [AC_SUBST(MANIFEST, ['win/manifest.$(O)'])])])
+
 PA_ADD_HEADERS(string.h)
 PA_ADD_HEADERS(stdarg.h)
 PA_ADD_HEADERS(inttypes.h)
@@ -255,7 +261,6 @@ dnl Check for supported gcc attributes; some compilers (e.g. Sun CC)
 dnl support these, but don't define __GNUC__ as they don't support
 dnl some other features of gcc.
 dnl
-PA_ADD_CFLAGS([-Werror=attributes])
 PA_COMMON_ATTRIBUTES
 
 dnl
@@ -289,22 +294,8 @@ PA_ARG_DISABLED([pedantic],
 [disable some extra paranoid compiler warnings],
 [],
 [PA_ADD_CFLAGS([-W])
- PA_ADD_CFLAGS([-pedantic])
- PA_ADD_CFLAGS([-Wc90-c99-compat])
- PA_ADD_CFLAGS([-Wc99-compat])
- PA_ADD_CFLAGS([-Wc99-extensions])
+PA_ADD_CFLAGS([-pedantic])
 ])
-dnl Suppress format warning on Windows targets due to their <inttypes.h>
-PA_ADD_CFLAGS([-Wpedantic-ms-format],[-Wno-pedantic-ms-format])
-PA_ADD_CFLAGS([-Wlong-long],[-Wno-long-long])
-dnl This is needed because we intentionally expect strncpy() to fill
-dnl in a zero-padded (not zero-terminated) buffer in several backends
-PA_ADD_CFLAGS([-Wstringop-truncation],[-Wno-stringop-truncation])
-dnl This is needed because we assume 2's-completement signed arithmetic;
-dnl on compilers with gcc-like command line syntax we pass the -fwrapv
-dnl option for exactly that reason.
-PA_ADD_CFLAGS([-Wshift-negative-value],[-Wno-shift-negative-value])
-
 dnl Want to turn this on at some point...
 dnl PA_ADD_CFLAGS([-Wwrite-strings])
 PA_ARG_ENABLED([werror],
@@ -321,6 +312,19 @@ PA_ARG_ENABLED([werror],
   PA_ADD_CFLAGS([-Werror=comment])
   PA_ADD_CFLAGS([-Werror=vla])]
 )
+
+dnl Variadic macros are used in this code, but only under explicit guard
+PA_ADD_CFLAGS([-Wvariadic-macros],[-Wno-variadic-macros])
+dnl Suppress format warning on Windows targets due to their <inttypes.h>
+PA_ADD_CFLAGS([-Wpedantic-ms-format],[-Wno-pedantic-ms-format])
+PA_ADD_CFLAGS([-Wlong-long],[-Wno-long-long])
+dnl This is needed because we intentionally expect strncpy() to fill
+dnl in a zero-padded (not zero-terminated) buffer in several backends
+PA_ADD_CFLAGS([-Wstringop-truncation],[-Wno-stringop-truncation])
+dnl This is needed because we assume 2's-completement signed arithmetic;
+dnl on compilers with gcc-like command line syntax we pass the -fwrapv
+dnl option for exactly that reason.
+PA_ADD_CFLAGS([-Wshift-negative-value],[-Wno-shift-negative-value])
 
 dnl Warnings that are probabilistic based on the compiler version, and
 dnl only should be used specifically when looking for opportunities to

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -342,8 +342,8 @@ static void debug_macro_out(const struct out_data *data)
  * This warning is currently issued by backends, but in the future
  * this code should be centralized.
  *
- *!zeroing [on] RESx in initialized section becomes zero
- *!  a \c{RESx} directive was used in a section which contains
+ *!zeroing [on] \c{RES}\e{x} in initialized section becomes zero
+ *!  a \c{RES}\e{x} directive was used in a section which contains
  *!  initialized data, and the output format does not support
  *!  this. Instead, this will be replaced with explicit zero
  *!  content, which may produce a large output file.
@@ -385,18 +385,123 @@ static void out(struct out_data *data)
         nasm_assert(data->size <= 8);
         asize = data->size;
         amax = ofmt->maxbits >> 3; /* Maximum address size in bytes */
-        if (!(ofmt->flags & OFMT_KEEP_ADDR) &&
-            data->tsegment == fixseg &&
-            data->twrt == NO_SEG) {
-            if (asize >= (size_t)(data->bits >> 3)) {
-                 /* Support address space wrapping for low-bit modes */
-                data->flags &= ~OUT_SIGNMASK;
+        if (data->tsegment == fixseg && data->twrt == NO_SEG) {
+            if (!(ofmt->flags & OFMT_KEEP_ADDR)) {
+                if (asize >= (size_t)(data->bits >> 3)) {
+                    /* Support address space wrapping for low-bit modes */
+                    data->flags &= ~OUT_SIGNMASK;
+                }
+                warn_overflow_out(addrval, asize, data->flags);
+                xdata.q = cpu_to_le64(addrval);
+                data->data = xdata.b;
+                data->type = OUT_RAWDATA;
+                asize = amax = 0;   /* No longer an address */
             }
-            warn_overflow_out(addrval, asize, data->flags);
-            xdata.q = cpu_to_le64(addrval);
-            data->data = xdata.b;
-            data->type = OUT_RAWDATA;
-            asize = amax = 0;   /* No longer an address */
+        } else {
+            /*!
+             *!reloc-abs-byte [off] 8-bit absolute section-crossing relocation
+             *!  warns that an 8-bit absolute relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This is usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-abs-word [off] 16-bit absolute section-crossing relocation
+             *!  warns that a 16-bit absolute relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This is usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-abs-dword [off] 32-bit absolute section-crossing relocation
+             *!  warns that a 32-bit absolute relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This is usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-abs-qword [off] 64-bit absolute section-crossing relocation
+             *!  warns that a 64-bit absolute relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This is usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-rel-byte [off] 8-bit relative section-crossing relocation
+             *!  warns that an 8-bit relative relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This is usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-rel-word [off] 16-bit relative section-crossing relocation
+             *!  warns that a 16-bit relative relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This is usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-rel-dword [off] 32-bit relative section-crossing relocation
+             *!  warns that a 32-bit relative relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This is usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            /*!
+             *!reloc-rel-qword [off] 64-bit relative section-crossing relocation
+             *!  warns that an 64-bit relative relocation that could
+             *!  not be resolved at assembly time was generated in
+             *!  the output format.
+             *!
+             *!  This is usually normal, but may not be handled by all
+             *!  possible target environments
+             */
+            int warn;
+            const char *type;
+
+            switch (data->type) {
+            case OUT_ADDRESS:
+                type = "absolute";
+                switch (asize) {
+                case 1: warn = WARN_RELOC_ABS_BYTE; break;
+                case 2: warn = WARN_RELOC_ABS_WORD; break;
+                case 4: warn = WARN_RELOC_ABS_DWORD; break;
+                case 8: warn = WARN_RELOC_ABS_QWORD; break;
+                default: panic();
+                }
+                break;
+            case OUT_RELADDR:
+                type = "relative";
+                switch (asize) {
+                case 1: warn = WARN_RELOC_REL_BYTE; break;
+                case 2: warn = WARN_RELOC_REL_WORD; break;
+                case 4: warn = WARN_RELOC_REL_DWORD; break;
+                case 8: warn = WARN_RELOC_REL_QWORD; break;
+                default: panic();
+                }
+                break;
+            default:
+                warn = 0;
+            }
+
+            if (warn) {
+                nasm_warn(warn, "%u-bit %s section-crossing relocation",
+                          (unsigned int)(asize << 3), type);
+            }
         }
         break;
 
@@ -593,7 +698,7 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
         /* jmp short (opcode eb) cannot be used with bnd prefix. */
         ins->prefixes[PPS_REP] = P_none;
         /*!
-         *!prefix-bnd [on] invalid BND prefix
+         *!prefix-bnd [on] invalid \c{BND} prefix
          *!=bnd
          *!  warns about ineffective use of the \c{BND} prefix when the
          *!  \c{JMP} instruction is converted to the \c{SHORT} form.
@@ -1738,14 +1843,27 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         }
     }
 
-    if (has_prefix(ins, PPS_LOCK, P_LOCK) && lockcheck &&
-        (!itemp_has(temp,IF_LOCK) || !is_class(MEMORY, ins->oprs[0].type))) {
-        /*!
-         *!prefix-lock [on] LOCK prefix on unlockable instructions
-         *!=lock
-         *!  warns about \c{LOCK} prefixes on unlockable instructions.
-         */
-        nasm_warn(WARN_PREFIX_LOCK|ERR_PASS2 , "instruction is not lockable");
+    if (lockcheck && has_prefix(ins, PPS_LOCK, P_LOCK)) {
+        if ((!itemp_has(temp,IF_LOCK)  || !is_class(MEMORY, ins->oprs[0].type)) &&
+            (!itemp_has(temp,IF_LOCK1) || !is_class(MEMORY, ins->oprs[1].type))) {
+            /*!
+             *!prefix-lock-error [on] \c{LOCK} prefix on unlockable instruction
+             *!=lock
+             *!  warns about \c{LOCK} prefixes on unlockable instructions.
+             */
+            nasm_warn(WARN_PREFIX_LOCK_ERROR|ERR_PASS2 , "instruction is not lockable");
+        } else if (temp->opcode == I_XCHG) {
+            /*!
+             *!prefix-lock-xchg [on] superfluous \c{LOCK} prefix on \c{XCHG} instruction
+             *!  warns about a \c{LOCK} prefix added to an \c{XCHG} instruction.
+             *!  The \c{XCHG} instruction is \e{always} locking, and so this
+             *!  prefix is not necessary; however, NASM will generate it if
+             *!  explicitly provided by the user, so this warning indicates that
+             *!  suboptimal code is being generated.
+             */
+            nasm_warn(WARN_PREFIX_LOCK_XCHG|ERR_PASS2,
+                      "superfluous LOCK prefix on XCHG instruction");
+        }
     }
 
     bad_hle_warn(ins, hleok);

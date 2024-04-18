@@ -12,16 +12,114 @@ since 2007.
 \b ... here goes release notes not intended to be included in the
 2.16.xx stable series ...
 
+\S{cl-2.16.02} Version 2.16.03
+
+\e{This is a source build machinery and documentation update
+only. There are no functionality changes.}
+
+\b Fix building from \c{git} in a separate directory from the source.
+
+\b Remove some irrelevant files from the source distribution.
+
+\b Make the documentation stronger that \c{-O0} or \c{-O1} are
+probably not what the user wants. See \k{opt-O}.
+
+\b Fix \c{configure --enable-lto} build option.
+
+\b Update the included RPM \c{.spec} file.
+
 \S{cl-2.16.02} Version 2.16.02
 
 \b Fix building from the source distribution in a separate directory
 from the source.
 
-\b Update broken \c{autoconf} macros.
+\b Fix a number of issues when building from source, mostly involving
+\c{configure} or dependency generation.
+
+\> In particular, more aggressively avoid cross-compilation problems
+on Unix/Linux systems automatically invoking WINE. We could end up
+invoking WINE even when we didn't want to, making \c{configure} think
+it was running native when in fact cross-compiling.
+
+\b Hopefully fix compiling with the latest versions of MSVC/nmake.
+
+\b Windows host: add embedded manifest file. Without a manifest,
+Windows applications force a fixed \c{PATH_MAX} limit to any pathname;
+this is unnecessary.
+
+\b Add support VEX-encoded SM4-NI instructions.
+
+\b Add support for VEX-encoded SM3-NI instructions.
+
+\b Add support for VEX-encoded SHA512-NI instructions.
+
+\b \c{PTWRITE} opcode corrected (\c{F3} prefix required.)
+
+\b Disassembler: the SMAP instructions are \c{NP}; notably the
+prefixed versions of \c{CLAC} are \c{ERETU}/\c{ERETS}.
+
+\b Add support for Flexible Return and Exception Delivery (FRED): the
+\c{LKGS}, \c{ERETS} and \c{ERETU} instructions.
+
+\b Fix external references to segments in the \c{obj} (OMF) and
+possibly other output formats.
+
+\b Always support up to 8 characters, i.e. 64 bits, in a
+string-to-numeric conversion.
+
+\b Preprocessor: add \c{%map()} function to expand a macro from a list of
+arguments, see \k{f_map}.
+
+\b Preprocessor: allow the user to specify the desired radix for an
+evaluated parameter. It doesn't make any direct difference, but can be
+nice for debugging or turning into strings. See the \c{=} modifier in
+\k{define}.
+
+\b Update documentation: \c{__USE_}\e{package}\c{__} is now
+\c{__?USE_}\e{package}\c{?__}.
+
+\b Documentation: correct a minor problem in the expression grammar
+for \c{D}\e{x} statements, see \k{db}.
+
+\b Preprocessor: correctly handle empty \c{%rep} blocks.
+
+\b Preprocessor: add options for a base prefix to \c{%num()}, see \k{f_num}.
+
+\b Preprocessor: add a \c{%hex()} function, equivalent to \c{%eval()}
+except that it producess hexadecimal values that are nevertheless
+valid NASM numeric constants, see \k{f_hex}.
+
+\b Preprocessor: fix the parameter number in error messages (should be
+1-based, like \c{%}\e{num} references to multi-line macro arguments.)
+
+\b Documentation: be more clear than the \c{bin} format is simply a
+linker built into NASM. See \k{binfmt}.
+
+\b Adjust the \c{LOCK} prefix warning for \c{XCHG}.
+
+\> \c{LOCK XCHG }\e{reg}\c{,}\e{mem} would issue a warning for being
+unlockable, which is incorrect. In this case the \e{reg}\c{,}\e{mem}
+encoding is simply an alias for the \e{mem}\c{,}\e{reg} encoding. However,
+\c{XCHG} is \e{always} locked, so create a new warning
+(\c{-w+prefix-lock-xchg}) to explicitly flag a user-specified \c{LOCK
+XCHG}; default off. Future versions of NASM may remove the \c{LOCK}
+prefix when optimization is enabled.
+
+\b Fix broken dependency-list generation.
+
+\b Add optional warnings for specific relocation types
+(\c{-w+reloc-*}, see \k{warnings}), default off.
+
+\> Some target environments may have specific restrictions on what
+kinds of relocations are possible or allowed.
+
+\b Error out on certain bad syntax in \c{D}\e{x} statements, such as
+\c{db 1 2}. See \k{db}.
 
 \S{cl-2.16.01} Version 2.16.01
 
-\e{This is a documentation update release only.}
+\e{This is a documentation update release only. There are no
+functionality changes.}
 
 \b Fix the creation of the table of contents in the HTML version of
 the documentation.
@@ -152,7 +250,7 @@ operation size (e.g. \c{movsd qword [eax],xmm0}).
 \b The \c{-L+} option no longer enables \c{-Lw}, which is mainly
 useful to debug NASM crashes. See \k{opt-L}.
 
-\b Document long-standing hazards in the use of \c{$} in \c{Dx}
+\b Document long-standing hazards in the use of \c{$} in \c{D}\e{x}
 statements, see \k{db}.
 
 \b The NASM-only RDOFF output format backend, which has been broken
@@ -557,7 +655,7 @@ files. See \k{opt-keep-all}.
 \b Fix the \c{\{z\}} decorator on AVX-512 \c{VMOVDQ*} instructions.
 
 \b Add new warnings for certain dangerous constructs which never ought
-   to have been allowed.  In particular, the \c{RESB} family of
+   to have been allowed.  In particular, the \c{RES}\e{x} family of
    instructions should have been taking a critical expression all
    along.
 

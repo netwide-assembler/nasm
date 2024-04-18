@@ -1,7 +1,7 @@
 \# --------------------------------------------------------------------------
 \#
-\#   Copyright 1996-2022 The NASM Authors - All Rights Reserved
-\M{year}{1996-2022}
+\#   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+\M{year}{1996-2024}
 \#   See the file AUTHORS included with the NASM distribution for
 \#   the specific copyright holders.
 \#
@@ -40,7 +40,9 @@
 \M{author}{The NASM Development Team}
 \M{copyright_tail}{-- All Rights Reserved}
 \M{license}{This document is redistributable under the license given in the section "License".}
-\M{summary}{This file documents NASM, the Netwide Assembler: an assembler targeting the Intel x86 series of processors, with portable source.}
+\M{summary}{This file documents NASM, the Netwide Assembler: an
+assembler targeting the Intel x86 series of processors, with portable
+source.}
 \M{infoname}{NASM}
 \M{infofile}{nasm}
 \M{infotitle}{The Netwide Assembler for x86}
@@ -409,7 +411,7 @@ goes wrong: you won't see any output at all, unless it gives error
 messages.
 
 
-\S{opt-o} The \i\c{-o} Option: Specifying the Output File Name
+\S{opt-o} The \i\c{-o} Option: Output File Name
 
 NASM will normally choose the name of your output file for you;
 precisely how it does this is dependent on the object file format.
@@ -440,7 +442,7 @@ Note that this is a small o, and is different from a capital O , which
 is used to specify the number of optimization passes required. See \k{opt-O}.
 
 
-\S{opt-f} The \i\c{-f} Option: Specifying the \i{Output File Format}
+\S{opt-f} The \i\c{-f} Option: \i{Output File Format}
 
 If you do not supply the \c{-f} option to NASM, it will choose an
 output file format for you itself. In the distribution versions of
@@ -569,28 +571,28 @@ specified by the \c{-o} option.
 The \c{-MQ} option acts as the \c{-MT} option, except it tries to
 quote characters that have special meaning in Makefile syntax.  This
 is not foolproof, as not all characters with special meaning are
-quotable in Make.  The default output (if no \c{-MT} or \c{-MQ} option
+quotable in \c{make}.  The default output (if no \c{-MT} or \c{-MQ} option
 is specified) is automatically quoted.
 
 
-\S{opt-MP} The \i\c{-MP} Option: Emit phony targets
+\S{opt-MP} The \i\c{-MP} Option: Emit Phony Makefile Targets
 
 When used with any of the dependency generation options, the \c{-MP}
 option causes NASM to emit a phony target without dependencies for
-each header file.  This prevents Make from complaining if a header
+each header file.  This prevents \c{make} from complaining if a header
 file has been removed.
 
 
-\S{opt-MW} The \i\c{-MW} Option: Watcom Make quoting style
+\S{opt-MW} The \i\c{-MW} Option: Watcom \c{make} quoting style
 
 This option causes NASM to attempt to quote dependencies according to
-Watcom Make conventions rather than POSIX Make conventions (also used
-by most other Make variants.)  This quotes \c{#} as \c{$#} rather than
+Watcom \c{make} conventions rather than POSIX \c{make} conventions (also used
+by most other \c{make} variants.)  This quotes \c{#} as \c{$#} rather than
 \c{\\#}, uses \c{&} rather than \c{\\} for continuation lines, and
 encloses filenames containing whitespace in double quotes.
 
 
-\S{opt-F} The \i\c{-F} Option: Selecting a \i{Debug Information Format}
+\S{opt-F} The \i\c{-F} Option: \i{Debug Information Format}
 
 This option is used to select the format of the debug information
 emitted into the output file, to be used by a debugger (or \e{will}
@@ -784,7 +786,7 @@ For compatibility with older version of NASM, this option can also be
 written \c{-e}.  \c{-E} in older versions of NASM was the equivalent
 of the current \c{-Z} option, \k{opt-Z}.
 
-\S{opt-a} The \i\c{-a} Option: Don't Preprocess At All
+\S{opt-a} The \i\c{-a} Option: Suppress Preprocessing
 
 If NASM is being used as the back end to a compiler, it might be
 desirable to \I{suppressing preprocessing}suppress preprocessing
@@ -794,7 +796,7 @@ argument, instructs NASM to replace its powerful \i{preprocessor}
 with a \i{stub preprocessor} which does nothing.
 
 
-\S{opt-O} The \i\c{-O} Option: Specifying \i{Multipass Optimization}
+\S{opt-O} The \i\c{-O} Option: \i{Multipass Optimization}
 
 Using the \c{-O} option, you can tell NASM to carry out different
 levels of optimization. Multiple flags can be specified after the
@@ -821,15 +823,18 @@ e.g. \c{-Oxv}.
         actually executed.
 
 The \c{-Ox} mode is recommended for most uses, and is the default
-since NASM 2.09.
+since NASM 2.09. \e{Any other mode will generate worse quality
+output.} Use \c{-O0} or \c{-O1} only if you need the finer
+programmer-level control of output and \c{strict} is not suitable for
+your use case.
 
 Note that this is a capital \c{O}, and is different from a small \c{o}, which
 is used to specify the output file name. See \k{opt-o}.
 
 
-\S{opt-t} The \i\c{-t} Option: Enable TASM Compatibility Mode
+\S{opt-t} The \i\c{-t} Option: \i{TASM} Compatibility Mode
 
-NASM includes a limited form of compatibility with Borland's \i\c{TASM}.
+NASM includes a limited form of compatibility with Borland's TASM.
 When NASM's \c{-t} option is used, the following changes are made:
 
 \b local labels may be prefixed with \c{@@} instead of \c{.}
@@ -1264,14 +1269,15 @@ uninitialized}\i{uninitialized} counterparts \i\c{RESB}, \i\c{RESW},
 \i\c\{RESZ}; the \i\c{INCBIN} command, the \i\c{EQU} command, and the
 \i\c{TIMES} prefix.
 
-In this documentation, the notation "\c{Dx}" and "\c{RESx}" is used to
-indicate all the \c{DB} and \c{RESB} type directives, respectively.
+In this documentation, the notation "\c{D}\e{x}" and "\c{RES}\e{x}" is
+used to indicate all the \c{DB} and \c{RESB} type directives,
+respectively.
 
 
-\S{db} \c{Dx}: Declaring Initialized Data
+\S{db} \c{D}\e{x}: Declaring Initialized Data
 
 \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, \i\c{DO}, \i\c{DY}
-and \i\c{DZ} (collectively "\c{Dx}" in this documentation) are used,
+and \i\c{DZ} (collectively "\c{D}\e{x}" in this documentation) are used,
 much as in MASM, to declare initialized data in the output file. They
 can be invoked in a wide range of ways:
 \I{floating-point}\I{character constant}\I{string constant}
@@ -1307,12 +1313,12 @@ keywords:
 \c      dx      := DB | DW | DD | DQ | DT | DO | DY | DZ
 \c      type    := BYTE | WORD | DWORD | QWORD | TWORD | OWORD | YWORD | ZWORD
 \c      atom    := expression | string | float | '?'
-\c      parlist := '(' value [, value ...] ')'
+\c      parlist := '(' value [',' value ...] ')'
 \c      duplist := expression DUP [type] ['%'] parlist
 \c      list    := duplist | '%' parlist | type ['%'] parlist
-\c      value   := atom | type value | list
+\c      value   := [type] atom | list
 \c
-\c      stmt    := dx value [, value...]
+\c      stmt    := dx value [',' value ...]
 
 \> Note that a \e{list} needs to be prefixed with a \I{%db}\c{%} sign unless
 prefixed by either \c{DUP} or a \e{type} in order to avoid confusing it with
@@ -1337,7 +1343,7 @@ valid:
 \c        dd 16 dup (0xaaaa, ?, 0xbbbbbb)
 \c        dd 64 dup (?)
 
-\I{baddb} The use of \c{$} (current address) in a \c{Dx} statement is
+\I{baddb} The use of \c{$} (current address) in a \c{D}\e{x} statement is
 undefined in the current version of NASM, \e{except in the following
 cases}:
 
@@ -2425,7 +2431,13 @@ A single pair of parentheses is a subcase of a single, unused argument:
 This is similar to the behavior of the C preprocessor.
 
 \b If declared with an \c{=}, NASM will expand the argument and then
-evaluate it as a numeric expression.
+evaluate it as a numeric expression. The name of the argument may
+optionally be followed by \c{/} followed by a numeric radix character
+(\c{b}, \c{y}, \c{o}, \c{q}, \c{d}, \c{t}, \c{h} or \c{x}) and/or the
+letters \c{u} (unsigned) or \c{s} (signed), in which the number is
+formatted accordingly, with a radix prefix if a radix letter is
+specified. For the case of hexadecimal, if the radix letter is in
+upper case, alphabetic hex digits will be in upper case.
 
 \b If declared with an \c{&}, NASM will expand the argument and then
 turn into a quoted string; if the argument already \e{is} a quoted
@@ -2443,9 +2455,9 @@ braces (potentially useful in conjunction with \c{&} or \c{&&}.)
 
 For example:
 
-\c     %define xyzzy(=expr,&val) expr, str
-\c     %define plugh(x) xyzzy(x,x)
-\c     db plugh(3+5), `\0` ; Expands to: db 8, "3+5", `\0`
+\c     %define xyzzy(=expr,&val,=hex/x) expr, str, hex
+\c     %define plugh(x) xyzzy(x,x,x)
+\c     db plugh(13+5), `\0` ; Expands to: db 18, "13+5", 0x12, `\0`
 
 You can \i{pre-define} single-line macros using the `-d' option on
 the NASM command line: see \k{opt-d}.
@@ -2895,7 +2907,7 @@ the macro. Note that just as for single-line macros, \c{%count()}
 treats an empty argument list as a single empty argument.
 
 \c %xdefine empty %count()        ; %define empty 1
-\c %xdefine one   %count(1) 	  ; %define one 1
+\c %xdefine one   %count(1)	  ; %define one 1
 \c %xdefine two   %count(5,q)	  ; %define two 2
 \c %define  list  a,b,46
 \c %xdefine lc1   %count(list)	  ; %define lc 1 (just one argument)
@@ -2912,11 +2924,17 @@ one argument is specified, it is expanded to a comma-separated list of
 values.
 
 \c %assign a    2
-\c %assign b    3 
-\c %defstr what %expr(a+b,a*b)	; equivalent to %define what "5,6"
+\c %assign b    3
+\c %defstr what %eval(a+b,a*b)	; equivalent to %define what "5,6"
 
 The expressions passed to \c{%eval()} are \i{critical expressions},
 see \k{crit}.
+
+
+\S{f_hex} \i\c{%hex()} Function
+
+Equivalent to \i\c\{%eval()}, except that the results generated are
+given as unsigned hexadecimal, with a \c{0x} prefix.
 
 
 \S{f_is} \i\c{%is()} Family Functions
@@ -2944,20 +2962,86 @@ argument to the conditional using \c{\{\}}:
 \c %endif
 
 
+\S{f_map} \i\c{%map()} Function
+
+The \c{%map()} function takes as its first parameter the name of a
+single-line macro, followed by up to two optional colon-separated
+subparameters:
+
+\b The first subparameter, if present, should be a list of macro
+parameters enclosed in parentheses. Note that \c{()} represents a
+one-argument list containing an empty parameter; omit the parentheses
+to specify no parameters.
+
+\b The second subparameter, if present, represent the number of
+group size for additional parameters to the macro (default 1).
+
+Further parameters, if any, are then passed as additional parameters to the
+given macro for expansion, in sets given by the specified group size,
+and the results turned into a comma-separated list. If no additional
+parameters are given, \c{%map()} expands to nothing.
+
+For example:
+
+\c %define alpha(&x)     x
+\c %define alpha(&x,y)	 y dup (x)
+\c %define alpha(s,&x,y) y dup (x,s)
+\c ; 0 fixed + 1 grouped parameters per call, calls alpha(&x)
+\c       db %map(alpha,foo,bar,baz,quux)
+\c ; 0 fixed + 2 grouped parameters per call, calls alpha(&x,y)
+\c	 db %map(alpha::2,foo,bar,baz,quux)
+\c ; 1 fixed + 2 grouped parameters per call, calls alpha(s,&x,y)
+\c       db %map(alpha:("!"):2,foo,bar,baz,quux)
+
+... expands to:
+
+\c       db 'foo','bar','baz','quux'
+\c       db bar dup ('foo'),quux dup ('baz')
+\c       db bar dup ('foo',"!"),quux dup ('baz',"!")
+
+As a more complex example, a macro that joins quoted strings together
+with a user-specified delimiter string:
+
+\c %define join(sep)        ''      ; handle the case of zero strings
+\c %define _join(sep,str)   sep,str ; helper macro
+\c %define join(sep,s1,sn+) %strcat(s1, %map(_join:(sep) %, sn))
+\c
+\c       db join(':')
+\c       db join(':','a')
+\c       db join(':','a','b')
+\c       db join(':','a','b','c')
+\c       db join(':','a','b','c','d')
+
+... expands to:
+
+\c       db ''
+\c       db 'a'
+\c       db 'a:b'
+\c       db 'a:b:c'
+\c       db 'a:b:c:d'
+
+
 \S{f_num} \i\c{%num()} Function
 
 The \c{%num()} function evaluates its arguments as expressions, and
 then produces a quoted string encoding the first argument as an
-\e{unsigned} integer. The second argument is the desired number of
-digits (max 253, default -1), and the second argument is the encoding
-base (from 2 to 64, default 10.)
+\e{unsigned} 64-bit integer.
+
+The second argument is the desired number of digits (max 255, default
+-1).
+
+The third argument is the encoding base (from 2 to 64, default 10); if
+the base is given as -2, -8, -10, or -16, then \c{0b}, \c{0q}, \c{0d}
+or \c{0x} is prepended, respectively; all other negative values are
+disallowed.
 
 Only the first argument is required.
 
 If the number of digits is negative, NASM will add additional digits
-if needed, if positive the string is truncated to the number of digits
+if needed; if positive the string is truncated to the number of digits
 specified. 0 is treated as -1, except that the input number 0
-generates an empty string (thus, the first digit will never be zero.)
+always generates an empty string (thus, the first digit will never be
+zero), even if the base given is negative.
 
 The full 64-symbol set used is, in order:
 
@@ -2966,7 +3050,6 @@ The full 64-symbol set used is, in order:
 If a \e{signed} number needs to be converted to a string, use
 \c{%abs()}, \c{%cond()}, and \c{%strcat()} to format the signed number
 string to your specific output requirements.
-
 
 \S{f_sel} \i\c{%sel()} Function
 
@@ -4736,7 +4819,7 @@ Include Test
 
 When a standard macro package (see \k{macropkg}) is included with the
 \c{%use} directive (see \k{use}), a single-line macro of the form
-\c{__USE_}\e{package}\c{__} is automatically defined.  This allows
+\c{__?USE_}\e{package}\c{?__} is automatically defined.  This allows
 testing if a particular package is invoked or not.
 
 For example, if the \c{altreg} package is included (see
@@ -5193,7 +5276,7 @@ order to control particular features of that file format. These
 documented along with the formats that implement them, in \k{outfmt}.
 
 
-\H{bits} \i\c{BITS}: Specifying Target \i{Processor Mode}
+\H{bits} \i\c{BITS}: Target \i{Processor Mode}
 
 The \c{BITS} directive specifies whether NASM should generate code
 \I{16-bit mode, versus 32-bit mode}designed to run on a processor
@@ -5550,19 +5633,19 @@ private extensions mentioned in \k{global}.
 \c{LPOSTFIX} directives can prepend or append a string to a certain
 type of symbols, normally to fit specific ABI conventions
 
-\b\c{PREFIX}|\c{GPREFIX}: Prepend the argument to all \c{EXTERN}
+\b\c{PREFIX}|\c{GPREFIX}: Prepend the argument to all \c{EXTERN},
 \c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols.
 
 \b\c{LPREFIX}: Prepend the argument to all other symbols
 such as local labels and backend defined symbols.
 
-\b\c{POSTFIX}|\c{GPOSTFIX}: Append the argument to all \c{EXTERN}
+\b\c{POSTFIX}|\c{GPOSTFIX}: Append the argument to all \c{EXTERN},
 \c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols.
 
 \b\c{LPOSTFIX}: Append the argument to all other symbols
 such as local labels and backend defined symbols.
 
-These a macros implemented as pragmas, and using \c{%pragma} syntax
+These are macros implemented as pragmas, and using \c{%pragma} syntax
 can be restricted to specific backends (see \k{pragma}):
 
 \c %pragma macho lprefix L_
@@ -5578,17 +5661,19 @@ One example which supports many ABIs:
 \c %pragma elf    gprefix			; empty
 \c %pragma elf    lprefix .L
 
-Some toolchains is aware of a particular prefix for its own optimization
-options, such as code elimination. For instance, Mach-O backend has a
-linker that uses a simplistic naming scheme to chunk up sections into a
-meta section. When the \c{subsections_via_symbols} directive
-(\k{macho-ssvs}) is declared, each symbol is the start of a
-separate block. The meta section is, then, defined to include sections
-before the one that starts with a 'L'. \c{LPREFIX} is useful here to mark
-all local symbols with the 'L' prefix to be excluded to the meta section.
-It converts local symbols compatible with the particular toolchain.
-Note that local symbols declared with \c{STATIC} (\k{static})
-are excluded from the symbol mangling and also not marked as global.
+Some toolchains is aware of a particular prefix for its own
+optimization options, such as dead code elimination. For instance, the
+Mach-O binary format has a linker convention that uses a simplistic
+naming scheme to chunk up sections into smaller subsections, each of
+which may be eliminated. When the \c{subsections_via_symbols}
+directive (\k{macho-ssvs}) is declared, each symbol is the start of a
+separate block. The subsection is, then, defined to include sections
+before the one that starts with a 'L'. \c{LPREFIX} is useful here to
+mark all local symbols with the 'L' prefix to be excluded to the meta
+section.  It converts local symbols compatible with the particular
+toolchain.  Note that local symbols declared with \c{STATIC}
+(\k{static}) are excluded from the symbol mangling and also not marked
+as global.
 
 
 \H{CPU} \i\c{CPU}: Defining CPU Dependencies
@@ -5600,7 +5685,7 @@ used to enforce unavailable \e{encodings} of instructions, such as
 
 (If someone would volunteer to work through the database and add
 proper annotations to each instruction, this could be greatly
-improved. Please contact the developers to volunteer, see \{contact}.)
+improved. Please contact the developers to volunteer, see \k{contact}.)
 
 Current CPU keywords are:
 
@@ -5770,6 +5855,13 @@ leaves your file name as it is once the original extension has been
 removed. Thus, the default is for NASM to assemble \c{binprog.asm}
 into a binary file called \c{binprog}.
 
+It is extremely important to understand that the binary output format
+is simply nothing other than \e{a linker built into the NASM
+executable.} As such, NASM behaves just as it does when producing any
+other output format: notably the list file reflects the code output
+\e{before} relocation, and the addresses in the list file are
+addresses relative to the start of the current output section.
+
 
 \S{org} \i\c{ORG}: Binary File \i{Program Origin}
 
@@ -5870,11 +5962,13 @@ brackets must be used.
 
 The \c{ith} file format produces Intel hex-format files.  Just as the
 \c{bin} format, this is a flat memory image format with no support for
-relocation or linking.  It is usually used with ROM programmers and
-similar utilities.
+further relocation or linking.  It is usually used with ROM
+programmers and similar utilities.
 
-All extensions supported by the \c{bin} file format is also supported by
-the \c{ith} file format.
+From a programmer point of view, this behaves identically to the
+\c{.bin} format; the only difference is the encoding of the
+output. All extensions supported by the \c{bin} file format is also
+supported by the \c{ith} file format.
 
 \c{ith} provides a default output file-name extension of \c{.ith}.
 
@@ -5886,8 +5980,10 @@ The \c{srec} file format produces Motorola S-records files.  Just as the
 relocation or linking.  It is usually used with ROM programmers and
 similar utilities.
 
-All extensions supported by the \c{bin} file format is also supported by
-the \c{srec} file format.
+From a programmer point of view, this behaves identically to the
+\c{.bin} format; the only difference is the encoding of the
+output. All extensions supported by the \c{bin} file format is also
+supported by the \c{srec} file format.
 
 \c{srec} provides a default output file-name extension of \c{.srec}.
 
@@ -9059,7 +9155,7 @@ number of NDISASM you are running, and \i\c{-h} which gives a short
 summary of command line options.
 
 
-\S{ndiscom} COM Files: Specifying an Origin
+\S{ndiscom} Specifying the Input Origin
 
 To disassemble a \c{DOS .COM} file correctly, a disassembler must assume
 that the first instruction in the file is loaded at address \c{0x100},
