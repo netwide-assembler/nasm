@@ -12,7 +12,7 @@ since 2007.
 \b ... here goes release notes not intended to be included in the
 2.16.xx stable series ...
 
-\S{cl-2.16.02} Version 2.16.03
+\S{cl-2.16.03} Version 2.16.03
 
 \e{This is a source build machinery and documentation update
 only. There are no functionality changes.}
