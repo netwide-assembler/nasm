@@ -4,7 +4,7 @@ Summary: The Netwide Assembler, a portable x86 assembler with Intel-like syntax
 Name: nasm
 Version: @@NASM_MANGLED_VER@@
 Release: 0%{?dist}
-License: BSD
+License: BSD-2-Clause
 Source: http://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_version}.tar.xz
 URL: http://www.nasm.us/
 BuildRoot: /tmp/rpm-build-nasm
@@ -14,9 +14,11 @@ BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: asciidoc
 BuildRequires: xmlto
-BuildRequires: xz
 BuildRequires: perl
+BuildRequires: gcc
+BuildRequires: make
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Obsoletes: nasm-rdoff
 
 %package doc
 Summary: Detailed manual for the Netwide Assembler
@@ -25,6 +27,8 @@ BuildRequires: ghostscript
 BuildRequires: fontconfig
 BuildRequires: adobe-source-sans-pro-fonts
 BuildRequires: adobe-source-code-pro-fonts
+BuildRequires: xz
+Obsoletes: %{nasm}-doc < %{version}-%{release}
 
 %description
 NASM is the Netwide Assembler, a free portable assembler for the Intel
