@@ -12,6 +12,12 @@ since 2007.
 \b ... here goes release notes not intended to be included in the
 2.16.xx stable series ...
 
+\S{cl-2.16.04} Version 2.16.04
+
+\b Clean up the command-line help text (\c{-h}) and break it down into
+individual topics, as the previous output was just too verbose to be
+practical as a quick reference.
+
 \S{cl-2.16.03} Version 2.16.03
 
 \e{This is a source build machinery and documentation update
