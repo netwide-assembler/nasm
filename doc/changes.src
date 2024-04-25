@@ -7,6 +7,12 @@
 The NASM 2 series supports x86-64, and is the production version of NASM
 since 2007.
 
+\S{cl-2.16.04} Version 2.16.04
+
+\b Clean up the command-line help text (\c{-h}) and break it down into
+individual topics, as the previous output was just too verbose to be
+practical as a quick reference.
+
 \S{cl-2.16.03} Version 2.16.03
 
 \e{This is a source build machinery and documentation update
