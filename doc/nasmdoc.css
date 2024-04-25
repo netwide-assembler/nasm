@@ -72,7 +72,7 @@ li.toc2 {
 ul.navbar {
     display: none;
 }
-@media only print {
+@media print {
     a {
 	color: inherit;
     }
