@@ -8424,6 +8424,14 @@ where your library is loaded (which is typically done using a
 GOT, and you can then load the addresses of your variables out of
 linker-generated entries in the GOT.
 
+However, this approach is no longer recommended in environments 
+where Control-flow Enforcement Technology (CET) with shadow stacks 
+is active. The shadow stack mechanism in CET is designed to protect 
+against return-oriented programming attacks by ensuring that the 
+return addresses remain unmodified. Using CALL and POP trick 
+interfere with the integrity of the shadow stack, potentially 
+leading to runtime errors.
+
 The \e{data} section of a PIC shared library does not have these
 restrictions: since the data section is writable, it has to be
 copied into memory anyway rather than just paged in from the library
@@ -8486,6 +8494,26 @@ to get the real address of the GOT, and subtracts the value of
 \c{.get_GOT} which it knows is in \c{EBX}. Therefore, by the time
 that instruction has finished, \c{EBX} contains the address of the GOT.
 
+CET compatible function:
+
+\c func:   push    ebp
+\c         mov     ebp,esp
+\c         push    ebx
+\c         call    .get_GOT
+\c         jmp     .after_get
+\c .get_GOT:
+\c         mov     ebx, [esp]
+\c         add     ebx,_GLOBAL_OFFSET_TABLE_+$$-.get_GOT wrt ..gotpc
+\c         ret
+\c .after_get:
+\c
+\c         ; the function body comes here
+\c
+\c         mov     ebx,[ebp-4]
+\c         mov     esp,ebp
+\c         pop     ebp
+\c         ret
+
 If you didn't follow that, don't worry: it's never necessary to
 obtain the address of the GOT by any other means, so you can put
 those three instructions into a macro and safely ignore them:
@@ -8498,6 +8526,21 @@ those three instructions into a macro and safely ignore them:
 \c         add     ebx,_GLOBAL_OFFSET_TABLE_+$$-%%getgot wrt ..gotpc
 \c
 \c %endmacro
+
+CET compatible macro:
+
+\c %macro  get_GOT 0
+\c
+\c         call    %%getgot
+\c         jmp     %%after_get
+\c   %%getgot:
+\c         mov     ebx, [esp]
+\c         add     ebx,_GLOBAL_OFFSET_TABLE_+$$-%%getgot wrt ..gotpc
+\c         ret
+\c   %%after_get:
+\c
+\c %endmacro
+
 
 \S{piclocal} Finding Your Local Data Items
 
