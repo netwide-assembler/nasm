@@ -86,6 +86,9 @@
 #   the \W prefix is ignored except in HTML; in HTML the last part
 #   becomes a hyperlink to the first part.
 #
+# Web URL \w{http://foobar/}
+#   equivalent to \W{http://foobar}\c{http://foobar/}.
+#
 # Literals \{ \} \\
 #   In case it's necessary, they expand to the real versions.
 #
@@ -123,8 +126,8 @@
 #   insert the {something} string associated with metadata {key}
 #
 # Include subfile
-# \&{filename}
-#  Includes filename. Recursion is allowed.
+# \& filename
+#   includes filename. Recursion is allowed. Must be on a separate line.
 #
 
 use File::Spec;
@@ -474,22 +477,31 @@ sub got_para {
       die "badly formatted \\k: \\k$_\n" if !/\{([^\}]*)\}(.*)$/;
       $_ = $2;
       push @$para,"$t$1";
-    } elsif (/^\\W/) {
-      s/^\\W//;
-      die "badly formatted \\W: \\W$_\n"
-          if !/\{([^\}]*)\}(\\i)?(\\c)?\{(([^\\}]|\\.)*)\}(.*)$/;
-      $l = $1;
-      $w = $4;
-      $_ = $6;
-      $t = "w ";
-      $t = "wc" if $3 eq "\\c";
-      $indexing = 1 if $2;
-      $w =~ s/\\\{/\{/g;
-      $w =~ s/\\\}/\}/g;
-      $w =~ s/\\-/-/g;
-      $w =~ s/\\\\/\\/g;
-      push(@$para, addidx($node, $w, "c $w")) if $indexing;
-      push(@$para, "$t<$l>$w");
+    } elsif (/^\\[Ww]/) {
+	if (/^\\w/) {
+	    die "badly formatted \\w: $_\n"
+		if !/^\\w(\\i)?\{([^\\}]*)\}(.*)$/;
+	    $l = $2;
+	    $w = $2;
+	    $indexing = $1;
+	    $c = 1;
+	    $_ = $3;
+	} else {
+	    die "badly formatted \\W: $_\n"
+		if !/^\\W\{([^\\}]*)\}(\\i)?(\\c)?\{(([^\\}]|\\.)*)\}(.*)$/;
+	    $l = $1;
+	    $w = $4;
+	    $_ = $6;
+	    $indexing = $2;
+	    $c = $3;
+	}
+	$t = $c ? 'wc' : 'w ';
+	$w =~ s/\\\{/\{/g;
+	$w =~ s/\\\}/\}/g;
+	$w =~ s/\\-/-/g;
+	$w =~ s/\\\\/\\/g;
+	push(@$para, addidx($node, $w, "c $w")) if $indexing;
+	push(@$para, "$t<$l>$w");
     } else {
       die "what the hell? $_\n" if !/^(([^\s\\\-]|\\[\\{}\-])*-?)(.*)$/;
       die "painful death! $_\n" if !length $1;
