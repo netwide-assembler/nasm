@@ -71,6 +71,7 @@ TAGS
 /doc/inslist.src
 /doc/version.src
 /doc/warnings.src
+/doc/perlbreq.src
 /doc/fontpath
 /doc/Fontmap
 /include/warnings.h

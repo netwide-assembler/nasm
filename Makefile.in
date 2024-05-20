@@ -442,7 +442,7 @@ cscope:
 	$(FIND) . -name '*.[hcS]' -print > cscope.files
 	cscope -b -f cscope.out
 
-doc: doc/warnings.src
+doc: doc/warnings.src doc/perlbreq.src
 	$(MAKE) -C doc all
 
 doc_install install_doc:
@@ -477,6 +477,11 @@ perlbreq.si: $(ALLPERLSRC)
 	sed -n -r -e 's/^[[:space:]]*use[[:space:]]+([[:upper:]][^[:space:];]*).*$$/BuildRequires: perl(\1)/p' $(ALLPERLSRC) | \
 	sed -r -e '/perl\((Win32.*)\)/d' | \
 	sort | uniq > perlbreq.si
+
+doc/perlbreq.src: perlbreq.si
+	sed -n -r -e 's/^BuildRequires: perl\((.*)\)$$/\\c      \1/p' \
+		< perlbreq.si > doc/perlbreq.src
+	echo '\c      Win32 (if building on Windows only)' >> doc/perlbreq.src
 
 nasm.spec: nasm.spec.in nasm.spec.sed version.sed perlbreq.si
 	sed -f version.sed -f nasm.spec.sed \

@@ -9,8 +9,7 @@ since 2007.
 
 \S{cl-2.17} Version 2.17
 
-\b ... here goes release notes not intended to be included in the
-2.16.xx stable series ...
+\b Improve the documentation for building from source (\k{source}).
 
 \S{cl-2.16.04} Version 2.16.04
 

@@ -8946,7 +8946,7 @@ a zero-extended absolute displacement can access from 0 to 4 GB.
 On Unix, the 64-bit ABI as well as the x32 ABI (32-bit ABI with the
 CPU in 64-bit mode) is defined by the documents at:
 
-\W{http://www.nasm.us/abi/unix64}\c{http://www.nasm.us/abi/unix64}
+\W{https://www.nasm.us/abi/unix64}\c{https://www.nasm.us/abi/unix64}
 
 Although written for AT&T-syntax assembly, the concepts apply equally
 well for NASM-style assembly.  What follows is a simplified summary.
@@ -8980,7 +8980,7 @@ Integer and SSE register arguments are counted separately, so for the case of
 
 The Win64 ABI is described by the document at:
 
-\W{http://www.nasm.us/abi/win64}\c{http://www.nasm.us/abi/win64}
+\W{https://www.nasm.us/abi/win64}\c{https://www.nasm.us/abi/win64}
 
 What follows is a simplified summary.
 
@@ -9294,32 +9294,109 @@ anyway.
 \A{source} Building NASM from Source
 
 The source code for NASM is available from our website,
-\W{http://www.nasm.us/}{http://www.nasm.us/}, see \k{website}.
+\w{https://www.nasm.us/}, see \k{website}.
 
 \H{tarball} Building from a Source Archive
 
 The source archives available on the web site should be capable of
 building on a number of platforms.  This is the recommended method for
 building NASM to support platforms for which executables are not
-available.
+available, if you do not require changing the source code.
 
-On a system which has Unix shell (\c{sh}), run:
+The preferred build platforms are development environments which
+support POSIX (Unix)-style tools (a "POSIX environment"). For Windows,
+MSYS2 (\w{https://www.msys2.org/}) is such a development environment.
+
+In a POSIX environment, run:
 
 \c      sh configure
-\c      make everything
+\c      make
 
 A number of options can be passed to \c{configure}; see
-\c{sh configure --help}.
+\c{sh configure --help}. In particular, the \c{--host} option can be
+used to cross-compile NASM to run on another host system.
 
-A set of Makefiles for some other environments are also available;
-please see the file \c{Mkfiles/README}.
+For non-POSIX environments, a set of Makefiles for some other
+environments are also available; please see the file
+\c{Mkfiles/README}.
 
-To build the installer for the Windows platform, you will need the
-\i\e{Nullsoft Scriptable Installer}, \i{NSIS}, installed.
+The \c{.zip} version of the source archive has DOS/Windows line
+endings (\c{CR LF}), which many POSIX systems will not recognize. To
+extract the \c{.zip} version on such a system, use \c{unzip
+-a}. The \c{.tar} versions of the source archive has POSIX line
+endings (\c{LF}).
 
-To build the documentation, you will need a set of additional tools.
-The documentation is not likely to be able to build on non-Unix
-systems.
+
+\H{buildtools} Optional Build Tools
+
+The following additional tools are required to build specific
+subsystems, to build from the \c{git} repository, or if the sources
+are modified.
+
+Note that some of these tools will have their own dependencies.
+
+Make sure all tools are available in your \c{PATH} (or equivalent.)
+
+To build the installer for the Windows platform:
+
+\b The \i{Nullsoft Scriptable Installer} (\i{NSIS},
+\w{https://nsis-dev.github.io/}).
+
+To modify the sources, \e{or} to build the documentation:
+
+\b A Perl interpreter (\w{https://www.perl.org/}).
+
+\b Modules from CPAN (\w{https://www.cpan.org/}). The following Perl
+modules are currently required, some of which will be bundled with the
+Perl interpreter or into larger CPAN packages:
+
+\& perlbreq.src
+
+To build the documentation:
+
+\b Either Ghostscript (\w{https://www.ghostscript.com/}) or Adobe
+Acrobat Distiller (untested.)
+
+\b The Adobe \e{Source Sans} (or \e{Source Sans 3}) and \e{Source
+Code} fonts, which are freely available under the SIL Open Font
+License (\w{https://fonts.adobe.com/}).
+
+To build the Unix man pages:
+
+\b AsciiDoc (\w{https://asciidoc.org/}).
+
+\b xmlto (\w{https://pagure.io/xmlto/}).
+
+To build from the \c{git} repository on a POSIX platform:
+
+\b GNU \c{m4}, \c{autoconf} and \c{autoheader}
+(\w{https://www.gnu.org/}).
+
+
+
+\H{buildopt} Building Optional Components
+
+Install the required tools for the subsystem in question as described
+in \k{buildtools}.
+
+To build the documentation:
+
+\c      make doc
+
+Building the documentation may not work in a non-POSIX environment.
+
+To build the Windows installer:
+
+\c      make nsis
+
+To build the Unix man pages:
+
+\c      make manpages
+
+To build everything available on the current platform:
+
+\c      make everything
+
 
 \H{git} Building from the \i\c{git} Repository
 
@@ -9328,30 +9405,45 @@ the \c{git} distributed source control system.  The link is available
 on the website.  This is recommended only to participate in the
 development of NASM or to assist with testing the development code.
 
-To build NASM from the \c{git} repository you will need a Perl
-interpreter and, if building on a Unix system, GNU autoconf installed
-on your system.
+Install the required tools as described in section \k{buildtools}.
 
-To build on a Unix system, run:
+In a POSIX environment:
+
+Run:
 
 \c      sh autogen.sh
 
-to create the \c{configure} script and then build as listed above.
+to create the \c{configure} script and then build as described in
+\k{tarball}.
 
-\H{builddoc} Building the documentation
+In a non-POSIX environment, use the tool-specific Makefiles
+as described in \k{tarball}.
 
-To build the documentation, you will need a Perl interpreter, a
-Postscript to PDF converter such as Ghostscript, and suitable fonts
-installed on your system. The recommended (and default) fonts are
-Adobe's Source Sans and Source Code fonts, which are freely available
-under the SIL Open Font License.
+
+\H{modifysrc} Modifying the Sources
+
+To build modified sources, you will need the tools described in
+\k{buildtools}.
+
+Some build system changes might not be possible without a POSIX
+environment.
+
+If you have modified the sources to change the embedded declarations
+of warning classes, you may have to manually re-build the warning
+catalog:
+
+\c      make warnings
+
+This is not done automatically, as the tools do not have the ability
+to automatically detect when it is necessary to do so.
+
 
 \A{contact} Contact Information
 
 \H{website} Website
 
 NASM has a \i{website} at
-\W{http://www.nasm.us/}\c{http://www.nasm.us/}.
+\w{https://www.nasm.us/}.
 
 \i{New releases}, \i{release candidates}, and \I{snapshots, daily
 development}\i{daily development snapshots} of NASM are available from
@@ -9374,7 +9466,7 @@ links and archives of past posts are available on the website.
 \H{bugs} \i{Reporting Bugs}\I{bugs}
 
 To report bugs in NASM, please use the \i{bug tracker} at
-\W{http://www.nasm.us/}\c{http://www.nasm.us/} (click on "Bug
+\w{https://www.nasm.us/} (click on "Bug
 Tracker"), or if that fails then through one of the contacts in
 \k{website}.
 
