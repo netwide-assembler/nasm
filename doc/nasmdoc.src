@@ -2892,7 +2892,7 @@ The \c{%cond()} function evaluates its first argument as an
 expression, then expands to its second argument if true (nonzero), and
 the third, if present, if false (zero). This is in effect a specialized
 version of the \i\c{%sel()} function; \c{%cond(x,y,z)} is equivalent
-to \c{%sel(2-!(x),y,z)}.
+to \c{%sel(1+!(x),y,z)}.
 
 \c %define a 1
 \c %xdefine astr %cond(a,"true","false") ; %define astr "true"
