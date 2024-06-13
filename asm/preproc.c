@@ -2523,6 +2523,9 @@ static Token **count_mmac_params(Token *tline, int *nparamp, Token ***paramsp)
                 }
             }
 
+            if (!t)
+                break;              /* End of string, no comma */
+
             /* Advance to the next comma */
             maybe_comma = &t->next;
             while (tok_isnt(t, ',')) {
