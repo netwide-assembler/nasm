@@ -1436,8 +1436,13 @@ static Token *tokenize(const char *line)
                 }
                 while (nasm_isidchar(*p));
             } else if (*p == '%') {
-                /* %% operator */
                 p++;
+                if (*p == '[') {
+                    /* %%[ */
+                    p++;
+                } else {
+                    /* %% operator */
+                }
             }
 
             if (!ep)
@@ -1493,7 +1498,13 @@ static Token *tokenize(const char *line)
                     break;
 
                 case '%':
-                    type = (toklen == 2) ? TOKEN_SMOD : TOKEN_LOCAL_SYMBOL;
+                    if (toklen == 2) {
+                        type = TOKEN_SMOD;
+                    } else if (toklen >= 3 && line[2] == '[') {
+                        type = TOKEN_INDIRECT_ID;
+                    } else {
+                        type = TOKEN_LOCAL_SYMBOL;
+                    }
                     break;
 
                 case '$':
