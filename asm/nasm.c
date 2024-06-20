@@ -606,6 +606,7 @@ int main(int argc, char **argv)
     if (!outname && !(operating_mode & OP_PREPROCESS)) {
         outname = filename_set_extension(inname, ofmt->extension);
         if (!strcmp(outname, inname)) {
+            nasm_free((char *)outname);
             outname = "nasm.out";
             nasm_warn(WARN_OTHER, "default output file same as input, using `%s' for output\n", outname);
         }
