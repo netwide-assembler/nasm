@@ -575,7 +575,7 @@ static void macho_output(int32_t secto, const void *data,
         dfmt->debug_output(0, &sinfo);
     }
 
-    is_bss = (s->flags & SECTION_TYPE) == S_ZEROFILL;
+    is_bss = (s->flags & SECTION_TYPE) == S_ZEROFILL || (s->flags & SECTION_TYPE) == S_THREAD_LOCAL_ZEROFILL;
 
     if (is_bss && type != OUT_RESERVE) {
         nasm_warn(WARN_OTHER, "attempt to initialize memory in "
@@ -740,14 +740,19 @@ static const struct macho_known_section {
     const char      *sectname;
     const uint32_t  flags;
 } known_sections[] = {
-    { ".text",          "__TEXT",   "__text",           S_CODE          },
-    { ".data",          "__DATA",   "__data",           S_REGULAR       },
-    { ".rodata",        "__DATA",   "__const",          S_REGULAR       },
-    { ".bss",           "__DATA",   "__bss",            S_ZEROFILL      },
-    { ".debug_abbrev",  "__DWARF",  "__debug_abbrev",   S_ATTR_DEBUG    },
-    { ".debug_info",    "__DWARF",  "__debug_info",     S_ATTR_DEBUG    },
-    { ".debug_line",    "__DWARF",  "__debug_line",     S_ATTR_DEBUG    },
-    { ".debug_str",     "__DWARF",  "__debug_str",      S_ATTR_DEBUG    },
+    { ".text",          "__TEXT",   "__text",           S_CODE                                  },
+    { ".data",          "__DATA",   "__data",           S_REGULAR                               },
+    { ".rodata",        "__DATA",   "__const",          S_REGULAR                               },
+    { ".bss",           "__DATA",   "__bss",            S_ZEROFILL                              },
+    { ".tdata",         "__DATA",   "__thread_data",    S_THREAD_LOCAL_REGULAR                  },
+    { ".tbss",          "__DATA",   "__thread_bss",     S_THREAD_LOCAL_ZEROFILL                 },
+    { NULL,             "__DATA",   "__thread_vars",    S_THREAD_LOCAL_VARIABLES                },
+    { NULL,             "__DATA",   "__thread_ptrs",    S_THREAD_LOCAL_VARIABLE_POINTERS        },
+    { NULL,             "__DATA",   "__thread_init",    S_THREAD_LOCAL_INIT_FUNCTION_POINTERS   },
+    { ".debug_abbrev",  "__DWARF",  "__debug_abbrev",   S_ATTR_DEBUG                            },
+    { ".debug_info",    "__DWARF",  "__debug_info",     S_ATTR_DEBUG                            },
+    { ".debug_line",    "__DWARF",  "__debug_line",     S_ATTR_DEBUG                            },
+    { ".debug_str",     "__DWARF",  "__debug_str",      S_ATTR_DEBUG                            },
 };
 
 /* Section type or attribute directives */
@@ -760,6 +765,9 @@ static const struct macho_known_section_attr {
     { "mixed",              S_REGULAR | S_ATTR_SOME_INSTRUCTIONS    },
     { "bss",                S_ZEROFILL                              },
     { "zerofill",           S_ZEROFILL                              },
+    { "thread_data",        S_THREAD_LOCAL_REGULAR                  },
+    { "thread_bss",         S_THREAD_LOCAL_ZEROFILL                 },
+    { "thread_zerofil",     S_THREAD_LOCAL_ZEROFILL                 },
     { "no_dead_strip",      NO_TYPE | S_ATTR_NO_DEAD_STRIP          },
     { "live_support",       NO_TYPE | S_ATTR_LIVE_SUPPORT           },
     { "strip_static_syms",  NO_TYPE | S_ATTR_STRIP_STATIC_SYMS      },
@@ -777,7 +785,7 @@ lookup_known_section(const char *name, bool by_sectname)
                 const char *p = by_sectname ?
                     known_sections[i].sectname :
                     known_sections[i].nasmsect;
-                if (!strcmp(name, p))
+                if (p && !strcmp(name, p))
                     return &known_sections[i];
             }
     }
@@ -1248,7 +1256,7 @@ static void macho_calculate_sizes (void)
         seg_vmsize = newaddr + s->size;
 
         /* zerofill sections aren't actually written to the file */
-        if ((s->flags & SECTION_TYPE) != S_ZEROFILL) {
+        if ((s->flags & SECTION_TYPE) != S_ZEROFILL && (s->flags & SECTION_TYPE) != S_THREAD_LOCAL_ZEROFILL) {
 	    /*
 	     * LLVM/Xcode as always aligns the section data to 4
 	     * bytes; there is a comment in the LLVM source code that
@@ -1330,7 +1338,7 @@ static uint32_t macho_write_segment (uint64_t offset)
     /* emit section headers */
     for (s = sects; s != NULL; s = s->next) {
 	if (s->nreloc) {
-	    nasm_assert((s->flags & SECTION_TYPE) != S_ZEROFILL);
+	    nasm_assert((s->flags & SECTION_TYPE) != S_ZEROFILL && (s->flags & SECTION_TYPE) != S_THREAD_LOCAL_ZEROFILL);
 	    s->flags |= S_ATTR_LOC_RELOC;
 	    if (s->extreloc)
 		s->flags |= S_ATTR_EXT_RELOC;
@@ -1353,7 +1361,7 @@ static uint32_t macho_write_segment (uint64_t offset)
         fwriteptr(s->size, ofile);
 
         /* dummy data for zerofill sections or proper values */
-        if ((s->flags & SECTION_TYPE) != S_ZEROFILL) {
+        if ((s->flags & SECTION_TYPE) != S_ZEROFILL && (s->flags & SECTION_TYPE) != S_THREAD_LOCAL_ZEROFILL) {
 	    nasm_assert(s->pad != (uint32_t)-1);
 	    offset += s->pad;
             fwriteint32_t(offset, ofile);
@@ -1419,7 +1427,7 @@ static void macho_write_section (void)
     } blk;
 
     for (s = sects; s != NULL; s = s->next) {
-	if ((s->flags & SECTION_TYPE) == S_ZEROFILL)
+	if ((s->flags & SECTION_TYPE) == S_ZEROFILL || (s->flags & SECTION_TYPE) == S_THREAD_LOCAL_ZEROFILL)
 	    continue;
 
 	/* Like a.out Mach-O references things in the data or bss
