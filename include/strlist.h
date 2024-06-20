@@ -89,5 +89,5 @@ void * safe_alloc strlist_linearize(const struct strlist *list, char sep);
 void strlist_write(const struct strlist *list, const char *sep, FILE *f);
 void strlist_free(struct strlist **listp);
 #define strlist_for_each(p,h) list_for_each((p), strlist_head(h))
- 
+
 #endif /* NASM_STRLIST_H */
