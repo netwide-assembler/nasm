@@ -4736,7 +4736,7 @@ issue_error:
         }
         mmac = istk->mstk.mmac;
         if (!mmac) {
-            nasm_nonfatal("`%s' invoked outside a macro call", dname);;
+            nasm_nonfatal("`%s' invoked outside a macro call", dname);
         } else if (mmac->nparam == 0) {
             nasm_nonfatal("`%s' invoked within macro without parameters", dname);
         } else {
