@@ -118,6 +118,7 @@ if_("SM4",               "SM4 instructions");
 if_("AMXFP16",           "AMX float16 multiplication");
 if_("AMXCOMPLEX",        "AMX float16 complex multiplication");
 if_("AVXVNNI",           "AVX Vector Neural Network instructions");
+if_("AVXVNNIINT16",      "AVX Vector Neural Network 16-bit integer instructions");
 
 # Put these last to minimize their relevance
 if_("OBSOLETE",          "Instruction removed from architecture");

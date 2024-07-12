@@ -3643,6 +3643,20 @@ VPDPBUUD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 50 /r]	AVXVNNIINT8
 VPDPBUUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,AVX
 VPDPBUUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,AVX
 
+;# AVX Vector Neural Network Instructions INT16
+VPDPWSUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWSUD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f3.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWSUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWSUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f3.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUSD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUSD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUSDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUSDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUUD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
+
 ;# AVX Integer Fused Multiply-Add
 ; Must precede AVX-512 versions
 VPMADD52HUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX
