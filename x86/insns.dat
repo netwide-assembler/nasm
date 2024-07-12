@@ -3618,6 +3618,17 @@ VCVTNEOPH2PS	ymmreg,mem256				[rm:	vex.256.np.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE
 VCVTNEPS2BF16	xmmreg,xmmrm128				[rm:	vex.128.f3.0f38.w0 72 /r]	AVXNECONVERT,FUTURE,AVX,SX
 VCVTNEPS2BF16	xmmreg,ymmrm256				[rm:	vex.256.f3.0f38.w0 72 /r]	AVXNECONVERT,FUTURE,AVX,SY
 
+;# AVX Vector Neural Network Instructions
+; Must precede AVX-512 versions
+VPDPBUSD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 50 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPBUSD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 50 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPBUSDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 51 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPBUSDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 51 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPWSSD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 52 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPWSSD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 52 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPWSSDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 53 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPWSSDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 53 /r]	AVXVNNI,FUTURE,LATEVEX
+
 ;# AVX Vector Neural Network Instructions INT8
 VPDPBSSD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f2.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,AVX
 VPDPBSSD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f2.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,AVX
