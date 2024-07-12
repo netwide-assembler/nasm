@@ -23,6 +23,7 @@
 	tdpbusd treg, treg2, treg3
 	tdpbsud treg, treg2, treg3
 	tdpbuud treg, treg2, treg3
+	tdpfp16ps treg, treg2, treg3
 
 	tilestored [rax], treg
 	tilestored [rax,rdx], treg
