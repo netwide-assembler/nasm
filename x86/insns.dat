@@ -3645,10 +3645,10 @@ VPDPBUUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 51 /r]	AVXVNNIINT
 
 ;# AVX Integer Fused Multiply-Add
 ; Must precede AVX-512 versions
-VPMADD52HUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX,SX
-VPMADD52HUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX,SY
-VPMADD52LUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b4 /r]	AVXIFMA,FUTURE,LATEVEX,SX
-VPMADD52LUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b4 /r]	AVXIFMA,FUTURE,LATEVEX,SY
+VPMADD52HUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX
+VPMADD52HUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX
+VPMADD52LUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b4 /r]	AVXIFMA,FUTURE,LATEVEX
+VPMADD52LUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b4 /r]	AVXIFMA,FUTURE,LATEVEX
 
 ;# AVX-512 mask register instructions
 KADDB           kreg,kreg,kreg                      [rvm: vex.nds.l1.66.0f.w0 4a /r ] FUTURE
