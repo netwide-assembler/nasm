@@ -116,6 +116,7 @@ if_("SHA512",            "SHA512 instructions");
 if_("SM3",               "SM3 instructions");
 if_("SM4",               "SM4 instructions");
 if_("AMXFP16",           "AMX float16 multiplication");
+if_("AMXCOMPLEX",        "AMX float16 complex multiplication");
 
 # Put these last to minimize their relevance
 if_("OBSOLETE",          "Instruction removed from architecture");

@@ -6096,6 +6096,8 @@ LDTILECFG	mem512				[m:	vex.128.np.0f38.w0 49 /0]		AMXTILE,FUTURE,SZ,LONG
 STTILECFG	mem512				[m:	vex.128.66.0f38.w0 49 /0]		AMXTILE,FUTURE,SZ,LONG
 TDPBF16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5c /r]		AMXBF16,FUTURE,LONG
 TDPFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5c /r]		AMXFP16,FUTURE,LONG
+TCMMIMFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 6c /r]		AMXCOMPLEX,FUTURE,LONG
+TCMMRLFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 6c /r]		AMXCOMPLEX,FUTURE,LONG
 TDPBSSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
 TDPBSUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
 TDPBUSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
