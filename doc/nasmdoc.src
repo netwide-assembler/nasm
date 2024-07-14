@@ -4688,7 +4688,7 @@ or
 
 \c         db      1,32,98,0
 
-Note that the above lines are generate exactly the same code, the second
+Note that the above lines generate exactly the same code, the second
 line is used just to give an indication of the order that the separate
 values will be present in memory.
 
