@@ -50,14 +50,20 @@ Codes            Mnemonic        Explanation
 \240..\243                               this instruction uses EVEX rather than REX or VEX/XOP, with the
                                          V field taken from operand 0..3.
 \250                                     this instruction uses EVEX rather than REX or VEX/XOP, with the
-                                         V field set to 1111b.
+                                         V field set to 11111b.
 
 EVEX prefixes are followed by the sequence:
-\cm\wlp\tup    where cm is:
-                 cc 00m mmm
-                 c = 2 for EVEX and mmmm is the M field (EVEX.P0[3:0])
-               and wlp is:
-                 00 wwl lpp
+\um\wlp\tup    um defintion:	ue 00m mmm
+		 u          = set the U bit (EVEX.P1[2]) if mod = 3
+		 [.m#] mmmm = opcode map
+
+		 NOTE: if the base register is a GPR the m bit is used
+		 to encode bit 4 of the GPR number.
+
+               wlp definition: df wwl lpp
+		 [nd]  d = 1
+		 [nf]  f = 1
+
                  [l0]  ll = 0 (.128, .lz)
                  [l1]  ll = 1 (.256)
                  [l2]  ll = 2 (.512)
@@ -82,8 +88,13 @@ EVEX prefixes are followed by the sequence:
 \270                                     this instruction uses VEX/XOP rather than REX, with the
                                          V field set to 1111b.
 VEX/XOP prefixes are followed by the sequence:
-\tmm\wlp        where mm is the M field; and wlp is:
-                00 wwl lpp
+\tmm\wlp	tmm format:	tt 0mm mmm
+		[vex] tt = 0
+		[xop] tt = 1
+
+		mmmmm = M field
+
+		wlp format:	00 wwl lpp
                 [l0]  ll = 0 for L = 0 (.128, .lz)
                 [l1]  ll = 1 for L = 1 (.256)
                 [lig] ll = 2 for L don't care (always assembled as 0)
@@ -116,10 +127,8 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \323             o64nw                       indicates fixed 64-bit operand size, REX on extensions only.
 \324             o64                         indicates 64-bit operand size requiring REX prefix.
 \325             nohi                        instruction which always uses spl/bpl/sil/dil
-\326             nof3                        instruction not valid with 0xF3 REP prefix.  Hint for
-                                                disassembler only; for SSE instructions.
-\331             norep                       instruction not valid with REP prefix.  Hint for
-                                             disassembler only; for SSE instructions.
+\326             nof3                        (disassembler only) not valid with 0xF3 REP prefix.
+\331             norep                       (disassembler only) not valid with 0xF2 or 0xF3 REP prefixes.
 \332             f2i                         REP prefix (0xF2 byte) used as opcode extension.
 \333             f3i                         REP prefix (0xF3 byte) used as opcode extension.
 \334             rex.l                       LOCK prefix used as REX.R (used in non-64-bit mode)
@@ -130,6 +139,8 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \340             resb                        reserve <operand 0> bytes of uninitialized storage.
                                              Operand 0 had better be a segmentless constant.
 \341             wait                        this instruction needs a WAIT "prefix"
+\342		 rex2.m0		     REX2 prefix, map 0
+\343		 rex2.m1		     REX2 prefix, map 1
 \360             np                          no SSE prefix (== \364\331)
 \361                                         66 SSE prefix (== \366\331)
 \364             !osp                        operand-size prefix (0x66) not permitted

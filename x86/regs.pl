@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
-##   
-##   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+##
+##   Copyright 1996-2024 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -15,7 +15,7 @@
 ##     copyright notice, this list of conditions and the following
 ##     disclaimer in the documentation and/or other materials provided
 ##     with the distribution.
-##     
+##
 ##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -156,8 +156,8 @@ if ( $fmt eq 'h' ) {
     printf "    0,\n";		# Dummy entry for 0
     foreach $reg ( sort(keys(%regs)) ) {
 	# Print the class of the register
-	printf "    %-15s /* %-5s */\n",
-		$regs{$reg}.',', $reg;
+	printf "    /* %-5s */    RN_FLAGS(%2d) | %s,\n",
+	    $reg, $regvals{$reg}, $regs{$reg};
     }
     print "};\n";
 } elsif ( $fmt eq 'vc' ) {
