@@ -36,6 +36,10 @@
 # insns.pl
 #
 # Parse insns.dat and produce generated source code files
+#
+# See x86/bytecode.txt for the defintion of the byte code
+# output to x86/insnsb.c.
+#
 
 require 'x86/insns-iflags.ph';
 

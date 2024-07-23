@@ -33,6 +33,9 @@
 
 /*
  * disasm.c   where all the _work_ gets done in the Netwide Disassembler
+ *
+ * See x86/bytecode.txt for the definition of the instruction encoding
+ * byte codes.
  */
 
 #include "compiler.h"
