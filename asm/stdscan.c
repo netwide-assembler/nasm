@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -47,19 +47,43 @@
  * formats. It keeps a succession of temporary-storage strings in
  * stdscan_tempstorage, which can be cleared using stdscan_reset.
  */
-static char *stdscan_bufptr = NULL;
+enum stdscan_scan_state {
+    ss_init                    /* Normal scanner state */
+};
+
+struct token_stack {
+    struct token_stack *prev;
+    struct tokenval tv;
+};
+
+struct stdscan_state {
+    char *bufptr;
+    struct token_stack *pushback;
+    enum stdscan_scan_state sstate;
+};
+
+static struct stdscan_state scan;
 static char **stdscan_tempstorage = NULL;
 static int stdscan_tempsize = 0, stdscan_templen = 0;
 #define STDSCAN_TEMP_DELTA 256
 
-void stdscan_set(char *str)
+static void *stdscan_alloc(size_t bytes);
+
+void stdscan_set(const struct stdscan_state *state)
 {
-        stdscan_bufptr = str;
+    scan = *state;
 }
 
-char *stdscan_get(void)
+const struct stdscan_state *stdscan_get(void)
 {
-        return stdscan_bufptr;
+    struct stdscan_state *save = stdscan_alloc(sizeof(struct stdscan_state));
+    *save = scan;
+    return save;
+}
+
+char *stdscan_tell(void)
+{
+    return scan.bufptr;
 }
 
 static void stdscan_pop(void)
@@ -67,10 +91,25 @@ static void stdscan_pop(void)
     nasm_free(stdscan_tempstorage[--stdscan_templen]);
 }
 
-void stdscan_reset(void)
+static void stdscan_pushback_pop(void)
+{
+    struct token_stack *ps;
+
+    ps = scan.pushback->prev;
+    nasm_free(scan.pushback);
+    scan.pushback = ps;
+}
+
+void stdscan_reset(char *buffer)
 {
     while (stdscan_templen > 0)
         stdscan_pop();
+
+    while (scan.pushback)
+        stdscan_pushback_pop();
+
+    scan.bufptr   = buffer;
+    scan.sstate   = ss_init;
 }
 
 /*
@@ -79,27 +118,41 @@ void stdscan_reset(void)
  */
 void stdscan_cleanup(void)
 {
-    stdscan_reset();
+    stdscan_reset(NULL);
     nasm_free(stdscan_tempstorage);
 }
 
-static char *stdscan_copy(const char *p, int len)
+static void *stdscan_alloc(size_t bytes)
 {
-    char *text;
-
-    text = nasm_malloc(len + 1);
-    memcpy(text, p, len);
-    text[len] = '\0';
-
+    void *buf = nasm_malloc(bytes);
     if (stdscan_templen >= stdscan_tempsize) {
         stdscan_tempsize += STDSCAN_TEMP_DELTA;
         stdscan_tempstorage = nasm_realloc(stdscan_tempstorage,
                                            stdscan_tempsize *
                                            sizeof(char *));
     }
-    stdscan_tempstorage[stdscan_templen++] = text;
+    stdscan_tempstorage[stdscan_templen++] = buf;
+
+    return buf;
+}
+
+static char *stdscan_copy(const char *p, int len)
+{
+    char *text = stdscan_alloc(len+1);
+    memcpy(text, p, len);
+    text[len] = '\0';
 
     return text;
+}
+
+void stdscan_pushback(const struct tokenval *tv)
+{
+    struct token_stack *ts;
+
+    nasm_new(ts);
+    ts->tv = *tv;
+    ts->prev = scan.pushback;
+    scan.pushback = ts;
 }
 
 /*
@@ -131,28 +184,28 @@ static int stdscan_parse_braces(struct tokenval *tv)
     int token_len;
     char *r;
 
-    r = stdscan_bufptr = nasm_skip_spaces(++stdscan_bufptr);
+    r = scan.bufptr = nasm_skip_spaces(++scan.bufptr);
 
     /*
      * read the entire buffer to advance the buffer pointer
      * {rn-sae}, {rd-sae}, {ru-sae}, {rz-sae} contain '-' in tokens.
      */
-    while (nasm_isbrcchar(*stdscan_bufptr))
-        stdscan_bufptr++;
+    while (nasm_isbrcchar(*scan.bufptr))
+        scan.bufptr++;
 
-    token_len = stdscan_bufptr - r;
+    token_len = scan.bufptr - r;
 
     /* ... copy only up to DECOLEN_MAX-1 characters */
     if (token_len <= MAX_KEYWORD)
         tv->t_charptr = stdscan_copy(r, token_len);
 
-    stdscan_bufptr = nasm_skip_spaces(stdscan_bufptr);
+    scan.bufptr = nasm_skip_spaces(scan.bufptr);
     /* if brace is not closed properly or token is too long  */
-    if (*stdscan_bufptr != '}') {
+    if (*scan.bufptr != '}') {
         nasm_nonfatal("unterminated braces at end of line");
         return tv->t_type = TOKEN_INVALID;
     }
-    stdscan_bufptr++;       /* skip closing brace */
+    scan.bufptr++;       /* skip closing brace */
 
     if (token_len > MAX_KEYWORD) {
         nasm_nonfatal("`{%.*s}' is not a valid token", token_len, r);
@@ -172,16 +225,23 @@ int stdscan(void *private_data, struct tokenval *tv)
 
     (void)private_data;         /* Don't warn that this parameter is unused */
 
+
+    if (unlikely(scan.pushback)) {
+        *tv = scan.pushback->tv;
+        stdscan_pushback_pop();
+        return tv->t_type;
+    }
+
     nasm_zero(*tv);
 
-    stdscan_bufptr = nasm_skip_spaces(stdscan_bufptr);
-    tv->t_start = stdscan_bufptr;
+    scan.bufptr = nasm_skip_spaces(scan.bufptr);
+    tv->t_start = scan.bufptr;
 
-    if (!*stdscan_bufptr)
+    if (!*scan.bufptr)
         return tv->t_type = TOKEN_EOS;
 
     i = stdscan_token(tv);
-    tv->t_len = stdscan_bufptr - tv->t_start;
+    tv->t_len = scan.bufptr - tv->t_start;
 
     return i;
 }
@@ -191,27 +251,27 @@ static int stdscan_token(struct tokenval *tv)
     const char *r;
 
     /* we have a token; either an id, a number, operator or char */
-    if (nasm_isidstart(*stdscan_bufptr) ||
-        (*stdscan_bufptr == '$' && nasm_isidstart(stdscan_bufptr[1]))) {
+    if (nasm_isidstart(*scan.bufptr) ||
+        (*scan.bufptr == '$' && nasm_isidstart(scan.bufptr[1]))) {
         /* now we've got an identifier */
         bool is_sym = false;
         int token_type;
 
-        if (*stdscan_bufptr == '$') {
+        if (*scan.bufptr == '$') {
             is_sym = true;
-            stdscan_bufptr++;
+            scan.bufptr++;
         }
 
-        r = stdscan_bufptr++;
+        r = scan.bufptr++;
         /* read the entire buffer to advance the buffer pointer but... */
-        while (nasm_isidchar(*stdscan_bufptr))
-            stdscan_bufptr++;
+        while (nasm_isidchar(*scan.bufptr))
+            scan.bufptr++;
 
         /* ... copy only up to IDLEN_MAX-1 characters */
-        tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r < IDLEN_MAX ?
-                                     stdscan_bufptr - r : IDLEN_MAX - 1);
+        tv->t_charptr = stdscan_copy(r, scan.bufptr - r < IDLEN_MAX ?
+                                     scan.bufptr - r : IDLEN_MAX - 1);
 
-        if (is_sym || stdscan_bufptr - r > MAX_KEYWORD)
+        if (is_sym || scan.bufptr - r > MAX_KEYWORD)
             return tv->t_type = TOKEN_ID;       /* bypass all other checks */
 
         token_type = nasm_token_hash(tv->t_charptr, tv);
@@ -235,52 +295,52 @@ static int stdscan_token(struct tokenval *tv)
         } else {
             return tv->t_type = TOKEN_ID;
         }
-    } else if (*stdscan_bufptr == '$' && !nasm_isnumchar(stdscan_bufptr[1])) {
+    } else if (*scan.bufptr == '$' && !nasm_isnumchar(scan.bufptr[1])) {
         /*
          * It's a $ sign with no following hex number; this must
          * mean it's a Here token ($), evaluating to the current
          * assembly location, or a Base token ($$), evaluating to
          * the base of the current segment.
          */
-        stdscan_bufptr++;
-        if (*stdscan_bufptr == '$') {
-            stdscan_bufptr++;
+        scan.bufptr++;
+        if (*scan.bufptr == '$') {
+            scan.bufptr++;
             return tv->t_type = TOKEN_BASE;
         }
         return tv->t_type = TOKEN_HERE;
-    } else if (nasm_isnumstart(*stdscan_bufptr)) {   /* now we've got a number */
+    } else if (nasm_isnumstart(*scan.bufptr)) {   /* now we've got a number */
         bool rn_error;
         bool is_hex = false;
         bool is_float = false;
         bool has_e = false;
         char c;
 
-        r = stdscan_bufptr;
+        r = scan.bufptr;
 
-        if (*stdscan_bufptr == '$') {
-            stdscan_bufptr++;
+        if (*scan.bufptr == '$') {
+            scan.bufptr++;
             is_hex = true;
         }
 
         for (;;) {
-            c = *stdscan_bufptr++;
+            c = *scan.bufptr++;
 
             if (!is_hex && (c == 'e' || c == 'E')) {
                 has_e = true;
-                if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-') {
+                if (*scan.bufptr == '+' || *scan.bufptr == '-') {
                     /*
                      * e can only be followed by +/- if it is either a
                      * prefixed hex number or a floating-point number
                      */
                     is_float = true;
-                    stdscan_bufptr++;
+                    scan.bufptr++;
                 }
             } else if (c == 'H' || c == 'h' || c == 'X' || c == 'x') {
                 is_hex = true;
             } else if (c == 'P' || c == 'p') {
                 is_float = true;
-                if (*stdscan_bufptr == '+' || *stdscan_bufptr == '-')
-                    stdscan_bufptr++;
+                if (*scan.bufptr == '+' || *scan.bufptr == '-')
+                    scan.bufptr++;
             } else if (nasm_isnumchar(c))
                 ; /* just advance */
             else if (c == '.')
@@ -288,7 +348,7 @@ static int stdscan_token(struct tokenval *tv)
             else
                 break;
         }
-        stdscan_bufptr--;       /* Point to first character beyond number */
+        scan.bufptr--;       /* Point to first character beyond number */
 
         if (has_e && !is_hex) {
             /* 1e13 is floating-point, but 1e13h is not */
@@ -296,10 +356,10 @@ static int stdscan_token(struct tokenval *tv)
         }
 
         if (is_float) {
-            tv->t_charptr = stdscan_copy(r, stdscan_bufptr - r);
+            tv->t_charptr = stdscan_copy(r, scan.bufptr - r);
             return tv->t_type = TOKEN_FLOAT;
         } else {
-            r = stdscan_copy(r, stdscan_bufptr - r);
+            r = stdscan_copy(r, scan.bufptr - r);
             tv->t_integer = readnum(r, &rn_error);
             stdscan_pop();
             if (rn_error) {
@@ -309,70 +369,70 @@ static int stdscan_token(struct tokenval *tv)
             tv->t_charptr = NULL;
             return tv->t_type = TOKEN_NUM;
         }
-    } else if (*stdscan_bufptr == '\'' || *stdscan_bufptr == '"' ||
-               *stdscan_bufptr == '`') {
+    } else if (*scan.bufptr == '\'' || *scan.bufptr == '"' ||
+               *scan.bufptr == '`') {
         /* a quoted string */
-        char start_quote = *stdscan_bufptr;
-        tv->t_charptr = stdscan_bufptr;
-        tv->t_inttwo = nasm_unquote(tv->t_charptr, &stdscan_bufptr);
-        if (*stdscan_bufptr != start_quote)
+        char start_quote = *scan.bufptr;
+        tv->t_charptr = scan.bufptr;
+        tv->t_inttwo = nasm_unquote(tv->t_charptr, &scan.bufptr);
+        if (*scan.bufptr != start_quote)
             return tv->t_type = TOKEN_ERRSTR;
-        stdscan_bufptr++;       /* Skip final quote */
+        scan.bufptr++;       /* Skip final quote */
         return tv->t_type = TOKEN_STR;
-    } else if (*stdscan_bufptr == '{') {
+    } else if (*scan.bufptr == '{') {
         return stdscan_parse_braces(tv);
         /* now we've got a decorator */
-    } else if (*stdscan_bufptr == ';') {
+    } else if (*scan.bufptr == ';') {
         /* a comment has happened - stay */
         return tv->t_type = TOKEN_EOS;
-    } else if (stdscan_bufptr[0] == '>' && stdscan_bufptr[1] == '>') {
-        if (stdscan_bufptr[2] == '>') {
-            stdscan_bufptr += 3;
+    } else if (scan.bufptr[0] == '>' && scan.bufptr[1] == '>') {
+        if (scan.bufptr[2] == '>') {
+            scan.bufptr += 3;
             return tv->t_type = TOKEN_SAR;
         } else {
-            stdscan_bufptr += 2;
+            scan.bufptr += 2;
             return tv->t_type = TOKEN_SHR;
         }
-    } else if (stdscan_bufptr[0] == '<' && stdscan_bufptr[1] == '<') {
-        stdscan_bufptr += stdscan_bufptr[2] == '<' ? 3 : 2;
+    } else if (scan.bufptr[0] == '<' && scan.bufptr[1] == '<') {
+        scan.bufptr += scan.bufptr[2] == '<' ? 3 : 2;
         return tv->t_type = TOKEN_SHL;
-    } else if (stdscan_bufptr[0] == '/' && stdscan_bufptr[1] == '/') {
-        stdscan_bufptr += 2;
+    } else if (scan.bufptr[0] == '/' && scan.bufptr[1] == '/') {
+        scan.bufptr += 2;
         return tv->t_type = TOKEN_SDIV;
-    } else if (stdscan_bufptr[0] == '%' && stdscan_bufptr[1] == '%') {
-        stdscan_bufptr += 2;
+    } else if (scan.bufptr[0] == '%' && scan.bufptr[1] == '%') {
+        scan.bufptr += 2;
         return tv->t_type = TOKEN_SMOD;
-    } else if (stdscan_bufptr[0] == '=' && stdscan_bufptr[1] == '=') {
-        stdscan_bufptr += 2;
+    } else if (scan.bufptr[0] == '=' && scan.bufptr[1] == '=') {
+        scan.bufptr += 2;
         return tv->t_type = TOKEN_EQ;
-    } else if (stdscan_bufptr[0] == '<' && stdscan_bufptr[1] == '>') {
-        stdscan_bufptr += 2;
+    } else if (scan.bufptr[0] == '<' && scan.bufptr[1] == '>') {
+        scan.bufptr += 2;
         return tv->t_type = TOKEN_NE;
-    } else if (stdscan_bufptr[0] == '!' && stdscan_bufptr[1] == '=') {
-        stdscan_bufptr += 2;
+    } else if (scan.bufptr[0] == '!' && scan.bufptr[1] == '=') {
+        scan.bufptr += 2;
         return tv->t_type = TOKEN_NE;
-    } else if (stdscan_bufptr[0] == '<' && stdscan_bufptr[1] == '=') {
-        if (stdscan_bufptr[2] == '>') {
-            stdscan_bufptr += 3;
+    } else if (scan.bufptr[0] == '<' && scan.bufptr[1] == '=') {
+        if (scan.bufptr[2] == '>') {
+            scan.bufptr += 3;
             return tv->t_type = TOKEN_LEG;
         } else {
-            stdscan_bufptr += 2;
+            scan.bufptr += 2;
             return tv->t_type = TOKEN_LE;
         }
-    } else if (stdscan_bufptr[0] == '>' && stdscan_bufptr[1] == '=') {
-        stdscan_bufptr += 2;
+    } else if (scan.bufptr[0] == '>' && scan.bufptr[1] == '=') {
+        scan.bufptr += 2;
         return tv->t_type = TOKEN_GE;
-    } else if (stdscan_bufptr[0] == '&' && stdscan_bufptr[1] == '&') {
-        stdscan_bufptr += 2;
+    } else if (scan.bufptr[0] == '&' && scan.bufptr[1] == '&') {
+        scan.bufptr += 2;
         return tv->t_type = TOKEN_DBL_AND;
-    } else if (stdscan_bufptr[0] == '^' && stdscan_bufptr[1] == '^') {
-        stdscan_bufptr += 2;
+    } else if (scan.bufptr[0] == '^' && scan.bufptr[1] == '^') {
+        scan.bufptr += 2;
         return tv->t_type = TOKEN_DBL_XOR;
-    } else if (stdscan_bufptr[0] == '|' && stdscan_bufptr[1] == '|') {
-        stdscan_bufptr += 2;
+    } else if (scan.bufptr[0] == '|' && scan.bufptr[1] == '|') {
+        scan.bufptr += 2;
         return tv->t_type = TOKEN_DBL_OR;
     } else {
         /* just an ordinary char */
-        return tv->t_type = (uint8_t)(*stdscan_bufptr++);
+        return tv->t_type = (uint8_t)(*scan.bufptr++);
     }
 }

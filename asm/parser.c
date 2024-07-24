@@ -504,7 +504,7 @@ static int parse_eops(extop **result, bool critical, int elem)
             }
             skip = i != ',';
         } else if (i == '-' || i == '+') {
-            char *save = stdscan_get();
+            const struct stdscan_state *save = stdscan_get();
             struct tokenval tmptok;
 
             sign = (i == '-') ? -1 : 1;
@@ -667,8 +667,7 @@ insn *parse_line(char *buffer, insn *result)
 restart_parse:
     first               = true;
 
-    stdscan_reset();
-    stdscan_set(buffer);
+    stdscan_reset(buffer);
     i = stdscan(NULL, &tokval);
 
     nasm_static_assert(P_none == 0);
@@ -968,9 +967,9 @@ restart_parse:
                     break;
 
                 case ',':
+                    stdscan_pushback(&tokval);      /* rewind the comma */
                     tokval.t_type = TOKEN_NUM;
                     tokval.t_integer = 0;
-                    stdscan_set(stdscan_get() - 1);     /* rewind the comma */
                     done = nofw = true;
                     break;
 
@@ -1319,12 +1318,12 @@ fail:
 static int end_expression_next(void)
 {
     struct tokenval tv;
-    char *p;
+    const struct stdscan_state *save;
     int i;
 
-    p = stdscan_get();
+    save = stdscan_get();
     i = stdscan(NULL, &tv);
-    stdscan_set(p);
+    stdscan_set(save);
 
     return (i == ',' || i == ';' || i == ')' || !i);
 }

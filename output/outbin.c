@@ -973,8 +973,7 @@ static int bin_read_attribute(char **line, int *attribute,
     }
 
     /* Read and evaluate the expression. */
-    stdscan_reset();
-    stdscan_set(exp);
+    stdscan_reset(exp);
     tokval.t_type = TOKEN_INVALID;
     e = evaluate(stdscan, NULL, &tokval, NULL, 1, NULL);
     if (e) {
@@ -1272,8 +1271,7 @@ bin_directive(enum directive directive, char *args)
         uint64_t value;
         expr *e;
 
-        stdscan_reset();
-        stdscan_set(args);
+        stdscan_reset(args);
         tokval.t_type = TOKEN_INVALID;
         e = evaluate(stdscan, NULL, &tokval, NULL, 1, NULL);
         if (e) {

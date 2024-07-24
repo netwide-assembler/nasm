@@ -793,8 +793,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                 expr *e;
                 char *p = nasm_skip_spaces(nasm_skip_word(special));
 
-                stdscan_reset();
-                stdscan_set(p);
+                stdscan_reset(p);
                 tokval.t_type = TOKEN_INVALID;
                 e = evaluate(stdscan, NULL, &tokval, NULL, 1, NULL);
                 if (e) {
@@ -940,14 +939,13 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             struct tokenval tokval;
             expr *e;
             int fwd = 0;
-            char *saveme = stdscan_get();
+            char *saveme = stdscan_tell();
 
             /*
              * We have a size expression; attempt to
              * evaluate it.
              */
-            stdscan_reset();
-            stdscan_set((char *)spcword);
+            stdscan_reset((char *)spcword);
             tokval.t_type = TOKEN_INVALID;
             e = evaluate(stdscan, NULL, &tokval, &fwd, 0, NULL);
             if (fwd) {
@@ -961,7 +959,7 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
                 else
                     sym->size = reloc_value(e);
             }
-            stdscan_set(saveme);
+            stdscan_reset(saveme);
         }
     }
 

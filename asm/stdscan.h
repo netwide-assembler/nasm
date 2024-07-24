@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,7 +31,7 @@
  *
  * ----------------------------------------------------------------------- */
 
-/* 
+/*
  * stdscan.h	header file for stdscan.c
  */
 
@@ -39,10 +39,14 @@
 #define NASM_STDSCAN_H
 
 /* Standard scanner */
-void stdscan_set(char *str);
-char *stdscan_get(void);
-void stdscan_reset(void);
-int stdscan(void *private_data, struct tokenval *tv);
+struct stdscan_state;
+
+void stdscan_set(const struct stdscan_state *);
+const struct stdscan_state *stdscan_get(void);
+char *stdscan_tell(void);
+void stdscan_reset(char *buffer);
+int stdscan(void *pvt, struct tokenval *tv);
+void stdscan_pushback(const struct tokenval *tv);
 int nasm_token_hash(const char *token, struct tokenval *tv);
 void stdscan_cleanup(void);
 

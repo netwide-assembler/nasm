@@ -319,8 +319,7 @@ bool process_directives(char *directive)
 	expr *e;
 
         if (*value) {
-            stdscan_reset();
-            stdscan_set(value);
+            stdscan_reset(value);
             tokval.t_type = TOKEN_INVALID;
             e = evaluate(stdscan, NULL, &tokval, NULL, true, NULL);
             if (e) {
@@ -432,8 +431,7 @@ bool process_directives(char *directive)
     {
 	expr *e;
 
-        stdscan_reset();
-        stdscan_set(value);
+        stdscan_reset(value);
         tokval.t_type = TOKEN_INVALID;
         e = evaluate(stdscan, NULL, &tokval, NULL, true, NULL);
         if (e) {
@@ -520,8 +518,7 @@ bool process_directives(char *directive)
         break;
 
     case D_DEFAULT:         /* [DEFAULT] */
-        stdscan_reset();
-        stdscan_set(value);
+        stdscan_reset(value);
         tokval.t_type = TOKEN_INVALID;
         if (stdscan(NULL, &tokval) != TOKEN_INVALID) {
             switch (tokval.t_integer) {

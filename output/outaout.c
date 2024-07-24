@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2013 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,7 +31,7 @@
  *
  * ----------------------------------------------------------------------- */
 
-/* 
+/*
  * outaout.c	output routines for the Netwide Assembler to produce
  *		Linux a.out object files
  */
@@ -286,8 +286,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                 char *p = special;
 
                 p = nasm_skip_spaces(nasm_skip_word(p));
-                stdscan_reset();
-                stdscan_set(p);
+                stdscan_reset(p);
                 tokval.t_type = TOKEN_INVALID;
                 e = evaluate(stdscan, NULL, &tokval, NULL, 1, NULL);
                 if (e) {
@@ -367,7 +366,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                 struct tokenval tokval;
                 expr *e;
                 int fwd = false;
-                char *saveme = stdscan_get();
+                char *saveme = stdscan_tell();
 
                 if (!bsd) {
                     nasm_nonfatal("Linux a.out does not support"
@@ -380,8 +379,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                      * evaluate it.
                      */
                     sym->type |= SYM_WITH_SIZE;
-                    stdscan_reset();
-                    stdscan_set(special + n);
+                    stdscan_reset(special + n);
                     tokval.t_type = TOKEN_INVALID;
                     e = evaluate(stdscan, NULL, &tokval, &fwd, 0, NULL);
                     if (fwd) {
@@ -396,7 +394,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
                             sym->size = reloc_value(e);
                     }
                 }
-                stdscan_set(saveme);
+                stdscan_reset(saveme);
             }
             special_used = true;
         }
