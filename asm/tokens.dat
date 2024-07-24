@@ -72,9 +72,6 @@ xrelease
 bnd
 nobnd
 
-% TOKEN_PREFIX, PPS_TIMES, 0, P_*
-times
-
 % TOKEN_PREFIX, PPS_WAIT, 0, P_*
 wait
 
@@ -150,6 +147,7 @@ __?ilog2c?__
 % TOKEN_*, 0, 0, 0
 seg
 wrt
+times
 
 % TOKEN_{__?*?__}, 0, 0, 0
 __?masm_ptr?__

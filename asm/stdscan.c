@@ -110,7 +110,7 @@ static int stdscan_handle_brace(struct tokenval *tv)
 {
     if (!(tv->t_flag & TFLAG_BRC_ANY)) {
         /* invalid token is put inside braces */
-        nasm_nonfatal("`%s' is not a valid decorator with braces", tv->t_charptr);
+        nasm_nonfatal("`{%s}' is not a valid token", tv->t_charptr);
         tv->t_type = TOKEN_INVALID;
     } else if (tv->t_flag & TFLAG_BRC_OPT) {
         if (is_reg_class(OPMASKREG, tv->t_integer)) {
@@ -120,6 +120,48 @@ static int stdscan_handle_brace(struct tokenval *tv)
     }
 
     return tv->t_type;
+}
+
+/*
+ * Parse a braced token
+ */
+
+static int stdscan_parse_braces(struct tokenval *tv)
+{
+    int token_len;
+    char *r;
+
+    r = stdscan_bufptr = nasm_skip_spaces(++stdscan_bufptr);
+
+    /*
+     * read the entire buffer to advance the buffer pointer
+     * {rn-sae}, {rd-sae}, {ru-sae}, {rz-sae} contain '-' in tokens.
+     */
+    while (nasm_isbrcchar(*stdscan_bufptr))
+        stdscan_bufptr++;
+
+    token_len = stdscan_bufptr - r;
+
+    /* ... copy only up to DECOLEN_MAX-1 characters */
+    if (token_len <= MAX_KEYWORD)
+        tv->t_charptr = stdscan_copy(r, token_len);
+
+    stdscan_bufptr = nasm_skip_spaces(stdscan_bufptr);
+    /* if brace is not closed properly or token is too long  */
+    if (*stdscan_bufptr != '}') {
+        nasm_nonfatal("unterminated braces at end of line");
+        return tv->t_type = TOKEN_INVALID;
+    }
+    stdscan_bufptr++;       /* skip closing brace */
+
+    if (token_len > MAX_KEYWORD) {
+        nasm_nonfatal("`{%.*s}' is not a valid token", token_len, r);
+        return tv->t_type = TOKEN_INVALID;
+    }
+
+    /* handle tokens inside braces */
+    nasm_token_hash(tv->t_charptr, tv);
+    return stdscan_handle_brace(tv);
 }
 
 static int stdscan_token(struct tokenval *tv);
@@ -278,37 +320,8 @@ static int stdscan_token(struct tokenval *tv)
         stdscan_bufptr++;       /* Skip final quote */
         return tv->t_type = TOKEN_STR;
     } else if (*stdscan_bufptr == '{') {
+        return stdscan_parse_braces(tv);
         /* now we've got a decorator */
-        int token_len;
-
-        stdscan_bufptr = nasm_skip_spaces(stdscan_bufptr);
-
-        r = ++stdscan_bufptr;
-        /*
-         * read the entire buffer to advance the buffer pointer
-         * {rn-sae}, {rd-sae}, {ru-sae}, {rz-sae} contain '-' in tokens.
-         */
-        while (nasm_isbrcchar(*stdscan_bufptr))
-            stdscan_bufptr++;
-
-        token_len = stdscan_bufptr - r;
-
-        /* ... copy only up to DECOLEN_MAX-1 characters */
-        tv->t_charptr = stdscan_copy(r, token_len < DECOLEN_MAX ?
-                                        token_len : DECOLEN_MAX - 1);
-
-        stdscan_bufptr = nasm_skip_spaces(stdscan_bufptr);
-        /* if brace is not closed properly or token is too long  */
-        if ((*stdscan_bufptr != '}') || (token_len > MAX_KEYWORD)) {
-            nasm_nonfatal("invalid decorator token inside braces");
-            return tv->t_type = TOKEN_INVALID;
-        }
-
-        stdscan_bufptr++;       /* skip closing brace */
-
-        /* handle tokens inside braces */
-        nasm_token_hash(tv->t_charptr, tv);
-        return stdscan_handle_brace(tv);
     } else if (*stdscan_bufptr == ';') {
         /* a comment has happened - stay */
         return tv->t_type = TOKEN_EOS;

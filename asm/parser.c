@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -621,6 +621,35 @@ fail:
     return -1;
 }
 
+/* Return true if not a prefix token */
+static bool add_prefix(insn *result)
+{
+    enum prefix_pos slot;
+
+    switch (tokval.t_type) {
+    case TOKEN_PREFIX:
+        slot = tokval.t_inttwo;
+        break;
+    case TOKEN_REG:
+        slot = PPS_SEG;
+        if (!IS_SREG(tokval.t_integer))
+            return false;
+        break;
+    default:
+        return false;
+    }
+
+    if (result->prefixes[slot]) {
+        if (result->prefixes[slot] == tokval.t_integer)
+            nasm_warn(WARN_OTHER, "instruction has redundant prefixes");
+        else
+            nasm_nonfatal("instruction has conflicting prefixes");
+    }
+    result->prefixes[slot] = tokval.t_integer;
+
+    return true;
+}
+
 insn *parse_line(char *buffer, insn *result)
 {
     bool insn_is_label = false;
@@ -630,39 +659,26 @@ insn *parse_line(char *buffer, insn *result)
     bool first;
     bool recover;
     bool far_jmp_ok;
+    bool have_prefixes;
     int i;
 
     nasm_static_assert(P_none == 0);
 
 restart_parse:
     first               = true;
-    result->forw_ref    = false;
 
     stdscan_reset();
     stdscan_set(buffer);
     i = stdscan(NULL, &tokval);
 
-    memset(result->prefixes, P_none, sizeof(result->prefixes));
-    result->times       = 1;    /* No TIMES either yet */
-    result->label       = NULL; /* Assume no label */
-    result->eops        = NULL; /* must do this, whatever happens */
-    result->operands    = 0;    /* must initialize this */
-    result->evex_rm     = 0;    /* Ensure EVEX rounding mode is reset */
-    result->evex_brerop = -1;   /* Reset EVEX broadcasting/ER op position */
+    nasm_static_assert(P_none == 0);
 
-    /* Ignore blank lines */
-    if (i == TOKEN_EOS)
-        goto fail;
+    nasm_zero(*result);
+    result->opcode      = I_none; /* No opcode */
+    result->times       = 1;      /* No TIMES either yet */
+    result->evex_brerop = -1;     /* Reset EVEX broadcasting/ER op position */
 
-    if (i != TOKEN_ID       &&
-        i != TOKEN_INSN     &&
-        i != TOKEN_PREFIX   &&
-        (i != TOKEN_REG || !IS_SREG(tokval.t_integer))) {
-        nasm_nonfatal("label or instruction expected at start of line");
-        goto fail;
-    }
-
-    if (i == TOKEN_ID || (insn_is_label && i == TOKEN_INSN)) {
+    if (i == TOKEN_ID || insn_is_label) {
         /* there's a label here */
         first = false;
         result->label = tokval.t_charptr;
@@ -678,7 +694,7 @@ restart_parse:
              *!  of a typo, but is technically correct NASM syntax (see \k{syntax}.)
              */
             nasm_warn(WARN_LABEL_ORPHAN ,
-                       "label alone on a line without a colon might be in error");
+                      "label alone on a line without a colon might be in error");
         }
         if (i != TOKEN_INSN || tokval.t_integer != I_EQU) {
             /*
@@ -694,83 +710,64 @@ restart_parse:
         }
     }
 
-    /* Just a label here */
-    if (i == TOKEN_EOS)
-        goto fail;
+    have_prefixes = false;
 
+    /* Process things that go before the opcode */
     while (i) {
-        int slot = PPS_SEG;
+        if (i == TOKEN_TIMES) {
+            /* TIMES is a very special prefix */
+            expr *value;
 
-        if (i == TOKEN_PREFIX) {
-            slot = tokval.t_inttwo;
-
-            if (slot == PPS_TIMES) {
-                /* TIMES is a very special prefix */
-                expr *value;
-
-                i = stdscan(NULL, &tokval);
-                value = evaluate(stdscan, NULL, &tokval, NULL,
-                                 pass_stable(), NULL);
-                i = tokval.t_type;
-                if (!value)                  /* Error in evaluator */
-                    goto fail;
-                if (!is_simple(value)) {
-                    nasm_nonfatal("non-constant argument supplied to TIMES");
-                    result->times = 1;
-                } else {
-                    result->times = value->value;
-                    if (value->value < 0) {
-                        nasm_nonfatalf(ERR_PASS2, "TIMES value %"PRId64" is negative", value->value);
-                        result->times = 0;
-                    }
+            i = stdscan(NULL, &tokval);
+            value = evaluate(stdscan, NULL, &tokval, NULL,
+                             pass_stable(), NULL);
+            i = tokval.t_type;
+            if (!value)                  /* Error in evaluator */
+                goto fail;
+            if (!is_simple(value)) {
+                nasm_nonfatal("non-constant argument supplied to TIMES");
+                result->times = 1;
+            } else {
+                result->times = value->value;
+                if (value->value < 0) {
+                    nasm_nonfatalf(ERR_PASS2, "TIMES value %"PRId64" is negative", value->value);
+                    result->times = 0;
                 }
-                first = false;
-                continue;
             }
-        } else if (i == TOKEN_REG && IS_SREG(tokval.t_integer)) {
-            slot = PPS_SEG;
-            first = false;
         } else {
-            break;              /* Not a prefix */
+            if (!add_prefix(result))
+                break;
+            have_prefixes = true;
+            i = stdscan(NULL, &tokval);
         }
 
-        if (result->prefixes[slot]) {
-            if (result->prefixes[slot] == tokval.t_integer)
-                nasm_warn(WARN_OTHER, "instruction has redundant prefixes");
-            else
-                nasm_nonfatal("instruction has conflicting prefixes");
-        }
-        result->prefixes[slot] = tokval.t_integer;
-        i = stdscan(NULL, &tokval);
         first = false;
     }
 
     if (i != TOKEN_INSN) {
-        int j;
-        enum prefixes pfx;
-
-        for (j = 0; j < MAXPREFIX; j++) {
-            if ((pfx = result->prefixes[j]) != P_none)
-                break;
+        if (!i) {
+            if (have_prefixes) {
+                /*
+                 * Instruction prefixes are present, but no actual
+                 * instruction. This is allowed: at this point we
+                 * invent a notional instruction of RESB 0.
+                 *
+                 * Note that this can be combined with TIMES, so do
+                 * not clear result->
+                 *
+                 */
+                result->opcode          = I_RESB;
+                result->operands        = 1;
+                result->oprs[0].type    = IMMEDIATE;
+                result->oprs[0].offset  = 0;
+                result->oprs[0].segment = result->oprs[0].wrt = NO_SEG;
+            }
+        } else if (!first) {
+            nasm_nonfatal("instruction expected");
+        } else if (!result->label) {
+            nasm_nonfatal("label or instruction expected at start of line");
         }
-
-        if (i == 0 && pfx != P_none) {
-            /*
-             * Instruction prefixes are present, but no actual
-             * instruction. This is allowed: at this point we
-             * invent a notional instruction of RESB 0.
-             */
-            result->opcode          = I_RESB;
-            result->operands        = 1;
-            nasm_zero(result->oprs);
-            result->oprs[0].type    = IMMEDIATE;
-            result->oprs[0].offset  = 0L;
-            result->oprs[0].segment = result->oprs[0].wrt = NO_SEG;
-            return result;
-        } else {
-            nasm_nonfatal("parser: instruction expected");
-            goto fail;
-        }
+        return result;
     }
 
     result->opcode = tokval.t_integer;
@@ -842,7 +839,7 @@ restart_parse:
     }
 
     /*
-     * Now we begin to parse the operands. There may be up to four
+     * Now we begin to parse the operands. There may be up to MAX_OPERANDS
      * of these, separated by commas, and terminated by a zero token.
      */
     far_jmp_ok = result->opcode == I_JMP || result->opcode == I_CALL;
@@ -859,13 +856,27 @@ restart_parse:
         init_operand(op);
 
         i = stdscan(NULL, &tokval);
-        if (i == TOKEN_EOS)
-            break;              /* end of operands: get out of here */
-        else if (first && i == ':') {
+        if (first && i == ':') {
             insn_is_label = true;
             goto restart_parse;
         }
+
         first = false;
+        if (opnum == 0) {
+            /*
+             * Allow braced prefix tokens like {evex} or {dfv} after
+             * the opcode mnemonic proper, but before the first
+             * operand. This is currently not allowed for non-braced
+             * prefix tokens.
+             */
+            while ((tokval.t_flag & TFLAG_BRC) && add_prefix(result))
+                i = stdscan(NULL, &tokval);
+        }
+
+
+        if (i == TOKEN_EOS)
+            break;
+
         op->type = 0; /* so far, no override */
         /* size specifiers */
         while (i == TOKEN_SPECIAL || i == TOKEN_SIZE) {

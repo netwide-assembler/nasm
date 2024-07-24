@@ -228,6 +228,7 @@ enum token_type { /* token types, other than chars */
 
     TOKEN_SEG,          /* SEG */
     TOKEN_WRT,          /* WRT */
+    TOKEN_TIMES,        /* TIMES */
     TOKEN_FLOATIZE,     /* __?floatX?__ */
     TOKEN_STRFUNC,      /* __utf16*__, __utf32*__ */
     TOKEN_IFUNC,        /* __ilog2*__ */
@@ -266,6 +267,18 @@ enum token_type { /* token types, other than chars */
     /* smacro parameters starting here; an arbitrary number. */
     TOKEN_SMAC_START_PARAMS,    /* MUST BE LAST IN THE LIST!!! */
     TOKEN_MAX = INT_MAX		/* Keep compiler from reducing the range */
+};
+
+/*
+ * Token flags
+ */
+enum token_flags {
+    TFLAG_BRC     = 1 << 0,   /* valid only with braces. {1to8}, {rd-sae}, ...*/
+    TFLAG_BRC_OPT = 1 << 1,   /* may or may not have braces. opmasks {k1} */
+    TFLAG_BRC_ANY = TFLAG_BRC | TFLAG_BRC_OPT,
+    TFLAG_BRDCAST = 1 << 2,   /* broadcasting decorator */
+    TFLAG_WARN	  = 1 << 3,   /* warning only, treat as ID */
+    TFLAG_DUP	  = 1 << 4    /* valid ID but also has context-specific use */
 };
 
 /* Must match the fp_formats[] array in asm/floats.c */
@@ -311,13 +324,13 @@ size_t string_transform(char *, size_t, char **, enum strfunc);
  * `t_type' field in the structure.
  */
 struct tokenval {
-    char                *t_charptr;
     int64_t             t_integer;
     int64_t             t_inttwo;
-    enum token_type     t_type;
-    int8_t              t_flag;
+    char                *t_charptr;
     const char		*t_start; /* Pointer to token in input buffer */
     int			t_len;    /* Length of token in input buffer */
+    enum token_type     t_type;
+    enum token_flags    t_flag;
 };
 typedef int (*scanner)(void *private_data, struct tokenval *tv);
 
@@ -526,16 +539,6 @@ static inline bool is_register(int reg)
 }
 
 /*
- * token flags
- */
-#define TFLAG_BRC       (1 << 0)    /* valid only with braces. {1to8}, {rd-sae}, ...*/
-#define TFLAG_BRC_OPT   (1 << 1)    /* may or may not have braces. opmasks {k1} */
-#define TFLAG_BRC_ANY   (TFLAG_BRC | TFLAG_BRC_OPT)
-#define TFLAG_BRDCAST   (1 << 2)    /* broadcasting decorator */
-#define TFLAG_WARN	(1 << 3)    /* warning only, treat as ID */
-#define TFLAG_DUP	(1 << 4)    /* valid ID but also has context-specific use */
-
-/*
  * REX flags
  */
 #define REX_MASK    0x4f    /* Actual REX prefix bits */
@@ -699,17 +702,19 @@ enum ea_type {
  *
  * LOCK and REP used to be one slot; this is no longer the case since
  * the introduction of HLE.
+ *
+ * Note: these are stored in an PPS_BITS-bit field in the token hash!
+ *
  */
 enum prefix_pos {
-    PPS_TIMES = -1,     /* TIMES (not a slot, handled separately) */
-    PPS_WAIT  =  0,   	/* WAIT (technically not a prefix!) */
-    PPS_REP,    	/* REP/HLE prefix */
-    PPS_LOCK,   	/* LOCK prefix */
-    PPS_SEG,    	/* Segment override prefix */
-    PPS_OSIZE,  	/* Operand size prefix */
-    PPS_ASIZE,  	/* Address size prefix */
-    PPS_REX,    	/* REX/VEX type */
-    MAXPREFIX   	/* Total number of prefix slots */
+    PPS_WAIT  =  0,     /* WAIT (technically not a prefix!) */
+    PPS_REP,            /* REP/HLE prefix */
+    PPS_LOCK,           /* LOCK prefix */
+    PPS_SEG,            /* Segment override prefix */
+    PPS_OSIZE,          /* Operand size prefix */
+    PPS_ASIZE,          /* Address size prefix */
+    PPS_REX,            /* REX/VEX type */
+    MAXPREFIX           /* Total number of prefix slots */
 };
 
 /*
