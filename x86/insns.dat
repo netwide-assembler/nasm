@@ -6366,7 +6366,7 @@ AXOR	   	mem64,reg64				[mr:	o64 f3 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
 
 ;# User interrupts
 CLUI		void					[	f3 0f 01 ee		]	UINTR,FUTURE,LONG
-SENDUIPI	reg64					[m:	o64nw f3 0f c7 /6	]	UINTR,FUTURE,LONG
+SENDUIPI	reg64					[r:	o64nw f3 0f c7 /6	]	UINTR,FUTURE,LONG
 STUI		void					[	f3 0f 01 ef		]	UINTR,FUTURE,LONG
 TESTUI		void					[	f3 0f 01 ed		]	UINTR,FUTURE,LONG
 UIRET		void					[	f3 0f 01 ec		]	UINTR,FUTURE,LONG
