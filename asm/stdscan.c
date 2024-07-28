@@ -156,35 +156,26 @@ void stdscan_pushback(const struct tokenval *tv)
 }
 
 /*
- * a token is enclosed with braces. proper token type will be assigned
- * accordingly with the token flag.
+ * Parse a set of braces. A set of braces can contain either
+ * a keyword (which, unlike normal keywords, can contain -)
+ * or a sequence like {dfv=foo,bar,baz} which generates a
+ * {dfv=} token with t_integer set to the logical OR of the t_integer
+ * and t_inttwo values of {dfv=foo}{dfv=bar}{dfv=baz}; these tokens
+ * *except* {dfv=} should have TFLAG_ORBIT set.
  */
-static int stdscan_handle_brace(struct tokenval *tv)
-{
-    if (!(tv->t_flag & TFLAG_BRC_ANY)) {
-        /* invalid token is put inside braces */
-        nasm_nonfatal("`{%s}' is not a valid token", tv->t_charptr);
-        tv->t_type = TOKEN_INVALID;
-    } else if (tv->t_flag & TFLAG_BRC_OPT) {
-        if (is_reg_class(OPMASKREG, tv->t_integer)) {
-            /* within braces, opmask register is now used as a mask */
-            tv->t_type = TOKEN_OPMASK;
-        }
-    }
-
-    return tv->t_type;
-}
-
-/*
- * Parse a braced token
- */
-
 static int stdscan_parse_braces(struct tokenval *tv)
 {
-    int token_len;
-    char *r;
+    size_t prefix_len = 0;
+    size_t suffix_len = 0;
+    size_t brace_len;
+    const char *startp, *endp;
+    const char *pfx, *r;
+    char *buf;
+    char nextchar;
+    int64_t t_integer, t_inttwo;
 
-    r = scan.bufptr = nasm_skip_spaces(++scan.bufptr);
+    startp = scan.bufptr;        /* Beginning including { */
+    pfx = r = scan.bufptr = nasm_skip_spaces(++scan.bufptr);
 
     /*
      * read the entire buffer to advance the buffer pointer
@@ -193,28 +184,74 @@ static int stdscan_parse_braces(struct tokenval *tv)
     while (nasm_isbrcchar(*scan.bufptr))
         scan.bufptr++;
 
-    token_len = scan.bufptr - r;
+    /*
+     * Followed by equal sign?
+     */
+    if (*scan.bufptr == '=') {
+        r = ++scan.bufptr;
+        prefix_len = scan.bufptr - pfx;
+        /* Note that the prefix includes = and the first suffix is blank */
+    }
 
-    /* ... copy only up to DECOLEN_MAX-1 characters */
-    if (token_len <= MAX_KEYWORD)
-        tv->t_charptr = stdscan_copy(r, token_len);
-
-    scan.bufptr = nasm_skip_spaces(scan.bufptr);
-    /* if brace is not closed properly or token is too long  */
-    if (*scan.bufptr != '}') {
+    /*
+     * Find terminating brace, assuming it exists, to allocate a
+     * buffer large enough for the whole possible compound token.
+     * Don't fill it yet as we are using it as a work buffer for now.
+     */
+    endp = strchr(scan.bufptr, '}');
+    if (!endp) {
         nasm_nonfatal("unterminated braces at end of line");
         return tv->t_type = TOKEN_INVALID;
     }
-    scan.bufptr++;       /* skip closing brace */
+    brace_len = endp - startp + 1;
+    buf = tv->t_charptr = stdscan_alloc(brace_len + 1);
 
-    if (token_len > MAX_KEYWORD) {
-        nasm_nonfatal("`{%.*s}' is not a valid token", token_len, r);
-        return tv->t_type = TOKEN_INVALID;
-    }
+    memcpy(buf, pfx, prefix_len);
+    t_integer = t_inttwo = 0;
 
-    /* handle tokens inside braces */
-    nasm_token_hash(tv->t_charptr, tv);
-    return stdscan_handle_brace(tv);
+    do {
+        suffix_len = scan.bufptr - r;
+
+        scan.bufptr = nasm_skip_spaces(scan.bufptr);
+        nextchar = *scan.bufptr++;
+
+        if (nextchar != '}' && (!prefix_len || nextchar != ',')) {
+            nasm_nonfatal("invalid character `%c' in brace sequence",
+                          nextchar);
+            return tv->t_type = TOKEN_INVALID;
+        }
+
+        memcpy(buf + prefix_len, r, suffix_len);
+        buf[prefix_len + suffix_len] = '\0';
+
+        /* handle tokens inside braces */
+        nasm_token_hash(tv->t_charptr, tv);
+
+        if (!(tv->t_flag & TFLAG_BRC_ANY)) {
+            /* invalid token is put inside braces */
+            nasm_nonfatal("`{%.*s%.*s}' is not a valid brace token",
+                          (int)prefix_len, pfx, (int)suffix_len, r);
+            return tv->t_type = TOKEN_INVALID;
+        }
+
+        if (tv->t_type == TOKEN_REG &&
+            is_reg_class(OPMASKREG, tv->t_integer)) {
+            /* within braces, opmask register is now used as a mask */
+            tv->t_type = TOKEN_OPMASK;
+        }
+
+        if (tv->t_flag & TFLAG_ORBIT) {
+            t_integer |= tv->t_integer;
+            t_inttwo  |= tv->t_inttwo;
+        } else {
+            t_integer = tv->t_integer;
+            t_inttwo  = tv->t_inttwo;
+        }
+    } while (nextchar != '}');
+
+    tv->t_integer = t_integer;
+    tv->t_inttwo  = t_inttwo;
+    return tv->t_type;
 }
 
 static int stdscan_token(struct tokenval *tv);

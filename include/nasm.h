@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -51,6 +51,7 @@
 #include "labels.h"     /* For enum mangle_index, enum label_type */
 #include "opflags.h"
 #include "regs.h"
+#include "x86const.h"
 #include "srcfile.h"
 #include "error.h"
 
@@ -239,6 +240,7 @@ enum token_type { /* token types, other than chars */
     TOKEN_SIZE,		/* BYTE, WORD, DWORD, QWORD, etc */
     TOKEN_SPECIAL,      /* REL, FAR, NEAR, STRICT, NOSPLIT, etc */
     TOKEN_PREFIX,       /* A32, O16, LOCK, REPNZ, TIMES, etc */
+    TOKEN_DFV,          /* {dfv=} */
     TOKEN_REG,          /* register name */
     TOKEN_INSN,         /* instruction name */
 
@@ -278,7 +280,8 @@ enum token_flags {
     TFLAG_BRC_ANY = TFLAG_BRC | TFLAG_BRC_OPT,
     TFLAG_BRDCAST = 1 << 2,   /* broadcasting decorator */
     TFLAG_WARN	  = 1 << 3,   /* warning only, treat as ID */
-    TFLAG_DUP	  = 1 << 4    /* valid ID but also has context-specific use */
+    TFLAG_DUP	  = 1 << 4,   /* valid ID but also has context-specific use */
+    TFLAG_ORBIT   = 1 << 5    /* OR in the bit given in t_inttwo */
 };
 
 /* Must match the fp_formats[] array in asm/floats.c */
