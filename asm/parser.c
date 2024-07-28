@@ -160,7 +160,7 @@ static void process_size_override(insn *result, operand *op)
  * decorators can be placed in any order.  e.g. zmm1 {k2}{z} or zmm2
  * {z}{k3} decorator(s) are placed at the end of an operand.
  */
-static bool parse_braces(decoflags_t *decoflags)
+static bool parse_decorators(decoflags_t *decoflags)
 {
     int i, j;
 
@@ -650,6 +650,27 @@ static bool add_prefix(insn *result)
     return true;
 }
 
+/* Set value-specific immediate flags. */
+static opflags_t imm_flags(int64_t n, opflags_t flags)
+{
+    if (n == 1)
+        flags |= UNITY;
+
+    if (optimizing.level < 0 || (flags & STRICT))
+        return flags;
+
+    if ((int32_t)n == (int8_t)n)
+        flags |= SBYTEDWORD;
+    if ((int16_t)n == (int8_t)n)
+        flags |= SBYTEWORD;
+    if ((uint64_t)n == (uint32_t)n)
+        flags |= UDWORD;
+    if ((int64_t)n == (int32_t)n)
+        flags |= SDWORD;
+
+    return flags;
+}
+
 insn *parse_line(char *buffer, insn *result)
 {
     bool insn_is_label = false;
@@ -757,7 +778,7 @@ restart_parse:
                  */
                 result->opcode          = I_RESB;
                 result->operands        = 1;
-                result->oprs[0].type    = IMMEDIATE;
+                result->oprs[0].type    = imm_flags(0, IMM_NORMAL);
                 result->oprs[0].offset  = 0;
                 result->oprs[0].segment = result->oprs[0].wrt = NO_SEG;
             }
@@ -863,20 +884,37 @@ restart_parse:
         first = false;
         if (opnum == 0) {
             /*
-             * Allow braced prefix tokens like {evex} or {dfv} after
-             * the opcode mnemonic proper, but before the first
-             * operand. This is currently not allowed for non-braced
-             * prefix tokens.
+             * Allow braced prefix tokens like {evex} after the opcode
+             * mnemonic proper, but before the first operand. This is
+             * currently not allowed for non-braced prefix tokens.
              */
             while ((tokval.t_flag & TFLAG_BRC) && add_prefix(result))
                 i = stdscan(NULL, &tokval);
         }
 
-
         if (i == TOKEN_EOS)
             break;
 
         op->type = 0; /* so far, no override */
+
+        /*
+         * Naked special immediate token. Terminates the expression
+         * without requiring a post-comma.
+         */
+        if (i == TOKEN_BRCCONST) {
+            op->type    = imm_flags(tokval.t_integer, IMMEDIATE);
+            op->opflags = 0;
+            op->offset  = tokval.t_integer;
+            op->segment = NO_SEG;
+            op->wrt     = NO_SEG;
+            op->iflag   = tokval.t_inttwo;
+
+            i = stdscan(NULL, &tokval);
+            if (i != ',')
+                stdscan_pushback(&tokval);
+            continue;           /* Next operand */
+        }
+
         /* size specifiers */
         while (i == TOKEN_SPECIAL || i == TOKEN_SIZE) {
             switch (tokval.t_integer) {
@@ -1100,7 +1138,7 @@ restart_parse:
 
             if (i == TOKEN_DECORATOR || i == TOKEN_OPMASK) {
                 /* parse opmask (and zeroing) after an operand */
-                recover = parse_braces(&brace_flags);
+                recover = parse_decorators(&brace_flags);
                 i = tokval.t_type;
             }
             if (!recover && i != 0 && i != ',') {
@@ -1117,7 +1155,7 @@ restart_parse:
                 op->type |= COLON;
             } else if (i == TOKEN_DECORATOR || i == TOKEN_OPMASK) {
                 /* parse opmask (and zeroing) after an operand */
-                recover = parse_braces(&brace_flags);
+                recover = parse_decorators(&brace_flags);
             }
         }
         if (recover) {
@@ -1146,7 +1184,7 @@ restart_parse:
                 recover = true;
         } else {                /* it's not a memory reference */
             if (is_just_unknown(value)) {       /* it's immediate but unknown */
-                op->type      |= IMMEDIATE;
+                op->type      |= IMM_NORMAL;
                 op->opflags   |= OPFLAG_UNKNOWN;
                 op->offset    = 0;        /* don't care */
                 op->segment   = NO_SEG;   /* don't care again */
@@ -1160,26 +1198,14 @@ restart_parse:
             } else if (is_reloc(value)) {       /* it's immediate */
                 uint64_t n = reloc_value(value);
 
-                op->type      |= IMMEDIATE;
+                op->type      |= IMM_NORMAL;
                 op->offset    = n;
                 op->segment   = reloc_seg(value);
                 op->wrt       = reloc_wrt(value);
                 op->opflags   |= is_self_relative(value) ? OPFLAG_RELATIVE : 0;
 
-                if (is_simple(value)) {
-                    if (n == 1)
-                        op->type |= UNITY;
-                    if (optimizing.level >= 0 && !(op->type & STRICT)) {
-                        if ((uint32_t) (n + 128) <= 255)
-                            op->type |= SBYTEDWORD;
-                        if ((uint16_t) (n + 128) <= 255)
-                            op->type |= SBYTEWORD;
-                        if (n <= UINT64_C(0xFFFFFFFF))
-                            op->type |= UDWORD;
-                        if (n + UINT64_C(0x80000000) <= UINT64_C(0xFFFFFFFF))
-                            op->type |= SDWORD;
-                    }
-                }
+                if (is_simple(value))
+                    op->type = imm_flags(n, op->type);
             } else if (value->type == EXPR_RDSAE) {
                 /*
                  * it's not an operand but a rounding or SAE decorator.

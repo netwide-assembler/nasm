@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -69,6 +69,7 @@ enum match_result {
     MERR_BADREPNE,
     MERR_REGSETSIZE,
     MERR_REGSET,
+    MERR_WRONGIMM,
     /*
      * Matching success; the conditional ones first
      */
@@ -919,6 +920,9 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                 break;
             case MERR_REGSET:
                 nasm_nonfatal("register set not valid for operand");
+                break;
+            case MERR_WRONGIMM:
+                nasm_nonfatal("operand/operator invalid for this instruction");
                 break;
             default:
                 nasm_nonfatal("invalid combination of opcode and operands");
@@ -2552,11 +2556,15 @@ static enum match_result matches(const struct itemplate *itemp,
     }
 
     /*
-     * Check that no spurious colons or TOs are present
+     * First, cursory operand filtering
      */
-    for (i = 0; i < itemp->operands; i++)
-        if (instruction->oprs[i].type & ~itemp->opd[i] & (COLON | TO))
+    for (i = 0; i < itemp->operands; i++) {
+        struct operand * const op = &instruction->oprs[i];
+        if (op->type & ~itemp->opd[i] & (COLON | TO))
             return MERR_INVALOP;
+        if (op->iflag && !itemp_has(itemp, op->iflag))
+            return MERR_WRONGIMM;
+    }
 
     /*
      * Process size flags

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2024 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -535,7 +535,8 @@ sub format_insn($$$$$) {
                 }
                 $opp =~ s/^mem$/memory/;
                 $opp =~ s/^memory_offs$/mem_offs/;
-                $opp =~ s/^imm$/immediate/;
+		$opp =~ s/^spec$/immediate/; # Immediate or special immediate
+                $opp =~ s/^imm$/imm_normal/; # Normal immediates only
                 $opp =~ s/^([a-z]+)rm$/rm_$1/;
                 $opp =~ s/^rm$/rm_gpr/;
                 $opp =~ s/^reg$/reg_gpr/;

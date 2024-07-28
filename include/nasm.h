@@ -648,6 +648,7 @@ typedef struct operand { /* operand to an instruction */
     int32_t         wrt;        /* segment base it's relative to */
     int             eaflags;    /* special EA flags */
     int             opflags;    /* see OPFLAG_* defines below */
+    int             iflag;      /* Requires a specific IF_* flag */
     decoflags_t     decoflags;  /* decorator flags such as {...} */
 } operand;
 
@@ -758,7 +759,7 @@ typedef struct insn { /* an instruction itself */
     char            *label;                 /* the label defined, or NULL */
     int             prefixes[MAXPREFIX];    /* instruction prefixes, if any */
     enum opcode     opcode;                 /* the opcode - not just the string */
-    int             operands;               /* how many operands? 0-3 (more if db et al) */
+    int             operands;               /* how many operands? 0-7 (more if db et al) */
     int             addr_size;              /* address size */
     operand         oprs[MAX_OPERANDS];     /* the operands, defined as above */
     extop           *eops;                  /* extended operands */

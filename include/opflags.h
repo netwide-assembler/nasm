@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -328,6 +328,7 @@ static inline bool is_reg_class(opflags_t class, opflags_t reg)
 #define SBYTEDWORD              (GEN_SUBCLASS(2) | IMMEDIATE)   /* operand is in the range -128..127 mod 2^32 */
 #define SDWORD                  (GEN_SUBCLASS(3) | IMMEDIATE)   /* operand is in the range -0x80000000..0x7FFFFFFF */
 #define UDWORD                  (GEN_SUBCLASS(4) | IMMEDIATE)   /* operand is in the range 0..0xFFFFFFFF */
+#define IMM_NORMAL		(GEN_SUBCLASS(5) | IMMEDIATE)   /* operand is NOT a brcconst */
 
 /* Register set sizes */
 #define RS2                     GEN_REGSET(0)

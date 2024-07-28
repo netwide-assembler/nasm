@@ -168,29 +168,34 @@ static int stdscan_parse_braces(struct tokenval *tv)
     size_t prefix_len = 0;
     size_t suffix_len = 0;
     size_t brace_len;
-    const char *startp, *endp;
-    const char *pfx, *r;
+    const char *startp;
+    char *endp;
+    const char *pfx, *r, *e;
     char *buf;
     char nextchar;
     int64_t t_integer, t_inttwo;
+    bool first;
 
     startp = scan.bufptr;        /* Beginning including { */
     pfx = r = scan.bufptr = nasm_skip_spaces(++scan.bufptr);
 
     /*
-     * read the entire buffer to advance the buffer pointer
+     * Read the token to advance the buffer pointer
      * {rn-sae}, {rd-sae}, {ru-sae}, {rz-sae} contain '-' in tokens.
      */
     while (nasm_isbrcchar(*scan.bufptr))
         scan.bufptr++;
 
+    e = scan.bufptr;
+
     /*
      * Followed by equal sign?
      */
-    if (*scan.bufptr == '=') {
-        r = ++scan.bufptr;
-        prefix_len = scan.bufptr - pfx;
-        /* Note that the prefix includes = and the first suffix is blank */
+    scan.bufptr = nasm_skip_spaces(scan.bufptr);
+    if (r != e && *scan.bufptr == '=') {
+        prefix_len = e - pfx;
+        r = e = ++scan.bufptr;
+        /* Note that the first suffix is blank */
     }
 
     /*
@@ -203,35 +208,31 @@ static int stdscan_parse_braces(struct tokenval *tv)
         nasm_nonfatal("unterminated braces at end of line");
         return tv->t_type = TOKEN_INVALID;
     }
-    brace_len = endp - startp + 1;
+
+    brace_len = ++endp - startp;
     buf = tv->t_charptr = stdscan_alloc(brace_len + 1);
 
-    memcpy(buf, pfx, prefix_len);
+    if (prefix_len) {
+        memcpy(buf, pfx, prefix_len);
+        buf[prefix_len++] = '=';
+    }
     t_integer = t_inttwo = 0;
+    first = true;
 
-    do {
-        suffix_len = scan.bufptr - r;
-
-        scan.bufptr = nasm_skip_spaces(scan.bufptr);
-        nextchar = *scan.bufptr++;
-
-        if (nextchar != '}' && (!prefix_len || nextchar != ',')) {
-            nasm_nonfatal("invalid character `%c' in brace sequence",
-                          nextchar);
-            return tv->t_type = TOKEN_INVALID;
-        }
+    while (1) {
+        suffix_len = e - r;
 
         memcpy(buf + prefix_len, r, suffix_len);
         buf[prefix_len + suffix_len] = '\0';
 
-        /* handle tokens inside braces */
-        nasm_token_hash(tv->t_charptr, tv);
+        /* Note: nasm_token_hash doesn't modify t_charptr */
+        nasm_token_hash(buf, tv);
 
         if (!(tv->t_flag & TFLAG_BRC_ANY)) {
             /* invalid token is put inside braces */
-            nasm_nonfatal("`{%.*s%.*s}' is not a valid brace token",
-                          (int)prefix_len, pfx, (int)suffix_len, r);
-            return tv->t_type = TOKEN_INVALID;
+            nasm_nonfatal("`{%s}' is not a valid brace token", buf);
+            tv->t_type = TOKEN_INVALID;
+            break;
         }
 
         if (tv->t_type == TOKEN_REG &&
@@ -247,7 +248,35 @@ static int stdscan_parse_braces(struct tokenval *tv)
             t_integer = tv->t_integer;
             t_inttwo  = tv->t_inttwo;
         }
-    } while (nextchar != '}');
+
+        scan.bufptr = nasm_skip_spaces(scan.bufptr);
+        nextchar = *scan.bufptr;
+
+        if (nextchar == '}')
+            break;
+
+        if (!prefix_len ||
+            !(nextchar == ',' || (first && nasm_isbrcchar(nextchar)))) {
+            nasm_nonfatal("invalid character `%c' in brace sequence",
+                          nextchar);
+            tv->t_type = TOKEN_INVALID;
+            break;
+        }
+
+        if (nextchar == ',')
+            scan.bufptr = nasm_skip_spaces(++scan.bufptr);
+
+        r = scan.bufptr;
+        while (nasm_isbrcchar(*scan.bufptr))
+            scan.bufptr++;
+        e = scan.bufptr;
+
+        first = false;
+    }
+
+    memcpy(tv->t_charptr, startp, brace_len);
+    buf[brace_len] = '\0';
+    scan.bufptr = endp;
 
     tv->t_integer = t_integer;
     tv->t_inttwo  = t_inttwo;
