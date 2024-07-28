@@ -170,10 +170,10 @@ rz-sae
 sae
 z
 
-% TOKEN_DFV, 0, TFLAG_BRC, 0
+% TOKEN_BRCCONST, IF_DFV, TFLAG_BRC, 0
 dfv=
 
-% TOKEN_DFV, 0, TFLAG_BRC | TFLAG_ORBIT, DFV_{dfv=*}
+% TOKEN_BRCCONST, IF_DFV, TFLAG_BRC | TFLAG_ORBIT, DFV_{dfv=*}
 dfv=cf
 dfv=zf
 dfv=sf

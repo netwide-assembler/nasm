@@ -240,7 +240,7 @@ enum token_type { /* token types, other than chars */
     TOKEN_SIZE,		/* BYTE, WORD, DWORD, QWORD, etc */
     TOKEN_SPECIAL,      /* REL, FAR, NEAR, STRICT, NOSPLIT, etc */
     TOKEN_PREFIX,       /* A32, O16, LOCK, REPNZ, TIMES, etc */
-    TOKEN_DFV,          /* {dfv=} */
+    TOKEN_BRCCONST,     /* braced constant expression */
     TOKEN_REG,          /* register name */
     TOKEN_INSN,         /* instruction name */
 

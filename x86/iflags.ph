@@ -23,7 +23,12 @@ if_("AR2",               "SB, SW, SD applies to argument 2");
 if_("AR3",               "SB, SW, SD applies to argument 3");
 if_("AR4",               "SB, SW, SD applies to argument 4");
 if_("OPT",               "Optimizing assembly only");
-if_("LATEVEX",            "Only if EVEX instructions are disabled");
+if_("LATEVEX",           "Only if EVEX instructions are disabled");
+
+#
+# special immediates like {dfv=}
+#
+if_("DFV",               "Destination flag values");
 
 #
 # dword bound - instruction feature filtering flags
