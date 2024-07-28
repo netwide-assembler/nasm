@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -918,6 +918,7 @@ static expr *expr6(void)
         return e;
 
     case TOKEN_NUM:
+    case TOKEN_BRCCONST:
     case TOKEN_STR:
     case TOKEN_REG:
     case TOKEN_ID:
@@ -928,6 +929,7 @@ static expr *expr6(void)
         begintemp();
         switch (tt) {
         case TOKEN_NUM:
+        case TOKEN_BRCCONST:
             addtotemp(EXPR_SIMPLE, tokval->t_integer);
             break;
         case TOKEN_STR:
