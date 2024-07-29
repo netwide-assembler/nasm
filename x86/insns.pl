@@ -122,18 +122,23 @@ sub relaxed_forms(@) {
     return @field_list;
 }
 
-# Condition codes used by the disassembler
-my %condd = ( 'o'   =>  0, 'no'  =>  1, 'c'   =>  2,  'nc'  =>  3,
-	      'z'   =>  4, 'nz'  =>  5, 'na'  =>  6,  'a'   =>  7,
-	      's'   =>  8, 'ns'  =>  9, 'pe'  => 10,  'po'  => 11,
-	      'l'   => 12, 'nl'  => 13, 'ng'  => 14,  'g'   => 15 );
+# Condition codes.
+my $c_ccmask = 0x0f;
+my $c_nd     = 0x10;		# Not for the disassembler
+my $c_cc     = 0x20;		# cc only (not scc)
+my $c_scc    = 0x40;		# scc only (not cc)
+my %conds = (
+    'o'   =>  0,             'no'  =>  1,        'c'   =>  2,        'nc'  =>  3,
+    'z'   =>  4,             'nz'  =>  5,        'na'  =>  6,        'a'   =>  7,
+    's'   =>  8,             'ns'  =>  9,
+    'pe'  => 10|$c_cc,       'po'  => 11|$c_cc,
+    'f'   => 10|$c_scc,      't'   => 11|$c_scc,
+    'l'   => 12,             'nl'  => 13,        'ng'  => 14,        'g'   => 15,
 
-# All condition code aliases
-my %conds = ( %condd,
-	      'ae'  =>  3, 'b'   =>  2, 'be'  =>  6,  'e'   =>  4,
-	      'ge'  => 13, 'le'  => 14, 'nae' =>  2,  'nb'  =>  3,
-	      'nbe' =>  7, 'ne'  =>  5, 'nge' => 12,  'nle' => 15,
-	      'np'  => 11, 'p'   => 10 );
+    'ae'  =>  3|$c_nd,       'b'   =>  2|$c_nd,  'be'  =>  6|$c_nd,  'e'   =>  4|$c_nd,
+    'ge'  => 13|$c_nd,       'le'  => 14|$c_nd,  'nae' =>  2|$c_nd,  'nb'  =>  3|$c_nd,
+    'nbe' =>  7|$c_nd,       'ne'  =>  5|$c_nd,  'nge' => 12|$c_nd,  'nle' => 15|$c_nd,
+    'np'  => 11|$c_nd|$c_cc, 'p'   => 10|$c_nd|$c_cc );
 
 my @conds = sort keys(%conds);
 
@@ -143,7 +148,7 @@ sub conditional_forms(@) {
 
     foreach my $fields (@_) {
 	# This is a case sensitive match!
-	if ($fields->[0] !~ /cc/) {
+	if ($fields->[0] !~ /s?cc/) {
 	    # Not a conditional instruction pattern
 	    push(@field_list, $fields);
 	    next;
@@ -154,18 +159,27 @@ sub conditional_forms(@) {
 	    next;
 	}
 
+	my $exclude_mask = ($fields->[0] =~ /scc/ ? $c_cc : $c_scc);
+
 	foreach my $cc (@conds) {
+	    my $ccval = $conds{$cc};
+	    next if ($ccval & $exclude_mask);
+
 	    my @ff = @$fields;
 
-	    $ff[0] =~ s/cc/\U$cc/;
+	    $ff[0] =~ s/s?cc/\U$cc/;
 
-	    unless ($ff[2] =~ /^(\[.*?)\b([0-9a-f]{2})\+c\b(.*\])$/) {
-		warn "$fname:$line: invalid conditional encoding";
+	    if ($ff[2] =~ /^(\[.*?)\b([0-9a-f]{2})\+c\b(.*\])$/) {
+		$ff[2] = $1.sprintf('%02x', hex($2)^($ccval & $c_ccmask)).$3;
+	    } elsif ($ff[2] =~ /^(\[.*?\.scc\b)(.*\])$/) {
+		$ff[2] = $1.sprintf('%d', $ccval & $c_ccmask).$2;
+	    } else {
+		my $eerr = $ff[2];
+		warn "$fname:$line: invalid conditional encoding: $eerr\n";
 		next;
 	    }
-	    $ff[2] = $1.sprintf('%02x', hex($2)^$conds{$cc}).$3;
 
-	    unless (defined($condd{$cc}) || $ff[3] =~ /\bND\b/) {
+	    if (($ccval & $c_nd) && !($ff[3] =~ /\bND\b/)) {
 		$ff[3] .= ',ND';
 	    }
 
@@ -214,7 +228,7 @@ while (<F>) {
         warn "line $line does not contain four fields\n";
         next;
     }
-    my @field_list = ([$1, $2, $3, $4, 0]);
+    my @field_list = ([$1, $2, $3, uc($4), 0]);
     @field_list = relaxed_forms(@field_list);
     @field_list = conditional_forms(@field_list);
 
@@ -320,6 +334,7 @@ if ( $output eq 'a' ) {
         print A "static const struct itemplate instrux_${i}[] = {\n";
         foreach $j (@{$aname{$i}}) {
             print A "    ", codesubst($j), "\n";
+	    print A "        /* ", show_bytecodes($j), " */\n";
         }
         print A "    ITEMPLATE_END\n};\n\n";
     }
@@ -496,7 +511,7 @@ sub count_bytecodes(@) {
         } elsif (($bc & ~3) == 0260 || $bc == 0270) {   # VEX
             $skip = 2;
         } elsif (($bc & ~3) == 0240 || $bc == 0250) {   # EVEX
-            $skip = 3;
+            $skip = 4;
         } elsif ($bc == 0330) {
             $skip = 1;
         }
@@ -535,15 +550,22 @@ sub format_insn($$$$$) {
                 }
                 $opp =~ s/^mem$/memory/;
                 $opp =~ s/^memory_offs$/mem_offs/;
+		if ($opp =~ /^(spec|imm)4$/) {
+		    push(@oppx, 'fourbits');
+		    $opp = $1;
+		}
 		$opp =~ s/^spec$/immediate/; # Immediate or special immediate
                 $opp =~ s/^imm$/imm_normal/; # Normal immediates only
+		if ($opp =~ /^(unity|sbyted?word|[su]dword)$/) {
+		    push(@oppx, 'imm_normal');
+		}
                 $opp =~ s/^([a-z]+)rm$/rm_$1/;
                 $opp =~ s/^rm$/rm_gpr/;
                 $opp =~ s/^reg$/reg_gpr/;
-                # only for evex insns, high-16 regs are allowed
-                if ($codes !~ /(^|\s)evex\./) {
-                    $opp =~ s/^(rm_[xyz]mm)$/$1_l16/;
-                    $opp =~ s/^([xyz]mm)reg$/$1_l16/;
+                # only for evex and rex2 insns, high-16 regs are allowed
+                if ($codes !~ /(^|\s)(evex|rex[x2])\./ &&
+                    $opp =~ /^(rm_\w+|reg_\w+|\w+reg)$/) {
+		    push(@oppx, 'rn_l16'); # Register number must be < 16
                 }
                 push(@opx, $opp, @oppx) if $opp;
             }
@@ -593,17 +615,11 @@ sub format_insn($$$$$) {
 	}
     }
 
-    if ($codes =~ /evex\./) {
-	$flags{'EVEX'}++;
-    } elsif ($codes =~ /(vex|xop)\./) {
-	$flags{'VEX'}++;
-    }
-
     # Look for SM flags clearly inconsistent with operand bitsizes
-    if ($flags{'SM'} || $flags{'SM2'}) {
+    if ($flags{'SM'} || $flags{'SM2'} || $flags{'SM23'}) {
 	my $ssize = 0;
 	my $e = $flags{'SM2'} ? 2 : $MAX_OPERANDS;
-	for (my $i = 0; $i < $e; $i++) {
+	for (my $i = $flags{'SM23'} ? 1 : 0; $i < $e; $i++) {
 	    next if (!$opsize[$i]);
 	    if (!$ssize) {
 		$ssize = $opsize[$i];
@@ -632,13 +648,13 @@ sub format_insn($$$$$) {
 	}
     }
 
-    $flagsindex = insns_flag_index(keys %flags);
-    die "$fname:$line: error in flags $flags\n" unless (defined($flagsindex));
-
-    @bytecode = (decodify($codes, $relax), 0);
+    @bytecode = (decodify($codes, $relax, \%flags), 0);
     push(@bytecode_list, [@bytecode]);
     $codes = hexstr(@bytecode);
     count_bytecodes(@bytecode);
+
+    $flagsindex = insns_flag_index(keys %flags);
+    die "$fname:$line: error in flags $flags\n" unless (defined($flagsindex));
 
     ("{I_$opcode, $num, {$operands}, $decorators, \@\@CODES-$codes\@\@, $flagsindex},", $nd);
 }
@@ -660,6 +676,51 @@ sub codesubst($) {
     }
     return $s;
 }
+#
+# Extract byte codes in human-friendly form; added as a comment
+# to insnsa.c to help debugging
+#
+sub show_bytecodes($) {
+    my($s) = @_;
+    my @o = ();
+
+    if ($s =~ /\@\@CODES-([0-9A-F]+)00\@\@/) {
+	my $hstr = $1;
+	my $literals = 0;
+	my $hexlit = 0;
+	for (my $i = 0; $i < length($hstr); $i += 2) {
+	    my $c = hex(substr($hstr,$i,2));
+	    if ($literals) {
+		# Non-leading bytes
+		$literals--;
+		$o[-1] .= sprintf($hexlit ? '%02x' : '%03o', $c);
+		$o[-1] .= $literals ? ' ' : ')';
+	    } else {
+		push(@o, sprintf("%03o", $c));
+		if ($c <= 4) {
+		    $literals = $c;
+		    $hexlit = 1;
+		} elsif ($c >= 0240 && $c <= 0250) {
+		    $literals = 3;
+		    $hexlit = 1;
+		} elsif ($c >= 0260 && $c <= 0270) {
+		    $literals = 2;
+		    $hexlit = 0;
+		} elsif ($c == 0171) {
+		    $literals = 1;
+		    $hexlit = 0;
+		} elsif ($c == 0172) {
+		    $literals = 1;
+		    $hexlit = 1;
+		}
+		$o[-1] .= '(' if ($literals);
+	    }
+	}
+	return join(' ', @o);
+    } else {
+	return 'no bytecode';
+    }
+}
 
 sub addprefix ($@) {
     my ($prefix, @list) = @_;
@@ -676,14 +737,14 @@ sub addprefix ($@) {
 #
 # Turn a code string into a sequence of bytes
 #
-sub decodify($$) {
+sub decodify($$$) {
   # Although these are C-syntax strings, by convention they should have
   # only octal escapes (for directives) and hexadecimal escapes
   # (for verbatim bytes)
-    my($codestr, $relax) = @_;
+    my($codestr, $relax, $flags) = @_;
 
     if ($codestr =~ /^\s*\[([^\]]*)\]\s*$/) {
-        return byte_code_compile($1, $relax);
+        return byte_code_compile($1, $relax, $flags);
     }
 
     my $c = $codestr;
@@ -736,7 +797,7 @@ sub startseq($$) {
     my($c0, $c1, $i);
     my $prefix = '';
 
-    @codes = decodify($codestr, $relax);
+    @codes = decodify($codestr, $relax, {});
 
     while (defined($c0 = shift(@codes))) {
         $c1 = $codes[0];
@@ -837,7 +898,7 @@ sub tupletype($) {
 #
 # r = register field in the modr/m
 # m = modr/m
-# v = VEX "v" field
+# v = VEX "v" field or DFV
 # i = immediate
 # s = register field of is4/imz2 field
 # - = implicit (unencoded) operand
@@ -846,8 +907,8 @@ sub tupletype($) {
 # For an operand that should be filled into more than one field,
 # enter it as e.g. "r+v".
 #
-sub byte_code_compile($$) {
-    my($str, $relax) = @_;
+sub byte_code_compile($$$) {
+    my($str, $relax, $flags) = @_;
     my $opr;
     my $opc;
     my @codes = ();
@@ -1004,48 +1065,52 @@ sub byte_code_compile($$) {
             my $c = $vexmap{$vexname};
             my ($m,$w,$l,$p) = (undef,2,undef,0);
             my $has_nds = 0;
-            my @subops = split(/\./, $op);
-            shift @subops;      # Drop prefix
-                foreach $oq (@subops) {
-                    if ($oq eq '128' || $oq eq 'l0' || $oq eq 'lz') {
-                        $l = 0;
-                    } elsif ($oq eq '256' || $oq eq 'l1') {
-                        $l = 1;
-                    } elsif ($oq eq 'lig') {
-                        $l = 2;
-                    } elsif ($oq eq 'w0') {
-                        $w = 0;
-                    } elsif ($oq eq 'w1') {
-                        $w = 1;
-                    } elsif ($oq eq 'wig') {
-                        $w = 2;
-                    } elsif ($oq eq 'ww') {
-                        $w = 3;
-                    } elsif ($oq eq 'np' || $oq eq 'p0') {
-                        $p = 0;
-                    } elsif ($oq eq '66' || $oq eq 'p1') {
-                        $p = 1;
-                    } elsif ($oq eq 'f3' || $oq eq 'p2') {
-                        $p = 2;
-                    } elsif ($oq eq 'f2' || $oq eq 'p3') {
-                        $p = 3;
-                    } elsif ($oq eq '0f') {
-                        $m = 1;
-                    } elsif ($oq eq '0f38') {
-                        $m = 2;
-                    } elsif ($oq eq '0f3a') {
-                        $m = 3;
-                    } elsif ($oq =~ /^(m|map)([0-9]+)$/) {
-                        $m = $2+0;
-                    } elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {
-                        if (!defined($oppos{'v'})) {
-                            die "$fname:$line: $vexname.$oq without 'v' operand\n";
-                        }
-                        $has_nds = 1;
-                    } else {
-                        die "$fname:$line: undefined \U$vexname\E subcode: $oq\n";
-                    }
-                }
+            my @subops = split(/\./, $2);
+	    foreach $oq (@subops) {
+		if ($oq eq '') {
+		    next;
+		} elsif ($oq eq '128' || $oq eq 'l0' || $oq eq 'lz') {
+		    $l = 0;
+		} elsif ($oq eq '256' || $oq eq 'l1') {
+		    $l = 1;
+		} elsif ($oq eq 'lig') {
+		    $l = 0;
+		    $flags->{'LIG'}++;
+		} elsif ($oq eq 'w0') {
+		    $w = 0;
+		} elsif ($oq eq 'w1') {
+		    $w = 1;
+		} elsif ($oq eq 'wig') {
+		    $w = 0;
+		    $flags->{'WIG'}++;
+		} elsif ($oq eq 'ww') {
+		    $w = 0;
+		    $flags->{'WW'}++;
+		} elsif ($oq eq 'np' || $oq eq 'p0') {
+		    $p = 0;
+		} elsif ($oq eq '66' || $oq eq 'p1') {
+		    $p = 1;
+		} elsif ($oq eq 'f3' || $oq eq 'p2') {
+		    $p = 2;
+		} elsif ($oq eq 'f2' || $oq eq 'p3') {
+		    $p = 3;
+		} elsif ($oq eq '0f') {
+		    $m = 1;
+		} elsif ($oq eq '0f38') {
+		    $m = 2;
+		} elsif ($oq eq '0f3a') {
+		    $m = 3;
+		} elsif ($oq =~ /^(m|map)([0-9]+)$/) {
+		    $m = $2+0;
+		} elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {
+		    if (!defined($oppos{'v'})) {
+			die "$fname:$line: $vexname.$oq without 'v' operand\n";
+		    }
+		    $has_nds = 1;
+		} else {
+		    die "$fname:$line: undefined modifier: $vexname.$oq\n";
+		}
+	    }
             if (!defined($m) || !defined($w) || !defined($l) || !defined($p)) {
                 die "$fname:$line: missing fields in \U$vexname\E specification\n";
             }
@@ -1053,67 +1118,132 @@ sub byte_code_compile($$) {
 	    if ($m < $minmap || $m > 31) {
 		die "$fname:$line: Only maps ${minmap}-31 are valid for \U${vexname}\n";
 	    }
-            push(@codes, defined($oppos{'v'}) ? 0260+($oppos{'v'} & 3) : 0270,
+            push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
                  ($c << 6)+$m, ($w << 4)+($l << 2)+$p);
+
+	    $flags->{'VEX'}++;
             $prefix_ok = 0;
         } elsif ($op =~ /^(evex)(|\..*)$/) {
             my $c = $vexmap{$1};
-            my ($m,$w,$l,$p) = (undef,2,undef,0);
-            my $has_nds = 0;
-            my @subops = split(/\./, $op);
-            shift @subops;      # Drop prefix
-                foreach $oq (@subops) {
-                    if ($oq eq '128' || $oq eq 'l0' || $oq eq 'lz' || $oq eq 'lig') {
-                        $l = 0;
-                    } elsif ($oq eq '256' || $oq eq 'l1') {
-                        $l = 1;
-                    } elsif ($oq eq '512' || $oq eq 'l2') {
-                        $l = 2;
-                    } elsif ($oq eq 'w0') {
-                        $w = 0;
-                    } elsif ($oq eq 'w1') {
-                        $w = 1;
-                    } elsif ($oq eq 'wig') {
-                        $w = 2;
-                    } elsif ($oq eq 'ww') {
-                        $w = 3;
-                    } elsif ($oq eq 'np' || $oq eq 'p0') {
-                        $p = 0;
-                    } elsif ($oq eq '66' || $oq eq 'p1') {
-                        $p = 1;
-                    } elsif ($oq eq 'f3' || $oq eq 'p2') {
-                        $p = 2;
-                    } elsif ($oq eq 'f2' || $oq eq 'p3') {
-                        $p = 3;
-                    } elsif ($oq eq '0f') {
-                        $m = 1;
-                    } elsif ($oq eq '0f38') {
-                        $m = 2;
-                    } elsif ($oq eq '0f3a') {
-                        $m = 3;
-                    } elsif ($oq eq 'map5') {
-                        $m = 5;
-                    } elsif ($oq eq 'map6') {
-                        $m = 6;
-                    } elsif ($oq =~ /^m([0-9]+)$/) {
-                        $m = $1+0;
-                    } elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {
-                        if (!defined($oppos{'v'})) {
-                            die "$fname:$line: evex.$oq without 'v' operand\n";
-                        }
-                        $has_nds = 1;
-                    } else {
-                        die "$fname:$line: undefined EVEX subcode: $oq\n";
-                    }
-                }
+            my ($m,$w,$l,$p,$scc,$nf,$u,$ndd) = (undef,0,undef,0,undef,undef,undef,0,0);
+            my ($nds,$nd,$dfv,$v) = (0, 0, 0, 0);
+	    my @bad_op = ();
+            my @subops = split(/\./, $2);
+	    foreach $oq (@subops) {
+		if ($oq eq '') {
+		    next;
+		} elsif ($oq eq '128' || $oq eq 'l0' || $oq eq 'lz' || $oq eq 'lig') {
+		    $l = 0;
+		} elsif ($oq eq '256' || $oq eq 'l1') {
+		    $l = 1;
+		} elsif ($oq eq '512' || $oq eq 'l2') {
+		    $l = 2;
+		} elsif ($oq eq 'w0') {
+		    $w = 0;
+		} elsif ($oq eq 'w1') {
+		    $w = 1;
+		} elsif ($oq eq 'wig') {
+		    $w = 0;
+		    $flags->{'WIG'}++;
+		} elsif ($oq eq 'ww') {
+		    $w = 0;
+		    $flags->{'WW'}++;
+		} elsif ($oq eq 'np' || $oq eq 'p0') {
+		    $p = 0;
+		} elsif ($oq eq '66' || $oq eq 'p1') {
+		    $p = 1;
+		} elsif ($oq eq 'f3' || $oq eq 'p2') {
+		    $p = 2;
+		} elsif ($oq eq 'f2' || $oq eq 'p3') {
+		    $p = 3;
+		} elsif ($oq eq '0f') {
+		    $m = 1;
+		} elsif ($oq eq '0f38') {
+		    $m = 2;
+		} elsif ($oq eq '0f3a') {
+		    $m = 3;
+		} elsif ($oq =~ /^(m|map)([0-7])$/) {
+		    $m = $2+0;
+		} elsif ($oq =~ /^scc([0-9]+)$/) {
+		    $scc = $1+0;
+		    push(@bad_op, ['v', $oq]);
+		} elsif ($oq eq 'u') {
+		    $u = 1;
+		} elsif ($oq =~ /^nf([01]?)$/) {
+		    if ($1 eq '') {
+			$flags->{'NF'}++;
+		    }
+		    $nf = "0$1" + 0;
+		} elsif ($oq =~ /^v([0-9]+)$/) {
+		    $v = $1 + 0;
+		    push(@bad_op, ['v', $oq]);
+		} elsif ($oq eq 'dfv') {
+		    $flags->{'DFV'}++;
+		    $dfv = 1;
+		    push(@bad_op, ['v', $oq]);
+		} elsif ($oq =~ /^(nds|ndd|nd|dds)$/) {
+		    if (!defined($oppos{'v'})) {
+			die "$fname:$line: evex.$oq without 'v' operand\n";
+		    }
+		    $nds = 1;
+		    $ndd = $oq eq 'nd';
+		} else {
+		    die "$fname:$line: undefined modifier: evex.$oq\n";
+		}
+	    }
             if (!defined($m) || !defined($w) || !defined($l) || !defined($p)) {
                 die "$fname:$line: missing fields in EVEX specification\n";
             }
-	    if ($m > 15) {
-		die "$fname:$line: Only maps 0-15 are valid for EVEX\n";
+	    if ($m > 7) {
+		die "$fname:$line: Only maps 0-7 are valid for EVEX\n";
 	    }
-            push(@codes, defined($oppos{'v'}) ? 0240+($oppos{'v'} & 3) : 0250,
-                 ($c << 6)+$m, ($w << 4)+($l << 2)+$p, $tup);
+	    foreach my $bad (@bad_op) {
+		my($what, $because) = @$inv;
+		if (defined($oppos{$what})) {
+		    die "$fname:$line: $what and evex.$because are mutually incompatible\n";
+		}
+	    }
+	    if ($scc && $nf) {
+		die "$fname:$line: evex.scc and evex.nf are mutually incompatible\n";
+	    }
+
+	    my @p = ($m | 0xf0, 0x78, ($l << 5) | 0x08);
+	    $v ^= 0x0f if ($dfv);
+	    $v ^= 0x10 if (defined($scc));
+	    $p[1] ^= ($v & 15) << 3;
+	    $p[2] ^= ($v & 16) >> 1;
+	    $p[2] ^= $scc & 15;
+	    $p[2] |= 0x04 if ($nf);
+	    $p[2] |= 0x10 if ($nd);
+
+	    push(@codes, defined($oppos{'v'}) ? 0240+$oppos{'v'} : 0250, @p);
+
+	    $flags->{'EVEX'}++;
+            $prefix_ok = 0;
+	} elsif ($op =~ /^(rex[x2])(\..*)?$/) {
+	    my $type = $1;
+	    my $rex2 = $1 eq 'rex2';
+            my @subops = split(/\./, $2);
+	    my $c = $rex2 ? 0350 : 0344;
+	    foreach $oq (@subops) {
+		if ($oq eq '') {
+		    next;
+		} elsif ($oq =~ /^x[14]?$/ && $rex2) {
+		    $c |= 04;
+		} elsif ($oq =~ /^m1?$/ || $oq eq '0f') {
+		    $c |= 02;
+		} elsif ($oq =~ /^w1?$/) {
+		    $c |= 01;
+		} elsif ($oq =~ /^(w0|m0|x0|np)$/) {
+		    # Nothing
+		} else {
+		    die "$fname:$line: unknown modifier: $type.$oq\n";
+		}
+	    }
+	    push(@codes, $oq);
+
+	    $flags->{'REX2'}++ if ($rex2);
+	    $flags->{'REXX'}++;
             $prefix_ok = 0;
         } elsif (defined $imm_codes{$op}) {
             if ($op eq 'seg') {

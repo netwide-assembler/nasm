@@ -47,44 +47,35 @@ Codes            Mnemonic        Explanation
                                          an arbitrary value in bits 3..0 (assembled as zero.)
 \2ab             /b                      a ModRM, calculated on EA in operand a, with the reg
                                          field equal to digit b.
-\240..\243                               this instruction uses EVEX rather than REX or VEX/XOP, with the
-                                         V field taken from operand 0..3.
+\240..\247                               this instruction uses EVEX rather than REX or VEX/XOP, with the
+                                         V register number taken from operand 0..7 (which may
+					 be an immediate, as is used for DFV.)
 \250                                     this instruction uses EVEX rather than REX or VEX/XOP, with the
-                                         V field set to 11111b.
+                                         V register number set to 0 (subject to the XOR as defined
+					 below)
 
 EVEX prefixes are followed by the sequence:
-\um\wlp\tup    um defintion:	ue 00m mmm
-		 u          = set the U bit (EVEX.P1[2]) if mod = 3
-		 [.m#] mmmm = opcode map
 
-		 NOTE: if the base register is a GPR the m bit is used
-		 to encode bit 4 of the GPR number.
+     \p1\p2\p3\3tt
 
-               wlp definition: df wwl lpp
-		 [nd]  d = 1
-		 [nf]  f = 1
+		... which are XOR'd into the EVEX payload bytes. These are used to encode the
+		map and other fixed fields. Note that the inverted register bits should be
+		set to 1.
 
-                 [l0]  ll = 0 (.128, .lz)
-                 [l1]  ll = 1 (.256)
-                 [l2]  ll = 2 (.512)
-                 [lig] ll = 3 for EVEX.L'L don't care (always assembled as 0)
+		These are used in conjunction with the following instruction flags:
 
-                 [w0]  ww = 0 for W = 0
-                 [w1]  ww = 1 for W = 1
-                 [wig] ww = 2 for W don't care (always assembled as 0)
-                 [ww]  ww = 3 for W used as REX.W
+		I_LIG	hint to the disassembler: ignore EVEX.L
+		I_WIG	hint to the disassembler: ignore EVEX.W
+		I_WW	W is used as REX_W
+		I_NF	the {nf} prefix is permitted for this instruction
+		I_DFV	this instruction uses the V field as DFV
 
-                 [p0]  pp = 0 for no prefix
-                 [60]  pp = 1 for legacy prefix 60
-                 [f3]  pp = 2
-                 [f2]  pp = 3
-
-               tup is tuple type for Disp8*N from %tuple_codes in insns.pl
+		tt is tuple type for Disp8*N from %tuple_codes in insns.pl
                    (compressed displacement encoding)
 
 \254..\257       id,s                    a signed 32-bit operand to be extended to 64 bits.
-\260..\263                               this instruction uses VEX/XOP rather than REX, with the
-                                         V field taken from operand 0..3.
+\260..\267                               this instruction uses VEX/XOP rather than REX, with the
+                                         V field taken from operand 0..7.
 \270                                     this instruction uses VEX/XOP rather than REX, with the
                                          V field set to 1111b.
 VEX/XOP prefixes are followed by the sequence:
@@ -94,15 +85,15 @@ VEX/XOP prefixes are followed by the sequence:
 
 		mmmmm = M field
 
-		wlp format:	00 wwl lpp
+		wlp format:	00 0w0 lpp
                 [l0]  ll = 0 for L = 0 (.128, .lz)
                 [l1]  ll = 1 for L = 1 (.256)
-                [lig] ll = 2 for L don't care (always assembled as 0)
+                [lig] ll = 0 for L don't care (always assembled as 0) with IF_LIG
 
                 [w0]  ww = 0 for W = 0
                 [w1 ] ww = 1 for W = 1
-                [wig] ww = 2 for W don't care (always assembled as 0)
-                [ww]  ww = 3 for W used as REX.W
+                [wig] ww = 0 for W don't care (always assembled as 0) with IF_WIG
+                [ww]  ww = 0 for W used as REX.W with IF_WW
 
 t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 
@@ -124,8 +115,8 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \322             odf                         indicates that this instruction is only valid when the
                                              operand size is the default (instruction to disassembler,
                                              generates no code in the assembler)
-\323             o64nw                       indicates fixed 64-bit operand size, REX on extensions only.
-\324             o64                         indicates 64-bit operand size requiring REX prefix.
+\323             o64nw                       indicates fixed 64-bit operand size, REX.W not required.
+\324             o64                         indicates 64-bit operand size requiring REX.W.
 \325             nohi                        instruction which always uses spl/bpl/sil/dil
 \326             nof3                        (disassembler only) not valid with 0xF3 REP prefix.
 \331             norep                       (disassembler only) not valid with 0xF2 or 0xF3 REP prefixes.
@@ -139,8 +130,11 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \340             resb                        reserve <operand 0> bytes of uninitialized storage.
                                              Operand 0 had better be a segmentless constant.
 \341             wait                        this instruction needs a WAIT "prefix"
-\342		 rex2.m0		     REX2 prefix, map 0
-\343		 rex2.m1		     REX2 prefix, map 1
+\344..\347	 rexx[.0f|m1][.w]	     REX or REX2 prefix, bits [1:0] set the M or W bits (promotable)
+					     rexx.m1 -> rex 0f if REX2 is not generated.
+					     The W bit will also be set if o64 is specified.
+35x		 rex2[.0f|m1][.x1][.w]	     obligatory REX2 prefix, bits [2:0] set the X1, M, and W bits
+					     The W bit will also be set if o64 is specified.
 \360             np                          no SSE prefix (== \364\331)
 \361                                         66 SSE prefix (== \366\331)
 \364             !osp                        operand-size prefix (0x66) not permitted

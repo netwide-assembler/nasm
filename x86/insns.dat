@@ -6357,12 +6357,12 @@ VSUBSH		xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.f3.map5.w0 5c /r
 VUCOMISH	xmmreg,xmmrm16|sae			[rm:t1s: evex.lig.np.map5.w0 2e /r]	AVX512FP16,FUTURE
 
 ;# RAO-INT weakly ordered atomic operations
-AADD	   	mem32,reg32				[mr:	norexw np 0f 38 fc /r	]	RAOINT,FUTURE,SD
-AADD	   	mem64,reg64				[mr:	o64 np 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
-AAND	   	mem32,reg32				[mr:	norexw 66 0f 38 fc /r	]	RAOINT,FUTURE,SD
-AAND	   	mem64,reg64				[mr:	o64 66 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
-AXOR	   	mem32,reg32				[mr:	norexw f3 0f 38 fc /r	]	RAOINT,FUTURE,SD
-AXOR	   	mem64,reg64				[mr:	o64 f3 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
+AADD		mem32,reg32				[mr:	norexw np 0f 38 fc /r	]	RAOINT,FUTURE,SD
+AADD		mem64,reg64				[mr:	o64 np 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
+AAND		mem32,reg32				[mr:	norexw 66 0f 38 fc /r	]	RAOINT,FUTURE,SD
+AAND		mem64,reg64				[mr:	o64 66 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
+AXOR		mem32,reg32				[mr:	norexw f3 0f 38 fc /r	]	RAOINT,FUTURE,SD
+AXOR		mem64,reg64				[mr:	o64 f3 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
 
 ;# User interrupts
 CLUI		void					[	f3 0f 01 ee		]	UINTR,FUTURE,LONG
@@ -6392,6 +6392,45 @@ WRMSRLIST	void					[	f3 0f 01 c6		]	MSRLIST,FUTURE,PRIV,LONG
 ;# History reset
 HRESET		imm,reg_eax				[i-:	f3 0f 3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB
 HRESET		imm					[i:	f3 0f 3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB,ND
+
+;# APX test
+CCMPscc		spec4,rm8,reg8			[vmr:	evex.scc.dfv.l0.np.m4.wig 38 /r	]	SM23,APX
+CCMPscc		spec4,rm16,reg16		[vmr:	evex.scc.dfv.l0.66.m4.w0  39 /r	]	SM23,APX
+CCMPscc		spec4,rm32,reg32		[vmr:	evex.scc.dfv.l0.np.m4.w0  39 /r	]	SM23,APX
+CCMPscc		spec4,rm64,reg64		[vmr:	evex.scc.dfv.l0.np.m4.w1  39 /r	]	SM23,APX
+
+CCMPscc		spec4,reg8,rm8			[vrm:	evex.scc.dfv.l0.np.m4.wig 3a /r	]	SM23,APX
+CCMPscc		spec4,reg16,rm16		[vrm:	evex.scc.dfv.l0.66.m4.w0  3b /r	]	SM23,APX
+CCMPscc		spec4,reg32,rm32		[vrm:	evex.scc.dfv.l0.np.m4.w0  3b /r	]	SM23,APX
+CCMPscc		spec4,reg64,rm64		[vrm:	evex.scc.dfv.l0.np.m4.w1  3b /r	]	SM23,APX
+
+CCMPscc		spec4,rm8,imm			[vmi:	evex.scc.dfv.l0.np.m4.wig 80 /7	]	SM23,APX
+CCMPscc		spec4,rm16,sbyteword		[vmi:	evex.scc.dfv.l0.66.m4.w0  83 /7	]	SM23,APX
+CCMPscc		spec4,rm32,sbytedword		[vmi:	evex.scc.dfv.l0.np.m4.w0  83 /7	]	SM23,APX
+CCMPscc		spec4,rm64,sbytedword		[vmi:	evex.scc.dfv.l0.np.m4.w1  83 /7	]	SM23,APX
+CCMPscc		spec4,rm16,imm			[vmi:	evex.scc.dfv.l0.66.m4.w0  81 /7	]	SM23,APX
+CCMPscc		spec4,rm32,imm			[vmi:	evex.scc.dfv.l0.np.m4.w0  81 /7	]	SM23,APX
+CCMPscc		spec4,rm64,imm			[vmi:	evex.scc.dfv.l0.np.m4.w1  81 /7	]	SM23,APX
+
+PUSH2		reg64,reg64			[vm:	evex.nd.l0.np.m4.w0	  ff /6	]	APX
+PUSH		reg64,reg64			[vm:	evex.nd.l0.np.m4.w0	  ff /6	]	APX,ND
+PUSH2		reg64:reg64			[vm:	evex.nd.l0.np.m4.w0	  ff /6	]	APX,ND
+PUSH		reg64:reg64			[vm:	evex.nd.l0.np.m4.w0	  ff /6	]	APX,ND
+PUSH2P		reg64,reg64			[vm:	evex.nd.l0.np.m4.w1	  ff /6	]	APX
+PUSHP		reg64,reg64			[vm:	evex.nd.l0.np.m4.w1	  ff /6	]	APX,ND
+PUSH2P		reg64:reg64			[vm:	evex.nd.l0.np.m4.w1	  ff /6	]	APX,ND
+PUSHP		reg64:reg64			[vm:	evex.nd.l0.np.m4.w1	  ff /6	]	APX,ND
+POP2		reg64,reg64			[vm:	evex.nd.l0.np.m4.w0	  8f /0	]	APX
+POP		reg64,reg64			[vm:	evex.nd.l0.np.m4.w0	  8f /0	]	APX,ND
+POP2		reg64:reg64			[mv:	evex.nd.l0.np.m4.w0	  8f /0	]	APX,ND
+POP		reg64:reg64			[mv:	evex.nd.l0.np.m4.w0	  8f /0	]	APX,ND
+POP2P		reg64,reg64			[vm:	evex.nd.l0.np.m4.w1	  8f /0	]	APX
+POPP		reg64,reg64			[vm:	evex.nd.l0.np.m4.w1	  8f /0	]	APX,ND
+POP2P		reg64:reg64			[mv:	evex.nd.l0.np.m4.w1	  8f /0	]	APX,ND
+POPP		reg64:reg64			[mv:	evex.nd.l0.np.m4.w1	  8f /0	]	APX,ND
+
+PUSHP		reg64				[r:	rex2.m0.w1 50+r			]	APX
+POPP		reg64				[r:	rex2.m0.w1 58+r			]	APX
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file

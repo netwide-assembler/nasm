@@ -655,6 +655,8 @@ static opflags_t imm_flags(int64_t n, opflags_t flags)
 {
     if (n == 1)
         flags |= UNITY;
+    if ((uint64_t)n <= 15)
+        flags |= FOURBITS;
 
     if (optimizing.level < 0 || (flags & STRICT))
         return flags;

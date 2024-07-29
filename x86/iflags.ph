@@ -7,6 +7,7 @@ if_align('IGEN');
 
 if_("SM",                "Size match");
 if_("SM2",               "Size match first two operands");
+if_("SM23",              "Size match operands 2 and 3");
 if_("SB",                "Unsized operands can't be non-byte");
 if_("SW",                "Unsized operands can't be non-word");
 if_("SD",                "Unsized operands can't be non-dword");
@@ -24,11 +25,6 @@ if_("AR3",               "SB, SW, SD applies to argument 3");
 if_("AR4",               "SB, SW, SD applies to argument 4");
 if_("OPT",               "Optimizing assembly only");
 if_("LATEVEX",           "Only if EVEX instructions are disabled");
-
-#
-# special immediates like {dfv=}
-#
-if_("DFV",               "Destination flag values");
 
 #
 # dword bound - instruction feature filtering flags
@@ -120,13 +116,29 @@ if_("SMAP",		 "Supervisor Mode Access Prevention (SMAP)");
 if_("SHA512",            "SHA512 instructions");
 if_("SM3",               "SM3 instructions");
 if_("SM4",               "SM4 instructions");
+if_("APX",               "Advanced Performance Extensions (APX)");
 
 # Put these last to minimize their relevance
 if_("OBSOLETE",          "Instruction removed from architecture");
 if_("NEVER",             "Instruction never implemented");
 if_("NOP",               "Instruction is always a (nonintentional) NOP");
+
+#
+# Encoding flags
+#
 if_("VEX",               "VEX or XOP encoded instruction");
 if_("EVEX",              "EVEX encoded instruction");
+if_("REXX",		 "Instruction supports REX2 encoding");
+if_("REX2",              "Instruction requires REX2 encoding");
+if_("NF",                "Instruction supports the {nf} prefix");
+if_("LIG",               "Ignore VEX/EVEX L field");
+if_("WIG",               "Ignore VEX/EVEX W field");
+if_("WW",                "VEX/EVEX W is REX.W");
+
+#
+# special immediates types like {dfv=}
+#
+if_("DFV",               "Destination flag values");
 
 #
 # dword bound - cpu type flags
