@@ -2291,8 +2291,8 @@ static void gencode(struct out_data *data, insn *ins)
                         int asize = ins->addr_size >> 3;
 
                         if (overflow_general(opy->offset, asize) ||
-                            signed_bits(opy->offset, ins->addr_size) !=
-                            signed_bits(opy->offset, ea_data.bytes << 3))
+                            sext(opy->offset, ins->addr_size) !=
+                            sext(opy->offset, ea_data.bytes << 3))
                             warn_overflow(ea_data.bytes);
 
                         out_imm(data, opy, ea_data.bytes,

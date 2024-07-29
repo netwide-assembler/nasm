@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -434,59 +434,70 @@ off_t nasm_file_size_by_path(const char *pathname);
 bool nasm_file_time(time_t *t, const char *pathname);
 void fwritezero(off_t bytes, FILE *fp);
 
-static inline bool const_func overflow_general(int64_t value, int bytes)
+/* Sign-extend a value to an arbitrary number of bits */
+static inline int64_t const_func sext(int64_t value, unsigned int bits)
 {
-    int sbit;
-    int64_t vmax, vmin;
+    if (is_constant(bits)) {
+        switch (bits) {
+        case 8:
+            return (int8_t)value;
+        case 16:
+            return (int16_t)value;
+        case 32:
+            return (int32_t)value;
+        default:
+            break;
+        }
+    }
 
-    if (bytes >= 8)
-        return false;
+    if (bits >= 64)
+        return value;
 
-    sbit = (bytes << 3) - 1;
-    vmax =  ((int64_t)2 << sbit) - 1;
-    vmin = -((int64_t)2 << sbit);
+    /* sext(foo,0) == sext(foo,1) */
+    bits = bits ? 64-bits : 63;
 
-    return value < vmin || value > vmax;
+    return value >> bits << bits;
+}
+
+/* Zero-extend a value to an arbitrary number of bits */
+static inline uint64_t const_func zext(uint64_t value, unsigned int bits)
+{
+    if (is_constant(bits)) {
+        switch (bits) {
+        case 8:
+            return (uint8_t)value;
+        case 16:
+            return (uint16_t)value;
+        case 32:
+            return (uint32_t)value;
+        default:
+            break;
+        }
+    }
+
+    if (bits >= 64)
+        return value;
+
+    if (!bits)
+        return 0;
+
+    bits = 64-bits;
+    return value >> bits << bits;
 }
 
 static inline bool const_func overflow_signed(int64_t value, int bytes)
 {
-    int sbit;
-    int64_t vmax, vmin;
-
-    if (bytes >= 8)
-        return false;
-
-    sbit = (bytes << 3) - 1;
-    vmax =  ((int64_t)1 << sbit) - 1;
-    vmin = -((int64_t)1 << sbit);
-
-    return value < vmin || value > vmax;
+    return sext(value, bytes << 3) != value;
 }
 
-static inline bool const_func overflow_unsigned(int64_t value, int bytes)
+static inline bool const_func overflow_unsigned(uint64_t value, int bytes)
 {
-    int sbit;
-    int64_t vmax, vmin;
-
-    if (bytes >= 8)
-        return false;
-
-    sbit = (bytes << 3) - 1;
-    vmax = ((int64_t)2 << sbit) - 1;
-    vmin = 0;
-
-    return value < vmin || value > vmax;
+    return zext(value, bytes << 3) != value;
 }
 
-static inline int64_t const_func signed_bits(int64_t value, int bits)
+static inline bool const_func overflow_general(int64_t value, int bytes)
 {
-    if (bits < 64) {
-        value &= ((int64_t)1 << bits) - 1;
-        if (value & (int64_t)1 << (bits - 1))
-            value |= (int64_t)((uint64_t)-1 << bits);
-    }
-    return value;
+    return overflow_unsigned(value, bytes) && overflow_signed(value, bytes);
 }
 
 /* check if value is power of 2 */
