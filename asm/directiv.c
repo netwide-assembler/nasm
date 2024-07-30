@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -111,6 +111,7 @@ void set_cpu(const char *value)
         { "any", IF_ANY },
         { "all", IF_ANY },
         { "latevex", IF_LATEVEX },
+        { "apx", IF_APX },
         { "evex", IF_EVEX },
         { "vex", IF_VEX },
         { NULL, 0 }

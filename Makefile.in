@@ -113,8 +113,8 @@ MANIFEST = @MANIFEST@
 NASM    = asm/nasm.$(O)
 NDISASM = disasm/ndisasm.$(O)
 
-PROGOBJ = $(NASM) $(NDISASM)
-PROGS   = nasm$(X) ndisasm$(X)
+PROGOBJ = $(NASM) # $(NDISASM)
+PROGS   = nasm$(X) # ndisasm$(X)
 
 LIBOBJ_NW = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	stdlib/strnlen.$(O) stdlib/strrchrnul.$(O) \
@@ -160,8 +160,9 @@ LIBOBJ_NW = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	output/outobj.$(O) output/outas86.$(O) \
 	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
 	output/codeview.$(O) \
-	\
-	disasm/disasm.$(O) disasm/sync.$(O)
+
+#	\
+#	disasm/disasm.$(O) disasm/sync.$(O)
 
 # Warnings depend on all source files, so handle them separately
 WARNOBJ   = asm/warnings.$(O)

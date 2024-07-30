@@ -77,10 +77,14 @@ wait
 
 % TOKEN_PREFIX, PPS_REX, TFLAG_BRC, P_*
 rex
+rex2
 evex
 vex
 vex3
 vex2
+
+% TOKEN_PREFIX, PPS_NF, TFLAG_BRC, P_*
+nf
 
 % TOKEN_SIZE, SIZE_*, 0, S_*
 byte

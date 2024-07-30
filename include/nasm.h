@@ -535,12 +535,6 @@ enum {
  * -----------------------------------------------------------
  */
 
-/* Verify value to be a valid register */
-static inline bool is_register(int reg)
-{
-    return reg >= EXPR_REG_START && reg < REG_ENUM_LIMIT;
-}
-
 /*
  * REX flags
  */
@@ -555,22 +549,36 @@ static inline bool is_register(int reg)
 #define REX_V       0x0100  /* Instruction uses VEX/XOP instead of REX */
 #define REX_NH      0x0200  /* Instruction which doesn't use high regs */
 #define REX_EV      0x0400  /* Instruction uses EVEX instead of REX */
+#define REX_2       0x0800  /* Instruction requires REX2 */
+#define REX_B1      0x1000  /* REX2/EVEX B second bit */
+#define REX_X1      0x2000  /* REX2/EVEX X second bit */
+#define REX_R1      0x4000  /* REX2/EVEX R second bit */
+
+#define REX_BXR0    0x0007
+#define REX_BXR1    0x7000
+#define REX_BXR     0x7007
+
+#define REX_rB	    (REX_B | REX_B1 | REX_H | REX_P)
+#define REX_rX	    (REX_X | REX_X1 | REX_H | REX_P)
+#define REX_rR	    (REX_R | REX_R1 | REX_H | REX_P)
 
 /*
  * EVEX bit field
  */
-#define EVEX_P0MM       0x0f        /* EVEX P[3:0] : Opcode map           */
-#define EVEX_P0RP       0x10        /* EVEX P[4] : High-16 reg            */
-#define EVEX_P0X        0x40        /* EVEX P[6] : High-16 rm             */
-#define EVEX_P1PP       0x03        /* EVEX P[9:8] : Legacy prefix        */
-#define EVEX_P1VVVV     0x78        /* EVEX P[14:11] : NDS register       */
-#define EVEX_P1W        0x80        /* EVEX P[15] : Osize extension       */
-#define EVEX_P2AAA      0x07        /* EVEX P[18:16] : Embedded opmask    */
-#define EVEX_P2VP       0x08        /* EVEX P[19] : High-16 NDS reg       */
-#define EVEX_P2B        0x10        /* EVEX P[20] : Broadcast / RC / SAE  */
-#define EVEX_P2LL       0x60        /* EVEX P[22:21] : Vector length      */
+#define EVEX_P0MM       0x0f00      /* EVEX P[3:0] : Opcode map           */
+#define EVEX_P0RP       0x1000      /* EVEX P[4] : High-16 reg            */
+#define EVEX_P0X        0x4000      /* EVEX P[6] : High-16 rm             */
+#define EVEX_P1PP       0x030000    /* EVEX P[9:8] : Legacy prefix        */
+#define EVEX_P1VVVV     0x780000    /* EVEX P[14:11] : NDS register       */
+#define EVEX_P1W        0x800000    /* EVEX P[15] : Osize extension       */
+#define EVEX_P2AAA      0x07000000  /* EVEX P[18:16] : Embedded opmask    */
+#define EVEX_P2NF       0x04000000  /* EVEX P[18]: No flags bit           */
+#define EVEX_P2VP       0x08000000  /* EVEX P[19] : High-16 NDS reg       */
+#define EVEX_P2B        0x10000000  /* EVEX P[20] : Broadcast / RC / SAE  */
+#define EVEX_P2ND       EVEX_P2B    /* EVEX P[20] : New destination       */
+#define EVEX_P2LL       0x60000000  /* EVEX P[22:21] : Vector length      */
 #define EVEX_P2RC       EVEX_P2LL   /* EVEX P[22:21] : Rounding control   */
-#define EVEX_P2Z        0x80        /* EVEX P[23] : Zeroing/Merging       */
+#define EVEX_P2Z        0x80000000  /* EVEX P[23] : Zeroing/Merging       */
 
 /*
  * REX_V "classes" (prefixes which behave like VEX)
@@ -610,10 +618,12 @@ enum prefixes { /* instruction prefixes */
     P_BND,
     P_NOBND,
     P_REX,
+    P_REX2,
     P_EVEX,
     P_VEX,
     P_VEX3,
     P_VEX2,
+    P_NF,
     PREFIX_ENUM_LIMIT
 };
 
@@ -718,6 +728,7 @@ enum prefix_pos {
     PPS_OSIZE,          /* Operand size prefix */
     PPS_ASIZE,          /* Address size prefix */
     PPS_REX,            /* REX/VEX type */
+    PPS_NF,             /* No flags */
     MAXPREFIX           /* Total number of prefix slots */
 };
 
@@ -761,6 +772,7 @@ typedef struct insn { /* an instruction itself */
     enum opcode     opcode;                 /* the opcode - not just the string */
     int             operands;               /* how many operands? 0-7 (more if db et al) */
     int             addr_size;              /* address size */
+    int             op_size;                /* operand size */
     operand         oprs[MAX_OPERANDS];     /* the operands, defined as above */
     extop           *eops;                  /* extended operands */
     int             eops_float;             /* true if DD and floating */
@@ -768,11 +780,10 @@ typedef struct insn { /* an instruction itself */
     bool            forw_ref;               /* is there a forward reference? */
     bool            rex_done;               /* REX prefix emitted? */
     int             rex;                    /* Special REX Prefix */
-    int             vexreg;                 /* Register encoded in VEX prefix */
+    int             vexreg;                 /* Register encoded in VEX.V */
     int             vex_cm;                 /* Class and M field for VEX prefix */
     int             vex_wlp;                /* W, P and L information for VEX prefix */
-    uint8_t         evex_p[3];              /* EVEX.P0: [RXB,R',00,mm], P1: [W,vvvv,1,pp] */
-                                            /* EVEX.P2: [z,L'L,b,V',aaa] */
+    uint32_t	    evex;                   /* EVEX prefix under construction */
     enum ttypes     evex_tuple;             /* Tuple type for compressed Disp8*N */
     int             evex_rm;                /* static rounding mode for AVX512 (EVEX) */
     int8_t          evex_brerop;            /* BR/ER/SAE operand position */

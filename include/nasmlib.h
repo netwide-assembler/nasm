@@ -456,7 +456,7 @@ static inline int64_t const_func sext(int64_t value, unsigned int bits)
     /* sext(foo,0) == sext(foo,1) */
     bits = bits ? 64-bits : 63;
 
-    return value >> bits << bits;
+    return value << bits >> bits;
 }
 
 /* Zero-extend a value to an arbitrary number of bits */
@@ -482,20 +482,20 @@ static inline uint64_t const_func zext(uint64_t value, unsigned int bits)
         return 0;
 
     bits = 64-bits;
-    return value >> bits << bits;
+    return value << bits >> bits;
 }
 
-static inline bool const_func overflow_signed(int64_t value, int bytes)
+static inline bool const_func overflow_signed(int64_t value, unsigned int bytes)
 {
     return sext(value, bytes << 3) != value;
 }
 
-static inline bool const_func overflow_unsigned(uint64_t value, int bytes)
+static inline bool const_func overflow_unsigned(uint64_t value, unsigned int bytes)
 {
     return zext(value, bytes << 3) != value;
 }
 
-static inline bool const_func overflow_general(int64_t value, int bytes)
+static inline bool const_func overflow_general(int64_t value, unsigned int bytes)
 {
     return overflow_unsigned(value, bytes) && overflow_signed(value, bytes);
 }

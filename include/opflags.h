@@ -178,16 +178,23 @@
 #define REG_CLASS_BND           GEN_REG_CLASS(9)
 #define REG_CLASS_RM_TMM	GEN_REG_CLASS(10)
 
+/* Verify value to be a valid register */
+static inline bool is_register(opflags_t reg)
+{
+    return reg >= EXPR_REG_START && reg < REG_ENUM_LIMIT;
+}
+
 static inline bool is_class(opflags_t class, opflags_t op)
 {
-	return !(class & ~op);
+    return !(class & ~op);
 }
 
 static inline bool is_reg_class(opflags_t class, opflags_t reg)
 {
-	if (reg >= EXPR_REG_START && reg <= EXPR_REG_END)
-		return is_class(class, nasm_reg_flags[reg]);
-	return false;
+    if (!is_register(reg))
+        return false;
+
+    return is_class(class, nasm_reg_flags[reg]);
 }
 
 #define IS_SREG(reg)                is_reg_class(REG_SREG, (reg))

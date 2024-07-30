@@ -47,8 +47,8 @@ Codes            Mnemonic        Explanation
                                          an arbitrary value in bits 3..0 (assembled as zero.)
 \2ab             /b                      a ModRM, calculated on EA in operand a, with the reg
                                          field equal to digit b.
-\240..\247                               this instruction uses EVEX rather than REX or VEX/XOP, with the
-                                         V register number taken from operand 0..7 (which may
+\240..\243                               this instruction uses EVEX rather than REX or VEX/XOP, with the
+                                         V register number taken from operand "b" (0..3) (which may
 					 be an immediate, as is used for DFV.)
 \250                                     this instruction uses EVEX rather than REX or VEX/XOP, with the
                                          V register number set to 0 (subject to the XOR as defined
@@ -74,10 +74,10 @@ EVEX prefixes are followed by the sequence:
                    (compressed displacement encoding)
 
 \254..\257       id,s                    a signed 32-bit operand to be extended to 64 bits.
-\260..\267                               this instruction uses VEX/XOP rather than REX, with the
-                                         V field taken from operand 0..7.
+\260..\263                               this instruction uses VEX/XOP rather than REX, with the
+                                         V register taken from operand "b" 0..3.
 \270                                     this instruction uses VEX/XOP rather than REX, with the
-                                         V field set to 1111b.
+                                         V register set to 0.
 VEX/XOP prefixes are followed by the sequence:
 \tmm\wlp	tmm format:	tt 0mm mmm
 		[vex] tt = 0
@@ -85,15 +85,15 @@ VEX/XOP prefixes are followed by the sequence:
 
 		mmmmm = M field
 
-		wlp format:	00 0w0 lpp
+		wlp format:	w0 00l lpp
                 [l0]  ll = 0 for L = 0 (.128, .lz)
                 [l1]  ll = 1 for L = 1 (.256)
                 [lig] ll = 0 for L don't care (always assembled as 0) with IF_LIG
 
-                [w0]  ww = 0 for W = 0
-                [w1 ] ww = 1 for W = 1
-                [wig] ww = 0 for W don't care (always assembled as 0) with IF_WIG
-                [ww]  ww = 0 for W used as REX.W with IF_WW
+                [w0]  w = 0 for W = 0
+                [w1 ] w = 1 for W = 1
+                [wig] w = 0 for W don't care (always assembled as 0) with IF_WIG
+                [ww]  w = 0 for W used as REX.W with IF_WW
 
 t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 
@@ -130,10 +130,11 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \340             resb                        reserve <operand 0> bytes of uninitialized storage.
                                              Operand 0 had better be a segmentless constant.
 \341             wait                        this instruction needs a WAIT "prefix"
-\344..\347	 rexx[.0f|m1][.w]	     REX or REX2 prefix, bits [1:0] set the M or W bits (promotable)
+\344..\347	 rexx[.0f|m1][.w]	     REX or REX2 prefix, bits [1:0] set the W or M bits (promotable)
 					     rexx.m1 -> rex 0f if REX2 is not generated.
 					     The W bit will also be set if o64 is specified.
-35x		 rex2[.0f|m1][.x1][.w]	     obligatory REX2 prefix, bits [2:0] set the X1, M, and W bits
+					     The REX prefix can be omitted using normal REX omission rules.
+\35x		 rex2[.0f|m1][.x1][.w]	     obligatory REX2 prefix, bits [2:0] set the X1, W, and M bits
 					     The W bit will also be set if o64 is specified.
 \360             np                          no SSE prefix (== \364\331)
 \361                                         66 SSE prefix (== \366\331)

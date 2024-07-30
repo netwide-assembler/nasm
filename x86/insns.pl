@@ -77,19 +77,26 @@ sub xpush($@) {
 }
 
 # Generate relaxed form patterns if applicable
+# * is used for an optional source operand, duplicating the previous one
+#   in the encoding if it is missing.
+# ? is used for an optional destination operand which is not encoded if
+#   missing; if combined evex.ndx set the nd bit if present.
 sub relaxed_forms(@) {
     my @field_list = @_;
 
     foreach my $fields (@_) {
-	next unless ($fields->[1] =~ /\*/);
+	next unless ($fields->[1] =~ /[\*\?]/);
 
 	# This instruction has relaxed form(s)
-	if ($fields->[2] !~ /^\[/) {
+	if ($fields->[2] !~ /^(\[\s*)(\S+)(\s*:.*\])$/) {
 	    warn "$fname:$line: has an * operand but uses raw bytecodes\n";
 	    next;
 	}
+	my @f2o = ($1, $2, $3);
 
 	my $opmask = 0;
+	my $ndmask = 0;
+	my $ndflag = 0;
 	my @ops = split(/,/, $fields->[1]);
 	for (my $oi = 0; $oi < scalar @ops; $oi++) {
 	    if ($ops[$oi] =~ /\*$/) {
@@ -98,22 +105,46 @@ sub relaxed_forms(@) {
 		    next;
 		}
 		$opmask |= 1 << $oi;
+	    } elsif ($ops[$oi] =~ /\?$/) {
+		$opmask |= 1 << $oi;
+		$ndmask |= 1 << $oi;
+		$ndflag = 1;
 	    }
 	}
+
+	# If .ndx is present, then change it to .nd0 or .nd1
+	# Set to .nd0 if no ndmask fields are present, otherwise 1
+	$fields->[2] =~ s/(\.nd)x\b/$1$ndflag/;
 
 	for (my $oi = 1; $oi < (1 << scalar @ops); $oi++) {
 	    if (($oi & ~$opmask) == 0) {
 		my @xops = ();
-		my $omask = ~$oi;
-		for ($oj = 0; $oj < scalar(@ops); $oj++) {
-		    if ($omask & 1) {
-			push(@xops, $ops[$oj]);
+		my $ndflag = 0;
+		my $relax = 0;
+		my $rbit = 1;
+		my $ondflag = $ndflag;
+		my $f2 = $f2o[0];
+		for (my $oj = 0; $oj < scalar(@ops); $oj++) {
+		    my $ob = 1 << $oj;
+		    if ($ob & $ndmask & $oi) {
+			# Make it disappear completely
+			$ondflag = 0;
+		    } else {
+			if ($ob & ~$oi) {
+			    push(@xops, $ops[$oj]);
+			} else {
+			    $relax |= $rbit;
+			}
+			$rbit <<= 1;
+			$f2 .= substr($f2o[1], $oj, 1);
 		    }
-		    $omask >>= 1;
 		}
+		$f2 .= $f2o[2];
 		my @ff = @$fields;
 		$ff[1] = join(',', @xops);
-		$ff[4] = $oi;
+		$f2 =~ s/(\.nd)x\b/$1$ondflag/;
+		$ff[2] = $f2;
+		$ff[4] = $relax;
 		push(@field_list, [@ff]);
 	    }
 	}
@@ -528,7 +559,7 @@ sub format_insn($$$$$) {
     return (undef, undef) if $operands eq "ignore";
 
     # format the operands
-    $operands =~ s/\*//g;
+    $operands =~ s/[\*\?]//g;
     $operands =~ s/:/|colon,/g;
     @ops = ();
     @opsize = ();
@@ -613,6 +644,11 @@ sub format_insn($$$$$) {
 	if ($flag =~ /^AR([0-9]+)$/) {
 	    $arx = $1+0;
 	}
+    }
+
+    # Flags that imply long mode only
+    if ($flags{'APX'}) {
+	$flags->{'LONG'}++;
     }
 
     # Look for SM flags clearly inconsistent with operand bitsizes
@@ -700,10 +736,10 @@ sub show_bytecodes($) {
 		if ($c <= 4) {
 		    $literals = $c;
 		    $hexlit = 1;
-		} elsif ($c >= 0240 && $c <= 0250) {
+		} elsif (($c & 3) == 0240 || $c == 0250) {
 		    $literals = 3;
 		    $hexlit = 1;
-		} elsif ($c >= 0260 && $c <= 0270) {
+		} elsif (($c & 3) == 0260 || $c == 0270) {
 		    $literals = 2;
 		    $hexlit = 0;
 		} elsif ($c == 0171) {
@@ -835,17 +871,24 @@ sub startseq($$) {
             return addprefix($prefix, $c1, $c1|2);
         } elsif ($c0 == 0 || $c0 == 0340) {
             return $prefix;
-        } elsif (($c0 & ~3) == 0260 || $c0 == 0270 ||
-                 ($c0 & ~3) == 0240 || $c0 == 0250) {
+        } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
+	    # VEX/XOP
             my($c,$m,$wlp);
             $m   = shift(@codes);
             $wlp = shift(@codes);
             $c = ($m >> 6);
             $m = $m & 31;
             $prefix .= sprintf('%s%02X%01X', $vex_class[$c], $m, $wlp & 3);
-            if ($c0 < 0260) {
-                my $tuple = shift(@codes);
-            }
+	} elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
+	    # EVEX
+	    my @p;
+	    push(@p, shift(@codes));
+	    push(@p, shift(@codes));
+	    push(@p, shift(@codes));
+	    my $tuple = shift(@codes);
+	    my $m = $p[0] & 7;
+	    my $p = $p[1] & 3;
+            $prefix .= sprintf('%s%02X%01X', 'evex', $m, $p);
         } elsif ($c0 >= 0172 && $c0 <= 173) {
             shift(@codes);      # Skip is4 control byte
         } else {
@@ -917,6 +960,8 @@ sub byte_code_compile($$$) {
     my $i;
     my ($op, $oq);
     my $opex;
+
+    printf STDERR "%s (%x) %s\n", $str, $relax, join(',', sort(keys(%$flags)));
 
     my %imm_codes = (
         'ib'        => 020,     # imm8
@@ -1063,7 +1108,7 @@ sub byte_code_compile($$$) {
         } elsif ($op =~ /^(vex|xop)(|\..*)$/) {
             my $vexname = $1;
             my $c = $vexmap{$vexname};
-            my ($m,$w,$l,$p) = (undef,2,undef,0);
+            my ($m,$w,$l,$p) = (undef,undef,undef,0);
             my $has_nds = 0;
             my @subops = split(/\./, $2);
 	    foreach $oq (@subops) {
@@ -1111,15 +1156,22 @@ sub byte_code_compile($$$) {
 		    die "$fname:$line: undefined modifier: $vexname.$oq\n";
 		}
 	    }
-            if (!defined($m) || !defined($w) || !defined($l) || !defined($p)) {
+            if (!defined($m) || !defined($l) || !defined($p)) {
                 die "$fname:$line: missing fields in \U$vexname\E specification\n";
             }
+
+	    if (!defined($w)) {
+		$w = 0;
+		$flags->{'WIG'}++;
+	    }
+
 	    my $minmap = ($c == 1) ? 8 : 0; # 0-31 for VEX, 8-31 for XOP
 	    if ($m < $minmap || $m > 31) {
 		die "$fname:$line: Only maps ${minmap}-31 are valid for \U${vexname}\n";
 	    }
+	    push(@codes, 05) if ($oppos{'v'} > 3);
             push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
-                 ($c << 6)+$m, ($w << 4)+($l << 2)+$p);
+                 ($c << 6)+$m, ($w << 7)+($l << 2)+$p);
 
 	    $flags->{'VEX'}++;
             $prefix_ok = 0;
@@ -1138,6 +1190,9 @@ sub byte_code_compile($$$) {
 		    $l = 1;
 		} elsif ($oq eq '512' || $oq eq 'l2') {
 		    $l = 2;
+		} elsif ($oq eq '1024' || $oq eq '1k' || $oq eq 'l3') {
+		    # Not actually defined, but...
+		    $l = 3;
 		} elsif ($oq eq 'w0') {
 		    $w = 0;
 		} elsif ($oq eq 'w1') {
@@ -1181,12 +1236,14 @@ sub byte_code_compile($$$) {
 		    $flags->{'DFV'}++;
 		    $dfv = 1;
 		    push(@bad_op, ['v', $oq]);
+		} elsif ($oq =~ /^nd([01])$/) {
+		    $nd = $1 + 0;
 		} elsif ($oq =~ /^(nds|ndd|nd|dds)$/) {
 		    if (!defined($oppos{'v'})) {
 			die "$fname:$line: evex.$oq without 'v' operand\n";
 		    }
 		    $nds = 1;
-		    $ndd = $oq eq 'nd';
+		    $nd  = $oq eq 'nd';
 		} else {
 		    die "$fname:$line: undefined modifier: evex.$oq\n";
 		}
@@ -1216,7 +1273,9 @@ sub byte_code_compile($$$) {
 	    $p[2] |= 0x04 if ($nf);
 	    $p[2] |= 0x10 if ($nd);
 
+	    push(@codes, 05) if ($oppos{'v'} > 3);
 	    push(@codes, defined($oppos{'v'}) ? 0240+$oppos{'v'} : 0250, @p);
+	    push(@codes, $tup);
 
 	    $flags->{'EVEX'}++;
             $prefix_ok = 0;
@@ -1242,8 +1301,11 @@ sub byte_code_compile($$$) {
 	    }
 	    push(@codes, $oq);
 
-	    $flags->{'REX2'}++ if ($rex2);
-	    $flags->{'REXX'}++;
+	    if ($rex2) {
+		$flags->{'APX'}++;
+		$flags->{'LONG'}++;
+	    }
+	    $flags->{'REX2'}++;
             $prefix_ok = 0;
         } elsif (defined $imm_codes{$op}) {
             if ($op eq 'seg') {

@@ -5988,7 +5988,7 @@ VPSHRDD		zmmreg|mask|z,zmmreg*,zmmrm512|b32,imm8	[rvmi:fv:  evex.nds.512.66.0f3a
 VPSHRDQ		xmmreg|mask|z,xmmreg*,xmmrm128|b64,imm8	[rvmi:fv:  evex.nds.128.66.0f3a.w1 73 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
 VPSHRDQ		ymmreg|mask|z,ymmreg*,ymmrm256|b64,imm8	[rvmi:fv:  evex.nds.256.66.0f3a.w1 73 /r ib]	AVX512VBMI2,AVX512VL,FUTURE
 VPSHRDQ		zmmreg|mask|z,zmmreg*,zmmrm512|b64,imm8	[rvmi:fv:  evex.nds.512.66.0f3a.w1 73 /r ib]	AVX512VBMI2,FUTURE
-VPSHRDVW	xmmreg|mask|z,xmmreg*,xmmrm128    	[rvmi:fvm: evex.dds.128.66.0f38.w1 72 /r]	AVX512VBMI2,AVX512VL,FUTURE
+VPSHRDVW	xmmreg|mask|z,xmmreg*,xmmrm128		[rvmi:fvm: evex.dds.128.66.0f38.w1 72 /r]	AVX512VBMI2,AVX512VL,FUTURE
 VPSHRDVW	ymmreg|mask|z,ymmreg*,ymmrm256		[rvmi:fvm: evex.dds.256.66.0f38.w1 72 /r]	AVX512VBMI2,AVX512VL,FUTURE
 VPSHRDVW	zmmreg|mask|z,zmmreg*,zmmrm512		[rvmi:fvm: evex.dds.512.66.0f38.w1 72 /r]	AVX512VBMI2,FUTURE
 VPSHRDVD	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvmi:fv:  evex.dds.128.66.0f38.w0 73 /r]	AVX512VBMI2,AVX512VL,FUTURE
@@ -6394,43 +6394,48 @@ HRESET		imm,reg_eax				[i-:	f3 0f 3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB
 HRESET		imm					[i:	f3 0f 3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB,ND
 
 ;# APX test
-CCMPscc		spec4,rm8,reg8			[vmr:	evex.scc.dfv.l0.np.m4.wig 38 /r	]	SM23,APX
-CCMPscc		spec4,rm16,reg16		[vmr:	evex.scc.dfv.l0.66.m4.w0  39 /r	]	SM23,APX
-CCMPscc		spec4,rm32,reg32		[vmr:	evex.scc.dfv.l0.np.m4.w0  39 /r	]	SM23,APX
-CCMPscc		spec4,rm64,reg64		[vmr:	evex.scc.dfv.l0.np.m4.w1  39 /r	]	SM23,APX
+CCMPscc		spec4,rm8,reg8			[vmr:	    evex.scc.dfv.l0.np.m4.wig 38 /r	]	APX,SM23
+CCMPscc		spec4,rm16,reg16		[vmr:	o16 evex.scc.dfv.l0.66.m4.w0  39 /r	]	APX,SM23
+CCMPscc		spec4,rm32,reg32		[vmr:	o32 evex.scc.dfv.l0.np.m4.w0  39 /r	]	APX,SM23
+CCMPscc		spec4,rm64,reg64		[vmr:	o64 evex.scc.dfv.l0.np.m4.w1  39 /r	]	APX,SM23
 
-CCMPscc		spec4,reg8,rm8			[vrm:	evex.scc.dfv.l0.np.m4.wig 3a /r	]	SM23,APX
-CCMPscc		spec4,reg16,rm16		[vrm:	evex.scc.dfv.l0.66.m4.w0  3b /r	]	SM23,APX
-CCMPscc		spec4,reg32,rm32		[vrm:	evex.scc.dfv.l0.np.m4.w0  3b /r	]	SM23,APX
-CCMPscc		spec4,reg64,rm64		[vrm:	evex.scc.dfv.l0.np.m4.w1  3b /r	]	SM23,APX
+CCMPscc		spec4,reg8,rm8			[vrm:	    evex.scc.dfv.l0.np.m4.wig 3a /r	]	APX,SM23
+CCMPscc		spec4,reg16,rm16		[vrm:	o16 evex.scc.dfv.l0.66.m4.w0  3b /r	]	APX,SM23
+CCMPscc		spec4,reg32,rm32		[vrm:	o32 evex.scc.dfv.l0.np.m4.w0  3b /r	]	APX,SM23
+CCMPscc		spec4,reg64,rm64		[vrm:	o64 evex.scc.dfv.l0.np.m4.w1  3b /r	]	APX,SM23
 
-CCMPscc		spec4,rm8,imm			[vmi:	evex.scc.dfv.l0.np.m4.wig 80 /7	]	SM23,APX
-CCMPscc		spec4,rm16,sbyteword		[vmi:	evex.scc.dfv.l0.66.m4.w0  83 /7	]	SM23,APX
-CCMPscc		spec4,rm32,sbytedword		[vmi:	evex.scc.dfv.l0.np.m4.w0  83 /7	]	SM23,APX
-CCMPscc		spec4,rm64,sbytedword		[vmi:	evex.scc.dfv.l0.np.m4.w1  83 /7	]	SM23,APX
-CCMPscc		spec4,rm16,imm			[vmi:	evex.scc.dfv.l0.66.m4.w0  81 /7	]	SM23,APX
-CCMPscc		spec4,rm32,imm			[vmi:	evex.scc.dfv.l0.np.m4.w0  81 /7	]	SM23,APX
-CCMPscc		spec4,rm64,imm			[vmi:	evex.scc.dfv.l0.np.m4.w1  81 /7	]	SM23,APX
+CCMPscc		spec4,rm8,imm			[vmi:	    evex.scc.dfv.l0.np.m4.wig 80 /7	ib   ]	APX,SM23
+CCMPscc		spec4,rm16,imm8			[vmi:	o16 evex.scc.dfv.l0.66.m4.w0  83 /7	ib,s ]	APX
+CCMPscc		spec4,rm16,sbyteword		[vmi:	o16 evex.scc.dfv.l0.66.m4.w0  83 /7	ib,s ]	APX,SM23,ND
+CCMPscc		spec4,rm16,imm			[vmi:	o16 evex.scc.dfv.l0.66.m4.w0  81 /7	iw   ]	APX,SM23
+CCMPscc		spec4,rm32,imm8			[vmi:	o32 evex.scc.dfv.l0.np.m4.w0  83 /7	ib,s ]	APX
+CCMPscc		spec4,rm32,sbytedword		[vmi:	o32 evex.scc.dfv.l0.np.m4.w0  83 /7	ib,s ]	APX,SM23,ND
+CCMPscc		spec4,rm32,imm			[vmi:	o32 evex.scc.dfv.l0.np.m4.w0  81 /7	id   ]	APX,SM23
+CCMPscc		spec4,rm64,imm8			[vmi:	o64 evex.scc.dfv.l0.np.m4.w1  83 /7	ib,s ]	APX
+CCMPscc		spec4,rm64,sbytedword		[vmi:	o64 evex.scc.dfv.l0.np.m4.w1  83 /7	ib,s ]	APX,SM23,ND
+CCMPscc		spec4,rm64,imm			[vmi:	o64 evex.scc.dfv.l0.np.m4.w1  81 /7	id,s ]	APX,SM23
 
-PUSH2		reg64,reg64			[vm:	evex.nd.l0.np.m4.w0	  ff /6	]	APX
-PUSH		reg64,reg64			[vm:	evex.nd.l0.np.m4.w0	  ff /6	]	APX,ND
-PUSH2		reg64:reg64			[vm:	evex.nd.l0.np.m4.w0	  ff /6	]	APX,ND
-PUSH		reg64:reg64			[vm:	evex.nd.l0.np.m4.w0	  ff /6	]	APX,ND
-PUSH2P		reg64,reg64			[vm:	evex.nd.l0.np.m4.w1	  ff /6	]	APX
-PUSHP		reg64,reg64			[vm:	evex.nd.l0.np.m4.w1	  ff /6	]	APX,ND
-PUSH2P		reg64:reg64			[vm:	evex.nd.l0.np.m4.w1	  ff /6	]	APX,ND
-PUSHP		reg64:reg64			[vm:	evex.nd.l0.np.m4.w1	  ff /6	]	APX,ND
-POP2		reg64,reg64			[vm:	evex.nd.l0.np.m4.w0	  8f /0	]	APX
-POP		reg64,reg64			[vm:	evex.nd.l0.np.m4.w0	  8f /0	]	APX,ND
-POP2		reg64:reg64			[mv:	evex.nd.l0.np.m4.w0	  8f /0	]	APX,ND
-POP		reg64:reg64			[mv:	evex.nd.l0.np.m4.w0	  8f /0	]	APX,ND
-POP2P		reg64,reg64			[vm:	evex.nd.l0.np.m4.w1	  8f /0	]	APX
-POPP		reg64,reg64			[vm:	evex.nd.l0.np.m4.w1	  8f /0	]	APX,ND
-POP2P		reg64:reg64			[mv:	evex.nd.l0.np.m4.w1	  8f /0	]	APX,ND
-POPP		reg64:reg64			[mv:	evex.nd.l0.np.m4.w1	  8f /0	]	APX,ND
+PUSH2		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  ff /6	]	APX
+PUSH		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0        ff /6	]	APX,ND
+PUSH2		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  ff /6	]	APX,ND
+PUSH		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  ff /6	]	APX,ND
+PUSH2P		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX
+PUSHP		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX,ND
+PUSH2P		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX,ND
+PUSHP		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX,ND
+POP2		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX
+POP		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX,ND
+POP2		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX,ND
+POP		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX,ND
+POP2P		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX
+POPP		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
+POP2P		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
+POPP		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
 
-PUSHP		reg64				[r:	rex2.m0.w1 50+r			]	APX
-POPP		reg64				[r:	rex2.m0.w1 58+r			]	APX
+PUSHP		reg64				[r:	o64nw rex2.m0.w1 50+r		]	APX
+POPP		reg64				[r:	o64nw rex2.m0.w1 58+r		]	APX
+
+ADD		reg8?,rm8,reg8			[vmr:	evex.ndx.l0.np.m4.wig 00 /r	]	APX,NF
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file

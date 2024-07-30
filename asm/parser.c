@@ -655,7 +655,9 @@ static opflags_t imm_flags(int64_t n, opflags_t flags)
 {
     if (n == 1)
         flags |= UNITY;
-    if ((uint64_t)n <= 15)
+
+    /* Allow FOURBITS matching for negative values, so things like ~0 work */
+    if (n >= -16 && n <= 15)
         flags |= FOURBITS;
 
     if (optimizing.level < 0 || (flags & STRICT))
@@ -1048,26 +1050,36 @@ restart_parse:
             goto mref_more;
         }
 
-        if (i == ':' && (mref || !far_jmp_ok)) {
-            /* segment override? */
-            mref = true;
+        if (i == ':') {
+            bool ok_reg = is_register(value->type) &&
+                value->value == 1 && !value[1].type;
 
-            /*
-             * Process the segment override.
-             */
-            if (!IS_SREG(value->type) || value->value != 1 ||
-                value[1].type != 0) {
-                nasm_nonfatal("invalid segment override");
-            } else if (result->prefixes[PPS_SEG]) {
-                nasm_nonfatal("instruction has conflicting segment overrides");
-            } else {
-                result->prefixes[PPS_SEG] = value->type;
-                if (IS_FSGS(value->type))
-                    op->eaflags |= EAF_FSGS;
+            if (!mref && ok_reg && !IS_SREG(value->type)) {
+                /*
+                 * Register pair syntax; this terminates the expression
+                 * as if it had ended in a comma, but sets the COLON flag
+                 * on the operand further down.
+                 */
+            } else if (mref || !far_jmp_ok) {
+                /* segment override? */
+                mref = true;
+
+                /*
+                 * Process the segment override.
+                 */
+                if (!ok_reg || !IS_SREG(value->type)) {
+                    nasm_nonfatal("invalid segment override");
+                } else if (result->prefixes[PPS_SEG]) {
+                    nasm_nonfatal("instruction has conflicting segment overrides");
+                } else {
+                    result->prefixes[PPS_SEG] = value->type;
+                    if (IS_FSGS(value->type))
+                        op->eaflags |= EAF_FSGS;
+                }
+
+                i = stdscan(NULL, &tokval); /* then skip the colon */
+                goto mref_more;
             }
-
-            i = stdscan(NULL, &tokval); /* then skip the colon */
-            goto mref_more;
         }
 
         mib = false;
@@ -1264,8 +1276,11 @@ restart_parse:
                     regset_size = 0;
                 }
 
-                /* clear overrides, except TO which applies to FPU regs */
-                if (op->type & ~TO) {
+                /*
+                 * Clear overrides, except TO which applies to FPU regs
+                 * and colon which is used in register pair syntax
+                 */
+                if (op->type & ~(TO | COLON)) {
                     /*
                      * we want to produce a warning iff the specified size
                      * is different from the register size
@@ -1292,7 +1307,7 @@ restart_parse:
                         goto fail;
                 }
 
-                op->type      &= TO;
+                op->type      &= TO | COLON;
                 op->type      |= REGISTER;
                 op->type      |= nasm_reg_flags[value->type];
                 op->type      |= (regset_size >> 1) << REGSET_SHIFT;
