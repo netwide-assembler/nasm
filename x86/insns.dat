@@ -194,8 +194,8 @@ AND		mem,imm32			[mi:	hle o32 81 /4 id]			386,SM,LOCK
 AND		rm8,imm				[mi:	hle 82 /4 ib]				8086,SM,LOCK,ND,NOLONG
 ARPL		mem,reg16			[mr:	63 /r]					286,PROT,SM,NOLONG
 ARPL		reg16,reg16			[mr:	63 /r]					286,PROT,NOLONG
-BB0_RESET	void				[	0f 3a]					PENT,CYRIX,ND,OBSOLETE
-BB1_RESET	void				[	0f 3b]					PENT,CYRIX,ND,OBSOLETE
+BB0_RESET	void				[	0f 3a]					PENT,CYRIX,NOLONG,OBSOLETE,ND
+BB1_RESET	void				[	0f 3b]					PENT,CYRIX,NOLONG,OBSOLETE,ND
 BOUND		reg16,mem			[rm:	o16 62 /r]				186,NOLONG
 BOUND		reg32,mem			[rm:	o32 62 /r]				386,NOLONG
 BSF		reg16,mem			[rm:	o16 nof3 0f bc /r]			386,SM
@@ -326,10 +326,10 @@ CMP		mem,imm16			[mi:	o16 81 /7 iw]				8086,SM
 CMP		mem,sbytedword32		[mi:	o32 83 /7 ib,s]				386,SM,ND
 CMP		mem,imm32			[mi:	o32 81 /7 id]				386,SM
 CMP		rm8,imm				[mi:	82 /7 ib]				8086,SM,ND,NOLONG
-CMPSB		void				[	repe a6]				8086
-CMPSD		void				[	repe o32 a7]				386
-CMPSQ		void				[	repe o64 a7]				X86_64,LONG
-CMPSW		void				[	repe o16 a7]				8086
+CMPSB		void				[	repe a6]				8086,NOAPX
+CMPSD		void				[	repe o32 a7]				386,NOAPX
+CMPSQ		void				[	repe o64 a7]				X86_64,LONG,NOAPX
+CMPSW		void				[	repe o16 a7]				8086,NOAPX
 CMPXCHG		mem,reg8			[mr:	hle 0f b0 /r]				PENT,SM,LOCK
 CMPXCHG		reg8,reg8			[mr:	0f b0 /r]				PENT
 CMPXCHG		mem,reg16			[mr:	hle o16 0f b1 /r]			PENT,SM,LOCK
@@ -347,8 +347,8 @@ CMPXCHG486	reg32,reg32			[mr:	o32 0f a7 /r]				486,UNDOC,ND,OBSOLETE
 CMPXCHG8B	mem64				[m:	hle norexw 0f c7 /1]			PENT,LOCK
 CMPXCHG16B	mem128				[m:	o64 0f c7 /1]				X86_64,LONG,LOCK
 CPUID		void				[	0f a2]					PENT
-CPU_READ	void				[	0f 3d]					PENT,CYRIX
-CPU_WRITE	void				[	0f 3c]					PENT,CYRIX
+CPU_READ	void				[	0f 3d]					PENT,CYRIX,NOAPX
+CPU_WRITE	void				[	0f 3c]					PENT,CYRIX,NOAPX
 CQO		void				[	o64 99]					X86_64,LONG
 CWD		void				[	o16 99]					8086
 CWDE		void				[	o32 98]					386
@@ -364,7 +364,7 @@ DIV		rm8				[m:	f6 /6]					8086
 DIV		rm16				[m:	o16 f7 /6]				8086
 DIV		rm32				[m:	o32 f7 /6]				386
 DIV		rm64				[m:	o64 f7 /6]				X86_64,LONG
-DMINT		void				[	0f 39]					P6,CYRIX
+DMINT		void				[	0f 39]					P6,CYRIX,NOAPX
 EMMS		void				[	0f 77]					PENT,MMX
 ENTER		imm,imm				[ij:	c8 iw ib,u]				186
 EQU		imm				ignore						8086
@@ -1121,10 +1121,10 @@ RCR		rm32,imm8			[mi:	o32 c1 /3 ib,u]				386
 RCR		rm64,unity			[m-:	o64 d1 /3]				X86_64,LONG
 RCR		rm64,reg_cl			[m-:	o64 d3 /3]				X86_64,LONG
 RCR		rm64,imm8			[mi:	o64 c1 /3 ib,u]				X86_64,LONG
-RDSHR		rm32				[m:	o32 0f 36 /0]				P6,CYRIX,SMM
-RDMSR		void				[	0f 32]					PENT,PRIV
-RDPMC		void				[	0f 33]					P6
-RDTSC		void				[	0f 31]					PENT
+RDSHR		rm32				[m:	o32 0f 36 /0]				P6,CYRIX,SMM,NOAPX
+RDMSR		void				[	0f 32]					PENT,PRIV,NOAPX
+RDPMC		void				[	0f 33]					P6,NOAPX
+RDTSC		void				[	0f 31]					PENT,NOAPX
 RDTSCP		void				[	0f 01 f9]				X86_64
 RET		void				[	c3]					8086,BND
 RET		imm				[i:	c2 iw]					8086,SW,BND
@@ -1372,8 +1372,8 @@ SVLDT		mem80				[m:	0f 7a /0]				486,CYRIX,SMM,ND
 SVTS		mem80				[m:	0f 7c /0]				486,CYRIX,SMM
 SWAPGS		void				[	0f 01 f8]				X86_64,LONG
 SYSCALL		void				[	0f 05]					P6,AMD
-SYSENTER	void				[	0f 34]					P6
-SYSEXIT		void				[	0f 35]					P6,PRIV
+SYSENTER	void				[	0f 34]					P6,NOAPX
+SYSEXIT		void				[	0f 35]					P6,PRIV,NOAPX
 SYSRET		void				[	0f 07]					P6,PRIV,AMD
 TEST		mem,reg8			[mr:	84 /r]					8086,SM
 TEST		reg8,reg8			[mr:	84 /r]					8086
@@ -1432,8 +1432,8 @@ VERW		mem16				[m:	0f 00 /5]				286,PROT
 VERW		reg16				[m:	0f 00 /5]				286,PROT
 FWAIT		void				[	wait]					8086
 WBINVD		void				[	0f 09]					486,PRIV
-WRSHR		rm32				[m:	o32 0f 37 /0]				P6,CYRIX,SMM
-WRMSR		void				[	0f 30]					PENT,PRIV
+WRSHR		rm32				[m:	o32 0f 37 /0]				P6,CYRIX,SMM,NOAPX
+WRMSR		void				[	0f 30]					PENT,PRIV,NOAPX
 XADD		mem,reg8			[mr:	hle 0f c0 /r]				486,SM,LOCK
 XADD		reg8,reg8			[mr:	0f c0 /r]				486
 XADD		mem,reg16			[mr:	hle o16 0f c1 /r]			486,SM,LOCK
@@ -1514,13 +1514,13 @@ CMOVcc		reg32,mem			[rm:	o32 0f 40+c /r]				P6,SM
 CMOVcc		reg32,reg32			[rm:	o32 0f 40+c /r]				P6
 CMOVcc		reg64,mem			[rm:	o64 0f 40+c /r]				X86_64,LONG,SM
 CMOVcc		reg64,reg64			[rm:	o64 0f 40+c /r]				X86_64,LONG
-Jcc		imm|near			[i:	odf 0f 80+c rel]			386,BND
+Jcc		imm|near			[i:	odf 0f 80+c rel]			386,BND,NOAPX
 Jcc		imm16|near			[i:	o16 0f 80+c rel]			386,NOLONG,BND
 Jcc		imm32|near			[i:	o32 0f 80+c rel]			386,NOLONG,BND
-Jcc		imm64|near			[i:	o64nw 0f 80+c rel]			X86_64,LONG,BND
+Jcc		imm64|near			[i:	o64nw 0f 80+c rel]			X86_64,LONG,BND,NOAPX
 Jcc		imm|short			[i:	70+c rel8]				8086,ND,BND
 Jcc		imm				[i:	jcc8 70+c rel8]				8086,ND,BND
-Jcc		imm				[i:	0f 80+c rel]				386,ND,BND
+Jcc		imm				[i:	0f 80+c rel]				386,ND,BND,NOAPX
 Jcc		imm				[i:	71+c jlen e9 rel]			8086,ND,BND
 Jcc		imm				[i:	70+c rel8]				8086,BND
 
@@ -1616,18 +1616,18 @@ FXSAVE64	mem				[m:	o64 np 0f ae /0]			X86_64,LONG,SSE,FPU
 ; of CPU feature bits.
 XGETBV		void				[	0f 01 d0]				NEHALEM
 XSETBV		void				[	0f 01 d1]				NEHALEM,PRIV
-XSAVE		mem				[m:	np 0f ae /4]				NEHALEM
-XSAVE64		mem				[m:	o64 np 0f ae /4]			LONG,NEHALEM
-XSAVEC		mem				[m:	np 0f c7 /4]				FUTURE
-XSAVEC64	mem				[m:	o64 np 0f c7 /4]			LONG,FUTURE
-XSAVEOPT	mem				[m:	np 0f ae /6]				FUTURE
-XSAVEOPT64	mem				[m:	o64 np 0f ae /6]			LONG,FUTURE
-XSAVES		mem				[m:	np 0f c7 /5]				FUTURE
-XSAVES64	mem				[m:	o64 np 0f c7 /5]			LONG,FUTURE
-XRSTOR		mem				[m:	np 0f ae /5]				NEHALEM
-XRSTOR64	mem				[m:	o64 np 0f ae /5]			LONG,NEHALEM
-XRSTORS		mem				[m:	np 0f c7 /3]				FUTURE
-XRSTORS64	mem				[m:	o64 np 0f c7 /3]			LONG,FUTURE
+XSAVE		mem				[m:	np 0f ae /4]				NEHALEM,NOAPX
+XSAVE64		mem				[m:	o64 np 0f ae /4]			LONG,NEHALEM,NOAPX
+XSAVEC		mem				[m:	np 0f c7 /4]				FUTURE,NOAPX
+XSAVEC64	mem				[m:	o64 np 0f c7 /4]			LONG,FUTURE,NOAPX
+XSAVEOPT	mem				[m:	np 0f ae /6]				FUTURE,NOAPX
+XSAVEOPT64	mem				[m:	o64 np 0f ae /6]			LONG,FUTURE,NOAPX
+XSAVES		mem				[m:	np 0f c7 /5]				FUTURE,NOAPX
+XSAVES64	mem				[m:	o64 np 0f c7 /5]			LONG,FUTURE,NOAPX
+XRSTOR		mem				[m:	np 0f ae /5]				NEHALEM,NOAPX
+XRSTOR64	mem				[m:	o64 np 0f ae /5]			LONG,NEHALEM,NOAPX
+XRSTORS		mem				[m:	np 0f c7 /3]				FUTURE,NOAPX
+XRSTORS64	mem				[m:	o64 np 0f c7 /3]			LONG,FUTURE,NOAPX
 
 ; These instructions are not SSE-specific; they are
 ;# Generic memory operations
@@ -2028,7 +2028,7 @@ POPCNT		reg32,rm32			[rm:	o32 f3i 0f b8 /r]			NEHALEM,SD
 POPCNT		reg64,rm64			[rm:	o64 f3i 0f b8 /r]			NEHALEM,SQ,LONG
 
 ;# Intel SMX
-GETSEC		void				[	0f 37]					KATMAI
+GETSEC		void				[	0f 37]					KATMAI,NOAPX
 
 ;# Geode (Cyrix) 3DNow! additions
 PFRCPV		mmxreg,mmxrm			[rm:	o64nw 0f 0f /r 86]			PENT,3DNOW,SQ,CYRIX
@@ -6436,6 +6436,9 @@ PUSHP		reg64				[r:	o64nw rex.w rex2 50+r		]	APX
 POPP		reg64				[r:	o64nw rex.w rex2 58+r		]	APX
 
 ADD		reg8?,rm8,reg8			[vmr:	evex.ndx.l0.np.m4.wig 00 /r	]	APX,NF
+ADD		reg16?,rm16,reg16		[vmr:	evex.ndx.l0.66.m4.w0 01 /r	]	APX,NF
+ADD		reg32?,rm32,reg32		[vmr:	evex.ndx.l0.np.m4.w0 01 /r	]	APX,NF
+ADD		reg64?,rm64,reg64		[vmr:	evex.ndx.l0.np.m4.w1 01 /r	]	APX,NF
 
 JMP		imm|abs				[i:	a64 np rex2 a1 iq		]	APX
 JMP		imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,SQ

@@ -180,18 +180,24 @@
 #define REG_CLASS_BND           GEN_REG_CLASS(9)
 #define REG_CLASS_RM_TMM	GEN_REG_CLASS(10)
 
-/* Verify value to be a valid register */
-static inline bool is_register(opflags_t reg)
-{
-    return reg >= EXPR_REG_START && reg < REG_ENUM_LIMIT;
-}
+/* Register classes treated as vectors for EVEX/REX2 encoding purposes */
+#define REG_CLASS_VECTOR	(REG_CLASS_RM_XMM|REG_CLASS_RM_YMM|\
+                                 REG_CLASS_RM_ZMM|REG_CLASS_RM_TMM)
 
+/* Helper function to test for a value matching a class */
 static inline bool is_class(opflags_t class, opflags_t op)
 {
     return !(class & ~op);
 }
 
-static inline bool is_reg_class(opflags_t class, opflags_t reg)
+/* Verify a token value is a valid register */
+static inline bool is_register(int reg)
+{
+    return reg >= EXPR_REG_START && reg < REG_ENUM_LIMIT;
+}
+
+/* Helper function to test if a token is a register matching a class */
+static inline bool is_reg_class(opflags_t class, int reg)
 {
     if (!is_register(reg))
         return false;

@@ -591,10 +591,9 @@ sub format_insn($$$$$) {
     $flagsindex = insns_flag_index(keys %flags);
     die "$fname:$line: error in flags $flags\n" unless (defined($flagsindex));
 
-    # Flags that imply long mode only
-    if ($flags{'APX'}) {
-	$flags->{'LONG'}++;
-    }
+    # Flags implying each other
+    $flags->{'LONG'}++  if ($flags{'APX'});
+    $flags->{'NOAPX'}++ if ($flags{'NOLONG'});
 
     # format the operands
     $operands =~ s/[\*\?]//g;
@@ -604,6 +603,7 @@ sub format_insn($$$$$) {
     @decos = ();
     if ($operands ne 'void') {
         foreach $op (split(/,/, $operands)) {
+	    my $iszero = 0;
 	    my $opsz = 0;
             @opx = ();
             @opevex = ();
@@ -613,15 +613,21 @@ sub format_insn($$$$$) {
                     push(@opevex, $1);
                 }
 
-                if ($opp =~ s/(?<!\d)(8|16|32|64|80|128|256|512)$//) {
-                    push(@oppx, "bits$1");
+                if ($opp =~ s/([^0-9]0?)(8|16|32|64|80|128|256|512|1024|1k)$/$1/) {
+                    push(@oppx, "bits$2");
 		    $opsz = $1 + 0;
                 }
+		if ($opp =~ s/0$//) {
+		    push(@oppx, 'rm_zero');
+		    $iszero = 1;
+		    if ($opp !~ /reg/) {
+			$opp .= 'reg';
+		    }
+		}
                 $opp =~ s/^mem$/memory/;
                 $opp =~ s/^memory_offs$/mem_offs/;
-		if ($opp =~ /^(spec|imm)4$/) {
+		if ($opp =~ s/^(spec|imm)4$/$1/) {
 		    push(@oppx, 'fourbits');
-		    $opp = $1;
 		}
 		$opp =~ s/^spec$/immediate/; # Immediate or special immediate
                 $opp =~ s/^imm$/imm_normal/; # Normal immediates only
@@ -629,20 +635,15 @@ sub format_insn($$$$$) {
 		    push(@oppx, 'imm_normal');
 		}
                 $opp =~ s/^([a-z]+)rm$/rm_$1/;
-                $opp =~ s/^rm$/rm_gpr/;
-                $opp =~ s/^reg$/reg_gpr/;
-                # only for evex and rex2 insns, high-16 GPR or creg regs are allowed
-		unless ($flags{'EVEX'} || $flags{'REX2'}) {
-                    if ($opp =~ /^(rm_gpr|reg_gpr|reg_[cd]reg)$/) {
-			push(@oppx, 'rn_l16'); # Register number must be < 16
-		    }
-                }
-		# only for evex, high vector registers are allowed
-		unless ($flags{'EVEX'}) {
-                    if ($opp =~ /^[xyz]mm(reg|rm)$/) {
-			push(@oppx, 'rn_l16'); # Register number must be < 16
-		    }
-                }
+                $opp =~ s/^(rm|reg)$/$1_gpr/;
+		$opp =~ s/^rm_k$/rm_opmask/;
+		$opp =~ s/^kreg$/opmaskreg/;
+		my $isreg = ($opp =~ /(\brm_|\breg_|reg\b)/);
+		my $isvec = ($opp =~ /\b[xyzt]mm/);
+		if ($isreg && !(($flags{'EVEX'} && $isvec) || !$flags{'NOAPX'})) {
+		    # Register numbers >= 16 disallowed
+		    push(@oppx, 'rn_l16');
+		}
                 push(@opx, $opp, @oppx) if $opp;
             }
             $op = join('|', @opx);
@@ -693,7 +694,7 @@ sub format_insn($$$$$) {
     foreach my $sf (keys(%sflags)) {
 	next if (!$flags{$sf});
 	for (my $i = $s; $i <= $e; $i++) {
-	    if ($opsize[$i] && $ops[$i] !~ /\breg_(gpr|[cdts]reg)\b/) {
+	    if ($opsize[$i] && $ops[$i] !~ /(\breg_|reg\b)/) {
 		die "$fname:$line: inconsistent $sf flag for argument $i ($ops[$i])\n"
 		    if ($opsize[$i] != $sflags{$sf});
 	    }
@@ -1210,6 +1211,7 @@ sub byte_code_compile($$$) {
                  ($c << 6)+$m, ($w << 7)+($l << 2)+$p);
 
 	    $flags->{'VEX'}++;
+	    $flags->{'NOAPX'}++; # VEX doesn't support registers 16+
             $prefix_ok = 0;
         } elsif ($op =~ /^(evex)(|\..*)$/) {
             my $c = $vexmap{$1};
@@ -1319,10 +1321,9 @@ sub byte_code_compile($$$) {
 
 	    $flags->{'EVEX'}++;
             $prefix_ok = 0;
-	} elsif ($op =~ /^(rex2(\??))(\..*)?$/) {
+	} elsif ($op =~ /^(rex2)(\..*)?$/) {
 	    my $name = $1;
-	    my $optional = $2 eq '?';
-            my @subops = split(/\./, $3);
+            my @subops = split(/\./, $2);
 	    my $c = 0350;
 	    my $m = undef;
 	    foreach $oq (@subops) {
@@ -1339,12 +1340,10 @@ sub byte_code_compile($$$) {
 		}
 	    }
 
-	    if (!$optional) {
-		push(@codes, $c);
-		$flags->{'APX'}++;
-		$flags->{'LONG'}++;
-	    }
+	    push(@codes, $c);
+	    $flags->{'APX'}++;
 	    $flags->{'REX2'}++;
+	    $flags->{'LONG'}++;
             $prefix_ok = 0;
         } elsif (defined $imm_codes{$op}) {
             if ($op eq 'seg') {
@@ -1397,6 +1396,11 @@ sub byte_code_compile($$$) {
         } else {
             die "$fname:$line: unknown operation: $op\n";
         }
+    }
+
+    # Legacy maps 2+ do not support REX2 encodings
+    if ($opmap > 1 && !$flags{'EVEX'}) {
+	$flags->{'NOAPX'}++;
     }
 
     return @codes;

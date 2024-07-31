@@ -31,6 +31,22 @@ if_("LATEVEX",           "Only if EVEX instructions are disabled");
 #
 if_align('FEATURE');
 
+#
+# Encoding flags
+#
+if_("VEX",               "VEX or XOP encoded instruction");
+if_("EVEX",              "EVEX encoded instruction");
+if_("NOAPX",             "Instruction does not support APX registers");
+if_("REX2",              "REX2 encoding required");
+if_("NF",                "Instruction supports the {nf} prefix");
+if_("LIG",               "Ignore VEX/EVEX L field");
+if_("WIG",               "Ignore VEX/EVEX W field");
+if_("WW",                "VEX/EVEX W is REX.W");
+if_("SIB",               "SIB encoding required");
+
+#
+# Feature filtering flags
+#
 if_("PRIV",              "Privileged instruction");
 if_("SMM",               "Only valid in SMM");
 if_("PROT",              "Protected mode only");
@@ -40,7 +56,6 @@ if_("NOLONG",            "Not available in long mode");
 if_("LONG",              "Long mode");
 if_("NOHLE",             "HLE prefixes forbidden");
 if_("MIB",               "split base/index EA");
-if_("SIB",               "SIB encoding required");
 if_("BND",               "BND (0xF2) prefix available");
 if_("UNDOC",             "Undocumented");
 if_("HLE",               "HLE prefixed");
@@ -122,18 +137,6 @@ if_("APX",               "Advanced Performance Extensions (APX)");
 if_("OBSOLETE",          "Instruction removed from architecture");
 if_("NEVER",             "Instruction never implemented");
 if_("NOP",               "Instruction is always a (nonintentional) NOP");
-
-#
-# Encoding flags
-#
-if_("VEX",               "VEX or XOP encoded instruction");
-if_("EVEX",              "EVEX encoded instruction");
-if_("REXX",		 "Instruction supports REX2 encoding");
-if_("REX2",              "Instruction requires REX2 encoding");
-if_("NF",                "Instruction supports the {nf} prefix");
-if_("LIG",               "Ignore VEX/EVEX L field");
-if_("WIG",               "Ignore VEX/EVEX W field");
-if_("WW",                "VEX/EVEX W is REX.W");
 
 #
 # special immediates types like {dfv=}

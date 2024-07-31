@@ -112,7 +112,10 @@ static void add_asp(insn *, int);
 static int process_ea(operand *, ea *, int, int, opflags_t,
                       insn *, enum ea_type, const char **);
 
-/* Return any of REX_[BXR]1 corresponding to non-GPR registers */
+/*
+ * Return any of REX_[BXR]1 corresponding to non-GPR registers by
+ * masking them with the REX_[BXR]V flags.
+ */
 static inline uint32_t rex_highvec(uint32_t rexflags)
 {
     return rexflags & (rexflags >> 4) & REX_BXR1;
@@ -1793,7 +1796,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         } else {
             /* VEX */
             if (ins->vexreg > 15 || (ins->rex & REX_BXR1)) {
-                nasm_nonfatal("invalid high-16 register in non-AVX-512");
+                nasm_nonfatal("invalid high-16 register in VEX encoded instruction");
                 return -1;
             }
 
@@ -1811,20 +1814,20 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         }
     } else if (ins->rex & (REX_BXR1 | REX_2)) {
         /* REX2 prefix needed */
-        if (!itemp_has(temp, IF_REX2) || rex_highvec(ins->rex)) {
-            nasm_nonfatal("this use of registers 16-31 not supported for this instruction");
-            return -1;
-        }
-        if (ins->rex & REX_H) {
-            nasm_nonfatal("cannot use high byte register in rex2 instruction");
-            return -1;
-        }
         if (bits != 64) {
-            nasm_nonfatal("invalid operands in non-64-bit mode");
+            nasm_nonfatal("invalid operands in %d-bit mode", bits);
             return -1;
         }
         if (!iflag_test(&cpu, IF_APX)) {
             nasm_nonfatal("invalid operands in non-APX mode");
+            return -1;
+        }
+        if (itemp_has(temp, IF_NOAPX) || rex_highvec(ins->rex)) {
+            nasm_nonfatal("this use of registers 16-31 not supported for this instruction");
+            return -1;
+        }
+        if (ins->rex & REX_H) {
+            nasm_nonfatal("cannot use high byte register in this instruction");
             return -1;
         }
 
@@ -1832,7 +1835,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         length += 2;
     } else if (ins->rex & REX_MASK) {
         if (ins->rex & REX_H) {
-            nasm_nonfatal("cannot use high byte register in rex instruction");
+            nasm_nonfatal("cannot use high byte register in this instruction");
             return -1;
         } else if (bits == 64) {
             ins->rex &= ~REX_L;
@@ -1845,7 +1848,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             lockcheck = false;  /* Already errored, no need for warning */
             ins->rex &= ~REX_P;
         } else {
-            nasm_nonfatal("invalid operands in non-64-bit mode");
+            nasm_nonfatal("invalid operands in %d-bit mode", bits);
             return -1;
         }
         length++;
@@ -2522,23 +2525,26 @@ static uint32_t rexflags(int val, opflags_t flags, uint32_t mask)
 {
     uint32_t rex = 0;
 
-    if (val >= 0) {
-        if (val & 8)
-            rex |= REX_B|REX_X|REX_R;
-        if (val & 16)
-            rex |= REX_B1|REX_X1|REX_R1;
+    if (val < 0 || !is_class(REGISTER, flags)) {
+        /* Not a register */
+        return 0;
     }
-    if (flags & BITS64)
-        rex |= REX_W;
 
-    if (!is_class(REG_GPR, flags)) {
-        if (!is_class(REG_CDT, flags))
-            rex |= REX_BV|REX_XV|REX_RV;
+    if (val & 8)
+        rex |= REX_B|REX_X|REX_R;
+    if (val & 16)
+        rex |= REX_B1|REX_X1|REX_R1;
+
+    if (flags & REG_CLASS_VECTOR) {
+        rex |= REX_BV|REX_XV|REX_RV;
     } else if (is_class(REG8, flags)) {
-        if (is_class(REG_HIGH, flags))		/* AH, CH, DH, BH */
+        if (is_class(REG_HIGH, flags)) {
+            /* AH, CH, DH, BH: REX/REX2/VEX/EVEX forbidden */
             rex |= REX_H;
-        else if (val >= 4)      /* SPL, BPL, SIL, DIL */
+        } else if (val >= 4) {
+            /* SPL, BPL, SIL, DIL, or extended: prefix required */
             rex |= REX_P;
+        }
     }
 
     return rex & mask;
@@ -2711,12 +2717,16 @@ static enum match_result matches(const struct itemplate *itemp,
             return MERR_ENCMISMATCH;
         break;
     case P_REX:
-        if (itemp_has(itemp, IF_VEX) || itemp_has(itemp, IF_EVEX) ||
-            bits != 64)
+        if (bits != 64 ||
+            itemp_has(itemp, IF_VEX) ||
+            itemp_has(itemp, IF_EVEX) ||
+            itemp_has(itemp, IF_REX2))
             return MERR_ENCMISMATCH;
         break;
     case P_REX2:
-        if (!itemp_has(itemp, IF_REX2) || bits != 64)
+        if (bits != 64 ||
+            itemp_has(itemp, IF_NOAPX) ||
+            itemp_has(itemp, IF_EVEX))
             return MERR_ENCMISMATCH;
         break;
     default:
@@ -2728,6 +2738,9 @@ static enum match_result matches(const struct itemplate *itemp,
                 return MERR_ENCMISMATCH;
             } else if (itemp_has(itemp, IF_LATEVEX)) {
                 if (!iflag_test(&cpu, IF_LATEVEX) && iflag_test(&cpu, IF_EVEX))
+                    return MERR_ENCMISMATCH;
+            } else if (itemp_has(itemp, IF_REX2)) {
+                if (bits != 64 || !iflag_test(&cpu, IF_APX))
                     return MERR_ENCMISMATCH;
             }
         }
