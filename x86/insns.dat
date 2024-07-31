@@ -1175,7 +1175,7 @@ ROR		rm32,imm8			[mi:	o32 c1 /1 ib,u]				386
 ROR		rm64,unity			[m-:	o64 d1 /1]				X86_64,LONG
 ROR		rm64,reg_cl			[m-:	o64 d3 /1]				X86_64,LONG
 ROR		rm64,imm8			[mi:	o64 c1 /1 ib,u]				X86_64,LONG
-RDM		void				[	0f3a]					P6,CYRIX,ND
+RDM		void				[	0f 3a]					P6,CYRIX,ND,NOLONG,OBSOLETE
 RSDC		reg_sreg,mem80			[rm:	0f 79 /r]				486,CYRIX,SMM
 RSLDT		mem80				[m:	0f 7b /0]				486,CYRIX,SMM
 RSM		void				[	0f aa]					PENT,SMM
@@ -1308,9 +1308,9 @@ SLDT		reg64				[m:	o64nw 0f 00 /0]				X86_64,LONG,ND
 SLDT		reg64				[m:	o64 0f 00 /0]				X86_64,LONG
 SKINIT		void				[	0f 01 de]				X86_64,LONG
 SMI		void				[	f1]					386,UNDOC
-SMINT		void				[	0f38]					P6,CYRIX,ND
+SMINT		void				[	0f 38]					P6,CYRIX,ND,NOLONG,OBSOLETE
 ; Older Cyrix chips had this; they had to move due to conflict with MMX
-SMINTOLD	void				[	0f 7e]					486,CYRIX,ND,OBSOLETE
+SMINTOLD	void				[	0f 7e]					486,CYRIX,ND,NOLONG,OBSOLETE
 SMSW		mem				[m:	0f 01 /4]				286
 SMSW		mem16				[m:	0f 01 /4]				286
 SMSW		reg16				[m:	o16 0f 01 /4]				286
