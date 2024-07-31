@@ -264,7 +264,7 @@ static inline bool is_reg_class(opflags_t class, opflags_t reg)
 #define REG_DREG                (GEN_SUBCLASS(1) | REG_CDT )      /* DRn */
 #define REG_TREG                (GEN_SUBCLASS(2) | REG_CDT )      /* TRn */
 
-#define REG_SREG                (REG_CLASS_SREG  | REGISTER | BITS16)       /* segment register */
+#define REG_SREG                (REG_CLASS_SREG  | REG_L16 | BITS16)        /* segment register */
 
 /* Segment registers */
 #define REG_ES                  (GEN_SUBCLASS(0) | GEN_SUBCLASS(2) | REG_SREG)      /* ES */

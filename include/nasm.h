@@ -537,6 +537,12 @@ enum {
 
 /*
  * REX flags
+ *
+ * Note: REX_[BXRW] and REX_P must match the locations of these
+ * bits within an actual REX prefix (with REX_P being the invariant
+ * 0x40 bit. REX_[BXR]1 must match the locations of these bits
+ * within the REX2 prefix, shifted into the second byte (<< 12).
+ * Finally, REX_[BXR]V are should match BXR << 16.
  */
 #define REX_MASK    0x4f    /* Actual REX prefix bits */
 #define REX_B       0x01    /* ModRM r/m extension */
@@ -554,21 +560,30 @@ enum {
 #define REX_X1      0x2000  /* REX2/EVEX X second bit */
 #define REX_R1      0x4000  /* REX2/EVEX R second bit */
 
+#define REX_BV      0x10000 /* B is not a GPR or CREG */
+#define REX_XV      0x20000 /* X is not a GPR or CREG */
+#define REX_RV      0x40000 /* R is not a GPR or CREG */
+
 #define REX_BXR0    0x0007
 #define REX_BXR1    0x7000
 #define REX_BXR     0x7007
 
-#define REX_rB	    (REX_B | REX_B1 | REX_H | REX_P)
-#define REX_rX	    (REX_X | REX_X1 | REX_H | REX_P)
-#define REX_rR	    (REX_R | REX_R1 | REX_H | REX_P)
+/* All flags pertaining to B, X, and R */
+#define REX_rB	    (REX_B | REX_B1 | REX_BV | REX_H | REX_P)
+#define REX_rX	    (REX_X | REX_X1 | REX_XV | REX_H | REX_P)
+#define REX_rR	    (REX_R | REX_R1 | REX_RV | REX_H | REX_P)
 
 /*
  * EVEX bit field
  */
-#define EVEX_P0MM       0x0f00      /* EVEX P[3:0] : Opcode map           */
-#define EVEX_P0RP       0x1000      /* EVEX P[4] : High-16 reg            */
-#define EVEX_P0X        0x4000      /* EVEX P[6] : High-16 rm             */
+#define EVEX_P0MM       0x0700      /* EVEX P[2:0] : Opcode map           */
+#define EVEX_P0BP       0x0800      /* EVEX P[3] : High-16 B register     */
+#define EVEX_P0RP       0x1000      /* EVEX P[4] : High-16 R register     */
+#define EVEX_P0B        0x2000      /* EVEX P[5] : High-8 B register      */
+#define EVEX_P0X        0x4000      /* EVEX P[6] : High-8 X register      */
+#define EVEX_P0R        0x8000      /* EVEX P[7] : High-8 R register      */
 #define EVEX_P1PP       0x030000    /* EVEX P[9:8] : Legacy prefix        */
+#define EVEX_P1XP       0x040000    /* EVEX P[10] : High-16 X register    */
 #define EVEX_P1VVVV     0x780000    /* EVEX P[14:11] : NDS register       */
 #define EVEX_P1W        0x800000    /* EVEX P[15] : Osize extension       */
 #define EVEX_P2AAA      0x07000000  /* EVEX P[18:16] : Embedded opmask    */

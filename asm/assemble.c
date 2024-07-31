@@ -82,8 +82,10 @@ typedef struct {
     int sib_present;              /* is a SIB byte necessary? */
     int bytes;                    /* # of bytes of offset needed */
     int size;                     /* lazy - this is sib+bytes+1 */
-    uint8_t modrm, sib, rex, rip; /* the bytes themselves */
-    int8_t disp8;                  /* compressed displacement for EVEX */
+    uint32_t rex;                 /* REX flags */
+    uint8_t modrm, sib;		  /* the bytes themselves */
+    bool rip;                     /* RIP-relative? */
+    int8_t disp8;                 /* compressed displacement for EVEX */
 } ea;
 
 #define GEN_SIB(scale, index, base)                 \
@@ -110,6 +112,12 @@ static void add_asp(insn *, int);
 static int process_ea(operand *, ea *, int, int, opflags_t,
                       insn *, enum ea_type, const char **);
 
+/* Return any of REX_[BXR]1 corresponding to non-GPR registers */
+static inline uint32_t rex_highvec(uint32_t rexflags)
+{
+    return rexflags & (rexflags >> 4) & REX_BXR1;
+}
+
 static inline bool absolute_op(const struct operand *o)
 {
     return o->segment == NO_SEG && o->wrt == NO_SEG &&
@@ -121,10 +129,13 @@ static int has_prefix(insn * ins, enum prefix_pos pos, int prefix)
     return ins->prefixes[pos] == prefix;
 }
 
-static void assert_no_prefix(insn * ins, enum prefix_pos pos)
+static int assert_no_prefix(insn * ins, enum prefix_pos pos)
 {
-    if (ins->prefixes[pos])
+    if (ins->prefixes[pos]) {
         nasm_nonfatal("invalid %s prefix", prefix_name(ins->prefixes[pos]));
+        return -1;
+    }
+    return 0;
 }
 
 static const char *size_name(int size)
@@ -898,7 +909,10 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
             data.inslen = merge_resb(instruction, data.inslen);
 
             gencode(&data, instruction);
-            nasm_assert(data.insoffs == data.inslen);
+            if (unlikely(data.insoffs != data.inslen)) {
+                nasm_panic("instruction length changed during code generation: %u -> %u\n",
+                           (unsigned int)data.insoffs, (unsigned int)data.inslen);
+            }
         } else {
             /* No match */
             switch (m) {
@@ -1253,7 +1267,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     eat = EA_SCALAR;            /* Expect a scalar EA */
 
     /* Default operand size */
-    ins->op_size = bits == 16 ? 32 : 16;
+    ins->op_size = bits != 16 ? 32 : 16;
 
     (void)segment;              /* Don't warn that this parameter is unused */
     (void)offset;               /* Don't warn that this parameter is unused */
@@ -1368,6 +1382,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             ins->evex += *codes++ << 16;
             ins->evex += *codes++ << 24;
             ins->evex_tuple = (*codes++ - 0300);
+            ins->vex_cm = ((ins->evex >> 8) & 7) | (RV_EVEX << 6);
             break;
 
         case4(0254):
@@ -1400,23 +1415,50 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             break;
 
         case 0310:
+        {
+            enum prefixes pfx = ins->prefixes[PPS_ASIZE];
+
+            ins->addr_size = 16;
+
             if (bits == 64)
                 return -1;
-            length += (bits != 16) && !has_prefix(ins, PPS_ASIZE, P_A16);
+            if (pfx) {
+                if (!(pfx == P_A16 || (bits == 32 && pfx == P_ASP)))
+                    return -1;
+            } else {
+                ins->prefixes[PPS_ASIZE] = P_A16;
+            }
             break;
+        }
 
         case 0311:
-            length += (bits != 32) && !has_prefix(ins, PPS_ASIZE, P_A32);
+        {
+            enum prefixes pfx = ins->prefixes[PPS_ASIZE];
+
+            ins->addr_size = 32;
+
+            if (pfx) {
+                if (!(pfx == P_A32 || (bits != 32 && pfx == P_ASP)))
+                    return -1;
+            } else {
+                ins->prefixes[PPS_ASIZE] = P_A32;
+            }
             break;
+        }
 
         case 0312:
             break;
 
         case 0313:
-            if (bits != 64 || has_prefix(ins, PPS_ASIZE, P_A16) ||
-                has_prefix(ins, PPS_ASIZE, P_A32))
+        {
+            enum prefixes pfx = ins->prefixes[PPS_ASIZE];
+
+            ins->addr_size = 64;
+
+            if (bits != 64 || (pfx && pfx != P_A64))
                 return -1;
             break;
+        }
 
         case4(0314):
             break;
@@ -1537,17 +1579,33 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 ins->prefixes[PPS_WAIT] = P_WAIT;
             break;
 
-        case4(0350):
-        case4(0354):
-            ins->rex |= REX_2 | ((c & 4) << (13-2)); /* X1 bit */
-            goto rexx_common;
+        case 0344:
+            ins->rex |= REX_P | REX_B;
+            break;
 
-        case4(0344):
-            goto rexx_common;
+        case 0345:
+            ins->rex |= REX_P | REX_X;
+            break;
 
-        rexx_common:
-            ins->rex |= (c & 2) << (3-1); /* W bit */
-            ins->vex_cm = c & 1;
+        case 0346:
+            ins->rex |= REX_P | REX_R;
+            break;
+
+        case 0347:
+            ins->rex |= REX_P | REX_W;
+            break;
+
+        case 0350:
+            ins->rex |= REX_P | REX_2;
+            break;
+
+        case 0351:
+            ins->rex |= REX_P | REX_2 | REX_X1;
+            break;
+
+        case3(0355):
+            /* Set opmap for legacy and REX2 encodings */
+            ins->vex_cm = c & 3;
             break;
 
         case 0360:
@@ -1621,7 +1679,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                              &ins->oprs[ins->evex_brerop] : NULL);
 
                 if (op_er_sae && (op_er_sae->decoflags & (ER | SAE))) {
-                    /* set EVEX.b */
+                    /* set EVEX.b and clear EVEX.L/RC */
+                    ins->evex &= ~EVEX_P2RC;
                     ins->evex ^= EVEX_P2B;
                     if (op_er_sae->decoflags & ER) {
                         /* set EVEX.RC (rounding control) */
@@ -1629,7 +1688,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                             & EVEX_P2RC;
                     }
                 } else if (opy->decoflags & BRDCAST_MASK) {
-                    /* set EVEX.b */
+                    /* set EVEX.b but don't EVEX.L/RC */
                     ins->evex ^= EVEX_P2B;
                 }
 
@@ -1689,12 +1748,20 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             return -1;
         break;
     case P_REX:
+        if (bits != 64) {
+            nasm_nonfatal("REX encoding not supported in %d-bit mode", bits);
+            return -1;
+        }
         if (ins->rex & (REX_V|REX_EV|REX_2))
             return -1;
         ins->rex |= REX_P;      /* Force REX prefix */
         break;
     case P_REX2:
-        if (ins->rex & (REX_V|REX_EV))
+        if (bits != 64) {
+            nasm_nonfatal("REX2 encoding not supported in %d-bit mode", bits);
+            return -1;
+        }
+        if ((ins->rex & (REX_V|REX_EV)) || rex_highvec(ins->rex))
             return -1;
         ins->rex |= REX_P | REX_2; /* Force REX2 prefix */
         break;
@@ -1725,11 +1792,13 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             length += 4;
         } else {
             /* VEX */
-            if (ins->vexreg > 15 || (ins->rex & REX_BXR1))
+            if (ins->vexreg > 15 || (ins->rex & REX_BXR1)) {
                 nasm_nonfatal("invalid high-16 register in non-AVX-512");
-            return -1;
+                return -1;
+            }
 
-            if (ins->vex_cm != 1 || (ins->rex & REX_BXR0) ||
+            if (ins->vex_cm != 1 ||
+                (ins->rex & (REX_B|REX_X|REX_W)) ||
                 ins->prefixes[PPS_REX] == P_VEX3) {
                 /* VEX3 required */
                 if (ins->prefixes[PPS_REX] == P_VEX2)
@@ -1742,6 +1811,10 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         }
     } else if (ins->rex & (REX_BXR1 | REX_2)) {
         /* REX2 prefix needed */
+        if (!itemp_has(temp, IF_REX2) || rex_highvec(ins->rex)) {
+            nasm_nonfatal("this use of registers 16-31 not supported for this instruction");
+            return -1;
+        }
         if (ins->rex & REX_H) {
             nasm_nonfatal("cannot use high byte register in rex2 instruction");
             return -1;
@@ -1750,7 +1823,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             nasm_nonfatal("invalid operands in non-64-bit mode");
             return -1;
         }
-        if (!itemp_has(temp, IF_REX2) || !iflag_test(&cpu, IF_APX)) {
+        if (!iflag_test(&cpu, IF_APX)) {
             nasm_nonfatal("invalid operands in non-APX mode");
             return -1;
         }
@@ -1762,20 +1835,25 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
             nasm_nonfatal("cannot use high byte register in rex instruction");
             return -1;
         } else if (bits == 64) {
+            ins->rex &= ~REX_L;
             ins->rex |= REX_P;
         } else if ((ins->rex & (REX_L|REX_W|REX_BXR)) == (REX_L|REX_R) &&
                    iflag_cpu_level_ok(&cpu, IF_X86_64)) {
             /* LOCK-as-REX.R */
-            assert_no_prefix(ins, PPS_LOCK);
+            if (assert_no_prefix(ins, PPS_LOCK))
+                return -1;
             lockcheck = false;  /* Already errored, no need for warning */
             ins->rex &= ~REX_P;
         } else {
             nasm_nonfatal("invalid operands in non-64-bit mode");
             return -1;
         }
+        length++;
+    }
 
-        /* Implicitly encoded legacy prefixes */
-        length += 1 + (ins->vex_cm > 0) + (ins->vex_cm > 1);
+    if (!(ins->rex & (REX_2|REX_V|REX_EV))) {
+        /* Opmap legacy encoding: none, 0f, 0f 38, 0f 3a */
+        length += (ins->vex_cm > 0) + (ins->vex_cm > 1);
     }
 
     if (lockcheck && has_prefix(ins, PPS_LOCK, P_LOCK)) {
@@ -1820,9 +1898,10 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     return length;
 }
 
+/* Emit REX and REX2 prefixes, and if necessary legacy opmap bytes */
 static inline void emit_rex(struct out_data *data, insn *ins)
 {
-    if (data->bits != 64 || ins->rex_done)
+    if (ins->rex_done)
         return;
 
     ins->rex_done = true;
@@ -1832,19 +1911,28 @@ static inline void emit_rex(struct out_data *data, insn *ins)
 
     if (ins->rex & REX_2) {
         uint16_t rex2 = 0x00d5;
+        nasm_assert(ins->vex_cm < 2);
         rex2 |= (ins->rex & (REX_BXR0|REX_W)) << 8;
         rex2 |= (ins->rex & REX_BXR1);
-        rex2 |= (ins->vex_cm & 1) << 15;
+        rex2 |= ins->vex_cm << 15;
         out_rawword(data, rex2);
     } else {
-        uint8_t rex = ins->rex & REX_MASK;
-        if (rex & REX_P)
+        uint8_t rex = ins->rex & (REX_MASK|REX_L);
+
+        if (rex == (REX_L|REX_R)) {
+            out_rawbyte(data, 0xf0);
+        } else if (rex & REX_P) {
             out_rawbyte(data, rex);
+        } else {
+            nasm_assert(!rex);
+        }
+
         if (ins->vex_cm) {
             out_rawbyte(data, 0x0f);
             if (ins->vex_cm > 1) {
                 /* Map 2 = 0F 38, map 3 = 0F 3A */
-                out_rawbyte(data, 0x36 + (ins->vex_cm << 1));
+                nasm_assert(ins->vex_cm < 4);
+                out_rawbyte(data, 0x34 + (ins->vex_cm << 1));
             }
         }
     }
@@ -2143,12 +2231,14 @@ static void gencode(struct out_data *data, insn *ins)
 
         case4(0240):
         case 0250:
-            codes += 3;
+            codes += 4;
             ins->evex ^= op_evexflags(&ins->oprs[0], EVEX_P2Z|EVEX_P2AAA);
-            ins->evex ^= (ins->rex & REX_BXR0) << 12; /* R0 B0 X0 */
-            ins->evex ^= (ins->rex & REX_B1)   >> (12-11);
-            ins->evex ^= (ins->rex & REX_X1)   << (18-13);
-            ins->evex ^= (ins->rex & REX_R1)   << (15-14);
+            ins->evex ^= (ins->rex & REX_BXR0) << 13; /* R0 X0 B0 */
+            if (ins->rex & REX_B1)
+                ins->evex ^= (ins->rex & REX_BV) ? EVEX_P0X  : EVEX_P0BP;
+            if (ins->rex & REX_X1)
+                ins->evex ^= (ins->rex & REX_XV) ? EVEX_P2VP : EVEX_P1XP;
+            ins->evex ^= (ins->rex & REX_R1)   >> (14-12);
             ins->evex ^= (ins->rex & REX_W)    << (23-3);
             ins->evex ^= (ins->vexreg & 15) << 19;
             ins->evex ^= (ins->vexreg & 16) << (27 - 4);
@@ -2167,7 +2257,8 @@ static void gencode(struct out_data *data, insn *ins)
                 bytes[1] = (ins->vex_cm & 31) |
                     ((~ins->rex & REX_BXR0) << 5);
                 bytes[2] = ((ins->rex & REX_W) << (7-3)) |
-                    ((~ins->vexreg & 15) << 3);
+                    ((~ins->vexreg & 15) << 3) |
+                    (ins->vex_wlp & 07);
                 out_rawdata(data, bytes, 3);
             } else {
                 bytes[0] = 0xc5;
@@ -2219,13 +2310,7 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         case 0310:
-            if (bits == 32 && !has_prefix(ins, PPS_ASIZE, P_A16))
-                out_rawbyte(data, 0x67);
-            break;
-
         case 0311:
-            if (bits != 32 && !has_prefix(ins, PPS_ASIZE, P_A32))
-                out_rawbyte(data, 0x67);
             break;
 
         case 0312:
@@ -2261,9 +2346,6 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         case 0334:
-            if (ins->rex & REX_R)
-                out_rawbyte(data, 0xF0);
-            ins->rex &= ~(REX_L|REX_R);
             break;
 
         case 0335:
@@ -2284,8 +2366,13 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         case4(0344):
-        case4(0350):
-        case4(0354):
+            break;
+
+        case 0350:
+        case 0351:
+            break;
+
+        case3(0355):
             break;
 
         case 0360:
@@ -2443,10 +2530,16 @@ static uint32_t rexflags(int val, opflags_t flags, uint32_t mask)
     }
     if (flags & BITS64)
         rex |= REX_W;
-    if (!(REG_HIGH & ~flags))                   /* AH, CH, DH, BH */
-        rex |= REX_H;
-    else if (!(REG8 & ~flags) && val >= 4)      /* SPL, BPL, SIL, DIL */
-        rex |= REX_P;
+
+    if (!is_class(REG_GPR, flags)) {
+        if (!is_class(REG_CDT, flags))
+            rex |= REX_BV|REX_XV|REX_RV;
+    } else if (is_class(REG8, flags)) {
+        if (is_class(REG_HIGH, flags))		/* AH, CH, DH, BH */
+            rex |= REX_H;
+        else if (val >= 4)      /* SPL, BPL, SIL, DIL */
+            rex |= REX_P;
+    }
 
     return rex & mask;
 }
@@ -2805,7 +2898,7 @@ static enum match_result matches(const struct itemplate *itemp,
                 return MERR_BRNUMMISMATCH;
             }
         }
-    }
+   }
 
     if (opsizemissing)
         return MERR_OPSIZEMISSING;

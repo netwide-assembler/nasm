@@ -558,6 +558,44 @@ sub format_insn($$$$$) {
 
     return (undef, undef) if $operands eq "ignore";
 
+    # Remember if we have an ARx flag
+    my $arx = undef;
+
+    # expand and uniqify the flags
+    my %flags;
+    foreach my $flag (split(',', $flags)) {
+	next if ($flag eq '');
+
+	if ($flag eq 'ND') {
+	    $nd = 1;
+	} else {
+	    $flags{$flag}++;
+	}
+
+	if ($flag eq 'NEVER' || $flag eq 'NOP') {
+	    # These flags imply OBSOLETE
+	    $flags{'OBSOLETE'}++;
+	}
+
+	if ($flag =~ /^AR([0-9]+)$/) {
+	    $arx = $1+0;
+	}
+    }
+
+    # Generate byte code. This may modify the flags.
+    @bytecode = (decodify($codes, $relax, \%flags), 0);
+    push(@bytecode_list, [@bytecode]);
+    $codes = hexstr(@bytecode);
+    count_bytecodes(@bytecode);
+
+    $flagsindex = insns_flag_index(keys %flags);
+    die "$fname:$line: error in flags $flags\n" unless (defined($flagsindex));
+
+    # Flags that imply long mode only
+    if ($flags{'APX'}) {
+	$flags->{'LONG'}++;
+    }
+
     # format the operands
     $operands =~ s/[\*\?]//g;
     $operands =~ s/:/|colon,/g;
@@ -593,10 +631,17 @@ sub format_insn($$$$$) {
                 $opp =~ s/^([a-z]+)rm$/rm_$1/;
                 $opp =~ s/^rm$/rm_gpr/;
                 $opp =~ s/^reg$/reg_gpr/;
-                # only for evex and rex2 insns, high-16 regs are allowed
-                if ($codes !~ /(^|\s)(evex|rex[x2])\./ &&
-                    $opp =~ /^(rm_\w+|reg_\w+|\w+reg)$/) {
-		    push(@oppx, 'rn_l16'); # Register number must be < 16
+                # only for evex and rex2 insns, high-16 GPR or creg regs are allowed
+		unless ($flags{'EVEX'} || $flags{'REX2'}) {
+                    if ($opp =~ /^(rm_gpr|reg_gpr|reg_[cd]reg)$/) {
+			push(@oppx, 'rn_l16'); # Register number must be < 16
+		    }
+                }
+		# only for evex, high vector registers are allowed
+		unless ($flags{'EVEX'}) {
+                    if ($opp =~ /^[xyz]mm(reg|rm)$/) {
+			push(@oppx, 'rn_l16'); # Register number must be < 16
+		    }
                 }
                 push(@opx, $opp, @oppx) if $opp;
             }
@@ -621,35 +666,6 @@ sub format_insn($$$$$) {
         $decorators = "NO_DECORATOR";
     }
     $decorators =~ tr/a-z/A-Z/;
-
-    # Remember if we have an ARx flag
-    my $arx = undef;
-
-    # expand and uniqify the flags
-    my %flags;
-    foreach my $flag (split(',', $flags)) {
-	next if ($flag eq '');
-
-	if ($flag eq 'ND') {
-	    $nd = 1;
-	} else {
-	    $flags{$flag}++;
-	}
-
-	if ($flag eq 'NEVER' || $flag eq 'NOP') {
-	    # These flags imply OBSOLETE
-	    $flags{'OBSOLETE'}++;
-	}
-
-	if ($flag =~ /^AR([0-9]+)$/) {
-	    $arx = $1+0;
-	}
-    }
-
-    # Flags that imply long mode only
-    if ($flags{'APX'}) {
-	$flags->{'LONG'}++;
-    }
 
     # Look for SM flags clearly inconsistent with operand bitsizes
     if ($flags{'SM'} || $flags{'SM2'} || $flags{'SM23'}) {
@@ -684,13 +700,6 @@ sub format_insn($$$$$) {
 	}
     }
 
-    @bytecode = (decodify($codes, $relax, \%flags), 0);
-    push(@bytecode_list, [@bytecode]);
-    $codes = hexstr(@bytecode);
-    count_bytecodes(@bytecode);
-
-    $flagsindex = insns_flag_index(keys %flags);
-    die "$fname:$line: error in flags $flags\n" unless (defined($flagsindex));
 
     ("{I_$opcode, $num, {$operands}, $decorators, \@\@CODES-$codes\@\@, $flagsindex},", $nd);
 }
@@ -736,10 +745,10 @@ sub show_bytecodes($) {
 		if ($c <= 4) {
 		    $literals = $c;
 		    $hexlit = 1;
-		} elsif (($c & 3) == 0240 || $c == 0250) {
+		} elsif (($c & ~3) == 0240 || $c == 0250) {
 		    $literals = 3;
 		    $hexlit = 1;
-		} elsif (($c & 3) == 0260 || $c == 0270) {
+		} elsif (($c & ~3) == 0260 || $c == 0270) {
 		    $literals = 2;
 		    $hexlit = 0;
 		} elsif ($c == 0171) {
@@ -961,8 +970,6 @@ sub byte_code_compile($$$) {
     my ($op, $oq);
     my $opex;
 
-    printf STDERR "%s (%x) %s\n", $str, $relax, join(',', sort(keys(%$flags)));
-
     my %imm_codes = (
         'ib'        => 020,     # imm8
         'ib,u'      => 024,     # Unsigned imm8
@@ -1005,6 +1012,10 @@ sub byte_code_compile($$$) {
         'nof3'      => 0326,    # No REP 0xF3 prefix permitted
         'norep'     => 0331,    # No REP prefix permitted
         'wait'      => 0341,    # Needs a wait prefix
+	'rex.b'	    => 0344,
+	'rex.x'	    => 0345,
+	'rex.r'	    => 0346,
+	'rex.w'     => 0347,
         'resb'      => 0340,
         'np'        => 0360,    # No prefix
         'jcc8'      => 0370,    # Match only if Jcc possible with single byte
@@ -1052,6 +1063,8 @@ sub byte_code_compile($$$) {
     }
     $tup = tupletype($tuple);
 
+    my $opmap = undef;
+
     my $last_imm = 'h';
     my $prefix_ok = 1;
     foreach $op (split(/\s*(?:\s|(?=[\/\\]))/, $opc)) {
@@ -1069,6 +1082,26 @@ sub byte_code_compile($$$) {
             } else {
                 push(@codes, 0333);
             }
+	} elsif ($prefix_ok && $op =~ /^(0f|0f38|0f3a|m([0-3]))$/) {
+	    if ($2 ne '') {
+		$opmap = $2 + 0;
+	    } elsif ($op eq '0f') {
+		$opmap = 1;
+	    } elsif ($op eq '0f38') {
+		$opmap = 2;
+	    } elsif ($op eq '0f3a') {
+		$opmap = 3;
+	    }
+	    push(@codes, 0354 + $opmap) if ($opmap > 0);
+	    $prefix_ok = 0;
+	} elsif ($op =~ /^(m[0-9]+|0f38|0f3a)$/) {
+	    if ($prefix_ok) {
+		die "$fname:$line: invalid legacy map: $m\n";
+	    } elsif (defined($opmap)) {
+		die "$fname:$line: multiple legacy map specifiers\n";
+	    } else {
+		die "$fname:$line: legacy map must precede opcodes\n";
+	    }
         } elsif ($op =~ /^[0-9a-f]{2}$/) {
             if (defined($litix) && $litix+$codes[$litix]+1 == scalar @codes &&
                 $codes[$litix] < 4) {
@@ -1111,6 +1144,9 @@ sub byte_code_compile($$$) {
             my ($m,$w,$l,$p) = (undef,undef,undef,0);
             my $has_nds = 0;
             my @subops = split(/\./, $2);
+	    if (defined($opmap)) {
+		warn "$fname:$line: legacy prefix ignored with VEX\n";
+	    }
 	    foreach $oq (@subops) {
 		if ($oq eq '') {
 		    next;
@@ -1181,6 +1217,9 @@ sub byte_code_compile($$$) {
             my ($nds,$nd,$dfv,$v) = (0, 0, 0, 0);
 	    my @bad_op = ();
             my @subops = split(/\./, $2);
+	    if (defined($opmap)) {
+		warn "$fname:$line: legacy prefix ignored with EVEX\n";
+	    }
 	    foreach $oq (@subops) {
 		if ($oq eq '') {
 		    next;
@@ -1264,10 +1303,11 @@ sub byte_code_compile($$$) {
 		die "$fname:$line: evex.scc and evex.nf are mutually incompatible\n";
 	    }
 
-	    my @p = ($m | 0xf0, 0x78, ($l << 5) | 0x08);
+	    my @p = ($m | 0xf0, $p | 0x7c, ($l << 5) | 0x08);
 	    $v ^= 0x0f if ($dfv);
 	    $v ^= 0x10 if (defined($scc));
 	    $p[1] ^= ($v & 15) << 3;
+	    $p[1] ^= $w << 7;
 	    $p[2] ^= ($v & 16) >> 1;
 	    $p[2] ^= $scc & 15;
 	    $p[2] |= 0x04 if ($nf);
@@ -1279,29 +1319,28 @@ sub byte_code_compile($$$) {
 
 	    $flags->{'EVEX'}++;
             $prefix_ok = 0;
-	} elsif ($op =~ /^(rex[x2])(\..*)?$/) {
-	    my $type = $1;
-	    my $rex2 = $1 eq 'rex2';
-            my @subops = split(/\./, $2);
-	    my $c = $rex2 ? 0350 : 0344;
+	} elsif ($op =~ /^(rex2(\??))(\..*)?$/) {
+	    my $name = $1;
+	    my $optional = $2 eq '?';
+            my @subops = split(/\./, $3);
+	    my $c = 0350;
+	    my $m = undef;
 	    foreach $oq (@subops) {
 		if ($oq eq '') {
 		    next;
-		} elsif ($oq =~ /^x[14]?$/ && $rex2) {
-		    $c |= 04;
-		} elsif ($oq =~ /^m1?$/ || $oq eq '0f') {
-		    $c |= 02;
-		} elsif ($oq =~ /^w1?$/) {
+		} elsif ($oq =~ /^x[15]$/) {
 		    $c |= 01;
-		} elsif ($oq =~ /^(w0|m0|x0|np)$/) {
-		    # Nothing
+		    if ($optional) {
+			warn "$fname:$line: $name.$oq promoted to unconditional\n";
+			$optional = 0;
+		    }
 		} else {
-		    die "$fname:$line: unknown modifier: $type.$oq\n";
+		    die "$fname:$line: unknown modifier: $name.$oq\n";
 		}
 	    }
-	    push(@codes, $oq);
 
-	    if ($rex2) {
+	    if (!$optional) {
+		push(@codes, $c);
 		$flags->{'APX'}++;
 		$flags->{'LONG'}++;
 	    }

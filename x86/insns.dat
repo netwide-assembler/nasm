@@ -665,8 +665,8 @@ INT03		void				[	cc]					8086,ND
 INT3		void				[	cc]					8086
 INTO		void				[	ce]					8086,NOLONG
 INVD		void				[	0f 08]					486,PRIV
-INVPCID		reg32,mem128			[rm:	66 0f 38 82 /r]				FUTURE,INVPCID,PRIV,NOLONG
-INVPCID		reg64,mem128			[rm:	66 0f 38 82 /r]				FUTURE,INVPCID,PRIV,LONG
+INVPCID		reg32,mem128			[rm:	66 0f38 82 /r]				FUTURE,INVPCID,PRIV,NOLONG
+INVPCID		reg64,mem128			[rm:	66 0f38 82 /r]				FUTURE,INVPCID,PRIV,LONG
 INVLPG		mem				[m:	0f 01 /7]				486,PRIV
 INVLPGA		reg_ax,reg_ecx			[--:	a16 0f 01 df]				X86_64,AMD,NOLONG
 INVLPGA		reg_eax,reg_ecx			[--:	a32 0f 01 df]				X86_64,AMD
@@ -1175,7 +1175,7 @@ ROR		rm32,imm8			[mi:	o32 c1 /1 ib,u]				386
 ROR		rm64,unity			[m-:	o64 d1 /1]				X86_64,LONG
 ROR		rm64,reg_cl			[m-:	o64 d3 /1]				X86_64,LONG
 ROR		rm64,imm8			[mi:	o64 c1 /1 ib,u]				X86_64,LONG
-RDM		void				[	0f 3a]					P6,CYRIX,ND
+RDM		void				[	0f3a]					P6,CYRIX,ND
 RSDC		reg_sreg,mem80			[rm:	0f 79 /r]				486,CYRIX,SMM
 RSLDT		mem80				[m:	0f 7b /0]				486,CYRIX,SMM
 RSM		void				[	0f aa]					PENT,SMM
@@ -1308,7 +1308,7 @@ SLDT		reg64				[m:	o64nw 0f 00 /0]				X86_64,LONG,ND
 SLDT		reg64				[m:	o64 0f 00 /0]				X86_64,LONG
 SKINIT		void				[	0f 01 de]				X86_64,LONG
 SMI		void				[	f1]					386,UNDOC
-SMINT		void				[	0f 38]					P6,CYRIX,ND
+SMINT		void				[	0f38]					P6,CYRIX,ND
 ; Older Cyrix chips had this; they had to move due to conflict with MMX
 SMINTOLD	void				[	0f 7e]					486,CYRIX,ND,OBSOLETE
 SMSW		mem				[m:	0f 01 /4]				286
@@ -1894,10 +1894,10 @@ VMWRITE		reg64,rm64			[rm:	o64nw np 0f 79 /r]			X86_64,LONG,VMX,SQ
 VMXOFF		void				[	0f 01 c4]				VMX
 VMXON		mem				[m:	f3 0f c7 /6]				VMX
 ;# Extended Page Tables VMX instructions
-INVEPT		reg32,mem			[rm: 66 0f 38 80 /r]				VMX,SO,NOLONG
-INVEPT		reg64,mem			[rm: o64nw 66 0f 38 80 /r]			VMX,SO,LONG
-INVVPID		reg32,mem			[rm: 66 0f 38 81 /r]				VMX,SO,NOLONG
-INVVPID		reg64,mem			[rm: o64nw 66 0f 38 81 /r]			VMX,SO,LONG
+INVEPT		reg32,mem			[rm: 66 0f38 80 /r]				VMX,SO,NOLONG
+INVEPT		reg64,mem			[rm: o64nw 66 0f38 80 /r]			VMX,SO,LONG
+INVVPID		reg32,mem			[rm: 66 0f38 81 /r]				VMX,SO,NOLONG
+INVVPID		reg64,mem			[rm: o64nw 66 0f38 81 /r]			VMX,SO,LONG
 ;# SEV-SNP AMD instructions
 PVALIDATE	void				[       f2 0f 01 ff]				VMX,AMD
 RMPADJUST	void				[       f3 0f 01 fe]				VMX,AMD
@@ -1905,38 +1905,38 @@ VMGEXIT		void				[       f2 0f 01 c1]				VMX,AMD
 VMGEXIT		void				[       f3 0f 01 c1]				VMX,AMD
 
 ;# Tejas New Instructions (SSSE3)
-PABSB		mmxreg,mmxrm			[rm:	np 0f 38 1c /r]				SSSE3,MMX,SQ
-PABSB		xmmreg,xmmrm128			[rm:	66 0f 38 1c /r]				SSSE3
-PABSW		mmxreg,mmxrm			[rm:	np 0f 38 1d /r]				SSSE3,MMX,SQ
-PABSW		xmmreg,xmmrm128			[rm:	66 0f 38 1d /r]				SSSE3
-PABSD		mmxreg,mmxrm			[rm:	np 0f 38 1e /r]				SSSE3,MMX,SQ
-PABSD		xmmreg,xmmrm128			[rm:	66 0f 38 1e /r]				SSSE3
-PALIGNR		mmxreg,mmxrm,imm		[rmi:	np 0f 3a 0f /r ib,u]			SSSE3,MMX,SQ
-PALIGNR		xmmreg,xmmrm,imm		[rmi:	66 0f 3a 0f /r ib,u]			SSSE3
-PHADDW		mmxreg,mmxrm			[rm:	np 0f 38 01 /r]				SSSE3,MMX,SQ
-PHADDW		xmmreg,xmmrm128			[rm:	66 0f 38 01 /r]				SSSE3
-PHADDD		mmxreg,mmxrm			[rm:	np 0f 38 02 /r]				SSSE3,MMX,SQ
-PHADDD		xmmreg,xmmrm128			[rm:	66 0f 38 02 /r]				SSSE3
-PHADDSW		mmxreg,mmxrm			[rm:	np 0f 38 03 /r]				SSSE3,MMX,SQ
-PHADDSW		xmmreg,xmmrm128			[rm:	66 0f 38 03 /r]				SSSE3
-PHSUBW		mmxreg,mmxrm			[rm:	np 0f 38 05 /r]				SSSE3,MMX,SQ
-PHSUBW		xmmreg,xmmrm128			[rm:	66 0f 38 05 /r]				SSSE3
-PHSUBD		mmxreg,mmxrm			[rm:	np 0f 38 06 /r]				SSSE3,MMX,SQ
-PHSUBD		xmmreg,xmmrm128			[rm:	66 0f 38 06 /r]				SSSE3
-PHSUBSW		mmxreg,mmxrm			[rm:	np 0f 38 07 /r]				SSSE3,MMX,SQ
-PHSUBSW		xmmreg,xmmrm128			[rm:	66 0f 38 07 /r]				SSSE3
-PMADDUBSW	mmxreg,mmxrm			[rm:	np 0f 38 04 /r]				SSSE3,MMX,SQ
-PMADDUBSW	xmmreg,xmmrm128			[rm:	66 0f 38 04 /r]				SSSE3
-PMULHRSW	mmxreg,mmxrm			[rm:	np 0f 38 0b /r]				SSSE3,MMX,SQ
-PMULHRSW	xmmreg,xmmrm128			[rm:	66 0f 38 0b /r]				SSSE3
-PSHUFB		mmxreg,mmxrm			[rm:	np 0f 38 00 /r]				SSSE3,MMX,SQ
-PSHUFB		xmmreg,xmmrm128			[rm:	66 0f 38 00 /r]				SSSE3
-PSIGNB		mmxreg,mmxrm			[rm:	np 0f 38 08 /r]				SSSE3,MMX,SQ
-PSIGNB		xmmreg,xmmrm128			[rm:	66 0f 38 08 /r]				SSSE3
-PSIGNW		mmxreg,mmxrm			[rm:	np 0f 38 09 /r]				SSSE3,MMX,SQ
-PSIGNW		xmmreg,xmmrm128			[rm:	66 0f 38 09 /r]				SSSE3
-PSIGND		mmxreg,mmxrm			[rm:	np 0f 38 0a /r]				SSSE3,MMX,SQ
-PSIGND		xmmreg,xmmrm128			[rm:	66 0f 38 0a /r]				SSSE3
+PABSB		mmxreg,mmxrm			[rm:	np 0f38 1c /r]				SSSE3,MMX,SQ
+PABSB		xmmreg,xmmrm128			[rm:	66 0f38 1c /r]				SSSE3
+PABSW		mmxreg,mmxrm			[rm:	np 0f38 1d /r]				SSSE3,MMX,SQ
+PABSW		xmmreg,xmmrm128			[rm:	66 0f38 1d /r]				SSSE3
+PABSD		mmxreg,mmxrm			[rm:	np 0f38 1e /r]				SSSE3,MMX,SQ
+PABSD		xmmreg,xmmrm128			[rm:	66 0f38 1e /r]				SSSE3
+PALIGNR		mmxreg,mmxrm,imm		[rmi:	np 0f3a 0f /r ib,u]			SSSE3,MMX,SQ
+PALIGNR		xmmreg,xmmrm,imm		[rmi:	66 0f3a 0f /r ib,u]			SSSE3
+PHADDW		mmxreg,mmxrm			[rm:	np 0f38 01 /r]				SSSE3,MMX,SQ
+PHADDW		xmmreg,xmmrm128			[rm:	66 0f38 01 /r]				SSSE3
+PHADDD		mmxreg,mmxrm			[rm:	np 0f38 02 /r]				SSSE3,MMX,SQ
+PHADDD		xmmreg,xmmrm128			[rm:	66 0f38 02 /r]				SSSE3
+PHADDSW		mmxreg,mmxrm			[rm:	np 0f38 03 /r]				SSSE3,MMX,SQ
+PHADDSW		xmmreg,xmmrm128			[rm:	66 0f38 03 /r]				SSSE3
+PHSUBW		mmxreg,mmxrm			[rm:	np 0f38 05 /r]				SSSE3,MMX,SQ
+PHSUBW		xmmreg,xmmrm128			[rm:	66 0f38 05 /r]				SSSE3
+PHSUBD		mmxreg,mmxrm			[rm:	np 0f38 06 /r]				SSSE3,MMX,SQ
+PHSUBD		xmmreg,xmmrm128			[rm:	66 0f38 06 /r]				SSSE3
+PHSUBSW		mmxreg,mmxrm			[rm:	np 0f38 07 /r]				SSSE3,MMX,SQ
+PHSUBSW		xmmreg,xmmrm128			[rm:	66 0f38 07 /r]				SSSE3
+PMADDUBSW	mmxreg,mmxrm			[rm:	np 0f38 04 /r]				SSSE3,MMX,SQ
+PMADDUBSW	xmmreg,xmmrm128			[rm:	66 0f38 04 /r]				SSSE3
+PMULHRSW	mmxreg,mmxrm			[rm:	np 0f38 0b /r]				SSSE3,MMX,SQ
+PMULHRSW	xmmreg,xmmrm128			[rm:	66 0f38 0b /r]				SSSE3
+PSHUFB		mmxreg,mmxrm			[rm:	np 0f38 00 /r]				SSSE3,MMX,SQ
+PSHUFB		xmmreg,xmmrm128			[rm:	66 0f38 00 /r]				SSSE3
+PSIGNB		mmxreg,mmxrm			[rm:	np 0f38 08 /r]				SSSE3,MMX,SQ
+PSIGNB		xmmreg,xmmrm128			[rm:	66 0f38 08 /r]				SSSE3
+PSIGNW		mmxreg,mmxrm			[rm:	np 0f38 09 /r]				SSSE3,MMX,SQ
+PSIGNW		xmmreg,xmmrm128			[rm:	66 0f38 09 /r]				SSSE3
+PSIGND		mmxreg,mmxrm			[rm:	np 0f38 0a /r]				SSSE3,MMX,SQ
+PSIGND		xmmreg,xmmrm128			[rm:	66 0f38 0a /r]				SSSE3
 
 ;# AMD SSE4A
 EXTRQ		xmmreg,imm,imm			[mij:	66 0f 78 /0 ib,u ib,u]			SSE4A,AMD
@@ -1952,77 +1952,77 @@ LZCNT		reg32,rm32			[rm:	o32 f3i 0f bd /r]			P6,AMD
 LZCNT		reg64,rm64			[rm:	o64 f3i 0f bd /r]			X86_64,LONG,AMD
 
 ;# Penryn New Instructions (SSE4.1)
-BLENDPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 0d /r ib,u]			SSE41
-BLENDPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 0c /r ib,u]			SSE41
-BLENDVPD	xmmreg,xmmrm128,xmm0		[rm-:	66 0f 38 15 /r]				SSE41
-BLENDVPD	xmmreg,xmmrm128			[rm:	66 0f 38 15 /r]				SSE41
-BLENDVPS	xmmreg,xmmrm128,xmm0		[rm-:	66 0f 38 14 /r]				SSE41
-BLENDVPS	xmmreg,xmmrm128			[rm:	66 0f 38 14 /r]				SSE41
-DPPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 41 /r ib,u]			SSE41
-DPPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 40 /r ib,u]			SSE41
-EXTRACTPS	rm32,xmmreg,imm8		[mri:	66 0f 3a 17 /r ib,u]			SSE41
-EXTRACTPS	reg64,xmmreg,imm8		[mri:	o64 66 0f 3a 17 /r ib,u]		SSE41,X86_64,LONG
-INSERTPS	xmmreg,xmmrm32,imm8		[rmi:	66 0f 3a 21 /r ib,u]			SSE41
-MOVNTDQA	xmmreg,mem128			[rm:	66 0f 38 2a /r]				SSE41
-MPSADBW		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 42 /r ib,u]			SSE41
-PACKUSDW	xmmreg,xmmrm128			[rm:	66 0f 38 2b /r]				SSE41
-PBLENDVB	xmmreg,xmmrm,xmm0		[rm-:	66 0f 38 10 /r]				SSE41
-PBLENDVB	xmmreg,xmmrm128			[rm:	66 0f 38 10 /r]				SSE41
-PBLENDW		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 0e /r ib,u]			SSE41
-PCMPEQQ		xmmreg,xmmrm128			[rm:	66 0f 38 29 /r]				SSE41
-PEXTRB		reg32,xmmreg,imm8		[mri:	66 0f 3a 14 /r ib,u]			SSE41
-PEXTRB		mem8,xmmreg,imm8		[mri:	66 0f 3a 14 /r ib,u]			SSE41
-PEXTRB		reg64,xmmreg,imm8		[mri:	o64nw 66 0f 3a 14 /r ib,u]		SSE41,X86_64,LONG
-PEXTRD		rm32,xmmreg,imm8		[mri:	norexw 66 0f 3a 16 /r ib,u]		SSE41
-PEXTRQ		rm64,xmmreg,imm8		[mri:	o64 66 0f 3a 16 /r ib,u]		SSE41,X86_64,LONG
-PEXTRW		reg32,xmmreg,imm8		[mri:	66 0f 3a 15 /r ib,u]			SSE41
-PEXTRW		mem16,xmmreg,imm8		[mri:	66 0f 3a 15 /r ib,u]			SSE41
-PEXTRW		reg64,xmmreg,imm8		[mri:	o64 66 0f 3a 15 /r ib,u]		SSE41,X86_64,LONG
-PHMINPOSUW	xmmreg,xmmrm128			[rm:	66 0f 38 41 /r]				SSE41
-PINSRB		xmmreg,mem,imm8			[rmi:	66 0f 3a 20 /r ib,u]			SSE41,SB,AR2
-PINSRB		xmmreg,rm8,imm8			[rmi:	nohi 66 0f 3a 20 /r ib,u]		SSE41,SB,AR2
-PINSRB		xmmreg,reg32,imm8		[rmi:	66 0f 3a 20 /r ib,u]			SSE41,SB,AR2
-PINSRD		xmmreg,rm32,imm8		[rmi:	norexw 66 0f 3a 22 /r ib,u]		SSE41,SB,AR2
-PINSRQ		xmmreg,rm64,imm8		[rmi:	o64 66 0f 3a 22 /r ib,u]		SSE41,X86_64,LONG,SB,AR2
-PMAXSB		xmmreg,xmmrm128			[rm:	66 0f 38 3c /r]				SSE41
-PMAXSD		xmmreg,xmmrm128			[rm:	66 0f 38 3d /r]				SSE41
-PMAXUD		xmmreg,xmmrm128			[rm:	66 0f 38 3f /r]				SSE41
-PMAXUW		xmmreg,xmmrm128			[rm:	66 0f 38 3e /r]				SSE41
-PMINSB		xmmreg,xmmrm128			[rm:	66 0f 38 38 /r]				SSE41
-PMINSD		xmmreg,xmmrm128			[rm:	66 0f 38 39 /r]				SSE41
-PMINUD		xmmreg,xmmrm128			[rm:	66 0f 38 3b /r]				SSE41
-PMINUW		xmmreg,xmmrm128			[rm:	66 0f 38 3a /r]				SSE41
-PMOVSXBW	xmmreg,xmmrm64			[rm:	66 0f 38 20 /r]				SSE41,SQ
-PMOVSXBD	xmmreg,xmmrm32			[rm:	66 0f 38 21 /r]				SSE41,SD
-PMOVSXBQ	xmmreg,xmmrm16			[rm:	66 0f 38 22 /r]				SSE41,SW
-PMOVSXWD	xmmreg,xmmrm64			[rm:	66 0f 38 23 /r]				SSE41,SQ
-PMOVSXWQ	xmmreg,xmmrm32			[rm:	66 0f 38 24 /r]				SSE41,SD
-PMOVSXDQ	xmmreg,xmmrm64			[rm:	66 0f 38 25 /r]				SSE41,SQ
-PMOVZXBW	xmmreg,xmmrm64			[rm:	66 0f 38 30 /r]				SSE41,SQ
-PMOVZXBD	xmmreg,xmmrm32			[rm:	66 0f 38 31 /r]				SSE41,SD
-PMOVZXBQ	xmmreg,xmmrm16			[rm:	66 0f 38 32 /r]				SSE41,SW
-PMOVZXWD	xmmreg,xmmrm64			[rm:	66 0f 38 33 /r]				SSE41,SQ
-PMOVZXWQ	xmmreg,xmmrm32			[rm:	66 0f 38 34 /r]				SSE41,SD
-PMOVZXDQ	xmmreg,xmmrm64			[rm:	66 0f 38 35 /r]				SSE41,SQ
-PMULDQ		xmmreg,xmmrm128			[rm:	66 0f 38 28 /r]				SSE41
-PMULLD		xmmreg,xmmrm128			[rm:	66 0f 38 40 /r]				SSE41
-PTEST		xmmreg,xmmrm128			[rm:	66 0f 38 17 /r]				SSE41
-ROUNDPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 09 /r ib,u]			SSE41
-ROUNDPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 08 /r ib,u]			SSE41
-ROUNDSD		xmmreg,xmmrm64,imm8		[rmi:	66 0f 3a 0b /r ib,u]			SSE41
-ROUNDSS		xmmreg,xmmrm32,imm8		[rmi:	66 0f 3a 0a /r ib,u]			SSE41
+BLENDPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 0d /r ib,u]			SSE41
+BLENDPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 0c /r ib,u]			SSE41
+BLENDVPD	xmmreg,xmmrm128,xmm0		[rm-:	66 0f38 15 /r]				SSE41
+BLENDVPD	xmmreg,xmmrm128			[rm:	66 0f38 15 /r]				SSE41
+BLENDVPS	xmmreg,xmmrm128,xmm0		[rm-:	66 0f38 14 /r]				SSE41
+BLENDVPS	xmmreg,xmmrm128			[rm:	66 0f38 14 /r]				SSE41
+DPPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 41 /r ib,u]			SSE41
+DPPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 40 /r ib,u]			SSE41
+EXTRACTPS	rm32,xmmreg,imm8		[mri:	66 0f3a 17 /r ib,u]			SSE41
+EXTRACTPS	reg64,xmmreg,imm8		[mri:	o64 66 0f3a 17 /r ib,u]		SSE41,X86_64,LONG
+INSERTPS	xmmreg,xmmrm32,imm8		[rmi:	66 0f3a 21 /r ib,u]			SSE41
+MOVNTDQA	xmmreg,mem128			[rm:	66 0f38 2a /r]				SSE41
+MPSADBW		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 42 /r ib,u]			SSE41
+PACKUSDW	xmmreg,xmmrm128			[rm:	66 0f38 2b /r]				SSE41
+PBLENDVB	xmmreg,xmmrm,xmm0		[rm-:	66 0f38 10 /r]				SSE41
+PBLENDVB	xmmreg,xmmrm128			[rm:	66 0f38 10 /r]				SSE41
+PBLENDW		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 0e /r ib,u]			SSE41
+PCMPEQQ		xmmreg,xmmrm128			[rm:	66 0f38 29 /r]				SSE41
+PEXTRB		reg32,xmmreg,imm8		[mri:	66 0f3a 14 /r ib,u]			SSE41
+PEXTRB		mem8,xmmreg,imm8		[mri:	66 0f3a 14 /r ib,u]			SSE41
+PEXTRB		reg64,xmmreg,imm8		[mri:	o64nw 66 0f3a 14 /r ib,u]		SSE41,X86_64,LONG
+PEXTRD		rm32,xmmreg,imm8		[mri:	norexw 66 0f3a 16 /r ib,u]		SSE41
+PEXTRQ		rm64,xmmreg,imm8		[mri:	o64 66 0f3a 16 /r ib,u]		SSE41,X86_64,LONG
+PEXTRW		reg32,xmmreg,imm8		[mri:	66 0f3a 15 /r ib,u]			SSE41
+PEXTRW		mem16,xmmreg,imm8		[mri:	66 0f3a 15 /r ib,u]			SSE41
+PEXTRW		reg64,xmmreg,imm8		[mri:	o64 66 0f3a 15 /r ib,u]		SSE41,X86_64,LONG
+PHMINPOSUW	xmmreg,xmmrm128			[rm:	66 0f38 41 /r]				SSE41
+PINSRB		xmmreg,mem,imm8			[rmi:	66 0f3a 20 /r ib,u]			SSE41,SB,AR2
+PINSRB		xmmreg,rm8,imm8			[rmi:	nohi 66 0f3a 20 /r ib,u]		SSE41,SB,AR2
+PINSRB		xmmreg,reg32,imm8		[rmi:	66 0f3a 20 /r ib,u]			SSE41,SB,AR2
+PINSRD		xmmreg,rm32,imm8		[rmi:	norexw 66 0f3a 22 /r ib,u]		SSE41,SB,AR2
+PINSRQ		xmmreg,rm64,imm8		[rmi:	o64 66 0f3a 22 /r ib,u]		SSE41,X86_64,LONG,SB,AR2
+PMAXSB		xmmreg,xmmrm128			[rm:	66 0f38 3c /r]				SSE41
+PMAXSD		xmmreg,xmmrm128			[rm:	66 0f38 3d /r]				SSE41
+PMAXUD		xmmreg,xmmrm128			[rm:	66 0f38 3f /r]				SSE41
+PMAXUW		xmmreg,xmmrm128			[rm:	66 0f38 3e /r]				SSE41
+PMINSB		xmmreg,xmmrm128			[rm:	66 0f38 38 /r]				SSE41
+PMINSD		xmmreg,xmmrm128			[rm:	66 0f38 39 /r]				SSE41
+PMINUD		xmmreg,xmmrm128			[rm:	66 0f38 3b /r]				SSE41
+PMINUW		xmmreg,xmmrm128			[rm:	66 0f38 3a /r]				SSE41
+PMOVSXBW	xmmreg,xmmrm64			[rm:	66 0f38 20 /r]				SSE41,SQ
+PMOVSXBD	xmmreg,xmmrm32			[rm:	66 0f38 21 /r]				SSE41,SD
+PMOVSXBQ	xmmreg,xmmrm16			[rm:	66 0f38 22 /r]				SSE41,SW
+PMOVSXWD	xmmreg,xmmrm64			[rm:	66 0f38 23 /r]				SSE41,SQ
+PMOVSXWQ	xmmreg,xmmrm32			[rm:	66 0f38 24 /r]				SSE41,SD
+PMOVSXDQ	xmmreg,xmmrm64			[rm:	66 0f38 25 /r]				SSE41,SQ
+PMOVZXBW	xmmreg,xmmrm64			[rm:	66 0f38 30 /r]				SSE41,SQ
+PMOVZXBD	xmmreg,xmmrm32			[rm:	66 0f38 31 /r]				SSE41,SD
+PMOVZXBQ	xmmreg,xmmrm16			[rm:	66 0f38 32 /r]				SSE41,SW
+PMOVZXWD	xmmreg,xmmrm64			[rm:	66 0f38 33 /r]				SSE41,SQ
+PMOVZXWQ	xmmreg,xmmrm32			[rm:	66 0f38 34 /r]				SSE41,SD
+PMOVZXDQ	xmmreg,xmmrm64			[rm:	66 0f38 35 /r]				SSE41,SQ
+PMULDQ		xmmreg,xmmrm128			[rm:	66 0f38 28 /r]				SSE41
+PMULLD		xmmreg,xmmrm128			[rm:	66 0f38 40 /r]				SSE41
+PTEST		xmmreg,xmmrm128			[rm:	66 0f38 17 /r]				SSE41
+ROUNDPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 09 /r ib,u]			SSE41
+ROUNDPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 08 /r ib,u]			SSE41
+ROUNDSD		xmmreg,xmmrm64,imm8		[rmi:	66 0f3a 0b /r ib,u]			SSE41
+ROUNDSS		xmmreg,xmmrm32,imm8		[rmi:	66 0f3a 0a /r ib,u]			SSE41
 
 ;# Nehalem New Instructions (SSE4.2)
-CRC32		reg32,rm8			[rm:	f2i 0f 38 f0 /r]			SSE42
-CRC32		reg32,rm16			[rm:	o16 f2i 0f 38 f1 /r]			SSE42
-CRC32		reg32,rm32			[rm:	o32 f2i 0f 38 f1 /r]			SSE42
-CRC32		reg64,rm8			[rm:	o64 f2i 0f 38 f0 /r]			SSE42,X86_64,LONG
-CRC32		reg64,rm64			[rm:	o64 f2i 0f 38 f1 /r]			SSE42,X86_64,LONG
-PCMPESTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 61 /r ib,u]			SSE42
-PCMPESTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 60 /r ib,u]			SSE42
-PCMPISTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 63 /r ib,u]			SSE42
-PCMPISTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 62 /r ib,u]			SSE42
-PCMPGTQ		xmmreg,xmmrm128			[rm:	66 0f 38 37 /r]				SSE42
+CRC32		reg32,rm8			[rm:	f2i 0f38 f0 /r]			SSE42
+CRC32		reg32,rm16			[rm:	o16 f2i 0f38 f1 /r]			SSE42
+CRC32		reg32,rm32			[rm:	o32 f2i 0f38 f1 /r]			SSE42
+CRC32		reg64,rm8			[rm:	o64 f2i 0f38 f0 /r]			SSE42,X86_64,LONG
+CRC32		reg64,rm64			[rm:	o64 f2i 0f38 f1 /r]			SSE42,X86_64,LONG
+PCMPESTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 61 /r ib,u]			SSE42
+PCMPESTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 60 /r ib,u]			SSE42
+PCMPISTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 63 /r ib,u]			SSE42
+PCMPISTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 62 /r ib,u]			SSE42
+PCMPGTQ		xmmreg,xmmrm128			[rm:	66 0f38 37 /r]				SSE42
 POPCNT		reg16,rm16			[rm:	o16 f3i 0f b8 /r]			NEHALEM,SW
 POPCNT		reg32,rm32			[rm:	o32 f3i 0f b8 /r]			NEHALEM,SD
 POPCNT		reg64,rm64			[rm:	o64 f3i 0f b8 /r]			NEHALEM,SQ,LONG
@@ -2036,20 +2036,20 @@ PFRSQRTV	mmxreg,mmxrm			[rm:	o64nw 0f 0f /r 87]			PENT,3DNOW,SQ,CYRIX
 
 ;# Intel new instructions in ???
 ; Is NEHALEM right here?
-MOVBE		reg16,mem16			[rm:	o16 norep 0f 38 f0 /r]			NEHALEM,SM
-MOVBE		reg32,mem32			[rm:	o32 norep 0f 38 f0 /r]			NEHALEM,SM
-MOVBE		reg64,mem64			[rm:	o64 norep 0f 38 f0 /r]			NEHALEM,SM
-MOVBE		mem16,reg16			[mr:	o16 norep 0f 38 f1 /r]			NEHALEM,SM
-MOVBE		mem32,reg32			[mr:	o32 norep 0f 38 f1 /r]			NEHALEM,SM
-MOVBE		mem64,reg64			[mr:	o64 norep 0f 38 f1 /r]			NEHALEM,SM
+MOVBE		reg16,mem16			[rm:	o16 norep 0f38 f0 /r]			NEHALEM,SM
+MOVBE		reg32,mem32			[rm:	o32 norep 0f38 f0 /r]			NEHALEM,SM
+MOVBE		reg64,mem64			[rm:	o64 norep 0f38 f0 /r]			NEHALEM,SM
+MOVBE		mem16,reg16			[mr:	o16 norep 0f38 f1 /r]			NEHALEM,SM
+MOVBE		mem32,reg32			[mr:	o32 norep 0f38 f1 /r]			NEHALEM,SM
+MOVBE		mem64,reg64			[mr:	o64 norep 0f38 f1 /r]			NEHALEM,SM
 
 ;# Intel AES instructions
-AESENC		xmmreg,xmmrm128			[rm:	66 0f 38 dc /r]				SSE,WESTMERE
-AESENCLAST	xmmreg,xmmrm128			[rm:	66 0f 38 dd /r]				SSE,WESTMERE
-AESDEC		xmmreg,xmmrm128			[rm:	66 0f 38 de /r]				SSE,WESTMERE
-AESDECLAST	xmmreg,xmmrm128			[rm:	66 0f 38 df /r]				SSE,WESTMERE
-AESIMC		xmmreg,xmmrm128			[rm:	66 0f 38 db /r]				SSE,WESTMERE
-AESKEYGENASSIST	xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a df /r ib]			SSE,WESTMERE
+AESENC		xmmreg,xmmrm128			[rm:	66 0f38 dc /r]				SSE,WESTMERE
+AESENCLAST	xmmreg,xmmrm128			[rm:	66 0f38 dd /r]				SSE,WESTMERE
+AESDEC		xmmreg,xmmrm128			[rm:	66 0f38 de /r]				SSE,WESTMERE
+AESDECLAST	xmmreg,xmmrm128			[rm:	66 0f38 df /r]				SSE,WESTMERE
+AESIMC		xmmreg,xmmrm128			[rm:	66 0f38 db /r]				SSE,WESTMERE
+AESKEYGENASSIST	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a df /r ib]			SSE,WESTMERE
 
 ;# Intel AVX AES instructions
 VAESENC		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38 dc /r]		AVX,SANDYBRIDGE
@@ -2777,11 +2777,11 @@ VZEROALL	void				[	vex.256.0f.w0 77]			AVX,SANDYBRIDGE
 VZEROUPPER	void				[	vex.128.0f.w0 77]			AVX,SANDYBRIDGE
 
 ;# Intel Carry-Less Multiplication instructions (CLMUL)
-PCLMULLQLQDQ	xmmreg,xmmrm128			[rm:	66 0f 3a 44 /r 00]			SSE,WESTMERE
-PCLMULHQLQDQ	xmmreg,xmmrm128			[rm:	66 0f 3a 44 /r 01]			SSE,WESTMERE
-PCLMULLQHQDQ	xmmreg,xmmrm128			[rm:	66 0f 3a 44 /r 10]			SSE,WESTMERE
-PCLMULHQHQDQ	xmmreg,xmmrm128			[rm:	66 0f 3a 44 /r 11]			SSE,WESTMERE
-PCLMULQDQ	xmmreg,xmmrm128,imm8		[rmi:	66 0f 3a 44 /r ib]			SSE,WESTMERE
+PCLMULLQLQDQ	xmmreg,xmmrm128			[rm:	66 0f3a 44 /r 00]			SSE,WESTMERE
+PCLMULHQLQDQ	xmmreg,xmmrm128			[rm:	66 0f3a 44 /r 01]			SSE,WESTMERE
+PCLMULLQHQDQ	xmmreg,xmmrm128			[rm:	66 0f3a 44 /r 10]			SSE,WESTMERE
+PCLMULHQHQDQ	xmmreg,xmmrm128			[rm:	66 0f3a 44 /r 11]			SSE,WESTMERE
+PCLMULQDQ	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 44 /r ib]			SSE,WESTMERE
 
 ;# Intel AVX Carry-Less Multiplication instructions (CLMUL)
 VPCLMULLQLQDQ	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f3a 44 /r 00]		AVX,SANDYBRIDGE
@@ -3031,10 +3031,10 @@ VCVTPS2PH	xmmrm128,ymmreg,imm8		[mri:	vex.256.66.0f3a.w0 1d /r ib]		AVX,FUTURE
 VCVTPS2PH	xmmrm64,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 1d /r ib]		AVX,FUTURE
 
 ; Per AVX spec revision 13, document 319433-013
-ADCX		reg32,rm32			[rm:	norexw 66 0f 38 f6 /r]			FUTURE
-ADCX		reg64,rm64			[rm:	o64 66 0f 38 f6 /r]			LONG,FUTURE
-ADOX		reg32,rm32			[rm:	norexw f3 0f 38 f6 /r]			FUTURE
-ADOX		reg64,rm64			[rm:	o64 f3 0f 38 f6 /r]			LONG,FUTURE
+ADCX		reg32,rm32			[rm:	norexw 66 0f38 f6 /r]			FUTURE
+ADCX		reg64,rm64			[rm:	o64 66 0f38 f6 /r]			LONG,FUTURE
+ADOX		reg32,rm32			[rm:	norexw f3 0f38 f6 /r]			FUTURE
+ADOX		reg64,rm64			[rm:	o64 f3 0f38 f6 /r]			LONG,FUTURE
 RDSEED		reg16				[m:	o16 0f c7 /7]				FUTURE
 RDSEED		reg32				[m:	o32 0f c7 /7]				FUTURE
 RDSEED		reg64				[m:	o64 0f c7 /7]				LONG,FUTURE
@@ -3579,14 +3579,14 @@ BNDSTX      mem,bndreg,reg32       [mrx:           0f 1b /r ]  MPX,MIB,NOLONG,FU
 BNDSTX      mem,bndreg,reg64       [mrx:           0f 1b /r ]  MPX,MIB,LONG,FUTURE
 
 ;# Intel SHA acceleration instructions
-SHA1MSG1        xmmreg,xmmrm128                     [rm: 0f 38 c9 /r ] SHA,FUTURE
-SHA1MSG2        xmmreg,xmmrm128                     [rm: 0f 38 ca /r ] SHA,FUTURE
-SHA1NEXTE       xmmreg,xmmrm128                     [rm: 0f 38 c8 /r ] SHA,FUTURE
-SHA1RNDS4       xmmreg,xmmrm128,imm8                [rmi: 0f 3a cc /r ib ] SHA,FUTURE
-SHA256MSG1      xmmreg,xmmrm128                     [rm: 0f 38 cc /r ] SHA,FUTURE
-SHA256MSG2      xmmreg,xmmrm128                     [rm: 0f 38 cd /r ] SHA,FUTURE
-SHA256RNDS2     xmmreg,xmmrm128,xmm0                [rm-: 0f 38 cb /r ] SHA,FUTURE
-SHA256RNDS2     xmmreg,xmmrm128                     [rm:  0f 38 cb /r ] SHA,FUTURE
+SHA1MSG1        xmmreg,xmmrm128                     [rm: 0f38 c9 /r ] SHA,FUTURE
+SHA1MSG2        xmmreg,xmmrm128                     [rm: 0f38 ca /r ] SHA,FUTURE
+SHA1NEXTE       xmmreg,xmmrm128                     [rm: 0f38 c8 /r ] SHA,FUTURE
+SHA1RNDS4       xmmreg,xmmrm128,imm8                [rmi: 0f3a cc /r ib ] SHA,FUTURE
+SHA256MSG1      xmmreg,xmmrm128                     [rm: 0f38 cc /r ] SHA,FUTURE
+SHA256MSG2      xmmreg,xmmrm128                     [rm: 0f38 cd /r ] SHA,FUTURE
+SHA256RNDS2     xmmreg,xmmrm128,xmm0                [rm-: 0f38 cb /r ] SHA,FUTURE
+SHA256RNDS2     xmmreg,xmmrm128                     [rm:  0f38 cb /r ] SHA,FUTURE
 VSHA512MSG1     ymmreg,xmmreg                       [rm: vex.256.f2.0f38.w0 cc /r] SHA512,AVX,FUTURE
 VSHA512MSG2     ymmreg,ymmreg                       [rm: vex.256.f2.0f38.w0 cd /r] SHA512,AVX,FUTURE
 VSHA512RNDS2    ymmreg,ymmreg,xmmreg                [rvm: vex.nds.256.f2.0f38.w0 cb /r] SHA512,AVX,FUTURE
@@ -5907,11 +5907,11 @@ PTWRITE		rm64				[m:	o64 f3 0f ae /4]			LONG,FUTURE
 ;# Instructions from the Intel Instruction Set Extensions,
 ;# doc 319433-034 May 2018
 CLDEMOTE	mem				[m:	np 0f 1c /0]				FUTURE
-MOVDIRI		mem32,reg32			[mr:	np 0f 38 f9 /r]				FUTURE,SD
-MOVDIRI		mem64,reg64			[mr:	o64 0f 38 f9 /r]			FUTURE,LONG,SQ
-MOVDIR64B	reg16,mem512			[rm:	a16 66 0f 38 f8 /r]			FUTURE,NOLONG
-MOVDIR64B	reg32,mem512			[rm:	a32 66 0f 38 f8 /r]			FUTURE
-MOVDIR64B	reg64,mem512			[rm:	o64nw a64 66 0f 38 f8 /r]		FUTURE,LONG
+MOVDIRI		mem32,reg32			[mr:	np 0f38 f9 /r]				FUTURE,SD
+MOVDIRI		mem64,reg64			[mr:	o64 0f38 f9 /r]			FUTURE,LONG,SQ
+MOVDIR64B	reg16,mem512			[rm:	a16 66 0f38 f8 /r]			FUTURE,NOLONG
+MOVDIR64B	reg32,mem512			[rm:	a32 66 0f38 f8 /r]			FUTURE
+MOVDIR64B	reg64,mem512			[rm:	o64nw a64 66 0f38 f8 /r]		FUTURE,LONG
 PCONFIG		void				[	np 0f 01 c5]				FUTURE
 TPAUSE		reg32				[m:	66 0f ae /6]				FUTURE
 TPAUSE		reg32,reg_edx,reg_eax		[m--:	66 0f ae /6]				FUTURE,ND
@@ -5923,19 +5923,19 @@ UMWAIT		reg32,reg_edx,reg_eax		[m--:	f2 0f ae /6]				FUTURE,ND
 WBNOINVD	void				[	f3 0f 09]				FUTURE
 
 ;# Galois field operations (GFNI)
-GF2P8AFFINEINVQB	xmmreg,xmmrm128,imm8			[rmi:	  66 0f 3a cf /r ib]			GFNI,SSE,FUTURE
+GF2P8AFFINEINVQB	xmmreg,xmmrm128,imm8			[rmi:	  66 0f3a cf /r ib]			GFNI,SSE,FUTURE
 VGF2P8AFFINEINVQB	xmmreg,xmmreg*,xmmrm128,imm8		[rvmi:	  vex.nds.128.66.0f3a.w1 cf /r ib]	GFNI,AVX,FUTURE
 VGF2P8AFFINEINVQB	ymmreg,ymmreg*,ymmrm256,imm8		[rvmi:	  vex.nds.256.66.0f3a.w1 cf /r ib]	GFNI,AVX,FUTURE
 VGF2P8AFFINEINVQB	xmmreg|mask|z,xmmreg*,xmmrm128|b64,imm8	[rvmi:fv: evex.nds.128.66.0f3a.w1 cf /r ib]	GFNI,AVX512VL,FUTURE
 VGF2P8AFFINEINVQB	ymmreg|mask|z,ymmreg*,ymmrm256|b64,imm8	[rvmi:fv: evex.nds.256.66.0f3a.w1 cf /r ib]	GFNI,AVX512VL,FUTURE
 VGF2P8AFFINEINVQB	zmmreg|mask|z,zmmreg*,zmmrm512|b64,imm8	[rvmi:fv: evex.nds.512.66.0f3a.w1 cf /r ib]	GFNI,AVX512,FUTURE
-GF2P8AFFINEQB   	xmmreg,xmmrm128,imm8			[rmi:	  66 0f 3a ce /r ib]			GFNI,SSE,FUTURE
+GF2P8AFFINEQB   	xmmreg,xmmrm128,imm8			[rmi:	  66 0f3a ce /r ib]			GFNI,SSE,FUTURE
 VGF2P8AFFINEQB   	xmmreg,xmmreg*,xmmrm128,imm8		[rvmi:	  vex.nds.128.66.0f3a.w1 ce /r ib]	GFNI,AVX,FUTURE
 VGF2P8AFFINEQB   	ymmreg,ymmreg*,ymmrm256,imm8		[rvmi:	  vex.nds.256.66.0f3a.w1 ce /r ib]	GFNI,AVX,FUTURE
 VGF2P8AFFINEQB   	xmmreg|mask|z,xmmreg*,xmmrm128|b64,imm8	[rvmi:fv: evex.nds.128.66.0f3a.w1 ce /r ib]	GFNI,AVX512VL,FUTURE
 VGF2P8AFFINEQB   	ymmreg|mask|z,ymmreg*,ymmrm256|b64,imm8	[rvmi:fv: evex.nds.256.66.0f3a.w1 ce /r ib]	GFNI,AVX512VL,FUTURE
 VGF2P8AFFINEQB   	zmmreg|mask|z,zmmreg*,zmmrm512|b64,imm8	[rvmi:fv: evex.nds.512.66.0f3a.w1 ce /r ib]	GFNI,AVX512,FUTURE
-GF2P8MULB		xmmreg,xmmrm128				[rm:      66 0f 38 cf /r]			GFNI,SSE,FUTURE
+GF2P8MULB		xmmreg,xmmrm128				[rm:      66 0f38 cf /r]			GFNI,SSE,FUTURE
 VGF2P8MULB		xmmreg,xmmreg*,xmmrm128			[rvm:     vex.nds.128.66.0f38.w0 cf /r]		GFNI,AVX,FUTURE
 VGF2P8MULB		ymmreg,ymmreg*,ymmrm256			[rvm:     vex.nds.256.66.0f38.w0 cf /r]		GFNI,AVX,FUTURE
 VGF2P8MULB		xmmreg|mask|z,xmmreg*,xmmrm128		[rvm:fvm: evex.nds.128.66.0f38.w0 cf /r]	GFNI,AVX512VL,FUTURE
@@ -6055,20 +6055,20 @@ RDSSPQ		reg64				[m:	o64 f3 0f 1e /1]			CET,FUTURE,LONG
 RSTORSSP	mem64				[m:	f3 0f 01 /5]				CET,FUTURE
 SAVEPREVSSP	void				[	f3 0f 01 ea]				CET,FUTURE
 SETSSBSY	void				[	f3 0f 01 e8]				CET,FUTURE
-WRUSSD		mem32,reg32			[mr:	o32 66 0f 38 f5 /r]			CET,FUTURE
-WRUSSQ		mem64,reg64			[mr:	o64 66 0f 38 f5 /r]			CET,FUTURE,LONG
-WRSSD		mem32,reg32			[mr:	o32 0f 38 f6 /r]			CET,FUTURE
-WRSSQ		mem64,reg64			[mr:	o64 0f 38 f6 /r]			CET,FUTURE,LONG
+WRUSSD		mem32,reg32			[mr:	o32 66 0f38 f5 /r]			CET,FUTURE
+WRUSSQ		mem64,reg64			[mr:	o64 66 0f38 f5 /r]			CET,FUTURE,LONG
+WRSSD		mem32,reg32			[mr:	o32 0f38 f6 /r]			CET,FUTURE
+WRSSQ		mem64,reg64			[mr:	o64 0f38 f6 /r]			CET,FUTURE,LONG
 
 ;# Instructions from ISE doc 319433-040, June 2020
-ENQCMD		reg16,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG
-ENQCMD		reg32,mem512			[rm:	a16 f2 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG,ND
-ENQCMD		reg32,mem512			[rm:	a32 f2 0f 38 f8 /r]			ENQCMD,FUTURE,SZ
-ENQCMD		reg64,mem512			[rm:	a64 f2 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,LONG
-ENQCMDS		reg16,mem512			[rm:	a16 f3 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG,PRIV
-ENQCMDS		reg32,mem512			[rm:	a16 f3 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG,PRIV,ND
-ENQCMDS		reg32,mem512			[rm:	a32 f3 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,PRIV
-ENQCMDS		reg64,mem512			[rm:	a64 f3 0f 38 f8 /r]			ENQCMD,FUTURE,SZ,PRIV,LONG
+ENQCMD		reg16,mem512			[rm:	a16 f2 0f38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG
+ENQCMD		reg32,mem512			[rm:	a16 f2 0f38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG,ND
+ENQCMD		reg32,mem512			[rm:	a32 f2 0f38 f8 /r]			ENQCMD,FUTURE,SZ
+ENQCMD		reg64,mem512			[rm:	a64 f2 0f38 f8 /r]			ENQCMD,FUTURE,SZ,LONG
+ENQCMDS		reg16,mem512			[rm:	a16 f3 0f38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG,PRIV
+ENQCMDS		reg32,mem512			[rm:	a16 f3 0f38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG,PRIV,ND
+ENQCMDS		reg32,mem512			[rm:	a32 f3 0f38 f8 /r]			ENQCMD,FUTURE,SZ,PRIV
+ENQCMDS		reg64,mem512			[rm:	a64 f3 0f38 f8 /r]			ENQCMD,FUTURE,SZ,PRIV,LONG
 PCONFIG		void				[	np 0f 01 c5]				PCONFIG,FUTURE,PRIV
 SERIALIZE	void				[	np 0f 01 e8]				SERIALIZE,FUTURE
 WBNOINVD	void				[	f3 0f 09]				WBNOINVD,FUTURE,PRIV
@@ -6357,12 +6357,12 @@ VSUBSH		xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.f3.map5.w0 5c /r
 VUCOMISH	xmmreg,xmmrm16|sae			[rm:t1s: evex.lig.np.map5.w0 2e /r]	AVX512FP16,FUTURE
 
 ;# RAO-INT weakly ordered atomic operations
-AADD		mem32,reg32				[mr:	norexw np 0f 38 fc /r	]	RAOINT,FUTURE,SD
-AADD		mem64,reg64				[mr:	o64 np 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
-AAND		mem32,reg32				[mr:	norexw 66 0f 38 fc /r	]	RAOINT,FUTURE,SD
-AAND		mem64,reg64				[mr:	o64 66 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
-AXOR		mem32,reg32				[mr:	norexw f3 0f 38 fc /r	]	RAOINT,FUTURE,SD
-AXOR		mem64,reg64				[mr:	o64 f3 0f 38 fc /r	]	RAOINT,FUTURE,SQ,LONG
+AADD		mem32,reg32				[mr:	norexw np 0f38 fc /r	]	RAOINT,FUTURE,SD
+AADD		mem64,reg64				[mr:	o64 np 0f38 fc /r	]	RAOINT,FUTURE,SQ,LONG
+AAND		mem32,reg32				[mr:	norexw 66 0f38 fc /r	]	RAOINT,FUTURE,SD
+AAND		mem64,reg64				[mr:	o64 66 0f38 fc /r	]	RAOINT,FUTURE,SQ,LONG
+AXOR		mem32,reg32				[mr:	norexw f3 0f38 fc /r	]	RAOINT,FUTURE,SD
+AXOR		mem64,reg64				[mr:	o64 f3 0f38 fc /r	]	RAOINT,FUTURE,SQ,LONG
 
 ;# User interrupts
 CLUI		void					[	f3 0f 01 ee		]	UINTR,FUTURE,LONG
@@ -6390,8 +6390,8 @@ RDMSRLIST	void					[	f2 0f 01 c6		]	MSRLIST,FUTURE,PRIV,LONG
 WRMSRLIST	void					[	f3 0f 01 c6		]	MSRLIST,FUTURE,PRIV,LONG
 
 ;# History reset
-HRESET		imm,reg_eax				[i-:	f3 0f 3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB
-HRESET		imm					[i:	f3 0f 3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB,ND
+HRESET		imm,reg_eax				[i-:	f3 0f3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB
+HRESET		imm					[i:	f3 0f3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB,ND
 
 ;# APX test
 CCMPscc		spec4,rm8,reg8			[vmr:	    evex.scc.dfv.l0.np.m4.wig 38 /r	]	APX,SM23
@@ -6432,8 +6432,8 @@ POPP		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
 POP2P		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
 POPP		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
 
-PUSHP		reg64				[r:	o64nw rex2.m0.w1 50+r		]	APX
-POPP		reg64				[r:	o64nw rex2.m0.w1 58+r		]	APX
+PUSHP		reg64				[r:	o64nw rex.w rex2 50+r		]	APX
+POPP		reg64				[r:	o64nw rex.w rex2 58+r		]	APX
 
 ADD		reg8?,rm8,reg8			[vmr:	evex.ndx.l0.np.m4.wig 00 /r	]	APX,NF
 

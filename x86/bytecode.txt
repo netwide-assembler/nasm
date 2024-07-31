@@ -122,7 +122,7 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \331             norep                       (disassembler only) not valid with 0xF2 or 0xF3 REP prefixes.
 \332             f2i                         REP prefix (0xF2 byte) used as opcode extension.
 \333             f3i                         REP prefix (0xF3 byte) used as opcode extension.
-\334             rex.l                       LOCK prefix used as REX.R (used in non-64-bit mode)
+\334             rex.l                       LOCK prefix used as REX.
 \335             repe                        disassemble a rep (0xF3 byte) prefix as repe not rep.
 \336             mustrep                     force a REP(E) prefix (0xF3) even if not specified.
 \337             mustrepne                   force a REPNE prefix (0xF2) even if not specified.
@@ -130,12 +130,15 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \340             resb                        reserve <operand 0> bytes of uninitialized storage.
                                              Operand 0 had better be a segmentless constant.
 \341             wait                        this instruction needs a WAIT "prefix"
-\344..\347	 rexx[.0f|m1][.w]	     REX or REX2 prefix, bits [1:0] set the W or M bits (promotable)
-					     rexx.m1 -> rex 0f if REX2 is not generated.
-					     The W bit will also be set if o64 is specified.
-					     The REX prefix can be omitted using normal REX omission rules.
-\35x		 rex2[.0f|m1][.x1][.w]	     obligatory REX2 prefix, bits [2:0] set the X1, W, and M bits
-					     The W bit will also be set if o64 is specified.
+\344		 rex.b			     REX[2].B used as an opcode extension.
+\345		 rex.x			     REX[2].X used as an opcode extension.
+\346		 rex.r			     REX[2].R used as an opcode extension.
+\347		 rex.w			     REX[2].W used as an opcode extension.
+\350..\351	 rex2[.x1]		     obligatory REX2 prefix, bit 0 sets the X1 bit
+					     when used as opcode extensions.
+					     insns.dat supports the syntax rex2? for an optional REX2 prefix.
+\355..\357	 m[1-3] 0f 0f38 0f3a	     Set the legacy map number. Unless a REX2, VEX, or EVEX prefix
+					     is also generated, these are emitted as legacy prefix bytes.
 \360             np                          no SSE prefix (== \364\331)
 \361                                         66 SSE prefix (== \366\331)
 \364             !osp                        operand-size prefix (0x66) not permitted
