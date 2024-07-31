@@ -978,6 +978,9 @@ restart_parse:
             case S_SHORT:
                 op->type |= SHORT;
                 break;
+            case S_ABS:
+                op->type |= ABS;
+                break;
             default:
                 nasm_nonfatal("invalid operand size specification");
             }

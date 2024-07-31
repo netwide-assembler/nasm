@@ -6437,6 +6437,11 @@ POPP		reg64				[r:	o64nw rex.w rex2 58+r		]	APX
 
 ADD		reg8?,rm8,reg8			[vmr:	evex.ndx.l0.np.m4.wig 00 /r	]	APX,NF
 
+JMP		imm|abs				[i:	a64 np rex2 a1 iq		]	APX
+JMP		imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,SQ
+JMPABS		imm				[i:	a64 np rex2 a1 iq		]	APX,ND
+JMPABS		imm64				[i:	a64 np rex2 a1 iq		]	APX,SQ,ND
+
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
 HINT_NOP0	rm16				[m:	o16 0f 18 /0]				P6,UNDOC

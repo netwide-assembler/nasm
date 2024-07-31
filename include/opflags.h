@@ -100,6 +100,7 @@
 
 /*
  * Special flags. Context dependent.
+ * XXX: ARE THESE EVEN USED ANYMORE?
  *
  * Bits: 26 - 32
  */
@@ -111,19 +112,19 @@
 /*
  * Sizes of the operands and attributes.
  *
- * Bits: 33 - 43
+ * Bits: 33 - 44
  */
 #define SIZE_SHIFT              (33)
-#define SIZE_BITS               (11)
+#define SIZE_BITS               (12)
 #define SIZE_MASK               OP_GENMASK(SIZE_BITS, SIZE_SHIFT)
 #define GEN_SIZE(bit)           OP_GENBIT(bit, SIZE_SHIFT)
 
 /*
  * Register set count
  *
- * Bits: 44 - 48
+ * Bits: 45 - 49
  */
-#define REGSET_SHIFT            (44)
+#define REGSET_SHIFT            (45)
 #define REGSET_BITS             (5)
 #define REGSET_MASK             OP_GENMASK(REGSET_BITS, REGSET_SHIFT)
 #define GEN_REGSET(bit)         OP_GENBIT(bit, REGSET_SHIFT)
@@ -141,8 +142,8 @@
  * ..............................................11111111111....... register classes
  * ......................................11111111.................. subclasses
  * ...............................1111111.......................... specials
- * ....................11111111111................................. sizes
- * ...............11111............................................ regset count
+ * ...................111111111111................................. sizes
+ * ..............11111............................................. regset count
  */
 
 #define REGISTER                GEN_OPTYPE(0)                   /* register number in 'basereg' */
@@ -161,6 +162,7 @@
 #define FAR                     GEN_SIZE(8)                     /* grotty: this means 16:16 or 16:32, like in CALL/JMP */
 #define NEAR                    GEN_SIZE(9)
 #define SHORT                   GEN_SIZE(10)                    /* and this means what it says :) */
+#define ABS			GEN_SIZE(11)                    /* JMP ABS */
 
 #define TO                      GEN_MODIFIER(0)                 /* reverse effect in FADD, FSUB &c */
 #define COLON                   GEN_MODIFIER(1)                 /* operand is followed by a colon */
