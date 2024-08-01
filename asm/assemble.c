@@ -2045,6 +2045,12 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
             if (!(ins->rex & (REX_2|REX_V|REX_EV)))
                 c = 0x66;
             break;
+        case P_NF:
+            if (!itemp_has(data->itemp, IF_NF)) {
+                /* Not actually an NF encoding, just doesn't modify flags */
+                ins->prefixes[j] = P_none;
+            }
+            break;
         case P_REX:
         case P_VEX:
         case P_EVEX:
@@ -2052,7 +2058,7 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
         case P_VEX2:
         case P_REX2:
         case P_NOBND:
-        case P_NF:
+        case P_ZU:
         case P_none:
             break;
         default:
@@ -2245,6 +2251,7 @@ static void gencode(struct out_data *data, insn *ins)
             ins->evex ^= (ins->rex & REX_W)    << (23-3);
             ins->evex ^= (ins->vexreg & 15) << 19;
             ins->evex ^= (ins->vexreg & 16) << (27 - 4);
+            /* Only set NF if this is a real NF instruction */
             if (ins->prefixes[PPS_NF] == P_NF)
                 ins->evex ^= EVEX_P2NF;
             out_rawdword(data, ins->evex);
@@ -2577,6 +2584,13 @@ static enum match_result find_match(const struct itemplate **tempp,
     bool opsizemissing = false;
     int8_t broadcast = instruction->evex_brerop;
     int i;
+    int rex = instruction->prefixes[PPS_REX];
+
+    /* Impossible encoding request? */
+    if (bits != 64) {
+        if (rex == P_REX || rex == P_REX2)
+            return MERR_ENCMISMATCH;
+    }
 
     /* broadcasting uses a different data element size */
     for (i = 0; i < instruction->operands; i++) {
@@ -2959,10 +2973,15 @@ static enum match_result matches(const struct itemplate *itemp,
         return MERR_BADMODE;
 
     /*
-     * {nf} prefix used? Must be permitted.
+     * {nf} or {zu} prefixes used? Must be permitted.
      */
-    if (has_prefix(instruction, PPS_NF, P_NF) &&
-        !itemp_has(itemp, IF_NF))
+    if (has_prefix(instruction, PPS_NF, P_NF)) {
+        if (itemp_has(itemp, IF_FL) && !itemp_has(itemp, IF_NF))
+            return MERR_ENCMISMATCH;
+    }
+
+    if (has_prefix(instruction, PPS_ZU, P_ZU) &&
+        !itemp_has(itemp, IF_ZU))
         return MERR_ENCMISMATCH;
 
     /*

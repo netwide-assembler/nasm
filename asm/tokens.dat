@@ -86,6 +86,9 @@ vex2
 % TOKEN_PREFIX, PPS_NF, TFLAG_BRC, P_*
 nf
 
+% TOKEN_PREFIX, PPS_ZU, TFLAG_BRC, P_*
+zu
+
 % TOKEN_SIZE, SIZE_*, 0, S_*
 byte
 word

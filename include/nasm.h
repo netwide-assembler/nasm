@@ -639,6 +639,7 @@ enum prefixes { /* instruction prefixes */
     P_VEX3,
     P_VEX2,
     P_NF,
+    P_ZU,
     PREFIX_ENUM_LIMIT
 };
 
@@ -743,7 +744,8 @@ enum prefix_pos {
     PPS_OSIZE,          /* Operand size prefix */
     PPS_ASIZE,          /* Address size prefix */
     PPS_REX,            /* REX/VEX type */
-    PPS_NF,             /* No flags */
+    PPS_NF,             /* Do not set flags */
+    PPS_ZU,             /* Zero upper register */
     MAXPREFIX           /* Total number of prefix slots */
 };
 
