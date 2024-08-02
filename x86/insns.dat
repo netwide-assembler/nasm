@@ -6106,14 +6106,14 @@ TILESTORED	mem,tmmreg			[mr:	vex.128.f3.0f38.w0 4b /r]		AMXTILE,MIB,SIB,FUTURE,S
 TILEZERO	tmmreg				[r:	vex.128.f2.0f38.w0 49 /3r0]		AMXTILE,FUTURE,LONG
 
 ;# Intel AVX512-FP16 instructions
-VADDPH		xmmreg|mask|z,xmmreg*,xmmrm16|b16	[rvm:fv:  evex.nds.128.np.map5.w0 58 /r]    AVX512FP16,AVX512VL,FUTURE
-VADDPH		ymmreg|mask|z,ymmreg*,ymmrm16|b16	[rvm:fv:  evex.nds.256.np.map5.w0 58 /r]    AVX512FP16,AVX512VL,FUTURE
-VADDPH		zmmreg|mask|z,zmmreg*,zmmrm16|b16|er	[rvm:fv:  evex.nds.512.np.map5.w0 58 /r]    AVX512FP16,FUTURE
+VADDPH		xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv:  evex.nds.128.np.map5.w0 58 /r]    AVX512FP16,AVX512VL,FUTURE
+VADDPH		ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv:  evex.nds.256.np.map5.w0 58 /r]    AVX512FP16,AVX512VL,FUTURE
+VADDPH		zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv:  evex.nds.512.np.map5.w0 58 /r]    AVX512FP16,FUTURE
 VADDSH		xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.f3.map5.w0 58 /r]    AVX512FP16,FUTURE
-VCMPPH		kreg|mask,xmmreg*,xmmrm16|b16,imm8	[rvmi:fv: evex.nds.128.np.0f3a.w0 C2 /r ib] AVX512FP16,AVX512VL,FUTURE
-VCMPPH		kreg|mask,ymmreg*,ymmrm16|b16,imm8	[rvmi:fv: evex.nds.256.np.0f3a.w0 C2 /r ib] AVX512FP16,AVX512VL,FUTURE
-VCMPPH		kreg|mask,zmmreg*,zmmrm16|b16|sae,imm8	[rvmi:fv: evex.nds.512.np.0f3a.w0 C2 /r ib] AVX512FP16,FUTURE
-VCMPSH		kreg|mask,xmmreg*,xmmrm16|sae,imm8	[rvmi:t1s: evex.nds.lig.f3.0f3a.w0 C2 /r ib] AVX512FP16,FUTURE
+VCMPPH		kreg|mask,xmmreg,xmmrm128|b16,imm8	[rvmi:fv: evex.nds.128.np.0f3a.w0 C2 /r ib] AVX512FP16,AVX512VL,FUTURE
+VCMPPH		kreg|mask,ymmreg,ymmrm256|b16,imm8	[rvmi:fv: evex.nds.256.np.0f3a.w0 C2 /r ib] AVX512FP16,AVX512VL,FUTURE
+VCMPPH		kreg|mask,zmmreg,zmmrm512|b16|sae,imm8	[rvmi:fv: evex.nds.512.np.0f3a.w0 C2 /r ib] AVX512FP16,FUTURE
+VCMPSH		kreg|mask,xmmreg,xmmrm16|sae,imm8	[rvmi:t1s: evex.nds.lig.f3.0f3a.w0 C2 /r ib] AVX512FP16,FUTURE
 VCOMISH		xmmreg,xmmrm16|sae			[rm:fv:	  evex.lig.np.map5.w0 2F /r]	    AVX512FP16,FUTURE
 VCVTDQ2PH	xmmreg|mask|z,xmmrm128|b32		[rm:fv:	  evex.128.np.map5.w0 5B /r]	    AVX512FP16,AVX512VL,FUTURE
 VCVTDQ2PH	ymmreg|mask|z,ymmrm256|b32		[rm:fv:	  evex.256.np.map5.w0 5B /r]	    AVX512FP16,AVX512VL,FUTURE
