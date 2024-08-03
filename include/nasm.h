@@ -584,7 +584,8 @@ enum {
 #define EVEX_P0R        0x8000      /* EVEX P[7] : High-8 R register      */
 #define EVEX_P1PP       0x030000    /* EVEX P[9:8] : Legacy prefix        */
 #define EVEX_P1XP       0x040000    /* EVEX P[10] : High-16 X register    */
-#define EVEX_P1VVVV     0x780000    /* EVEX P[14:11] : NDS register       */
+#define EVEX_P1U        EVEX_P1XP   /* EVEX P[10] : 256-bit er/sae        */
+#define EVEX_P1VVVV     0x780000    /* EVEX P[14:11] : V register         */
 #define EVEX_P1W        0x800000    /* EVEX P[15] : Osize extension       */
 #define EVEX_P2AAA      0x07000000  /* EVEX P[18:16] : Embedded opmask    */
 #define EVEX_P2NF       0x04000000  /* EVEX P[18]: No flags bit           */

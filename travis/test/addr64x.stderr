@@ -1,4 +1,2 @@
 ./travis/test/addr64x.asm:5: warning: displacement byte data exceeds bounds [-w+number-overflow]
-./travis/test/addr64x.asm:5: warning: signed byte data exceeds bounds [-w+number-overflow]
 ./travis/test/addr64x.asm:6: warning: displacement byte data exceeds bounds [-w+number-overflow]
-./travis/test/addr64x.asm:6: warning: signed byte data exceeds bounds [-w+number-overflow]

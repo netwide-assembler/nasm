@@ -134,6 +134,8 @@ if_("SHA512",            "SHA512 instructions");
 if_("SM3",               "SM3 instructions");
 if_("SM4",               "SM4 instructions");
 if_("APX",               "Advanced Performance Extensions (APX)");
+if_("AVX10_1",           "AVX 10.1 instructions");
+if_("AVX10_2",           "AVX 10.2 instructions");
 
 # Put these last to minimize their relevance
 if_("OBSOLETE",          "Instruction removed from architecture");

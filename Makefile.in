@@ -137,7 +137,7 @@ LIBOBJ_NW = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	\
 	x86/insnsa.$(O) x86/insnsb.$(O) x86/insnsd.$(O) x86/insnsn.$(O) \
 	x86/regs.$(O) x86/regvals.$(O) x86/regflags.$(O) x86/regdis.$(O) \
-	x86/disp8.$(O) x86/iflag.$(O) \
+	x86/iflag.$(O) \
 	\
 	asm/error.$(O) \
 	asm/floats.$(O) \

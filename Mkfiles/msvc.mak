@@ -69,8 +69,8 @@ MANIFEST = win/manifest.xml
 NASM    = asm\nasm.obj
 NDISASM = disasm\ndisasm.obj
 
-PROGOBJ = $(NASM) $(NDISASM)
-PROGS   = nasm$(X) ndisasm$(X)
+PROGOBJ = $(NASM) # $(NDISASM)
+PROGS   = nasm$(X) # ndisasm$(X)
 
 LIBOBJ_NW = stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj \
 	stdlib\strnlen.obj stdlib\strrchrnul.obj \
@@ -93,7 +93,7 @@ LIBOBJ_NW = stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj \
 	\
 	x86\insnsa.obj x86\insnsb.obj x86\insnsd.obj x86\insnsn.obj \
 	x86\regs.obj x86\regvals.obj x86\regflags.obj x86\regdis.obj \
-	x86\disp8.obj x86\iflag.obj \
+	x86\iflag.obj \
 	\
 	asm\error.obj \
 	asm\floats.obj \
@@ -116,8 +116,9 @@ LIBOBJ_NW = stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj \
 	output\outobj.obj output\outas86.obj \
 	output\outdbg.obj output\outieee.obj output\outmacho.obj \
 	output\codeview.obj \
-	\
-	disasm\disasm.obj disasm\sync.obj
+
+#	\
+#	disasm\disasm.obj disasm\sync.obj
 
 # Warnings depend on all source files, so handle them separately
 WARNOBJ   = asm\warnings.obj

@@ -367,11 +367,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
             break;
         case 1:
             op->segment |= SEG_DISP8;
-            if (ins->evex_tuple != 0) {
-                op->offset = gets8(data) * get_disp8N(ins);
-            } else {
-                op->offset = gets8(data);
-            }
+            op->offset = gets8(data) << get_disp8_shift(ins);
             data++;
             break;
         case 2:

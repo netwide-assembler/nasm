@@ -77,15 +77,17 @@ enum match_result {
     MOK_GOOD		/* Matching unconditionally OK */
 };
 
-typedef struct {
-    enum ea_type type;            /* what kind of EA is this? */
-    int sib_present;              /* is a SIB byte necessary? */
-    int bytes;                    /* # of bytes of offset needed */
-    int size;                     /* lazy - this is sib+bytes+1 */
+typedef struct ea_data {
+    unsigned int bytes;           /* # of bytes of offset needed */
+    unsigned int size;            /* lazy - this is sib+bytes+1 */
     uint32_t rex;                 /* REX flags */
+    enum ea_type type;            /* what kind of EA is this? */
+    bool sib_present;             /* is a SIB byte necessary? */
     uint8_t modrm, sib;		  /* the bytes themselves */
     bool rip;                     /* RIP-relative? */
-    int8_t disp8;                 /* compressed displacement for EVEX */
+    int8_t disp8;                 /* 8-bit displacement, possibly compressed */
+    uint8_t disp8_shift;          /* Shift for 8-bit displacement */
+    bool disp8_ok;                /* 8-bit displacement is valid */
 } ea;
 
 #define GEN_SIB(scale, index, base)                 \
@@ -1244,6 +1246,58 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
     }
 }
 
+/* Handle EVEX flags at the time of EA processing */
+static int ea_evex_flags(insn *ins, const ea *ea_data,
+                         const struct operand *opy)
+{
+    /* EVEX.b1 : evex_brerop contains the operand position */
+    const struct operand *op_er_sae =
+        (ins->evex_brerop >= 0 ? &ins->oprs[ins->evex_brerop] : NULL);
+
+    if (op_er_sae && (op_er_sae->decoflags & (ER | SAE))) {
+        unsigned int vlen = (ins->evex & EVEX_P2RC) >> 29;
+        const char *why = "";
+        const char *what;
+
+        switch (vlen) {
+        case 2:
+            /* 512 bits, no special encoding */
+            break;
+        case 1:
+            /* 256 bits, encodable in AVX 10.2 if mod=3 */
+            if ((ea_data->modrm >> 6) != 3) {
+                why = " in memory";
+            } else if (!iflag_test(&cpu, IF_AVX10_2)) {
+                why = " without AVX 10.2";
+            } else {
+                ins->evex ^= EVEX_P1U;
+                break;
+            }
+            /* else fall through */
+        default:
+            /* Not encodable */
+            what = op_er_sae->decoflags & ER ?
+                "embedded rounding" :
+                "suppress all exceptions";
+            nasm_nonfatal("%s not possible for %d-bit vectors%s",
+                          what, 128 << vlen, why);
+            return -1;
+        }
+
+        ins->evex &= ~EVEX_P2RC;
+        ins->evex ^= EVEX_P2B;
+        if (op_er_sae->decoflags & ER) {
+            /* set EVEX.RC (rounding control) */
+            ins->evex ^= ((ins->evex_rm - BRC_RN) << 29) & EVEX_P2RC;
+        }
+    } else if (opy->decoflags & BRDCAST_MASK) {
+        /* set EVEX.b but don't EVEX.L/RC */
+        ins->evex ^= EVEX_P2B;
+    }
+
+    return 0;
+}
+
 /* Common construct */
 #define case3(x) case (x): case (x)+1: case (x)+2
 #define case4(x) case3(x): case (x)+3
@@ -1664,7 +1718,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 int rfield;
                 opflags_t rflags;
                 struct operand *opy = &ins->oprs[op2];
-                struct operand *op_er_sae;
 
                 ea_data.rex = 0;           /* Ensure ea.REX is initially 0 */
 
@@ -1676,25 +1729,6 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                     rflags = 0;
                     rfield = c & 7;
                 }
-
-                /* EVEX.b1 : evex_brerop contains the operand position */
-                op_er_sae = (ins->evex_brerop >= 0 ?
-                             &ins->oprs[ins->evex_brerop] : NULL);
-
-                if (op_er_sae && (op_er_sae->decoflags & (ER | SAE))) {
-                    /* set EVEX.b and clear EVEX.L/RC */
-                    ins->evex &= ~EVEX_P2RC;
-                    ins->evex ^= EVEX_P2B;
-                    if (op_er_sae->decoflags & ER) {
-                        /* set EVEX.RC (rounding control) */
-                        ins->evex ^= ((ins->evex_rm - BRC_RN) << 29)
-                            & EVEX_P2RC;
-                    }
-                } else if (opy->decoflags & BRDCAST_MASK) {
-                    /* set EVEX.b but don't EVEX.L/RC */
-                    ins->evex ^= EVEX_P2B;
-                }
-
                 if (itemp_has(temp, IF_MIB)) {
                     opy->eaflags |= EAF_MIB;
                     /*
@@ -1721,6 +1755,9 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                     ins->rex |= ea_data.rex;
                     length += ea_data.size;
                 }
+
+                if (ea_evex_flags(ins, &ea_data, opy))
+                    return -1;
             }
             break;
 
@@ -2463,24 +2500,30 @@ static void gencode(struct out_data *data, insn *ins)
                  * Make sure the address gets the right offset in case
                  * the line breaks in the .lst file (BR 1197827)
                  */
-
-                if (ea_data.bytes) {
-                    /* use compressed displacement, if available */
-                    if (ea_data.disp8) {
-                        out_rawbyte(data, ea_data.disp8);
-                    } else if (ea_data.rip) {
+                switch (ea_data.bytes) {
+                case 0:
+                    /* No displacement */
+                    break;
+                case 1:
+                    /* 8-bit displacement, which may be compressed */
+                    out_rawbyte(data, ea_data.disp8);
+                    if (!ea_data.disp8_ok)
+                        warn_overflow(ea_data.bytes, "displacement ");
+                    break;
+                default:
+                    if (ea_data.rip) {
                         out_reladdr(data, opy, ea_data.bytes);
                     } else {
-                        int asize = ins->addr_size >> 3;
+                        unsigned int asize = ins->addr_size >> 3;
+
+                        out_imm(data, opy, ea_data.bytes,
+                                (asize > ea_data.bytes)
+                                ? OUT_SIGNED : OUT_WRAP);
 
                         if (overflow_general(opy->offset, asize) ||
                             sext(opy->offset, ins->addr_size) !=
                             sext(opy->offset, ea_data.bytes << 3))
                             warn_overflow(ea_data.bytes, "displacement ");
-
-                        out_imm(data, opy, ea_data.bytes,
-                                (asize > ea_data.bytes)
-                                ? OUT_SIGNED : OUT_WRAP);
                     }
                 }
             }
@@ -3015,22 +3058,51 @@ static enum match_result matches(const struct itemplate *itemp,
 }
 
 /*
- * Check if ModR/M.mod should/can be 01.
- * - EAF_BYTEOFFS is set
- * - offset can fit in a byte when EVEX is not used
- * - offset can be compressed when EVEX is used
+ * Select the mod part of modr/m for an memory operand with displacement.
+ * zerook should be clear for the forbidden BP encodings; such instructions
+ * must be coded with a +0 displacement.
+ *
+ * 0 = no displacement
+ * 1 = 8-bit displacment
+ * 2 = 16/32-bit displacement
  */
-#define IS_MOD_01() (!(input->eaflags & EAF_WORDOFFS) &&               \
-                    (ins->rex & REX_EV ? seg == NO_SEG && !forw_ref && \
-                     is_disp8n(input, ins, &output->disp8) :           \
-                     input->eaflags & EAF_BYTEOFFS || (o >= -128 &&    \
-                     o <= 127 && seg == NO_SEG && !forw_ref)))
+static unsigned int memory_mod(const int eaflags, const insn *ins,
+                               ea *output, int64_t o,
+                               bool known, bool zerook)
+{
+    /* Explicitly requested by user */
+    if (eaflags & EAF_WORDOFFS) {
+        return 2;
+    }
+
+    output->disp8_shift = get_disp8_shift(ins);
+    output->disp8 = (int8_t)(o >> output->disp8_shift);
+    output->disp8_ok =
+        ((int64_t)output->disp8 << output->disp8_shift)
+        == sext(o, ins->addr_size);
+
+    /* Explicitly requested by user */
+    if (eaflags & EAF_BYTEOFFS) {
+        return 1;
+    }
+
+    /* Not knowable at this time */
+    if (!known)
+        return 2;
+
+    /* No displacement needed? */
+    if (o == 0 && zerook)
+        return 0;
+
+    /* 8-bit displacement possible? */
+    return output->disp8_ok ? 1 : 2;
+}
 
 static int process_ea(operand *input, ea *output, int bits,
                       int rfield, opflags_t rflags, insn *ins,
                       enum ea_type expected, const char **errmsgp)
 {
-    bool forw_ref = !!(input->opflags & OPFLAG_UNKNOWN);
+    bool known = !(input->opflags & OPFLAG_UNKNOWN);
     const int addrbits = ins->addr_size;
     const int eaflags = input->eaflags;
     const char *errmsg = NULL;
@@ -3146,6 +3218,9 @@ static int process_ea(operand *input, ea *output, int bits,
             int t, it, bt;              /* register numbers */
             opflags_t x, ix, bx;        /* register flags */
 
+            if (seg != NO_SEG)
+                known = false;  /* Inter-segment reference */
+
             if (s == 0)
                 i = -1;         /* make this easy, at least */
 
@@ -3236,15 +3311,9 @@ static int process_ea(operand *input, ea *output, int bits,
                     base = 5;
                     mod = 0;
                 } else {
-                    base = (bt & 7);
-                    if (base != REG_NUM_EBP && o == 0 &&
-                        seg == NO_SEG && !forw_ref &&
-                        !(eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
-                        mod = 0;
-                    else if (IS_MOD_01())
-                        mod = 1;
-                    else
-                        mod = 2;
+                    base = bt & 7;
+                    mod = memory_mod(eaflags, ins, output, o, known,
+                                     base != REG_NUM_EBP);
                 }
 
                 output->sib_present = true;
@@ -3349,15 +3418,9 @@ static int process_ea(operand *input, ea *output, int bits,
                         rm = 5;
                         mod = 0;
                     } else {
-                        rm = (bt & 7);
-                        if (rm != REG_NUM_EBP && o == 0 &&
-                            seg == NO_SEG && !forw_ref &&
-                            !(eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
-                            mod = 0;
-                        else if (IS_MOD_01())
-                            mod = 1;
-                        else
-                            mod = 2;
+                        rm = bt & 7;
+                        mod = memory_mod(eaflags, ins, output, o, known,
+                                         rm != REG_NUM_EBP);
                     }
 
                     output->sib_present = false;
@@ -3394,14 +3457,8 @@ static int process_ea(operand *input, ea *output, int bits,
                         mod = 0;
                     } else {
                         base = (bt & 7);
-                        if (base != REG_NUM_EBP && o == 0 &&
-                            seg == NO_SEG && !forw_ref &&
-                            !(eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
-                            mod = 0;
-                        else if (IS_MOD_01())
-                            mod = 1;
-                        else
-                            mod = 2;
+                        mod = memory_mod(eaflags, ins, output, o, known,
+                            base != REG_NUM_EBP);
                     }
 
                     output->sib_present = true;
@@ -3480,14 +3537,7 @@ static int process_ea(operand *input, ea *output, int bits,
                 if (rm == -1)           /* can't happen, in theory */
                     goto err;        /* so panic if it does */
 
-                if (o == 0 && seg == NO_SEG && !forw_ref && rm != 6 &&
-                    !(eaflags & (EAF_BYTEOFFS | EAF_WORDOFFS)))
-                    mod = 0;
-                else if (IS_MOD_01())
-                    mod = 1;
-                else
-                    mod = 2;
-
+                mod = memory_mod(eaflags, ins, output, o, known, rm != 6);
                 output->sib_present = false;    /* no SIB - it's 16-bit */
                 output->bytes       = mod;      /* bytes of offset needed */
                 output->modrm       = GEN_MODRM(mod, rfield, rm);
