@@ -3532,18 +3532,28 @@ BZHI		reg32,rm32,reg32		[rmv:	vex.nds.lz.0f38.w0 f5 /r]		FUTURE,BMI2
 BZHI		reg64,rm64,reg64		[rmv:	vex.nds.lz.0f38.w1 f5 /r]		LONG,FUTURE,BMI2
 MULX		reg32,reg32,rm32		[rvm:	vex.ndd.lz.f2.0f38.w0 f6 /r]		FUTURE,BMI2
 MULX		reg64,reg64,rm64		[rvm:	vex.ndd.lz.f2.0f38.w1 f6 /r]		LONG,FUTURE,BMI2
+MUL		reg32,reg32*,rm32		[rvm:	vex.ndd.lz.f2.0f38.w0 f6 /r]		FUTURE,BMI2,NF,ND
+MUL		reg64,reg64*,rm64		[rvm:	vex.ndd.lz.f2.0f38.w1 f6 /r]		LONG,FUTURE,BMI2,NF,ND
 PDEP		reg32,reg32,rm32		[rvm:	vex.nds.lz.f2.0f38.w0 f5 /r]		FUTURE,BMI2
 PDEP		reg64,reg64,rm64		[rvm:	vex.nds.lz.f2.0f38.w1 f5 /r]		LONG,FUTURE,BMI2
 PEXT		reg32,reg32,rm32		[rvm:	vex.nds.lz.f3.0f38.w0 f5 /r]		FUTURE,BMI2
 PEXT		reg64,reg64,rm64		[rvm:	vex.nds.lz.f3.0f38.w1 f5 /r]		LONG,FUTURE,BMI2
-RORX		reg32,rm32,imm8			[rmi:	vex.lz.f2.0f3a.w0 f0 /r ib]		FUTURE,BMI2
-RORX		reg64,rm64,imm8			[rmi:	vex.lz.f2.0f3a.w1 f0 /r ib]		LONG,FUTURE,BMI2
-SARX		reg32,rm32,reg32		[rmv:	vex.nds.lz.f3.0f38.w0 f7 /r]		FUTURE,BMI2
-SARX		reg64,rm64,reg64		[rmv:	vex.nds.lz.f3.0f38.w1 f7 /r]		LONG,FUTURE,BMI2
-SHLX		reg32,rm32,reg32		[rmv:	vex.nds.lz.66.0f38.w0 f7 /r]		FUTURE,BMI2
-SHLX		reg64,rm64,reg64		[rmv:	vex.nds.lz.66.0f38.w1 f7 /r]		LONG,FUTURE,BMI2
-SHRX		reg32,rm32,reg32		[rmv:	vex.nds.lz.f2.0f38.w0 f7 /r]		FUTURE,BMI2
-SHRX		reg64,rm64,reg64		[rmv:	vex.nds.lz.f2.0f38.w1 f7 /r]		LONG,FUTURE,BMI2
+RORX		reg32?,rm32,imm8		[rmi:	vex.lz.f2.0f3a.w0 f0 /r ib]		FUTURE,BMI2
+RORX		reg64?,rm64,imm8		[rmi:	vex.lz.f2.0f3a.w1 f0 /r ib]		LONG,FUTURE,BMI2
+ROR		reg32?,rm32,imm8		[rmi:	vex.lz.f2.0f3a.w0 f0 /r ib]		FUTURE,BMI2,NF,ND
+ROR		reg64?,rm64,imm8		[rmi:	vex.lz.f2.0f3a.w1 f0 /r ib]		LONG,FUTURE,BMI2,NF,ND
+SARX		reg32?,rm32,reg32		[rmv:	vex.nds.lz.f3.0f38.w0 f7 /r]		FUTURE,BMI2
+SARX		reg64?,rm64,reg64		[rmv:	vex.nds.lz.f3.0f38.w1 f7 /r]		LONG,FUTURE,BMI2
+SAR		reg32?,rm32,reg32		[rmv:	vex.nds.lz.f3.0f38.w0 f7 /r]		FUTURE,BMI2,NF,ND
+SAR		reg64?,rm64,reg64		[rmv:	vex.nds.lz.f3.0f38.w1 f7 /r]		LONG,FUTURE,BMI2,NF,ND
+SHLX		reg32?,rm32,reg32		[rmv:	vex.nds.lz.66.0f38.w0 f7 /r]		FUTURE,BMI2
+SHLX		reg64?,rm64,reg64		[rmv:	vex.nds.lz.66.0f38.w1 f7 /r]		LONG,FUTURE,BMI2
+SHL		reg32?,rm32,reg32		[rmv:	vex.nds.lz.66.0f38.w0 f7 /r]		FUTURE,BMI2,NF,ND
+SHL		reg64?,rm64,reg64		[rmv:	vex.nds.lz.66.0f38.w1 f7 /r]		LONG,FUTURE,BMI2,NF,ND
+SHRX		reg32?,rm32,reg32		[rmv:	vex.nds.lz.f2.0f38.w0 f7 /r]		FUTURE,BMI2
+SHRX		reg64?,rm64,reg64		[rmv:	vex.nds.lz.f2.0f38.w1 f7 /r]		LONG,FUTURE,BMI2
+SHR		reg32?,rm32,reg32		[rmv:	vex.nds.lz.f2.0f38.w0 f7 /r]		FUTURE,BMI2,NF,ND
+SHR		reg64?,rm64,reg64		[rmv:	vex.nds.lz.f2.0f38.w1 f7 /r]		LONG,FUTURE,BMI2,NF,ND
 TZCNT		reg16,rm16			[rm:	o16 f3i 0f bc /r]			FUTURE,BMI1
 TZCNT		reg32,rm32			[rm:	o32 f3i 0f bc /r]			FUTURE,BMI1
 TZCNT		reg64,rm64			[rm:	o64 f3i 0f bc /r]			LONG,FUTURE,BMI1
