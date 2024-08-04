@@ -70,6 +70,8 @@ enum match_result {
     MERR_REGSETSIZE,
     MERR_REGSET,
     MERR_WRONGIMM,
+    MERR_BADZU,
+    MERR_MEMZU,
     /*
      * Matching success; the conditional ones first
      */
@@ -904,8 +906,6 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                           whathappened, validity);
             }
 
-            data.itemp = temp;
-            data.bits = bits;
             data.insoffs = 0;
 
             data.inslen = calcsize(data.segment, data.offset,
@@ -966,6 +966,12 @@ int64_t assemble(int32_t segment, int64_t start, int bits, insn *instruction)
                 break;
             case MERR_WRONGIMM:
                 nasm_nonfatal("operand/operator invalid for this instruction");
+                break;
+            case MERR_BADZU:
+                nasm_nonfatal("{zu} not applicable to this instruction");
+                break;
+            case MERR_MEMZU:
+                nasm_nonfatal("{zu} invalid for non-register destination");
                 break;
             default:
                 nasm_nonfatal("invalid combination of opcode and operands");
@@ -1303,7 +1309,7 @@ static int ea_evex_flags(insn *ins, const ea *ea_data,
 #define case4(x) case3(x): case (x)+3
 
 static int64_t calcsize(int32_t segment, int64_t offset, int bits,
-                        insn * ins, const struct itemplate *temp)
+                        insn * ins, const struct itemplate * const temp)
 {
     const uint8_t *codes = temp->code;
     int64_t length = 0;
@@ -1321,6 +1327,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     ins->evex    = 0;		/* Ensure EVEX is reset */
     ins->vexreg  = 0;           /* No V register */
     ins->vex_cm  = 0;           /* No implicit map */
+    ins->bits    = bits;        /* Execution mode (default asize) */
+    ins->itemp   = temp;        /* Instruction template */
     eat = EA_SCALAR;            /* Expect a scalar EA */
 
     /* Default operand size */
@@ -2083,7 +2091,7 @@ static int emit_prefix(struct out_data *data, const int bits, insn *ins)
                 c = 0x66;
             break;
         case P_NF:
-            if (!itemp_has(data->itemp, IF_NF)) {
+            if (!itemp_has(ins->itemp, IF_NF)) {
                 /* Not actually an NF encoding, just doesn't modify flags */
                 ins->prefixes[j] = P_none;
             }
@@ -2117,12 +2125,15 @@ static void gencode(struct out_data *data, insn *ins)
     int64_t size;
     int op1, op2;
     struct operand *opx;
-    const uint8_t *codes = data->itemp->code;
+    const uint8_t *codes = ins->itemp->code;
     uint8_t opex = 0;
     enum ea_type eat = EA_SCALAR;
     int r;
-    const int bits = data->bits;
+    const int bits = ins->bits;
     const char *errmsg;
+
+    data->itemp = ins->itemp;
+    data->bits  = ins->bits;
 
     ins->rex_done = false;
 
@@ -2734,7 +2745,7 @@ static uint8_t get_broadcast_num(opflags_t opflags, opflags_t brsize)
     return brcast_num;
 }
 
-static enum match_result matches(const struct itemplate *itemp,
+static enum match_result matches(const struct itemplate * const itemp,
                                  insn *instruction, int bits)
 {
     opflags_t size[MAX_OPERANDS], asize;
@@ -3023,9 +3034,12 @@ static enum match_result matches(const struct itemplate *itemp,
             return MERR_ENCMISMATCH;
     }
 
-    if (has_prefix(instruction, PPS_ZU, P_ZU) &&
-        !itemp_has(itemp, IF_ZU))
-        return MERR_ENCMISMATCH;
+    if (has_prefix(instruction, PPS_ZU, P_ZU)) {
+        if (!itemp_has(itemp, IF_ZU))
+            return MERR_BADZU;
+        else if (!(instruction->oprs[0].type & REGISTER))
+            return MERR_MEMZU;
+    }
 
     /*
      * If we have a HLE prefix, look for the NOHLE flag

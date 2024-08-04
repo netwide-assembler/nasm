@@ -73,3 +73,29 @@
 	add      [r27],r25d
 	add {evex} [r27],r25d
 	add {nf} [r27],r25d
+
+	add{zu}     al,[rdx],cl
+	add{zu}{nf} al,[rdx],cl
+	add	    al,al,cl
+	add{zu}	    al,al,cl
+	add{zu}	    al,cl
+	add{zu}{nf} al,al,cl
+	add{zu}{nf} al,cl
+	add{nf}{zu} al,al,cl
+	add{nf}{zu} al,cl
+	add{evex}   al,cl
+	add{nf}     al,al,cl
+	add{nf}     al,cl
+	add	    al,cl
+
+	add{zu}     eax,[rdx],ecx
+	add{zu}{nf} eax,[rdx],ecx
+	add	    eax,eax,ecx
+	add{zu}	    eax,eax,ecx
+	add{zu}	    eax,ecx
+	add{zu}{nf} eax,eax,ecx
+	add{zu}{nf} eax,ecx
+	add{nf}{zu} eax,eax,ecx
+	add{nf}{zu} eax,ecx
+	add{evex}   eax,ecx
+	add	    eax,ecx

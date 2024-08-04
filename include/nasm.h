@@ -805,6 +805,8 @@ typedef struct insn { /* an instruction itself */
     enum ttypes     evex_tuple;             /* Tuple type for compressed Disp8*N */
     int             evex_rm;                /* static rounding mode for AVX512 (EVEX) */
     int8_t          evex_brerop;            /* BR/ER/SAE operand position */
+    int             bits;                   /* Execution mode (16, 32, 64) */
+    const struct itemplate *itemp;          /* Instruction template */
 } insn;
 
 /* Instruction flags type: IF_* flags are defined in insns.h */
