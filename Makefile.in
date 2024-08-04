@@ -422,7 +422,7 @@ distclean: clean
 	-sh autoconf/clean.sh || sh '$(srcdir)'/autoconf/clean.sh
 
 cleaner:
-	$(RM_F) $(PERLREQ_CL) *.1 nasm.spec
+	$(RM_F) $(PERLREQ_CLEANABLE) *.1 nasm.spec
 	$(MAKE) -C doc clean
 	$(MAKE) distclean
 	$(RM_F) */*.time
