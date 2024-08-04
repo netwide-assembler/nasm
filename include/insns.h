@@ -31,20 +31,11 @@ static inline bool itemp_has(const struct itemplate *itemp, unsigned int bit)
 
 /* Disassembler table structure */
 
-/*
- * If n == -1, then p points to another table of 256
- * struct disasm_index, otherwise p points to a list of n
- * struct itemplates to consider.
- */
-struct disasm_index {
-    const void *p;
-    int n;
-};
-
-/* Tables for the assembler and disassembler, respectively */
+/* Instruction tables for the assembler and disassembler, respectively */
 extern const struct itemplate * const nasm_instructions[];
-extern const struct disasm_index itable[256];
-extern const struct disasm_index * const itable_vex[NASM_VEX_CLASSES][32][4];
+
+extern const struct itemplate * const * const * const
+ndisasm_itable[NASM_VEX_CLASSES][NASM_MAX_MAPS];
 
 /* Common table for the byte codes */
 extern const uint8_t nasm_bytecodes[];
