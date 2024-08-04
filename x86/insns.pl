@@ -450,14 +450,14 @@ if ( $output eq 'd' ) {
 		    }
 		}
 
-		printf D "\nstatic const struct itemplate * const %s[256] = {\n", $tname;
+		printf D "\nstatic const struct itemplate * const * const %s[256] = {\n", $tname;
 		print D map { "    $_,\n" } @itbls;
 		print D "};\n";
 	    }
         }
     }
 
-    print D "\nconst struct itemplate * const * const\n";
+    print D "\nconst struct itemplate * const * const * const\n";
     print D "ndisasm_itable[NASM_VEX_CLASSES][NASM_MAX_MAPS] = {\n";
     for (my $c = 0; $c < $vex_classes; $c++) {
         print D "    { /* ", $vex_class[$c], " */\n";
