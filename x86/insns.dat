@@ -881,19 +881,25 @@ MOVSD		void				[	o32 a5]					386,NOAPX
 MOVSQ		void				[	o64 a5]					X86_64,LONG,NOAPX
 MOVSW		void				[	o16 a5]					8086,NOAPX
 MOVSX		reg16,mem			[rm:	o16 0f be /r]				386,SB
+MOVSX		reg_ax,reg_al			[--:	o16 98]					8086,OPT,ND
 MOVSX		reg16,reg8			[rm:	o16 0f be /r]				386
 MOVSX		reg32,rm8			[rm:	o32 0f be /r]				386
+MOVSX		reg_eax,reg_ax			[--:	o32 98]					386,OPT,ND
 MOVSX		reg32,rm16			[rm:	o32 0f bf /r]				386
 MOVSX		reg64,rm8			[rm:	o64 0f be /r]				X86_64,LONG
 MOVSX		reg64,rm16			[rm:	o64 0f bf /r]				X86_64,LONG
+MOVSXD		reg_rax,reg_eax			[--:	o64 98]					X86_64,LONG,OPT,ND
 MOVSXD		reg64,rm32			[rm:	o64 63 /r]				X86_64,LONG
-MOVSX		reg64,rm32			[rm:	o64 63 /r]				X86_64,LONG,ND
+MOVSX		reg_rax,reg_eax			[--:	o64 98]					X86_64,LONG,ND
+MOVSX		reg64,rm32			[rm:	o64 63 /r]				X86_64,LONG,OPT,ND
 MOVZX		reg16,mem			[rm:	o16 0f b6 /r]				386,SB
 MOVZX		reg16,reg8			[rm:	o16 0f b6 /r]				386
 MOVZX		reg32,rm8			[rm:	o32 0f b6 /r]				386
 MOVZX		reg32,rm16			[rm:	o32 0f b7 /r]				386
 MOVZX		reg64,rm8			[rm:	o64 0f b6 /r]				X86_64,LONG
 MOVZX		reg64,rm16			[rm:	o64 0f b7 /r]				X86_64,LONG
+MOVZXD		reg64,rm32			[rm:	o32 8b /r]				X86_64,LONG,ND
+MOVZX		reg64,rm32			[rm:	o32 8b /r]				X86_64,LONG,ND
 MUL		rm8				[m:	f6 /4]					8086
 MUL		rm16				[m:	o16 f7 /4]				8086
 MUL		rm32				[m:	o32 f7 /4]				386
