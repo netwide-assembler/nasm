@@ -43,24 +43,18 @@
 
 require 'x86/insns-iflags.ph';
 
-# Opcode prefixes which need their own opcode tables
-# LONGER PREFIXES FIRST!
-@disasm_prefixes = qw(0F24 0F25 0F38 0F3A 0F7A 0FA6 0FA7 0F);
-
 # This should match MAX_OPERANDS from nasm.h
 $MAX_OPERANDS = 5;
 
-# Add VEX/XOP prefixes
-@vex_class = ( 'vex', 'xop', 'evex' );
-$vex_classes = scalar(@vex_class);
-@vexlist = ();
-%vexmap = ();
+# Create disassembly root tables
+my @vex_class = ( 'novex', 'vex', 'xop', 'evex' );
+my $vex_classes = scalar(@vex_class);
+my $max_maps = 32;
+my @distable;
 for ($c = 0; $c < $vex_classes; $c++) {
-    $vexmap{$vex_class[$c]} = $c;
-    for ($m = 0; $m < 32; $m++) {
-        for ($p = 0; $p < 4; $p++) {
-            push(@vexlist, sprintf("%s%02X%01X", $vex_class[$c], $m, $p));
-        }
+    push(@distable, []);
+    for ($m = 0; $m < $max_maps; $m++) {
+	push(@{$distable[$c]}, {});
     }
 }
 @disasm_prefixes = (@vexlist, @disasm_prefixes, '');
@@ -134,7 +128,7 @@ sub relaxed_forms(@) {
 		# This is used to generate the {zu} forms of instrutions
 		# which support ND - the {zu} form is created as the ND form
 		# with the destination and first source operand the same.
-		my $fvar = !($oi & $ndmask);
+		my $fvar = !($has_ndx && ($oi & $ndmask));
 		my $evar = $fvar || ($has_ndx && !$has_zu);
 		for (my $var = $fvar; $var <= $evar; $var++) {
 		    my @xops = ();
@@ -275,7 +269,6 @@ die if (scalar(@args) != 2);	# input output
 
 open(F, '<', $fname) || die "unable to open $fname";
 
-%dinstables = ();
 @bytecode_list = ();
 %aname = ();
 
@@ -310,7 +303,7 @@ while (<F>) {
             push @big, $formatted;
             my @sseq = startseq($fields->[2], $fields->[4]);
             foreach my $i (@sseq) {
-                xpush(\$dinstables{$i}, $#big);
+		xpush(\$distable[$i->[0]][$i->[1]]{$i->[2]}, $#big);
             }
         }
     }
@@ -431,68 +424,46 @@ if ( $output eq 'd' ) {
     }
     print D "};\n";
 
-    foreach $h (sort(keys(%dinstables))) {
-        next if ($h eq ''); # Skip pseudo-instructions
-	print D "\nstatic const struct itemplate * const itable_${h}[] = {\n";
-        foreach $j (@{$dinstables{$h}}) {
-            print D "    instrux + $j,\n";
-        }
-        print D "};\n";
-    }
-
-    @prefix_list = ();
-    foreach $h (@disasm_prefixes) {
-        for ($c = 0; $c < 256; $c++) {
-            $nn = sprintf("%s%02X", $h, $c);
-            if ($is_prefix{$nn} || defined($dinstables{$nn})) {
-                # At least one entry in this prefix table
-                push(@prefix_list, $h);
-                $is_prefix{$h} = 1;
-                last;
-            }
-        }
-    }
-
-    foreach $h (@prefix_list) {
-        print D "\n";
-        print D "static " unless ($h eq '');
-        print D "const struct disasm_index ";
-        print D ($h eq '') ? 'itable' : "itable_$h";
-        print D "[256] = {\n";
-        for ($c = 0; $c < 256; $c++) {
-            $nn = sprintf("%s%02X", $h, $c);
-            if ($is_prefix{$nn}) {
-		if ($dinstables{$nn}) {
-		    print STDERR "$fname: ambiguous decoding, prefix $nn aliases:\n";
-		    foreach my $dc (@{$dinstables{$nn}}) {
-			print STDERR codesubst($big[$dc]), "\n";
+    my @dinstname;
+    for (my $c = 0; $c < $vex_classes; $c++) {
+	push(@dinstname, []);
+	for (my $m = 0; $m < $max_maps; $m++) {
+	    my $ninst = scalar(keys %{$distable[$c][$m]});
+	    if (!$ninst) {
+		push(@{$dinstname[$c]}, 'NULL');
+	    } else {
+		my $tname = sprintf("itbl_%s%d", $vex_class[$c], $m);
+		push(@{$dinstname[$c]}, $tname);
+		my @itbls = ();
+		for (my $o = 0; $o < 256; $o++) {
+		    my $tbl = $distable[$c][$m]{$o};
+		    if (defined($tbl)) {
+			my $name = sprintf("%s_%02x", $tname, $o);
+			push(@itbls, $name);
+			printf D "\nstatic const struct itemplate * const %s[] = {\n", $name;
+			foreach my $j (@$tbl) {
+			    print D "    instrux + $j,\n";
+			}
+			print D "    NULL\n};\n";
+		    } else {
+			push(@itbls, 'NULL');
 		    }
-		    exit 1;
 		}
-                printf D "    /* 0x%02x */ { itable_%s, -1 },\n", $c, $nn;
-            } elsif ($dinstables{$nn}) {
-                printf D "    /* 0x%02x */ { itable_%s, %u },\n", $c,
-                       $nn, scalar(@{$dinstables{$nn}});
-            } else {
-                printf D "    /* 0x%02x */ { NULL, 0 },\n", $c;
-            }
+
+		printf D "\nstatic const struct itemplate * const %s[256] = {\n", $tname;
+		print D map { "    $_,\n" } @itbls;
+		print D "};\n";
+	    }
         }
-        print D "};\n";
     }
 
-    printf D "\nconst struct disasm_index * const itable_vex[NASM_VEX_CLASSES][32][4] =\n";
-    print D "{\n";
-    for ($c = 0; $c < $vex_classes; $c++) {
-        print D "    {\n";
-        for ($m = 0; $m < 32; $m++) {
-            print D "        { ";
-            for ($p = 0; $p < 4; $p++) {
-                $vp = sprintf("%s%02X%01X", $vex_class[$c], $m, $p);
-                printf D "%-15s",
-                       ($is_prefix{$vp} ? sprintf("itable_%s,", $vp) : 'NULL,');
-            }
-            print D "},\n";
-        }
+    print D "\nconst struct itemplate * const * const\n";
+    print D "ndisasm_itable[NASM_VEX_CLASSES][NASM_MAX_MAPS] = {\n";
+    for (my $c = 0; $c < $vex_classes; $c++) {
+        print D "    { /* ", $vex_class[$c], " */\n";
+	for (my $m = 0; $m < $max_maps; $m++) {
+	    print D "        ", $dinstname[$c][$m], ",\n";
+	}
         print D "    },\n";
     }
     print D "};\n";
@@ -523,6 +494,7 @@ if ( $output eq 'i' ) {
     print I "};\n\n";
     print I "#define MAX_INSLEN ", $maxlen, "\n";
     print I "#define NASM_VEX_CLASSES ", $vex_classes, "\n";
+    print I "#define NASM_MAX_MAPS ", $max_maps, "\n";
     print I "#define NO_DECORATOR\t{", join(',',(0) x $MAX_OPERANDS), "}\n";
     print I "#endif /* NASM_INSNSI_H */\n";
 
@@ -812,18 +784,6 @@ sub show_iflags($) {
     return get_iflags($1);
 }
 
-sub addprefix ($@) {
-    my ($prefix, @list) = @_;
-    my $x;
-    my @l = ();
-
-    foreach $x (@list) {
-        push(@l, sprintf("%s%02X", $prefix, $x));
-    }
-
-    return @l;
-}
-
 #
 # Turn a code string into a sequence of bytes
 #
@@ -870,15 +830,21 @@ sub hexstr(@) {
     return $s;
 }
 
-# Here we determine the range of possible starting bytes for a given
-# instruction. We need only consider the codes:
+# Here we determine the set of possible [encoding, map, opcode] sets
+# for a given instruction. We need only consider the codes:
 # \[1234]      mean literal bytes, of course
 # \1[0123]     mean byte plus register value
-# \0 or \340   mean give up and return empty set
-# \34[4567]    mean PUSH/POP of segment registers: special case
-# \17[234]     skip is4 control byte
-# \26x \270    skip VEX control bytes
-# \24x \250    skip EVEX control bytes
+# \35[567]     legacy map number
+# \26x \270    VEX prefix and map
+# \24x \250    EVEX prefix and map
+# prefixes     ignored
+my @ignore_bytecodes = (05...07, 014...017, 0271...0273, 0310...0337,
+			0341...0351, 0360...0372, 0374..0376);
+my @ignore_bytecode = (0 x 256);
+foreach my $pfx (@ignore_bytecodes) {
+    $ignore_bytecode[$pfx] = 1;
+}
+
 sub startseq($) {
     my ($codestr) = @_;
     my $word;
@@ -886,69 +852,42 @@ sub startseq($) {
     my $c = $codestr;
     my($c0, $c1, $i);
     my $prefix = '';
+    my $enc = 0;		# Legacy
+    my $map = 0;		# Map 0
 
     @codes = decodify($codestr, {});
 
     while (defined($c0 = shift(@codes))) {
         $c1 = $codes[0];
         if ($c0 >= 01 && $c0 <= 04) {
-            # Fixed byte string
-            my $fbs = $prefix;
-            while (defined($c0)) {
-                if ($c0 >= 01 && $c0 <= 04) {
-                    while ($c0--) {
-                        $fbs .= sprintf("%02X", shift(@codes));
-                    }
-                } else {
-                    last;
-                }
-                $c0 = shift(@codes);
-            }
-
-            foreach $pfx (@disasm_prefixes) {
-		my $len = length($pfx);
-                if (substr($fbs, 0, $len) eq $pfx) {
-                    $prefix = $pfx;
-                    $fbs = substr($fbs, $len, 2);
-                    last;
-                }
-            }
-
-            if ($fbs ne '') {
-                return ($prefix.$fbs);
-            }
-
-            unshift(@codes, $c0);
+            # Fixed byte string, this should be the opcode
+	    return ([$enc, $map, $c1]);
         } elsif ($c0 >= 010 && $c0 <= 013) {
-            return addprefix($prefix, $c1..($c1+7));
+            return map { [$enc, $map, $_] } ($c1..($c1+7));
         } elsif (($c0 & ~013) == 0144) {
-            return addprefix($prefix, $c1, $c1|2);
-        } elsif ($c0 == 0 || $c0 == 0340) {
-            return $prefix;
+            return map { [$enc, $map, $_] } ($c1, $c1|2);
+	} elsif ($c0 >= 0355 && $c0 <= 0357) {
+	    $map = $c0 - 0354;
         } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
 	    # VEX/XOP
-            my($c,$m,$wlp);
-            $m   = shift(@codes);
+            my($cm,$wlp);
+            $cm  = shift(@codes);
             $wlp = shift(@codes);
-            $c = ($m >> 6);
-            $m = $m & 31;
-            $prefix .= sprintf('%s%02X%01X', $vex_class[$c], $m, $wlp & 3);
-	} elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
+            $enc = ($cm >> 6) + 1; # vex or xop
+            $map = $cm & 31;
+	} elsif (($c0 & ~3) == 0240 || $c0 == 0250) {
 	    # EVEX
 	    my @p;
 	    push(@p, shift(@codes));
 	    push(@p, shift(@codes));
 	    push(@p, shift(@codes));
 	    my $tuple = shift(@codes);
-	    my $m = $p[0] & 7;
-	    my $p = $p[1] & 3;
-            $prefix .= sprintf('%s%02X%01X', 'evex', $m, $p);
-        } elsif ($c0 >= 0172 && $c0 <= 173) {
-            shift(@codes);      # Skip is4 control byte
-        } else {
-            # We really need to be able to distinguish "forbidden"
-            # and "ignorable" codes here
-        }
+	    $map = $p[0] & 7;
+	    $enc = 3;	# evex
+	} elsif (!$ignore_bytecode[$c0]) {
+	    # This cannot be an opcode
+	    last;
+	}
     }
     return ();
 }
@@ -1181,7 +1120,7 @@ sub byte_code_compile($$) {
 	    $prefix_ok = 0;
         } elsif ($op =~ /^(vex|xop)(|\..*)$/) {
             my $vexname = $1;
-            my $c = $vexmap{$vexname};
+            my $c = $vexname eq 'xop' ? 1 : 0;
             my ($m,$w,$l,$p) = (undef,undef,undef,0);
             my $has_nds = 0;
             my @subops = split(/\./, $2);
