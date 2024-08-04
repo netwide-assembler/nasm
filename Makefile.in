@@ -223,7 +223,10 @@ PERLREQ_CLEANABLE = \
 # by "make spotless"...
 PERLREQ = config/unconfig.h $(PERLREQ_CLEANABLE)
 
-INSDEP = x86/insns.dat x86/insns.pl x86/insns-iflags.ph x86/iflags.ph
+INSDEP = x86/insns.dax x86/insns.pl x86/insns-iflags.ph x86/iflags.ph
+
+x86/insns.dax: x86/insns.dat x86/addflags.pl
+	$(RUNPERL) '$(srcdir)'/x86/addflags.pl $< $@
 
 config/unconfig.h: config/config.h.in autoconf/unconfig.pl
 	$(RUNPERL) '$(srcdir)'/autoconf/unconfig.pl \
@@ -231,25 +234,25 @@ config/unconfig.h: config/config.h.in autoconf/unconfig.pl
 
 x86/iflag.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)/x86/insns.pl -fc \
-		$(srcdir)/x86/insns.dat x86/iflag.c
+		$(srcdir)/x86/insns.dax x86/iflag.c
 x86/iflaggen.h: $(INSDEP)
 	$(RUNPERL) $(srcdir)/x86/insns.pl -fh \
-		$(srcdir)/x86/insns.dat x86/iflaggen.h
+		$(srcdir)/x86/insns.dax x86/iflaggen.h
 x86/insnsb.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)/x86/insns.pl -b \
-		$(srcdir)/x86/insns.dat x86/insnsb.c
+		$(srcdir)/x86/insns.dax x86/insnsb.c
 x86/insnsa.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)/x86/insns.pl -a \
-		$(srcdir)/x86/insns.dat x86/insnsa.c
+		$(srcdir)/x86/insns.dax x86/insnsa.c
 x86/insnsd.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)/x86/insns.pl -d \
-		$(srcdir)/x86/insns.dat x86/insnsd.c
+		$(srcdir)/x86/insns.dax x86/insnsd.c
 x86/insnsi.h: $(INSDEP)
 	$(RUNPERL) $(srcdir)/x86/insns.pl -i \
-		$(srcdir)/x86/insns.dat x86/insnsi.h
+		$(srcdir)/x86/insns.dax x86/insnsi.h
 x86/insnsn.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)/x86/insns.pl -n \
-		$(srcdir)/x86/insns.dat x86/insnsn.c
+		$(srcdir)/x86/insns.dax x86/insnsn.c
 
 # These files contains all the standard macros that are derived from
 # the version number.
@@ -329,14 +332,14 @@ doc/warnings.src : doc/warnings.src.time
 	@: Side effect
 
 # Assembler token hash
-asm/tokhash.c: x86/insns.dat x86/insnsn.c asm/tokens.dat asm/tokhash.pl \
+asm/tokhash.c: x86/insns.dax x86/insnsn.c asm/tokens.dat asm/tokhash.pl \
 	perllib/phash.ph
 	$(RUNPERL) $(srcdir)/asm/tokhash.pl c \
 		x86/insnsn.c $(srcdir)/x86/regs.dat \
 		$(srcdir)/asm/tokens.dat > asm/tokhash.c
 
 # Assembler token metadata
-asm/tokens.h: x86/insns.dat x86/insnsn.c asm/tokens.dat asm/tokhash.pl \
+asm/tokens.h: x86/insns.dax x86/insnsn.c asm/tokens.dat asm/tokhash.pl \
 	perllib/phash.ph
 	$(RUNPERL) $(srcdir)/asm/tokhash.pl h \
 		x86/insnsn.c $(srcdir)/x86/regs.dat \
@@ -401,7 +404,7 @@ install: $(PROGS)
 
 clean:
 	for d in . $(SUBDIRS) $(XSUBDIRS); do \
-		$(RM_F) "$$d"/*.$(O) "$$d"/*.s "$$d"/*.i "$$d"/*.$(A) ; \
+		$(RM_F) "$$d"/*.$(O) "$$d"/*.s "$$d"/*.i "$$d"/*.$(A)
 	done
 	$(RM_F) $(PROGS)
 	$(RM_F) nasm-*-installer-*.exe
@@ -412,7 +415,7 @@ clean:
 distclean: clean
 	for d in . $(SUBDIRS) $(XSUBDIRS); do \
 		$(RM_F) "$$d"/.\# "$$d"/\# "$$d"/*~ "$$d"/*.bak \
-			"$$d"/*.lst "$$d"/*.bin ; \
+			"$$d"/*.lst "$$d"/*.bin "$$d"/*.dax ; \
 	done
 	$(RM_F) test/*.$(O)
 	$(RM_F) *.dep
