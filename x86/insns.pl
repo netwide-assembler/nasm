@@ -124,6 +124,7 @@ sub relaxed_forms(@) {
 	# (This line applies to the full form instruction; see below
 	# for the modified versions.)
 	my $has_ndx = ($f2o[2] =~ /(\.nd)x\b/);
+	my $has_zu  = ($fields->[3] =~ /\bZU\b/);
 
 	for (my $oi = 0; $oi < (1 << scalar @ops); $oi++) {
 	    if (($oi & ~$opmask) == 0) {
@@ -134,7 +135,7 @@ sub relaxed_forms(@) {
 		# which support ND - the {zu} form is created as the ND form
 		# with the destination and first source operand the same.
 		my $fvar = !($oi & $ndmask);
-		my $evar = $fvar || ($has_ndx && $flags->[3] !~ /\bZU\b/);
+		my $evar = $fvar || ($has_ndx && !$has_zu);
 		for (my $var = $fvar; $var <= $evar; $var++) {
 		    my @xops = ();
 		    my $ndflag = 0;
@@ -175,7 +176,7 @@ sub relaxed_forms(@) {
 		    $ff[1] = join(',', @xops);
 		    $f2 =~ s/(\.nd)x\b/$1$ondflag/ if ($has_ndx);
 		    $ff[2] = $f2;
-		    $ff[3] .= ',ZU' if ($setzu);
+		    $ff[3] .= ',ZU' if ($setzu && !$has_zu);
 		    $ff[3] .= ',ND' if ($oi && $var);
 		    push(@field_list, [@ff]);
 		}

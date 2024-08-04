@@ -6437,8 +6437,8 @@ POPP		reg64				[r:	o64nw rex.w rex2 58+r		]	APX
 
 ADD		reg8?,rm8,reg8			[vmr:	evex.ndx.l0.np.m4.wig 00 /r	]	APX,NF
 ADD		reg16?,rm16,reg16		[vmr:	evex.ndx.l0.66.m4.w0 01 /r	]	APX,NF
-ADD		reg32?,rm32,reg32		[vmr:	evex.ndx.l0.np.m4.w0 01 /r	]	APX,NF
-ADD		reg64?,rm64,reg64		[vmr:	evex.ndx.l0.np.m4.w1 01 /r	]	APX,NF
+ADD		reg32?,rm32,reg32		[vmr:	evex.ndx.l0.np.m4.w0 01 /r	]	APX,NF,ZU
+ADD		reg64?,rm64,reg64		[vmr:	evex.ndx.l0.np.m4.w1 01 /r	]	APX,NF,ZU
 
 JMP		imm|abs				[i:	a64 np rex2 a1 iq		]	APX
 JMP		imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,SQ
