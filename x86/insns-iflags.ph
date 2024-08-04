@@ -144,6 +144,15 @@ sub insns_flag_index(@) {
     return $flag_index;
 }
 
+#
+# Show the iflags corresponding to a specific iflags set extracted from
+# a code sequence in human-readable form.
+#
+sub get_iflags($) {
+    my($n) = @_;
+    return $insns_flag_lists[$n];
+}
+
 sub write_iflaggen_h() {
     print STDERR "Writing $oname...\n";
 

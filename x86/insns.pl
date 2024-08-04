@@ -82,16 +82,23 @@ sub xpush($@) {
 # ? is used for an optional destination operand which is not encoded if
 #   missing; if combined evex.ndx set the nd bit if present.
 sub relaxed_forms(@) {
-    my @field_list = @_;
+    my @field_list = ();
 
     foreach my $fields (@_) {
-	next unless ($fields->[1] =~ /[\*\?]/);
-
-	# This instruction has relaxed form(s)
-	if ($fields->[2] !~ /^(\[\s*)(\S+)(\s*:.*\])$/) {
-	    warn "$fname:$line: has an * operand but uses raw bytecodes\n";
+	if ($fields->[1] !~ /([\*\?])/) {
+	    push(@field_list, $fields);
 	    next;
 	}
+	my $flag = $1;
+
+	# This instruction has relaxed form(s)
+	if ($fields->[2] !~ /^(\[\s*)([^:\s]+)(\s*:.*\])$/) {
+	    warn "$fname:$line: has a $flag operand but uses raw bytecodes\n";
+	    push(@field_list, $fields);
+	    next;
+	}
+	# Subfields of the instruction encoding field;
+	# [1] is the encoding of the operands
 	my @f2o = ($1, $2, $3);
 
 	my $opmask = 0;
@@ -114,38 +121,64 @@ sub relaxed_forms(@) {
 
 	# If .ndx is present, then change it to .nd0 or .nd1
 	# Set to .nd0 if no ndmask fields are present, otherwise 1
-	$fields->[2] =~ s/(\.nd)x\b/$1$ndflag/;
+	# (This line applies to the full form instruction; see below
+	# for the modified versions.)
+	my $has_ndx = ($f2o[2] =~ /(\.nd)x\b/);
 
-	for (my $oi = 1; $oi < (1 << scalar @ops); $oi++) {
+	for (my $oi = 0; $oi < (1 << scalar @ops); $oi++) {
 	    if (($oi & ~$opmask) == 0) {
-		my @xops = ();
-		my $ndflag = 0;
-		my $relax = 0;
-		my $rbit = 1;
-		my $ondflag = $ndflag;
-		my $f2 = $f2o[0];
-		for (my $oj = 0; $oj < scalar(@ops); $oj++) {
-		    my $ob = 1 << $oj;
-		    if ($ob & $ndmask & $oi) {
-			# Make it disappear completely
-			$ondflag = 0;
-		    } else {
-			if ($ob & ~$oi) {
-			    push(@xops, $ops[$oj]);
-			} else {
-			    $relax |= $rbit;
+		# First and ending variants. 0 means a ? operand is to
+		# be omitted entirely, a 1 that is is to be treated
+		# like the *next* operand (emitted with a relax annotation.)
+		# This is used to generate the {zu} forms of instrutions
+		# which support ND - the {zu} form is created as the ND form
+		# with the destination and first source operand the same.
+		my $fvar = !($oi & $ndmask);
+		my $evar = $fvar || ($has_ndx && $flags->[3] !~ /\bZU\b/);
+		for (my $var = $fvar; $var <= $evar; $var++) {
+		    my @xops = ();
+		    my $ndflag = 0;
+		    my $ondflag = 0;
+		    my $setzu = 0;
+		    my $voi = $oi;
+		    my $f2 = $f2o[0];
+		    for (my $oj = 0; $oj < scalar(@ops); $oj++) {
+			my $ob = 1 << $oj;
+			my $emit = 0;
+			if ($ob & ~$voi) {
+			    $emit = 1;
+			} elsif ($ob & $ndmask) {
+			    die if (($ob << 1) & $ndmask);
+			    if (!$var) {
+				# Make it disappear completely
+				next;
+			    } else {
+				# Treat the *next* operand as an omitted
+				# * operand
+				$emit = 1;
+				$voi |= $ob << 1;
+			    }
 			}
-			$rbit <<= 1;
+			if ($emit) {
+			    push(@xops, $ops[$oj]);
+			    if ($ndmask & $ob) {
+				$setzu |= $has_ndx;
+				$ondflag = 1;
+			    }
+			} else {
+			    $f2 .= '+';
+			}
 			$f2 .= substr($f2o[1], $oj, 1);
 		    }
+		    $f2 .= $f2o[2];
+		    my @ff = @$fields;
+		    $ff[1] = join(',', @xops);
+		    $f2 =~ s/(\.nd)x\b/$1$ondflag/ if ($has_ndx);
+		    $ff[2] = $f2;
+		    $ff[3] .= ',ZU' if ($setzu);
+		    $ff[3] .= ',ND' if ($oi && $var);
+		    push(@field_list, [@ff]);
 		}
-		$f2 .= $f2o[2];
-		my @ff = @$fields;
-		$ff[1] = join(',', @xops);
-		$f2 =~ s/(\.nd)x\b/$1$ondflag/;
-		$ff[2] = $f2;
-		$ff[4] = $relax;
-		push(@field_list, [@ff]);
 	    }
 	}
     }
@@ -259,7 +292,7 @@ while (<F>) {
         warn "line $line does not contain four fields\n";
         next;
     }
-    my @field_list = ([$1, $2, $3, uc($4), 0]);
+    my @field_list = ([$1, $2, $3, uc($4)]);
     @field_list = relaxed_forms(@field_list);
     @field_list = conditional_forms(@field_list);
 
@@ -267,7 +300,7 @@ while (<F>) {
         ($formatted, $nd) = format_insn(@$fields);
         if ($formatted) {
             $insns++;
-	    xpush(\$aname{$fields->[0]}, $formatted);
+	    xpush(\$aname{$fields->[0]}, [$formatted, $fields]);
         }
 	if (!defined($k_opcodes{$fields->[0]})) {
 	    $k_opcodes{$fields->[0]} = $n_opcodes++;
@@ -364,8 +397,9 @@ if ( $output eq 'a' ) {
     foreach $i (@opcodes) {
         print A "static const struct itemplate instrux_${i}[] = {\n";
         foreach $j (@{$aname{$i}}) {
-            print A "    ", codesubst($j), "\n";
-	    print A "        /* ", show_bytecodes($j), " */\n";
+	    print A '    /* ', join(' ', @{$j->[1]}), " */\n";
+	    print A '        /* ', show_bytecodes($j->[0]), ' : ', show_iflags($j->[0]), " */\n";
+            print A '        ', codesubst($j->[0]), "\n";
         }
         print A "    ITEMPLATE_END\n};\n\n";
     }
@@ -549,8 +583,8 @@ sub count_bytecodes(@) {
     }
 }
 
-sub format_insn($$$$$) {
-    my ($opcode, $operands, $codes, $flags, $relax) = @_;
+sub format_insn($$$$) {
+    my ($opcode, $operands, $codes, $flags) = @_;
     my $nd = 0;
     my ($num, $flagsindex);
     my @bytecode;
@@ -583,7 +617,7 @@ sub format_insn($$$$$) {
     }
 
     # Generate byte code. This may modify the flags.
-    @bytecode = (decodify($codes, $relax, \%flags), 0);
+    @bytecode = (decodify($codes, \%flags), 0);
     push(@bytecode_list, [@bytecode]);
     $codes = hexstr(@bytecode);
     count_bytecodes(@bytecode);
@@ -722,9 +756,10 @@ sub codesubst($) {
     }
     return $s;
 }
+
 #
-# Extract byte codes in human-friendly form; added as a comment
-# to insnsa.c to help debugging
+# Extract byte codes in human-friendly form. Added as a comment
+# to insnsa.c to help debugging.
 #
 sub show_bytecodes($) {
     my($s) = @_;
@@ -768,6 +803,14 @@ sub show_bytecodes($) {
     }
 }
 
+# Get the iflags from an insnsa.c pattern.
+# Added as a comment to help debugging.
+sub show_iflags($) {
+    my($s) = @_;
+    return undef unless ($s =~ /([0-9]+)\},$/);
+    return get_iflags($1);
+}
+
 sub addprefix ($@) {
     my ($prefix, @list) = @_;
     my $x;
@@ -783,14 +826,14 @@ sub addprefix ($@) {
 #
 # Turn a code string into a sequence of bytes
 #
-sub decodify($$$) {
+sub decodify($$) {
   # Although these are C-syntax strings, by convention they should have
   # only octal escapes (for directives) and hexadecimal escapes
   # (for verbatim bytes)
-    my($codestr, $relax, $flags) = @_;
+    my($codestr, $flags) = @_;
 
     if ($codestr =~ /^\s*\[([^\]]*)\]\s*$/) {
-        return byte_code_compile($1, $relax, $flags);
+        return byte_code_compile($1, $flags);
     }
 
     my $c = $codestr;
@@ -835,15 +878,15 @@ sub hexstr(@) {
 # \17[234]     skip is4 control byte
 # \26x \270    skip VEX control bytes
 # \24x \250    skip EVEX control bytes
-sub startseq($$) {
-    my ($codestr, $relax) = @_;
+sub startseq($) {
+    my ($codestr) = @_;
     my $word;
     my @codes = ();
     my $c = $codestr;
     my($c0, $c1, $i);
     my $prefix = '';
 
-    @codes = decodify($codestr, $relax, {});
+    @codes = decodify($codestr, {});
 
     while (defined($c0 = shift(@codes))) {
         $c1 = $codes[0];
@@ -960,8 +1003,8 @@ sub tupletype($) {
 # For an operand that should be filled into more than one field,
 # enter it as e.g. "r+v".
 #
-sub byte_code_compile($$$) {
-    my($str, $relax, $flags) = @_;
+sub byte_code_compile($$) {
+    my($str, $flags) = @_;
     my $opr;
     my $opc;
     my @codes = ();
@@ -1055,10 +1098,6 @@ sub byte_code_compile($$$) {
         if ($c eq '+') {
             $op--;
         } else {
-            if ($relax & 1) {
-                $op--;
-            }
-            $relax >>= 1;
             $oppos{$c} = $op++;
         }
     }
