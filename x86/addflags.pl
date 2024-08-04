@@ -9,13 +9,15 @@
 use integer;
 use strict;
 
+# Instructions which (possibly) change the flags
 my $flaggy = '^(aa[adms]|ad[dc]|ad[co]x|aes\w*kl|and|andn|arpl|bextr|bl[sc]ic?|bl[sc]msk|bl[sc]r|\
 bs[rf]|bt|bt[crs]|bzhi|clac|clc|cld|cli|clrssbsy|cmc|cmp|cmpxchg.*|da[as]|dec|div|\
 encodekey.*|enqcmd.*|fu?comip?|idiv|imul|inc|iret.*|kortest.*|ktest.*|lar|loadiwkey|\
 lsl|[lt]zcnt|mul|neg|or|pconfig|popcnt|popf.*|r[co][lr]|rdrand|rdseed|sahf|s[ah][lr]|\
 sbb|scas.*|sh[lr]d|stac|stc|std|sti|sub|test|testui|tpause|v?u?comis[sdh]|uiret|\
-umwait|ver[rw]|vtestp[ps]|xadd|xor|xtest|getsec|rsm|sbb|cmps.*|hint_.*)$';
+umwait|ver[rw]|vtestp[ps]|xadd|xor|xtest|getsec|rsm|sbb|cmps[bwdq]|hint_.*)$';
 
+# Instructions which don't write their leftmost operand are inherently not {zu}
 my $nozero = '^(jmp|call|bt|test|cmp|ud[012].*|ptwrite|tpause|u?monitor.*|u?mwait.*|incssp.*|\
 enqcmds?|senduipi|hint_.*|jmpe|nop|inv.*|push2?p?|vmwrite|clzero|clflush|clwb|lkgs)$';
 
@@ -39,7 +41,7 @@ while (defined(my $l = <$in>)) {
     my @f = ($1, $2, $3, $4, $5, $6, $7, $8);
 
     # Flag-changing instructions
-    if ($f[7] !~ /\bFL\b/ && $f[1] =~ /$flaggy/io) {
+    if ($f[7] !~ /\b(FL|NF)\b/ && $f[1] =~ /$flaggy/io) {
 	$f[7] .= ',FL';
     }
 
