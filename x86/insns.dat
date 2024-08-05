@@ -3603,43 +3603,66 @@ VSM4RNDS4       xmmreg,xmmreg,xmmrm128              [rvm: vex.nds.128.f2.0f38.w0
 VSM4RNDS4       ymmreg,ymmreg,ymmrm128              [rvm: vex.nds.256.f2.0f38.w0 da /r] SM4,AVX,FUTURE
 
 ;# AVX no exception conversions
-; Must precede AVX-512 versions
-VBCSTNEBF16PS	xmmreg,mem16				[rm:	vex.128.f3.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,LATEVEX,SW
-VBCSTNEBF16PS	ymmreg,mem16				[rm:	vex.256.f3.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,LATEVEX,SW
-VBCSTNESH2PS	xmmreg,mem16				[rm:	vex.128.66.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,LATEVEX,SW
-VBCSTNESH2PS	ymmreg,mem16				[rm:	vex.256.66.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,LATEVEX,SW
-VCVTNEEBF162PS	xmmreg,mem128				[rm:	vex.128.f3.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SX
-VCVTNEEBF162PS	ymmreg,mem256				[rm:	vex.256.f3.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SY
-VCVTNEEPH2PS	xmmreg,mem128				[rm:	vex.128.66.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SX
-VCVTNEEPH2PS	ymmreg,mem256				[rm:	vex.256.66.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SY
-VCVTNEOBF162PS	xmmreg,mem128				[rm:	vex.128.f2.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SX
-VCVTNEOBF162PS	ymmreg,mem256				[rm:	vex.256.f2.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SY
-VCVTNEOPH2PS	xmmreg,mem128				[rm:	vex.128.np.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SX
-VCVTNEOPH2PS	ymmreg,mem256				[rm:	vex.256.np.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SY
+VBCSTNEBF162PS	xmmreg,mem16				[rm:	vex.128.f3.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,AVX
+VBCSTNEBF162PS	ymmreg,mem16				[rm:	vex.256.f3.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,AVX
+VBCSTNESH2PS	xmmreg,mem16				[rm:	vex.128.66.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,AVX
+VBCSTNESH2PS	ymmreg,mem16				[rm:	vex.256.66.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,AVX
+VCVTNEEBF162PS	xmmreg,mem128				[rm:	vex.128.f3.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,AVX
+VCVTNEEBF162PS	ymmreg,mem256				[rm:	vex.256.f3.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,AVX
+VCVTNEEPH2PS	xmmreg,mem128				[rm:	vex.128.66.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,AVX
+VCVTNEEPH2PS	ymmreg,mem256				[rm:	vex.256.66.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,AVX
+VCVTNEOBF162PS	xmmreg,mem128				[rm:	vex.128.f2.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,AVX
+VCVTNEOBF162PS	ymmreg,mem256				[rm:	vex.256.f2.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,AVX
+VCVTNEOPH2PS	xmmreg,mem128				[rm:	vex.128.np.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,AVX
+VCVTNEOPH2PS	ymmreg,mem256				[rm:	vex.256.np.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,AVX
 VCVTNEPS2BF16	xmmreg,xmmrm128				[rm:	vex.128.f3.0f38.w0 72 /r]	AVXNECONVERT,FUTURE,LATEVEX,SX
-VCVTNEPS2BF16	ymmreg,ymmrm256				[rm:	vex.256.f3.0f38.w0 72 /r]	AVXNECONVERT,FUTURE,LATEVEX,SY
+VCVTNEPS2BF16	xmmreg,ymmrm256				[rm:	vex.256.f3.0f38.w0 72 /r]	AVXNECONVERT,FUTURE,LATEVEX,SY
 
 ;# AVX Vector Neural Network Instructions
 ; Must precede AVX-512 versions
-VPDPBSSD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f2.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
-VPDPBSSD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f2.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
-VPDPBSSDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f2.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
-VPDPBSSDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f2.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
-VPDPBSUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
-VPDPBSUD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f3.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
-VPDPBSUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
-VPDPBSUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f3.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
-VPDPBUUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
-VPDPBUUD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
-VPDPBUUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
-VPDPBUUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
+VPDPBUSD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 50 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPBUSD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 50 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPBUSDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 51 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPBUSDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 51 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPWSSD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 52 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPWSSD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 52 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPWSSDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 53 /r]	AVXVNNI,FUTURE,LATEVEX
+VPDPWSSDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 53 /r]	AVXVNNI,FUTURE,LATEVEX
+
+;# AVX Vector Neural Network Instructions INT8
+VPDPBSSD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f2.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,AVX
+VPDPBSSD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f2.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,AVX
+VPDPBSSDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f2.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,AVX
+VPDPBSSDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f2.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,AVX
+VPDPBSUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,AVX
+VPDPBSUD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f3.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,AVX
+VPDPBSUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,AVX
+VPDPBSUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f3.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,AVX
+VPDPBUUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,AVX
+VPDPBUUD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,AVX
+VPDPBUUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,AVX
+VPDPBUUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,AVX
+
+;# AVX Vector Neural Network Instructions INT16
+VPDPWSUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWSUD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f3.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWSUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWSUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f3.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUSD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUSD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUSDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUSDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUUD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 d2 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
+VPDPWUUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 d3 /r]	AVXVNNIINT16,FUTURE,AVX
 
 ;# AVX Integer Fused Multiply-Add
 ; Must precede AVX-512 versions
-VPMADD52HUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX,SX
-VPMADD52HUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX,SY
-VPMADD52LUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b4 /r]	AVXIFMA,FUTURE,LATEVEX,SX
-VPMADD52LUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b4 /r]	AVXIFMA,FUTURE,LATEVEX,SY
+VPMADD52HUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX
+VPMADD52HUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX
+VPMADD52LUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b4 /r]	AVXIFMA,FUTURE,LATEVEX
+VPMADD52LUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b4 /r]	AVXIFMA,FUTURE,LATEVEX
 
 ;# AVX-512 mask register instructions
 KADDB           kreg,kreg,kreg                      [rvm: vex.nds.l1.66.0f.w0 4a /r ] FUTURE
@@ -6076,25 +6099,31 @@ XRESLDTRK	void				[	f2 0f 01 e9]				TSXLDTRK,FUTURE
 XSUSLDTRK	void				[	f2 0f 01 e8]				TSXLDTRK,FUTURE
 
 ;# AVX512 Bfloat16 instructions
-VCVTNE2PS2BF16	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f2.0f38.w0 72 /r]	AVX512BF16,FUTURE
-VCVTNE2PS2BF16	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:fv:	evex.256.f2.0f38.w0 72 /r]	AVX512BF16,FUTURE
-VCVTNE2PS2BF16	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:fv:	evex.512.f2.0f38.w0 72 /r]	AVX512BF16,FUTURE
-VCVTNEPS2BF16	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
-VCVTNEPS2BF16	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:fv:	evex.256.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
-VCVTNEPS2BF16	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:fv:	evex.512.f3.0f38.w0 72 /r]	AVX512BF16,FUTURE
-VDPBF16PS	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f3.0f38.w0 52 /r]	AVX512BF16,FUTURE
-VDPBF16PS	ymmreg|mask|z,ymmreg*,ymmrm128|b32	[rvm:fv:	evex.256.f3.0f38.w0 52 /r]	AVX512BF16,FUTURE
-VDPBF16PS	zmmreg|mask|z,zmmreg*,zmmrm128|b32	[rvm:fv:	evex.512.f3.0f38.w0 52 /r]	AVX512BF16,FUTURE
+VCVTNE2PS2BF16	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f2.0f38.w0 72 /r]	AVX512VL,AVX512BF16,FUTURE
+VCVTNE2PS2BF16	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:fv:	evex.256.f2.0f38.w0 72 /r]	AVX512VL,AVX512BF16,FUTURE
+VCVTNE2PS2BF16	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:fv:	evex.512.f2.0f38.w0 72 /r]	AVX512,AVX512BF16,FUTURE
+VCVTNEPS2BF16	xmmreg|mask|z,xmmrm128|b32		[rm:fv:		evex.128.f3.0f38.w0 72 /r]	AVX512VL,AVX512BF16,FUTURE
+VCVTNEPS2BF16	xmmreg|mask|z,ymmrm256|b32		[rm:fv:		evex.256.f3.0f38.w0 72 /r]	AVX512VL,AVX512BF16,FUTURE
+VCVTNEPS2BF16	ymmreg|mask|z,zmmrm512|b32		[rm:fv:		evex.512.f3.0f38.w0 72 /r]	AVX512,AVX512BF16,FUTURE
+VDPBF16PS	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f3.0f38.w0 52 /r]	AVX512VL,AVX512BF16,FUTURE
+VDPBF16PS	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:fv:	evex.256.f3.0f38.w0 52 /r]	AVX512VL,AVX512BF16,FUTURE
+VDPBF16PS	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:fv:	evex.512.f3.0f38.w0 52 /r]	AVX512,AVX512BF16,FUTURE
 
 ;# AVX512 mask intersect instructions
-VP2INTERSECTD	kreg|rs2,xmmreg,xmmrm128|b32		[rvm:fv:	evex.nds.128.f2.0f38.w0 68 /r]	AVX512BF16,FUTURE
-VP2INTERSECTD	kreg|rs2,ymmreg,ymmrm128|b32		[rvm:fv:	evex.nds.256.f2.0f38.w0 68 /r]	AVX512BF16,FUTURE
-VP2INTERSECTD	kreg|rs2,zmmreg,zmmrm128|b32		[rvm:fv:	evex.nds.512.f2.0f38.w0 68 /r]	AVX512BF16,FUTURE
+VP2INTERSECTD	kreg|rs2,xmmreg,xmmrm128|b32		[rvm:fv:	evex.nds.128.f2.0f38.w0 68 /r]	AVX512VL,AVX512VP2INTERSECT,FUTURE
+VP2INTERSECTD	kreg|rs2,ymmreg,ymmrm256|b32		[rvm:fv:	evex.nds.256.f2.0f38.w0 68 /r]	AVX512VL,AVX512VP2INTERSECT,FUTURE
+VP2INTERSECTD	kreg|rs2,zmmreg,zmmrm512|b32		[rvm:fv:	evex.nds.512.f2.0f38.w0 68 /r]	AVX512,AVX512VP2INTERSECT,FUTURE
+VP2INTERSECTQ	kreg|rs2,xmmreg,xmmrm128|b64		[rvm:fv:	evex.nds.128.f2.0f38.w1 68 /r]	AVX512VL,AVX512VP2INTERSECT,FUTURE
+VP2INTERSECTQ	kreg|rs2,ymmreg,ymmrm256|b64		[rvm:fv:	evex.nds.256.f2.0f38.w1 68 /r]	AVX512VL,AVX512VP2INTERSECT,FUTURE
+VP2INTERSECTQ	kreg|rs2,zmmreg,zmmrm512|b64		[rvm:fv:	evex.nds.512.f2.0f38.w1 68 /r]	AVX512,AVX512VP2INTERSECT,FUTURE
 
 ;# Intel Advanced Matrix Extensions (AMX)
 LDTILECFG	mem512				[m:	vex.128.np.0f38.w0 49 /0]		AMXTILE,FUTURE,SZ,LONG
 STTILECFG	mem512				[m:	vex.128.66.0f38.w0 49 /0]		AMXTILE,FUTURE,SZ,LONG
 TDPBF16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5c /r]		AMXBF16,FUTURE,LONG
+TDPFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5c /r]		AMXFP16,FUTURE,LONG
+TCMMIMFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 6c /r]		AMXCOMPLEX,FUTURE,LONG
+TCMMRLFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 6c /r]		AMXCOMPLEX,FUTURE,LONG
 TDPBSSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
 TDPBSUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
 TDPBUSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
@@ -6248,54 +6277,54 @@ VFMSUBADD213PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.ma
 VFMSUBADD231PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 b7 /r]	AVX512FP16,AVX512VL,FUTURE
 VFMSUBADD231PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 b7 /r]	AVX512FP16,AVX512VL,FUTURE
 VFMSUBADD231PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 b7 /r]	AVX512FP16,FUTURE
-VPMADD132PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 98 /r]	AVX512FP16,AVX512VL,FUTURE
-VPMADD132PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 98 /r]	AVX512FP16,AVX512VL,FUTURE
-VPMADD132PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 98 /r]	AVX512FP16,FUTURE
-VPMADD213PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 a8 /r]	AVX512FP16,AVX512VL,FUTURE
-VPMADD213PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 a8 /r]	AVX512FP16,AVX512VL,FUTURE
-VPMADD213PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 a8 /r]	AVX512FP16,FUTURE
-VPMADD231PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 b8 /r]	AVX512FP16,AVX512VL,FUTURE
-VPMADD231PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 b8 /r]	AVX512FP16,AVX512VL,FUTURE
-VPMADD231PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 b8 /r]	AVX512FP16,FUTURE
-VFMADD132PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 9c /r]	AVX512FP16,AVX512VL,FUTURE
-VFMADD132PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 9c /r]	AVX512FP16,AVX512VL,FUTURE
-VFMADD132PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 9c /r]	AVX512FP16,FUTURE
-VFMADD213PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 ac /r]	AVX512FP16,AVX512VL,FUTURE
-VFMADD213PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 ac /r]	AVX512FP16,AVX512VL,FUTURE
-VFMADD213PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 ac /r]	AVX512FP16,FUTURE
-VFMADD231PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 bc /r]	AVX512FP16,AVX512VL,FUTURE
-VFMADD231PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 bc /r]	AVX512FP16,AVX512VL,FUTURE
-VFMADD231PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 bc /r]	AVX512FP16,FUTURE
-VPMADD132SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 99 /r]	AVX512FP16,FUTURE
-VPMADD213SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 a9 /r]	AVX512FP16,FUTURE
-VPMADD231SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 b9 /r]	AVX512FP16,FUTURE
-VPNMADD132SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 9d /r]	AVX512FP16,FUTURE
-VPNMADD213SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 ad /r]	AVX512FP16,FUTURE
-VPNMADD231SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 bd /r]	AVX512FP16,FUTURE
-VPMSUB132PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 9a /r]	AVX512FP16,AVX512VL,FUTURE
-VPMSUB132PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 9a /r]	AVX512FP16,AVX512VL,FUTURE
-VPMSUB132PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 9a /r]	AVX512FP16,FUTURE
-VPMSUB213PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 aa /r]	AVX512FP16,AVX512VL,FUTURE
-VPMSUB213PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 aa /r]	AVX512FP16,AVX512VL,FUTURE
-VPMSUB213PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 aa /r]	AVX512FP16,FUTURE
-VPMSUB231PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 ba /r]	AVX512FP16,AVX512VL,FUTURE
-VPMSUB231PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 ba /r]	AVX512FP16,AVX512VL,FUTURE
-VPMSUB231PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 ba /r]	AVX512FP16,FUTURE
-VFMSUB132PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 9e /r]	AVX512FP16,AVX512VL,FUTURE
-VFMSUB132PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 9e /r]	AVX512FP16,AVX512VL,FUTURE
-VFMSUB132PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 9e /r]	AVX512FP16,FUTURE
-VFMSUB213PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 ae /r]	AVX512FP16,AVX512VL,FUTURE
-VFMSUB213PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 ae /r]	AVX512FP16,AVX512VL,FUTURE
-VFMSUB213PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 ae /r]	AVX512FP16,FUTURE
-VFMSUB231PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 be /r]	AVX512FP16,AVX512VL,FUTURE
-VFMSUB231PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 be /r]	AVX512FP16,AVX512VL,FUTURE
-VFMSUB231PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 be /r]	AVX512FP16,FUTURE
-VPMSUB132SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 9b /r]	AVX512FP16,FUTURE
-VPMSUB213SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 ab /r]	AVX512FP16,FUTURE
-VPMSUB231SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 bb /r]	AVX512FP16,FUTURE
-VPNMSUB132SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 9f /r]	AVX512FP16,FUTURE
-VPNMSUB213SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 af /r]	AVX512FP16,FUTURE
-VPNMSUB231SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 bf /r]	AVX512FP16,FUTURE
+VFMADD132PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 98 /r]	AVX512FP16,AVX512VL,FUTURE
+VFMADD132PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 98 /r]	AVX512FP16,AVX512VL,FUTURE
+VFMADD132PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 98 /r]	AVX512FP16,FUTURE
+VFMADD213PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 a8 /r]	AVX512FP16,AVX512VL,FUTURE
+VFMADD213PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 a8 /r]	AVX512FP16,AVX512VL,FUTURE
+VFMADD213PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 a8 /r]	AVX512FP16,FUTURE
+VFMADD231PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 b8 /r]	AVX512FP16,AVX512VL,FUTURE
+VFMADD231PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 b8 /r]	AVX512FP16,AVX512VL,FUTURE
+VFMADD231PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 b8 /r]	AVX512FP16,FUTURE
+VFNMADD132PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 9c /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMADD132PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 9c /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMADD132PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 9c /r]	AVX512FP16,FUTURE
+VFNMADD213PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 ac /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMADD213PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 ac /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMADD213PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 ac /r]	AVX512FP16,FUTURE
+VFNMADD231PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 bc /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMADD231PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 bc /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMADD231PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 bc /r]	AVX512FP16,FUTURE
+VFMADD132SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 99 /r]	AVX512FP16,FUTURE
+VFMADD213SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 a9 /r]	AVX512FP16,FUTURE
+VFMADD231SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 b9 /r]	AVX512FP16,FUTURE
+VFNMADD132SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 9d /r]	AVX512FP16,FUTURE
+VFNMADD213SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 ad /r]	AVX512FP16,FUTURE
+VFNMADD231SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 bd /r]	AVX512FP16,FUTURE
+VFMSUB132PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 9a /r]	AVX512FP16,AVX512VL,FUTURE
+VFMSUB132PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 9a /r]	AVX512FP16,AVX512VL,FUTURE
+VFMSUB132PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 9a /r]	AVX512FP16,FUTURE
+VFMSUB213PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 aa /r]	AVX512FP16,AVX512VL,FUTURE
+VFMSUB213PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 aa /r]	AVX512FP16,AVX512VL,FUTURE
+VFMSUB213PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 aa /r]	AVX512FP16,FUTURE
+VFMSUB231PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 ba /r]	AVX512FP16,AVX512VL,FUTURE
+VFMSUB231PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 ba /r]	AVX512FP16,AVX512VL,FUTURE
+VFMSUB231PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 ba /r]	AVX512FP16,FUTURE
+VFNMSUB132PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 9e /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMSUB132PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 9e /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMSUB132PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 9e /r]	AVX512FP16,FUTURE
+VFNMSUB213PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 ae /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMSUB213PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 ae /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMSUB213PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 ae /r]	AVX512FP16,FUTURE
+VFNMSUB231PH	xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv: evex.nds.128.66.map6.w0 be /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMSUB231PH	ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv: evex.nds.256.66.map6.w0 be /r]	AVX512FP16,AVX512VL,FUTURE
+VFNMSUB231PH	zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv: evex.nds.512.66.map6.w0 be /r]	AVX512FP16,FUTURE
+VFMSUB132SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 9b /r]	AVX512FP16,FUTURE
+VFMSUB213SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 ab /r]	AVX512FP16,FUTURE
+VFMSUB231SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 bb /r]	AVX512FP16,FUTURE
+VFNMSUB132SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 9f /r]	AVX512FP16,FUTURE
+VFNMSUB213SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 af /r]	AVX512FP16,FUTURE
+VFNMSUB231SH	xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.66.map6.w0 bf /r]	AVX512FP16,FUTURE
 VFPCLASSPH	kreg|mask,xmmrm128|b16,imm8		[rmi:fv: evex.128.np.0f3a.w0 66 /r ib]	AVX512FP16,AVX512VL,FUTURE
 VFPCLASSPH	kreg|mask,ymmrm256|b16,imm8		[rmi:fv: evex.256.np.0f3a.w0 66 /r ib]	AVX512FP16,AVX512VL,FUTURE
 VFPCLASSPH	kreg|mask,zmmrm512|b16,imm8		[rmi:fv: evex.512.np.0f3a.w0 66 /r ib]	AVX512FP16,FUTURE
