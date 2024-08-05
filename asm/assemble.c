@@ -635,7 +635,7 @@ static void out_eops(struct out_data *data, const extop *e)
                     data->tsegment = e->val.num.segment;
                     data->toffset  = e->val.num.offset;
                     data->twrt = e->val.num.wrt;
-                    data->relbase = 0;
+                    data->relbase = data->offset;
                     if (e->val.num.segment != NO_SEG &&
                         (e->val.num.segment & 1)) {
                         data->type  = OUT_SEGMENT;
@@ -644,6 +644,11 @@ static void out_eops(struct out_data *data, const extop *e)
                         data->type = e->val.num.relative
                             ? OUT_RELADDR : OUT_ADDRESS;
                         data->flags = OUT_WRAP;
+
+                        if (e->val.num.relative) {
+                            /* Make the address absolute again */
+                            data->toffset += data->offset;
+                        }
                     }
                     out(data);
                 }
