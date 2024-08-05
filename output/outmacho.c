@@ -981,8 +981,8 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
 
 #if defined(DEBUG) && DEBUG>2
     nasm_error(ERR_DEBUG,
-            " macho_symdef: %s, pass=%"PRId64" type %s, sec=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
-	       name, pass_count(), pass_types[pass_type()],
+            " %s: %s, pass=%"PRId64" type %s, sec=%"PRIx32", off=%"PRIx64", is_global=%d, %s\n",
+	       __func__, name, pass_count(), pass_types[pass_type()],
 	       section, offset, is_global, special);
 #endif
 

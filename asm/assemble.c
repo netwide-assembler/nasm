@@ -2326,14 +2326,14 @@ static void gencode(struct out_data *data, insn *ins)
 static opflags_t regflag(const operand * o)
 {
     if (!is_register(o->basereg))
-        nasm_panic("invalid operand passed to regflag()");
+        nasm_panic("invalid operand passed to %s()", __func__);
     return nasm_reg_flags[o->basereg];
 }
 
 static int32_t regval(const operand * o)
 {
     if (!is_register(o->basereg))
-        nasm_panic("invalid operand passed to regval()");
+        nasm_panic("invalid operand passed to %s()", __func__);
     return nasm_regvals[o->basereg];
 }
 
@@ -2343,7 +2343,7 @@ static int op_rexflags(const operand * o, int mask)
     int val;
 
     if (!is_register(o->basereg))
-        nasm_panic("invalid operand passed to op_rexflags()");
+        nasm_panic("invalid operand passed to %s()", __func__);
 
     flags = nasm_reg_flags[o->basereg];
     val = nasm_regvals[o->basereg];
