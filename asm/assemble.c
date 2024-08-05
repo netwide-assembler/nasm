@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -109,9 +109,18 @@ static void add_asp(insn *, int);
 static int process_ea(operand *, ea *, int, int, opflags_t,
                       insn *, enum ea_type, const char **);
 
+/* Get the pointer to an operand if it exits */
+static inline struct operand *get_operand(insn *ins, unsigned int n)
+{
+    if (n >= (unsigned int)ins->operands)
+        return NULL;
+    else
+        return &ins->oprs[n];
+}
+
 static inline bool absolute_op(const struct operand *o)
 {
-    return o->segment == NO_SEG && o->wrt == NO_SEG &&
+    return o && o->segment == NO_SEG && o->wrt == NO_SEG &&
         !(o->opflags & OPFLAG_RELATIVE);
 }
 
@@ -537,8 +546,9 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
     const uint8_t *code = temp->code;
     uint8_t c = code[0];
     bool is_byte;
+    const struct operand * const op0 = get_operand(ins, 0);
 
-    if (((c & ~1) != 0370) || (ins->oprs[0].type & STRICT))
+    if (((c & ~1) != 0370) || (op0->type & STRICT))
         return false;
     if (!optimizing.level || (optimizing.flag & OPTIM_DISABLE_JMP_MATCH))
         return false;
@@ -547,14 +557,14 @@ static bool jmp_match(int32_t segment, int64_t offset, int bits,
 
     isize = calcsize(segment, offset, bits, ins, temp);
 
-    if (ins->oprs[0].opflags & OPFLAG_UNKNOWN)
+    if (op0->opflags & OPFLAG_UNKNOWN)
         /* Be optimistic in pass 1 */
         return true;
 
-    if (ins->oprs[0].segment != segment)
+    if (op0->segment != segment)
         return false;
 
-    isize = ins->oprs[0].offset - offset - isize; /* isize is delta */
+    isize = op0->offset - offset - isize; /* isize is delta */
     is_byte = (isize >= -128 && isize <= 127); /* is it byte size? */
 
     if (is_byte && c == 0371 && ins->prefixes[PPS_REP] == P_BND) {
@@ -1211,7 +1221,7 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     uint8_t c;
     int rex_mask = ~0;
     int op1, op2;
-    struct operand *opx;
+    struct operand *opx, *opy;
     uint8_t opex = 0;
     enum ea_type eat;
     uint8_t hleok = 0;
@@ -1232,8 +1242,9 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
     while (*codes) {
         c = *codes++;
         op1 = (c & 3) + ((opex & 1) << 2);
+        opx = get_operand(ins, op1);
         op2 = ((c >> 3) & 3) + ((opex & 2) << 1);
-        opx = &ins->oprs[op1];
+        opy = NULL;
         opex = 0;               /* For the next iteration */
 
         switch (c) {
@@ -1310,8 +1321,8 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
         case 0171:
             c = *codes++;
             op2 = (op2 & ~3) | ((c >> 3) & 3);
-            opx = &ins->oprs[op2];
-            ins->rex |= op_rexflags(opx, REX_R|REX_H|REX_P|REX_W);
+            opy = get_operand(ins, op2);
+            ins->rex |= op_rexflags(opy, REX_R|REX_H|REX_P|REX_W);
             length++;
             break;
 
@@ -1479,14 +1490,15 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
              *!  severe programming error as the code could break at
              *!  any time for any number of reasons.
              */
-            if (!absolute_op(&ins->oprs[0]))
+            /* The bytecode ends in 0, so opx points to operand 0 */
+            if (!absolute_op(opx))
                 nasm_nonfatal("attempt to reserve non-constant"
                               " quantity of BSS space");
-            else if (ins->oprs[0].opflags & OPFLAG_FORWARD)
+            else if (opx->opflags & OPFLAG_FORWARD)
                 nasm_warn(WARN_FORWARD, "forward reference in RESx "
                            "can have unpredictable results");
             else
-                length += ins->oprs[0].offset * resb_bytes(ins->opcode);
+                length += opx->offset * resb_bytes(ins->opcode);
             break;
 
         case 0341:
@@ -1546,8 +1558,9 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 ea ea_data;
                 int rfield;
                 opflags_t rflags;
-                struct operand *opy = &ins->oprs[op2];
-                struct operand *op_er_sae;
+                const struct operand *op_er_sae;
+
+                opy = get_operand(ins, op2);
 
                 ea_data.rex = 0;           /* Ensure ea.REX is initially 0 */
 
@@ -1558,11 +1571,11 @@ static int64_t calcsize(int32_t segment, int64_t offset, int bits,
                 } else {
                     rflags = 0;
                     rfield = c & 7;
+                    opx = NULL;
                 }
 
                 /* EVEX.b1 : evex_brerop contains the operand position */
-                op_er_sae = (ins->evex_brerop >= 0 ?
-                             &ins->oprs[ins->evex_brerop] : NULL);
+                op_er_sae = ins->evex_brerop;
 
                 if (op_er_sae && (op_er_sae->decoflags & (ER | SAE))) {
                     /* set EVEX.b */
@@ -1888,7 +1901,7 @@ static void gencode(struct out_data *data, insn *ins)
     uint8_t bytes[4];
     int64_t size;
     int op1, op2;
-    struct operand *opx;
+    struct operand *opx, *opy;
     const uint8_t *codes = data->itemp->code;
     uint8_t opex = 0;
     enum ea_type eat = EA_SCALAR;
@@ -1903,8 +1916,9 @@ static void gencode(struct out_data *data, insn *ins)
     while (*codes) {
         c = *codes++;
         op1 = (c & 3) + ((opex & 1) << 2);
+        opx = get_operand(ins, op1);
         op2 = ((c >> 3) & 3) + ((opex & 2) << 1);
-        opx = &ins->oprs[op1];
+        opy = NULL;
         opex = 0;                /* For the next iteration */
 
 
@@ -2013,11 +2027,11 @@ static void gencode(struct out_data *data, insn *ins)
             const struct operand *opy;
 
             c = *codes++;
-            opx = &ins->oprs[c >> 3];
-            opy = &ins->oprs[c & 7];
+            opx = get_operand(ins, op1 = (c >> 3) & 7);
+            opy = get_operand(ins, op2 = c & 7);
             if (!absolute_op(opy))
                 nasm_nonfatal("non-absolute expression not permitted "
-                              "as argument %d", c & 7);
+                              "as argument %d", op2);
             else if (opy->offset & ~mask)
                 nasm_warn(ERR_PASS2|WARN_NUMBER_OVERFLOW,
                            "is4 argument exceeds bounds");
@@ -2027,7 +2041,7 @@ static void gencode(struct out_data *data, insn *ins)
 
         case 0173:
             c = *codes++;
-            opx = &ins->oprs[c >> 4];
+            opx = get_operand(ins, op1 = c >> 4);
             c &= 15;
             goto emit_is4;
 
@@ -2250,7 +2264,8 @@ static void gencode(struct out_data *data, insn *ins)
                 int rfield;
                 opflags_t rflags;
                 uint8_t *p;
-                struct operand *opy = &ins->oprs[op2];
+
+                opy = get_operand(ins, op2);
 
                 if (c <= 0177) {
                     /* pick rfield from operand b (opx) */
@@ -2260,6 +2275,7 @@ static void gencode(struct out_data *data, insn *ins)
                     /* rfield is constant */
                     rflags = 0;
                     rfield = c & 7;
+                    opx = NULL;
                 }
 
                 if (process_ea(opy, &ea_data, bits,
@@ -2390,16 +2406,10 @@ static enum match_result find_match(const struct itemplate **tempp,
     enum match_result m, merr;
     opflags_t xsizeflags[MAX_OPERANDS];
     bool opsizemissing = false;
-    int8_t broadcast = instruction->evex_brerop;
     int i;
 
-    /* broadcasting uses a different data element size */
-    for (i = 0; i < instruction->operands; i++) {
-        if (i == broadcast)
-            xsizeflags[i] = instruction->oprs[i].decoflags & BRSIZE_MASK;
-        else
-            xsizeflags[i] = instruction->oprs[i].type & SIZE_MASK;
-    }
+    for (i = 0; i < instruction->operands; i++)
+        xsizeflags[i] = instruction->oprs[i].xsize;
 
     merr = MERR_INVALOP;
 
@@ -2415,11 +2425,12 @@ static enum match_result find_match(const struct itemplate **tempp,
             /*
              * Missing operand size and a candidate for fuzzy matching...
              */
-            for (i = 0; i < temp->operands; i++)
-                if (i == broadcast)
+            for (i = 0; i < temp->operands; i++) {
+                if (instruction->oprs[i].bcast)
                     xsizeflags[i] |= temp->deco[i] & BRSIZE_MASK;
                 else
                     xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
+            }
             opsizemissing = true;
         }
         if (m > merr)
@@ -2433,23 +2444,24 @@ static enum match_result find_match(const struct itemplate **tempp,
         goto done;
 
     for (i = 0; i < instruction->operands; i++) {
+        struct operand *op = &instruction->oprs[i];
         /*
          * We ignore extrinsic operand sizes on registers, so we should
          * never try to fuzzy-match on them.  This also resolves the case
          * when we have e.g. "xmmrm128" in two different positions.
          */
-        if (is_class(REGISTER, instruction->oprs[i].type))
+        if (is_class(REGISTER, op->type))
             continue;
 
         /* This tests if xsizeflags[i] has more than one bit set */
         if ((xsizeflags[i] & (xsizeflags[i]-1)))
             goto done;                /* No luck */
 
-        if (i == broadcast) {
-            instruction->oprs[i].decoflags |= xsizeflags[i];
-            instruction->oprs[i].type |= brsize_to_size(xsizeflags[i]);
+        if (op->bcast) {
+            op->decoflags |= xsizeflags[i];
+            op->type |= brsize_to_size(xsizeflags[i]);
         } else {
-            instruction->oprs[i].type |= xsizeflags[i]; /* Set the size */
+            op->type |= xsizeflags[i]; /* Set the size */
         }
     }
 

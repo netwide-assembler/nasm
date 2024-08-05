@@ -221,14 +221,15 @@ const expr *next_expr(const expr *e, const expr **next_list)
     return e;
 }
 
-static inline void init_operand(operand *op)
+static inline void init_operand(operand *op, unsigned int opidx)
 {
-    memset(op, 0, sizeof *op);
+    nasm_zero(*op);
 
     op->basereg  = -1;
     op->indexreg = -1;
     op->segment  = NO_SEG;
     op->wrt      = NO_SEG;
+    op->opidx    = opidx;
 }
 
 static int parse_mref(operand *op, const expr *e)
@@ -648,7 +649,7 @@ restart_parse:
     result->eops        = NULL; /* must do this, whatever happens */
     result->operands    = 0;    /* must initialize this */
     result->evex_rm     = 0;    /* Ensure EVEX rounding mode is reset */
-    result->evex_brerop = -1;   /* Reset EVEX broadcasting/ER op position */
+    result->evex_brerop = NULL; /* Reset EVEX broadcasting/ER op position */
 
     /* Ignore blank lines */
     if (i == TOKEN_EOS)
@@ -847,6 +848,10 @@ restart_parse:
      */
     far_jmp_ok = result->opcode == I_JMP || result->opcode == I_CALL;
 
+    /* Initialize operand structures */
+    for (opnum = 0; opnum < MAX_OPERANDS; opnum++)
+        init_operand(&result->oprs[opnum], opnum);
+
     for (opnum = 0; opnum < MAX_OPERANDS; opnum++) {
         operand *op = &result->oprs[opnum];
         expr *value;            /* used most of the time */
@@ -855,8 +860,6 @@ restart_parse:
         bool mib;               /* compound (mib) mref? */
         int setsize = 0;
         decoflags_t brace_flags = 0;    /* flags for decorators in braces */
-
-        init_operand(op);
 
         i = stdscan(NULL, &tokval);
         if (i == TOKEN_EOS)
@@ -1035,7 +1038,7 @@ restart_parse:
             if (!value)
                 goto fail;
 
-            init_operand(&o2);
+            init_operand(&o2, 0);
             if (parse_mref(&o2, value))
                 goto fail;
 
@@ -1288,15 +1291,17 @@ restart_parse:
         }
 
         /* remember the position of operand having broadcasting/ER mode */
-        if (op->decoflags & (BRDCAST_MASK | ER | SAE))
-            result->evex_brerop = opnum;
+        if (op->decoflags & (BRDCAST_MASK | ER | SAE)) {
+            result->evex_brerop = op;
+            op->bcast = true;
+            op->xsize = op->decoflags & BRSIZE_MASK;
+        } else {
+            op->bcast = false;
+            op->xsize = op->type & SIZE_MASK;
+        }
     }
 
     result->operands = opnum; /* set operand count */
-
-    /* clear remaining operands */
-    while (opnum < MAX_OPERANDS)
-        result->oprs[opnum++].type = 0;
 
     return result;
 
