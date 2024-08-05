@@ -664,7 +664,7 @@ enum eval_hint { /* values for `hinttype' */
 
 typedef struct operand { /* operand to an instruction */
     opflags_t       type;       /* type of operand */
-    int             disp_size;  /* 0 means default; 16; 32; 64 */
+    opflags_t       xsize;      /* size flags used in find_match() */
     enum reg_enum   basereg;
     enum reg_enum   indexreg;   /* address registers */
     int             scale;      /* index scale */
@@ -677,6 +677,9 @@ typedef struct operand { /* operand to an instruction */
     int             opflags;    /* see OPFLAG_* defines below */
     int             iflag;      /* Requires a specific IF_* flag */
     decoflags_t     decoflags;  /* decorator flags such as {...} */
+    bool            bcast;      /* broadcast operand */
+    uint8_t         disp_size;  /* 0 means default; 16; 32; 64 */
+    uint8_t         opidx;      /* Operand index */
 } operand;
 
 #define OPFLAG_FORWARD      1   /* operand is a forward reference */
@@ -804,9 +807,9 @@ typedef struct insn { /* an instruction itself */
     uint32_t	    evex;                   /* EVEX prefix under construction */
     enum ttypes     evex_tuple;             /* Tuple type for compressed Disp8*N */
     int             evex_rm;                /* static rounding mode for AVX512 (EVEX) */
-    int8_t          evex_brerop;            /* BR/ER/SAE operand position */
     int             bits;                   /* Execution mode (16, 32, 64) */
     const struct itemplate *itemp;          /* Instruction template */
+    struct operand *evex_brerop;            /* BR/ER/SAE operand position */
 } insn;
 
 /* Instruction flags type: IF_* flags are defined in insns.h */
