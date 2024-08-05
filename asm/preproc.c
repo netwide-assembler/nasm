@@ -1815,6 +1815,9 @@ static Token *delete_Token(Token *t)
     nasm_assert(t && t->type != TOKEN_FREE);
 
     next = t->next;
+
+    if (t->len > INLINE_TEXT)
+        nasm_free(t->text.p.ptr);
     nasm_zero(*t);
     t->type = TOKEN_FREE;
     t->next = freeTokens;
