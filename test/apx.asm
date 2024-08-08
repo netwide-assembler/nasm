@@ -98,4 +98,44 @@
 	add{nf}{zu} eax,eax,ecx
 	add{nf}{zu} eax,ecx
 	add{evex}   eax,ecx
+	add{nf}     eax,eax,ecx
+	add{nf}     eax,ecx
 	add	    eax,ecx
+
+%if 1
+	add{evex}   [rdx],16
+	add{evex}   [rdx],byte 16
+	add{evex}   [rdx],dword 16
+	add{evex}   [rdx],strict dword 16
+%endif
+
+	add{evex}   dword [rdx],16
+	add{evex}   dword [rdx],256
+	add{evex}   dword [rdx],byte 16
+	add{evex}   dword [rdx],dword 16
+	add{evex}   dword [rdx],strict dword 16
+
+%if 1
+	add{nf}	    [rdx],16
+	add{nf}	    [rdx],byte 16
+	add{nf}	    [rdx],dword 16
+	add{nf}	    [rdx],strict dword 16
+%endif
+
+	add{nf}	    dword [rdx],16
+	add{nf}     dword [rdx],256
+	add{nf}	    dword [rdx],byte 16
+	add{nf}	    dword [rdx],dword 16
+	add{nf}	    dword [rdx],strict dword 16
+
+	add{nf}	    eax,[rdx],16
+	add{nf}	    eax,[rdx],256
+	add{nf}	    eax,[rdx],byte 16
+	add{nf}	    eax,[rdx],dword 16
+	add{nf}	    eax,[rdx],strict dword 16
+
+	add{nf}	    eax,dword [rdx],16
+	add{nf}	    eax,dword [rdx],256
+	add{nf}	    eax,dword [rdx],byte 16
+	add{nf}	    eax,dword [rdx],dword 16
+	add{nf}	    eax,dword [rdx],strict dword 16

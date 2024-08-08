@@ -43,8 +43,8 @@
 
 require 'x86/insns-iflags.ph';
 
-# This should match MAX_OPERANDS from nasm.h
-$MAX_OPERANDS = 5;
+# This could be generated automatically, really...
+my $MAX_OPERANDS = 5;
 
 # Create disassembly root tables
 my @vex_class = ( 'novex', 'vex', 'xop', 'evex' );
@@ -118,7 +118,9 @@ sub relaxed_forms(@) {
 	# (This line applies to the full form instruction; see below
 	# for the modified versions.)
 	my $has_ndx = ($f2o[2] =~ /(\.nd)x\b/);
-	my $has_zu  = ($fields->[3] =~ /\bZU\b/);
+
+	my %flags = split_flags($fields->[3]);
+	my $has_zu  = $flags{'ZU'};
 
 	for (my $oi = 0; $oi < (1 << scalar @ops); $oi++) {
 	    if (($oi & ~$opmask) == 0) {
@@ -137,6 +139,7 @@ sub relaxed_forms(@) {
 		    my $setzu = 0;
 		    my $voi = $oi;
 		    my $f2 = $f2o[0];
+		    my $dropped = 0;
 		    for (my $oj = 0; $oj < scalar(@ops); $oj++) {
 			my $ob = 1 << $oj;
 			my $emit = 0;
@@ -146,6 +149,7 @@ sub relaxed_forms(@) {
 			    die if (($ob << 1) & $ndmask);
 			    if (!$var) {
 				# Make it disappear completely
+				$dropped |= $ob;
 				next;
 			    } else {
 				# Treat the *next* operand as an omitted
@@ -161,6 +165,7 @@ sub relaxed_forms(@) {
 				$ondflag = 1;
 			    }
 			} else {
+			    $dropped |= $ob;
 			    $f2 .= '+';
 			}
 			$f2 .= substr($f2o[1], $oj, 1);
@@ -170,8 +175,28 @@ sub relaxed_forms(@) {
 		    $ff[1] = join(',', @xops);
 		    $f2 =~ s/(\.nd)x\b/$1$ondflag/ if ($has_ndx);
 		    $ff[2] = $f2;
-		    $ff[3] .= ',ZU' if ($setzu && !$has_zu);
-		    $ff[3] .= ',ND' if ($oi && $var);
+		    my %newfl = %flags;
+		    $newfl{'ZU'}++ if ($setzu && !$has_zu);
+		    $newfl{'ND'}++ if ($oi && $var);
+		    # Change ARx and SMx if needed
+		    foreach my $as ('AR', 'SM') {
+			my $ndelta = 0;
+			for (my $i = 0; $i < $MAX_OPERANDS; $i++) {
+			    if ($dropped & (1 << $i)) {
+				delete $newfl{"$as$i"};
+				$ndelta++;
+			    } elsif ($ndelta) {
+				my $newi = $i - $ndelta;
+				if ($newfl{"$as$i"}) {
+				    delete $newfl{"$as$i"};
+				    $newfl{"$as$newi"}++ if ($newi >= 0);
+				}
+			    }
+			}
+		    }
+
+		    $ff[3] = merge_flags(\%newfl);
+
 		    push(@field_list, [@ff]);
 		}
 	    }
@@ -283,7 +308,7 @@ while (<F>) {
     next if ( /^\s*(\;.*|)$/ );   # comments or blank lines
 
     unless (/^\s*(\S+)\s+(\S+)\s+(\S+|\[.*\])\s+(\S+)\s*$/) {
-        warn "line $line does not contain four fields\n";
+        warn "$fname:$line: line does not contain four fields\n";
         next;
     }
     my @field_list = ([$1, $2, $3, uc($4)]);
@@ -493,10 +518,11 @@ if ( $output eq 'i' ) {
     print I "\tI_none = -1\n";
     print I "};\n\n";
     print I "#define MAX_INSLEN ", $maxlen, "\n";
+    print I "#define MAX_OPERANDS ", $MAX_OPERANDS, "\n";
     print I "#define NASM_VEX_CLASSES ", $vex_classes, "\n";
     print I "#define NASM_MAX_MAPS ", $max_maps, "\n";
     print I "#define NO_DECORATOR\t{", join(',',(0) x $MAX_OPERANDS), "}\n";
-    print I "#endif /* NASM_INSNSI_H */\n";
+    print I "\n#endif /* NASM_INSNSI_H */\n";
 
     close I;
 }
@@ -556,6 +582,69 @@ sub count_bytecodes(@) {
     }
 }
 
+# Find any per-operand flags
+sub opr_flags($$;$) {
+    my($flags, $name, $oprs) = @_;
+    $oprs = $MAX_OPERANDS unless (defined($oprs));
+    my $nfl = 0;
+    for (my $i = 0; $i < $oprs; $i++) {
+	if ($flags->{"$name$i"}) {
+	    $nfl |= 1 << $i;
+	}
+    }
+    return $nfl;
+}
+
+# Adjust flags which imply each other
+sub set_implied_flags($;$) {
+    my($flags, $oprs) = @_;
+    $oprs = $MAX_OPERANDS unless (defined($oprs));
+
+    clean_flags($flags);
+
+    # If no ARx flags, make all operands ARx
+    if (!opr_flags($flags, 'AR', $oprs)) {
+	for (my $i = 0; $i < $oprs; $i++) {
+	    $flags->{"AR$i"}++;
+	}
+    }
+
+    # Convert the SM flag to all possible SMx flags
+    if ($flags->{'SM'}) {
+	delete $flags->{'SM'};
+	for (my $i = 0; $i < $oprs; $i++) {
+	    $flags->{"SM$i"}++;
+	}
+    }
+
+    # Delete SMx and ARx flags for nonexistent operands
+    foreach my $as ('AR', 'SM') {
+	for (my $i = $oprs; $i < $MAX_OPERANDS; $i++) {
+	    delete $flags->{"$as$i"};
+	}
+    }
+
+    $flags->{'LONG'}++  if ($flags->{'APX'});
+    $flags->{'NOAPX'}++ if ($flags->{'NOLONG'});
+    $flags->{'OBSOLETE'}++ if ($flags->{'NEVER'} || $flags->{'NOP'});
+    $flags->{'NF'}++ if ($flags->{'NF_R'} || $flags->{'NF_E'});
+}
+
+# Return the value of any assume-size flag if one exists
+sub size_flag($) {
+    my($flags) = @_;
+    my %sflags = ( 'SB' => 8, 'SW' => 16, 'SD' => 32, 'SQ' => 64,
+		   'SO' => 128, 'SY' => 256, 'SZ' => 512 );
+
+    foreach my $fl (keys(%sflags)) {
+	if ($flags->{$fl}) {
+	    return $sflags{$fl};
+	}
+    }
+
+    return undef;
+}
+
 sub format_insn($$$$) {
     my ($opcode, $operands, $codes, $flags) = @_;
     my $nd = 0;
@@ -563,31 +652,13 @@ sub format_insn($$$$) {
     my @bytecode;
     my ($op, @ops, @opsize, $opp, @opx, @oppx, @decos, @opevex);
 
-    return (undef, undef) if $operands eq "ignore";
+    return (undef, undef) if $operands eq 'ignore';
 
     # Remember if we have an ARx flag
     my $arx = undef;
 
-    # expand and uniqify the flags
-    my %flags;
-    foreach my $flag (split(',', $flags)) {
-	next if ($flag eq '');
-
-	if ($flag eq 'ND') {
-	    $nd = 1;
-	} else {
-	    $flags{$flag}++;
-	}
-
-	if ($flag eq 'NEVER' || $flag eq 'NOP') {
-	    # These flags imply OBSOLETE
-	    $flags{'OBSOLETE'}++;
-	}
-
-	if ($flag =~ /^AR([0-9]+)$/) {
-	    $arx = $1+0;
-	}
-    }
+    my %flags = split_flags($flags);
+    set_implied_flags(\%flags);
 
     # Generate byte code. This may modify the flags.
     @bytecode = (decodify($codes, \%flags), 0);
@@ -595,12 +666,11 @@ sub format_insn($$$$) {
     $codes = hexstr(@bytecode);
     count_bytecodes(@bytecode);
 
-    $flagsindex = insns_flag_index(keys %flags);
-    die "$fname:$line: error in flags $flags\n" unless (defined($flagsindex));
+    my $nd = !!$flags{'ND'};
+    delete $flags{'ND'};
 
-    # Flags implying each other
-    $flags->{'LONG'}++  if ($flags{'APX'});
-    $flags->{'NOAPX'}++ if ($flags{'NOLONG'});
+    $flagsindex = insns_flag_index(\%flags);
+    die "$fname:$line: error in flags $flags\n" unless (defined($flagsindex));
 
     # format the operands
     $operands =~ s/[\*\?]//g;
@@ -660,7 +730,11 @@ sub format_insn($$$$) {
         }
     }
 
-    $num = scalar(@ops);
+    my $nops = scalar(@ops);
+
+    # Tidy up the flags now then the operand count is known
+    set_implied_flags(\%flags, $nops);
+
     while (scalar(@ops) < $MAX_OPERANDS) {
         push(@ops, '0');
 	push(@opsize, 0);
@@ -676,40 +750,35 @@ sub format_insn($$$$) {
     $decorators =~ tr/a-z/A-Z/;
 
     # Look for SM flags clearly inconsistent with operand bitsizes
-    if ($flags{'SM'} || $flags{'SM2'} || $flags{'SM23'}) {
-	my $ssize = 0;
-	my $e = $flags{'SM2'} ? 2 : $MAX_OPERANDS;
-	for (my $i = $flags{'SM23'} ? 1 : 0; $i < $e; $i++) {
-	    next if (!$opsize[$i]);
-	    if (!$ssize) {
-		$ssize = $opsize[$i];
-	    } elsif ($opsize[$i] != $ssize) {
-		die "$fname:$line: inconsistent SM flag for argument $i\n";
-	    }
+    my $ssize = 0;
+    for (my $i = 0; $i < $nopr; $i++) {
+	next if (!$flags{"SM$i"} || !$opsize[$i]);
+	if (!$ssize) {
+	    $ssize = $opsize[$i];
+	} elsif ($opsize[$i] != $ssize) {
+	    die "$fname:$line: inconsistent SM flag for argument $i\n";
 	}
     }
+
+    # Look for ARx flags
+    my $arx = opr_flags(\%flags, 'AR');
 
     # Look for Sx flags that can never match operand bitsizes. If the
     # intent is to never match (require explicit sizes), use the SX flag.
     # This doesn't apply to registers that pre-define specific sizes;
     # this should really be derived from include/opflags.h...
-    my %sflags = ( 'SB' => 8, 'SW' => 16, 'SD' => 32, 'SQ' => 64,
-		   'SO' => 128, 'SY' => 256, 'SZ' => 512 );
-    my $s = defined($arx) ? $arx : 0;
-    my $e = defined($arx) ? $arx : $MAX_OPERANDS - 1;
-
-    foreach my $sf (keys(%sflags)) {
-	next if (!$flags{$sf});
-	for (my $i = $s; $i <= $e; $i++) {
-	    if ($opsize[$i] && $ops[$i] !~ /(\breg_|reg\b)/) {
-		die "$fname:$line: inconsistent $sf flag for argument $i ($ops[$i])\n"
-		    if ($opsize[$i] != $sflags{$sf});
+    my $fsize = size_flag(\%flags);
+    if (defined($fsize)) {
+	for (my $i = 0; $i < $nops; $i++) {
+	    next unless ($arx & (1 << $i));
+	    if ($opsize[$i] && $ops[$i] !~ /(\breg_|reg\b)/ &&
+		$opsize[$i] != $fsize) {
+		die "$fname:$line: inconsistent Sx flag for argument $i ($ops[$i])\n";
 	    }
 	}
     }
 
-
-    ("{I_$opcode, $num, {$operands}, $decorators, \@\@CODES-$codes\@\@, $flagsindex},", $nd);
+    return ("{I_$opcode, $nops, {$operands}, $decorators, \@\@CODES-$codes\@\@, $flagsindex},", $nd);
 }
 
 #
@@ -792,30 +861,37 @@ sub decodify($$) {
   # only octal escapes (for directives) and hexadecimal escapes
   # (for verbatim bytes)
     my($codestr, $flags) = @_;
+    my @codes;
 
-    if ($codestr =~ /^\s*\[([^\]]*)\]\s*$/) {
-        return byte_code_compile($1, $flags);
+    if ($codestr eq 'ignore') {
+	@codes = ();
+    } elsif ($codestr =~ /^\s*\[([^\]]*)\]\s*$/) {
+        @codes = byte_code_compile($1, $flags);
+    } else {
+	# This really shouldn't happen anymore...
+	warn "$fname:$line: raw bytecodes?!\n";
+
+	my $c = $codestr;
+
+	@codes = ();
+
+	while ($c ne '') {
+	    if ($c =~ /^\\x([0-9a-f]+)(.*)$/i) {
+		push(@codes, hex $1);
+		$c = $2;
+		next;
+	    } elsif ($c =~ /^\\([0-7]{1,3})(.*)$/) {
+		push(@codes, oct $1);
+		$c = $2;
+		next;
+	    } else {
+		die "$fname:$line: unknown code format in \"$codestr\"\n";
+	    }
+	}
     }
 
-    my $c = $codestr;
-    my @codes = ();
-
-    unless ($codestr eq 'ignore') {
-        while ($c ne '') {
-            if ($c =~ /^\\x([0-9a-f]+)(.*)$/i) {
-                push(@codes, hex $1);
-                $c = $2;
-                next;
-            } elsif ($c =~ /^\\([0-7]{1,3})(.*)$/) {
-                push(@codes, oct $1);
-                $c = $2;
-                next;
-            } else {
-                die "$fname:$line: unknown code format in \"$codestr\"\n";
-            }
-        }
-    }
-
+    # Flags may have been updated
+    set_implied_flags($flags);
     return @codes;
 }
 
@@ -976,12 +1052,14 @@ sub byte_code_compile($$) {
         'odf'       => 0322,    # Operand size is default
         'o64'       => 0324,    # 64-bit operand size requiring REX.W
         'o64nw'     => 0323,    # Implied 64-bit operand size (no REX.W)
+	'nw'        => 0327,	# Conditional o64nw
         'a16'       => 0310,
         'a32'       => 0311,
         'adf'       => 0312,    # Address size is default
         'a64'       => 0313,
         '!osp'      => 0364,
         '!asp'      => 0365,
+	'osz'       => 0330,	# 66 or REX.W if operand size != default
         'f2i'       => 0332,    # F2 prefix, but 66 for operand size is OK
         'f3i'       => 0333,    # F3 prefix, but 66 for operand size is OK
         'mustrep'   => 0336,
@@ -1043,6 +1121,7 @@ sub byte_code_compile($$) {
     }
     $tup = tupletype($tuple);
 
+    # Opcode map. Map 0 is the default, but not explicitly defined yet.
     my $opmap = undef;
 
     my $last_imm = 'h';
@@ -1135,7 +1214,7 @@ sub byte_code_compile($$) {
 		} elsif ($oq eq '256' || $oq eq 'l1') {
 		    $l = 1;
 		} elsif ($oq eq 'lig') {
-		    $l = 0;
+		    $l = 0 unless (defined($l));
 		    $flags->{'LIG'}++;
 		} elsif ($oq eq 'w0') {
 		    $w = 0;
@@ -1194,8 +1273,9 @@ sub byte_code_compile($$) {
             $prefix_ok = 0;
         } elsif ($op =~ /^(evex)(|\..*)$/) {
             my $c = $vexmap{$1};
-            my ($m,$w,$l,$p,$scc,$nf,$u,$ndd) = (undef,0,undef,0,undef,undef,undef,0,0);
+            my ($m,$w,$l,$p,$scc,$nf,$u,$ndd) = (undef,undef,undef,undef,undef,undef,undef,0,0);
             my ($nds,$nd,$dfv,$v) = (0, 0, 0, 0);
+	    my $opsize = undef;
 	    my @bad_op = ();
             my @subops = split(/\./, $2);
 	    if (defined($opmap)) {
@@ -1204,15 +1284,18 @@ sub byte_code_compile($$) {
 	    foreach $oq (@subops) {
 		if ($oq eq '') {
 		    next;
-		} elsif ($oq eq '128' || $oq eq 'l0' || $oq eq 'lz' || $oq eq 'lig') {
+		} elsif ($oq =~ /^(128|ll?[0z])$/) {
 		    $l = 0;
-		} elsif ($oq eq '256' || $oq eq 'l1') {
+		} elsif ($oq =~ /^(256|ll?1)$/) {
 		    $l = 1;
-		} elsif ($oq eq '512' || $oq eq 'l2') {
+		} elsif ($oq =~ /^(512|ll?2)$/) {
 		    $l = 2;
-		} elsif ($oq eq '1024' || $oq eq '1k' || $oq eq 'l3') {
+		} elsif ($oq =~ /^(1024|1k|ll?3)$/) {
 		    # Not actually defined, but...
 		    $l = 3;
+		} elsif ($oq eq 'lig') {
+		    $l = 0 unless (defined($l));
+		    $flags->{'LIG'}++;
 		} elsif ($oq eq 'w0') {
 		    $w = 0;
 		} elsif ($oq eq 'w1') {
@@ -1231,6 +1314,24 @@ sub byte_code_compile($$) {
 		    $p = 2;
 		} elsif ($oq eq 'f2' || $oq eq 'p3') {
 		    $p = 3;
+		} elsif ($oq eq 'o8') {
+		    $p = 0 unless (defined($p)); # np
+		    if (!defined($w)) {		 # wig
+			$w = 0;
+			$flags->{'WIG'}++;
+		    }
+		} elsif ($oq eq 'o16') {
+		    $p = 1 unless (defined($p)); # 66
+		    $w = 0 unless (defined($w)); # w0
+		    $opsize = 0320;
+		} elsif ($oq eq 'o32') {
+		    $p = 0 unless (defined($p)); # np
+		    $w = 0 unless (defined($w)); # w0
+		    $opsize = 0321;
+		} elsif ($oq eq 'o64') {
+		    $p = 0 unless (defined($p)); # np
+		    $w = 1 unless (defined($w)); # w1
+		    $opsize = 0323 + $w;
 		} elsif ($oq eq '0f') {
 		    $m = 1;
 		} elsif ($oq eq '0f38') {
@@ -1244,11 +1345,11 @@ sub byte_code_compile($$) {
 		    push(@bad_op, ['v', $oq]);
 		} elsif ($oq eq 'u') {
 		    $u = 1;
-		} elsif ($oq =~ /^nf([01]?)$/) {
-		    if ($1 eq '') {
-			$flags->{'NF'}++;
-		    }
-		    $nf = "0$1" + 0;
+		} elsif ($oq eq 'nf') {
+		    $flags->{'NF_E'}++;
+		    $nf = 0;
+		} elsif ($oq =~ /^nf([01])$/) {
+		    $nf = $1 + 0;
 		} elsif ($oq =~ /^v([0-9]+)$/) {
 		    $v = $1 + 0;
 		    push(@bad_op, ['v', $oq]);
@@ -1268,8 +1369,11 @@ sub byte_code_compile($$) {
 		    die "$fname:$line: undefined modifier: evex.$oq\n";
 		}
 	    }
-            if (!defined($m) || !defined($w) || !defined($l) || !defined($p)) {
-                die "$fname:$line: missing fields in EVEX specification\n";
+	    # Currently too many patterns miss .w or .p; it would be good
+	    # to figure out if they should be .[wp]0 or .[wp]ig, but
+	    # don't warn yet to keep the noise down
+            if (!defined($m) || !defined($l)) {
+                warn "$fname:$line: missing fields in EVEX specification\n";
             }
 	    if ($m > 7) {
 		die "$fname:$line: Only maps 0-7 are valid for EVEX\n";
@@ -1297,6 +1401,8 @@ sub byte_code_compile($$) {
 	    push(@codes, 05) if ($oppos{'v'} > 3);
 	    push(@codes, defined($oppos{'v'}) ? 0240+$oppos{'v'} : 0250, @p);
 	    push(@codes, $tup);
+
+	    push(@codes, $opsize) if (defined($opsize));
 
 	    $flags->{'EVEX'}++;
             $prefix_ok = 0;

@@ -1809,7 +1809,7 @@ macho_pragma(const struct pragma *pragma)
 	    head_flags |= MH_SUBSECTIONS_VIA_SYMBOLS;
 
         /* Jmp-match optimization conflicts */
-        optimizing.flag |= OPTIM_DISABLE_JMP_MATCH;
+        optimizing |= OPTIM_DISABLE_JMP_MATCH;
 
 	return DIRR_OK;
 

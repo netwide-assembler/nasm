@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 2007-2023 The NASM Authors - All Rights Reserved
+ *   Copyright 2007-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -393,6 +393,15 @@ static inline void *mempset(void *dst, int c, size_t n)
  */
 #ifndef SIZE_MAX
 # define SIZE_MAX (((size_t)0) - 1)
+#endif
+
+/*
+ * Current function name, if available, otherwise NULL
+ */
+#ifdef HAVE_FUNC_NAME
+# define NASM_FUNC __func__
+#else
+# define NASM_FUNC NULL
 #endif
 
 /* Watcom doesn't handle switch statements with 64-bit types, hack around it */

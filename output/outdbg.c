@@ -218,7 +218,7 @@ static void dbg_out(const struct out_data *data)
     fprintf(ofile,
             "out to %"PRIx32":%"PRIx64" %s(%s) bits %d insoffs %d/%d "
             "size %"PRIu64,
-            data->segment, data->offset,
+            data->loc.segment, data->loc.offset,
             out_type(data->type), out_flags(data->flags),
             data->bits, data->insoffs, data->inslen, data->size);
     if (data->itemp) {

@@ -21,7 +21,7 @@ foo
 	mov	r8, r9, r10
 ; error: invalid combination of opcode and operands
 	add	r8d, byte 80h
-; warning: signed byte value exceeds bounds [-w+number-overflow]
+; warning: signed byte exceeds bounds [-w+number-overflow]
 	section	.data
 msg	db	"Hello, world!", 10
 msglen	equ	$-msg

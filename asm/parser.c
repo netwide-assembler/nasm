@@ -628,6 +628,13 @@ static bool add_prefix(insn *result)
     enum prefix_pos slot;
 
     switch (tokval.t_type) {
+    case TOKEN_SPECIAL:
+        if (tokval.t_integer == S_STRICT) {
+            result->opt |= OPTIM_STRICT_INSTR;
+            return true;
+        } else {
+            return false;
+        }
     case TOKEN_PREFIX:
         slot = tokval.t_inttwo;
         break;
@@ -652,7 +659,7 @@ static bool add_prefix(insn *result)
 }
 
 /* Set value-specific immediate flags. */
-static opflags_t imm_flags(int64_t n, opflags_t flags)
+static opflags_t imm_flags(int64_t n, opflags_t flags, enum optimization opt)
 {
     if (n == 1)
         flags |= UNITY;
@@ -661,7 +668,7 @@ static opflags_t imm_flags(int64_t n, opflags_t flags)
     if (n >= -16 && n <= 15)
         flags |= FOURBITS;
 
-    if (optimizing.level < 0 || (flags & STRICT))
+    if ((flags & STRICT) || (opt & OPTIM_STRICT_OPER))
         return flags;
 
     if ((int32_t)n == (int8_t)n)
@@ -676,7 +683,7 @@ static opflags_t imm_flags(int64_t n, opflags_t flags)
     return flags;
 }
 
-insn *parse_line(char *buffer, insn *result)
+insn *parse_line(char *buffer, insn *result, const int bits)
 {
     bool insn_is_label = false;
     struct eval_hints hints;
@@ -697,9 +704,12 @@ restart_parse:
     i = stdscan(NULL, &tokval);
 
     nasm_zero(*result);
-    result->times       = 1;    /* No TIMES either yet */
-    result->opcode      = I_none; /* No opcode */
-    result->times       = 1;      /* No TIMES either yet */
+    result->times       = 1;        /* No TIMES either yet */
+    result->opcode      = I_none;   /* No opcode */
+    result->times       = 1;        /* No TIMES either yet */
+    result->loc         = location; /* Current assembly position */
+    result->bits        = bits;     /* Current assembly mode */
+    result->opt         = optimizing; /* Optimization flags */
 
     if (i == TOKEN_ID || insn_is_label) {
         /* there's a label here */
@@ -752,10 +762,7 @@ restart_parse:
                 result->times = 1;
             } else {
                 result->times = value->value;
-                if (value->value < 0) {
-                    nasm_nonfatalf(ERR_PASS2, "TIMES value %"PRId64" is negative", value->value);
-                    result->times = 0;
-                }
+                /* negative values handled in assemble.c: process_insn() */
             }
         } else {
             if (!add_prefix(result))
@@ -776,12 +783,12 @@ restart_parse:
                  * invent a notional instruction of RESB 0.
                  *
                  * Note that this can be combined with TIMES, so do
-                 * not clear result->
+                 * not clear *result!
                  *
                  */
                 result->opcode          = I_RESB;
                 result->operands        = 1;
-                result->oprs[0].type    = imm_flags(0, IMM_NORMAL);
+                result->oprs[0].type    = imm_flags(0, IMM_NORMAL, 0);
                 result->oprs[0].offset  = 0;
                 result->oprs[0].segment = result->oprs[0].wrt = NO_SEG;
             }
@@ -907,7 +914,7 @@ restart_parse:
          * without requiring a post-comma.
          */
         if (i == TOKEN_BRCCONST) {
-            op->type    = imm_flags(tokval.t_integer, IMMEDIATE);
+            op->type   |= imm_flags(tokval.t_integer, IMMEDIATE, result->opt);
             op->opflags = 0;
             op->offset  = tokval.t_integer;
             op->segment = NO_SEG;
@@ -1208,7 +1215,8 @@ restart_parse:
                 op->segment   = NO_SEG;   /* don't care again */
                 op->wrt       = NO_SEG;   /* still don't care */
 
-                if(optimizing.level >= 0 && !(op->type & STRICT)) {
+                if(!(op->type & STRICT) &&
+                   !(result->opt & OPTIM_STRICT_OPER)) {
                     /* Be optimistic */
                     op->type |=
                         UNITY | SBYTEWORD | SBYTEDWORD | UDWORD | SDWORD;
@@ -1223,7 +1231,7 @@ restart_parse:
                 op->opflags   |= is_self_relative(value) ? OPFLAG_RELATIVE : 0;
 
                 if (is_simple(value))
-                    op->type = imm_flags(n, op->type);
+                    op->type = imm_flags(n, op->type, result->opt);
             } else if (value->type == EXPR_RDSAE) {
                 /*
                  * it's not an operand but a rounding or SAE decorator.

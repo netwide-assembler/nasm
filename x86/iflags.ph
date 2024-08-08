@@ -5,9 +5,17 @@
 #
 if_align('IGEN');
 
-if_("SM",                "Size match");
-if_("SM2",               "Size match first two operands");
-if_("SM23",              "Size match operands 2 and 3");
+# The following MUST be in word 0
+if_("SM0",               "Size match operand 0");
+if_("SM1",               "Size match operand 1");
+if_("SM2",               "Size match operand 2");
+if_("SM3",               "Size match operand 3");
+if_("SM4",               "Size match operand 4");
+if_("AR0",               "SB, SW, SD applies to operand 0");
+if_("AR1",               "SB, SW, SD applies to operand 1");
+if_("AR2",               "SB, SW, SD applies to operand 2");
+if_("AR3",               "SB, SW, SD applies to operand 3");
+if_("AR4",               "SB, SW, SD applies to operand 4");
 if_("SB",                "Unsized operands can't be non-byte");
 if_("SW",                "Unsized operands can't be non-word");
 if_("SD",                "Unsized operands can't be non-dword");
@@ -18,39 +26,19 @@ if_("SZ",                "Unsized operands can't be non-zword");
 if_("SIZE",              "Unsized operands must match the bitsize");
 if_("SX",                "Unsized operands not allowed");
 if_("ANYSIZE",           "Ignore operand size even if explicit");
-if_("AR0",               "SB, SW, SD applies to argument 0");
-if_("AR1",               "SB, SW, SD applies to argument 1");
-if_("AR2",               "SB, SW, SD applies to argument 2");
-if_("AR3",               "SB, SW, SD applies to argument 3");
-if_("AR4",               "SB, SW, SD applies to argument 4");
+# End word 0 requirement
+
 if_("OPT",               "Optimizing assembly only");
 if_("LATEVEX",           "Only if EVEX instructions are disabled");
-
-#
-# dword bound - instruction feature filtering flags
-#
-if_align('FEATURE');
-
-#
-# Encoding flags
-#
-if_("VEX",               "VEX or XOP encoded instruction");
-if_("EVEX",              "EVEX encoded instruction");
 if_("NOAPX",             "Instruction does not support APX registers");
-if_("REX2",              "REX2 encoding required");
-if_("NF",                "Instruction supports the EVEX.NF bit");
+if_("NF",                "Instruction supports the {nf} prefix");
+if_("NF_R",              "Instruction requires the {nf} prefix");
+if_("NF_E",              "EVEX.NF set with {nf} prefix");
 if_("ZU",                "Instruction supports the {zu} prefix");
 if_("LIG",               "Ignore VEX/EVEX L field");
 if_("WIG",               "Ignore VEX/EVEX W field");
 if_("WW",                "VEX/EVEX W is REX.W");
 if_("SIB",               "SIB encoding required");
-
-#
-# Feature filtering flags
-#
-if_("PRIV",              "Privileged instruction");
-if_("SMM",               "Only valid in SMM");
-if_("PROT",              "Protected mode only");
 if_("LOCK",              "Lockable if operand 0 is memory");
 if_("LOCK1",             "Lockable if operand 1 is memory");
 if_("NOLONG",            "Not available in long mode");
@@ -58,6 +46,31 @@ if_("LONG",              "Long mode");
 if_("NOHLE",             "HLE prefixes forbidden");
 if_("MIB",               "split base/index EA");
 if_("BND",               "BND (0xF2) prefix available");
+if_("REX2",              "REX2 encoding required");
+
+#
+# Special immediates types like {dfv=}
+# Used to detect incorrect usage and for the disassembler.
+#
+if_("DFV",               "Destination flag values");
+
+#
+# dword bound - instruction feature filtering flags
+#
+if_align('FEATURE');
+
+#
+# Encoding formats that can be set with the CPU directive
+#
+if_("VEX",               "VEX or XOP encoded instruction");
+if_("EVEX",              "EVEX encoded instruction");
+
+#
+# Feature filtering flags
+#
+if_("PRIV",              "Privileged instruction");
+if_("SMM",               "Only valid in SMM");
+if_("PROT",              "Protected mode only");
 if_("UNDOC",             "Undocumented");
 if_("HLE",               "HLE prefixed");
 if_("FL",                "Instruction modifies the flags");
@@ -131,8 +144,8 @@ if_("AVXIFMA",           "AVX integer multiply and add");
 if_("HRESET",            "History reset");
 if_("SMAP",		 "Supervisor Mode Access Prevention (SMAP)");
 if_("SHA512",            "SHA512 instructions");
-if_("SM3",               "SM3 instructions");
-if_("SM4",               "SM4 instructions");
+if_("HSM3",              "SM3 hash instructions");
+if_("HSM4",              "SM4 hash instructions");
 if_("APX",               "Advanced Performance Extensions (APX)");
 if_("AVX10_1",           "AVX 10.1 instructions");
 if_("AVX10_2",           "AVX 10.2 instructions");
@@ -141,11 +154,6 @@ if_("AVX10_2",           "AVX 10.2 instructions");
 if_("OBSOLETE",          "Instruction removed from architecture");
 if_("NEVER",             "Instruction never implemented");
 if_("NOP",               "Instruction is always a (nonintentional) NOP");
-
-#
-# special immediates types like {dfv=}
-#
-if_("DFV",               "Destination flag values");
 
 #
 # dword bound - cpu type flags

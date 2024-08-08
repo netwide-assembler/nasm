@@ -105,7 +105,7 @@ static inline size_t nasm_last_string_size(void)
     return _nasm_last_string_size;
 }
 
-/* Assert the argument is a pointer without evaluating it */
+/* Statically assert the argument is a pointer without evaluating it */
 #define nasm_assert_pointer(p) ((void)sizeof(*(p)))
 
 #define nasm_new(p) ((p) = nasm_zalloc(sizeof(*(p))))
@@ -181,12 +181,23 @@ void nasm_write(const void *, size_t, FILE *);
 /*
  * NASM assert failure
  */
-fatal_func nasm_assert_failed(const char *, int, const char *);
-#define nasm_assert(x)                                          \
-    do {                                                        \
-        nasm_try_static_assert(x);                              \
-        if (unlikely(!(x)))                                     \
-            nasm_assert_failed(__FILE__,__LINE__,#x);           \
+fatal_func nasm_assert_failed(const char *msg, const char *func,
+                              const char *file, int line);
+
+/* Plain assert, gives the source location as an error message */
+#define nasm_assert(x)                                                  \
+    do {                                                                \
+        nasm_try_static_assert(x);                                      \
+        if (unlikely(!(x)))                                             \
+            nasm_assert_failed(#x,NASM_FUNC,__FILE__,__LINE__);         \
+    } while (0)
+
+/* Assert with custom message */
+#define nasm_assert_msg(x,m)                    \
+    do {                                        \
+        nasm_try_static_assert(x);              \
+        if (unlikely(!(x)))                     \
+            nasm_panic("%s", m);                \
     } while (0)
 
 /* Utility function to generate a string for an invalid enum */
@@ -381,6 +392,10 @@ char * safe_alloc nasm_dirname(const char *path);
 char * safe_alloc nasm_basename(const char *path);
 char * safe_alloc nasm_catfile(const char *dir, const char *path);
 
+/*
+ * Various tokens to readable strings, with limit checking
+ */
+const char * pure_func register_name(int);
 const char * pure_func prefix_name(int);
 
 /*
@@ -495,9 +510,10 @@ static inline bool const_func overflow_unsigned(uint64_t value, unsigned int byt
     return zext(value, bytes << 3) != value;
 }
 
+/* This is very conservative, but otherwise things like ~0x80 break */
 static inline bool const_func overflow_general(int64_t value, unsigned int bytes)
 {
-    return overflow_unsigned(value, bytes) && overflow_signed(value, bytes);
+    return overflow_unsigned(value, bytes) && overflow_unsigned(-value, bytes);
 }
 
 /* check if value is power of 2 */

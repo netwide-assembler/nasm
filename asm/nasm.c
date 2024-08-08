@@ -127,8 +127,7 @@ const struct dfmt *dfmt;
 FILE *error_file;               /* Where to write error messages */
 
 FILE *ofile = NULL;
-struct optimization optimizing =
-    { MAX_OPTIMIZE, OPTIM_ALL_ENABLED }; /* number of optimization passes to take */
+enum optimization optimizing = OPTIM_DEFAULT;
 static int cmd_sb = 16;    /* by default */
 
 iflag_t cpu, cmd_cpu;
@@ -282,7 +281,7 @@ static void set_curr_offs(int64_t l_off)
             offsets = raa_write(offsets, location.segment, l_off);
 }
 
-static void increment_offset(int64_t delta)
+void increment_offset(int64_t delta)
 {
     if (unlikely(delta == 0))
         return;
@@ -1032,20 +1031,24 @@ static bool process_arg(char *p, char *q, int pass)
 
                 if (!*param) {
                     /* Naked -O == -Ox */
-                    optimizing.level = MAX_OPTIMIZE;
+                    optimizing = OPTIM_ALL_ENABLED;
                 } else {
                     while (*param) {
                         switch (*param) {
                         case '0': case '1': case '2': case '3': case '4':
                         case '5': case '6': case '7': case '8': case '9':
                             opt = strtoul(param, &param, 10);
-
-                            /* -O0 -> optimizing.level == -1, 0.98 behaviour */
-                            /* -O1 -> optimizing.level == 0, 0.98.09 behaviour */
-                            if (opt < 2)
-                                optimizing.level = opt - 1;
-                            else
-                                optimizing.level = opt;
+                            switch (opt) {
+                            case 0:
+                                optimizing = OPTIM_LEVEL_0;
+                                break;
+                            case 1:
+                                optimizing = OPTIM_LEVEL_1;
+                                break;
+                            default:
+                                optimizing = OPTIM_ALL_ENABLED;
+                                break;
+                            }
                             break;
 
                         case 'v':
@@ -1056,7 +1059,7 @@ static bool process_arg(char *p, char *q, int pass)
 
                         case 'x':
                             param++;
-                            optimizing.level = MAX_OPTIMIZE;
+                            optimizing = OPTIM_ALL_ENABLED;
                             break;
 
                         default:
@@ -1065,8 +1068,6 @@ static bool process_arg(char *p, char *q, int pass)
                             break;
                         }
                     }
-                    if (optimizing.level > MAX_OPTIMIZE)
-                        optimizing.level = MAX_OPTIMIZE;
                 }
             }
             break;
@@ -1566,7 +1567,7 @@ static void forward_refs(insn *instruction)
 
     instruction->forw_ref = false;
 
-    if (!optimizing.level)
+    if (instruction->opt & OPTIM_DISABLE_FWREF)
         return;                 /* For -O0 don't bother */
 
     if (!forwref)
@@ -1589,55 +1590,6 @@ static void forward_refs(insn *instruction)
             fwinf = saa_wstruct(forwrefs);
             fwinf->lineno = globallineno;
             fwinf->operand = i;
-        }
-    }
-}
-
-static void process_insn(insn *instruction)
-{
-    int32_t n;
-    int64_t l;
-
-    if (!instruction->times)
-        return;                 /* Nothing to do... */
-
-    nasm_assert(instruction->times > 0);
-
-    /*
-     * NOTE: insn_size() can change instruction->times
-     * (usually to 1) when called.
-     */
-    if (!pass_final()) {
-        int64_t start = location.offset;
-        for (n = 1; n <= instruction->times; n++) {
-            l = insn_size(location.segment, location.offset,
-                          globalbits, instruction);
-            /* l == -1 -> invalid instruction */
-            if (l != -1)
-                increment_offset(l);
-        }
-        if (list_option('p')) {
-            struct out_data dummy;
-            memset(&dummy, 0, sizeof dummy);
-            dummy.type   = OUT_RAWDATA; /* Handled specially with .data NULL */
-            dummy.offset = start;
-            dummy.size   = location.offset - start;
-            lfmt->output(&dummy);
-        }
-    } else {
-        l = assemble(location.segment, location.offset,
-                     globalbits, instruction);
-                /* We can't get an invalid instruction here */
-        increment_offset(l);
-
-        if (instruction->times > 1) {
-            lfmt->uplevel(LIST_TIMES, instruction->times);
-            for (n = 2; n <= instruction->times; n++) {
-                l = assemble(location.segment, location.offset,
-                             globalbits, instruction);
-                increment_offset(l);
-            }
-            lfmt->downlevel(LIST_TIMES);
         }
     }
 }
@@ -1747,7 +1699,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                 goto end_of_line; /* Just do final cleanup */
 
             /* Not a directive, or even something that starts with [ */
-            parse_line(line, &output_ins);
+            parse_line(line, &output_ins, globalbits);
             forward_refs(&output_ins);
             process_insn(&output_ins);
             cleanup_insn(&output_ins);

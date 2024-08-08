@@ -73,14 +73,19 @@ IF_GEN_HELPER(xor, ^)
 /* Some helpers which are to work with predefined masks */
 #define IF_SMASK        (IFM_SB|IFM_SW|IFM_SD|IFM_SQ|IFM_SO|IFM_SY|IFM_SZ|IFM_SIZE|IFM_ANYSIZE)
 #define IF_ARMASK       (IFM_AR0|IFM_AR1|IFM_AR2|IFM_AR3|IFM_AR4)
+#define IF_SMMASK       (IFM_SM0|IFM_SM1|IFM_SM2|IFM_SM3|IFM_SM4)
 
 #define _itemp_smask(idx)      (insns_flags[(idx)].field[0] & IF_SMASK)
 #define _itemp_armask(idx)     (insns_flags[(idx)].field[0] & IF_ARMASK)
-#define _itemp_arg(idx)        ((_itemp_armask(idx) >> IF_AR0) - 1)
+#define _itemp_smmask(idx)     (insns_flags[(idx)].field[0] & IF_SMMASK)
+#define _itemp_arx(idx)        (_itemp_armask(idx) >> IF_AR0)
+#define _itemp_smx(idx)        (_itemp_smmask(idx) >> IF_SM0)
 
 #define itemp_smask(itemp)      _itemp_smask((itemp)->iflag_idx)
-#define itemp_arg(itemp)        _itemp_arg((itemp)->iflag_idx)
 #define itemp_armask(itemp)     _itemp_armask((itemp)->iflag_idx)
+#define itemp_smmask(itemp)     _itemp_smmask((itemp)->iflag_idx)
+#define itemp_arx(itemp)        _itemp_arx((itemp)->iflag_idx)
+#define itemp_smx(itemp)        _itemp_smx((itemp)->iflag_idx)
 
 /*
  * IF_ANY is the highest CPU level by definition

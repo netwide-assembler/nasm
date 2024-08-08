@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -47,8 +47,8 @@ void set_cpu(const char *cpuspec);
 extern bool in_absolute;        /* Are we in an absolute segment? */
 extern struct location absolute;
 
-int64_t insn_size(int32_t segment, int64_t offset, int bits, insn *instruction);
-int64_t assemble(int32_t segment, int64_t offset, int bits, insn *instruction);
+void increment_offset(int64_t delta);
+void process_insn(insn *instruction);
 
 bool process_directives(char *);
 void process_pragma(char *);

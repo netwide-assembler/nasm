@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -90,14 +90,21 @@ void nasm_warn_(errflags flags, const char *fmt, ...)
 	nasm_do_error(ERR_WARNING, flags);
 }
 
-fatal_func nasm_panic_from_macro(const char *file, int line)
+fatal_func nasm_panic_from_macro(const char *func, const char *file, int line)
 {
-	nasm_panic("internal error at %s:%d\n", file, line);
+    if (!func)
+        func = "<unknown>";
+
+    nasm_panic("internal error in %s at %s:%d\n", func, file, line);
 }
 
-fatal_func nasm_assert_failed(const char *file, int line, const char *msg)
+fatal_func nasm_assert_failed(const char *msg, const char *func,
+                              const char *file, int line)
 {
-	nasm_panic("assertion %s failed at %s:%d", msg, file, line);
+    if (!func)
+        func = "<unknown>";
+
+    nasm_panic("assertion %s failed in %s at %s:%d", msg, func, file, line);
 }
 
 

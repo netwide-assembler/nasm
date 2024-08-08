@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -69,8 +69,8 @@ fatal_func printf_func(1, 2) nasm_critical(const char *fmt, ...);
 fatal_func printf_func(2, 3) nasm_criticalf(errflags flags, const char *fmt, ...);
 fatal_func printf_func(1, 2) nasm_panic(const char *fmt, ...);
 fatal_func printf_func(2, 3) nasm_panicf(errflags flags, const char *fmt, ...);
-fatal_func nasm_panic_from_macro(const char *file, int line);
-#define panic() nasm_panic_from_macro(__FILE__, __LINE__);
+fatal_func nasm_panic_from_macro(const char *func, const char *file, int line);
+#define panic() nasm_panic_from_macro(NASM_FUNC,__FILE__,__LINE__)
 
 void vprintf_func(2) nasm_verror(errflags severity, const char *fmt, va_list ap);
 fatal_func vprintf_func(2) nasm_verror_critical(errflags severity, const char *fmt, va_list ap);

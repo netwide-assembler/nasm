@@ -148,6 +148,9 @@ AC_CHECK_INCLUDES_DEFAULT
 dnl Check for variadic macro support
 PA_VARIADIC_MACROS
 
+dnl Check if the compiler supports __func__ or some equivalent
+PA_HAVE_FUNC_NAME
+
 dnl Handle Windows embedded manifests
 AS_CASE([$host],
 	[*-win* | *-mingw*],

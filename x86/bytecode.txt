@@ -110,23 +110,23 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \315             norexx                      (disassembler only) invalid with REX.X
 \316             norexr                      (disassembler only) invalid with REX.R
 \317             norexw                      (disassembler only) invalid with REX.W
-\320             o16                         indicates fixed 16-bit operand size, i.e. optional 0x66.
-\321             o32                         indicates fixed 32-bit operand size, i.e. optional 0x66.
+\320             o16*                        indicates fixed 16-bit operand size, i.e. optional 0x66.
+\321             o32*                        indicates fixed 32-bit operand size, i.e. optional 0x66.
 \322             odf                         indicates that this instruction is only valid when the
                                              operand size is the default (instruction to disassembler,
                                              generates no code in the assembler)
-\323             o64nw                       indicates fixed 64-bit operand size, REX.W not required.
-\324             o64                         indicates 64-bit operand size requiring REX.W.
+\323             o64nw*                      indicates fixed 64-bit operand size, REX.W not required.
+\324             o64*                        indicates 64-bit operand size requiring REX.W.
 \325             nohi                        instruction which always uses spl/bpl/sil/dil
 \326             nof3                        (disassembler only) not valid with 0xF3 REP prefix.
-\331             norep                       (disassembler only) not valid with 0xF2 or 0xF3 REP prefixes.
+\327		 nw			     o64nw if in 64-bit mode, otherwise ignore. Can be prefixed
+					     with o16 or o32; this code overrides those for 64-bit mode.
+\330		 osz			     generate 0x66 or REX.W if operand size is not the default (16/32/32).
+\331             norep                       not valid with 0xF2 or 0xF3 REP prefixes.
 \332             f2i                         REP prefix (0xF2 byte) used as opcode extension.
 \333             f3i                         REP prefix (0xF3 byte) used as opcode extension.
 \334             rex.l                       LOCK prefix used as REX.
 \335             repe                        disassemble a rep (0xF3 byte) prefix as repe not rep.
-\336             mustrep                     force a REP(E) prefix (0xF3) even if not specified.
-\337             mustrepne                   force a REPNE prefix (0xF2) even if not specified.
-                                             \336-\337 are still listed as prefixes in the disassembler.
 \340             resb                        reserve <operand 0> bytes of uninitialized storage.
                                              Operand 0 had better be a segmentless constant.
 \341             wait                        this instruction needs a WAIT "prefix"
@@ -152,3 +152,5 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \374             vsibx|vm32x|vm64x           this instruction takes an XMM VSIB memory EA
 \375             vsiby|vm32y|vm64y           this instruction takes an YMM VSIB memory EA
 \376             vsibz|vm32z|vm64z           this instruction takes an ZMM VSIB memory EA
+
+* No prefix is emitted if following VEX/EVEX.

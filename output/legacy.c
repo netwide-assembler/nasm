@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 2016-2023 The NASM Authors - All Rights Reserved
+ *   Copyright 2016-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -84,7 +84,7 @@ void nasm_do_legacy_output(const struct out_data *data)
         }
 
         dptr = &data->toffset;
-        size = data->relbase - data->offset;
+        size = data->relbase - data->loc.offset;
         break;
 
     case OUT_SEGMENT:
@@ -110,7 +110,7 @@ void nasm_do_legacy_output(const struct out_data *data)
         type = OUT_RAWDATA;
         dptr = zero_buffer;
         while (size > ZERO_BUF_SIZE) {
-            ofmt->legacy_output(data->segment, dptr, type,
+            ofmt->legacy_output(data->loc.segment, dptr, type,
                                 ZERO_BUF_SIZE, tsegment, twrt);
             size -= ZERO_BUF_SIZE;
         }
@@ -121,5 +121,5 @@ void nasm_do_legacy_output(const struct out_data *data)
         break;
     }
 
-    ofmt->legacy_output(data->segment, dptr, type, size, tsegment, twrt);
+    ofmt->legacy_output(data->loc.segment, dptr, type, size, tsegment, twrt);
 }

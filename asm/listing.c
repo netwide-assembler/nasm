@@ -211,7 +211,7 @@ static void list_output(const struct out_data *data)
 {
     char q[24];
     uint64_t size = data->size;
-    uint64_t offset = data->offset;
+    uint64_t offset = data->loc.offset;
     const uint8_t *p = data->data;
 
 
@@ -231,7 +231,7 @@ static void list_output(const struct out_data *data)
     {
 	if (size == 0) {
             if (!listdata[0])
-                listoffset = data->offset;
+                listoffset = data->loc.offset;
         } else if (p) {
             while (size--) {
                 HEX(q, *p);

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2021 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -44,22 +44,41 @@
  * The current bit size of the CPU
  */
 int globalbits = 0;
+
+/*
+ * Name of a register token, if applicable; otherwise NULL
+ */
+const char *register_name(int token)
+{
+    if (is_register(token))
+        return nasm_reg_names[token - EXPR_REG_START];
+    else
+        return NULL;
+}
+
 /*
  * Common list of prefix names; ideally should be auto-generated
  * from tokens.dat. This MUST match the enum in include/nasm.h.
  */
 const char *prefix_name(int token)
 {
-    static const char *prefix_names[] = {
+    static const char * const
+        prefix_names[PREFIX_ENUM_LIMIT - PREFIX_ENUM_START] = {
         "a16", "a32", "a64", "asp", "lock", "o16", "o32", "o64", "osp",
-        "rep", "repe", "repne", "repnz", "repz", "times", "wait",
-        "xacquire", "xrelease", "bnd", "nobnd", "{rex}", "{evex}", "{vex}",
-        "{vex3}", "{vex2}"
+        "rep", "repe", "repne", "repnz", "repz", "wait",
+        "xacquire", "xrelease", "bnd", "nobnd", "{rex}", "{rex2}",
+        "{evex}", "{vex}", "{vex3}", "{vex2}", "{nf}", "{zu}"
     };
-    unsigned int prefix = token-PREFIX_ENUM_START;
+    const char *name;
 
-    if (prefix >= ARRAY_SIZE(prefix_names))
-	return NULL;
+    /* A register can also be a prefix */
+    name = register_name(token);
 
-    return prefix_names[prefix];
+    if (!name) {
+        const unsigned int prefix = token - PREFIX_ENUM_START;
+        if (prefix < ARRAY_SIZE(prefix_names))
+            name = prefix_names[prefix];
+    }
+
+    return name;
 }

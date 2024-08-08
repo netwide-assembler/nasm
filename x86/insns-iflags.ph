@@ -112,17 +112,71 @@ sub if_end() {
 require 'x86/iflags.ph';
 if_end();
 
+# Remove non-flags
+sub clean_flags($) {
+    my($flags) = @_;
+
+    delete $flags->{''};
+    delete $flags->{'0'};
+    delete $flags->{'IGNORE'};
+}
+
+# Split a flags field, returns a hash
+sub split_flags($) {
+    my($flagstr) = @_;
+    my %flags = ();
+
+    $flagstr = uc($flagstr);
+
+    foreach my $flag (split(',', $flagstr)) {
+	# Somewhat nicer syntax for required flags (NF! -> NF_R)
+	$flag =~ s/\!$/_R/;
+
+	if ($flag =~ /^(.*)(([0-9]+[+-])+[0-9]+)$/) {
+	    my $pref = $1;
+	    my @rang = split(/([-+])/, "+$2");
+	    shift(@rang);	# Drop empty entry at beginning
+	    my $eor;
+	    while (defined(my $sep = shift(@rang))) {
+		my $nxt = shift(@rang) + 0;
+
+		$eor = $nxt if ($sep eq '+');
+		for (my $i = $eor; $i <= $nxt; $i++) {
+		    $flags{"$pref$i"}++;
+		}
+		$eor = $nxt;
+	    }
+	} else {
+	    $flags{$flag}++;
+	}
+    }
+
+    clean_flags(\%flags);
+    return %flags;
+}
+
+# Merge a flags field
+sub merge_flags($) {
+    my($flags) = @_;
+
+    clean_flags(\%flags);
+
+    my @flagslist = sort keys(%$flags);
+    return scalar(@flagslist) ? join(',', @flagslist) : '0';
+}
+
 # Compute the combinations of instruction flags actually used in templates
 
 my %insns_flag_hash = ();
 my @insns_flag_values = ();
 my @insns_flag_lists = ();
 
-sub insns_flag_index(@) {
-    return undef if $_[0] eq "ignore";
+sub insns_flag_index($) {
+    my($flags) = @_;
 
-    my @prekey = sort(@_);
-    my $key = join(',', @prekey);
+    my $key = merge_flags($flags);
+    my @prekey = sort(keys %$flags);
+
     my $flag_index = $insns_flag_hash{$key};
 
     unless (defined($flag_index)) {

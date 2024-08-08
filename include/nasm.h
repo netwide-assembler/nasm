@@ -127,13 +127,22 @@ enum out_flags {
 };
 
 /*
+ * Description of an assembly output location
+ */
+struct location {
+    int64_t offset;
+    int32_t segment;
+    bool    known;
+};
+extern struct location location; /* Current assembly location */
+
+/*
  * The data we send down to the backend.
  * XXX: We still want to push down the base address symbol if
  * available, and replace the segment numbers with a structure.
  */
 struct out_data {
-    int64_t offset;             /* Offset within segment */
-    int32_t segment;            /* Segment written to */
+    struct location loc;        /* seg:offset being written to */
     enum out_type type;         /* See above */
     enum out_flags flags;       /* See above */
     int inslen;                 /* Length of instruction */
@@ -336,13 +345,6 @@ struct tokenval {
     enum token_flags    t_flag;
 };
 typedef int (*scanner)(void *private_data, struct tokenval *tv);
-
-struct location {
-    int64_t offset;
-    int32_t segment;
-    int     known;
-};
-extern struct location location;
 
 /*
  * Expression-evaluator datatype. Expressions, within the
@@ -609,6 +611,8 @@ enum vex_class {
  * Note that because segment registers may be used as instruction
  * prefixes, we must ensure the enumerations for prefixes and
  * register names do not overlap.
+ *
+ * These MUST match the table in common/common.c
  */
 enum prefixes { /* instruction prefixes */
     P_none = 0,
@@ -627,7 +631,6 @@ enum prefixes { /* instruction prefixes */
     P_REPNE,
     P_REPNZ,
     P_REPZ,
-    P_TIMES,
     P_WAIT,
     P_XACQUIRE,
     P_XRELEASE,
@@ -737,16 +740,18 @@ enum ea_type {
  * LOCK and REP used to be one slot; this is no longer the case since
  * the introduction of HLE.
  *
+ * The prefixes are emitted in order by slot number.
+ *
  * Note: these are stored in an PPS_BITS-bit field in the token hash!
  *
  */
 enum prefix_pos {
     PPS_WAIT  =  0,     /* WAIT (technically not a prefix!) */
-    PPS_REP,            /* REP/HLE prefix */
-    PPS_LOCK,           /* LOCK prefix */
     PPS_SEG,            /* Segment override prefix */
-    PPS_OSIZE,          /* Operand size prefix */
     PPS_ASIZE,          /* Address size prefix */
+    PPS_LOCK,           /* LOCK prefix */
+    PPS_OSIZE,          /* Operand size prefix */
+    PPS_REP,            /* REP/HLE prefix */
     PPS_REX,            /* REX/VEX type */
     PPS_NF,             /* Do not set flags */
     PPS_ZU,             /* Zero upper register */
@@ -784,32 +789,77 @@ enum vectlens {
     VLMAX = 3
 };
 
-/* If you need to change this, also change it in insns.pl */
-#define MAX_OPERANDS 5
+/* A postprocessed effective address (EA) */
+struct ea_data {
+    enum ea_type type;            /* what kind of EA is this? */
+    uint32_t rex;                 /* EA-derived REX flags */
+    bool sib_present;             /* is a SIB byte necessary? */
+    uint8_t bytes;                /* # of bytes of offset needed */
+    uint8_t size;                 /* lazy - this is sib+bytes+1 */
+    uint8_t modrm, sib;		  /* the bytes themselves */
+    bool rip;                     /* RIP-relative? */
+    int8_t disp8;                 /* 8-bit displacement, possibly compressed */
+    uint8_t disp8_shift;          /* Shift for 8-bit displacement */
+    bool disp8_ok;                /* 8-bit displacement is valid */
+};
+
+/*
+ * flag to disable optimizations selectively
+ * this is useful to turn-off certain optimizations
+ */
+enum optimization {
+    /* Individual flags */
+    OPTIM_NO_Jcc_RELAX     =  1, /* Disable Jcc relaxation */
+    OPTIM_NO_JMP_RELAX     =  2, /* Disable JMP relaxation */
+    OPTIM_STRICT_INSTR     =  4, /* Disable alternate instructions */
+    OPTIM_STRICT_OPER      =  8, /* Disable operand relaxation */
+    OPTIM_DISABLE_FWREF    = 16, /* Disable forward reference relaxation */
+
+    /* Everything */
+    OPTIM_ALL_ENABLED       = 0,
+
+    /* Disable all jump relaxations */
+    OPTIM_DISABLE_JMP_MATCH = OPTIM_NO_Jcc_RELAX | OPTIM_NO_JMP_RELAX,
+
+    /* Level 0 : 0.98 behavior */
+    OPTIM_LEVEL_0 =
+    OPTIM_STRICT_INSTR | OPTIM_STRICT_OPER | OPTIM_NO_JMP_RELAX,
+
+    /* Level 1 : 0.98.09 behavior */
+    OPTIM_LEVEL_1 =
+    OPTIM_STRICT_INSTR | OPTIM_NO_Jcc_RELAX | OPTIM_NO_JMP_RELAX |
+    OPTIM_DISABLE_FWREF,
+
+    /* Default */
+    OPTIM_DEFAULT = OPTIM_ALL_ENABLED
+};
 
 typedef struct insn { /* an instruction itself */
-    char            *label;                 /* the label defined, or NULL */
-    int             prefixes[MAXPREFIX];    /* instruction prefixes, if any */
     enum opcode     opcode;                 /* the opcode - not just the string */
-    int             operands;               /* how many operands? 0-7 (more if db et al) */
-    int             addr_size;              /* address size */
-    int             op_size;                /* operand size */
-    operand         oprs[MAX_OPERANDS];     /* the operands, defined as above */
+    struct location loc;                    /* assembly location */
+    int             prefixes[MAXPREFIX];    /* instruction prefixes, if any */
+    char            *label;                 /* the label defined, or NULL */
     extop           *eops;                  /* extended operands */
     int             eops_float;             /* true if DD and floating */
     int32_t         times;                  /* repeat count (TIMES prefix) */
     bool            forw_ref;               /* is there a forward reference? */
     bool            rex_done;               /* REX prefix emitted? */
-    int             rex;                    /* Special REX Prefix */
+    uint8_t         bits;                   /* Execution mode (16, 32, 64) */
+    uint8_t         op_size;                /* operand size */
+    uint8_t         addr_size;              /* address size */
+    int             operands;               /* how many operands? 0-7 unless eops */
+    int             rex;                    /* REX prefix flags */
     int             vexreg;                 /* Register encoded in VEX.V */
     int             vex_cm;                 /* Class and M field for VEX prefix */
     int             vex_wlp;                /* W, P and L information for VEX prefix */
     uint32_t	    evex;                   /* EVEX prefix under construction */
     enum ttypes     evex_tuple;             /* Tuple type for compressed Disp8*N */
     int             evex_rm;                /* static rounding mode for AVX512 (EVEX) */
-    int             bits;                   /* Execution mode (16, 32, 64) */
+    enum optimization opt;                /* Optimization flags to use */
+    struct ea_data  ea;                     /* Effective address data */
     const struct itemplate *itemp;          /* Instruction template */
-    struct operand *evex_brerop;            /* BR/ER/SAE operand position */
+    const struct operand *evex_brerop;      /* BR/ER/SAE operand position */
+    struct operand  oprs[MAX_OPERANDS];     /* the operands, defined as above */
 } insn;
 
 /* Instruction flags type: IF_* flags are defined in insns.h */
@@ -1417,20 +1467,6 @@ static inline opflags_t brsize_to_size(opflags_t brbits)
  */
 
 /*
- * flag to disable optimizations selectively
- * this is useful to turn-off certain optimizations
- */
-enum optimization_disable_flag {
-    OPTIM_ALL_ENABLED       = 0,
-    OPTIM_DISABLE_JMP_MATCH = 1
-};
-
-struct optimization {
-    int level;
-    int flag;
-};
-
-/*
  * Various types of compiler passes we may execute.
  * If these are changed, you need to also change _pass_types[]
  * in asm/nasm.c.
@@ -1490,7 +1526,7 @@ static inline int64_t pass_count(void)
     return _passn;
 }
 
-extern struct optimization optimizing;
+extern enum optimization optimizing;
 extern int globalbits;          /* 16, 32 or 64-bit mode */
 extern int globalrel;           /* default to relative addressing? */
 extern int globalbnd;           /* default to using bnd prefix? */

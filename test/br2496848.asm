@@ -1,12 +1,10 @@
-;Testname=unoptimized; Arguments=-O0 -fbin -o br2496848.bin; Files=stdout stderr br2496848.bin
-;Testname=optimized;   Arguments=-Ox -fbin -o br2496848.bin; Files=stdout stderr br2496848.bin
-
 bits 64
 
 foo:
 
 default abs
 
+mov al, [qword 0xffffffffffffff]
 mov al, [qword 0xffffffffffffffff]
 mov al, [qword 0x1ffffffffffffffff]
 
