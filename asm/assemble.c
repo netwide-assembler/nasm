@@ -1651,8 +1651,26 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
 
         case 0330:
             /* The actual prefixes are generated elsewhere */
-            if (bits == 64 && ins->prefixes[PPS_OSIZE] == P_O64)
-                ins->rex |= REX_W;
+            switch (ins->prefixes[PPS_OSIZE]) {
+            case P_OSP:
+                ins->op_size = bits == 16 ? 32 : 16;
+                break;
+            case P_O16:
+                ins->op_size = 16;
+                break;
+            case P_O32:
+                ins->op_size = 32;
+                break;
+            case P_O64:
+                /* This will error out elsewhere for non-64-bit mode */
+                if (bits == 64) {
+                    ins->op_size = 64;
+                    ins->rex |= REX_W;
+                }
+                break;
+            default:
+                break;
+            }
             break;
 
         case 0331:
