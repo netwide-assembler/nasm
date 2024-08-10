@@ -759,7 +759,6 @@ typedef struct insn { /* an instruction itself */
     extop           *eops;                  /* extended operands */
     int             eops_float;             /* true if DD and floating */
     int32_t         times;                  /* repeat count (TIMES prefix) */
-    bool            forw_ref;               /* is there a forward reference? */
     bool            rex_done;               /* REX prefix emitted? */
     int             rex;                    /* Special REX Prefix */
     int             vexreg;                 /* Register encoded in VEX prefix */

@@ -637,7 +637,6 @@ insn *parse_line(char *buffer, insn *result)
 
 restart_parse:
     first               = true;
-    result->forw_ref    = false;
 
     stdscan_reset();
     stdscan_set(buffer);
@@ -988,9 +987,6 @@ restart_parse:
         value = evaluate(stdscan, NULL, &tokval,
                          &op->opflags, critical, &hints);
         i = tokval.t_type;
-        if (op->opflags & OPFLAG_FORWARD) {
-            result->forw_ref = true;
-        }
         if (!value)                  /* Error in evaluator */
             goto fail;
 

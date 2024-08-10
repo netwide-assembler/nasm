@@ -1564,10 +1564,8 @@ static void forward_refs(insn *instruction)
     int i;
     struct forwrefinfo *fwinf;
 
-    instruction->forw_ref = false;
-
     if (!optimizing.level)
-        return;                 /* For -O0 don't bother */
+        return;                 /* For -O1 don't bother */
 
     if (!forwref)
         return;
@@ -1575,7 +1573,6 @@ static void forward_refs(insn *instruction)
     if (forwref->lineno != globallineno)
         return;
 
-    instruction->forw_ref = true;
     do {
         instruction->oprs[forwref->operand].opflags |= OPFLAG_FORWARD;
         forwref = saa_rstruct(forwrefs);
