@@ -1093,7 +1093,7 @@ restart_parse:
                 i = tokval.t_type;
             }
             if (!recover && i != 0 && i != ',') {
-                nasm_nonfatal("comma, decorator or end of line expected, got %d", i);
+                nasm_nonfatal("comma, decorator or end of line expected, got %c", i);
                 recover = true;
             }
         } else {                /* immediate operand */
