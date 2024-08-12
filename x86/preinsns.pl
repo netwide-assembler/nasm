@@ -112,9 +112,7 @@ sub eightfold($$@) {
 	}
 	my $nd = 0;
 	my $outdata = 0;
-	foreach my $op (split(/((?:[^\,\[\]\"]+|\[.*?\]|\".*?\")+)/, $ops)) {
-	    next if ($op =~ /^\,*$/);
-
+	foreach my $op ($ops =~ /(?:[^\,\[\]\"]+|\[.*?\]|\".*?\")+/g) {
 	    $op =~ s/\"//g;
 
 	    if ($op =~ s/^\@//) {
@@ -124,9 +122,10 @@ sub eightfold($$@) {
 		$vars{$1} = $2;
 		next;
 	    } elsif ($op =~ /^([\!\+\-])(\w+)$/) {
+		# The commas around KILL guarantees that it is a separate token
 		$vars{$2} =
 		    ($1 eq '+') ? $2 :
-		    ($1 eq '!') ? 'KILL' :
+		    ($1 eq '!') ? ',KILL,' :
 		    '';
 		next;
 	    } elsif ($op =~ /^\-?$/) {
@@ -284,7 +283,8 @@ sub process_insn($$) {
     adjust_instruction($f[1], $f[3], $f[5], \%flags);
 
     # The symbol KILL can be used in macros to eliminate a pattern entirely
-    next if ($f[3] =~ /\bKILL\b/ || $f[5] =~ /\bKILL\b/ || $flags{'KILL'});
+    next if ($f[1] =~ /\bKILL\b/ || $f[3] =~ /\bKILL\b/ ||
+	     $f[5] =~ /\bKILL\b/ || $flags{'KILL'});
 
     # Regenerate the flags string. Flags beginning with ! are for this program only.
     $f[7] = join(',', sort { $flags{$a} <=> $flags{$b} } grep { !/^\!/ } keys %flags);
@@ -301,9 +301,8 @@ while (defined(my $l = <$in>)) {
     my @insl;
 
     if ($l =~ /^\s*\$(\w+[^\;]*?)\s*(\;.*)?$/) {
-	print $out $2, "\n" if ($2 ne '');
-	my @args = split(/((?:\[.*?\]|\".*?\"|[^\[\]\"\s]+)+)/, $1);
-	@args = grep { !/^\s*$/ } @args;
+	print $out $2, "\n" if ($2 ne ''); # Comment
+	my @args = ($1 =~ /(?:\[.*?\]|\".*?\"|[^\[\]\"\s]+)+/g);
 	@insl = process_macro(@args);
     } else {
 	@insl = ($l);
