@@ -71,7 +71,9 @@ EQU		imm				ignore						ignore
 EQU		imm:imm				ignore						ignore
 
 ;# Conventional instructions
-$arith ADD OR ADC SBB AND SUB XOR CMP
+
+; The basic 8 arithmetic instructions
+$arith ADD OR ADC SBB AND SUB XOR -zu,-lock,-hle,CMP
 
 AAA		void				[	37]					8086,NOLONG
 AAD		void				[	d5 0a]					8086,NOLONG

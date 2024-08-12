@@ -13,39 +13,31 @@
 use integer;
 use strict;
 
-# Common patterns for the basic 8 arithmetric functions
-sub mac_arith {
-    my @l;
-    my $cnt = 0;
-    foreach my $op (@_) {
-	my $o0 = sprintf("%02x", ($cnt << 3)+0);
-	my $o1 = sprintf("%02x", ($cnt << 3)+1);
-	my $o2 = sprintf("%02x", ($cnt << 3)+2);
-	my $o3 = sprintf("%02x", ($cnt << 3)+3);
-	my $o4 = sprintf("%02x", ($cnt << 3)+4);
-	my $o5 = sprintf("%02x", ($cnt << 3)+5);
-	my($hle,$lock,$zu) = ($op ne 'CMP') ? ('hle','LOCK','ZU') : ('','','');
+our %macros;
+our($macro, $outfile, $infile, $line);	# Public for error messages
 
-	push(@l, <<EOL);
-$op		rm8,reg8			[mr:	$hle $o0 /r]				8086,SM,$lock
-$op		rm16,reg16			[mr:	$hle o16 $o1 /r]			8086,SM,$lock
-$op		rm32,reg32			[mr:	$hle o32 $o1 /r]			386,SM,$lock,$zu
-$op		rm64,reg64			[mr:	$hle o64 $o1 /r]			X86_64,LONG,SM,$lock,$zu
-$op		reg8,rm8			[rm:	$o2 /r]					8086,SM
-$op		reg16,rm16			[rm:	o16 $o3 /r]				8086,SM
-$op		reg32,rm32			[rm:	o32 $o3 /r]				386,SM,$zu
-$op		reg64,rm64			[rm:	o64 $o3 /r]				X86_64,LONG,SM,$zu
-$op		reg_al,imm8			[-i:	$o4 ib]					8086,SM
-$op		rm8,imm8			[mi:	$hle 80 /$cnt ib]			8086,SM,$lock
-$op		rm16,sbyteword16		[mi:	$hle o16 83 /$cnt ib,s]			8086,SM,$lock
-$op		reg_ax,imm16			[-i:	o16 $o5 iw]				8086,SM
-$op		rm16,imm16			[mi:	$hle o16 81 /$cnt iw]			8086,SM,$lock
-$op		rm32,sbytedword32		[mi:	$hle o32 83 /$cnt ib,s]			386,SM,$lock,$zu
-$op		reg_eax,imm32			[-i:	o32 $o5 id]				386,SM,$zu
-$op		rm32,imm32			[mi:	$hle o32 81 /$cnt id]			386,SM,$lock,$zu
-$op		rm64,sbytedword64		[mi:	$hle o64 83 /$cnt ib,s]			X86_64,LONG,SM,$lock,$zu
-$op		reg_rax,sdword64		[-i:	o64 $o5 id,s]				X86_64,LONG,SM,$zu
-$op		rm64,sdword64			[mi:	$hle o64 81 /$cnt id,s]			X86_64,LONG,SM,$lock,$zu
+# Common patterns for the basic 8 arithmetric functions
+$macros{'arith'} = sub {
+    return eightfold(<<'EOL', {}, @_);
+$op		rm8,reg8			[mr:	$hle $o0 /r				]	8086,SM,$lock
+$op		rm16,reg16			[mr:	$hle o16 $o1 /r				]	8086,SM,$lock
+$op		rm32,reg32			[mr:	$hle o32 $o1 /r				]	386,SM,$lock,$zu
+$op		rm64,reg64			[mr:	$hle o64 $o1 /r				]	X86_64,LONG,SM,$lock,$zu
+$op		reg8,rm8			[rm:	$o2 /r					]	8086,SM
+$op		reg16,rm16			[rm:	o16 $o3 /r				]	8086,SM
+$op		reg32,rm32			[rm:	o32 $o3 /r				]	386,SM,$zu
+$op		reg64,rm64			[rm:	o64 $o3 /r				]	X86_64,LONG,SM,$zu
+$op		reg_al,imm8			[-i:	$o4 ib					]	8086,SM
+$op		rm8,imm8			[mi:	$hle 80 /$n ib				]	8086,SM,$lock
+$op		rm16,sbyteword16		[mi:	$hle o16 83 /$n ib,s			]	8086,SM,$lock
+$op		reg_ax,imm16			[-i:	o16 $o5 iw				]	8086,SM
+$op		rm16,imm16			[mi:	$hle o16 81 /$n iw			]	8086,SM,$lock
+$op		rm32,sbytedword32		[mi:	$hle o32 83 /$n ib,s			]	386,SM,$lock,$zu
+$op		reg_eax,imm32			[-i:	o32 $o5 id				]	386,SM,$zu
+$op		rm32,imm32			[mi:	$hle o32 81 /$n id			]	386,SM,$lock,$zu
+$op		rm64,sbytedword64		[mi:	$hle o64 83 /$n ib,s			]	X86_64,LONG,SM,$lock,$zu
+$op		reg_rax,sdword64		[-i:	o64 $o5 id,s				]	X86_64,LONG,SM,$zu
+$op		rm64,sdword64			[mi:	$hle o64 81 /$n id,s			]	X86_64,LONG,SM,$lock,$zu
 $op		reg8?,reg8,rm8			[vrm:	evex.ndx.nf.l0.m4.o8     $o2 /r		]	APX,SM
 $op		reg16?,reg16,rm16		[vrm:	evex.ndx.nf.l0.m4.o16    $o3 /r		]	APX,SM
 $op		reg32?,reg32,rm32		[vrm:	evex.ndx.nf.l0.m4.o32    $o3 /r		]	APX,SM
@@ -54,28 +46,103 @@ $op		reg8?,rm8,reg8			[vmr:	evex.ndx.nf.l0.m4.o8     $o0 /r		]	APX,SM
 $op		reg16?,rm16,reg16		[vmr:	evex.ndx.nf.l0.m4.o16    $o1 /r		]	APX,SM
 $op		reg32?,rm32,reg32		[vmr:	evex.ndx.nf.l0.m4.o32    $o1 /r		]	APX,SM,$zu
 $op		reg64?,rm64,reg64		[vmr:	evex.ndx.nf.l0.m4.o64    $o1 /r		]	APX,SM,$zu
-$op		reg8?,rm8,imm8			[vmi:	evex.ndx.nf.l0.m4.o8     80 /$cnt ib	]	APX,SM
-$op		reg16?,rm16,sbyteword16		[vmi:	evex.ndx.nf.l0.m4.o16    83 /$cnt ib,s	]	APX,SM,ND
-$op		reg16?,rm16,imm16		[vmi:	evex.ndx.nf.l0.m4.o16    81 /$cnt iw	]	APX,SM
-$op		reg32?,rm32,sbytedword32	[vmi:	evex.ndx.nf.l0.m4.o32    83 /$cnt ib,s	]	APX,SM,ND
-$op		reg32?,rm32,imm32		[vmi:	evex.ndx.nf.l0.m4.o32    81 /$cnt id	]	APX,SM
-$op		reg64?,rm64,sbytedword32	[vmi:	evex.ndx.nf.l0.m4.o64    83 /$cnt ib,s	]	APX,SM,ND
-$op		reg64?,rm64,sdword64		[vmi:	evex.ndx.nf.l0.m4.o64    81 /$cnt id,s	]	APX,SM
-
+$op		reg8?,rm8,imm8			[vmi:	evex.ndx.nf.l0.m4.o8     80 /$n ib	]	APX,SM
+$op		reg16?,rm16,sbyteword16		[vmi:	evex.ndx.nf.l0.m4.o16    83 /$n ib,s	]	APX,SM,ND
+$op		reg16?,rm16,imm16		[vmi:	evex.ndx.nf.l0.m4.o16    81 /$n iw	]	APX,SM
+$op		reg32?,rm32,sbytedword32	[vmi:	evex.ndx.nf.l0.m4.o32    83 /$n ib,s	]	APX,SM,ND
+$op		reg32?,rm32,imm32		[vmi:	evex.ndx.nf.l0.m4.o32    81 /$n id	]	APX,SM
+$op		reg64?,rm64,sbytedword32	[vmi:	evex.ndx.nf.l0.m4.o64    83 /$n ib,s	]	APX,SM,ND
+$op		reg64?,rm64,sdword64		[vmi:	evex.ndx.nf.l0.m4.o64    81 /$n id,s	]	APX,SM
 EOL
-	$cnt++;
+};
+
+#
+# Macro helper functions for common constructs
+#
+
+# "8-fold" or similar sequential instruction patterns
+sub eightfold($$@) {
+    my $pat  = shift(@_);
+    my $uvars = shift(@_);
+    my @l;
+
+    my $n = 0;
+
+    my %initvars = ('shift' => 3,
+		    'zu' => 'ZU', 'lock' => 'LOCK', 'nd' => 'ND', 'nf' => 'NF',
+		    'hle' => 'hle',
+		    %$uvars);
+
+    foreach my $ops (@_) {
+	my %vars = %initvars;
+	$vars{'n'} = $n;
+	for (my $i = 0; $i < (1 << $vars{'shift'}); $i++) {
+	    $vars{"o$i"} = sprintf("%02x", $vars{'base'}+($n << $vars{'shift'})+$i);
+	}
+	my $nd = 0;
+	my $outdata = 0;
+	foreach my $op (split(/\,/, $ops)) {
+	    if ($op =~ s/^\!//) {
+		$nd = 1;
+	    }
+	    if ($op =~ /^(\w+)\=(.*)$/) {
+		$vars{$1} = $2;
+		next;
+	    } elsif ($op =~ /^([+-])(\w+)$/) {
+		$vars{$2} = ($1 eq '+') ? uc($2) : '';
+		next;
+	    } elsif ($op =~ /^\-?$/) {
+		next;
+	    }
+
+	    $vars{'op'} = $op;
+	    my $sp = substitute($pat, \%vars);
+	    if ($nd) {
+		$sp =~ s/^(\w.*)$/$1,ND/gm;
+	    }
+	    push(@l, $sp);
+	    $outdata = $nd = 1;
+	}
+	if ($outdata) {
+	    $n++;
+	} else {
+	    %initvars = %vars;
+	}
     }
 
     return @l;
 }
 
-my %macros = ( 'arith' => *mac_arith );
+#
+# Substitute variables in a pattern
+#
+sub substitute($$) {
+    my($pat, $vars) = @_;
+    my $o = '';
 
-my($infile, $outfile) = @ARGV;
-my $line = 0;
+    while ($pat =~ /^(.*?)\$(?:(\w+)\b|\{(\w+)\})(.*)$/s) {
+	$o .= $1;
+	$pat = $4;
+	my $vn = $2.$3;
+	my $vv = $vars->{$vn};
+	if (!defined($vv)) {
+	    die "$0:$infile:$line: no variable \$$vn in macro \$$macro\n";
+	}
+	$o .= $vv;
+    }
+    $o .= $pat;
+
+    return $o;
+}
+
+#
+# Main program
+#
+($infile, $outfile) = @ARGV;
+$line = 0;
 
 sub process_macro(@) {
-    my $macro = shift(@_);
+    $macro = shift(@_);
     my $mfunc = $macros{$macro};
 
     if (!defined($mfunc)) {
@@ -150,11 +217,17 @@ sub process_insn($$) {
     # Modify the instruction flags
     ($f[1], $f[3], $f[5], $f[7]) = adjust_instruction($f[1], $f[3], $f[5], $f[7]);
 
-    # Clean up stray commas in flags
-    $f[7] =~ s/^\+//;
-    $f[7] =~ s/\+$//;
-    $f[7] =~ s/\,\,+/,/g;
+    # Clean up stray commas and duplicate flags
+    my %fls = ('' => 1);
+    my @flc;
+    foreach my $fl (split(/\,/, uc($f[7]))) {
+	unless ($fls{$fl}) {
+	    push(@flc, $fl);
+	    $fls{$fl}++;
+	}
+    }
 
+    $f[7] = join(',', @flc);
     print $out @f, "\n";
 }
 
@@ -163,9 +236,11 @@ open(my $out, '>', $outfile) or die "$0:$outfile: $!\n";
 
 
 while (defined(my $l = <$in>)) {
+    $line++;
     chomp $l;
 
-    if ($l =~ /^\$\s*([^\s\;][^\;]*?)\s*(\;.*)?$/) {
+    if ($l =~ /^\$\s*(\w+[^\;]*?)\s*(\;.*)?$/) {
+	print $out $2, "\n" if ($2 ne '');
 	foreach my $ins (process_macro(split(/\s+/, $1))) {
 	    process_insn($out, $ins);
 	}
