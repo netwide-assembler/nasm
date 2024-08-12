@@ -222,7 +222,8 @@ my %conds = (
     'ae'  =>  3|$c_nd,       'b'   =>  2|$c_nd,  'be'  =>  6|$c_nd,  'e'   =>  4|$c_nd,
     'ge'  => 13|$c_nd,       'le'  => 14|$c_nd,  'nae' =>  2|$c_nd,  'nb'  =>  3|$c_nd,
     'nbe' =>  7|$c_nd,       'ne'  =>  5|$c_nd,  'nge' => 12|$c_nd,  'nle' => 15|$c_nd,
-    'np'  => 11|$c_nd|$c_cc, 'p'   => 10|$c_nd|$c_cc );
+    'np'  => 11|$c_nd|$c_cc, 'p'   => 10|$c_nd|$c_cc,
+    ''    => 11|$c_nd|$c_scc);
 
 my @conds = sort keys(%conds);
 
