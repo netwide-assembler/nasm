@@ -16,7 +16,7 @@ use strict;
 our %macros;
 our($macro, $outfile, $infile, $line);	# Public for error messages
 
-# Common patterns for the basic 8 arithmetric functions
+# Common pattern for the basic 8 arithmetric functions
 $macros{'arith'} = sub {
     return eightfold(<<'EOL', {}, @_);
 $op		rm8,reg8			[mr:	$hle $o0 /r				]	8086,SM,$lock
@@ -38,21 +38,51 @@ $op		rm32,imm32			[mi:	$hle o32 81 /$n id			]	386,SM,$lock,$zu
 $op		rm64,sbytedword64		[mi:	$hle o64 83 /$n ib,s			]	X86_64,LONG,SM,$lock,$zu
 $op		reg_rax,sdword64		[-i:	o64 $o5 id,s				]	X86_64,LONG,SM,$zu
 $op		rm64,sdword64			[mi:	$hle o64 81 /$n id,s			]	X86_64,LONG,SM,$lock,$zu
-$op		reg8?,reg8,rm8			[vrm:	evex.ndx.nf.l0.m4.o8     $o2 /r		]	APX,SM
-$op		reg16?,reg16,rm16		[vrm:	evex.ndx.nf.l0.m4.o16    $o3 /r		]	APX,SM
-$op		reg32?,reg32,rm32		[vrm:	evex.ndx.nf.l0.m4.o32    $o3 /r		]	APX,SM
-$op		reg64?,reg64,rm64		[vrm:	evex.ndx.nf.l0.m4.o64    $o3 /r		]	APX,SM
-$op		reg8?,rm8,reg8			[vmr:	evex.ndx.nf.l0.m4.o8     $o0 /r		]	APX,SM
-$op		reg16?,rm16,reg16		[vmr:	evex.ndx.nf.l0.m4.o16    $o1 /r		]	APX,SM
-$op		reg32?,rm32,reg32		[vmr:	evex.ndx.nf.l0.m4.o32    $o1 /r		]	APX,SM,$zu
-$op		reg64?,rm64,reg64		[vmr:	evex.ndx.nf.l0.m4.o64    $o1 /r		]	APX,SM,$zu
-$op		reg8?,rm8,imm8			[vmi:	evex.ndx.nf.l0.m4.o8     80 /$n ib	]	APX,SM
-$op		reg16?,rm16,sbyteword16		[vmi:	evex.ndx.nf.l0.m4.o16    83 /$n ib,s	]	APX,SM,ND
-$op		reg16?,rm16,imm16		[vmi:	evex.ndx.nf.l0.m4.o16    81 /$n iw	]	APX,SM
-$op		reg32?,rm32,sbytedword32	[vmi:	evex.ndx.nf.l0.m4.o32    83 /$n ib,s	]	APX,SM,ND
-$op		reg32?,rm32,imm32		[vmi:	evex.ndx.nf.l0.m4.o32    81 /$n id	]	APX,SM
-$op		reg64?,rm64,sbytedword32	[vmi:	evex.ndx.nf.l0.m4.o64    83 /$n ib,s	]	APX,SM,ND
-$op		reg64?,rm64,sdword64		[vmi:	evex.ndx.nf.l0.m4.o64    81 /$n id,s	]	APX,SM
+$op		reg8?,reg8,rm8			[vrm:	evex.ndx.nf.l0.m4.o8     $o2 /r		]	$apx,SM
+$op		reg16?,reg16,rm16		[vrm:	evex.ndx.nf.l0.m4.o16    $o3 /r		]	$apx,SM
+$op		reg32?,reg32,rm32		[vrm:	evex.ndx.nf.l0.m4.o32    $o3 /r		]	$apx,SM
+$op		reg64?,reg64,rm64		[vrm:	evex.ndx.nf.l0.m4.o64    $o3 /r		]	$apx,SM
+$op		reg8?,rm8,reg8			[vmr:	evex.ndx.nf.l0.m4.o8     $o0 /r		]	$apx,SM
+$op		reg16?,rm16,reg16		[vmr:	evex.ndx.nf.l0.m4.o16    $o1 /r		]	$apx,SM
+$op		reg32?,rm32,reg32		[vmr:	evex.ndx.nf.l0.m4.o32    $o1 /r		]	$apx,SM,$zu
+$op		reg64?,rm64,reg64		[vmr:	evex.ndx.nf.l0.m4.o64    $o1 /r		]	$apx,SM,$zu
+$op		reg8?,rm8,imm8			[vmi:	evex.ndx.nf.l0.m4.o8     80 /$n ib	]	$apx,SM
+$op		reg16?,rm16,sbyteword16		[vmi:	evex.ndx.nf.l0.m4.o16    83 /$n ib,s	]	$apx,SM
+$op		reg16?,rm16,imm16		[vmi:	evex.ndx.nf.l0.m4.o16    81 /$n iw	]	$apx,SM
+$op		reg32?,rm32,sbytedword32	[vmi:	evex.ndx.nf.l0.m4.o32    83 /$n ib,s	]	$apx,SM
+$op		reg32?,rm32,imm32		[vmi:	evex.ndx.nf.l0.m4.o32    81 /$n id	]	$apx,SM
+$op		reg64?,rm64,sbytedword32	[vmi:	evex.ndx.nf.l0.m4.o64    83 /$n ib,s	]	$apx,SM
+$op		reg64?,rm64,sdword64		[vmi:	evex.ndx.nf.l0.m4.o64    81 /$n id,s	]	$apx,SM
+EOL
+};
+
+# Common pattern for the basic shift and rotate instructions
+$macros{'shift'} = sub {
+    return eightfold(<<'EOL', {}, @_);
+$op		rm8,unity			[m-:	d0 /$n]					8086
+$op		rm8,reg_cl			[m-:	d2 /$n]					8086
+$op		rm8,imm8			[mi:	c0 /$n ib,u]				186
+$op		rm16,unity			[m-:	o16 d1 /$n]				8086
+$op		rm16,reg_cl			[m-:	o16 d3 /$n]				8086
+$op		rm16,imm8			[mi:	o16 c1 /$n ib,u]			186
+$op		rm32,unity			[m-:	o32 d1 /$n]				386
+$op		rm32,reg_cl			[m-:	o32 d3 /$n]				386
+$op		rm32,imm8			[mi:	o32 c1 /$n ib,u]			386
+$op		rm64,unity			[m-:	o64 d1 /$n]				X86_64,LONG
+$op		rm64,reg_cl			[m-:	o64 d3 /$n]				X86_64,LONG
+$op		rm64,imm8			[mi:	o64 c1 /$n ib,u]			X86_64,LONG
+$op		reg8?,rm8,unity			[vm-:	evex.ndx.nf.l0.m4.o8  d2 /$n     ]	$apx,SM0-1
+$op		reg16?,rm16,unity		[vm-:	evex.ndx.nf.l0.m4.o16 d3 /$n     ]	$apx,SM0-1
+$op		reg32?,rm32,unity		[vm-:	evex.ndx.nf.l0.m4.o32 d3 /$n     ]	$apx,SM0-1
+$op		reg64?,rm64,unity		[vm-:	evex.ndx.nf.l0.m4.o64 d3 /$n     ]	$apx,SM0-1
+$op		reg8?,rm8,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o8  d0 /$n     ]	$apx,SM0-1
+$op		reg16?,rm16,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o16 d1 /$n     ]	$apx,SM0-1
+$op		reg32?,rm32,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o32 d1 /$n     ]	$apx,SM0-1
+$op		reg64?,rm64,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o64 d1 /$n     ]	$apx,SM0-1
+$op		reg8?,rm8,imm8			[vmi:	evex.ndx.nf.l0.m4.o8  c0 /$n ib,u]	$apx,SM0-1
+$op		reg16?,rm16,imm8		[vmi:	evex.ndx.nf.l0.m4.o16 c1 /$n ib,u]	$apx,SM0-1
+$op		reg32?,rm32,imm8		[vmi:	evex.ndx.nf.l0.m4.o32 c1 /$n ib,u]	$apx,SM0-1
+$op		reg64?,rm64,imm8		[vmi:	evex.ndx.nf.l0.m4.o64 c1 /$n ib,u]	$apx,SM0-1
 EOL
 };
 
@@ -68,10 +98,7 @@ sub eightfold($$@) {
 
     my $n = 0;
 
-    my %initvars = ('shift' => 3,
-		    'zu' => 'ZU', 'lock' => 'LOCK', 'nd' => 'ND', 'nf' => 'NF',
-		    'hle' => 'hle',
-		    %$uvars);
+    my %initvars = ('shift' => 3, %$uvars);
 
     foreach my $ops (@_) {
 	my %vars = %initvars;
@@ -82,14 +109,17 @@ sub eightfold($$@) {
 	my $nd = 0;
 	my $outdata = 0;
 	foreach my $op (split(/\,/, $ops)) {
-	    if ($op =~ s/^\!//) {
+	    if ($op =~ s/^\@//) {
 		$nd = 1;
 	    }
 	    if ($op =~ /^(\w+)\=(.*)$/) {
 		$vars{$1} = $2;
 		next;
-	    } elsif ($op =~ /^([+-])(\w+)$/) {
-		$vars{$2} = ($1 eq '+') ? uc($2) : '';
+	    } elsif ($op =~ /^([\!\+\-])(\w+)$/) {
+		$vars{$2} =
+		    ($1 eq '+') ? $2 :
+		    ($1 eq '!') ? 'KILL' :
+		    '';
 		next;
 	    } elsif ($op =~ /^\-?$/) {
 		next;
@@ -126,7 +156,8 @@ sub substitute($$) {
 	my $vn = $2.$3;
 	my $vv = $vars->{$vn};
 	if (!defined($vv)) {
-	    die "$0:$infile:$line: no variable \$$vn in macro \$$macro\n";
+#	    warn "$0:$infile:$line: no variable \$$vn in macro \$$macro\n";
+	    $vv = $vn;
 	}
 	$o .= $vv;
     }
@@ -217,6 +248,9 @@ sub process_insn($$) {
     # Modify the instruction flags
     ($f[1], $f[3], $f[5], $f[7]) = adjust_instruction($f[1], $f[3], $f[5], $f[7]);
 
+    # The symbol KILL can be used in macros to eliminate a pattern entirely
+    next if ($f[3] =~ /\bKILL\b/ || $f[5] =~ /\bKILL\b/ || $f[7] =~ /\bKILL\b/);
+
     # Clean up stray commas and duplicate flags
     my %fls = ('' => 1);
     my @flc;
@@ -226,7 +260,6 @@ sub process_insn($$) {
 	    $fls{$fl}++;
 	}
     }
-
     $f[7] = join(',', @flc);
     print $out @f, "\n";
 }
@@ -241,7 +274,8 @@ while (defined(my $l = <$in>)) {
 
     if ($l =~ /^\$\s*(\w+[^\;]*?)\s*(\;.*)?$/) {
 	print $out $2, "\n" if ($2 ne '');
-	foreach my $ins (process_macro(split(/\s+/, $1))) {
+	my @args = grep { !/^\s*$/ } split(/((?:\[.*?\]|[^\[\]\s]+)+)/, $1);
+	foreach my $ins (process_macro(@args)) {
 	    process_insn($out, $ins);
 	}
     } else {
