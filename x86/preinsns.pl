@@ -112,11 +112,15 @@ sub eightfold($$@) {
 	}
 	my $nd = 0;
 	my $outdata = 0;
-	foreach my $op (split(/\,/, $ops)) {
+	foreach my $op (split(/((?:[^\,\[\]\"]+|\[.*?\]|\".*?\")+)/, $ops)) {
+	    next if ($op =~ /^\,*$/);
+
+	    $op =~ s/\"//g;
+
 	    if ($op =~ s/^\@//) {
 		$nd = 1;
 	    }
-	    if ($op =~ /^(\w+)\=\"?(.*?)\"?$/) {
+	    if ($op =~ /^(\w+)\=(.*)$/) {
 		$vars{$1} = $2;
 		next;
 	    } elsif ($op =~ /^([\!\+\-])(\w+)$/) {
