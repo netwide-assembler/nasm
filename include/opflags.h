@@ -39,7 +39,7 @@
 #define NASM_OPFLAGS_H
 
 #include "compiler.h"
-#include "tables.h"     /* for opflags_t and nasm_reg_flags[] */
+#include "tables.h"
 #include "regs.h"
 
 /*
@@ -73,7 +73,7 @@
  *
  * Bits: 4 - 6
  */
-#define MODIFIER_SHIFT          (4)
+#define MODIFIER_SHIFT          (OPTYPE_SHIFT + OPTYPE_BITS)
 #define MODIFIER_BITS           (3)
 #define MODIFIER_MASK           OP_GENMASK(MODIFIER_BITS, MODIFIER_SHIFT)
 #define GEN_MODIFIER(bit)       OP_GENBIT(bit, MODIFIER_SHIFT)
@@ -83,7 +83,7 @@
  *
  * Bits: 7 - 17
  */
-#define REG_CLASS_SHIFT         (7)
+#define REG_CLASS_SHIFT         (MODIFIER_SHIFT + MODIFIER_BITS)
 #define REG_CLASS_BITS          (11)
 #define REG_CLASS_MASK          OP_GENMASK(REG_CLASS_BITS, REG_CLASS_SHIFT)
 #define GEN_REG_CLASS(bit)      OP_GENBIT(bit, REG_CLASS_SHIFT)
@@ -93,7 +93,7 @@
  *
  * Bits: 18 - 25
  */
-#define SUBCLASS_SHIFT          (18)
+#define SUBCLASS_SHIFT          (REG_CLASS_SHIFT + REG_CLASS_BITS)
 #define SUBCLASS_BITS           (8)
 #define SUBCLASS_MASK           OP_GENMASK(SUBCLASS_BITS, SUBCLASS_SHIFT)
 #define GEN_SUBCLASS(bit)       OP_GENBIT(bit, SUBCLASS_SHIFT)
@@ -104,7 +104,7 @@
  *
  * Bits: 26 - 32
  */
-#define SPECIAL_SHIFT           (26)
+#define SPECIAL_SHIFT           (SUBCLASS_SHIFT + SUBCLASS_BITS)
 #define SPECIAL_BITS            (7)
 #define SPECIAL_MASK            OP_GENMASK(SPECIAL_BITS, SPECIAL_SHIFT)
 #define GEN_SPECIAL(bit)        OP_GENBIT(bit, SPECIAL_SHIFT)
@@ -114,7 +114,7 @@
  *
  * Bits: 33 - 44
  */
-#define SIZE_SHIFT              (33)
+#define SIZE_SHIFT              (SPECIAL_SHIFT + SPECIAL_BITS)
 #define SIZE_BITS               (12)
 #define SIZE_MASK               OP_GENMASK(SIZE_BITS, SIZE_SHIFT)
 #define GEN_SIZE(bit)           OP_GENBIT(bit, SIZE_SHIFT)
@@ -124,26 +124,32 @@
  *
  * Bits: 45 - 49
  */
-#define REGSET_SHIFT            (45)
+#define REGSET_SHIFT            (SIZE_SHIFT + SIZE_BITS)
 #define REGSET_BITS             (5)
 #define REGSET_MASK             OP_GENMASK(REGSET_BITS, REGSET_SHIFT)
 #define GEN_REGSET(bit)         OP_GENBIT(bit, REGSET_SHIFT)
+
+/*
+ * Remaining bits
+ */
+#define OPFLAGS_USED_BITS	(REGSET_SHIFT + REGSET_BITS)
+#define OPFLAGS_UNUSED_BITS	(64-OPFLAGS_USED_BITS)
 
 /*
  * Bits distribution (counted from 0)
  *
  *    6         5         4         3         2         1
  * 3210987654321098765432109876543210987654321098765432109876543210
- *                                 |
- *                                 | dword bound
- *
- * ............................................................1111 optypes
- * .........................................................111.... modifiers
- * ..............................................11111111111....... register classes
- * ......................................11111111.................. subclasses
+ *                                |
+ *                                |dword boundary
+ *                                |
+ * ...............................|............................1111 optypes
+ * ...............................|.........................111.... modifiers
+ * ...............................|..............11111111111....... register classes
+ * ...............................|......11111111.................. subclasses
  * ...............................1111111.......................... specials
- * ...................111111111111................................. sizes
- * ..............11111............................................. regset count
+ * ...................111111111111|................................ sizes
+ * ..............11111............|............................... regset count
  */
 
 #define REGISTER                GEN_OPTYPE(0)                   /* register number in 'basereg' */
@@ -183,6 +189,28 @@
 /* Register classes treated as vectors for EVEX/REX2 encoding purposes */
 #define REG_CLASS_VECTOR	(REG_CLASS_RM_XMM|REG_CLASS_RM_YMM|\
                                  REG_CLASS_RM_ZMM|REG_CLASS_RM_TMM)
+
+/*
+ * The bitfield and the union are handy for
+ * debugging, but are not portable in general.
+ */
+#if defined(__GNUC__) && defined(WORDS_LITTLEENDIAN)
+struct opflag_bits {
+    unsigned int type     : OPTYPE_BITS;
+    unsigned int mod      : MODIFIER_BITS;
+    unsigned int regclass : REG_CLASS_BITS;
+    unsigned int subclass : SUBCLASS_BITS;
+    unsigned int special  : SPECIAL_BITS;
+    unsigned int size     : SIZE_BITS;
+    unsigned int regset   : REGSET_BITS;
+    unsigned int pad      : OPFLAGS_UNUSED_BITS;
+} __attribute__((__packed__));
+
+union opflags {
+    opflags_t v;
+    struct opflag_bits f;
+};
+#endif
 
 /* Helper function to test for a value matching a class */
 static inline bool is_class(opflags_t class, opflags_t op)
@@ -345,6 +373,9 @@ static inline bool is_reg_class(opflags_t class, int reg)
 #define SDWORD                  (GEN_SUBCLASS(4) | IMMEDIATE)   /* operand is in the range -0x80000000..0x7FFFFFFF */
 #define UDWORD                  (GEN_SUBCLASS(5) | IMMEDIATE)   /* operand is in the range 0..0xFFFFFFFF */
 #define FOURBITS		(GEN_SUBCLASS(6) | IMMEDIATE)   /* operand is in the range 0-15 */
+
+#define BYTEEXTMASK		(GEN_SUBCLASS(2) | GEN_SUBCLASS(3))
+#define DWORDEXTMASK		(GEN_SUBCLASS(4) | GEN_SUBCLASS(5))
 
 /* Register set sizes */
 #define RS2                     GEN_REGSET(0)

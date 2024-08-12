@@ -3,7 +3,7 @@
 #
 # dword bound, index 0 - specific flags
 #
-if_align('IGEN');
+if_align('IGEN', $NOBREAK);
 
 # The following MUST be in word 0
 if_("SM0",               "Size match operand 0");
@@ -16,18 +16,24 @@ if_("AR1",               "SB, SW, SD applies to operand 1");
 if_("AR2",               "SB, SW, SD applies to operand 2");
 if_("AR3",               "SB, SW, SD applies to operand 3");
 if_("AR4",               "SB, SW, SD applies to operand 4");
+# These must match the order of the BITSx flags in opflags.h
 if_("SB",                "Unsized operands can't be non-byte");
 if_("SW",                "Unsized operands can't be non-word");
 if_("SD",                "Unsized operands can't be non-dword");
 if_("SQ",                "Unsized operands can't be non-qword");
+if_("ST",                "Unsized operands can't be non-tword");
 if_("SO",                "Unsized operands can't be non-oword");
 if_("SY",                "Unsized operands can't be non-yword");
 if_("SZ",                "Unsized operands can't be non-zword");
+# End BITSx order match requirement
 if_("SIZE",              "Unsized operands must match the bitsize");
-if_("SX",                "Unsized operands not allowed");
 if_("ANYSIZE",           "Ignore operand size even if explicit");
-# End word 0 requirement
+if_("SX",                "Unsized operands not allowed");
+if_("SX_W",              "At least one sized SMx operand required");
+if_("SDWORD",		 "Strict sdword64 matching");
+if_break_ok();
 
+if_("JMP_RELAX",         "Relaxable jump instruction");
 if_("OPT",               "Optimizing assembly only");
 if_("LATEVEX",           "Only if EVEX instructions are disabled");
 if_("NOAPX",             "Instruction does not support APX registers");

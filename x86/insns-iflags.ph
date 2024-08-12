@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2024 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -77,19 +77,32 @@ my %flag_byname;
 my @flag_bynum;
 my @flag_fields;
 my $iflag_words;
+my $no_word_break = 0;
+my $current_group;
+our $NOBREAK = 0;
 
 sub if_($$) {
     my($name, $def) = @_;
     my $num = $n_iflags++;
     my $v = [$num, $name, $def];
 
+    if (!($n_iflags & 31) && $no_word_break) {
+	die "iflags: group $current_group has disallowed dword break\n";
+    }
+
     $flag_byname{$name}  = $v;
     $flag_bynum[$num] = $v;
 
     return 1;
 }
-sub if_align($) {
-    my($name) = @_;
+sub if_break_ok(;$) {
+    my($ok) = @_;
+    $no_word_break = defined($ok) && !$ok;
+}
+sub if_align($;$) {
+    my($name, $break_ok) = @_;
+
+    if_break_ok($break_ok);
 
     if ($#flag_fields >= 0) {
 	$flag_fields[$#flag_fields]->[2] = $n_iflags-1;
@@ -97,6 +110,7 @@ sub if_align($) {
     $n_iflags = ($n_iflags + 31) & ~31;
 
     if (defined($name)) {
+	$current_group = $name;
 	push(@flag_fields, [$name, $n_iflags, undef]);
     }
 
@@ -131,6 +145,8 @@ sub split_flags($) {
     foreach my $flag (split(',', $flagstr)) {
 	# Somewhat nicer syntax for required flags (NF! -> NF_R)
 	$flag =~ s/\!$/_R/;
+	# Ditto for weak flags (SX- -> SX_W)
+	$flag =~ s/\-$/_W/;
 
 	if ($flag =~ /^(.*)(([0-9]+[+-])+[0-9]+)$/) {
 	    my $pref = $1;

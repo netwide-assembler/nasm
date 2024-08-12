@@ -659,28 +659,51 @@ static bool add_prefix(insn *result)
 }
 
 /* Set value-specific immediate flags. */
-static opflags_t imm_flags(int64_t n, opflags_t flags, enum optimization opt)
+static inline opflags_t set_imm_flags(struct operand *op, enum optimization opt)
 {
-    if (n == 1)
-        flags |= UNITY;
+    const bool strict = (op->type & STRICT) || (opt & OPTIM_STRICT_OPER);
+    const int64_t n = op->offset;
 
-    /* Allow FOURBITS matching for negative values, so things like ~0 work */
-    if (n >= -16 && n <= 15)
-        flags |= FOURBITS;
+    if (!(op->type & IMMEDIATE))
+        return op->type;
 
-    if ((flags & STRICT) || (opt & OPTIM_STRICT_OPER))
-        return flags;
+    if (op->opflags & OPFLAG_UNKNOWN) {
+        /* Be optimistic in pass 1 */
+        if (!strict || !(op->type & SIZE_MASK))
+            op->type |= UNITY|FOURBITS;
+        if (!strict)
+            op->type |= SBYTEDWORD|SBYTEWORD|UDWORD|SDWORD;
+        return op->type;
+    }
+
+    if (!(op->opflags & OPFLAG_SIMPLE))
+        return op->type;
+
+    if (!strict || !(op->type & SIZE_MASK)) {
+        if (n == 1)
+            op->type |= UNITY;
+
+        /*
+         * Allow FOURBITS matching for negative values, so things
+         * like ~0 work
+         */
+        if (n >= -16 && n <= 15)
+            op->type |= FOURBITS;
+    }
+
+    if (strict)
+        return op->type;
 
     if ((int32_t)n == (int8_t)n)
-        flags |= SBYTEDWORD;
+        op->type |= SBYTEDWORD;
     if ((int16_t)n == (int8_t)n)
-        flags |= SBYTEWORD;
+        op->type |= SBYTEWORD;
     if ((uint64_t)n == (uint32_t)n)
-        flags |= UDWORD;
+        op->type |= UDWORD;
     if ((int64_t)n == (int32_t)n)
-        flags |= SDWORD;
+        op->type |= SDWORD;
 
-    return flags;
+    return op->type;
 }
 
 insn *parse_line(char *buffer, insn *result, const int bits)
@@ -788,9 +811,11 @@ restart_parse:
                  */
                 result->opcode          = I_RESB;
                 result->operands        = 1;
-                result->oprs[0].type    = imm_flags(0, IMM_NORMAL, 0);
+                result->oprs[0].type    = IMM_NORMAL;
+                result->oprs[0].opflags = OPFLAG_SIMPLE;
                 result->oprs[0].offset  = 0;
                 result->oprs[0].segment = result->oprs[0].wrt = NO_SEG;
+                set_imm_flags(&result->oprs[0], result->opt);
             }
         } else if (!first) {
             nasm_nonfatal("instruction expected");
@@ -914,13 +939,13 @@ restart_parse:
          * without requiring a post-comma.
          */
         if (i == TOKEN_BRCCONST) {
-            op->type   |= imm_flags(tokval.t_integer, IMMEDIATE, result->opt);
-            op->opflags = 0;
+            op->type    = IMMEDIATE; /* But not IMM_NORMAL! */
+            op->opflags = OPFLAG_SIMPLE;
             op->offset  = tokval.t_integer;
             op->segment = NO_SEG;
             op->wrt     = NO_SEG;
             op->iflag   = tokval.t_inttwo;
-
+            set_imm_flags(op, result->opt);
             i = stdscan(NULL, &tokval);
             if (i != ',')
                 stdscan_pushback(&tokval);
@@ -1048,9 +1073,6 @@ restart_parse:
         value = evaluate(stdscan, NULL, &tokval,
                          &op->opflags, critical, &hints);
         i = tokval.t_type;
-        if (op->opflags & OPFLAG_FORWARD) {
-            result->forw_ref = true;
-        }
         if (!value)                  /* Error in evaluator */
             goto fail;
 
@@ -1215,12 +1237,7 @@ restart_parse:
                 op->segment   = NO_SEG;   /* don't care again */
                 op->wrt       = NO_SEG;   /* still don't care */
 
-                if(!(op->type & STRICT) &&
-                   !(result->opt & OPTIM_STRICT_OPER)) {
-                    /* Be optimistic */
-                    op->type |=
-                        UNITY | SBYTEWORD | SBYTEDWORD | UDWORD | SDWORD;
-                }
+                set_imm_flags(op, result->opt);
             } else if (is_reloc(value)) {       /* it's immediate */
                 uint64_t n = reloc_value(value);
 
@@ -1228,10 +1245,12 @@ restart_parse:
                 op->offset    = n;
                 op->segment   = reloc_seg(value);
                 op->wrt       = reloc_wrt(value);
-                op->opflags   |= is_self_relative(value) ? OPFLAG_RELATIVE : 0;
-
+                if (is_self_relative(value))
+                    op->opflags |= OPFLAG_RELATIVE;
                 if (is_simple(value))
-                    op->type = imm_flags(n, op->type, result->opt);
+                    op->opflags |= OPFLAG_SIMPLE;
+
+                set_imm_flags(op, result->opt);
             } else if (value->type == EXPR_RDSAE) {
                 /*
                  * it's not an operand but a rounding or SAE decorator.

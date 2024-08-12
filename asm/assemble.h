@@ -53,4 +53,31 @@ void process_insn(insn *instruction);
 bool process_directives(char *);
 void process_pragma(char *);
 
+/* Is this a compile-time absolute constant? */
+static inline bool op_compile_abs(const struct operand * const op)
+{
+    if (op->opflags & OPFLAG_UNKNOWN)
+        return true;            /* Be optimistic in pass 1 */
+    if (op->opflags & OPFLAG_RELATIVE)
+        return false;
+    if (op->wrt != NO_SEG)
+        return false;
+
+    return op->segment == NO_SEG;
+}
+
+/* Is this a compile-time relative constant? */
+static inline bool op_compile_rel(const insn * const ins,
+                                  const struct operand * const op)
+{
+    if (op->opflags & OPFLAG_UNKNOWN)
+        return true;            /* Be optimistic in pass 1 */
+    if (!(op->opflags & OPFLAG_RELATIVE))
+        return false;
+    if (op->wrt != NO_SEG)      /* Is this correct?! */
+        return false;
+
+    return op->segment == ins->loc.segment;
+}
+
 #endif

@@ -123,7 +123,8 @@ enum out_flags {
     OUT_WRAP     = 0,           /* Undefined signedness (wraps) */
     OUT_SIGNED   = 1,           /* Value is signed */
     OUT_UNSIGNED = 2,           /* Value is unsigned */
-    OUT_SIGNMASK = 3            /* Mask for signedness bits */
+    OUT_SIGNMASK = 3,           /* Mask for signedness bits */
+    OUT_NOWARN   = 4            /* Don't warn on overflow (already done?) */
 };
 
 /*
@@ -156,6 +157,7 @@ struct out_data {
     int32_t twrt;               /* Relocation with respect to */
     int64_t relbase;            /* Relative base for OUT_RELADDR */
     struct src_location where;  /* Source file and line */
+    const char *what;           /* Additional description, e.g. "immediate" */
 };
 
 /*
@@ -691,6 +693,7 @@ typedef struct operand { /* operand to an instruction */
                                    (always a forward reference also) */
 #define OPFLAG_RELATIVE     8   /* operand is self-relative, e.g. [foo - $]
                                    where foo is not in the current segment */
+#define OPFLAG_SIMPLE      16   /* operand is a simple expression */
 
 enum extop_type { /* extended operand types */
     EOT_NOTHING = 0,
@@ -842,8 +845,8 @@ typedef struct insn { /* an instruction itself */
     extop           *eops;                  /* extended operands */
     int             eops_float;             /* true if DD and floating */
     int32_t         times;                  /* repeat count (TIMES prefix) */
-    bool            forw_ref;               /* is there a forward reference? */
     bool            rex_done;               /* REX prefix emitted? */
+    bool            dummy;                  /* not a real instruction, no errors */
     uint8_t         bits;                   /* Execution mode (16, 32, 64) */
     uint8_t         op_size;                /* operand size */
     uint8_t         addr_size;              /* address size */

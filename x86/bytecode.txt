@@ -97,7 +97,7 @@ VEX/XOP prefixes are followed by the sequence:
 
 t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 
-\271             hlexr                       instruction takes XRELEASE (F3) with or without lock
+\271             hlex                       instruction takes XRELEASE (F3) with or without lock
 \272             hlenl                       instruction takes XACQUIRE/XRELEASE with or without lock
 \273             hle                         instruction takes XACQUIRE/XRELEASE with lock only
 \274..\277       ib,s                        a byte immediate operand, from operand 0..3, sign-extended

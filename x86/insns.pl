@@ -602,10 +602,13 @@ sub set_implied_flags($;$) {
 
     clean_flags($flags);
 
-    # If no ARx flags, make all operands ARx
+    # If no ARx flags, make all operands ARx if a size
+    # flag is present
     if (!opr_flags($flags, 'AR', $oprs)) {
-	for (my $i = 0; $i < $oprs; $i++) {
-	    $flags->{"AR$i"}++;
+	if (defined(size_flag($flags))) {
+	    for (my $i = 0; $i < $oprs; $i++) {
+		$flags->{"AR$i"}++;
+	    }
 	}
     }
 
@@ -630,11 +633,14 @@ sub set_implied_flags($;$) {
     $flags->{'NF'}++ if ($flags->{'NF_R'} || $flags->{'NF_E'});
 }
 
-# Return the value of any assume-size flag if one exists
+# Return the value of any assume-size flag if one exists;
+# SX, ANYSIZE or SIZE return 0 as they are size flags but
+# don't have a known value at compile time.
 sub size_flag($) {
-    my($flags) = @_;
     my %sflags = ( 'SB' => 8, 'SW' => 16, 'SD' => 32, 'SQ' => 64,
-		   'SO' => 128, 'SY' => 256, 'SZ' => 512 );
+		   'ST' => 80, 'SO' => 128, 'SY' => 256, 'SZ' => 512,
+		   'SX' => 0, 'SIZE' => 0, 'ANYSIZE' => 0 );
+    my($flags) = @_;
 
     foreach my $fl (keys(%sflags)) {
 	if ($flags->{$fl}) {
@@ -668,9 +674,6 @@ sub format_insn($$$$) {
 
     my $nd = !!$flags{'ND'};
     delete $flags{'ND'};
-
-    $flagsindex = insns_flag_index(\%flags);
-    die "$fname:$line: error in flags $flags\n" unless (defined($flagsindex));
 
     # format the operands
     $operands =~ s/[\*\?]//g;
@@ -732,9 +735,6 @@ sub format_insn($$$$) {
 
     my $nops = scalar(@ops);
 
-    # Tidy up the flags now then the operand count is known
-    set_implied_flags(\%flags, $nops);
-
     while (scalar(@ops) < $MAX_OPERANDS) {
         push(@ops, '0');
 	push(@opsize, 0);
@@ -748,6 +748,9 @@ sub format_insn($$$$) {
         $decorators = "NO_DECORATOR";
     }
     $decorators =~ tr/a-z/A-Z/;
+
+    # Tidy up the flags now then the operand count is known
+    set_implied_flags(\%flags, $nops);
 
     # Look for SM flags clearly inconsistent with operand bitsizes
     my $ssize = 0;
@@ -768,7 +771,7 @@ sub format_insn($$$$) {
     # This doesn't apply to registers that pre-define specific sizes;
     # this should really be derived from include/opflags.h...
     my $fsize = size_flag(\%flags);
-    if (defined($fsize)) {
+    if ($fsize) {
 	for (my $i = 0; $i < $nops; $i++) {
 	    next unless ($arx & (1 << $i));
 	    if ($opsize[$i] && $ops[$i] !~ /(\breg_|reg\b)/ &&
@@ -777,6 +780,10 @@ sub format_insn($$$$) {
 	    }
 	}
     }
+
+    # Generate the final index into the flags table
+    $flagsindex = insns_flag_index(\%flags);
+    die "$fname:$line: error in flags $flags\n" unless (defined($flagsindex));
 
     return ("{I_$opcode, $nops, {$operands}, $decorators, \@\@CODES-$codes\@\@, $flagsindex},", $nd);
 }
@@ -1055,7 +1062,7 @@ sub byte_code_compile($$) {
 	'nw'        => 0327,	# Conditional o64nw
         'a16'       => 0310,
         'a32'       => 0311,
-        'adf'       => 0312,    # Address size is default
+        'adf'       => 0312,    # Address size is default (disassembly)
         'a64'       => 0313,
         '!osp'      => 0364,
         '!asp'      => 0365,
@@ -1080,8 +1087,6 @@ sub byte_code_compile($$) {
 	'rex.w'     => 0347,
         'resb'      => 0340,
         'np'        => 0360,    # No prefix
-        'jcc8'      => 0370,    # Match only if Jcc possible with single byte
-        'jmp8'      => 0371,    # Match only if JMP possible with single byte
         'jlen'      => 0373,    # Length of jump
         'hlexr'     => 0271,
         'hlenl'     => 0272,
@@ -1475,6 +1480,10 @@ sub byte_code_compile($$) {
             push(@codes, 05) if ($oppos{'r'} & 4);
             push(@codes, 010 + ($oppos{'r'} & 3), hex $1);
             $prefix_ok = 0;
+	} elsif ($op =~ /^(jcc|jmp)8$/) {
+	    # A relaxable jump instruction
+	    push(@codes, $op eq 'jcc8' ? 0370 : 0371);
+	    $flags->{'JMP_RELAX'}++;
         } elsif ($op =~ /^\\([0-7]+|x[0-9a-f]{2})$/) {
             # Escape to enter literal bytecodes
             push(@codes, oct $1);

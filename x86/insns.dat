@@ -71,129 +71,14 @@ EQU		imm				ignore						ignore
 EQU		imm:imm				ignore						ignore
 
 ;# Conventional instructions
+$arith ADD OR ADC SBB AND SUB XOR CMP
+
 AAA		void				[	37]					8086,NOLONG
 AAD		void				[	d5 0a]					8086,NOLONG
 AAD		imm				[i:	d5 ib,u]				8086,SB,NOLONG
 AAM		void				[	d4 0a]					8086,NOLONG
 AAM		imm				[i:	d4 ib,u]				8086,SB,NOLONG
 AAS		void				[	3f]					8086,NOLONG
-ADC		mem,reg8			[mr:	hle 10 /r]				8086,SM,LOCK
-ADC		reg8,reg8			[mr:	10 /r]					8086
-ADC		mem,reg16			[mr:	hle o16 11 /r]				8086,SM,LOCK
-ADC		reg16,reg16			[mr:	o16 11 /r]				8086
-ADC		mem,reg32			[mr:	hle o32 11 /r]				386,SM,LOCK
-ADC		reg32,reg32			[mr:	o32 11 /r]				386
-ADC		mem,reg64			[mr:	hle o64 11 /r]				X86_64,LONG,SM,LOCK
-ADC		reg64,reg64			[mr:	o64 11 /r]				X86_64,LONG
-ADC		reg8,mem			[rm:	12 /r]					8086,SM
-ADC		reg8,reg8			[rm:	12 /r]					8086
-ADC		reg16,mem			[rm:	o16 13 /r]				8086,SM
-ADC		reg16,reg16			[rm:	o16 13 /r]				8086
-ADC		reg32,mem			[rm:	o32 13 /r]				386,SM
-ADC		reg32,reg32			[rm:	o32 13 /r]				386
-ADC		reg64,mem			[rm:	o64 13 /r]				X86_64,LONG,SM
-ADC		reg64,reg64			[rm:	o64 13 /r]				X86_64,LONG
-ADC		rm16,imm8			[mi:	hle o16 83 /2 ib,s]			8086,LOCK
-ADC		rm32,imm8			[mi:	hle o32 83 /2 ib,s]			386,LOCK
-ADC		rm64,imm8			[mi:	hle o64 83 /2 ib,s]			X86_64,LONG,LOCK
-ADC		reg_al,imm			[-i:	14 ib]					8086,SM
-ADC		reg_ax,sbyteword		[mi:	o16 83 /2 ib,s]				8086,SM,ND
-ADC		reg_ax,imm			[-i:	o16 15 iw]				8086,SM
-ADC		reg_eax,sbytedword		[mi:	o32 83 /2 ib,s]				386,SM,ND
-ADC		reg_eax,imm			[-i:	o32 15 id]				386,SM
-ADC		reg_rax,sbytedword		[mi:	o64 83 /2 ib,s]				X86_64,LONG,SM,ND
-ADC		reg_rax,imm			[-i:	o64 15 id,s]				X86_64,LONG,SM
-ADC		rm8,imm				[mi:	hle 80 /2 ib]				8086,SM,LOCK
-ADC		rm16,sbyteword			[mi:	hle o16 83 /2 ib,s]			8086,SM,LOCK,ND
-ADC		rm16,imm			[mi:	hle o16 81 /2 iw]			8086,SM,LOCK
-ADC		rm32,sbytedword			[mi:	hle o32 83 /2 ib,s]			386,SM,LOCK,ND
-ADC		rm32,imm			[mi:	hle o32 81 /2 id]			386,SM,LOCK
-ADC		rm64,sbytedword			[mi:	hle o64 83 /2 ib,s]			X86_64,LONG,SM,LOCK,ND
-ADC		rm64,imm			[mi:	hle o64 81 /2 id,s]			X86_64,LONG,SM,LOCK
-ADC		mem,imm8			[mi:	hle 80 /2 ib]				8086,SM,LOCK,ND
-ADC		mem,sbyteword16			[mi:	hle o16 83 /2 ib,s]			8086,SM,LOCK,ND
-ADC		mem,imm16			[mi:	hle o16 81 /2 iw]			8086,SM,LOCK
-ADC		mem,sbytedword32		[mi:	hle o32 83 /2 ib,s]			386,SM,LOCK,ND
-ADC		mem,imm32			[mi:	hle o32 81 /2 id]			386,SM,LOCK
-ADC		rm8,imm				[mi:	hle 82 /2 ib]				8086,SM,LOCK,ND,NOLONG
-ADD		mem,reg8			[mr:	hle 00 /r]				8086,SM,LOCK
-ADD		reg8,reg8			[mr:	00 /r]					8086
-ADD		mem,reg16			[mr:	hle o16 01 /r]				8086,SM,LOCK
-ADD		reg16,reg16			[mr:	o16 01 /r]				8086
-ADD		mem,reg32			[mr:	hle o32 01 /r]				386,SM,LOCK
-ADD		reg32,reg32			[mr:	o32 01 /r]				386
-ADD		mem,reg64			[mr:	hle o64 01 /r]				X86_64,LONG,SM,LOCK
-ADD		reg64,reg64			[mr:	o64 01 /r]				X86_64,LONG
-ADD		reg8,mem			[rm:	02 /r]					8086,SM
-ADD		reg8,reg8			[rm:	02 /r]					8086
-ADD		reg16,mem			[rm:	o16 03 /r]				8086,SM
-ADD		reg16,reg16			[rm:	o16 03 /r]				8086
-ADD		reg32,mem			[rm:	o32 03 /r]				386,SM
-ADD		reg32,reg32			[rm:	o32 03 /r]				386
-ADD		reg64,mem			[rm:	o64 03 /r]				X86_64,LONG,SM
-ADD		reg64,reg64			[rm:	o64 03 /r]				X86_64,LONG
-ADD		rm16,imm8			[mi:	hle o16 83 /0 ib,s]			8086,LOCK
-ADD		rm32,imm8			[mi:	hle o32 83 /0 ib,s]			386,LOCK
-ADD		rm64,imm8			[mi:	hle o64 83 /0 ib,s]			X86_64,LONG,LOCK
-ADD		reg_al,imm			[-i:	04 ib]					8086,SM
-ADD		reg_ax,sbyteword		[mi:	o16 83 /0 ib,s]				8086,SM,ND
-ADD		reg_ax,imm			[-i:	o16 05 iw]				8086,SM
-ADD		reg_eax,sbytedword		[mi:	o32 83 /0 ib,s]				386,SM,ND
-ADD		reg_eax,imm			[-i:	o32 05 id]				386,SM
-ADD		reg_rax,sbytedword		[mi:	o64 83 /0 ib,s]				X86_64,LONG,SM,ND
-ADD		reg_rax,imm			[-i:	o64 05 id,s]				X86_64,LONG,SM
-ADD		rm8,imm				[mi:	hle 80 /0 ib]				8086,SM,LOCK
-ADD		rm16,sbyteword			[mi:	hle o16 83 /0 ib,s]			8086,SM,LOCK,ND
-ADD		rm16,imm			[mi:	hle o16 81 /0 iw]			8086,SM,LOCK
-ADD		rm32,sbytedword			[mi:	hle o32 83 /0 ib,s]			386,SM,LOCK,ND
-ADD		rm32,imm			[mi:	hle o32 81 /0 id]			386,SM,LOCK
-ADD		rm64,sbytedword			[mi:	hle o64 83 /0 ib,s]			X86_64,LONG,SM,LOCK,ND
-ADD		rm64,imm			[mi:	hle o64 81 /0 id,s]			X86_64,LONG,SM,LOCK
-ADD		mem,imm8			[mi:	hle 80 /0 ib]				8086,SM,LOCK
-ADD		mem,sbyteword16			[mi:	hle o16 83 /0 ib,s]			8086,SM,LOCK,ND
-ADD		mem,imm16			[mi:	hle o16 81 /0 iw]			8086,SM,LOCK
-ADD		mem,sbytedword32		[mi:	hle o32 83 /0 ib,s]			386,SM,LOCK,ND
-ADD		mem,imm32			[mi:	hle o32 81 /0 id]			386,SM,LOCK
-ADD		rm8,imm				[mi:	hle 82 /0 ib]				8086,SM,LOCK,ND,NOLONG
-AND		mem,reg8			[mr:	hle 20 /r]				8086,SM,LOCK
-AND		reg8,reg8			[mr:	20 /r]					8086
-AND		mem,reg16			[mr:	hle o16 21 /r]				8086,SM,LOCK
-AND		reg16,reg16			[mr:	o16 21 /r]				8086
-AND		mem,reg32			[mr:	hle o32 21 /r]				386,SM,LOCK
-AND		reg32,reg32			[mr:	o32 21 /r]				386
-AND		mem,reg64			[mr:	hle o64 21 /r]				X86_64,LONG,SM,LOCK
-AND		reg64,reg64			[mr:	o64 21 /r]				X86_64,LONG
-AND		reg8,mem			[rm:	22 /r]					8086,SM
-AND		reg8,reg8			[rm:	22 /r]					8086
-AND		reg16,mem			[rm:	o16 23 /r]				8086,SM
-AND		reg16,reg16			[rm:	o16 23 /r]				8086
-AND		reg32,mem			[rm:	o32 23 /r]				386,SM
-AND		reg32,reg32			[rm:	o32 23 /r]				386
-AND		reg64,mem			[rm:	o64 23 /r]				X86_64,LONG,SM
-AND		reg64,reg64			[rm:	o64 23 /r]				X86_64,LONG
-AND		rm16,imm8			[mi:	hle o16 83 /4 ib,s]			8086,LOCK
-AND		rm32,imm8			[mi:	hle o32 83 /4 ib,s]			386,LOCK
-AND		rm64,imm8			[mi:	hle o64 83 /4 ib,s]			X86_64,LONG,LOCK
-AND		reg_al,imm			[-i:	24 ib]					8086,SM
-AND		reg_ax,sbyteword		[mi:	o16 83 /4 ib,s]				8086,SM,ND
-AND		reg_ax,imm			[-i:	o16 25 iw]				8086,SM
-AND		reg_eax,sbytedword		[mi:	o32 83 /4 ib,s]				386,SM,ND
-AND		reg_eax,imm			[-i:	o32 25 id]				386,SM
-AND		reg_rax,sbytedword		[mi:	o64 83 /4 ib,s]				X86_64,LONG,SM,ND
-AND		reg_rax,imm			[-i:	o64 25 id,s]				X86_64,LONG,SM
-AND		rm8,imm				[mi:	hle 80 /4 ib]				8086,SM,LOCK
-AND		rm16,sbyteword			[mi:	hle o16 83 /4 ib,s]			8086,SM,LOCK,ND
-AND		rm16,imm			[mi:	hle o16 81 /4 iw]			8086,SM,LOCK
-AND		rm32,sbytedword			[mi:	hle o32 83 /4 ib,s]			386,SM,LOCK,ND
-AND		rm32,imm			[mi:	hle o32 81 /4 id]			386,SM,LOCK
-AND		rm64,sbytedword			[mi:	hle o64 83 /4 ib,s]			X86_64,LONG,SM,LOCK,ND
-AND		rm64,imm			[mi:	hle o64 81 /4 id,s]			X86_64,LONG,SM,LOCK
-AND		mem,imm8			[mi:	hle 80 /4 ib]				8086,SM,LOCK
-AND		mem,sbyteword16			[mi:	hle o16 83 /4 ib,s]			8086,SM,LOCK,ND
-AND		mem,imm16			[mi:	hle o16 81 /4 iw]			8086,SM,LOCK
-AND		mem,sbytedword32		[mi:	hle o32 83 /4 ib,s]			386,SM,LOCK,ND
-AND		mem,imm32			[mi:	hle o32 81 /4 id]			386,SM,LOCK
-AND		rm8,imm				[mi:	hle 82 /4 ib]				8086,SM,LOCK,ND,NOLONG
 ARPL		mem,reg16			[mr:	63 /r]					286,PROT,SM,NOLONG
 ARPL		reg16,reg16			[mr:	63 /r]					286,PROT,NOLONG
 BB0_RESET	void				[	0f 3a]					PENT,CYRIX,NOLONG,OBSOLETE,ND
@@ -250,33 +135,33 @@ BTS		reg64,reg64			[mr:	o64 0f ab /r]				X86_64,LONG
 BTS		rm16,imm8			[mi:	hle o16 0f ba /5 ib,u]			386,LOCK
 BTS		rm32,imm8			[mi:	hle o32 0f ba /5 ib,u]			386,LOCK
 BTS		rm64,imm8			[mi:	hle o64 0f ba /5 ib,u]			X86_64,LONG,LOCK
-CALL		imm				[i:	odf e8 rel]				8086,BND,NOAPX
-CALL		imm|near			[i:	odf e8 rel]				8086,ND,BND,NOAPX
-CALL		imm|far				[i:	odf 9a iwd seg]				8086,ND,NOLONG
+CALL		imm				[i:	odf e8 rel]				8086,BND,NOAPX,SIZE
+CALL		imm|near			[i:	odf e8 rel]				8086,ND,BND,NOAPX,SIZE
+CALL		imm|far				[i:	odf 9a iwd seg]				8086,ND,NOLONG,SIZE
+CALL		imm:imm				[ji:	odf 9a iwd iw]				8086,NOLONG,SIZE,AR1
 ; Call/jmp near imm/reg/mem is always 64-bit in long mode.
-CALL		imm16				[i:	o16 e8 rel]				8086,NOLONG,BND
-CALL		imm16|near			[i:	o16 e8 rel]				8086,ND,NOLONG,BND
-CALL		imm16|far			[i:	o16 9a iwd seg]				8086,ND,NOLONG
-CALL		imm32				[i:	o32 e8 rel]				386,NOLONG,BND
-CALL		imm32|near			[i:	o32 e8 rel]				386,ND,NOLONG,BND
-CALL		imm32|far			[i:	o32 9a iwd seg]				386,ND,NOLONG
-CALL		imm64				[i:	o64nw e8 rel]				X86_64,LONG,BND,NOAPX
+CALL		imm16				[i:	o16 e8 rel]				8086,NOLONG,BND,SX
+CALL		imm16|near			[i:	o16 e8 rel]				8086,ND,NOLONG,BND,SX,ND
+CALL		imm16|far			[i:	o16 9a iwd seg]				8086,ND,NOLONG,SX,ND
+CALL		imm32				[i:	o32 e8 rel]				386,NOLONG,BND,SX,ND
+CALL		imm32|near			[i:	o32 e8 rel]				386,ND,NOLONG,BND,SX,ND
+CALL		imm32|far			[i:	o32 9a iwd seg]				386,ND,NOLONG,SX,ND
+CALL		imm64				[i:	o64nw e8 rel]				X86_64,LONG,BND,NOAPX,SX,ND
 CALL		imm64|near			[i:	o64nw e8 rel]				X86_64,LONG,ND,BND,NOAPX
-CALL		imm:imm				[ji:	odf 9a iwd iw]				8086,NOLONG
-CALL		imm16:imm			[ji:	o16 9a iw iw]				8086,NOLONG
-CALL		imm:imm16			[ji:	o16 9a iw iw]				8086,NOLONG
-CALL		imm32:imm			[ji:	o32 9a id iw]				386,NOLONG
-CALL		imm:imm32			[ji:	o32 9a id iw]				386,NOLONG
-CALL		mem|far				[m:	odf ff /3]				8086,NOLONG
-CALL		mem|far				[m:	o64 ff /3]				X86_64,LONG
-CALL		mem16|far			[m:	o16 ff /3]				8086
-CALL		mem32|far			[m:	o32 ff /3]				386
-CALL		mem64|far			[m:	o64 ff /3]				X86_64,LONG
-CALL		mem|near			[m:	odf ff /2]				8086,ND,BND
-CALL		rm16|near			[m:	o16 ff /2]				8086,NOLONG,ND,BND
-CALL		rm32|near			[m:	o32 ff /2]				386,NOLONG,ND,BND
-CALL		rm64|near			[m:	o64nw ff /2]				X86_64,LONG,ND,BND
-CALL		mem				[m:	odf ff /2]				8086,BND
+CALL		imm16:imm			[ji:	o16 9a iw iw]				8086,NOLONG,SX,AR0,ND
+CALL		imm:imm16			[ji:	o16 9a iw iw]				8086,NOLONG,SX,AR1
+CALL		imm32:imm			[ji:	o32 9a id iw]				386,NOLONG,SX,AR0,ND
+CALL		imm:imm32			[ji:	o32 9a id iw]				386,NOLONG,SX,AR1
+CALL		mem|far				[m:	odf ff /3]				8086,NOLONG,SX
+CALL		mem|far				[m:	o64 ff /3]				X86_64,LONG,SX
+CALL		mem16|far			[m:	o16 ff /3]				8086,SX
+CALL		mem32|far			[m:	o32 ff /3]				386,SX
+CALL		mem64|far			[m:	o64 ff /3]				X86_64,SX,LONG
+CALL		mem|near			[m:	odf ff /2]				8086,ND,BND,SX
+CALL		rm16|near			[m:	o16 ff /2]				8086,NOLONG,ND,BND,SX
+CALL		rm32|near			[m:	o32 ff /2]				386,NOLONG,ND,BND,SX
+CALL		rm64|near			[m:	o64nw ff /2]				X86_64,LONG,ND,BND,SX
+CALL		mem				[m:	odf ff /2]				8086,BND,SIZE
 CALL		rm16				[m:	o16 ff /2]				8086,NOLONG,BND
 CALL		rm32				[m:	o32 ff /2]				386,NOLONG,BND
 CALL		rm64				[m:	o64nw ff /2]				X86_64,LONG,BND
@@ -289,45 +174,7 @@ CLD		void				[	fc]					8086
 CLI		void				[	fa]					8086
 CLTS		void				[	0f 06]					286,PRIV
 CMC		void				[	f5]					8086
-CMP		mem,reg8			[mr:	38 /r]					8086,SM
-CMP		reg8,reg8			[mr:	38 /r]					8086
-CMP		mem,reg16			[mr:	o16 39 /r]				8086,SM
-CMP		reg16,reg16			[mr:	o16 39 /r]				8086
-CMP		mem,reg32			[mr:	o32 39 /r]				386,SM
-CMP		reg32,reg32			[mr:	o32 39 /r]				386
-CMP		mem,reg64			[mr:	o64 39 /r]				X86_64,LONG,SM
-CMP		reg64,reg64			[mr:	o64 39 /r]				X86_64,LONG
-CMP		reg8,mem			[rm:	3a /r]					8086,SM
-CMP		reg8,reg8			[rm:	3a /r]					8086
-CMP		reg16,mem			[rm:	o16 3b /r]				8086,SM
-CMP		reg16,reg16			[rm:	o16 3b /r]				8086
-CMP		reg32,mem			[rm:	o32 3b /r]				386,SM
-CMP		reg32,reg32			[rm:	o32 3b /r]				386
-CMP		reg64,mem			[rm:	o64 3b /r]				X86_64,LONG,SM
-CMP		reg64,reg64			[rm:	o64 3b /r]				X86_64,LONG
-CMP		rm16,imm8			[mi:	o16 83 /7 ib,s]				8086
-CMP		rm32,imm8			[mi:	o32 83 /7 ib,s]				386
-CMP		rm64,imm8			[mi:	o64 83 /7 ib,s]				X86_64,LONG
-CMP		reg_al,imm			[-i:	3c ib]					8086,SM
-CMP		reg_ax,sbyteword		[mi:	o16 83 /7 ib,s]				8086,SM,ND
-CMP		reg_ax,imm			[-i:	o16 3d iw]				8086,SM
-CMP		reg_eax,sbytedword		[mi:	o32 83 /7 ib,s]				386,SM,ND
-CMP		reg_eax,imm			[-i:	o32 3d id]				386,SM
-CMP		reg_rax,sbytedword		[mi:	o64 83 /7 ib,s]				X86_64,LONG,SM,ND
-CMP		reg_rax,imm			[-i:	o64 3d id,s]				X86_64,LONG,SM
-CMP		rm8,imm				[mi:	80 /7 ib]				8086,SM
-CMP		rm16,sbyteword			[mi:	o16 83 /7 ib,s]				8086,SM,ND
-CMP		rm16,imm			[mi:	o16 81 /7 iw]				8086,SM
-CMP		rm32,sbytedword			[mi:	o32 83 /7 ib,s]				386,SM,ND
-CMP		rm32,imm			[mi:	o32 81 /7 id]				386,SM
-CMP		rm64,sbytedword			[mi:	o64 83 /7 ib,s]				X86_64,LONG,SM,ND
-CMP		rm64,imm			[mi:	o64 81 /7 id,s]				X86_64,LONG,SM
-CMP		mem,imm8			[mi:	80 /7 ib]				8086,SM
-CMP		mem,sbyteword16			[mi:	o16 83 /7 ib,s]				8086,SM,ND
-CMP		mem,imm16			[mi:	o16 81 /7 iw]				8086,SM
-CMP		mem,sbytedword32		[mi:	o32 83 /7 ib,s]				386,SM,ND
-CMP		mem,imm32			[mi:	o32 81 /7 id]				386,SM
-CMP		rm8,imm				[mi:	82 /7 ib]				8086,SM,ND,NOLONG
+
 CMPSB		void				[	repe a6]				8086,NOAPX
 CMPSD		void				[	repe o32 a7]				386,NOAPX
 CMPSQ		void				[	repe o64 a7]				X86_64,LONG,NOAPX
@@ -601,48 +448,15 @@ IMUL		rm8				[m:	f6 /5]					8086
 IMUL		rm16				[m:	o16 f7 /5]				8086
 IMUL		rm32				[m:	o32 f7 /5]				386
 IMUL		rm64				[m:	o64 f7 /5]				X86_64,LONG
-IMUL		reg16,mem			[rm:	o16 0f af /r]				386,SM
-IMUL		reg16,reg16			[rm:	o16 0f af /r]				386
-IMUL		reg32,mem			[rm:	o32 0f af /r]				386,SM
-IMUL		reg32,reg32			[rm:	o32 0f af /r]				386
-IMUL		reg64,mem			[rm:	o64 0f af /r]				X86_64,LONG,SM
-IMUL		reg64,reg64			[rm:	o64 0f af /r]				X86_64,LONG
-IMUL		reg16,mem,imm8			[rmi:	o16 6b /r ib,s]				186,SM0-1
-IMUL		reg16,mem,sbyteword		[rmi:	o16 6b /r ib,s]				186,SM,ND
-IMUL		reg16,mem,imm16			[rmi:	o16 69 /r iw]				186,SM
-IMUL		reg16,mem,imm			[rmi:	o16 69 /r iw]				186,SM,ND
-IMUL		reg16,reg16,imm8		[rmi:	o16 6b /r ib,s]				186
-IMUL		reg16,reg16,sbyteword		[rmi:	o16 6b /r ib,s]				186,SM,ND
-IMUL		reg16,reg16,imm16		[rmi:	o16 69 /r iw]				186
-IMUL		reg16,reg16,imm			[rmi:	o16 69 /r iw]				186,SM,ND
-IMUL		reg32,mem,imm8			[rmi:	o32 6b /r ib,s]				386,SM0-1
-IMUL		reg32,mem,sbytedword		[rmi:	o32 6b /r ib,s]				386,SM,ND
-IMUL		reg32,mem,imm32			[rmi:	o32 69 /r id]				386,SM
-IMUL		reg32,mem,imm			[rmi:	o32 69 /r id]				386,SM,ND
-IMUL		reg32,reg32,imm8		[rmi:	o32 6b /r ib,s]				386
-IMUL		reg32,reg32,sbytedword		[rmi:	o32 6b /r ib,s]				386,SM,ND
-IMUL		reg32,reg32,imm32		[rmi:	o32 69 /r id]				386
-IMUL		reg32,reg32,imm			[rmi:	o32 69 /r id]				386,SM,ND
-IMUL		reg64,mem,imm8			[rmi:	o64 6b /r ib,s]				X86_64,LONG,SM0-1
-IMUL		reg64,mem,sbytedword		[rmi:	o64 6b /r ib,s]				X86_64,LONG,SM,ND
-IMUL		reg64,mem,imm32			[rmi:	o64 69 /r id]				X86_64,LONG,SM0-1
-IMUL		reg64,mem,imm			[rmi:	o64 69 /r id,s]				X86_64,LONG,SM,ND
-IMUL		reg64,reg64,imm8		[rmi:	o64 6b /r ib,s]				X86_64,LONG
-IMUL		reg64,reg64,sbytedword		[rmi:	o64 6b /r ib,s]				X86_64,LONG,SM,ND
-IMUL		reg64,reg64,imm32		[rmi:	o64 69 /r id]				X86_64,LONG
-IMUL		reg64,reg64,imm			[rmi:	o64 69 /r id,s]				X86_64,LONG,SM,ND
-IMUL		reg16,imm8			[r+mi:	o16 6b /r ib,s]				186
-IMUL		reg16,sbyteword			[r+mi:	o16 6b /r ib,s]				186,SM,ND
-IMUL		reg16,imm16			[r+mi:	o16 69 /r iw]				186
-IMUL		reg16,imm			[r+mi:	o16 69 /r iw]				186,SM,ND
-IMUL		reg32,imm8			[r+mi:	o32 6b /r ib,s]				386
-IMUL		reg32,sbytedword		[r+mi:	o32 6b /r ib,s]				386,SM,ND
-IMUL		reg32,imm32			[r+mi:	o32 69 /r id]				386
-IMUL		reg32,imm			[r+mi:	o32 69 /r id]				386,SM,ND
-IMUL		reg64,imm8			[r+mi:	o64 6b /r ib,s]				X86_64,LONG
-IMUL		reg64,sbytedword		[r+mi:	o64 6b /r ib,s]				X86_64,LONG,SM,ND
-IMUL		reg64,imm32			[r+mi:	o64 69 /r id,s]				X86_64,LONG
-IMUL		reg64,imm			[r+mi:	o64 69 /r id,s]				X86_64,LONG,SM,ND
+IMUL		reg16,rm16			[rm:	o16 0f af /r]				386,SM
+IMUL		reg32,rm32			[rm:	o32 0f af /r]				386,SM
+IMUL		reg64,rm64			[rm:	o64 0f af /r]				X86_64,LONG,SM
+IMUL		reg16,rm16*,sbyteword16		[rmi:	o16 6b /r ib,s]				186,SM
+IMUL		reg16,rm16*,imm16		[rmi:	o16 69 /r iw]				186,SM
+IMUL		reg32,rm32*,sbytedword32	[rmi:	o32 6b /r ib,s]				386,SM
+IMUL		reg32,rm32*,imm32		[rmi:	o32 69 /r id]				386,SM
+IMUL		reg64,rm64*,sbytedword64	[rmi:	o64 6b /r ib,s]				X86_64,LONG,SM
+IMUL		reg64,rm64*,sdword64		[rmi:	o64 69 /r id,s]				X86_64,LONG,SM
 IN		reg_al,imm			[-i:	e4 ib,u]				8086,SB,NOAPX
 IN		reg_ax,imm			[-i:	o16 e5 ib,u]				8086,SB,NOAPX
 IN		reg_eax,imm			[-i:	o32 e5 ib,u]				386,SB,NOAPX
@@ -679,34 +493,36 @@ IRETW		void				[	o16 cf]					8086
 JCXZ		imm				[i:	a16    e3 rel8]				8086,NOLONG
 JECXZ		imm				[i:	a32 nw e3 rel8]				386,NOAPX
 JRCXZ		imm				[i:	a64 nw e3 rel8]				X86_64,LONG,NOAPX
-JMP		imm|short			[i:	nw eb rel8]				8086,NOAPX
-JMP		imm				[i:	jmp8 nw eb rel8]			8086,ND,NOAPX
-JMP		imm				[i:	nw odf e9 rel]				8086,BND,NOAPX
-JMP		imm|near			[i:	nw odf e9 rel]				8086,ND,BND,NOAPX
-JMP		imm|far				[i:	   odf ea iwd seg]			8086,ND,NOLONG
 ; Call/jmp near imm/reg/mem is always 64-bit in long mode.
-JMP		imm16				[i:	o16 e9 rel]				8086,NOLONG,BND
-JMP		imm16|near			[i:	o16 e9 rel]				8086,ND,NOLONG,BND
-JMP		imm16|far			[i:	o16 ea iwd seg]				8086,ND,NOLONG
-JMP		imm32				[i:	o32 e9 rel]				386,NOLONG,BND
-JMP		imm32|near			[i:	o32 e9 rel]				386,ND,NOLONG,BND
-JMP		imm32|far			[i:	o32 ea iwd seg]				386,ND,NOLONG
-JMP		imm64				[i:	o64nw e9 rel]				X86_64,LONG,BND,NOAPX
-JMP		imm64|near			[i:	o64nw e9 rel]				X86_64,LONG,ND,BND,NOAPX
+JMP		imm|short			[i:	nw eb rel8]				8086,NOAPX,SX
+JMP		imm8				[i:	nw eb rel8]				8086,NOAPX,SX
+JMP		imm8|short			[i:	nw eb rel8]				8086,NOAPX,SX
+JMP		imm				[i:	jmp8 nw eb rel8]			8086,SX,ND,NOAPX
+JMP		imm				[i:	nw odf e9 rel]				8086,SX,BND,NOAPX
+JMP		imm|near			[i:	nw odf e9 rel]				8086,SX,ND,BND,NOAPX
+JMP		imm|far				[i:	   odf ea iwd seg]			8086,SX,ND,NOLONG
+JMP		imm16				[i:	o16 e9 rel]				8086,SX,NOLONG,BND
+JMP		imm16|near			[i:	o16 e9 rel]				8086,SX,ND,NOLONG,BND
+JMP		imm16|far			[i:	o16 ea iwd seg]				8086,SX,ND,NOLONG
+JMP		imm32				[i:	o32 e9 rel]				386,SX,NOLONG,BND
+JMP		imm32|near			[i:	o32 e9 rel]				386,SX,ND,NOLONG,BND
+JMP		imm32|far			[i:	o32 ea iwd seg]				386,SX,ND,NOLONG
+JMP		imm64				[i:	o64nw e9 rel]				X86_64,SX,LONG,BND,NOAPX
+JMP		imm64|near			[i:	o64nw e9 rel]				X86_64,SX,LONG,ND,BND,NOAPX
 JMP		imm:imm				[ji:	odf ea iwd iw]				8086,NOLONG
-JMP		imm16:imm			[ji:	o16 ea iw iw]				8086,NOLONG
-JMP		imm:imm16			[ji:	o16 ea iw iw]				8086,NOLONG
-JMP		imm32:imm			[ji:	o32 ea id iw]				386,NOLONG
-JMP		imm:imm32			[ji:	o32 ea id iw]				386,NOLONG
-JMP		mem|far				[m:	odf ff /5]				8086,NOLONG
-JMP		mem|far				[m:	o64 ff /5]				X86_64,LONG
-JMP		mem16|far			[m:	o16 ff /5]				8086
-JMP		mem32|far			[m:	o32 ff /5]				386
-JMP		mem64|far			[m:	o64 ff /5]				X86_64,LONG
-JMP		mem|near			[m:	odf ff /4]				8086,ND,BND
-JMP		rm16|near			[m:	o16 ff /4]				8086,NOLONG,ND,BND
-JMP		rm32|near			[m:	o32 ff /4]				386,NOLONG,ND,BND
-JMP		rm64|near			[m:	o64nw ff /4]				X86_64,LONG,ND,BND
+JMP		imm16:imm			[ji:	o16 ea iw iw]				8086,SX,AR0,NOLONG
+JMP		imm:imm16			[ji:	o16 ea iw iw]				8086,SX,AR1,NOLONG
+JMP		imm32:imm			[ji:	o32 ea id iw]				386,SX,AR0,NOLONG
+JMP		imm:imm32			[ji:	o32 ea id iw]				386,SX,AR1,NOLONG
+JMP		mem|far				[m:	odf ff /5]				8086,SX,NOLONG
+JMP		mem|far				[m:	o64 ff /5]				X86_64,SX,LONG
+JMP		mem16|far			[m:	o16 ff /5]				8086,SX
+JMP		mem32|far			[m:	o32 ff /5]				386,SX
+JMP		mem64|far			[m:	o64 ff /5]				X86_64,LONG,SX
+JMP		mem|near			[m:	odf ff /4]				8086,ND,BND,SX
+JMP		rm16|near			[m:	o16 ff /4]				8086,NOLONG,ND,SX,BND
+JMP		rm32|near			[m:	o32 ff /4]				386,NOLONG,ND,SX,BND
+JMP		rm64|near			[m:	o64nw ff /4]				X86_64,LONG,ND,SX,BND
 JMP		mem				[m:	odf ff /4]				8086,BND
 JMP		rm16				[m:	o16 ff /4]				8086,NOLONG,BND
 JMP		rm32				[m:	o32 ff /4]				386,NOLONG,BND
@@ -742,12 +558,12 @@ LAR		reg64,reg32			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT
 LAR		reg64,reg64			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT
 LDS		reg16,mem			[rm:	o16 c5 /r]				8086,NOLONG
 LDS		reg32,mem			[rm:	o32 c5 /r]				386,NOLONG
-LEA		reg16,mem			[rm:	o16 8d /r]				8086,ANYSIZE
-LEA		reg32,mem			[rm:	o32 8d /r]				386,ANYSIZE
-LEA		reg64,mem			[rm:	o64 8d /r]				X86_64,LONG,ANYSIZE
-LEA		reg16,imm			[rm:	o16 8d /r]				8086,ND,ANYSIZE
-LEA		reg32,imm			[rm:	o32 8d /r]				386,ND,ANYSIZE
-LEA		reg64,imm			[rm:	o64 8d /r]				X86_64,LONG,ND,ANYSIZE
+LEA		reg16,mem			[rm:	o16 8d /r]				8086,ANYSIZE,AR1
+LEA		reg32,mem			[rm:	o32 8d /r]				386,ANYSIZE,AR1
+LEA		reg64,mem			[rm:	o64 8d /r]				X86_64,LONG,ANYSIZE,AR1
+LEA		reg16,imm			[rm:	o16 8d /r]				8086,ND,ANYSIZE,AR1
+LEA		reg32,imm			[rm:	o32 8d /r]				386,ND,ANYSIZE,AR1
+LEA		reg64,imm			[rm:	o64 8d /r]				X86_64,LONG,ND,ANYSIZE,AR1
 LEAVE		void				[	c9]					186
 LES		reg16,mem			[rm:	o16 c4 /r]				8086,NOLONG
 LES		reg32,mem			[rm:	o32 c4 /r]				386,NOLONG
@@ -780,18 +596,18 @@ LOOPE		imm				[i:	adf nw e1 rel8]				8086,NOAPX
 LOOPE		imm,reg_cx			[i-:	a16    e1 rel8]				8086,NOLONG
 LOOPE		imm,reg_ecx			[i-:	a32 nw e1 rel8]				386,NOAPX
 LOOPE		imm,reg_rcx			[i-:	a64 nw e1 rel8]				X86_64,LONG,NOAPX
+LOOPZ		imm				[i:	adf nw e1 rel8]				8086,NOAPX,ND
+LOOPZ		imm,reg_cx			[i-:	a16    e1 rel8]				8086,NOLONG,ND
+LOOPZ		imm,reg_ecx			[i-:	a32 nw e1 rel8]				386,NOAPX,ND
+LOOPZ		imm,reg_rcx			[i-:	a64 nw e1 rel8]				X86_64,LONG,NOAPX,ND
 LOOPNE		imm				[i:	adf nw e0 rel8]				8086,NOAPX
 LOOPNE		imm,reg_cx			[i-:	a16    e0 rel8]				8086,NOLONG
 LOOPNE		imm,reg_ecx			[i-:	a32 nw e0 rel8]				386,NOAPX
 LOOPNE		imm,reg_rcx			[i-:	a64 nw e0 rel8]				X86_64,LONG,NOAPX
-LOOPNZ		imm				[i:	adf nw e0 rel8]				8086,NOAPX
-LOOPNZ		imm,reg_cx			[i-:	a16    e0 rel8]				8086,NOLONG
-LOOPNZ		imm,reg_ecx			[i-:	a32 nw e0 rel8]				386,NOAPX
-LOOPNZ		imm,reg_rcx			[i-:	a64 nw e0 rel8]				X86_64,LONG,NOAPX
-LOOPZ		imm				[i:	adf nw e1 rel8]				8086,NOAPX
-LOOPZ		imm,reg_cx			[i-:	a16    e1 rel8]				8086,NOLONG
-LOOPZ		imm,reg_ecx			[i-:	a32 nw e1 rel8]				386,NOAPX
-LOOPZ		imm,reg_rcx			[i-:	a64 nw e1 rel8]				X86_64,LONG,NOAPX
+LOOPNZ		imm				[i:	adf nw e0 rel8]				8086,NOAPX,ND
+LOOPNZ		imm,reg_cx			[i-:	a16    e0 rel8]				8086,NOLONG,ND
+LOOPNZ		imm,reg_ecx			[i-:	a32 nw e0 rel8]				386,NOAPX,ND
+LOOPNZ		imm,reg_rcx			[i-:	a64 nw e0 rel8]				X86_64,LONG,NOAPX,ND
 LSL		reg16,mem			[rm:	o16 0f 03 /r]				286,PROT,SW
 LSL		reg16,reg16			[rm:	o16 0f 03 /r]				286,PROT
 LSL		reg16,reg32			[rm:	o16 0f 03 /r]				386,PROT
@@ -848,36 +664,29 @@ MOV		reg_dreg,reg32			[rm:	0f 23 /r]				386,PRIV,NOLONG
 MOV		reg_dreg,reg64			[rm:	o64nw 0f 23 /r]				X86_64,LONG,PRIV
 MOV		reg32,reg_treg			[mr:	0f 24 /r]				386,NOLONG,ND
 MOV		reg_treg,reg32			[rm:	0f 26 /r]				386,NOLONG,ND
-MOV		mem,reg8			[mr:	hlexr 88 /r]				8086,SM
+MOV		mem8,reg8			[mr:	hlexr 88 /r]				8086,SM
 MOV		reg8,reg8			[mr:	88 /r]					8086
-MOV		mem,reg16			[mr:	hlexr o16 89 /r]			8086,SM
+MOV		mem16,reg16			[mr:	hlexr o16 89 /r]			8086,SM
 MOV		reg16,reg16			[mr:	o16 89 /r]				8086
-MOV		mem,reg32			[mr:	hlexr o32 89 /r]			386,SM
+MOV		mem32,reg32			[mr:	hlexr o32 89 /r]			386,SM
 MOV		reg32,reg32			[mr:	o32 89 /r]				386
-MOV		mem,reg64			[mr:	hlexr o64 89 /r]			X86_64,LONG,SM
+MOV		mem64,reg64			[mr:	hlexr o64 89 /r]			X86_64,LONG,SM
 MOV		reg64,reg64			[mr:	o64 89 /r]				X86_64,LONG
-MOV		reg8,mem			[rm:	8a /r]					8086,SM
+MOV		reg8,mem8			[rm:	8a /r]					8086,SM
 MOV		reg8,reg8			[rm:	8a /r]					8086
-MOV		reg16,mem			[rm:	o16 8b /r]				8086,SM
-MOV		reg16,reg16			[rm:	o16 8b /r]				8086
-MOV		reg32,mem			[rm:	o32 8b /r]				386,SM
-MOV		reg32,reg32			[rm:	o32 8b /r]				386
-MOV		reg64,mem			[rm:	o64 8b /r]				X86_64,LONG,SM
-MOV		reg64,reg64			[rm:	o64 8b /r]				X86_64,LONG
-MOV		reg8,imm			[ri:	b0+r ib]				8086,SM
-MOV		reg16,imm			[ri:	o16 b8+r iw]				8086,SM
-MOV		reg32,imm			[ri:	o32 b8+r id]				386,SM
-MOV		reg64,udword			[ri:	o64nw b8+r id]				X86_64,LONG,SM,OPT,ND
-MOV		reg64,sdword			[mi:	o64 c7 /0 id,s]				X86_64,LONG,SM,OPT,ND
-MOV		reg64,imm			[ri:	o64 b8+r iq]				X86_64,LONG,SM
-MOV		rm8,imm				[mi:	hlexr c6 /0 ib]				8086,SM
-MOV		rm16,imm			[mi:	hlexr o16 c7 /0 iw]			8086,SM
-MOV		rm32,imm			[mi:	hlexr o32 c7 /0 id]			386,SM
-MOV		rm64,imm			[mi:	hlexr o64 c7 /0 id,s]			X86_64,LONG,SM
-MOV		rm64,imm32			[mi:	hlexr o64 c7 /0 id,s]			X86_64,LONG
-MOV		mem,imm8			[mi:	hlexr c6 /0 ib]				8086,SM
-MOV		mem,imm16			[mi:	hlexr o16 c7 /0 iw]			8086,SM
-MOV		mem,imm32			[mi:	hlexr o32 c7 /0 id]			386,SM
+MOV		reg16,rm16			[rm:	o16 8b /r]				8086,SM
+MOV		reg32,rm32			[rm:	o32 8b /r]				386,SM
+MOV		reg64,rm64			[rm:	o64 8b /r]				X86_64,LONG,SM
+MOV		reg8,imm8			[ri:	b0+r ib]				8086,SM
+MOV		reg16,imm16			[ri:	o16 b8+r iw]				8086,SM
+MOV		reg32,imm32			[ri:	o32 b8+r id]				386,SM
+MOV		reg64,udword64			[ri:	o64nw b8+r id]				X86_64,LONG,SM,OPT,ND
+MOV		reg64,sdword64			[mi:	o64 c7 /0 id,s]				X86_64,LONG,SM,OPT,SDWORD,ND
+MOV		reg64,imm64			[ri:	o64 b8+r iq]				X86_64,LONG,SM
+MOV		rm8,imm8			[mi:	hlexr c6 /0 ib]				8086,SM
+MOV		rm16,imm16			[mi:	hlexr o16 c7 /0 iw]			8086,SM
+MOV		rm32,imm32			[mi:	hlexr o32 c7 /0 id]			386,SM
+MOV		rm64,sdword64			[mi:	hlexr o64 c7 /0 id,s]			X86_64,LONG,SM
 MOVD		mmxreg,rm32			[rm:	np 0f 6e /r]				PENT,MMX,SD
 MOVD		rm32,mmxreg			[mr:	np 0f 7e /r]				PENT,MMX,SD
 MOVD		mmxreg,rm64			[rm:	np o64 0f 6e /r]			X86_64,LONG,MMX,SX,ND
@@ -1097,17 +906,13 @@ PUSH		reg_ss				[-:	16]					8086,NOLONG
 PUSH		reg_ds				[-:	1e]					8086,NOLONG
 PUSH		reg_fs				[-:	0f a0]					386
 PUSH		reg_gs				[-:	0f a8]					386
-PUSH		imm8				[i:	nw 6a ib,s]				186
-PUSH		sbyteword16			[i:	o16 6a ib,s]				186,AR0,SIZE,ND
-PUSH		imm16				[i:	o16 68 iw]				186,AR0,SIZE
-PUSH		sbytedword32			[i:	o32 6a ib,s]				386,NOLONG,AR0,SIZE,ND
-PUSH		imm32				[i:	o32 68 id]				386,NOLONG,AR0,SIZE
-PUSH		sbytedword32			[i:	o32 6a ib,s]				386,NOLONG,SD,ND
-PUSH		imm32				[i:	o32 68 id]				386,NOLONG,SD
-PUSH		sbytedword64			[i:	o64nw 6a ib,s]				X86_64,LONG,AR0,SIZE,ND
-PUSH		imm64				[i:	o64nw 68 id,s]				X86_64,LONG,AR0,SIZE
-PUSH		sbytedword32			[i:	o64nw 6a ib,s]				X86_64,LONG,AR0,SIZE,ND
-PUSH		imm32				[i:	o64nw 68 id,s]				X86_64,LONG,AR0,SIZE
+PUSH		imm8				[i:	6a ib,s]				186,NOLONG,SX,ND
+PUSH		sbyteword16			[i:	o16 6a ib,s]				186,NOLONG,SIZE
+PUSH		imm16				[i:	o16 68 iw]				186,NOLONG,SIZE
+PUSH		sbytedword32			[i:	o32 6a ib,s]				386,NOLONG,SIZE
+PUSH		imm32				[i:	o32 68 id]				386,NOLONG,SIZE
+PUSH		sbytedword64			[i:	o64nw 6a ib,s]				X86_64,LONG,SIZE
+PUSH		sdword64			[i:	o64nw 68 id,s]				X86_64,LONG,SIZE
 PUSHA		void				[	odf 60]					186,NOLONG
 PUSHAD		void				[	o32 60]					386,NOLONG
 PUSHAW		void				[	o16 60]					186,NOLONG
@@ -1225,45 +1030,6 @@ SAR		rm32,imm8			[mi:	o32 c1 /7 ib,u]				386
 SAR		rm64,unity			[m-:	o64 d1 /7]				X86_64,LONG
 SAR		rm64,reg_cl			[m-:	o64 d3 /7]				X86_64,LONG
 SAR		rm64,imm8			[mi:	o64 c1 /7 ib,u]				X86_64,LONG
-SBB		mem,reg8			[mr:	hle 18 /r]				8086,SM,LOCK
-SBB		reg8,reg8			[mr:	18 /r]					8086
-SBB		mem,reg16			[mr:	hle o16 19 /r]				8086,SM,LOCK
-SBB		reg16,reg16			[mr:	o16 19 /r]				8086
-SBB		mem,reg32			[mr:	hle o32 19 /r]				386,SM,LOCK
-SBB		reg32,reg32			[mr:	o32 19 /r]				386
-SBB		mem,reg64			[mr:	hle o64 19 /r]				X86_64,LONG,SM,LOCK
-SBB		reg64,reg64			[mr:	o64 19 /r]				X86_64,LONG
-SBB		reg8,mem			[rm:	1a /r]					8086,SM
-SBB		reg8,reg8			[rm:	1a /r]					8086
-SBB		reg16,mem			[rm:	o16 1b /r]				8086,SM
-SBB		reg16,reg16			[rm:	o16 1b /r]				8086
-SBB		reg32,mem			[rm:	o32 1b /r]				386,SM
-SBB		reg32,reg32			[rm:	o32 1b /r]				386
-SBB		reg64,mem			[rm:	o64 1b /r]				X86_64,LONG,SM
-SBB		reg64,reg64			[rm:	o64 1b /r]				X86_64,LONG
-SBB		rm16,imm8			[mi:	hle o16 83 /3 ib,s]			8086,LOCK
-SBB		rm32,imm8			[mi:	hle o32 83 /3 ib,s]			386,LOCK
-SBB		rm64,imm8			[mi:	hle o64 83 /3 ib,s]			X86_64,LONG,LOCK
-SBB		reg_al,imm			[-i:	1c ib]					8086,SM
-SBB		reg_ax,sbyteword		[mi:	o16 83 /3 ib,s]				8086,SM,ND
-SBB		reg_ax,imm			[-i:	o16 1d iw]				8086,SM
-SBB		reg_eax,sbytedword		[mi:	o32 83 /3 ib,s]				386,SM,ND
-SBB		reg_eax,imm			[-i:	o32 1d id]				386,SM
-SBB		reg_rax,sbytedword		[mi:	o64 83 /3 ib,s]				X86_64,LONG,SM,ND
-SBB		reg_rax,imm			[-i:	o64 1d id,s]				X86_64,LONG,SM
-SBB		rm8,imm				[mi:	hle 80 /3 ib]				8086,SM,LOCK
-SBB		rm16,sbyteword			[mi:	hle o16 83 /3 ib,s]			8086,SM,LOCK,ND
-SBB		rm16,imm			[mi:	hle o16 81 /3 iw]			8086,SM,LOCK
-SBB		rm32,sbytedword			[mi:	hle o32 83 /3 ib,s]			386,SM,LOCK,ND
-SBB		rm32,imm			[mi:	hle o32 81 /3 id]			386,SM,LOCK
-SBB		rm64,sbytedword			[mi:	hle o64 83 /3 ib,s]			X86_64,LONG,SM,LOCK,ND
-SBB		rm64,imm			[mi:	hle o64 81 /3 id,s]			X86_64,LONG,SM,LOCK
-SBB		mem,imm8			[mi:	hle 80 /3 ib]				8086,SM,LOCK
-SBB		mem,sbyteword16			[mi:	hle o16 83 /3 ib,s]			8086,SM,LOCK,ND
-SBB		mem,imm16			[mi:	hle o16 81 /3 iw]			8086,SM,LOCK
-SBB		mem,sbytedword32		[mi:	hle o32 83 /3 ib,s]			386,SM,LOCK,ND
-SBB		mem,imm32			[mi:	hle o32 81 /3 id]			386,SM,LOCK
-SBB		rm8,imm				[mi:	hle 82 /3 ib]				8086,SM,LOCK,ND,NOLONG
 SCASB		void				[	repe ae]				8086,NOAPX
 SCASD		void				[	repe o32 af]				386,NOAPX
 SCASQ		void				[	repe o64 af]				X86_64,LONG,NOAPX
@@ -1347,45 +1113,6 @@ STR		mem16				[m:	0f 00 /1]				286,PROT
 STR		reg16				[m:	o16 0f 00 /1]				286,PROT
 STR		reg32				[m:	o32 0f 00 /1]				386,PROT
 STR		reg64				[m:	o64 0f 00 /1]				X86_64,LONG
-SUB		mem,reg8			[mr:	hle 28 /r]				8086,SM,LOCK
-SUB		reg8,reg8			[mr:	28 /r]					8086
-SUB		mem,reg16			[mr:	hle o16 29 /r]				8086,SM,LOCK
-SUB		reg16,reg16			[mr:	o16 29 /r]				8086
-SUB		mem,reg32			[mr:	hle o32 29 /r]				386,SM,LOCK
-SUB		reg32,reg32			[mr:	o32 29 /r]				386
-SUB		mem,reg64			[mr:	hle o64 29 /r]				X86_64,LONG,SM,LOCK
-SUB		reg64,reg64			[mr:	o64 29 /r]				X86_64,LONG
-SUB		reg8,mem			[rm:	2a /r]					8086,SM
-SUB		reg8,reg8			[rm:	2a /r]					8086
-SUB		reg16,mem			[rm:	o16 2b /r]				8086,SM
-SUB		reg16,reg16			[rm:	o16 2b /r]				8086
-SUB		reg32,mem			[rm:	o32 2b /r]				386,SM
-SUB		reg32,reg32			[rm:	o32 2b /r]				386
-SUB		reg64,mem			[rm:	o64 2b /r]				X86_64,LONG,SM
-SUB		reg64,reg64			[rm:	o64 2b /r]				X86_64,LONG
-SUB		rm16,imm8			[mi:	hle o16 83 /5 ib,s]			8086,LOCK
-SUB		rm32,imm8			[mi:	hle o32 83 /5 ib,s]			386,LOCK
-SUB		rm64,imm8			[mi:	hle o64 83 /5 ib,s]			X86_64,LONG,LOCK
-SUB		reg_al,imm			[-i:	2c ib]					8086,SM
-SUB		reg_ax,sbyteword		[mi:	o16 83 /5 ib,s]				8086,SM,ND
-SUB		reg_ax,imm			[-i:	o16 2d iw]				8086,SM
-SUB		reg_eax,sbytedword		[mi:	o32 83 /5 ib,s]				386,SM,ND
-SUB		reg_eax,imm			[-i:	o32 2d id]				386,SM
-SUB		reg_rax,sbytedword		[mi:	o64 83 /5 ib,s]				X86_64,LONG,SM,ND
-SUB		reg_rax,imm			[-i:	o64 2d id,s]				X86_64,LONG,SM
-SUB		rm8,imm				[mi:	hle 80 /5 ib]				8086,SM,LOCK
-SUB		rm16,sbyteword			[mi:	hle o16 83 /5 ib,s]			8086,SM,LOCK,ND
-SUB		rm16,imm			[mi:	hle o16 81 /5 iw]			8086,SM,LOCK
-SUB		rm32,sbytedword			[mi:	hle o32 83 /5 ib,s]			386,SM,LOCK,ND
-SUB		rm32,imm			[mi:	hle o32 81 /5 id]			386,SM,LOCK
-SUB		rm64,sbytedword			[mi:	hle o64 83 /5 ib,s]			X86_64,LONG,SM,LOCK,ND
-SUB		rm64,imm			[mi:	hle o64 81 /5 id,s]			X86_64,LONG,SM,LOCK
-SUB		mem,imm8			[mi:	hle 80 /5 ib]				8086,SM,LOCK
-SUB		mem,sbyteword16			[mi:	hle o16 83 /5 ib,s]			8086,SM,LOCK,ND
-SUB		mem,imm16			[mi:	hle o16 81 /5 iw]			8086,SM,LOCK
-SUB		mem,sbytedword32		[mi:	hle o32 83 /5 ib,s]			386,SM,LOCK,ND
-SUB		mem,imm32			[mi:	hle o32 81 /5 id]			386,SM,LOCK
-SUB		rm8,imm				[mi:	hle 82 /5 ib]				8086,SM,LOCK,ND,NOLONG
 SVDC		mem80,reg_sreg			[mr:	0f 78 /r]				486,CYRIX,SMM
 SVLDT		mem80				[m:	0f 7a /0]				486,CYRIX,SMM,ND
 SVTS		mem80				[m:	0f 7c /0]				486,CYRIX,SMM
@@ -1488,60 +1215,21 @@ XCHG		reg32,mem			[rm:	hlenl o32 87 /r]			386,SM,LOCK1
 XCHG		reg64,mem			[rm:	hlenl o64 87 /r]			X86_64,LONG,SM,LOCK1
 XLATB		void				[	d7]					8086
 XLAT		void				[	d7]					8086
-XOR		mem,reg8			[mr:	hle 30 /r]				8086,SM,LOCK
-XOR		reg8,reg8			[mr:	30 /r]					8086
-XOR		mem,reg16			[mr:	hle o16 31 /r]				8086,SM,LOCK
-XOR		reg16,reg16			[mr:	o16 31 /r]				8086
-XOR		mem,reg32			[mr:	hle o32 31 /r]				386,SM,LOCK
-XOR		reg32,reg32			[mr:	o32 31 /r]				386
-XOR		mem,reg64			[mr:	hle o64 31 /r]				X86_64,LONG,SM,LOCK
-XOR		reg64,reg64			[mr:	o64 31 /r]				X86_64,LONG
-XOR		reg8,mem			[rm:	32 /r]					8086,SM
-XOR		reg8,reg8			[rm:	32 /r]					8086
-XOR		reg16,mem			[rm:	o16 33 /r]				8086,SM
-XOR		reg16,reg16			[rm:	o16 33 /r]				8086
-XOR		reg32,mem			[rm:	o32 33 /r]				386,SM
-XOR		reg32,reg32			[rm:	o32 33 /r]				386
-XOR		reg64,mem			[rm:	o64 33 /r]				X86_64,LONG,SM
-XOR		reg64,reg64			[rm:	o64 33 /r]				X86_64,LONG
-XOR		rm16,imm8			[mi:	hle o16 83 /6 ib,s]			8086,LOCK
-XOR		rm32,imm8			[mi:	hle o32 83 /6 ib,s]			386,LOCK
-XOR		rm64,imm8			[mi:	hle o64 83 /6 ib,s]			X86_64,LONG,LOCK
-XOR		reg_al,imm			[-i:	34 ib]					8086,SM
-XOR		reg_ax,sbyteword		[mi:	o16 83 /6 ib,s]				8086,SM,ND
-XOR		reg_ax,imm			[-i:	o16 35 iw]				8086,SM
-XOR		reg_eax,sbytedword		[mi:	o32 83 /6 ib,s]				386,SM,ND
-XOR		reg_eax,imm			[-i:	o32 35 id]				386,SM
-XOR		reg_rax,sbytedword		[mi:	o64 83 /6 ib,s]				X86_64,LONG,SM,ND
-XOR		reg_rax,imm			[-i:	o64 35 id,s]				X86_64,LONG,SM
-XOR		rm8,imm				[mi:	hle 80 /6 ib]				8086,SM,LOCK
-XOR		rm16,sbyteword			[mi:	hle o16 83 /6 ib,s]			8086,SM,LOCK,ND
-XOR		rm16,imm			[mi:	hle o16 81 /6 iw]			8086,SM,LOCK
-XOR		rm32,sbytedword			[mi:	hle o32 83 /6 ib,s]			386,SM,LOCK,ND
-XOR		rm32,imm			[mi:	hle o32 81 /6 id]			386,SM,LOCK
-XOR		rm64,sbytedword			[mi:	hle o64 83 /6 ib,s]			X86_64,LONG,SM,LOCK,ND
-XOR		rm64,imm			[mi:	hle o64 81 /6 id,s]			X86_64,LONG,SM,LOCK
-XOR		mem,imm8			[mi:	hle 80 /6 ib]				8086,SM,LOCK
-XOR		mem,sbyteword16			[mi:	hle o16 83 /6 ib,s]			8086,SM,LOCK,ND
-XOR		mem,imm16			[mi:	hle o16 81 /6 iw]			8086,SM,LOCK
-XOR		mem,sbytedword32		[mi:	hle o32 83 /6 ib,s]			386,SM,LOCK,ND
-XOR		mem,imm32			[mi:	hle o32 81 /6 id]			386,SM,LOCK
-XOR		rm8,imm				[mi:	hle 82 /6 ib]				8086,SM,LOCK,ND,NOLONG
 CMOVcc		reg16,mem			[rm:	o16 0f 40+c /r]				P6,SM
 CMOVcc		reg16,reg16			[rm:	o16 0f 40+c /r]				P6
 CMOVcc		reg32,mem			[rm:	o32 0f 40+c /r]				P6,SM
 CMOVcc		reg32,reg32			[rm:	o32 0f 40+c /r]				P6
 CMOVcc		reg64,mem			[rm:	o64 0f 40+c /r]				X86_64,LONG,SM
 CMOVcc		reg64,reg64			[rm:	o64 0f 40+c /r]				X86_64,LONG
-Jcc		imm|near			[i:	odf 0f 80+c rel]			386,BND,NOAPX
-Jcc		imm16|near			[i:	o16 0f 80+c rel]			386,NOLONG,BND
-Jcc		imm32|near			[i:	o32 0f 80+c rel]			386,NOLONG,BND
-Jcc		imm64|near			[i:	o64nw 0f 80+c rel]			X86_64,LONG,BND,NOAPX
-Jcc		imm|short			[i:	nw 70+c rel8]				8086,ND,BND,NOAPX
-Jcc		imm				[i:	jcc8 nw 70+c rel8]			8086,ND,BND,NOAPX
+Jcc		imm|near			[i:	odf 0f 80+c rel]			386,BND,SX,NOAPX
+Jcc		imm16|near			[i:	o16 0f 80+c rel]			386,NOLONG,SX,BND
+Jcc		imm32|near			[i:	o32 0f 80+c rel]			386,NOLONG,SX,BND
+Jcc		imm64|near			[i:	o64nw 0f 80+c rel]			X86_64,LONG,SX,BND,NOAPX
+Jcc		imm|short			[i:	nw 70+c rel8]				8086,ND,BND,SX,NOAPX
+Jcc		imm8				[i:	nw 70+c rel8]				8086,ND,BND,SX,NOAPX
+Jcc		imm				[i:	jcc8 nw 70+c rel8]			8086,BND,NOAPX
 Jcc		imm				[i:	nw 0f 80+c rel]				386,ND,BND,NOAPX
-Jcc		imm				[i:	nw 71+c jlen e9 rel]			8086,ND,BND,NOAPX
-Jcc		imm				[i:	nw 70+c rel8]				8086,BND,NOAPX
+Jcc		imm				[i:	nw 71+c jlen e9 rel]			8086,ND,NOAPX
 
 SETcc		rm8				[m:	0f 90+c /0]				386,SB
 
@@ -1573,16 +1261,13 @@ CMPSS		xmmreg,xmmrm32,imm8		[rmi:	f3 0f c2 /r ib,u]			KATMAI,SSE
 COMISS		xmmreg,xmmrm32			[rm:	np 0f 2f /r]				KATMAI,SSE
 CVTPI2PS	xmmreg,mmxrm64			[rm:	np 0f 2a /r]				KATMAI,SSE,MMX
 CVTPS2PI	mmxreg,xmmrm64			[rm:	np 0f 2d /r]				KATMAI,SSE,MMX
-CVTSI2SS	xmmreg,mem			[rm:	f3 0f 2a /r]				KATMAI,SSE,SD,AR1,ND
-CVTSI2SS	xmmreg,rm32			[rm:	f3 0f 2a /r]				KATMAI,SSE,SD,AR1
-CVTSI2SS	xmmreg,rm64			[rm:	o64 f3 0f 2a /r]			X86_64,LONG,SSE,SQ,AR1
-CVTSS2SI	reg32,xmmreg			[rm:	f3 0f 2d /r]				KATMAI,SSE,SD,AR1
-CVTSS2SI	reg32,mem			[rm:	f3 0f 2d /r]				KATMAI,SSE,SD,AR1
-CVTSS2SI	reg64,xmmreg			[rm:	o64 f3 0f 2d /r]			X86_64,LONG,SSE,SD,AR1
-CVTSS2SI	reg64,mem			[rm:	o64 f3 0f 2d /r]			X86_64,LONG,SSE,SD,AR1
-CVTTPS2PI	mmxreg,xmmrm			[rm:	np 0f 2c /r]				KATMAI,SSE,MMX,SQ
-CVTTSS2SI	reg32,xmmrm			[rm:	f3 0f 2c /r]				KATMAI,SSE,SD,AR1
-CVTTSS2SI	reg64,xmmrm			[rm:	o64 f3 0f 2c /r]			X86_64,LONG,SSE,SD,AR1
+CVTSI2SS	xmmreg,rm32			[rm:	f3 0f 2a /r]				KATMAI,SSE
+CVTSI2SS	xmmreg,rm64			[rm:	o64 f3 0f 2a /r]			X86_64,LONG,SSE,SX,AR1
+CVTSS2SI	reg32,xmmrm32			[rm:	f3 0f 2d /r]				KATMAI,SSE
+CVTSS2SI	reg64,xmmrm32			[rm:	o64 f3 0f 2d /r]			X86_64,LONG,SSE
+CVTTPS2PI	mmxreg,xmmrm64			[rm:	np 0f 2c /r]				KATMAI,SSE,MMX
+CVTTSS2SI	reg32,xmmrm32			[rm:	f3 0f 2c /r]				KATMAI,SSE
+CVTTSS2SI	reg64,xmmrm32			[rm:	o64 f3 0f 2c /r]			X86_64,LONG,SSE
 DIVPS		xmmreg,xmmrm128			[rm:	np 0f 5e /r]				KATMAI,SSE
 DIVSS		xmmreg,xmmrm32			[rm:	f3 0f 5e /r]				KATMAI,SSE
 LDMXCSR		mem32				[m:	np 0f ae /2]				KATMAI,SSE
@@ -1832,22 +1517,17 @@ CVTPD2PS	xmmreg,xmmrm			[rm:	66 0f 5a /r]				WILLAMETTE,SSE2,SO
 CVTPI2PD	xmmreg,mmxrm			[rm:	66 0f 2a /r]				WILLAMETTE,SSE2,SQ
 CVTPS2DQ	xmmreg,xmmrm			[rm:	66 0f 5b /r]				WILLAMETTE,SSE2,SO
 CVTPS2PD	xmmreg,xmmrm			[rm:	np 0f 5a /r]				WILLAMETTE,SSE2,SQ
-CVTSD2SI	reg32,xmmreg			[rm:	norexw f2 0f 2d /r]			WILLAMETTE,SSE2,SQ,AR1
-CVTSD2SI	reg32,mem			[rm:	norexw f2 0f 2d /r]			WILLAMETTE,SSE2,SQ,AR1
-CVTSD2SI	reg64,xmmreg			[rm:	o64 f2 0f 2d /r]			X86_64,LONG,SSE2,SQ,AR1
-CVTSD2SI	reg64,mem			[rm:	o64 f2 0f 2d /r]			X86_64,LONG,SSE2,SQ,AR1
-CVTSD2SS	xmmreg,xmmrm			[rm:	f2 0f 5a /r]				WILLAMETTE,SSE2,SQ
-CVTSI2SD	xmmreg,mem			[rm:	f2 0f 2a /r]				WILLAMETTE,SSE2,SD,AR1,ND
-CVTSI2SD	xmmreg,rm32			[rm:	norexw f2 0f 2a /r]			WILLAMETTE,SSE2,SD,AR1
-CVTSI2SD	xmmreg,rm64			[rm:	o64 f2 0f 2a /r]			X86_64,LONG,SSE2,SQ,AR1
+CVTSD2SI	reg32,xmmrm64			[rm:	norexw f2 0f 2d /r]			WILLAMETTE,SSE2
+CVTSD2SI	reg64,xmmrm64			[rm:	o64 f2 0f 2d /r]			X86_64,LONG,SSE2
+CVTSD2SS	xmmreg,xmmrm64			[rm:	f2 0f 5a /r]				WILLAMETTE,SSE2,SQ
+CVTSI2SD	xmmreg,rm32			[rm:	norexw f2 0f 2a /r]			WILLAMETTE,SSE2
+CVTSI2SD	xmmreg,rm64			[rm:	o64 f2 0f 2a /r]			X86_64,LONG,SSE2,SX,AR1
 CVTSS2SD	xmmreg,xmmrm			[rm:	f3 0f 5a /r]				WILLAMETTE,SSE2,SD
 CVTTPD2PI	mmxreg,xmmrm			[rm:	66 0f 2c /r]				WILLAMETTE,SSE2,SO
 CVTTPD2DQ	xmmreg,xmmrm			[rm:	66 0f e6 /r]				WILLAMETTE,SSE2,SO
 CVTTPS2DQ	xmmreg,xmmrm			[rm:	f3 0f 5b /r]				WILLAMETTE,SSE2,SO
-CVTTSD2SI	reg32,xmmreg			[rm:	norexw f2 0f 2c /r]			WILLAMETTE,SSE2,SQ,AR1
-CVTTSD2SI	reg32,mem			[rm:	norexw f2 0f 2c /r]			WILLAMETTE,SSE2,SQ,AR1
-CVTTSD2SI	reg64,xmmreg			[rm:	o64 f2 0f 2c /r]			X86_64,LONG,SSE2,SQ,AR1
-CVTTSD2SI	reg64,mem			[rm:	o64 f2 0f 2c /r]			X86_64,LONG,SSE2,SQ,AR1
+CVTTSD2SI	reg32,xmmrm64			[rm:	norexw f2 0f 2c /r]			WILLAMETTE,SSE2
+CVTTSD2SI	reg64,xmmrm64			[rm:	o64 f2 0f 2c /r]			X86_64,LONG,SSE2
 DIVPD		xmmreg,xmmrm			[rm:	66 0f 5e /r]				WILLAMETTE,SSE2,SO
 DIVSD		xmmreg,xmmrm			[rm:	f2 0f 5e /r]				WILLAMETTE,SSE2,SQ
 MAXPD		xmmreg,xmmrm			[rm:	66 0f 5f /r]				WILLAMETTE,SSE2,SO
@@ -3636,37 +3316,37 @@ VBCSTNEBF16PS	xmmreg,mem16				[rm:	vex.128.f3.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE
 VBCSTNEBF16PS	ymmreg,mem16				[rm:	vex.256.f3.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,LATEVEX,SW
 VBCSTNESH2PS	xmmreg,mem16				[rm:	vex.128.66.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,LATEVEX,SW
 VBCSTNESH2PS	ymmreg,mem16				[rm:	vex.256.66.0f38.w0 b1 /r]	AVXNECONVERT,FUTURE,LATEVEX,SW
-VCVTNEEBF162PS	xmmreg,mem128				[rm:	vex.128.f3.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SX
+VCVTNEEBF162PS	xmmreg,mem128				[rm:	vex.128.f3.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SO
 VCVTNEEBF162PS	ymmreg,mem256				[rm:	vex.256.f3.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SY
-VCVTNEEPH2PS	xmmreg,mem128				[rm:	vex.128.66.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SX
+VCVTNEEPH2PS	xmmreg,mem128				[rm:	vex.128.66.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SO
 VCVTNEEPH2PS	ymmreg,mem256				[rm:	vex.256.66.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SY
-VCVTNEOBF162PS	xmmreg,mem128				[rm:	vex.128.f2.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SX
+VCVTNEOBF162PS	xmmreg,mem128				[rm:	vex.128.f2.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SO
 VCVTNEOBF162PS	ymmreg,mem256				[rm:	vex.256.f2.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SY
-VCVTNEOPH2PS	xmmreg,mem128				[rm:	vex.128.np.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SX
+VCVTNEOPH2PS	xmmreg,mem128				[rm:	vex.128.np.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SO
 VCVTNEOPH2PS	ymmreg,mem256				[rm:	vex.256.np.0f38.w0 b0 /r]	AVXNECONVERT,FUTURE,LATEVEX,SY
-VCVTNEPS2BF16	xmmreg,xmmrm128				[rm:	vex.128.f3.0f38.w0 72 /r]	AVXNECONVERT,FUTURE,LATEVEX,SX
+VCVTNEPS2BF16	xmmreg,xmmrm128				[rm:	vex.128.f3.0f38.w0 72 /r]	AVXNECONVERT,FUTURE,LATEVEX,SO
 VCVTNEPS2BF16	ymmreg,ymmrm256				[rm:	vex.256.f3.0f38.w0 72 /r]	AVXNECONVERT,FUTURE,LATEVEX,SY
 
 ;# AVX Vector Neural Network Instructions
 ; Must precede AVX-512 versions
-VPDPBSSD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f2.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
+VPDPBSSD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f2.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SO
 VPDPBSSD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f2.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
-VPDPBSSDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f2.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
+VPDPBSSDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f2.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SO
 VPDPBSSDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f2.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
-VPDPBSUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
+VPDPBSUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SO
 VPDPBSUD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f3.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
-VPDPBSUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
+VPDPBSUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.f3.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SO
 VPDPBSUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.f3.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
-VPDPBUUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
+VPDPBUUD  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SO
 VPDPBUUD  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 50 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
-VPDPBUUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SX
+VPDPBUUDS  	 xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.np.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SO
 VPDPBUUDS  	 ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.np.0f38.w0 51 /r]	AVXVNNIINT8,FUTURE,LATEVEX,SY
 
 ;# AVX Integer Fused Multiply-Add
 ; Must precede AVX-512 versions
-VPMADD52HUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX,SX
+VPMADD52HUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX,SO
 VPMADD52HUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b5 /r]	AVXIFMA,FUTURE,LATEVEX,SY
-VPMADD52LUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b4 /r]	AVXIFMA,FUTURE,LATEVEX,SX
+VPMADD52LUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b4 /r]	AVXIFMA,FUTURE,LATEVEX,SO
 VPMADD52LUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b4 /r]	AVXIFMA,FUTURE,LATEVEX,SY
 
 ;# AVX-512 mask register instructions
@@ -6127,10 +5807,10 @@ TDPBSSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5e /r]		AMXINT8,FUTURE,L
 TDPBSUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
 TDPBUSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
 TDPBUUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 5e /r]		AMXINT8,FUTURE,LONG
-TILELOADD	tmmreg,mem			[rm:	vex.128.f2.0f38.w0 4b /r]		AMXTILE,MIB,SIB,FUTURE,SX,LONG
-TILELOADDT1	tmmreg,mem			[rm:	vex.128.66.0f38.w0 4b /r]		AMXTILE,MIB,SIB,FUTURE,SX,LONG
+TILELOADD	tmmreg,mem			[rm:	vex.128.f2.0f38.w0 4b /r]		AMXTILE,MIB,SIB,ANYSIZE,AR1,FUTURE,LONG
+TILELOADDT1	tmmreg,mem			[rm:	vex.128.66.0f38.w0 4b /r]		AMXTILE,MIB,SIB,ANYSIZE,AR1,FUTURE,LONG
 TILERELEASE	void				[	vex.128.np.0f38.w0 49 c0]		AMXTILE,FUTURE,LONG
-TILESTORED	mem,tmmreg			[mr:	vex.128.f3.0f38.w0 4b /r]		AMXTILE,MIB,SIB,FUTURE,SX,LONG
+TILESTORED	mem,tmmreg			[mr:	vex.128.f3.0f38.w0 4b /r]		AMXTILE,MIB,SIB,ANYSIZE,AR0,FUTURE,LONG
 TILEZERO	tmmreg				[r:	vex.128.f2.0f38.w0 49 /3r0]		AMXTILE,FUTURE,LONG
 
 ;# Intel AVX512-FP16 instructions
@@ -6463,59 +6143,15 @@ POPP		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
 PUSHP		reg64				[r:	o64nw rex.w rex2 50+r		]	APX
 POPP		reg64				[r:	o64nw rex.w rex2 58+r		]	APX
 
-ADC		reg8?,reg8,rm8			[vrm:	evex.ndx.l0.m4.o8     12 /r	 ]	APX
-ADC		reg16?,reg16,rm16		[vrm:	evex.ndx.l0.m4.o16    13 /r	 ]	APX
-ADC		reg32?,reg32,rm32		[vrm:	evex.ndx.l0.m4.o32    13 /r	 ]	APX,ZU
-ADC		reg64?,reg64,rm64		[vrm:	evex.ndx.l0.m4.o64    13 /r	 ]	APX,ZU
-ADC		reg8?,rm8,reg8			[vmr:	evex.ndx.l0.m4.o8     10 /r	 ]	APX
-ADC		reg16?,rm16,reg16		[vmr:	evex.ndx.l0.m4.o16    11 /r	 ]	APX
-ADC		reg32?,rm32,reg32		[vmr:	evex.ndx.l0.m4.o32    11 /r	 ]	APX,ZU
-ADC		reg64?,rm64,reg64		[vmr:	evex.ndx.l0.m4.o64    11 /r	 ]	APX,ZU
-ADC		reg8?,rm8,imm8			[vmi:	evex.ndx.l0.m4.o8     80 /2 ib	 ]	APX,SM
-ADC		reg16?,rm16,imm8		[vmi:	evex.ndx.l0.m4.o16    83 /2 ib,s ]	APX
-ADC		reg16?,rm16,sbyteword16		[vmi:	evex.ndx.l0.m4.o16    83 /2 ib,s ]	APX,SM,ND
-ADC		reg16?,rm16,imm16		[vmi:	evex.ndx.l0.m4.o16    81 /2 iw	 ]	APX,SM
-ADC		reg32?,rm32,imm8		[vmi:	evex.ndx.l0.m4.o32    83 /2 ib,s ]	APX
-ADC		reg32?,rm32,sbytedword32	[vmi:	evex.ndx.l0.m4.o32    83 /2 ib,s ]	APX,SM,ND
-ADC		reg32?,rm32,imm32		[vmi:	evex.ndx.l0.m4.o32    81 /2 id	 ]	APX,SM
-ADC		reg64?,rm64,imm8		[vmi:	evex.ndx.l0.m4.o64    83 /2 ib,s ]	APX
-ADC		reg64?,rm64,sbytedword32	[vmi:	evex.ndx.l0.m4.o64    83 /2 ib,s ]	APX,SM,ND
-ADC		reg64?,rm64,imm32		[vmi:	evex.ndx.l0.m4.o64    81 /2 id,s ]	APX
 ADCX		reg32?,reg32,rm32		[vrm:	evex.ndx.l0.66.m4.w0 66 /r	]	APX,ZU
 ADCX		reg64?,reg64,rm64		[vrm:	evex.ndx.l0.66.m4.w1 66 /r	]	APX,ZU
-ADD		reg8?,reg8,rm8			[vrm:	evex.ndx.nf.l0.m4.o8     02 /r		]	APX
-ADD		reg16?,reg16,rm16		[vrm:	evex.ndx.nf.l0.m4.o16    03 /r		]	APX
-ADD		reg32?,reg32,rm32		[vrm:	evex.ndx.nf.l0.m4.o32    03 /r		]	APX,ZU
-ADD		reg64?,reg64,rm64		[vrm:	evex.ndx.nf.l0.m4.o64    03 /r		]	APX,ZU
-ADD		reg8?,rm8,reg8			[vmr:	evex.ndx.nf.l0.m4.o8     00 /r		]	APX
-ADD		reg16?,rm16,reg16		[vmr:	evex.ndx.nf.l0.m4.o16    01 /r		]	APX
-ADD		reg32?,rm32,reg32		[vmr:	evex.ndx.nf.l0.m4.o32    01 /r		]	APX,ZU
-ADD		reg64?,rm64,reg64		[vmr:	evex.ndx.nf.l0.m4.o64    01 /r		]	APX,ZU
-ADD		reg8?,rm8,imm			[vmi:	evex.ndx.nf.l0.m4.o8     80 /0 ib	]	APX,SB,AR2
-ADD		reg16?,rm16,imm8		[vmi:	evex.ndx.nf.l0.m4.o16    83 /0 ib,s	]	APX,SM0-1
-ADD		reg16?,rm16,sbyteword		[vmi:	evex.ndx.nf.l0.m4.o16    83 /0 ib,s	]	APX,SM0-1,ND
-ADD		reg16?,rm16,imm			[vmi:	evex.ndx.nf.l0.m4.o16    81 /0 iw	]	APX,SM0-1,SW,AR2
-ADD		reg32?,rm32,imm8		[vmi:	evex.ndx.nf.l0.m4.o32    83 /0 ib,s	]	APX,SM0-1
-ADD		reg32?,rm32,sbytedword		[vmi:	evex.ndx.nf.l0.m4.o32    83 /0 ib,s	]	APX,SM0-1,ND
-ADD		reg32?,rm32,imm			[vmi:	evex.ndx.nf.l0.m4.o32    81 /0 id	]	APX,SM0-1,SD,AR2
-ADD		reg64?,rm64,imm8		[vmi:	evex.ndx.nf.l0.m4.o64    83 /0 ib,s	]	APX,SM0-1
-ADD		reg64?,rm64,sbytedword		[vmi:	evex.ndx.nf.l0.m4.o64    83 /0 ib,s	]	APX,SM0-1,ND
-ADD		reg64?,rm64,imm			[vmi:	evex.ndx.nf.l0.m4.o64    81 /0 id,s	]	APX,SM0-1,SD,AR2
 ADOX		reg32?,reg32,rm32		[vrm:	evex.ndx.l0.f3.m4.w0 66 /r	]	APX,ZU
 ADOX		reg64?,reg64,rm64		[vrm:	evex.ndx.l0.f3.m4.w1 66 /r	]	APX,ZU
-AND		reg8?,reg8,rm8			[vrm:	evex.ndx.nf.l0.np.m4.wig 22 /r	]	APX
-AND		reg16?,reg16,rm16		[vrm:	evex.ndx.nf.l0.66.m4.w0 23 /r	]	APX
-AND		reg32?,reg32,rm32		[vrm:	evex.ndx.nf.l0.np.m4.w0 23 /r	]	APX,ZU
-AND		reg64?,reg64,rm64		[vrm:	evex.ndx.nf.l0.np.m4.w1 23 /r	]	APX,ZU
-AND		reg8?,rm8,reg8			[vmr:	evex.ndx.nf.l0.np.m4.wig 20 /r	]	APX
-AND		reg16?,rm16,reg16		[vmr:	evex.ndx.nf.l0.66.m4.w0 21 /r	]	APX
-AND		reg32?,rm32,reg32		[vmr:	evex.ndx.nf.l0.np.m4.w0 21 /r	]	APX,ZU
-AND		reg64?,rm64,reg64		[vmr:	evex.ndx.nf.l0.np.m4.w1 21 /r	]	APX,ZU
 
 JMP		imm|abs				[i:	a64 np rex2 a1 iq		]	APX
-JMP		imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,SQ
+JMP		imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,ND
 JMPABS		imm				[i:	a64 np rex2 a1 iq		]	APX,ND
-JMPABS		imm64				[i:	a64 np rex2 a1 iq		]	APX,SQ,ND
+JMPABS		imm64				[i:	a64 np rex2 a1 iq		]	APX,ND
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file

@@ -54,7 +54,7 @@
 enum match_result {
     /*
      * Matching errors.  These should be sorted so that more specific
-     * errors come later in the sequence.
+     * errors (higher priority) come later in the sequence.
      */
     MERR_INVALOP,
     MERR_OPSIZEMISSING,
@@ -76,11 +76,23 @@ enum match_result {
     MERR_REGSETSIZE,
     MERR_REGSET,
     MERR_WRONGIMM,
+
     /*
-     * Matching success; the conditional ones first
+     * Matching successes in decreasing order of fuzziness;
+     * the fuzziness factor amounts to the factors (normally
+     * operands) fuzzed.
      */
-    MOK_JUMP,		/* Matching OK but needs jmp_match() */
-    MOK_GOOD		/* Matching unconditionally OK */
+    MOK_FIRST,                  /* First successful anything */
+
+    MOK_FUZZY8,
+    MOK_FUZZY7,                 /* Matching unconditionally OK */
+    MOK_FUZZY6,
+    MOK_FUZZY5,
+    MOK_FUZZY4,
+    MOK_FUZZY3,
+    MOK_FUZZY2,
+    MOK_FUZZY1,
+    MOK_GOOD
 };
 
 #define GEN_SIB(scale, index, base)                 \
@@ -120,16 +132,39 @@ enum prefix_err {
 static int prefix_byte(enum prefixes pfx, const int bits);
 
 /*
+ * Convert operand/address/mode size to a BITS opflag constant.
+ * This is not valid for 80+ bits!
+ */
+static inline opflags_t mode_to_op(unsigned int bits)
+{
+    nasm_static_assert((BITS8 >> SIZE_SHIFT) == 1);
+    nasm_static_assert(BITS16 == (BITS8 << 1));
+    nasm_static_assert(BITS32 == (BITS8 << 2));
+    nasm_static_assert(BITS64 == (BITS8 << 3));
+
+    return (opflags_t)bits << (SIZE_SHIFT - 3);
+}
+
+/*
  * Return any of REX_[BXR]1 corresponding to non-GPR registers by
  * masking them with the REX_[BXR]V flags.
  */
-static inline uint32_t rex_highvec(uint32_t rexflags)
+static inline const_func uint32_t rex_highvec(uint32_t rexflags)
 {
     return rexflags & (rexflags >> 4) & REX_BXR1;
 }
 
 /* Get the pointer to an operand if it exits */
 static inline struct operand *get_operand(insn *ins, unsigned int n)
+{
+    if (n >= (unsigned int)ins->operands)
+        return NULL;
+    else
+        return &ins->oprs[n];
+}
+
+static inline const struct operand *
+get_operand_const(const insn *ins, unsigned int n)
 {
     if (n >= (unsigned int)ins->operands)
         return NULL;
@@ -183,14 +218,17 @@ static const char *size_name(int size)
 
 static void warn_overflow(int size, const char *prefix, const char *suffix)
 {
+    const char *pfxsp, *sufsp;
+
+    pfxsp = sufsp = " ";
     if (!prefix)
-        prefix = "";
+        prefix = ++pfxsp;
     if (!suffix)
-        suffix = "";
+        suffix = ++sufsp;
 
     nasm_warn(ERR_PASS2 | WARN_NUMBER_OVERFLOW,
-              "%s%s%s exceeds bounds",
-              prefix, size_name(size), suffix);
+              "%s%s%s%s%s exceeds bounds",
+              prefix, pfxsp, size_name(size), sufsp, suffix);
 }
 
 static void warn_overflow_const(int64_t data, int size)
@@ -199,16 +237,20 @@ static void warn_overflow_const(int64_t data, int size)
         warn_overflow(size, NULL, NULL);
 }
 
-static void warn_overflow_out(int64_t data, int size, enum out_flags flags)
+static void warn_overflow_out(int64_t data, int size,
+                              enum out_flags flags, const char *what)
 {
     bool err;
     const char *prefix;
 
+    if (flags & OUT_NOWARN)
+        return;
+
     if (flags & OUT_SIGNED) {
-        prefix = "signed ";
+        prefix = "signed";
         err = overflow_signed(data, size);
     } else if (flags & OUT_UNSIGNED) {
-        prefix = "unsigned ";
+        prefix = "unsigned";
         err = overflow_unsigned(data, size);
     } else {
         prefix = NULL;
@@ -216,7 +258,7 @@ static void warn_overflow_out(int64_t data, int size, enum out_flags flags)
     }
 
     if (err)
-        warn_overflow(size, prefix, NULL);
+        warn_overflow(size, prefix, what);
 }
 
 /*
@@ -296,7 +338,7 @@ static void out(struct out_data *data)
                     /* Support address space wrapping for low-bit modes */
                     data->flags &= ~OUT_SIGNMASK;
                 }
-                warn_overflow_out(addrval, asize, data->flags);
+                warn_overflow_out(addrval, asize, data->flags, data->what);
                 xdata.q = cpu_to_le64(addrval);
                 data->data = xdata.b;
                 data->type = OUT_RAWDATA;
@@ -484,6 +526,9 @@ static void out(struct out_data *data)
         data->insoffs     += zeropad;
         data->size        += zeropad;  /* Restore original size value */
     }
+
+    /* FOr the next time... */
+    data->what = NULL;
 }
 
 static inline void out_rawdata(struct out_data *data, const void *rawdata,
@@ -590,60 +635,81 @@ static void out_reladdr(struct out_data *data, const struct operand *opx,
     out(data);
 }
 
-static bool jmp_match(insn * ins, const struct itemplate *temp)
+/* This is a real hack. The jcc8 or jmp8 byte code must come first. */
+static enum match_result jmp_match(const struct itemplate *temp, const insn *ins)
 {
-    int64_t isize;
-    const uint8_t *code = temp->code;
-    uint8_t c = code[0];
-    bool is_byte;
-    const struct operand * const op0 = get_operand(ins, 0);
+    const struct operand * const op0 = get_operand_const(ins, 0);
+    int64_t delta;
 
     if (op0->type & STRICT)
-        return false;
+        return MERR_INVALOP;
 
-    switch (c) {
-    case 0370:
-        if (ins->opt & OPTIM_NO_Jcc_RELAX)
-            return false;
-        break;
-    case 0371:
-        if (ins->opt & OPTIM_NO_JMP_RELAX)
-            return false;
-        break;
-    default:
-        return false;
+    if (unlikely(ins->opt & (OPTIM_NO_Jcc_RELAX|OPTIM_NO_JMP_RELAX))) {
+        const uint8_t c = temp->code[0];
+        switch (c) {
+        case 0370:
+            if (ins->opt & OPTIM_NO_Jcc_RELAX)
+                return MERR_INVALOP;
+            break;
+        case 0371:
+            if (ins->opt & OPTIM_NO_JMP_RELAX)
+                return MERR_INVALOP;
+            break;
+        default:
+            return MERR_INVALOP;
+        }
     }
 
-    isize = calcsize(ins, temp);
-
-    if (op0->opflags & OPFLAG_UNKNOWN)
+    if (op0->opflags & OPFLAG_UNKNOWN) {
         /* Be optimistic in pass 1 */
-        return true;
-
-    if (op0->segment != ins->loc.segment)
-        return false;
-
-    isize = op0->offset - ins->loc.offset - isize; /* isize is delta */
-    is_byte = (isize >= -128 && isize <= 127); /* is it byte size? */
-
-    if (is_byte && c == 0371 && ins->prefixes[PPS_REP] == P_BND) {
-        /* jmp short (opcode eb) cannot be used with bnd prefix. */
-        ins->prefixes[PPS_REP] = P_none;
-        /*!
-         *!prefix-bnd [on] invalid \c{BND} prefix
-         *!=bnd
-         *!  warns about ineffective use of the \c{BND} prefix when the
-         *!  \c{JMP} instruction is converted to the \c{SHORT} form.
-         *!  This should be extremely rare since the short \c{JMP} only
-         *!  is applicable to jumps inside the same module, but if
-         *!  it is legitimate, it may be necessary to use
-         *!  \c{bnd jmp dword}.
-         */
-        nasm_warn(WARN_PREFIX_BND|ERR_PASS2 ,
-                   "jmp short does not init bnd regs - bnd prefix dropped");
+        return MOK_GOOD;
     }
 
-    return is_byte;
+    if (op0->segment != ins->loc.segment) {
+        /* Cross-segment jump */
+        return MERR_INVALOP;
+    }
+
+    /*
+     * An instruction can only range between 1 and 15 bytes.
+     * If that is guaranteed true or false, there is no reason
+     * to go through the process of calculating the exact instruction
+     * size.
+     */
+    delta = op0->offset - ins->loc.offset;
+    if (delta < -128 + 1 || delta > 127 + 15) {
+        /* This cannot be a byte-sized jump */
+        return MERR_INVALOP;
+    } else if (delta >= -128 + 15 && delta <= 127 + 1) {
+        /* It is guaranteed to be safe, no need to go through test */
+    } else {
+        /*
+         * Need to do this the hard way.
+         *
+         * However, calcsize() can modify the instruction structure,
+         * but after a mismatch we have to revert to the original
+         * state, so make a copy here and hold error messages.
+         */
+        int64_t isize;
+        insn tmpins;
+        errhold hold;
+
+        tmpins = *ins;
+        tmpins.dummy = true;
+        hold = nasm_error_hold_push();
+
+        isize = calcsize(&tmpins, temp);
+
+        if (nasm_error_hold_pop(hold, false) >= ERR_NONFATAL)
+            return MERR_INVALOP;
+        if (isize < 0)
+            return MERR_INVALOP;
+        delta -= isize;
+        if ((int8_t)delta != delta)
+            return MERR_INVALOP;
+    }
+
+    return MOK_GOOD;
 }
 
 static inline int64_t merge_resb(insn *ins, int64_t isize)
@@ -881,7 +947,7 @@ int64_t assemble(insn *instruction)
 
         m = find_match(&temp, instruction);
 
-        if (m == MOK_GOOD) {
+        if (m >= MOK_GOOD) {
             /* Matches! */
             if (unlikely(itemp_has(temp, IF_OBSOLETE))) {
                 errflags warning;
@@ -1110,7 +1176,6 @@ static void debug_set_type(insn *instruction)
     dfmt->debug_typevalue(typeinfo);
 }
 
-
 /* Proecess an EQU directive */
 static void define_equ(insn * instruction)
 {
@@ -1226,7 +1291,7 @@ int64_t insn_size(insn *instruction)
         add_asp(instruction);
 
         m = find_match(&temp, instruction);
-        if (m != MOK_GOOD)
+        if (m < MOK_GOOD)
             return -1;              /* No match */
 
         isize = calcsize(instruction, temp);
@@ -1570,6 +1635,8 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
 
             if (bits != 64 || (pfx && pfx != P_A64))
                 return -1;
+            else
+                ins->prefixes[PPS_ASIZE] = P_A64;
             break;
         }
 
@@ -1724,14 +1791,17 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
              *!  any time for any number of reasons.
              */
             /* The bytecode ends in 0, so opx points to operand 0 */
-            if (!absolute_op(opx))
+            if (!absolute_op(opx)) {
                 nasm_nonfatal("attempt to reserve non-constant"
-                              " quantity of BSS space");
-            else if (opx->opflags & OPFLAG_FORWARD)
-                nasm_warn(WARN_FORWARD, "forward reference in RESx "
-                           "can have unpredictable results");
-            else
-                length += opx->offset * resb_bytes(ins->opcode);
+                              " quantity of memory");
+                return -1;
+            } else if (opx->opflags & OPFLAG_FORWARD) {
+                nasm_warn(WARN_FORWARD, "forward reference in %s "
+                          "can have unpredictable results",
+                          nasm_insn_names[ins->opcode]);
+            }
+
+            length += opx->offset * resb_bytes(ins->opcode);
             break;
 
         case 0341:
@@ -1785,7 +1855,26 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case 0370:
+            break;
+
         case 0371:
+            if (ins->prefixes[PPS_REP] == P_BND) {
+                /* jmp short (opcode eb) cannot be used with bnd prefix. */
+                ins->prefixes[PPS_REP] = P_none;
+                /*!
+                 *!prefix-bnd [on] invalid \c{BND} prefix
+                 *!=bnd
+                 *!  warns about ineffective use of the \c{BND} prefix when the
+                 *!  \c{JMP} instruction is converted to the \c{SHORT} form.
+                 *!  This should be extremely rare since the short \c{JMP} only
+                 *!  is applicable to jumps inside the same module, but if
+                 *!  it is legitimate, it may be necessary to use
+                 *!  \c{bnd jmp dword}.
+                 */
+                if (!ins->dummy)
+                    nasm_warn(WARN_PREFIX_BND|ERR_PASS2 ,
+                              "jmp short does not init bnd regs - bnd prefix dropped");
+            }
             break;
 
         case 0373:
@@ -2417,11 +2506,6 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         case4(0254):
-            if (absolute_op(opx) &&
-                (int32_t)opx->offset != (int64_t)opx->offset) {
-                nasm_warn(ERR_PASS2|WARN_NUMBER_OVERFLOW,
-                           "signed dword immediate exceeds bounds");
-            }
             out_imm(data, opx, 4, OUT_SIGNED);
             break;
 
@@ -2649,7 +2733,7 @@ static void gencode(struct out_data *data, insn *ins)
 
                         out_imm(data, opy, ins->ea.bytes,
                                 (asize > ins->ea.bytes)
-                                ? OUT_SIGNED : OUT_WRAP);
+                                ? OUT_SIGNED|OUT_NOWARN : OUT_WRAP|OUT_NOWARN);
 
                         overflow = overflow_general(opy->offset, asize) ||
                             sext(opy->offset, ins->addr_size) !=
@@ -2658,7 +2742,7 @@ static void gencode(struct out_data *data, insn *ins)
                 }
 
                 if (overflow)
-                    warn_overflow(ins->ea.bytes, NULL, " displacement");
+                    warn_overflow(ins->ea.bytes, NULL, "displacement");
             }
             break;
 
@@ -2755,10 +2839,9 @@ static enum match_result find_match(const struct itemplate **tempp,
 {
     const int bits = instruction->bits;
     const struct itemplate *temp;
+    const struct itemplate *best = NULL;
     enum match_result m, merr;
-    opflags_t xsizeflags[MAX_OPERANDS];
-    bool opsizemissing = false;
-    int i;
+    int this_good;
     int rex = instruction->prefixes[PPS_REX];
 
     /* Impossible encoding request? */
@@ -2767,81 +2850,28 @@ static enum match_result find_match(const struct itemplate **tempp,
             return MERR_ENCMISMATCH;
     }
 
-    for (i = 0; i < instruction->operands; i++)
-        xsizeflags[i] = instruction->oprs[i].xsize;
-
     merr = MERR_INVALOP;
+    best = NULL;
+    this_good = 0;
 
     for (temp = nasm_instructions[instruction->opcode];
          temp->opcode != I_none; temp++) {
         m = matches(temp, instruction);
-        if (m == MOK_JUMP) {
-            if (jmp_match(instruction, temp))
-                m = MOK_GOOD;
-            else
-                m = MERR_INVALOP;
-        } else if (m == MERR_OPSIZEMISSING && !itemp_has(temp, IF_SX)) {
-            /*
-             * Missing operand size and a candidate for fuzzy matching...
-             */
-            for (i = 0; i < temp->operands; i++) {
-                if (instruction->oprs[i].bcast)
-                    xsizeflags[i] |= temp->deco[i] & BRSIZE_MASK;
-                else
-                    xsizeflags[i] |= temp->opd[i] & SIZE_MASK;
-            }
-            opsizemissing = true;
-        }
-        if (m > merr)
+        if (m > merr) {
+            best = temp;
             merr = m;
-        if (merr == MOK_GOOD)
-            goto done;
-    }
-
-    /* No match, but see if we can get a fuzzy operand size match... */
-    if (!opsizemissing)
-        goto done;
-
-    for (i = 0; i < instruction->operands; i++) {
-        struct operand *op = &instruction->oprs[i];
-        /*
-         * We ignore extrinsic operand sizes on registers, so we should
-         * never try to fuzzy-match on them.  This also resolves the case
-         * when we have e.g. "xmmrm128" in two different positions.
-         */
-        if (is_class(REGISTER, op->type))
-            continue;
-
-        /* This tests if xsizeflags[i] has more than one bit set */
-        if ((xsizeflags[i] & (xsizeflags[i]-1)))
-            goto done;                /* No luck */
-
-        if (op->bcast) {
-            op->decoflags |= xsizeflags[i];
-            op->type |= brsize_to_size(xsizeflags[i]);
-        } else {
-            op->type |= xsizeflags[i]; /* Set the size */
+            this_good = 1;
+            if (merr == MOK_GOOD)
+                goto done;      /* Not fuzzy at all */
+        } else if (m == merr) {
+            this_good++;
         }
     }
 
-    /* Try matching again... */
-    for (temp = nasm_instructions[instruction->opcode];
-         temp->opcode != I_none; temp++) {
-        m = matches(temp, instruction);
-        if (m == MOK_JUMP) {
-            if (jmp_match(instruction, temp))
-                m = MOK_GOOD;
-            else
-                m = MERR_INVALOP;
-        }
-        if (m > merr)
-            merr = m;
-        if (merr == MOK_GOOD)
-            goto done;
-    }
-
+    if (merr >= MOK_FIRST)
+        merr = MOK_GOOD;        /* Fuzzy match but valid */
 done:
-    *tempp = temp;
+    *tempp = best;
     return merr;
 }
 
@@ -2864,20 +2894,23 @@ static uint8_t get_broadcast_num(opflags_t opflags, opflags_t brsize)
 }
 
 static enum match_result matches(const struct itemplate * const itemp,
-                                 const insn *instruction)
+                                 const insn * const ins)
 {
-    const int bits = instruction->bits;
-    bool opsizemissing = false;
+    const int bits = ins->bits;
     int i;
-    const int oprs = instruction->operands;
+    const int oprs = ins->operands;
+    unsigned int arflag;
     unsigned int armask, smmask;
+    bool if_anysize, if_sx;
     opflags_t arsize, smsize;
-    opflags_t size[MAX_OPERANDS];
+    opflags_t isize[MAX_OPERANDS]; /* Adjusted instruction operand sizes */
+    opflags_t tsize[MAX_OPERANDS]; /* Adjusted template operand sizes */
+    opflags_t itype[MAX_OPERANDS]; /* Adjusted instruction flags */
 
     /*
      * Check the opcode
      */
-    if (itemp->opcode != instruction->opcode)
+    if (itemp->opcode != ins->opcode)
         return MERR_INVALOP;
 
     /*
@@ -2889,7 +2922,7 @@ static enum match_result matches(const struct itemplate * const itemp,
     /*
      * Is it legal?
      */
-    if (unlikely(instruction->opt & OPTIM_STRICT_INSTR)) {
+    if (unlikely(ins->opt & OPTIM_STRICT_INSTR)) {
         if (itemp_has(itemp, IF_OPT))
             return MERR_INVALOP;
     }
@@ -2897,7 +2930,7 @@ static enum match_result matches(const struct itemplate * const itemp,
     /*
      * {rex/vexn/evex} available?
      */
-    switch (instruction->prefixes[PPS_REX]) {
+    switch (ins->prefixes[PPS_REX]) {
     case P_EVEX:
         if (!itemp_has(itemp, IF_EVEX))
             return MERR_ENCMISMATCH;
@@ -2940,133 +2973,35 @@ static enum match_result matches(const struct itemplate * const itemp,
     }
 
     /*
-     * First, cursory operand filtering
+     * First, cursory operand filtering and initialize
+     * itype[] and isize[]
      */
     for (i = 0; i < oprs; i++) {
-        const struct operand * const op = &instruction->oprs[i];
-        if (op->type & ~itemp->opd[i] & (COLON | TO))
+        const struct operand * const op = &ins->oprs[i];
+        const opflags_t ttype  = itemp->opd[i];
+
+        isize[i] = op->type & SIZE_MASK;
+        itype[i] = op->type - isize[i];
+        if (op->type & ~ttype & (COLON | TO))
             return MERR_INVALOP;
         if (op->iflag && !itemp_has(itemp, op->iflag))
             return MERR_WRONGIMM;
     }
 
     /*
-     * Process size flags
-     */
-    switch (itemp_smask(itemp)) {
-    case IF_GENBIT(IF_SB):
-        arsize = BITS8;
-        break;
-    case IF_GENBIT(IF_SW):
-        arsize = BITS16;
-        break;
-    case IF_GENBIT(IF_SD):
-        arsize = BITS32;
-        break;
-    case IF_GENBIT(IF_SQ):
-        arsize = BITS64;
-        break;
-    case IF_GENBIT(IF_SO):
-        arsize = BITS128;
-        break;
-    case IF_GENBIT(IF_SY):
-        arsize = BITS256;
-        break;
-    case IF_GENBIT(IF_SZ):
-        arsize = BITS512;
-        break;
-    case IF_GENBIT(IF_ANYSIZE):
-        arsize = SIZE_MASK;
-        break;
-    case IF_GENBIT(IF_SIZE):
-        switch (bits) {
-        case 16:
-            arsize = BITS16;
-            break;
-        case 32:
-            arsize = BITS32;
-            break;
-        case 64:
-            arsize = BITS64;
-            break;
-        default:
-            arsize = 0;
-            break;
-        }
-        break;
-    default:
-        arsize = 0;
-        break;
-    }
-
-    /* Flags for which the AR and SM flags apply */
-    armask = arsize ? itemp_arx(itemp) : 0;
-    smmask = itemp_smx(itemp);
-
-    /* Look for any sized operands among the size-match ones */
-    smsize = 0;
-    for (i = 0; i < oprs; i++) {
-        if (smmask & (1 << i)) {
-            opflags_t osz = instruction->oprs[i].type & SIZE_MASK;
-            if (osz) {
-                if (smsize && smsize != osz) {
-                    /* Operands need to match, and they don't */
-                    return MERR_OPSIZEMISMATCH;
-                }
-                smsize = osz;
-            }
-        }
-    }
-
-    if (!smsize)
-        smmask = 0;
-
-    /* Give unsized operands a size */
-    for (i = 0; i < oprs; i++) {
-        if (smmask & (1 << i))
-            size[i] = smsize;
-        else if (armask & (1 << i))
-            size[i] = arsize;
-        else
-            size[i] = 0;
-    }
-
-    /*
-     * Check that the operand flags all match up,
-     * it's a bit tricky so lets be verbose:
-     *
-     * 1) Find out the size of operand. If instruction
-     *    doesn't have one specified -- we're trying to
-     *    guess it either from template (IF_S* flag) or
-     *    from code bits.
-     *
-     * 2) If template operand do not match the instruction OR
-     *    template has an operand size specified AND this size differ
-     *    from which instruction has (perhaps we got it from code bits)
-     *    we are:
-     *      a)  Check that only size of instruction and operand is differ
-     *          other characteristics do match
-     *      b)  Perhaps it's a register specified in instruction so
-     *          for such a case we just mark that operand as "size
-     *          missing" and this will turn on fuzzy operand size
-     *          logic facility (handled by a caller)
+     * Compare various operand flags that don't depend on sizes,
+     * and compute the "true" template operand sizes.
      */
     for (i = 0; i < oprs; i++) {
-        opflags_t type = instruction->oprs[i].type;
-        decoflags_t deco = instruction->oprs[i].decoflags;
-        decoflags_t ideco = itemp->deco[i];
-        bool is_broadcast = deco & BRDCAST_MASK;
-        uint8_t brcast_num = 0;
-        opflags_t template_opsize, insn_opsize;
+        const opflags_t ttype   = itemp->opd[i];
+        const decoflags_t deco  = ins->oprs[i].decoflags;
+        const decoflags_t ideco = itemp->deco[i];
+        const bool is_broadcast = deco & BRDCAST_MASK;
 
-        if (!(type & SIZE_MASK))
-            type |= size[i];
-
-        insn_opsize     = type & SIZE_MASK;
         if (!is_broadcast) {
-            template_opsize = itemp->opd[i] & SIZE_MASK;
+            tsize[i] = ttype & SIZE_MASK;
         } else {
-            decoflags_t deco_brsize = ideco & BRSIZE_MASK;
+            const decoflags_t ideco_brsize = ideco & BRSIZE_MASK;
 
             if (~ideco & BRDCAST_MASK)
                 return MERR_BRNOTHERE;
@@ -3075,14 +3010,43 @@ static enum match_result matches(const struct itemplate * const itemp,
              * when broadcasting, the element size depends on
              * the instruction type. decorator flag should match.
              */
-            if (deco_brsize) {
-                template_opsize = brsize_to_size(deco_brsize);
-                /* calculate the proper number : {1to<brcast_num>} */
-                brcast_num = get_broadcast_num(itemp->opd[i], template_opsize);
-            } else {
-                template_opsize = 0;
-            }
+            if (ideco_brsize)
+                tsize[i] = brsize_to_size(ideco_brsize);
+            else
+                tsize[i] = 0;   /* Is this even possible? */
         }
+
+        /* Check to see if we need to coerce an explicitly sized immediate */
+        if (unlikely(itype[i] & ttype & IMMEDIATE)) {
+            /*
+             * If this is an *explicitly* sized immediate,
+             * allow it to match an extending pattern.
+             */
+            switch (isize[i]) {
+            case BITS8:
+                if (ttype & BYTEEXTMASK) {
+                    isize[i]  = tsize[i];
+                    itype[i] |= BYTEEXTMASK;
+                }
+                break;
+            case BITS32:
+                if (ttype & DWORDEXTMASK)
+                    isize[i]  = tsize[i];
+                break;
+            default:
+                break;
+            }
+
+            /* MOST instructions which take an sdword64 are the only form;
+             * set the SDWORD flag to be strict about sdword64 matching
+             * (use when a true imm64 pattern exists.)
+             */
+            if (!itemp_has(itemp, IF_SDWORD))
+                itype[i] |= SDWORD;
+        }
+
+        if (ttype & ~itype[i] & ~(SIZE_MASK|REGSET_MASK))
+            return MERR_INVALOP;
 
         if (~ideco & deco & OPMASK_MASK)
             return MERR_MASKNOTHERE;
@@ -3090,31 +3054,135 @@ static enum match_result matches(const struct itemplate * const itemp,
         if (~ideco & deco & (Z_MASK|STATICRND_MASK|SAE_MASK))
             return MERR_DECONOTHERE;
 
-        if (itemp->opd[i] & ~type & ~(SIZE_MASK|REGSET_MASK))
-            return MERR_INVALOP;
-
-        if (~itemp->opd[i] & type & REGSET_MASK)
-            return (itemp->opd[i] & REGSET_MASK)
+        if (~ttype & itype[i] & REGSET_MASK)
+            return (ttype & REGSET_MASK)
                 ? MERR_REGSETSIZE : MERR_REGSET;
+    }
 
-        if (template_opsize) {
-            if (template_opsize != insn_opsize) {
-                if (insn_opsize) {
-                    return MERR_INVALOP;
-                } else if (!is_class(REGISTER, type)) {
-                    /*
-                     * Note: we don't honor extrinsic operand sizes for registers,
-                     * so "missing operand size" for a register should be
-                     * considered a wildcard match rather than an error.
-                     */
-                    opsizemissing = true;
-                } else if (is_class(REG_HIGH, type) &&
-                           instruction->prefixes[PPS_REX]) {
-                    return MERR_ENCMISMATCH;
+    /*
+     * Process the operand sizes.
+     */
+    arflag = itemp_smask(itemp);
+
+    nasm_static_assert(SIZE_SHIFT >= IF_SB);
+    nasm_static_assert((BITS8 >> SIZE_SHIFT) == 1);
+    arsize = (arflag & (IFM_SB|IFM_SW|IFM_SD|IFM_SQ|
+                        IFM_ST|IFM_SO|IFM_SY|IFM_SZ))
+        << (SIZE_SHIFT - IF_SB);
+
+    if (arflag & IFM_SIZE)
+        arsize = mode_to_op(bits);
+
+    if_anysize = itemp_has(itemp, IF_ANYSIZE);
+    if_sx      = itemp_has(itemp, IF_SX);
+
+    /* Flags for which the AR and SM flags apply */
+    armask = itemp_arx(itemp);
+    smmask = itemp_smx(itemp);
+
+    /* Apply ARx sizes and handle size coersion */
+    for (i = 0; i < oprs; i++) {
+        const unsigned int bit = 1U << i;
+
+        if (!isize[i] && is_class(REGISTER, itype[i]))
+            isize[i] = tsize[i];
+
+        if (armask & bit) {
+            if (!isize[i] && !if_sx)
+                isize[i] = arsize;
+        }
+    }
+
+    /* Look the common subset for the size-matched operands */
+    smsize = SIZE_MASK;
+    if (smmask) {
+        unsigned int nosizemask = 0;
+        for (i = 0; i < oprs; i++) {
+            const unsigned int bit = 1U << i;
+            if (isize[i]) {
+                if (smmask & bit)
+                    smsize &= isize[i];
+            } else if (!is_class(REGISTER, itype[i])) {
+                nosizemask |= bit;
+            }
+        }
+
+        if (!smsize) {
+            /* No valid common set */
+            return MERR_OPSIZEMISMATCH;
+        } else if (!(smmask & ~nosizemask)) {
+            /*
+             * No sized or register operand in the whole set...
+             */
+            return MERR_OPSIZEMISSING;
+        }
+    }
+
+    /*
+     * Check that the operand sizes actually match,
+     * and look for other kinds of mismatches, e.g.
+     * REG_HIGH when REX is specified.
+     */
+    for (i = 0; i < oprs; i++) {
+        const opflags_t type    = itype[i];
+        const decoflags_t deco  = ins->oprs[i].decoflags;
+        const decoflags_t ideco = itemp->deco[i];
+        const bool is_broadcast = deco & BRDCAST_MASK;
+        const bool has_ar      = (armask >> i) & 1;
+        const bool has_sm      = (smmask >> i) & 1;
+
+        /*
+         * Operand sizes are considered matching at this stage
+         * if any one of these is true:
+         *
+         * 1. The template size is undefined.
+         *    XXX: apply ARx|Sx flags here?
+         * 2. The operand size matches the template size.
+         * 3. There is an ARx|ANYSIZE flag in the template.
+         * 4. The operand size is unspecified and the
+         *    template does not carry an ARx|SX flag.
+         */
+
+        if (tsize[i]) {
+            if (isize[i] != tsize[i]) {
+                if (has_ar) {
+                    if (if_anysize)
+                        goto isize_ok;
+                    if (unlikely(if_sx) && !is_class(REGISTER, itype[i]))
+                        return MERR_OPSIZEMISMATCH;
                 }
-            } else if (is_broadcast &&
-                       (brcast_num !=
-                        (2U << ((deco & BRNUM_MASK) >> BRNUM_SHIFT)))) {
+
+                if (isize[i])
+                    return MERR_OPSIZEMISMATCH;
+            }
+
+        isize_ok:
+            if (has_sm)
+                smsize &= tsize[i];
+        } else {
+            /*
+             * SX with an unsized operand means only an unsized operand
+             * is OK.
+             */
+            if (unlikely(if_sx) && has_ar)
+                if (isize[i])
+                    return MERR_OPSIZEMISMATCH;
+        }
+
+        if (is_class(REG_HIGH, type) && ins->prefixes[PPS_REX]) {
+            /* High registers cannot be combined with any REX type */
+            return MERR_INVALOP;
+        }
+
+        if (is_broadcast) {
+            /* calculate the proper number : {1to<brcast_num>} */
+            const decoflags_t ideco_brsize = ideco & BRSIZE_MASK;
+            unsigned int brcast_num = 0;
+
+            if (ideco_brsize)
+                brcast_num = get_broadcast_num(itemp->opd[i], tsize[i]);
+
+            if (brcast_num != (2U << ((deco & BRNUM_MASK) >> BRNUM_SHIFT))) {
                 /*
                  * broadcasting opsize matches but the number of repeated memory
                  * element does not match.
@@ -3124,18 +3192,17 @@ static enum match_result matches(const struct itemplate * const itemp,
                 return MERR_BRNUMMISMATCH;
             }
         }
-   }
-
-    if (opsizemissing)
-        return MERR_OPSIZEMISSING;
+    }
 
     /*
-     * Check operand sizes
+     * Make sure that our size match set, if any, did not get exhausted,
+     * and contains exactly one valid combination still...
      */
-    for (i = 0; i < oprs; i++) {
-        if (!(itemp->opd[i] & SIZE_MASK) &&
-            (instruction->oprs[i].type & SIZE_MASK & ~size[i]))
+    if (smmask) {
+        if (!smsize)
             return MERR_OPSIZEMISMATCH;
+        else if (!is_power2(smsize))
+            return MERR_OPSIZEMISSING;
     }
 
     /*
@@ -3154,47 +3221,47 @@ static enum match_result matches(const struct itemplate * const itemp,
      * If we have a HLE prefix, look for the NOHLE flag
      */
     if (itemp_has(itemp, IF_NOHLE) &&
-        (has_prefix(instruction, PPS_REP, P_XACQUIRE) ||
-         has_prefix(instruction, PPS_REP, P_XRELEASE)))
+        (has_prefix(ins, PPS_REP, P_XACQUIRE) ||
+         has_prefix(ins, PPS_REP, P_XRELEASE)))
         return MERR_BADHLE;
 
     /*
      * {nf} or {zu} prefixes used? Must be permitted.
      */
-    if (has_prefix(instruction, PPS_NF, P_NF)) {
+    if (has_prefix(ins, PPS_NF, P_NF)) {
         if (!itemp_has(itemp, IF_NF) &&
             (itemp_has(itemp, IF_FL) ||
-             (instruction->opt & OPTIM_STRICT_INSTR)))
+             (ins->opt & OPTIM_STRICT_INSTR)))
             return MERR_BADNF;
     } else if (itemp_has(itemp, IF_NF_R)) {
         return MERR_REQNF;
     }
 
-    if (has_prefix(instruction, PPS_ZU, P_ZU)) {
+    if (has_prefix(ins, PPS_ZU, P_ZU)) {
         if (!itemp_has(itemp, IF_ZU))
             return MERR_BADZU;
-        else if (!(instruction->oprs[0].type & REGISTER))
+        else if (!(ins->oprs[0].type & REGISTER))
             return MERR_MEMZU;
     }
-
-    /*
-     * Check if special handling needed for Jumps
-     */
-    if ((itemp->code[0] & ~1) == 0370)
-        return MOK_JUMP;
 
     /*
      * Check if BND prefix is allowed.
      * Other 0xF2 (REPNE/REPNZ) prefix is prohibited.
      */
     if (!itemp_has(itemp, IF_BND) &&
-        (has_prefix(instruction, PPS_REP, P_BND) ||
-         has_prefix(instruction, PPS_REP, P_NOBND)))
+        (has_prefix(ins, PPS_REP, P_BND) ||
+         has_prefix(ins, PPS_REP, P_NOBND)))
         return MERR_BADBND;
     else if (itemp_has(itemp, IF_BND) &&
-             (has_prefix(instruction, PPS_REP, P_REPNE) ||
-              has_prefix(instruction, PPS_REP, P_REPNZ)))
+             (has_prefix(ins, PPS_REP, P_REPNE) ||
+              has_prefix(ins, PPS_REP, P_REPNZ)))
         return MERR_BADREPNE;
+
+    /*
+     * Check if special handling needed for relaxable jump
+     */
+    if (itemp_has(itemp, IF_JMP_RELAX))
+        return jmp_match(itemp, ins);
 
     return MOK_GOOD;
 }

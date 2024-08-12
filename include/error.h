@@ -135,12 +135,17 @@ void reset_warnings(void);
  * If "issue" is true the errors are committed (or promoted to the next
  * higher stack level), if false then they are discarded.
  *
+ * Return the highest severity level issued or discarded; note that if
+ * promoted, the severity level will be reported at the time the
+ * messages are issued, when the top level stack is popped. Fix this if
+ * this ever becomes a problem, but it would come at a cost.
+ *
  * Errors stronger than ERR_NONFATAL cannot be held.
  */
 struct nasm_errhold;
 typedef struct nasm_errhold *errhold;
 errhold nasm_error_hold_push(void);
-void nasm_error_hold_pop(errhold hold, bool issue);
+errflags nasm_error_hold_pop(errhold hold, bool issue);
 
 /* Should be included from within error.h only */
 #include "warnings.h"

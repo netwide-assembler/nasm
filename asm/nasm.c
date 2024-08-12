@@ -1565,10 +1565,9 @@ static void forward_refs(insn *instruction)
     int i;
     struct forwrefinfo *fwinf;
 
-    instruction->forw_ref = false;
-
+    /* Don't bother for -O1 */
     if (instruction->opt & OPTIM_DISABLE_FWREF)
-        return;                 /* For -O0 don't bother */
+        return;
 
     if (!forwref)
         return;
@@ -1576,7 +1575,6 @@ static void forward_refs(insn *instruction)
     if (forwref->lineno != globallineno)
         return;
 
-    instruction->forw_ref = true;
     do {
         instruction->oprs[forwref->operand].opflags |= OPFLAG_FORWARD;
         forwref = saa_rstruct(forwrefs);
@@ -1999,13 +1997,17 @@ struct nasm_errhold *nasm_error_hold_push(void)
     return eh;
 }
 
-void nasm_error_hold_pop(struct nasm_errhold *eh, bool issue)
+/* Pop an error hold. Returns the highest severity issued or dropped. */
+errflags nasm_error_hold_pop(struct nasm_errhold *eh, bool issue)
 {
     struct nasm_errtext *et, *etmp;
+    errflags worst = 0;
 
-    /* Allow calling with a null argument saying no hold in the first place */
+    /*
+     * Allow calling with a null argument saying no hold in the first place.
+     */
     if (!eh)
-        return;
+        return worst;
 
     /* This *must* be the current top of the errhold stack */
     nasm_assert(eh == errhold_stack);
@@ -2018,18 +2020,25 @@ void nasm_error_hold_pop(struct nasm_errhold *eh, bool issue)
                 eh->up->tail = eh->tail;
             } else {
                 /* Issue errors */
-                list_for_each_safe(et, etmp, eh->head)
+                list_for_each_safe(et, etmp, eh->head) {
+                    if (et->true_type > worst)
+                        worst = et->true_type;
                     nasm_issue_error(et);
+                }
             }
         } else {
             /* Free the list, drop errors */
-            list_for_each_safe(et, etmp, eh->head)
+            list_for_each_safe(et, etmp, eh->head) {
+                if (et->true_type > worst)
+                    worst = et->true_type;
                 nasm_free_error(et);
+            }
         }
     }
 
     errhold_stack = eh->up;
     nasm_free(eh);
+    return worst;
 }
 
 /**
