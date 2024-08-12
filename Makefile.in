@@ -225,8 +225,8 @@ PERLREQ = config/unconfig.h $(PERLREQ_CLEANABLE)
 
 INSDEP = x86/insns.xda x86/insns.pl x86/insns-iflags.ph x86/iflags.ph
 
-x86/insns.xda: x86/insns.dat x86/addflags.pl
-	$(RUNPERL) '$(srcdir)'/x86/addflags.pl $< $@
+x86/insns.xda: x86/insns.dat x86/preinsns.pl
+	$(RUNPERL) '$(srcdir)'/x86/preinsns.pl $< $@
 
 config/unconfig.h: config/config.h.in autoconf/unconfig.pl
 	$(RUNPERL) '$(srcdir)'/autoconf/unconfig.pl \

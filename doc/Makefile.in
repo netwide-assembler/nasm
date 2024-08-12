@@ -60,7 +60,7 @@ all: $(OUT)
 
 xzfiles: $(XZOUT)
 
-inslist.src: inslist.pl ../x86/insns.dat
+inslist.src: inslist.pl ../x86/insns.xda
 	$(RUNPERL) $^
 
 html: $(HTMLAUX)
