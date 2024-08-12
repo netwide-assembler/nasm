@@ -76,7 +76,7 @@ EQU		imm:imm				ignore						ignore
 $arith      ADD OR ADC SBB AND SUB XOR -zu,-lock,-hle,!apx,CMP
 
 ; The basic shift and rotate instructions
-$shift ROL ROR RCL RCR SHL,SAL SHR - SAR
+$shift !x,xs="0f38 f7" ROL x=f3,xs="0f3a f0",ROR RCL RCR x=66,SHL,SAL x=f2,SHR - x=f3,SAR
 
 AAA		void				[	37]					8086,NOLONG
 AAD		void				[	d5 0a]					8086,NOLONG

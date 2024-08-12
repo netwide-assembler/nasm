@@ -71,6 +71,10 @@ $op		rm32,imm8			[mi:	o32 c1 /$n ib,u]			386
 $op		rm64,unity			[m-:	o64 d1 /$n]				X86_64,LONG
 $op		rm64,reg_cl			[m-:	o64 d3 /$n]				X86_64,LONG
 $op		rm64,imm8			[mi:	o64 c1 /$n ib,u]			X86_64,LONG
+${op}X		reg32?,rm32,reg32		[rmv:	vex.nds.lz.$x.w0.$xs /r]		FUTURE,BMI2,!FL
+${op}X		reg64?,rm64,reg64		[rmv:	vex.nds.lz.$x.w1.$xs /r]		LONG,FUTURE,BMI2,!FL
+$op		reg32?,rm32,reg32		[rmv:	vex.nds.lz.$x.w0.$xs /r]		FUTURE,BMI2,NF!,OPT,ND
+$op		reg64?,rm64,reg64		[rmv:	vex.nds.lz.$x.w1.$xs /r]		LONG,FUTURE,BMI2,NF!,OPT,ND
 $op		reg8?,rm8,unity			[vm-:	evex.ndx.nf.l0.m4.o8  d2 /$n     ]	$apx,SM0-1
 $op		reg16?,rm16,unity		[vm-:	evex.ndx.nf.l0.m4.o16 d3 /$n     ]	$apx,SM0-1
 $op		reg32?,rm32,unity		[vm-:	evex.ndx.nf.l0.m4.o32 d3 /$n     ]	$apx,SM0-1
@@ -112,7 +116,7 @@ sub eightfold($$@) {
 	    if ($op =~ s/^\@//) {
 		$nd = 1;
 	    }
-	    if ($op =~ /^(\w+)\=(.*)$/) {
+	    if ($op =~ /^(\w+)\=\"?(.*?)\"?$/) {
 		$vars{$1} = $2;
 		next;
 	    } elsif ($op =~ /^([\!\+\-])(\w+)$/) {
@@ -159,6 +163,7 @@ sub substitute($$) {
 #	    warn "$0:$infile:$line: no variable \$$vn in macro \$$macro\n";
 	    $vv = $vn;
 	}
+	$vv =~ s/\s+$// if ($pat =~ /^\s/);
 	$o .= $vv;
     }
     $o .= $pat;
@@ -199,12 +204,35 @@ umwait|ver[rw]|vtestp[ps]|xadd|xor|xtest|getsec|rsm|sbb|cmps[bwdq]|hint_.*)$';
 my $nozero = '^(jmp|call|bt|test|cmp|ud[012].*|ptwrite|tpause|u?monitor.*|u?mwait.*|incssp.*|\
 enqcmds?|senduipi|hint_.*|jmpe|nop|inv.*|push2?p?|vmwrite|clzero|clflush|clwb|lkgs)$';
 
+my $_last_flag;			# Simple uniqueness counter
+sub add_flag($@) {
+    my $flags = shift(@_);
+
+    foreach my $fl (@_) {
+	unless ($fl =~ /^\s*$/) {
+	    $flags->{$fl} = $flags->{$fl} || ++$_last_flag;
+	}
+    }
+}
+
+sub has_flag($@) {
+    my $flags = shift(@_);
+    foreach my $fl (@_) {
+	return $flags->{$fl} if ($flags->{$fl});
+    }
+    return undef;
+}
+
 sub adjust_instruction_flags(@) {
     my($opcode, $operands, $encoding, $flags) = @_;
 
     # Flag-changing instructions
-    if ($flags !~ /\b(FL|NF)\b/ && $opcode =~ /$flaggy/io) {
-	$flags .= ',FL';
+    if ($encoding =~ /\bnf\b/) {
+	add_flag($flags, 'NF');
+    }
+
+    if (!has_flag($flags, '!FL', 'NF', 'NF!')) {
+	add_flag($flags, 'FL') if ($opcode =~ /$flaggy/io);
     }
 
     ## XXX: fix special case: XCHG
@@ -213,11 +241,11 @@ sub adjust_instruction_flags(@) {
 
     # Zero-upper. This can also be used to select the AVX forms
     # to clear the upper part of a vector register.
-    if ($flags !~ /\bZU\b/ &&
-	(($encoding =~ /\bE?VEXb/ && $operands =~ /^(xyz)mm(reg|rm)/) ||
+    if (!$flags->{'!ZU'} &&
+	(($encoding =~ /\be?vex\b/ && $operands =~ /^(xyz)mm(reg|rm)/) ||
 	 $operands =~ /^((reg|rm)(32|64)|reg_[re]([abcd]x|[sb]p|[sd]i))\b/) &&
 	$opcode !~ /$nozero/io) {
-	$flags .= ',ZU';
+	add_flag($flags, 'ZU');
     }
 
     return ($opcode, $operands, $encoding, $flags);
@@ -246,21 +274,16 @@ sub process_insn($$) {
     my @f = ($1, $2, $3, $4, $5, $6, $7, $8);
 
     # Modify the instruction flags
-    ($f[1], $f[3], $f[5], $f[7]) = adjust_instruction($f[1], $f[3], $f[5], $f[7]);
+    my %flags;
+    add_flag(\%flags, split(/\,/, uc($f[7])));
+
+    adjust_instruction($f[1], $f[3], $f[5], \%flags);
 
     # The symbol KILL can be used in macros to eliminate a pattern entirely
-    next if ($f[3] =~ /\bKILL\b/ || $f[5] =~ /\bKILL\b/ || $f[7] =~ /\bKILL\b/);
+    next if ($f[3] =~ /\bKILL\b/ || $f[5] =~ /\bKILL\b/ || $flags{'KILL'});
 
-    # Clean up stray commas and duplicate flags
-    my %fls = ('' => 1);
-    my @flc;
-    foreach my $fl (split(/\,/, uc($f[7]))) {
-	unless ($fls{$fl}) {
-	    push(@flc, $fl);
-	    $fls{$fl}++;
-	}
-    }
-    $f[7] = join(',', @flc);
+    # Regenerate the flags string. Flags beginning with ! are for this program only.
+    $f[7] = join(',', sort { $flags{$a} <=> $flags{$b} } grep { !/^\!/ } keys %flags);
     print $out @f, "\n";
 }
 
@@ -271,15 +294,19 @@ open(my $out, '>', $outfile) or die "$0:$outfile: $!\n";
 while (defined(my $l = <$in>)) {
     $line++;
     chomp $l;
+    my @insl;
 
-    if ($l =~ /^\$\s*(\w+[^\;]*?)\s*(\;.*)?$/) {
+    if ($l =~ /^\s*\$(\w+[^\;]*?)\s*(\;.*)?$/) {
 	print $out $2, "\n" if ($2 ne '');
-	my @args = grep { !/^\s*$/ } split(/((?:\[.*?\]|[^\[\]\s]+)+)/, $1);
-	foreach my $ins (process_macro(@args)) {
-	    process_insn($out, $ins);
-	}
+	my @args = split(/((?:\[.*?\]|\".*?\"|[^\[\]\"\s]+)+)/, $1);
+	@args = grep { !/^\s*$/ } @args;
+	@insl = process_macro(@args);
     } else {
-	process_insn($out, $l);
+	@insl = ($l);
+    }
+
+    foreach my $ins (@insl) {
+	process_insn($out, $ins);
     }
 }
 
