@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
-##   
-##   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+##
+##   Copyright 1996-2024 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -15,7 +15,7 @@
 ##     copyright notice, this list of conditions and the following
 ##     disclaimer in the documentation and/or other materials provided
 ##     with the distribution.
-##     
+##
 ##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -52,10 +52,11 @@ foreach $arg ( @ARGV ) {
     }
 }
 
-$fname = "../insns.dat" unless $fname = $args[0];
-open (F, '<', $fname) || die "unable to open $fname";
-print STDERR "Writing inslist.src...\n";
-open S, '>', 'inslist.src';
+$fname = "../insns.dat" unless $fname = shift(@args);
+open (F, '<', $fname) or die "$0: $fname, $!\n";
+$ofile = "insns.src" unless $ofile = shift(@args);
+open(S, '>', $ofile) or die "$0: $ofile: $!\n";
+print STDERR "Writing $ofile...\n";
 $line = 0;
 $insns = 0;
 while (<F>) {
@@ -105,4 +106,3 @@ print S "\n";
 close S;
 close F;
 printf STDERR "Done: %d instructions\n", $insns;
-
