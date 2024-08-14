@@ -203,7 +203,7 @@ DIV		rm32				[m:	o32 f7 /6]				386
 DIV		rm64				[m:	o64 f7 /6]				X86_64,LONG
 DMINT		void				[	0f 39]					P6,CYRIX,NOAPX
 EMMS		void				[	0f 77]					PENT,MMX
-ENTER		imm,imm				[ij:	c8 iw ib,u]				186
+ENTER		imm16,imm8			[ij:	c8 iw ib,u]				186
 F2XM1		void				[	d9 f0]					8086,FPU
 FABS		void				[	d9 e1]					8086,FPU
 FADD		mem32				[m:	d8 /0]					8086,FPU
@@ -3171,16 +3171,15 @@ VPGATHERDQ	ymmreg,xmem64,ymmreg		[rmv:	vm32x vex.dds.256.66.0f38.w1 90 /r]	FUTUR
 VPGATHERQQ	ymmreg,ymem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 91 /r]	FUTURE,AVX2
 
 ;# Intel Transactional Synchronization Extensions (TSX)
-XABORT		imm				[i:	c6 f8 ib]				FUTURE,RTM
 XABORT		imm8				[i:	c6 f8 ib]				FUTURE,RTM
-XBEGIN		imm				[i:	odf c7 f8 rel]				FUTURE,RTM
-XBEGIN		imm|near			[i:	odf c7 f8 rel]				FUTURE,RTM,ND
-XBEGIN		imm16				[i:	o16 c7 f8 rel]				FUTURE,RTM,NOLONG
-XBEGIN		imm16|near			[i:	o16 c7 f8 rel]				FUTURE,RTM,NOLONG,ND
-XBEGIN		imm32				[i:	o32 c7 f8 rel]				FUTURE,RTM,NOLONG
-XBEGIN		imm32|near			[i:	o32 c7 f8 rel]				FUTURE,RTM,NOLONG,ND
-XBEGIN		imm64				[i:	o64nw c7 f8 rel]				FUTURE,RTM,LONG
-XBEGIN		imm64|near			[i:	o64nw c7 f8 rel]				FUTURE,RTM,LONG,ND
+XBEGIN		imm				[i:	nw odf c7 f8 rel]			FUTURE,RTM
+XBEGIN		imm|near			[i:	nw odf c7 f8 rel]			FUTURE,RTM,SX,ND
+XBEGIN		imm16				[i:	   o16 c7 f8 rel]			FUTURE,RTM,NOLONG,SX
+XBEGIN		imm16|near			[i:	   o16 c7 f8 rel]			FUTURE,RTM,NOLONG,SX,ND
+XBEGIN		imm32				[i:	   o32 c7 f8 rel]			FUTURE,RTM,NOLONG,SX
+XBEGIN		imm32|near			[i:	   o32 c7 f8 rel]			FUTURE,RTM,NOLONG,SX,ND
+XBEGIN		imm64				[i:	 o64nw c7 f8 rel]			FUTURE,RTM,LONG,SX
+XBEGIN		imm64|near			[i:	 o64nw c7 f8 rel]			FUTURE,RTM,LONG,SX,ND
 XEND		void				[	0f 01 d5]				FUTURE,RTM
 XTEST		void				[	0f 01 d6]				FUTURE,HLE,RTM
 
@@ -5582,7 +5581,7 @@ WRPKRU		void				[	0f 01 ef]				LONG,FUTURE
 ;# Read Processor ID
 RDPID		reg32				[m:	f3 0f c7 /7]				NOLONG,FUTURE
 RDPID		reg64				[m:	o64nw f3 0f c7 /7]			LONG,FUTURE
-RDPID		reg32				[m:	f3 0f c7 /7]				LONG,UNDOC,FUTURE
+RDPID		reg32				[m:	f3 0f c7 /7]				LONG,UNDOC,FUTURE,ND
 
 ;# New memory instructions
 CLFLUSHOPT	mem				[m:	66 0f ae /7]				FUTURE
@@ -6074,11 +6073,10 @@ CMPccXADD       mem64,reg64,reg64			[mrv:	vex.128.66.0f38.w1 e0+c /r]	CMPCCXADD,
 ;# Flexible Return and Exception Delivery
 ERETS           void					[	f2 0f 01 ca		]	FRED,FUTURE,PRIV,LONG
 ERETU		void					[	f3 0f 01 ca		]	FRED,FUTURE,PRIV,LONG
-LKGS		mem					[m:	f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG,SW
-LKGS		reg16					[m:	f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG
+LKGS		rm16					[m:	f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG
 LKGS		reg32					[m:	f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG,ND
-LKGS		reg64					[m:	o64nw f2 0f 00 /6	]	LKGS,FUTURE,PRIV,LONG,ND,OPT
-LKGS		reg64					[m:	o64 f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG
+LKGS		reg64					[m:	f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG,ND,OPT
+LKGS		reg64					[m:	o64 f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG,ND
 
 ;# WRMSRNS and MSRLIST instructions
 WRMSRNS		void					[	np 0f 01 c6		]	WRMSRNS,FUTURE,PRIV,LONG
@@ -6135,6 +6133,13 @@ ADCX		reg32?,reg32,rm32		[vrm:	evex.ndx.l0.66.m4.w0 66 /r	]	APX,ZU
 ADCX		reg64?,reg64,rm64		[vrm:	evex.ndx.l0.66.m4.w1 66 /r	]	APX,ZU
 ADOX		reg32?,reg32,rm32		[vrm:	evex.ndx.l0.f3.m4.w0 66 /r	]	APX,ZU
 ADOX		reg64?,reg64,rm64		[vrm:	evex.ndx.l0.f3.m4.w1 66 /r	]	APX,ZU
+
+SETcc		reg64				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU
+SETcc		reg32				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
+SETccZU		reg64				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
+SETccZU		reg32				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
+SETcc		rm8				[m:	evex.zu.l0.f2.m4.wig   40+c /0	]	APX
+SETccZU		rm8				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
 
 JMP		imm|abs				[i:	a64 np rex2 a1 iq		]	APX
 JMP		imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,ND
