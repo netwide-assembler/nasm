@@ -13,6 +13,8 @@
 use integer;
 use strict;
 
+require 'x86/insns-iflags.ph';
+
 our %macros;
 our($macro, $outfile, $infile, $line);	# Public for error messages
 
@@ -276,9 +278,12 @@ sub process_insn($$) {
     # Flags    = $f[7]
     my @f = ($1, $2, $3, $4, $5, $6, $7, $8);
 
+    my $nopr = ($f[3] =~ /^(void|ignore)$/) ? 0 :
+	scalar(split(/[\,\:]/, $f[3]));
+
     # Modify the instruction flags
-    my %flags;
-    add_flag(\%flags, split(/\,/, uc($f[7])));
+    my %flags = split_flags($f[7]);
+    set_implied_flags(\%flags, $nopr);
 
     adjust_instruction($f[1], $f[3], $f[5], \%flags);
 
@@ -286,8 +291,7 @@ sub process_insn($$) {
     next if ($f[1] =~ /\bKILL\b/ || $f[3] =~ /\bKILL\b/ ||
 	     $f[5] =~ /\bKILL\b/ || $flags{'KILL'});
 
-    # Regenerate the flags string. Flags beginning with ! are for this program only.
-    $f[7] = join(',', sort { $flags{$a} <=> $flags{$b} } grep { !/^\!/ } keys %flags);
+    $f[7] = merge_flags(\%flags, 1);
     print $out @f, "\n";
 }
 

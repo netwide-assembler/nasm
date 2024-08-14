@@ -43,9 +43,6 @@
 
 require 'x86/insns-iflags.ph';
 
-# This could be generated automatically, really...
-my $MAX_OPERANDS = 5;
-
 # Create disassembly root tables
 my @vex_class = ( 'novex', 'vex', 'xop', 'evex' );
 my $vex_classes = scalar(@vex_class);
@@ -581,76 +578,6 @@ sub count_bytecodes(@) {
             $skip = 1;
         }
     }
-}
-
-# Find any per-operand flags
-sub opr_flags($$;$) {
-    my($flags, $name, $oprs) = @_;
-    $oprs = $MAX_OPERANDS unless (defined($oprs));
-    my $nfl = 0;
-    for (my $i = 0; $i < $oprs; $i++) {
-	if ($flags->{"$name$i"}) {
-	    $nfl |= 1 << $i;
-	}
-    }
-    return $nfl;
-}
-
-# Adjust flags which imply each other
-sub set_implied_flags($;$) {
-    my($flags, $oprs) = @_;
-    $oprs = $MAX_OPERANDS unless (defined($oprs));
-
-    clean_flags($flags);
-
-    # If no ARx flags, make all operands ARx if a size
-    # flag is present
-    if (!opr_flags($flags, 'AR', $oprs)) {
-	if (defined(size_flag($flags))) {
-	    for (my $i = 0; $i < $oprs; $i++) {
-		$flags->{"AR$i"}++;
-	    }
-	}
-    }
-
-    # Convert the SM flag to all possible SMx flags
-    if ($flags->{'SM'}) {
-	delete $flags->{'SM'};
-	for (my $i = 0; $i < $oprs; $i++) {
-	    $flags->{"SM$i"}++;
-	}
-    }
-
-    # Delete SMx and ARx flags for nonexistent operands
-    foreach my $as ('AR', 'SM') {
-	for (my $i = $oprs; $i < $MAX_OPERANDS; $i++) {
-	    delete $flags->{"$as$i"};
-	}
-    }
-
-    $flags->{'LONG'}++  if ($flags->{'APX'});
-    $flags->{'NOAPX'}++ if ($flags->{'NOLONG'});
-    $flags->{'OBSOLETE'}++ if ($flags->{'NEVER'} || $flags->{'NOP'});
-    $flags->{'NF'}++ if ($flags->{'NF_R'} || $flags->{'NF_E'});
-    $flags->{'ZU'}++ if ($flags->{'ZU_R'} || $flags->{'ZU_E'});
-}
-
-# Return the value of any assume-size flag if one exists;
-# SX, ANYSIZE or SIZE return 0 as they are size flags but
-# don't have a known value at compile time.
-sub size_flag($) {
-    my %sflags = ( 'SB' => 8, 'SW' => 16, 'SD' => 32, 'SQ' => 64,
-		   'ST' => 80, 'SO' => 128, 'SY' => 256, 'SZ' => 512,
-		   'SX' => 0, 'SIZE' => 0, 'ANYSIZE' => 0 );
-    my($flags) = @_;
-
-    foreach my $fl (keys(%sflags)) {
-	if ($flags->{$fl}) {
-	    return $sflags{$fl};
-	}
-    }
-
-    return undef;
 }
 
 sub format_insn($$$$) {
