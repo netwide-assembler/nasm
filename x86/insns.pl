@@ -632,6 +632,7 @@ sub set_implied_flags($;$) {
     $flags->{'NOAPX'}++ if ($flags->{'NOLONG'});
     $flags->{'OBSOLETE'}++ if ($flags->{'NEVER'} || $flags->{'NOP'});
     $flags->{'NF'}++ if ($flags->{'NF_R'} || $flags->{'NF_E'});
+    $flags->{'ZU'}++ if ($flags->{'ZU_R'} || $flags->{'ZU_E'});
 }
 
 # Return the value of any assume-size flag if one exists;
@@ -1365,6 +1366,9 @@ sub byte_code_compile($$) {
 		    push(@bad_op, ['v', $oq]);
 		} elsif ($oq =~ /^nd([01])$/) {
 		    $nd = $1 + 0;
+		} elsif ($oq eq 'zu') {
+		    # Set .ND if {zu} prefix is present
+		    $flags->{'ZU_E'}++;
 		} elsif ($oq =~ /^(nds|ndd|nd|dds)$/) {
 		    if (!defined($oppos{'v'})) {
 			die "$fname:$line: evex.$oq without 'v' operand\n";

@@ -102,7 +102,7 @@
 	add{nf}     eax,ecx
 	add	    eax,ecx
 
-%if 1
+%if 0
 	add{evex}   [rdx],16
 	add{evex}   [rdx],byte 16
 	add{evex}   [rdx],dword 16
@@ -115,7 +115,7 @@
 	add{evex}   dword [rdx],dword 16
 	add{evex}   dword [rdx],strict dword 16
 
-%if 1
+%if 0
 	add{nf}	    [rdx],16
 	add{nf}	    [rdx],byte 16
 	add{nf}	    [rdx],dword 16
@@ -139,3 +139,16 @@
 	add{nf}	    eax,dword [rdx],byte 16
 	add{nf}	    eax,dword [rdx],dword 16
 	add{nf}	    eax,dword [rdx],strict dword 16
+
+	setc	    al
+	setc{evex}  al
+	setc	    eax
+	setc        rax
+	setc{zu}    al
+	setc{zu}    eax
+	setc        [rdi]
+	setc byte   [rdi]
+%ifdef ERR
+	setc dword  [rdi]
+	setc{zu}    [rdi]
+%endif

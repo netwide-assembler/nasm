@@ -2522,10 +2522,15 @@ static void gencode(struct out_data *data, insn *ins)
             ins->evex ^= (ins->rex & REX_W)    << (23-3);
             ins->evex ^= (ins->vexreg & 15) << 19;
             ins->evex ^= (ins->vexreg & 16) << (27 - 4);
-            /* Set NF if this is EVEX-encoded */
+            /* Set NF if {nd} and this is applicable */
             if (ins->prefixes[PPS_NF] == P_NF) {
                 if (itemp_has(ins->itemp, IF_NF_E))
                     ins->evex ^= EVEX_P2NF;
+            }
+            /* Set ND if {zu} and this is applicable */
+            if (ins->prefixes[PPS_ZU] == P_ZU) {
+                if (itemp_has(ins->itemp, IF_ZU_E))
+                    ins->evex ^= EVEX_P2ND;
             }
             out_rawdword(data, ins->evex);
             break;
