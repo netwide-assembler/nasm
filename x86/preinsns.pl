@@ -106,11 +106,13 @@ sub func_trio_quad($$$) {
     my @ol;
 
     my %sizename = ( 8 => 'B', 16 => 'W', 32 => 'D', 64 => 'Q' );
+    my %sbyte = ( 8 => 'imm8', 16 => 'sbyteword16',
+		  32 => 'sbytedword32', 64 => 'sbytedword64' );
 
     for (my $i = $mac->{'first'}; $i <= 64; $i <<= 1) {
 	my $o;
 	my $ins = join("\t", @$rawargs);
-	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2})?\#|\%)(.*)$/) {
+	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}|\bsbyte|\bimm|\bi)?\#|\%)(.*)$/) {
 	    $o .= $1;
 	    my $mw = $2;
 	    $ins = $3;
@@ -118,6 +120,12 @@ sub func_trio_quad($$$) {
 		$o .= $sizename{$i};
 	    } elsif ($mw =~ /^([0-9a-f]{2})\#$/) {
 		$o .= sprintf('%02x', hex($1) | ($i >= 16));
+	    } elsif ($mw eq 'sbyte#') {
+		$o .= $sbyte{$i};
+	    } elsif ($mw eq 'imm#') {
+		$o .= ($i >= 64) ? "sdword$i" : "imm$i";
+	    } elsif ($mw eq 'i#') {
+		$o .= ($i >= 64) ? 'id,s' : 'i'.lc($sizename{$i});
 	    } else {
 		$o .= $i;
 	    }
@@ -177,6 +185,7 @@ sub parse_args($@) {
 	}
 	if (scalar(@oaa)) {
 	    push(@oa, [@oaa]);
+	    $n++;
 	} else {
 	    # Global variable setting
 	    %initvars = %vars;

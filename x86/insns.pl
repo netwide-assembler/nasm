@@ -983,6 +983,7 @@ sub byte_code_compile($$) {
         'seg'       => 074,
     );
     my %plain_codes = (
+	'o8'        => undef,   # 8-bit operand size (for orthogonality)
         'o16'       => 0320,    # 16-bit operand size
         'o32'       => 0321,    # 32-bit operand size
         'odf'       => 0322,    # Operand size is default
@@ -1061,11 +1062,10 @@ sub byte_code_compile($$) {
     my $last_imm = 'h';
     my $prefix_ok = 1;
     foreach $op (split(/\s*(?:\s|(?=[\/\\]))/, $opc)) {
-        my $pc = $plain_codes{$op};
-
-        if (defined $pc) {
+        if (exists($plain_codes{$op})) {
             # Plain code
-            push(@codes, $pc);
+	    my $pc = $plain_codes{$op};
+            push(@codes, $pc) if (defined($pc));
         } elsif ($prefix_ok && $op =~ /^(66|f2|f3)$/) {
             # 66/F2/F3 prefix used as an opcode extension
             if ($op eq '66') {

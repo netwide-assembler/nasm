@@ -148,22 +148,11 @@ CMPSD		void				[	repe o32 a7]				386,NOAPX
 CMPSQ		void				[	repe o64 a7]				X86_64,LONG,NOAPX
 CMPSW		void				[	repe o16 a7]				8086,NOAPX
 
-CMPXCHG		mem,reg8			[mr:	hle 0f b0 /r]				PENT,SM,LOCK
-CMPXCHG		reg8,reg8			[mr:	0f b0 /r]				PENT
-CMPXCHG		mem,reg16			[mr:	hle o16 0f b1 /r]			PENT,SM,LOCK
-CMPXCHG		reg16,reg16			[mr:	o16 0f b1 /r]				PENT
-CMPXCHG		mem,reg32			[mr:	hle o32 0f b1 /r]			PENT,SM,LOCK
-CMPXCHG		reg32,reg32			[mr:	o32 0f b1 /r]				PENT
-CMPXCHG		mem,reg64			[mr:	hle o64 0f b1 /r]			X86_64,LONG,SM,LOCK
-CMPXCHG		reg64,reg64			[mr:	o64 0f b1 /r]				X86_64,LONG
-CMPXCHG486	mem,reg8			[mr:	0f a6 /r]				486,SM,UNDOC,ND,LOCK,OBSOLETE
-CMPXCHG486	reg8,reg8			[mr:	0f a6 /r]				486,UNDOC,ND,OBSOLETE
-CMPXCHG486	mem,reg16			[mr:	o16 0f a7 /r]				486,SM,UNDOC,ND,LOCK,OBSOLETE
-CMPXCHG486	reg16,reg16			[mr:	o16 0f a7 /r]				486,UNDOC,ND,OBSOLETE
-CMPXCHG486	mem,reg32			[mr:	o32 0f a7 /r]				486,SM,UNDOC,ND,LOCK,OBSOLETE
-CMPXCHG486	reg32,reg32			[mr:	o32 0f a7 /r]				486,UNDOC,ND,OBSOLETE
+$quad CMPXCHG	rm#,reg#			[mr:	hle 0f b0# /r]				PENT,SM,LOCK
+$quad CMPXCHG486 rm#,reg#			[mr:	0f a6# /r]				486,SM,UNDOC,NOLONG,ND,LOCK,OBSOLETE
 CMPXCHG8B	mem64				[m:	hle norexw 0f c7 /1]			PENT,LOCK
 CMPXCHG16B	mem128				[m:	o64 0f c7 /1]				X86_64,LONG,LOCK
+
 CPUID		void				[	0f a2]					PENT
 CPU_READ	void				[	0f 3d]					PENT,CYRIX,NOAPX
 CPU_WRITE	void				[	0f 3c]					PENT,CYRIX,NOAPX
@@ -172,16 +161,14 @@ CWD		void				[	o16 99]					8086
 CWDE		void				[	o32 98]					386
 DAA		void				[	27]					8086,NOLONG
 DAS		void				[	2f]					8086,NOLONG
-DEC		reg16				[r:	o16 48+r]				8086,NOLONG
-DEC		reg32				[r:	o32 48+r]				386,NOLONG
-DEC		rm8				[m:	hle fe /1]				8086,LOCK
-DEC		rm16				[m:	hle o16 ff /1]				8086,LOCK
-DEC		rm32				[m:	hle o32 ff /1]				386,LOCK
-DEC		rm64				[m:	hle o64 ff /1]				X86_64,LONG,LOCK
-DIV		rm8				[m:	f6 /6]					8086
-DIV		rm16				[m:	o16 f7 /6]				8086
-DIV		rm32				[m:	o32 f7 /6]				386
-DIV		rm64				[m:	o64 f7 /6]				X86_64,LONG
+
+$trio INC	reg#				[r:	o# 40+r]				8086,NOLONG
+$quad INC	rm#				[m:	hle o# fe# /0]				8086,LOCK
+$trio DEC	reg#				[r:	o# 48+r]				8086,NOLONG
+$quad DEC	rm#				[m:	hle o# fe# /1]				8086,LOCK
+
+$quad DIV	rm#				[m:	o# f6# /6]				8086
+
 DMINT		void				[	0f 39]					P6,CYRIX,NOAPX
 EMMS		void				[	0f 77]					PENT,MMX
 ENTER		imm16,imm8			[ij:	c8 iw ib,u]				186
@@ -409,35 +396,20 @@ IBTS		reg16,reg16			[mr:	o16 0f a7 /r]				386,UNDOC,ND,OBSOLETE
 IBTS		mem,reg32			[mr:	o32 0f a7 /r]				386,SD,UNDOC,ND,OBSOLETE
 IBTS		reg32,reg32			[mr:	o32 0f a7 /r]				386,UNDOC,ND,OBSOLETE
 ICEBP		void				[	f1]					386,ND
-IDIV		rm8				[m:	f6 /7]					8086
-IDIV		rm16				[m:	o16 f7 /7]				8086
-IDIV		rm32				[m:	o32 f7 /7]				386
-IDIV		rm64				[m:	o64 f7 /7]				X86_64,LONG
-IMUL		rm8				[m:	f6 /5]					8086
-IMUL		rm16				[m:	o16 f7 /5]				8086
-IMUL		rm32				[m:	o32 f7 /5]				386
-IMUL		rm64				[m:	o64 f7 /5]				X86_64,LONG
-IMUL		reg16,rm16			[rm:	o16 0f af /r]				386,SM
-IMUL		reg32,rm32			[rm:	o32 0f af /r]				386,SM
-IMUL		reg64,rm64			[rm:	o64 0f af /r]				X86_64,LONG,SM
-IMUL		reg16,rm16*,sbyteword16		[rmi:	o16 6b /r ib,s]				186,SM
-IMUL		reg16,rm16*,imm16		[rmi:	o16 69 /r iw]				186,SM
-IMUL		reg32,rm32*,sbytedword32	[rmi:	o32 6b /r ib,s]				386,SM
-IMUL		reg32,rm32*,imm32		[rmi:	o32 69 /r id]				386,SM
-IMUL		reg64,rm64*,sbytedword64	[rmi:	o64 6b /r ib,s]				X86_64,LONG,SM
-IMUL		reg64,rm64*,sdword64		[rmi:	o64 69 /r id,s]				X86_64,LONG,SM
+
+$quad IDIV	rm#				[m:	o# f6# /7]				8086
+$quad IMUL	rm#				[m:	o# f6# /5]				8086
+$trio IMUL	reg#,rm#			[rm:	o# 0f af /r]				386,SM
+$trio IMUL	reg#,rm#*,sbyte#		[rmi:	o# 6b /r ib,s]				186,SM
+$trio IMUL	reg#,rm#*,imm#			[rmi:	o# 69 /r i#]				186,SM
+$quad MUL	rm#				[m:	o# f6 /4]				8086
+
 IN		reg_al,imm			[-i:	e4 ib,u]				8086,SB,NOAPX
 IN		reg_ax,imm			[-i:	o16 e5 ib,u]				8086,SB,NOAPX
 IN		reg_eax,imm			[-i:	o32 e5 ib,u]				386,SB,NOAPX
 IN		reg_al,reg_dx			[--:	ec]					8086,NOAPX
 IN		reg_ax,reg_dx			[--:	o16 ed]					8086,NOAPX
 IN		reg_eax,reg_dx			[--:	o32 ed]					386,NOAPX
-INC		reg16				[r:	o16 40+r]				8086,NOLONG
-INC		reg32				[r:	o32 40+r]				386,NOLONG
-INC		rm8				[m:	hle fe /0]				8086,LOCK
-INC		rm16				[m:	hle o16 ff /0]				8086,LOCK
-INC		rm32				[m:	hle o32 ff /0]				386,LOCK
-INC		rm64				[m:	hle o64 ff /0]				X86_64,LONG,LOCK
 INSB		void				[	6c]					186
 INSD		void				[	o32 6d]					386
 INSW		void				[	o16 6d]					186
@@ -688,10 +660,6 @@ MOVZX		reg64,rm8			[rm:	o64 0f b6 /r]				X86_64,LONG
 MOVZX		reg64,rm16			[rm:	o64 0f b7 /r]				X86_64,LONG
 MOVZXD		reg64,rm32			[rm:	o32 8b /r]				X86_64,LONG,ND
 MOVZX		reg64,rm32			[rm:	o32 8b /r]				X86_64,LONG,ND
-MUL		rm8				[m:	f6 /4]					8086
-MUL		rm16				[m:	o16 f7 /4]				8086
-MUL		rm32				[m:	o32 f7 /4]				386
-MUL		rm64				[m:	o64 f7 /4]				X86_64,LONG
 MWAIT		void				[	0f 01 c9]				PRESCOTT
 MWAIT		reg_eax,reg_ecx			[--:	0f 01 c9]				PRESCOTT,ND
 MWAITX		void				[	0f 01 fb]				AMD
