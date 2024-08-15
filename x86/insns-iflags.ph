@@ -172,9 +172,21 @@ sub set_implied_flags($;$) {
 
     $flags->{'LONG'}++  if ($flags->{'APX'});
     $flags->{'NOAPX'}++ if ($flags->{'NOLONG'});
+    $flags->{'X86_64'}++ if ($flags->{'LONG'});
     $flags->{'OBSOLETE'}++ if ($flags->{'NEVER'} || $flags->{'NOP'});
     $flags->{'NF'}++ if ($flags->{'NF_R'} || $flags->{'NF_E'});
     $flags->{'ZU'}++ if ($flags->{'ZU_R'} || $flags->{'ZU_E'});
+
+    # Retain only the highest CPU level flag
+    my $found = 0;
+    for (my $i = $flag_byname{'ANY'}->[0]; $i >= $flag_byname{'8086'}->[0]; $i--) {
+	my $f = $flag_bynum[$i]->[1];
+	if ($found) {
+	    delete $flags->{$f};
+	} else {
+	    $found = $flags->{$f};
+	}
+    }
 }
 
 # Return the value of any assume-size flag if one exists;
@@ -216,6 +228,8 @@ sub split_flags($) {
     $flagstr = uc($flagstr);
 
     foreach my $flag (split(',', $flagstr)) {
+	next if ($flag =~ /^\s*$/); # Null flag
+
 	# Somewhat nicer syntax for required flags (NF! -> NF_R)
 	$flag =~ s/\!$/_R/;
 	# Ditto for weak flags (SX- -> SX_W)
@@ -250,7 +264,8 @@ sub merge_flags($;$) {
 
     clean_flags(\%flags);
 
-    my @flagslist = sort grep { !/^(\s*|\!.*)$/ } keys(%$flags);
+    my @flagslist = sort { $flag_byname{$a} <=> $flag_byname{$b} }
+	grep { !/^(\s*|\!.*)$/ } keys(%$flags);
 
     if ($merge) {
 	# For possibe human consumption. Merge subsequent SM and AR
@@ -282,11 +297,12 @@ sub merge_flags($;$) {
 			    $nstr .= $n;
 			}
 		    }
-		    $nstr =~ s/^\+/$pfx/;
-		    push(@flagslist, $nstr);
 		    $n++;
 		    $mask >>= 1;
 		}
+
+		$nstr =~ s/^\+/$pfx/;
+		push(@flagslist, $nstr);
 	    } else {
 		push(@flagslist, $fl);
 	    }

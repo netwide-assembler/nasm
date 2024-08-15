@@ -54,11 +54,11 @@ ah		REG_HIGH	reg8		4
 ax		REG_AX		reg16		0
 eax		REG_EAX		reg32		0
 rax		REG_RAX		reg64		0
-bl		REG8NA		reg8,reg8_rex	3
+bl		REG_BL		reg8,reg8_rex	3
 bh		REG_HIGH	reg8		7
-bx		REG16NA		reg16		3
-ebx		REG32NA		reg32		3
-rbx		REG64NA		reg64		3
+bx		REG_BX		reg16		3
+ebx		REG_EBX		reg32		3
+rbx		REG_RBX		reg64		3
 cl		REG_CL		reg8,reg8_rex	1
 ch		REG_HIGH	reg8		5
 cx		REG_CX		reg16		1

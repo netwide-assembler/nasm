@@ -87,40 +87,21 @@ AAS		void				[	3f]					8086,NOLONG
 ARPL		rm16,reg16			[mr:	63 /r]					286,PROT,SM,NOLONG
 BB0_RESET	void				[	0f 3a]					PENT,CYRIX,NOLONG,OBSOLETE,ND
 BB1_RESET	void				[	0f 3b]					PENT,CYRIX,NOLONG,OBSOLETE,ND
-BOUND		reg16,mem			[rm:	o16 62 /r]				186,NOLONG
-BOUND		reg32,mem			[rm:	o32 62 /r]				386,NOLONG
-BSF		reg16,rm16			[rm:	o16 nof3 0f bc /r]			386,SM
-BSF		reg32,rm32			[rm:	o32 nof3 0f bc /r]			386,SM
-BSF		reg64,rm64			[rm:	o64 nof3 0f bc /r]			X86_64,LONG,SM
-BSR		reg16,rm16			[rm:	o16 nof3 0f bd /r]			386,SM
-BSR		reg32,rm32			[rm:	o32 nof3 0f bd /r]			386,SM
-BSR		reg64,rm64			[rm:	o64 nof3 0f bd /r]			X86_64,LONG,SM
+$trio BOUND	reg#,mem			[rm:	o# 62 /r]				186,NOLONG
+$trio BSF	reg#,rm#			[rm:	o# nof3 0f bc /r]			386,SM
+$trio BSR	reg#,rm#			[rm:	o# nof3 0f bd /r]			386,SM
 BSWAP		reg32				[r:	o32 0f c8+r]				486
 BSWAP		reg64				[r:	o64 0f c8+r]				X86_64,LONG
-BT		rm16,reg16			[mr:	o16 0f a3 /r]				386,SM
-BT		rm32,reg32			[mr:	o32 0f a3 /r]				386,SM
-BT		rm64,reg64			[mr:	o64 0f a3 /r]				X86_64,LONG,SM
-BT		rm16,imm8			[mi:	o16 0f ba /4 ib,u]			386
-BT		rm32,imm8			[mi:	o32 0f ba /4 ib,u]			386
-BT		rm64,imm8			[mi:	o64 0f ba /4 ib,u]			X86_64,LONG
-BTC		rm16,reg16			[mr:	hle o16 0f bb /r]			386,SM,LOCK
-BTC		rm32,reg32			[mr:	hle o32 0f bb /r]			386,SM,LOCK
-BTC		rm64,reg64			[mr:	hle o64 0f bb /r]			X86_64,LONG,SM,LOCK
-BTC		rm16,imm8			[mi:	hle o16 0f ba /7 ib,u]			386,LOCK
-BTC		rm32,imm8			[mi:	hle o32 0f ba /7 ib,u]			386,LOCK
-BTC		rm64,imm8			[mi:	hle o64 0f ba /7 ib,u]			X86_64,LONG,LOCK
-BTR		rm16,reg16			[mr:	hle o16 0f b3 /r]			386,SM,LOCK
-BTR		rm32,reg32			[mr:	hle o32 0f b3 /r]			386,SM,LOCK
-BTR		rm64,reg64			[mr:	hle o64 0f b3 /r]			X86_64,LONG,SM,LOCK
-BTR		rm16,imm8			[mi:	hle o16 0f ba /6 ib,u]			386,LOCK
-BTR		rm32,imm8			[mi:	hle o32 0f ba /6 ib,u]			386,LOCK
-BTR		rm64,imm8			[mi:	hle o64 0f ba /6 ib,u]			X86_64,LONG,LOCK
-BTS		rm16,reg16			[mr:	hle o16 0f ab /r]			386,SM,LOCK
-BTS		rm32,reg32			[mr:	o32 0f ab /r]				386
-BTS		rm64,reg64			[mr:	o64 0f ab /r]				X86_64,LONG
-BTS		rm16,imm8			[mi:	hle o16 0f ba /5 ib,u]			386,LOCK
-BTS		rm32,imm8			[mi:	hle o32 0f ba /5 ib,u]			386,LOCK
-BTS		rm64,imm8			[mi:	hle o64 0f ba /5 ib,u]			X86_64,LONG,LOCK
+; Basically a useless instruction; sets the 16-bit register to 0, but it executes
+BSWAP		reg16				[r:	o16 0f c8+r]				486,UNDOC
+$trio BT	rm#,reg#			[mr:	o# 0f a3 /r]				386,SM
+$trio BT	rm#,imm8			[mi:	o# 0f ba /4 ib,u]			386
+$trio BTC	rm#,reg#			[mr:	o# 0f bb /r]				386,SM,LOCK
+$trio BTC	rm#,imm8			[mi:	o# 0f ba /7 ib,u]			386,LOCK
+$trio BTR	rm#,reg#			[mr:	o# 0f b3 /r]				386,SM,LOCK
+$trio BTR	rm#,imm8			[mi:	o# 0f ab /6 ib,u]			386,LOCK
+$trio BTC	rm#,reg#			[mr:	o# 0f ab /r]				386,SM,LOCK
+$trio BTC	rm#,imm8			[mi:	o# 0f ba /5 ib,u]			386,LOCK
 
 CALL		imm				[i:	odf e8 rel]				8086,BND,NOAPX,SIZE
 CALL		imm|near			[i:	odf e8 rel]				8086,ND,BND,NOAPX,SIZE
@@ -729,45 +710,6 @@ NOT		rm8				[m:	hle f6 /2]				8086,LOCK
 NOT		rm16				[m:	hle o16 f7 /2]				8086,LOCK
 NOT		rm32				[m:	hle o32 f7 /2]				386,LOCK
 NOT		rm64				[m:	hle o64 f7 /2]				X86_64,LONG,LOCK
-OR		mem,reg8			[mr:	hle 08 /r]				8086,SM,LOCK
-OR		reg8,reg8			[mr:	08 /r]					8086
-OR		mem,reg16			[mr:	hle o16 09 /r]				8086,SM,LOCK
-OR		reg16,reg16			[mr:	o16 09 /r]				8086
-OR		mem,reg32			[mr:	hle o32 09 /r]				386,SM,LOCK
-OR		reg32,reg32			[mr:	o32 09 /r]				386
-OR		mem,reg64			[mr:	hle o64 09 /r]				X86_64,LONG,SM,LOCK
-OR		reg64,reg64			[mr:	o64 09 /r]				X86_64,LONG
-OR		reg8,mem			[rm:	0a /r]					8086,SM
-OR		reg8,reg8			[rm:	0a /r]					8086
-OR		reg16,mem			[rm:	o16 0b /r]				8086,SM
-OR		reg16,reg16			[rm:	o16 0b /r]				8086
-OR		reg32,mem			[rm:	o32 0b /r]				386,SM
-OR		reg32,reg32			[rm:	o32 0b /r]				386
-OR		reg64,mem			[rm:	o64 0b /r]				X86_64,LONG,SM
-OR		reg64,reg64			[rm:	o64 0b /r]				X86_64,LONG
-OR		rm16,imm8			[mi:	hle o16 83 /1 ib,s]			8086,LOCK
-OR		rm32,imm8			[mi:	hle o32 83 /1 ib,s]			386,LOCK
-OR		rm64,imm8			[mi:	hle o64 83 /1 ib,s]			X86_64,LONG,LOCK
-OR		reg_al,imm			[-i:	0c ib]					8086,SM
-OR		reg_ax,sbyteword		[mi:	o16 83 /1 ib,s]				8086,SM,ND
-OR		reg_ax,imm			[-i:	o16 0d iw]				8086,SM
-OR		reg_eax,sbytedword		[mi:	o32 83 /1 ib,s]				386,SM,ND
-OR		reg_eax,imm			[-i:	o32 0d id]				386,SM
-OR		reg_rax,sbytedword		[mi:	o64 83 /1 ib,s]				X86_64,LONG,SM,ND
-OR		reg_rax,imm			[-i:	o64 0d id,s]				X86_64,LONG,SM
-OR		rm8,imm				[mi:	hle 80 /1 ib]				8086,SM,LOCK
-OR		rm16,sbyteword			[mi:	hle o16 83 /1 ib,s]			8086,SM,LOCK,ND
-OR		rm16,imm			[mi:	hle o16 81 /1 iw]			8086,SM,LOCK
-OR		rm32,sbytedword			[mi:	hle o32 83 /1 ib,s]			386,SM,LOCK,ND
-OR		rm32,imm			[mi:	hle o32 81 /1 id]			386,SM,LOCK
-OR		rm64,sbytedword			[mi:	hle o64 83 /1 ib,s]			X86_64,LONG,SM,LOCK,ND
-OR		rm64,imm			[mi:	hle o64 81 /1 id,s]			X86_64,LONG,SM,LOCK
-OR		mem,imm8			[mi:	hle 80 /1 ib]				8086,SM,LOCK
-OR		mem,sbyteword16			[mi:	hle o16 83 /1 ib,s]			8086,SM,LOCK,ND
-OR		mem,imm16			[mi:	hle o16 81 /1 iw]			8086,SM,LOCK
-OR		mem,sbytedword32		[mi:	hle o32 83 /1 ib,s]			386,SM,LOCK,ND
-OR		mem,imm32			[mi:	hle o32 81 /1 id]			386,SM,LOCK
-OR		rm8,imm				[mi:	hle 82 /1 ib]				8086,SM,LOCK,ND,NOLONG
 OUT		imm,reg_al			[i-:	e6 ib,u]				8086,SB,NOAPX
 OUT		imm,reg_ax			[i-:	o16 e7 ib,u]				8086,SB,NOAPX
 OUT		imm,reg_eax			[i-:	o32 e7 ib,u]				386,SB,NOAPX
@@ -909,30 +851,6 @@ PUSHFD		void				[	o32 9c]					386,NOLONG
 PUSHFQ		void				[	o32 9c]					X86_64,LONG
 PUSHFW		void				[	o16 9c]					8086
 PXOR		mmxreg,mmxrm			[rm:	np 0f ef /r]			PENT,MMX,SQ
-RCL		rm8,unity			[m-:	d0 /2]					8086
-RCL		rm8,reg_cl			[m-:	d2 /2]					8086
-RCL		rm8,imm8			[mi:	c0 /2 ib,u]				186
-RCL		rm16,unity			[m-:	o16 d1 /2]				8086
-RCL		rm16,reg_cl			[m-:	o16 d3 /2]				8086
-RCL		rm16,imm8			[mi:	o16 c1 /2 ib,u]				186
-RCL		rm32,unity			[m-:	o32 d1 /2]				386
-RCL		rm32,reg_cl			[m-:	o32 d3 /2]				386
-RCL		rm32,imm8			[mi:	o32 c1 /2 ib,u]				386
-RCL		rm64,unity			[m-:	o64 d1 /2]				X86_64,LONG
-RCL		rm64,reg_cl			[m-:	o64 d3 /2]				X86_64,LONG
-RCL		rm64,imm8			[mi:	o64 c1 /2 ib,u]				X86_64,LONG
-RCR		rm8,unity			[m-:	d0 /3]					8086
-RCR		rm8,reg_cl			[m-:	d2 /3]					8086
-RCR		rm8,imm8			[mi:	c0 /3 ib,u]				186
-RCR		rm16,unity			[m-:	o16 d1 /3]				8086
-RCR		rm16,reg_cl			[m-:	o16 d3 /3]				8086
-RCR		rm16,imm8			[mi:	o16 c1 /3 ib,u]				186
-RCR		rm32,unity			[m-:	o32 d1 /3]				386
-RCR		rm32,reg_cl			[m-:	o32 d3 /3]				386
-RCR		rm32,imm8			[mi:	o32 c1 /3 ib,u]				386
-RCR		rm64,unity			[m-:	o64 d1 /3]				X86_64,LONG
-RCR		rm64,reg_cl			[m-:	o64 d3 /3]				X86_64,LONG
-RCR		rm64,imm8			[mi:	o64 c1 /3 ib,u]				X86_64,LONG
 RDSHR		rm32				[m:	o32 0f 36 /0]				P6,CYRIX,SMM,NOAPX
 RDMSR		void				[	0f 32]					PENT,PRIV,NOAPX
 RDPMC		void				[	0f 33]					P6,NOAPX
@@ -963,79 +881,19 @@ RETFQ		imm				[i:	o64 ca iw]				X86_64,LONG,SW
 RETNQ		void				[	o64nw c3]				X86_64,LONG,BND
 RETNQ		imm				[i:	o64nw c2 iw]				X86_64,LONG,SW,BND
 
-ROL		rm8,unity			[m-:	d0 /0]					8086
-ROL		rm8,reg_cl			[m-:	d2 /0]					8086
-ROL		rm8,imm8			[mi:	c0 /0 ib,u]				186
-ROL		rm16,unity			[m-:	o16 d1 /0]				8086
-ROL		rm16,reg_cl			[m-:	o16 d3 /0]				8086
-ROL		rm16,imm8			[mi:	o16 c1 /0 ib,u]				186
-ROL		rm32,unity			[m-:	o32 d1 /0]				386
-ROL		rm32,reg_cl			[m-:	o32 d3 /0]				386
-ROL		rm32,imm8			[mi:	o32 c1 /0 ib,u]				386
-ROL		rm64,unity			[m-:	o64 d1 /0]				X86_64,LONG
-ROL		rm64,reg_cl			[m-:	o64 d3 /0]				X86_64,LONG
-ROL		rm64,imm8			[mi:	o64 c1 /0 ib,u]				X86_64,LONG
-ROR		rm8,unity			[m-:	d0 /1]					8086
-ROR		rm8,reg_cl			[m-:	d2 /1]					8086
-ROR		rm8,imm8			[mi:	c0 /1 ib,u]				186
-ROR		rm16,unity			[m-:	o16 d1 /1]				8086
-ROR		rm16,reg_cl			[m-:	o16 d3 /1]				8086
-ROR		rm16,imm8			[mi:	o16 c1 /1 ib,u]				186
-ROR		rm32,unity			[m-:	o32 d1 /1]				386
-ROR		rm32,reg_cl			[m-:	o32 d3 /1]				386
-ROR		rm32,imm8			[mi:	o32 c1 /1 ib,u]				386
-ROR		rm64,unity			[m-:	o64 d1 /1]				X86_64,LONG
-ROR		rm64,reg_cl			[m-:	o64 d3 /1]				X86_64,LONG
-ROR		rm64,imm8			[mi:	o64 c1 /1 ib,u]				X86_64,LONG
 RDM		void				[	0f 3a]					P6,CYRIX,ND,NOLONG,OBSOLETE
 RSDC		reg_sreg,mem80			[rm:	0f 79 /r]				486,CYRIX,SMM
 RSLDT		mem80				[m:	0f 7b /0]				486,CYRIX,SMM
 RSM		void				[	0f aa]					PENT,SMM
 RSTS		mem80				[m:	0f 7d /0]				486,CYRIX,SMM
 SAHF		void				[	9e]					8086
-SAL		rm8,unity			[m-:	d0 /4]					8086,ND
-SAL		rm8,reg_cl			[m-:	d2 /4]					8086,ND
-SAL		rm8,imm8			[mi:	c0 /4 ib,u]				186,ND
-SAL		rm16,unity			[m-:	o16 d1 /4]				8086,ND
-SAL		rm16,reg_cl			[m-:	o16 d3 /4]				8086,ND
-SAL		rm16,imm8			[mi:	o16 c1 /4 ib,u]				186,ND
-SAL		rm32,unity			[m-:	o32 d1 /4]				386,ND
-SAL		rm32,reg_cl			[m-:	o32 d3 /4]				386,ND
-SAL		rm32,imm8			[mi:	o32 c1 /4 ib,u]				386,ND
-SAL		rm64,unity			[m-:	o64 d1 /4]				X86_64,LONG,ND
-SAL		rm64,reg_cl			[m-:	o64 d3 /4]				X86_64,LONG,ND
-SAL		rm64,imm8			[mi:	o64 c1 /4 ib,u]				X86_64,LONG,ND
 SALC		void				[	d6]					8086,UNDOC
-SAR		rm8,unity			[m-:	d0 /7]					8086
-SAR		rm8,reg_cl			[m-:	d2 /7]					8086
-SAR		rm8,imm8			[mi:	c0 /7 ib,u]				186
-SAR		rm16,unity			[m-:	o16 d1 /7]				8086
-SAR		rm16,reg_cl			[m-:	o16 d3 /7]				8086
-SAR		rm16,imm8			[mi:	o16 c1 /7 ib,u]				186
-SAR		rm32,unity			[m-:	o32 d1 /7]				386
-SAR		rm32,reg_cl			[m-:	o32 d3 /7]				386
-SAR		rm32,imm8			[mi:	o32 c1 /7 ib,u]				386
-SAR		rm64,unity			[m-:	o64 d1 /7]				X86_64,LONG
-SAR		rm64,reg_cl			[m-:	o64 d3 /7]				X86_64,LONG
-SAR		rm64,imm8			[mi:	o64 c1 /7 ib,u]				X86_64,LONG
 SCASB		void				[	repe ae]				8086,NOAPX
 SCASD		void				[	repe o32 af]				386,NOAPX
 SCASQ		void				[	repe o64 af]				X86_64,LONG,NOAPX
 SCASW		void				[	repe o16 af]				8086,NOAPX
 SFENCE		void				[	np 0f ae f8]				X86_64,LONG,AMD
 SGDT		mem				[m:	0f 01 /0]				286
-SHL		rm8,unity			[m-:	d0 /4]					8086
-SHL		rm8,reg_cl			[m-:	d2 /4]					8086
-SHL		rm8,imm8			[mi:	c0 /4 ib,u]				186
-SHL		rm16,unity			[m-:	o16 d1 /4]				8086
-SHL		rm16,reg_cl			[m-:	o16 d3 /4]				8086
-SHL		rm16,imm8			[mi:	o16 c1 /4 ib,u]				186
-SHL		rm32,unity			[m-:	o32 d1 /4]				386
-SHL		rm32,reg_cl			[m-:	o32 d3 /4]				386
-SHL		rm32,imm8			[mi:	o32 c1 /4 ib,u]				386
-SHL		rm64,unity			[m-:	o64 d1 /4]				X86_64,LONG
-SHL		rm64,reg_cl			[m-:	o64 d3 /4]				X86_64,LONG
-SHL		rm64,imm8			[mi:	o64 c1 /4 ib,u]				X86_64,LONG
 SHLD		mem,reg16,imm			[mri:	o16 0f a4 /r ib,u]			386,SM0-1,SB,AR2
 SHLD		reg16,reg16,imm			[mri:	o16 0f a4 /r ib,u]			386,SM0-1,SB,AR2
 SHLD		mem,reg32,imm			[mri:	o32 0f a4 /r ib,u]			386,SM0-1,SB,AR2
@@ -1048,18 +906,6 @@ SHLD		mem,reg32,reg_cl		[mr-:	o32 0f a5 /r]				386,SM
 SHLD		reg32,reg32,reg_cl		[mr-:	o32 0f a5 /r]				386
 SHLD		mem,reg64,reg_cl		[mr-:	o64 0f a5 /r]				X86_64,LONG,SM
 SHLD		reg64,reg64,reg_cl		[mr-:	o64 0f a5 /r]				X86_64,LONG
-SHR		rm8,unity			[m-:	d0 /5]					8086
-SHR		rm8,reg_cl			[m-:	d2 /5]					8086
-SHR		rm8,imm8			[mi:	c0 /5 ib,u]				186
-SHR		rm16,unity			[m-:	o16 d1 /5]				8086
-SHR		rm16,reg_cl			[m-:	o16 d3 /5]				8086
-SHR		rm16,imm8			[mi:	o16 c1 /5 ib,u]				186
-SHR		rm32,unity			[m-:	o32 d1 /5]				386
-SHR		rm32,reg_cl			[m-:	o32 d3 /5]				386
-SHR		rm32,imm8			[mi:	o32 c1 /5 ib,u]				386
-SHR		rm64,unity			[m-:	o64 d1 /5]				X86_64,LONG
-SHR		rm64,reg_cl			[m-:	o64 d3 /5]				X86_64,LONG
-SHR		rm64,imm8			[mi:	o64 c1 /5 ib,u]				X86_64,LONG
 SHRD		mem,reg16,imm			[mri:	o16 0f ac /r ib,u]			386,SM0-1,SB,AR2
 SHRD		reg16,reg16,imm			[mri:	o16 0f ac /r ib,u]			386,SM0-1,SB,AR2
 SHRD		mem,reg32,imm			[mri:	o32 0f ac /r ib,u]			386,SM0-1,SB,AR2

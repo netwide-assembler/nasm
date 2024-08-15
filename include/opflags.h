@@ -246,9 +246,9 @@ static inline bool is_reg_class(opflags_t class, int reg)
 #define RN_NZERO		GEN_SUBCLASS(7)			/* Register number 1+ */
 #define RN_1_15			(RN_NZERO | RN_L16)		/* Register number 1-15 */
 
-#define RN_FLAGS(n)		((n) == 0 ? RN_ZERO : \
-                                 (n) < 16 ? RN_1_15 : \
-                                 0)
+#define RN_FLAGS(n)                             \
+    (((n) == 0 ? RN_ZERO : RN_NZERO) |          \
+     ((n) < 16 ? RN_L16 : 0))
 
 #define RM_L16			(RN_L16   | REGMEM)
 #define RM_ZERO			(RN_ZERO  | REGMEM)
@@ -342,8 +342,15 @@ static inline bool is_reg_class(opflags_t class, int reg)
 #define REG_EDX                 (REG_DATA  | BITS32)
 #define REG_RDX			(REG_DATA  | BITS64)
 
+/* base: BL, BX, EBX, RBX */
+#define REG_BASE                (REG_GPR   | REG_1_15 | GEN_SUBCLASS(2))
+#define REG_BL                  (REG_BASE  | BITS8 )
+#define REG_BX                  (REG_BASE  | BITS16)
+#define REG_EBX                 (REG_BASE  | BITS32)
+#define REG_RBX			(REG_BASE  | BITS64)
+
 /* high 8-bit regs: AH, CH, DH, BH */
-#define REG_HIGH                (REG8      | REG_1_15 | GEN_SUBCLASS(2))
+#define REG_HIGH                (REG8      | REG_1_15 | GEN_SUBCLASS(3))
 
 /* Non-accumulator registers */
 #define REG_NA			(REG_GPR   | REG_NZERO)
