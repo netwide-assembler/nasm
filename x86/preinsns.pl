@@ -22,81 +22,39 @@ our($macro, $outfile, $infile, $line);	# Public for error messages
 $macros{'arith'} = {
     'def' => *def_eightfold,
     'txt' => <<'EOL'
-$op		rm8,reg8			[mr:	$hle $00 /r				]	8086,SM,$lock
-$op		rm16,reg16			[mr:	$hle o16 $01 /r				]	8086,SM,$lock
-$op		rm32,reg32			[mr:	$hle o32 $01 /r				]	386,SM,$lock,$zu
-$op		rm64,reg64			[mr:	$hle o64 $01 /r				]	X86_64,LONG,SM,$lock,$zu
-$op		reg8,rm8			[rm:	$02 /r					]	8086,SM
-$op		reg16,rm16			[rm:	o16 $03 /r				]	8086,SM
-$op		reg32,rm32			[rm:	o32 $03 /r				]	386,SM,$zu
-$op		reg64,rm64			[rm:	o64 $03 /r				]	X86_64,LONG,SM,$zu
-$op		reg_al,imm8			[-i:	$04 ib					]	8086,SM
-$op		rm8,imm8			[mi:	$hle 80 /$n ib				]	8086,SM,$lock
-$op		rm16,sbyteword16		[mi:	$hle o16 83 /$n ib,s			]	8086,SM,$lock
-$op		reg_ax,imm16			[-i:	o16 $05 iw				]	8086,SM
-$op		rm16,imm16			[mi:	$hle o16 81 /$n iw			]	8086,SM,$lock
-$op		rm32,sbytedword32		[mi:	$hle o32 83 /$n ib,s			]	386,SM,$lock,$zu
-$op		reg_eax,imm32			[-i:	o32 $05 id				]	386,SM,$zu
-$op		rm32,imm32			[mi:	$hle o32 81 /$n id			]	386,SM,$lock,$zu
-$op		rm64,sbytedword64		[mi:	$hle o64 83 /$n ib,s			]	X86_64,LONG,SM,$lock,$zu
-$op		reg_rax,sdword64		[-i:	o64 $05 id,s				]	X86_64,LONG,SM,$zu
-$op		rm64,sdword64			[mi:	$hle o64 81 /$n id,s			]	X86_64,LONG,SM,$lock,$zu
-$op		reg8?,reg8,rm8			[vrm:	evex.ndx.nf.l0.m4.o8     $02 /r		]	$apx,SM
-$op		reg16?,reg16,rm16		[vrm:	evex.ndx.nf.l0.m4.o16    $03 /r		]	$apx,SM
-$op		reg32?,reg32,rm32		[vrm:	evex.ndx.nf.l0.m4.o32    $03 /r		]	$apx,SM
-$op		reg64?,reg64,rm64		[vrm:	evex.ndx.nf.l0.m4.o64    $03 /r		]	$apx,SM
-$op		reg8?,rm8,reg8			[vmr:	evex.ndx.nf.l0.m4.o8     $00 /r		]	$apx,SM
-$op		reg16?,rm16,reg16		[vmr:	evex.ndx.nf.l0.m4.o16    $01 /r		]	$apx,SM
-$op		reg32?,rm32,reg32		[vmr:	evex.ndx.nf.l0.m4.o32    $01 /r		]	$apx,SM,$zu
-$op		reg64?,rm64,reg64		[vmr:	evex.ndx.nf.l0.m4.o64    $01 /r		]	$apx,SM,$zu
-$op		reg8?,rm8,imm8			[vmi:	evex.ndx.nf.l0.m4.o8     80 /$n ib	]	$apx,SM
-$op		reg16?,rm16,sbyteword16		[vmi:	evex.ndx.nf.l0.m4.o16    83 /$n ib,s	]	$apx,SM
-$op		reg16?,rm16,imm16		[vmi:	evex.ndx.nf.l0.m4.o16    81 /$n iw	]	$apx,SM
-$op		reg32?,rm32,sbytedword32	[vmi:	evex.ndx.nf.l0.m4.o32    83 /$n ib,s	]	$apx,SM
-$op		reg32?,rm32,imm32		[vmi:	evex.ndx.nf.l0.m4.o32    81 /$n id	]	$apx,SM
-$op		reg64?,rm64,sbytedword32	[vmi:	evex.ndx.nf.l0.m4.o64    83 /$n ib,s	]	$apx,SM
-$op		reg64?,rm64,sdword64		[vmi:	evex.ndx.nf.l0.m4.o64    81 /$n id,s	]	$apx,SM
+$$quad $op	rm#,reg#			[mr:	$hle o# $00# /r				]	8086,SM,$lock
+$$quad $op	reg#,rm#			[rm:	o# $02# /r				]	8086,SM
+$$trio $op	rm#,sbyte#			[mi:	$hle o# 83  /$n ib,s			]	8086,SM,$lock
+$$quad $op	ax#,imm#			[-i:	o# $04# i#				]	8086,SM
+$$quad $op	rm#,imm#			[mi:	$hle o# 80# /$n i#			]	8086,SM,$lock
+$$quad $op	reg#?,reg#,rm#			[vrm:	evex.ndx.nf.l0.m4.o#     $02# /r	]	$apx,SM
+$$quad $op	reg#?,rm#,reg#			[vmr:	evex.ndx.nf.l0.m4.o#     $00# /r	]	$apx,SM
+$$trio $op	reg#?,rm#,sbyte#		[vmi:	evex.ndx.nf.l0.m4.o#     83 /$n ib,s	]	$apx,SM
+$$quad $op	reg#?,rm#,imm#			[vmi:	evex.ndx.nf.l0.m4.o#     80# /$n ib	]	$apx,SM
 EOL
 };
 
 # Common pattern for the basic shift and rotate instructions
 $macros{'shift'} = {
     'def' => *def_eightfold,
-    'txt' => <<'EOL'
-$op		rm8,unity			[m-:	d0 /$n]					8086
-$op		rm8,reg_cl			[m-:	d2 /$n]					8086
-$op		rm8,imm8			[mi:	c0 /$n ib,u]				186
-$op		rm16,unity			[m-:	o16 d1 /$n]				8086
-$op		rm16,reg_cl			[m-:	o16 d3 /$n]				8086
-$op		rm16,imm8			[mi:	o16 c1 /$n ib,u]			186
-$op		rm32,unity			[m-:	o32 d1 /$n]				386
-$op		rm32,reg_cl			[m-:	o32 d3 /$n]				386
-$op		rm32,imm8			[mi:	o32 c1 /$n ib,u]			386
-$op		rm64,unity			[m-:	o64 d1 /$n]				X86_64,LONG
-$op		rm64,reg_cl			[m-:	o64 d3 /$n]				X86_64,LONG
-$op		rm64,imm8			[mi:	o64 c1 /$n ib,u]			X86_64,LONG
-${op}X		reg32?,rm32,reg32		[rmv:	vex.nds.lz.$x.w0.$xs /r]		FUTURE,BMI2,!FL
-${op}X		reg64?,rm64,reg64		[rmv:	vex.nds.lz.$x.w1.$xs /r]		LONG,FUTURE,BMI2,!FL
-$op		reg32?,rm32,reg32		[rmv:	vex.nds.lz.$x.w0.$xs /r]		FUTURE,BMI2,NF!,OPT,ND
-$op		reg64?,rm64,reg64		[rmv:	vex.nds.lz.$x.w1.$xs /r]		LONG,FUTURE,BMI2,NF!,OPT,ND
-$op		reg8?,rm8,unity			[vm-:	evex.ndx.nf.l0.m4.o8  d2 /$n     ]	$apx,SM0-1
-$op		reg16?,rm16,unity		[vm-:	evex.ndx.nf.l0.m4.o16 d3 /$n     ]	$apx,SM0-1
-$op		reg32?,rm32,unity		[vm-:	evex.ndx.nf.l0.m4.o32 d3 /$n     ]	$apx,SM0-1
-$op		reg64?,rm64,unity		[vm-:	evex.ndx.nf.l0.m4.o64 d3 /$n     ]	$apx,SM0-1
-$op		reg8?,rm8,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o8  d0 /$n     ]	$apx,SM0-1
-$op		reg16?,rm16,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o16 d1 /$n     ]	$apx,SM0-1
-$op		reg32?,rm32,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o32 d1 /$n     ]	$apx,SM0-1
-$op		reg64?,rm64,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o64 d1 /$n     ]	$apx,SM0-1
-$op		reg8?,rm8,imm8			[vmi:	evex.ndx.nf.l0.m4.o8  c0 /$n ib,u]	$apx,SM0-1
-$op		reg16?,rm16,imm8		[vmi:	evex.ndx.nf.l0.m4.o16 c1 /$n ib,u]	$apx,SM0-1
-$op		reg32?,rm32,imm8		[vmi:	evex.ndx.nf.l0.m4.o32 c1 /$n ib,u]	$apx,SM0-1
-$op		reg64?,rm64,imm8		[vmi:	evex.ndx.nf.l0.m4.o64 c1 /$n ib,u]	$apx,SM0-1
+	'txt' => <<'EOL'
+$$quad $op	rm#,unity			[m-:	o# d0# /$n]				]	8086
+$$quad $op	rm#,reg_cl			[m-:	o# d2# /$n]				]	8086
+$$quad $op	rm#,imm8			[mi:	o# c0# /$n ib,u]			]	186
+$$pair ${op}X	reg#?,rm#,reg#			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL
+$$pair ${op}X	reg#?,rm#,reg8			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL,ND
+$$pair $op	reg#?,rm#,reg#			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL
+$$pair $op	reg#?,rm#,reg8			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL,ND
+$$quad $op	reg#?,rm#,unity			[vm-:	evex.ndx.nf.l0.m4.o#  d0# /$n		]	$apx,SM0-1
+$$quad $op	reg#?,rm#,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o#  d2# /$n		]	$apx,SM0-1
+$$quad $op	reg#?,rm#,imm8			[vmi:	evex.ndx.nf.l0.m4.o#  c0# /$n ib,u	]	$apx,SM0-1
 EOL
 };
 
 #
-# Common pattern for 8/16/32/64 or 16/32/64 instructions
+# Common pattern for 32/64, 16/32/64, or 8/16/32/64 instructions
 #
+$macros{'pair'} = { 'func' => *func_trio_quad, 'first' => 32 };
 $macros{'trio'} = { 'func' => *func_trio_quad, 'first' => 16 };
 $macros{'quad'} = { 'func' => *func_trio_quad, 'first' =>  8 };
 
@@ -112,7 +70,7 @@ sub func_trio_quad($$$) {
     for (my $i = $mac->{'first'}; $i <= 64; $i <<= 1) {
 	my $o;
 	my $ins = join("\t", @$rawargs);
-	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}|\bsbyte|\bimm|\bi)?\#|\%)(.*)$/) {
+	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}|\bsbyte|\bimm|\bi|\b(?:reg_)?[abcd]x|\bw)?\#|\%)(.*)$/) {
 	    $o .= $1;
 	    my $mw = $2;
 	    $ins = $3;
@@ -126,6 +84,18 @@ sub func_trio_quad($$$) {
 		$o .= ($i >= 64) ? "sdword$i" : "imm$i";
 	    } elsif ($mw eq 'i#') {
 		$o .= ($i >= 64) ? 'id,s' : 'i'.lc($sizename{$i});
+	    } elsif ($mw =~ /^(?:reg_)?([abcd])x\#$/) {
+		if ($i == 8) {
+		    $o .= "reg_${1}l";
+		} elsif ($i == 16) {
+		    $o .= "reg_${1}x";
+		} elsif ($i == 32) {
+		    $o .= "reg_e${1}x";
+		} else {
+		    $o .= "reg_r${1}x";
+		}
+	    } elsif ($mw eq 'w#') {
+		$o .= ($i >= 64) ? 'w1' : 'w0';
 	    } else {
 		$o .= $i;
 	    }
@@ -401,9 +371,9 @@ while (defined(my $l = <$in>)) {
 
     while (defined(my $li = shift(@insi))) {
 	if ($li =~ /^\s*\$(\w+[^\;]*?)\s*(\;.*)?$/) {
-	    print $out $2, "\n" unless ($2 eq ''); # Retain comment
+	    push(@insi, "$2\n") unless ($2 eq ''); # Retain comment
 	    my @args = ($1 =~ /(?:\[[^\]]*\]|\"[^\"]*\"|[^\[\]\"\s])+/g);
-	    push(@insi, process_macro(@args));
+	    unshift(@insi, process_macro(@args));
 	} else {
 	    process_insn($out, $li);
 	}

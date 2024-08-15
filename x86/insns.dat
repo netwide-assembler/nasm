@@ -391,25 +391,38 @@ FXTRACT		void				[	d9 f4]					8086,FPU
 FYL2X		void				[	d9 f1]					8086,FPU
 FYL2XP1		void				[	d9 f9]					8086,FPU
 HLT		void				[	f4]					8086,PRIV
-IBTS		mem,reg16			[mr:	o16 0f a7 /r]				386,SW,UNDOC,ND,OBSOLETE
-IBTS		reg16,reg16			[mr:	o16 0f a7 /r]				386,UNDOC,ND,OBSOLETE
-IBTS		mem,reg32			[mr:	o32 0f a7 /r]				386,SD,UNDOC,ND,OBSOLETE
-IBTS		reg32,reg32			[mr:	o32 0f a7 /r]				386,UNDOC,ND,OBSOLETE
 ICEBP		void				[	f1]					386,ND
 
+$trio IBTS	rm#,reg#			[mr:	o# 0f a7 /r]				386,UNDOC,ND,OBSOLETE,NOLONG
+$trio XBTS	rm#,reg#			[mr:	o# 0f a6 /r]				386,UNDOC,ND,OBSOLETE,NOLONG
+
 $quad IDIV	rm#				[m:	o# f6# /7]				8086
+
 $quad IMUL	rm#				[m:	o# f6# /5]				8086
+$quad IMUL	rm#				[m:	evex.nf.nd0.l0.m4.o# f6# /5]		APX,SM
 $trio IMUL	reg#,rm#			[rm:	o# 0f af /r]				386,SM
 $trio IMUL	reg#,rm#*,sbyte#		[rmi:	o# 6b /r ib,s]				186,SM
 $trio IMUL	reg#,rm#*,imm#			[rmi:	o# 69 /r i#]				186,SM
-$quad MUL	rm#				[m:	o# f6 /4]				8086
+$trio IMUL	reg#?,reg#,rm#			[vrm:	evex.nf.ndx.l0.m4.o# af /r]		APX,SM
+$trio IMUL	reg#,rm#,sbyte#			[rmi:	evex.nf.zu.l0.m4.o# 6b /r i#]		APX,SM
+$trio IMUL	reg#,rm#,imm#			[rmi:	evex.nf.zu.l0.m4.o# 69 /r i#]		APX,SM
 
-IN		reg_al,imm			[-i:	e4 ib,u]				8086,SB,NOAPX
-IN		reg_ax,imm			[-i:	o16 e5 ib,u]				8086,SB,NOAPX
-IN		reg_eax,imm			[-i:	o32 e5 ib,u]				386,SB,NOAPX
-IN		reg_al,reg_dx			[--:	ec]					8086,NOAPX
-IN		reg_ax,reg_dx			[--:	o16 ed]					8086,NOAPX
-IN		reg_eax,reg_dx			[--:	o32 ed]					386,NOAPX
+$quad MUL	rm#				[m:	o# f6 /4]				8086
+$pair MULX	reg#,reg#*,rm#			[rvm:	vex.ndd.lz.f2.0f38.w# f6 /r]		FUTURE,BMI2
+$pair MUL	reg#,reg#*,rm#			[rvm:	vex.ndd.lz.f2.0f38.w# f6 /r]		FUTURE,BMI2,NF!,OPT,ND
+$quad MUL	rm#				[m:	evex.nf.nd0.l0.m4.o# f6# /4]		APX,SM
+; MUL and IMUL are the same thing when producing single-width output only, so accept MUL to generate IMUL
+; thereby creating symmetry.
+$trio MUL	reg#,rm#			[rm:	o# 0f af /r]				386,SM,ND
+$trio MUL	reg#,rm#*,sbyte#		[rmi:	o# 6b /r ib,s]				186,SM,ND
+$trio MUL	reg#,rm#*,imm#			[rmi:	o# 69 /r i#]				186,SM,ND
+$trio MUL	reg#?,reg#,rm#			[vrm:	evex.nf.ndx.l0.m4.o# af /r]		APX,SM,ND
+$trio MUL	reg#,rm#,sbyte#			[rmi:	evex.nf.zu.l0.m4.o# 6b /r i#]		APX,SM,ND
+$trio MUL	reg#,rm#,imm#			[rmi:	evex.nf.zu.l0.m4.o# 69 /r i#]		APX,SM,ND
+
+$trio IN	ax#,imm8			[-i:	o# e4# ib,u]				8086,SB,NOAPX
+$trio IN	ax#,reg_dx			[--:	o# ec#]					8086,NOAPX
+
 INSB		void				[	6c]					186
 INSD		void				[	o32 6d]					386
 INSW		void				[	o16 6d]					186
@@ -499,12 +512,10 @@ LAR		reg64,reg32			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT
 LAR		reg64,reg64			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT
 LDS		reg16,mem			[rm:	o16 c5 /r]				8086,NOLONG
 LDS		reg32,mem			[rm:	o32 c5 /r]				386,NOLONG
-LEA		reg16,mem			[rm:	o16 8d /r]				8086,ANYSIZE,AR1
-LEA		reg32,mem			[rm:	o32 8d /r]				386,ANYSIZE,AR1
-LEA		reg64,mem			[rm:	o64 8d /r]				X86_64,LONG,ANYSIZE,AR1
-LEA		reg16,imm			[rm:	o16 8d /r]				8086,ND,ANYSIZE,AR1
-LEA		reg32,imm			[rm:	o32 8d /r]				386,ND,ANYSIZE,AR1
-LEA		reg64,imm			[rm:	o64 8d /r]				X86_64,LONG,ND,ANYSIZE,AR1
+
+$trio LEA	reg#,mem			[rm:	o# 8d /r]				8086
+$trio LEA	reg#,imm#			[rm:	o# 8d /r]				8086,ND
+
 LEAVE		void				[	c9]					186
 LES		reg16,mem			[rm:	o16 c4 /r]				8086,NOLONG
 LES		reg32,mem			[rm:	o32 c4 /r]				386,NOLONG
@@ -990,10 +1001,6 @@ XADD		mem,reg32			[mr:	hle o32 0f c1 /r]			486,SM,LOCK
 XADD		reg32,reg32			[mr:	o32 0f c1 /r]				486
 XADD		mem,reg64			[mr:	hle o64 0f c1 /r]			X86_64,LONG,SM,LOCK
 XADD		reg64,reg64			[mr:	o64 0f c1 /r]				X86_64,LONG
-XBTS		reg16,mem			[rm:	o16 0f a6 /r]				386,SW,UNDOC,ND
-XBTS		reg16,reg16			[rm:	o16 0f a6 /r]				386,UNDOC,ND
-XBTS		reg32,mem			[rm:	o32 0f a6 /r]				386,SD,UNDOC,ND
-XBTS		reg32,reg32			[rm:	o32 0f a6 /r]				386,UNDOC,ND
 XCHG		reg_ax,reg16			[-r:	o16 90+r]				8086
 XCHG		reg_eax,reg32na			[-r:	o32 90+r]				386
 XCHG		reg_rax,reg64			[-r:	o64 90+r]				X86_64,LONG
@@ -3029,30 +3036,10 @@ BLCS		reg32,rm32			[vm:	xop.ndd.lz.m9.w0 01 /3]			FUTURE,TBM
 BLCS		reg64,rm64			[vm:	xop.ndd.lz.m9.w1 01 /3]			LONG,FUTURE,TBM
 BZHI		reg32,rm32,reg32		[rmv:	vex.nds.lz.0f38.w0 f5 /r]		FUTURE,BMI2
 BZHI		reg64,rm64,reg64		[rmv:	vex.nds.lz.0f38.w1 f5 /r]		LONG,FUTURE,BMI2
-MULX		reg32,reg32,rm32		[rvm:	vex.ndd.lz.f2.0f38.w0 f6 /r]		FUTURE,BMI2
-MULX		reg64,reg64,rm64		[rvm:	vex.ndd.lz.f2.0f38.w1 f6 /r]		LONG,FUTURE,BMI2
-MUL		reg32,reg32*,rm32		[rvm:	vex.ndd.lz.f2.0f38.w0 f6 /r]		FUTURE,BMI2,NF!,ND
-MUL		reg64,reg64*,rm64		[rvm:	vex.ndd.lz.f2.0f38.w1 f6 /r]		LONG,FUTURE,BMI2,NF!,ND
 PDEP		reg32,reg32,rm32		[rvm:	vex.nds.lz.f2.0f38.w0 f5 /r]		FUTURE,BMI2
 PDEP		reg64,reg64,rm64		[rvm:	vex.nds.lz.f2.0f38.w1 f5 /r]		LONG,FUTURE,BMI2
 PEXT		reg32,reg32,rm32		[rvm:	vex.nds.lz.f3.0f38.w0 f5 /r]		FUTURE,BMI2
 PEXT		reg64,reg64,rm64		[rvm:	vex.nds.lz.f3.0f38.w1 f5 /r]		LONG,FUTURE,BMI2
-RORX		reg32?,rm32,imm8		[rmi:	vex.lz.f2.0f3a.w0 f0 /r ib]		FUTURE,BMI2
-RORX		reg64?,rm64,imm8		[rmi:	vex.lz.f2.0f3a.w1 f0 /r ib]		LONG,FUTURE,BMI2
-ROR		reg32?,rm32,imm8		[rmi:	vex.lz.f2.0f3a.w0 f0 /r ib]		FUTURE,BMI2,NF!,ND
-ROR		reg64?,rm64,imm8		[rmi:	vex.lz.f2.0f3a.w1 f0 /r ib]		LONG,FUTURE,BMI2,NF!,ND
-SARX		reg32?,rm32,reg32		[rmv:	vex.nds.lz.f3.0f38.w0 f7 /r]		FUTURE,BMI2
-SARX		reg64?,rm64,reg64		[rmv:	vex.nds.lz.f3.0f38.w1 f7 /r]		LONG,FUTURE,BMI2
-SAR		reg32?,rm32,reg32		[rmv:	vex.nds.lz.f3.0f38.w0 f7 /r]		FUTURE,BMI2,NF!,ND
-SAR		reg64?,rm64,reg64		[rmv:	vex.nds.lz.f3.0f38.w1 f7 /r]		LONG,FUTURE,BMI2,NF!,ND
-SHLX		reg32?,rm32,reg32		[rmv:	vex.nds.lz.66.0f38.w0 f7 /r]		FUTURE,BMI2
-SHLX		reg64?,rm64,reg64		[rmv:	vex.nds.lz.66.0f38.w1 f7 /r]		LONG,FUTURE,BMI2
-SHL		reg32?,rm32,reg32		[rmv:	vex.nds.lz.66.0f38.w0 f7 /r]		FUTURE,BMI2,NF!,ND
-SHL		reg64?,rm64,reg64		[rmv:	vex.nds.lz.66.0f38.w1 f7 /r]		LONG,FUTURE,BMI2,NF!,ND
-SHRX		reg32?,rm32,reg32		[rmv:	vex.nds.lz.f2.0f38.w0 f7 /r]		FUTURE,BMI2
-SHRX		reg64?,rm64,reg64		[rmv:	vex.nds.lz.f2.0f38.w1 f7 /r]		LONG,FUTURE,BMI2
-SHR		reg32?,rm32,reg32		[rmv:	vex.nds.lz.f2.0f38.w0 f7 /r]		FUTURE,BMI2,NF!,ND
-SHR		reg64?,rm64,reg64		[rmv:	vex.nds.lz.f2.0f38.w1 f7 /r]		LONG,FUTURE,BMI2,NF!,ND
 TZCNT		reg16,rm16			[rm:	o16 f3i 0f bc /r]			FUTURE,BMI1
 TZCNT		reg32,rm32			[rm:	o32 f3i 0f bc /r]			FUTURE,BMI1
 TZCNT		reg64,rm64			[rm:	o64 f3i 0f bc /r]			LONG,FUTURE,BMI1
