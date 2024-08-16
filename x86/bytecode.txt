@@ -104,7 +104,7 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
                                              to the operand size (if o16/o32/o64 present) or the bit size
 \310             a16                         indicates fixed 16-bit address size, i.e. optional 0x67.
 \311             a32                         indicates fixed 32-bit address size, i.e. optional 0x67.
-\312             adf                         (disassembler only) invalid with non-default address size.
+\312             adf, asz                    (disassembler only) invalid with non-default address size.
 \313             a64                         indicates fixed 64-bit address size, 0x67 invalid.
 \314             norexb                      (disassembler only) invalid with REX.B
 \315             norexx                      (disassembler only) invalid with REX.X

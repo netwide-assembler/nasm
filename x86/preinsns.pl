@@ -52,11 +52,12 @@ EOL
 };
 
 #
-# Common pattern for multiple 32/64, 16/32/64, or 8/16/32/64 instructions
+# Common pattern for multiple 32/64, 16/32/64, or 8/16/32/64 instructions.
+# 'z' is used for a null-prefixed default-sized instruction (osz/asz).
 #
-my @sizename = ('b', 'w', 'd', 'q');
+my @sizename = ('z', 'b', 'w', 'd', 'q');
 
-for (my $i = 1; $i <= 15; $i++) {
+for (my $i = 1; $i <= 31; $i++) {
     my $n;
     for (my $j = 0; $j < scalar @sizename; $j++) {
 	$n .= $sizename[$j] if ($i & (1 << $j));
@@ -66,14 +67,14 @@ for (my $i = 1; $i <= 15; $i++) {
 
 sub func_multisize($$$) {
     my($mac, $args, $rawargs) = @_;
-    my @sbyte = ('imm8', 'sbyteword16', 'sbytedword32', 'sbytedword64');
+    my @sbyte = ('imm8', 'imm8', 'sbyteword16', 'sbytedword32', 'sbytedword64');
 
     my @ol;
     my $mask = $mac->{'mask'};
 
     for (my $i = 0; $i < scalar(@sizename); $i++) {
 	next unless ($mask & (1 << $i));
-	my $s = 8 << $i;
+	my $s = ($i > 0) ? 4 << $i : 'sz';
 	my $o;
 	my $ins = join("\t", @$rawargs);
 	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}|\bsbyte|\bimm|\bi|\b(?:reg_)?[abcd]x|\bw)?\#|\%)(.*)$/) {
@@ -81,27 +82,29 @@ sub func_multisize($$$) {
 	    my $mw = $2;
 	    $ins = $3;
 	    if ($mw eq '%') {
-		$o .= uc($sizename[$i]);
+		$o .= uc($sizename[$i]) if ($i);
 	    } elsif ($mw =~ /^([0-9a-f]{2})\#$/) {
-		$o .= sprintf('%02x', hex($1) | ($s >= 16));
+		$o .= sprintf('%02x', hex($1) | ($s != 8));
 	    } elsif ($mw eq 'sbyte#') {
 		$o .= $sbyte[$i];
 	    } elsif ($mw eq 'imm#') {
-		$o .= ($i >= 3) ? "sdword$s" : "imm$s";
+		$o .= !$i ? 'imm' : ($s >= 64) ? "sdword$s" : "imm$s";
 	    } elsif ($mw eq 'i#') {
-		$o .= ($i >= 3) ? 'id,s' : 'i'.$sizename[$i];
+		$o .= !$i ? 'iwd' : ($s >= 64) ? 'id,s' : 'i'.$sizename[$i];
 	    } elsif ($mw =~ /^(?:reg_)?([abcd])x\#$/) {
-		if ($i == 0) {
+		if ($i == 1) {
 		    $o .= "reg_${1}l";
-		} elsif ($i == 1) {
-		    $o .= "reg_${1}x";
 		} elsif ($i == 2) {
+		    $o .= "reg_${1}x";
+		} elsif ($i == 3) {
 		    $o .= "reg_e${1}x";
-		} else {
+		} elsif ($i == 4) {
 		    $o .= "reg_r${1}x";
+		} else {
+		    die "$0:$infile:$line: register cannot be used with z\n";
 		}
 	    } elsif ($mw eq 'w#') {
-		$o .= ($i >= 3) ? 'w1' : 'w0';
+		$o .= !$i ? 'ww' : ($s >= 64) ? 'w1' : 'w0';
 	    } else {
 		$o .= $s;
 	    }
@@ -338,6 +341,9 @@ sub adjust_instruction(@) {
 
     return undef unless (@i);
 
+    if ($i[2] =~ /\ba16\b/) {
+	add_flag($i[3], 'NOLONG');
+    }
     if ($i[2] =~ /\b(o64(nw)?\b|rex2?|a64\b)/) {
 	add_flag($i[3], 'LONG');
     }

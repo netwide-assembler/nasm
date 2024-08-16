@@ -596,7 +596,7 @@ sub format_insn($$$$) {
     set_implied_flags(\%flags);
 
     # Generate byte code. This may modify the flags.
-    @bytecode = (decodify($codes, \%flags), 0);
+    @bytecode = (decodify($opcode, $codes, \%flags), 0);
     push(@bytecode_list, [@bytecode]);
     $codes = hexstr(@bytecode);
     count_bytecodes(@bytecode);
@@ -688,7 +688,7 @@ sub format_insn($$$$) {
 	if (!$ssize) {
 	    $ssize = $opsize[$i];
 	} elsif ($opsize[$i] != $ssize) {
-	    die "$fname:$line: inconsistent SM flag for argument $i\n";
+	    die "$fname:$line: $opcode: inconsistent SM flag for argument $i\n";
 	}
     }
 
@@ -705,14 +705,14 @@ sub format_insn($$$$) {
 	    next unless ($arx & (1 << $i));
 	    if ($opsize[$i] && $ops[$i] !~ /(\breg_|reg\b)/ &&
 		$opsize[$i] != $fsize) {
-		die "$fname:$line: inconsistent Sx flag for argument $i ($ops[$i])\n";
+		die "$fname:$line: $opcode: inconsistent Sx flag for argument $i ($ops[$i])\n";
 	    }
 	}
     }
 
     # Generate the final index into the flags table
     $flagsindex = insns_flag_index(\%flags);
-    die "$fname:$line: error in flags $flags\n" unless (defined($flagsindex));
+    die "$fname:$line: $opcode: error in flags $flags\n" unless (defined($flagsindex));
 
     return ("{I_$opcode, $nops, {$operands}, $decorators, \@\@CODES-$codes\@\@, $flagsindex},", $nd);
 }
@@ -792,17 +792,17 @@ sub show_iflags($) {
 #
 # Turn a code string into a sequence of bytes
 #
-sub decodify($$) {
+sub decodify($$$) {
   # Although these are C-syntax strings, by convention they should have
   # only octal escapes (for directives) and hexadecimal escapes
   # (for verbatim bytes)
-    my($codestr, $flags) = @_;
+    my($opcode, $codestr, $flags) = @_;
     my @codes;
 
     if ($codestr eq 'ignore') {
 	@codes = ();
     } elsif ($codestr =~ /^\s*\[([^\]]*)\]\s*$/) {
-        @codes = byte_code_compile($1, $flags);
+        @codes = byte_code_compile($opcode, $1, $flags);
     } else {
 	# This really shouldn't happen anymore...
 	warn "$fname:$line: raw bytecodes?!\n";
@@ -867,7 +867,7 @@ sub startseq($) {
     my $enc = 0;		# Legacy
     my $map = 0;		# Map 0
 
-    @codes = decodify($codestr, {});
+    @codes = decodify(undef, $codestr, {});
 
     while (defined($c0 = shift(@codes))) {
         $c1 = $codes[0];
@@ -930,7 +930,7 @@ sub tupletype($) {
     if (defined $tuple_codes{$tuplestr}) {
         return 0300 + $tuple_codes{$tuplestr};
     } else {
-        die "$fname:$line: undefined tuple type : $tuplestr\n";
+        die "$fname:$line: undefined tuple type: $tuplestr\n";
     }
 }
 
@@ -955,8 +955,8 @@ sub tupletype($) {
 # For an operand that should be filled into more than one field,
 # enter it as e.g. "r+v".
 #
-sub byte_code_compile($$) {
-    my($str, $flags) = @_;
+sub byte_code_compile($$$) {
+    my($opcode, $str, $flags) = @_;
     my $opr;
     my $opc;
     my @codes = ();
@@ -993,6 +993,7 @@ sub byte_code_compile($$) {
         'a16'       => 0310,
         'a32'       => 0311,
         'adf'       => 0312,    # Address size is default (disassembly)
+        'asz'       => 0312,    # Alias for adf, for macro convenience
         'a64'       => 0313,
         '!osp'      => 0364,
         '!asp'      => 0365,
@@ -1089,11 +1090,11 @@ sub byte_code_compile($$) {
 	    $prefix_ok = 0;
 	} elsif ($op =~ /^(m[0-9]+|0f38|0f3a)$/) {
 	    if ($prefix_ok) {
-		die "$fname:$line: invalid legacy map: $m\n";
+		die "$fname:$line: $opcode: invalid legacy map: $m\n";
 	    } elsif (defined($opmap)) {
-		die "$fname:$line: multiple legacy map specifiers\n";
+		die "$fname:$line: $opcode: multiple legacy map specifiers\n";
 	    } else {
-		die "$fname:$line: legacy map must precede opcodes\n";
+		die "$fname:$line: $opcode: legacy map must precede opcodes\n";
 	    }
         } elsif ($op =~ /^[0-9a-f]{2}$/) {
             if (defined($litix) && $litix+$codes[$litix]+1 == scalar @codes &&
@@ -1107,7 +1108,7 @@ sub byte_code_compile($$) {
             $prefix_ok = 0;
         } elsif ($op eq '/r') {
             if (!defined($oppos{'r'}) || !defined($oppos{'m'})) {
-                die "$fname:$line: $op requires r and m operands\n";
+                die "$fname:$line: $opcode: $op requires r and m operands\n";
             }
             $opex = (($oppos{'m'} & 4) ? 06 : 0) |
                 (($oppos{'r'} & 4) ? 05 : 0);
@@ -1118,14 +1119,14 @@ sub byte_code_compile($$) {
             $prefix_ok = 0;
         } elsif ($op =~ m:^/([0-7])$:) {
             if (!defined($oppos{'m'})) {
-                die "$fname:$line: $op requires an m operand\n";
+                die "$fname:$line: $opcode: $op requires an m operand\n";
             }
             push(@codes, 06) if ($oppos{'m'} & 4);
             push(@codes, 0200 + (($oppos{'m'} & 3) << 3) + $1);
             $prefix_ok = 0;
 	} elsif ($op =~ m:^/([0-3]?)r([0-7])$:) {
 	    if (!defined($oppos{'r'})) {
-                die "$fname:$line: $op requires an r operand\n";
+                die "$fname:$line: $opcode: $op requires an r operand\n";
 	    }
 	    push(@codes, 05) if ($oppos{'r'} & 4);
 	    push(@codes, 0171);
@@ -1138,7 +1139,7 @@ sub byte_code_compile($$) {
             my $has_nds = 0;
             my @subops = split(/\./, $2);
 	    if (defined($opmap)) {
-		warn "$fname:$line: legacy prefix ignored with VEX\n";
+		warn "$fname:$line: $opcode: legacy prefix ignored with VEX\n";
 	    }
 	    foreach $oq (@subops) {
 		if ($oq eq '') {
@@ -1178,15 +1179,15 @@ sub byte_code_compile($$) {
 		    $m = $2+0;
 		} elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {
 		    if (!defined($oppos{'v'})) {
-			die "$fname:$line: $vexname.$oq without 'v' operand\n";
+			die "$fname:$line: $opcode: $vexname.$oq without 'v' operand\n";
 		    }
 		    $has_nds = 1;
 		} else {
-		    die "$fname:$line: undefined modifier: $vexname.$oq\n";
+		    die "$fname:$line: $opcode: undefined modifier: $vexname.$oq\n";
 		}
 	    }
             if (!defined($m) || !defined($l) || !defined($p)) {
-                die "$fname:$line: missing fields in \U$vexname\E specification\n";
+                die "$fname:$line: $opcode: missing fields in \U$vexname\E specification\n";
             }
 
 	    if (!defined($w)) {
@@ -1196,7 +1197,7 @@ sub byte_code_compile($$) {
 
 	    my $minmap = ($c == 1) ? 8 : 0; # 0-31 for VEX, 8-31 for XOP
 	    if ($m < $minmap || $m > 31) {
-		die "$fname:$line: Only maps ${minmap}-31 are valid for \U${vexname}\n";
+		die "$fname:$line: $opcode: Only maps ${minmap}-31 are valid for \U${vexname}\n";
 	    }
 	    push(@codes, 05) if ($oppos{'v'} > 3);
             push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
@@ -1213,7 +1214,7 @@ sub byte_code_compile($$) {
 	    my @bad_op = ();
             my @subops = split(/\./, $2);
 	    if (defined($opmap)) {
-		warn "$fname:$line: legacy prefix ignored with EVEX\n";
+		warn "$fname:$line: $opcode: legacy prefix ignored with EVEX\n";
 	    }
 	    foreach $oq (@subops) {
 		if ($oq eq '') {
@@ -1298,31 +1299,31 @@ sub byte_code_compile($$) {
 		    $flags->{'ZU_E'}++;
 		} elsif ($oq =~ /^(nds|ndd|nd|dds)$/) {
 		    if (!defined($oppos{'v'})) {
-			die "$fname:$line: evex.$oq without 'v' operand\n";
+			die "$fname:$line: $opcode: evex.$oq without 'v' operand\n";
 		    }
 		    $nds = 1;
 		    $nd  = $oq eq 'nd';
 		} else {
-		    die "$fname:$line: undefined modifier: evex.$oq\n";
+		    die "$fname:$line: $opcode: undefined modifier: evex.$oq\n";
 		}
 	    }
 	    # Currently too many patterns miss .w or .p; it would be good
 	    # to figure out if they should be .[wp]0 or .[wp]ig, but
 	    # don't warn yet to keep the noise down
             if (!defined($m) || !defined($l)) {
-                warn "$fname:$line: missing fields in EVEX specification\n";
+                warn "$fname:$line: $opcode: missing fields in EVEX specification\n";
             }
 	    if ($m > 7) {
-		die "$fname:$line: Only maps 0-7 are valid for EVEX\n";
+		die "$fname:$line: $opcode: Only maps 0-7 are valid for EVEX\n";
 	    }
 	    foreach my $bad (@bad_op) {
 		my($what, $because) = @$inv;
 		if (defined($oppos{$what})) {
-		    die "$fname:$line: $what and evex.$because are mutually incompatible\n";
+		    die "$fname:$line: $opcode: $what and evex.$because are mutually incompatible\n";
 		}
 	    }
 	    if ($scc && $nf) {
-		die "$fname:$line: evex.scc and evex.nf are mutually incompatible\n";
+		die "$fname:$line: $opcode: evex.scc and evex.nf are mutually incompatible\n";
 	    }
 
 	    my @p = ($m | 0xf0, $p | 0x7c, ($l << 5) | 0x08);
@@ -1354,11 +1355,11 @@ sub byte_code_compile($$) {
 		} elsif ($oq =~ /^x[15]$/) {
 		    $c |= 01;
 		    if ($optional) {
-			warn "$fname:$line: $name.$oq promoted to unconditional\n";
+			warn "$fname:$line: $opcode: $name.$oq promoted to unconditional\n";
 			$optional = 0;
 		    }
 		} else {
-		    die "$fname:$line: unknown modifier: $name.$oq\n";
+		    die "$fname:$line: $opcode: unknown modifier: $name.$oq\n";
 		}
 	    }
 
@@ -1370,23 +1371,23 @@ sub byte_code_compile($$) {
         } elsif (defined $imm_codes{$op}) {
             if ($op eq 'seg') {
                 if ($last_imm lt 'i') {
-                    die "$fname:$line: seg without an immediate operand\n";
+                    die "$fname:$line: $opcode: seg without an immediate operand\n";
                 }
             } else {
                 $last_imm++;
                 if ($last_imm gt 'j') {
-                    die "$fname:$line: too many immediate operands\n";
+                    die "$fname:$line: $opcode: too many immediate operands\n";
                 }
             }
             if (!defined($oppos{$last_imm})) {
-                die "$fname:$line: $op without '$last_imm' operand\n";
+                die "$fname:$line: $opcode: $op without '$last_imm' operand\n";
             }
             push(@codes, 05) if ($oppos{$last_imm} & 4);
             push(@codes, $imm_codes{$op} + ($oppos{$last_imm} & 3));
             $prefix_ok = 0;
         } elsif ($op eq '/is4') {
             if (!defined($oppos{'s'})) {
-                die "$fname:$line: $op without 's' operand\n";
+                die "$fname:$line: $opcode: $op without 's' operand\n";
             }
             if (defined($oppos{'i'})) {
                 push(@codes, 0172, ($oppos{'s'} << 3)+$oppos{'i'});
@@ -1398,16 +1399,16 @@ sub byte_code_compile($$) {
         } elsif ($op =~ /^\/is4\=([0-9]+)$/) {
             my $imm = $1;
             if (!defined($oppos{'s'})) {
-                die "$fname:$line: $op without 's' operand\n";
+                die "$fname:$line: $opcode: $op without 's' operand\n";
             }
             if ($imm < 0 || $imm > 15) {
-                die "$fname:$line: invalid imm4 value for $op: $imm\n";
+                die "$fname:$line: $opcode: invalid imm4 value for $op: $imm\n";
             }
             push(@codes, 0173, ($oppos{'s'} << 4) + $imm);
             $prefix_ok = 0;
         } elsif ($op =~ /^([0-9a-f]{2})\+r$/) {
             if (!defined($oppos{'r'})) {
-                die "$fname:$line: $op without 'r' operand\n";
+                die "$fname:$line: $opcode: $op without 'r' operand\n";
             }
             push(@codes, 05) if ($oppos{'r'} & 4);
             push(@codes, 010 + ($oppos{'r'} & 3), hex $1);
@@ -1420,7 +1421,7 @@ sub byte_code_compile($$) {
             # Escape to enter literal bytecodes
             push(@codes, oct $1);
         } else {
-            die "$fname:$line: unknown operation: $op\n";
+            die "$fname:$line: $opcode: unknown operation: $op\n";
         }
     }
 

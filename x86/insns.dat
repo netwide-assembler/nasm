@@ -132,8 +132,7 @@ $wd   BOUND	reg#,mem			[rm:	o# 62 /r]				186,NOLONG
 ; ---
 
 ;# Endianness instructions
-BSWAP		reg32				[r:	o32 0f c8+r]				486
-BSWAP		reg64				[r:	o64 0f c8+r]				X86_64,LONG
+$dq   BSWAP	reg#				[r:	o#  0f c8+r]				486
 ; Basically a useless instruction; sets the 16-bit register to 0, but it executes
 BSWAP		reg16				[r:	o16 0f c8+r]				486,UNDOC
 
@@ -149,14 +148,16 @@ MOVSX		reg_eax,reg_ax			[--:	o32 98]					386,OPT,ND
 MOVSXD		reg_rax,reg_eax			[--:	o64 98]					X86_64,LONG,OPT,ND
 MOVSX		reg_rax,reg_eax			[--:	o64 98]					X86_64,LONG,OPT,ND
 $wdq  MOVSX	reg#,rm8			[rm:	o# 0f be /r]				386
-$dq   MOVSX	reg#,rm16			[rm:	o# 0f bf /r]				386
-MOVSXD		reg64,rm32			[rm:	o64 63 /r]				X86_64,LONG
-MOVSX		reg64,rm32			[rm:	o64 63 /r]				X86_64,LONG,ND
+$wdq  MOVSX	reg#,rm16			[rm:	o# 0f bf /r]				386
+$wdq  MOVSXD	reg#,rm32			[rm:	o# 63 /r]				X86_64,LONG
+$wdq  MOVSX	reg#,rm32			[rm:	o# 63 /r]				X86_64,LONG,ND
 
 $wdq  MOVZX	reg#,rm8			[rm:	o# 0f b6 /r]				386
-$dq   MOVZX	reg#,rm16			[rm:	o# 0f b7 /r]				386
-MOVZXD		reg64,rm32			[rm:	o32 8b /r]				X86_64,LONG,OPT,ND
-MOVZX		reg64,rm32			[rm:	o32 8b /r]				X86_64,LONG,OPT,ND
+$wdq  MOVZX	reg#,rm16			[rm:	o# 0f b7 /r]				386
+      MOVZXD	reg64,rm32			[rm:	o64nw norexw 8b /r]			X86_64,LONG,OPT,ND
+      MOVZX	reg64,rm32			[rm:	o64nw norexw 8b /r]			X86_64,LONG,OPT,ND
+$wd   MOVZXD	reg#,rm32			[rm:	o# 8b /r]				X86_64,LONG,OPT,ND
+$wd   MOVZX	reg#,rm32			[rm:	o# 8b /r]				X86_64,LONG,OPT,ND
 
 ;# Bit operations
 $wdq  BSF	reg#,rm#			[rm:	o# nof3 0f bc /r]			386,SM
@@ -171,55 +172,27 @@ $wdq  BTR	rm#,imm8			[mi:	o# 0f ab /6 ib,u]			386,LOCK
 $wdq  BTC	rm#,reg#			[mr:	o# 0f ab /r]				386,SM,LOCK
 $wdq  BTC	rm#,imm8			[mi:	o# 0f ba /5 ib,u]			386,LOCK
 
+$wd   IBTS	rm#,reg#			[mr:	o# 0f a7 /r]				386,UNDOC,ND,OBSOLETE,NOLONG
+$wd   XBTS	rm#,reg#			[mr:	o# 0f a6 /r]				386,UNDOC,ND,OBSOLETE,NOLONG
+
 ;# Atomic operations
-$bwdq CMPXCHG	rm#,reg#			[mr:	hle 0f b0# /r]				PENT,SM,LOCK
+$bwdq CMPXCHG	 rm#,reg#			[mr:	hle 0f b0# /r]				PENT,SM,LOCK
 $bwd  CMPXCHG486 rm#,reg#			[mr:	0f a6# /r]				486,SM,UNDOC,NOLONG,ND,LOCK,OBSOLETE
-CMPXCHG8B	mem64				[m:	hle norexw 0f c7 /1]			PENT,LOCK
-CMPXCHG16B	mem128				[m:	o64 0f c7 /1]				X86_64,LONG,LOCK
+      CMPXCHG8B	 mem64				[m:	hle norexw 0f c7 /1]			PENT,LOCK
+      CMPXCHG16B mem128				[m:	o64 0f c7 /1]				X86_64,LONG,LOCK
 
 $bwdq XADD	rm#,reg#			[mr:	hle o# 0f c0# /r]			486,SM,LOCK
 
 $wq   XCHG	ax#,reg#			[-r:	o# 90+r]				8086
 $wq   XCHG	reg#,ax#			[r-:	o# 90+r]				8086,ND
 ; 32-bit operand size needs special handling, because opcode 90 is special in 64-bit mode.
-XCHG		reg_eax,reg32na			[-r:	o32 90]					386
-XCHG		reg32na,reg_eax			[r-:	o32 90]					386,ND
-XCHG		reg_eax,reg_eax			[--:	o32 90]					386,NOLONG,ND
+      XCHG	reg_eax,reg32na			[-r:	o32 90+r]				386
+      XCHG	reg32na,reg_eax			[r-:	o32 90+r]				386,ND
+      XCHG	reg_eax,reg_eax			[--:	o32 90]					386,NOLONG,ND
 $bwdq XCHG	rm#,reg#			[mr:	hlenl o# 86# /r]			8086,SM,LOCK
 $bwdq XCHG	reg#,rm#			[rm:	hlenl o16 87 /r]			8086,SM,LOCK1,ND
 
-;# Control transfer
-CALL		imm				[i:	odf e8 rel]				8086,BND,NOAPX,SIZE
-CALL		imm|near			[i:	odf e8 rel]				8086,ND,BND,NOAPX,SIZE
-CALL		imm|far				[i:	odf 9a iwd seg]				8086,ND,NOLONG,SIZE
-CALL		imm:imm				[ji:	odf 9a iwd iw]				8086,NOLONG,SIZE,AR1
-; Call/jmp near imm/reg/mem is always 64-bit in long mode.
-CALL		imm16				[i:	o16 e8 rel]				8086,NOLONG,BND,SX
-CALL		imm16|near			[i:	o16 e8 rel]				8086,ND,NOLONG,BND,SX,ND
-CALL		imm16|far			[i:	o16 9a iwd seg]				8086,ND,NOLONG,SX,ND
-CALL		imm32				[i:	o32 e8 rel]				386,NOLONG,BND,SX,ND
-CALL		imm32|near			[i:	o32 e8 rel]				386,ND,NOLONG,BND,SX,ND
-CALL		imm32|far			[i:	o32 9a iwd seg]				386,ND,NOLONG,SX,ND
-CALL		imm64				[i:	o64nw e8 rel]				X86_64,LONG,BND,NOAPX,SX,ND
-CALL		imm64|near			[i:	o64nw e8 rel]				X86_64,LONG,ND,BND,NOAPX
-CALL		imm16:imm			[ji:	o16 9a iw iw]				8086,NOLONG,SX,AR0,ND
-CALL		imm:imm16			[ji:	o16 9a iw iw]				8086,NOLONG,SX,AR1
-CALL		imm32:imm			[ji:	o32 9a id iw]				386,NOLONG,SX,AR0,ND
-CALL		imm:imm32			[ji:	o32 9a id iw]				386,NOLONG,SX,AR1
-CALL		mem|far				[m:	odf ff /3]				8086,NOLONG,SX
-CALL		mem|far				[m:	o64 ff /3]				X86_64,LONG,SX
-CALL		mem16|far			[m:	o16 ff /3]				8086,SX
-CALL		mem32|far			[m:	o32 ff /3]				386,SX
-CALL		mem64|far			[m:	o64 ff /3]				X86_64,SX,LONG
-CALL		mem|near			[m:	odf ff /2]				8086,ND,BND,SX
-CALL		rm16|near			[m:	o16 ff /2]				8086,NOLONG,ND,BND,SX
-CALL		rm32|near			[m:	o32 ff /2]				386,NOLONG,ND,BND,SX
-CALL		rm64|near			[m:	o64nw ff /2]				X86_64,LONG,ND,BND,SX
-CALL		mem				[m:	odf ff /2]				8086,BND,SIZE
-CALL		rm16				[m:	o16 ff /2]				8086,NOLONG,BND
-CALL		rm32				[m:	o32 ff /2]				386,NOLONG,BND
-CALL		rm64				[m:	o64nw ff /2]				X86_64,LONG,BND
-
+;# Jumps
 ; Call/jmp near imm/reg/mem is always 64-bit in long mode.
 JMP		imm|short			[i:	nw eb rel8]				8086,NOAPX,SX
 JMP		imm8				[i:	nw eb rel8]				8086,NOAPX,SX
@@ -255,17 +228,6 @@ JMP		rm16				[m:	o16 ff /4]				8086,NOLONG,BND
 JMP		rm32				[m:	o32 ff /4]				386,NOLONG,BND
 JMP		rm64				[m:	o64nw ff /4]				X86_64,LONG,BND
 
-; JMPE is obsolete, but seems to be used by a fair number of virtual environments?
-JMPE		imm				[i:	odf    0f b8 rel]			IA64
-JMPE		imm16				[i:	o16    0f b8 rel]			IA64
-JMPE		imm32				[i:	o32    0f b8 rel]			IA64
-; 0f 00 /6 with a prefix has been repurposed in long mode
-JMPE		rm16				[m:	o16    0f 00 /6]			IA64,NOLONG
-JMPE		rm32				[m:	o32    0f 00 /6]			IA64,NOLONG
-JMPE		rm16				[m:	o16 np 0f 00 /6]			IA64,LONG
-JMPE		rm32				[m:	o32 np 0f 00 /6]			IA64,LONG
-JMPE		rm64				[m:	o64 np 0f 00 /6]			IA64,LONG
-
 Jcc		imm|near			[i:	odf 0f 80+c rel]			386,BND,SX,NOAPX
 Jcc		imm16|near			[i:	o16 0f 80+c rel]			386,NOLONG,SX,BND
 Jcc		imm32|near			[i:	o32 0f 80+c rel]			386,NOLONG,SX,BND
@@ -276,11 +238,92 @@ Jcc		imm				[i:	jcc8 nw 70+c rel8]			8086,BND,NOAPX
 Jcc		imm				[i:	nw 0f 80+c rel]				386,ND,BND,NOAPX
 Jcc		imm				[i:	nw 71+c jlen e9 rel]			8086,ND,NOAPX
 
-;# Flag setting instructions
+JCXZ		imm				[i:	a16 e3 rel8]				8086,NOLONG
+JECXZ		imm				[i:	a32 e3 rel8]				386,NOAPX
+JRCXZ		imm				[i:	a64 e3 rel8]				X86_64,LONG,NOAPX
+
+     LOOP	imm				[i:	adf nw e2 rel8]				8086,NOAPX
+$wdq LOOP	imm,cx#				[i-:	a#  nw e2 rel8]				8086,NOAPX
+     LOOPE	imm				[i:	adf nw e1 rel8]				8086,NOAPX
+$wdq LOOPE	imm,cx#				[i-:	a#  nw e1 rel8]				8086,NOAPX
+     LOOPNE	imm				[i:	adf nw e0 rel8]				8086,NOAPX
+$wdq LOOPNE	imm,cx#				[i:	a#  nw e0 rel8]				8086,NOAPX
+     LOOPZ	imm				[i:	adf nw e1 rel8]				8086,NOAPX,ND
+$wdq LOOPZ	imm,cx#				[i-:	a#  nw e1 rel8]				8086,NOAPX,ND
+     LOOPNZ	imm				[i:	adf nw e0 rel8]				8086,NOAPX,ND
+$wdq LOOPNZ	imm,cx#				[i:	a#  nw e0 rel8]				8086,NOAPX,ND
+
+; JMPE is obsolete, but seems to be used by a fair number of virtual environments?
+      JMPE	imm				[i:	nw odf 0f b8 rel]			IA64,SIZE
+$wdq  JMPE	imm#				[i:	nw o#  0f b8 rel]			IA64
+; 0f 00 /6 with a prefix has been repurposed in long mode
+$wdq  JMPE	rm#				[m:	o#  np 0f 00 /6]			IA64
+$wd   JMPE	rm#				[m:	o#     0f 00 /6]			IA64,NOLONG
+
+;# Call and return
+CALL		imm				[i:	odf e8 rel]				8086,BND,NOAPX,SIZE
+CALL		imm|near			[i:	odf e8 rel]				8086,ND,BND,NOAPX,SIZE
+CALL		imm|far				[i:	odf 9a iwd seg]				8086,ND,NOLONG,SIZE
+CALL		imm:imm				[ji:	odf 9a iwd iw]				8086,NOLONG,SIZE,AR1
+; Call/jmp near imm/reg/mem is always 64-bit in long mode.
+CALL		imm16				[i:	o16 e8 rel]				8086,NOLONG,BND,SX
+CALL		imm16|near			[i:	o16 e8 rel]				8086,ND,NOLONG,BND,SX,ND
+CALL		imm16|far			[i:	o16 9a iwd seg]				8086,ND,NOLONG,SX,ND
+CALL		imm32				[i:	o32 e8 rel]				386,NOLONG,BND,SX,ND
+CALL		imm32|near			[i:	o32 e8 rel]				386,ND,NOLONG,BND,SX,ND
+CALL		imm32|far			[i:	o32 9a iwd seg]				386,ND,NOLONG,SX,ND
+CALL		imm64				[i:	o64nw e8 rel]				X86_64,LONG,BND,NOAPX,SX,ND
+CALL		imm64|near			[i:	o64nw e8 rel]				X86_64,LONG,ND,BND,NOAPX
+CALL		imm16:imm			[ji:	o16 9a iw iw]				8086,NOLONG,SX,AR0,ND
+CALL		imm:imm16			[ji:	o16 9a iw iw]				8086,NOLONG,SX,AR1
+CALL		imm32:imm			[ji:	o32 9a id iw]				386,NOLONG,SX,AR0,ND
+CALL		imm:imm32			[ji:	o32 9a id iw]				386,NOLONG,SX,AR1
+CALL		mem|far				[m:	odf ff /3]				8086,NOLONG,SX
+CALL		mem|far				[m:	o64 ff /3]				X86_64,LONG,SX
+CALL		mem16|far			[m:	o16 ff /3]				8086,SX
+CALL		mem32|far			[m:	o32 ff /3]				386,SX
+CALL		mem64|far			[m:	o64 ff /3]				X86_64,SX,LONG
+CALL		mem|near			[m:	odf ff /2]				8086,ND,BND,SX
+CALL		rm16|near			[m:	o16 ff /2]				8086,NOLONG,ND,BND,SX
+CALL		rm32|near			[m:	o32 ff /2]				386,NOLONG,ND,BND,SX
+CALL		rm64|near			[m:	o64nw ff /2]				X86_64,LONG,ND,BND,SX
+CALL		mem				[m:	odf ff /2]				8086,BND,SIZE
+CALL		rm16				[m:	o16 ff /2]				8086,NOLONG,BND
+CALL		rm32				[m:	o32 ff /2]				386,NOLONG,BND
+CALL		rm64				[m:	o64nw ff /2]				X86_64,LONG,BND
+
+$zwdq RET%	void				[	nw o# c3]				8086,BND
+$zwdq RET%	imm16				[i:	nw o# c2 iw]				8086,BND
+$zwdq RETF%	void				[	   o# cb]				8086
+$zwdq RETF%	imm16				[i:	   o# ca iw]				8086
+$zwdq RETN%	void				[	nw o# c3]				8086,BND,ND
+$zwdq RETN%	imm16				[i:	nw o# c2 iw]				8086,BND,ND
+
+;# Interrupts, system calls, and returns
+INT		imm8				[i:	cd ib,u]				8086
+INT1		void				[	f1]					386
+INT01		void				[	f1]					386,ND
+ICEBP		void				[	f1]					386,ND
+INT3		void				[	cc]					8086
+INT03		void				[	cc]					8086,ND
+BRKPT		void				[	cc]					8086,ND
+INTO		void				[	ce]					8086,NOLONG
+
+SYSCALL		void				[	0f 05]					P6,AMD
+SYSENTER	void				[	0f 34]					P6,NOAPX
+
+SYSEXIT		void				[	0f 35]					P6,PRIV,NOAPX
+SYSRET		void				[	0f 07]					P6,PRIV,AMD
+
+$zwdq IRET%	void				[	o# cf]					8086
+
+ERETS           void				[	f2 0f 01 ca		]		FRED,FUTURE,PRIV,LONG
+ERETU		void				[	f3 0f 01 ca		]		FRED,FUTURE,PRIV,LONG
+
+;# Flag register instructions
 CLC		void				[	f8]					8086
 CLD		void				[	fc]					8086
 CLI		void				[	fa]					8086
-CLTS		void				[	0f 06]					286,PRIV
 CLAC		void				[	np 0f 01 ca]				SMAP,PRIV,FUTURE
 
 STC		void				[	f9]					8086
@@ -289,6 +332,13 @@ STI		void				[	fb]					8086
 STAC		void				[	np 0f 01 cb]				SMAP,PRIV,FUTURE
 
 CMC		void				[	f5]					8086
+
+LAHF		void				[	9f]					8086
+SAHF		void				[	9e]					8086
+SALC		void				[	d6]					8086,UNDOC
+
+$zwdq PUSHF%	void				[	nw o# 9c]				8086
+$zwdq POPF%	void				[	nw o# 9d]				8086
 
 ;# String instructions
 $bwdq CMPS%	void				[	repe o# a6#]				8086,NOAPX
@@ -299,13 +349,17 @@ $bwdq SCAS%	void				[	repe o# ae#]				8086,NOAPX
 $bwd  INS%	void				[	o# 6c#]					186
 $bwd  OUTS%	void				[	o# 6e#]					186
 
-CPUID		void				[	0f a2]					PENT
-CPU_READ	void				[	0f 3d]					PENT,CYRIX,NOAPX
-CPU_WRITE	void				[	0f 3c]					PENT,CYRIX,NOAPX
+;# Machine control and management instructions
+CLTS		void				[	0f 06]					286,PRIV
 
-DMINT		void				[	0f 39]					P6,CYRIX,NOAPX
+CPUID		void				[	0f a2]					PENT
+CPU_READ	void				[	0f 3d]					PENT,NOLONG,CYRIX,NOAPX,OBSOLETE
+CPU_WRITE	void				[	0f 3c]					PENT,NOLONG,CYRIX,NOAPX,OBSOLETE
+
+DMINT		void				[	0f 39]					P6,NOLONG,CYRIX,NOAPX,OBSOLETE
 EMMS		void				[	0f 77]					PENT,MMX
-ENTER		imm16,imm8			[ij:	c8 iw ib,u]				186
+
+;# x86
 F2XM1		void				[	d9 f0]					8086,FPU
 FABS		void				[	d9 e1]					8086,FPU
 FADD		mem32				[m:	d8 /0]					8086,FPU
@@ -525,20 +579,15 @@ FXTRACT		void				[	d9 f4]					8086,FPU
 FYL2X		void				[	d9 f1]					8086,FPU
 FYL2XP1		void				[	d9 f9]					8086,FPU
 HLT		void				[	f4]					8086,PRIV
-ICEBP		void				[	f1]					386,ND
 
-$wd   IBTS	rm#,reg#			[mr:	o# 0f a7 /r]				386,UNDOC,ND,OBSOLETE,NOLONG
-$wd   XBTS	rm#,reg#			[mr:	o# 0f a6 /r]				386,UNDOC,ND,OBSOLETE,NOLONG
 
-$bwd  IN	ax#,imm8			[-i:	o# e4# ib,u]				8086,SB,NOAPX
+;# I/O instructions
+$bwd  IN	ax#,imm8			[-i:	o# e4# ib,u]				8086,NOAPX
 $bwd  IN	ax#,reg_dx			[--:	o# ec#]					8086,NOAPX
+$bwd  OUT	imm8,ax#			[i-:	o# e6# ib,u]				8086,NOAPX
+$bwd  OUT	reg_dx,ax#			[--:	o# ee#]					8086,NOAPX
 
-INT		imm				[i:	cd ib,u]				8086,SB
-INT01		void				[	f1]					386,ND
-INT1		void				[	f1]					386
-INT03		void				[	cc]					8086,ND
-INT3		void				[	cc]					8086
-INTO		void				[	ce]					8086,NOLONG
+;#
 INVD		void				[	0f 08]					486,PRIV
 INVPCID		reg32,mem128			[rm:	66 0f38 82 /r]				FUTURE,INVPCID,PRIV,NOLONG
 INVPCID		reg64,mem128			[rm:	66 0f38 82 /r]				FUTURE,INVPCID,PRIV,LONG
@@ -547,14 +596,6 @@ INVLPGA		reg_ax,reg_ecx			[--:	a16 0f 01 df]				X86_64,AMD,NOLONG
 INVLPGA		reg_eax,reg_ecx			[--:	a32 0f 01 df]				X86_64,AMD
 INVLPGA		reg_rax,reg_ecx			[--:	a64 0f 01 df]				X86_64,LONG,AMD
 INVLPGA		void				[	0f 01 df]				X86_64,AMD
-IRET		void				[	odf cf]					8086
-IRETD		void				[	o32 cf]					386
-IRETQ		void				[	o64 cf]					X86_64,LONG
-IRETW		void				[	o16 cf]					8086
-JCXZ		imm				[i:	a16    e3 rel8]				8086,NOLONG
-JECXZ		imm				[i:	a32 nw e3 rel8]				386,NOAPX
-JRCXZ		imm				[i:	a64 nw e3 rel8]				X86_64,LONG,NOAPX
-LAHF		void				[	9f]					8086
 LAR		reg16,mem			[rm:	o16 0f 02 /r]				286,PROT,SW
 LAR		reg16,reg16			[rm:	o16 0f 02 /r]				286,PROT
 LAR		reg16,reg32			[rm:	o16 0f 02 /r]				386,PROT
@@ -571,23 +612,36 @@ LAR		reg64,mem			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT,SW
 LAR		reg64,reg16			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT
 LAR		reg64,reg32			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT
 LAR		reg64,reg64			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT
-LDS		reg16,mem			[rm:	o16 c5 /r]				8086,NOLONG
-LDS		reg32,mem			[rm:	o32 c5 /r]				386,NOLONG
+
+;# Segment handling instructions
+$wd   LDS	reg#,mem#			[rm:	o# c5 /r]				8086,NOLONG
+$wd   LES	reg#,mem#			[rm:	o# c4 /r]				8086,NOLONG
+$wdq  LFS	reg#,mem#			[rm:	o# 0f b4 /r]				386,SM
+$wdq  LGS	reg#,mem#			[rm:	o# 0f b5 /r]				386,SM
+$wdq  LSS	reg#,mem#			[rm:	o# 0f b2 /r]				386,SM
+
+      LKGS	rm16				[m:	f2 0f 00 /6		]		LKGS,FUTURE,PRIV,LONG
+$dq   LKGS	reg#				[m:	f2 0f 00 /6		]		LKGS,FUTURE,PRIV,LONG,ND
+
+PUSH		reg_es				[-:	06]					8086,NOLONG
+PUSH		reg_cs				[-:	0e]					8086,NOLONG
+PUSH		reg_ss				[-:	16]					8086,NOLONG
+PUSH		reg_ds				[-:	1e]					8086,NOLONG
+PUSH		reg_fs				[-:	0f a0]					386
+PUSH		reg_gs				[-:	0f a8]					386
+
+POP		reg_es				[-:	07]					8086,NOLONG
+POP		reg_cs				[-:	m0 0f]					8086,NOLONG,UNDOC,ND,OBSOLETE
+POP		reg_ss				[-:	17]					8086,NOLONG
+POP		reg_ds				[-:	1f]					8086,NOLONG
+POP		reg_fs				[-:	0f a1]					386
+POP		reg_gs				[-:	0f a9]					386
 
 $wdq LEA	reg#,mem			[rm:	o# 8d /r]				8086
 $wdq LEA	reg#,imm#			[rm:	o# 8d /r]				8086,ND
 
-LEAVE		void				[	c9]					186
-LES		reg16,mem			[rm:	o16 c4 /r]				8086,NOLONG
-LES		reg32,mem			[rm:	o32 c4 /r]				386,NOLONG
 LFENCE		void				[	np 0f ae e8]				X86_64,LONG,AMD
-LFS		reg16,mem			[rm:	o16 0f b4 /r]				386
-LFS		reg32,mem			[rm:	o32 0f b4 /r]				386
-LFS		reg64,mem			[rm:	o64 0f b4 /r]				X86_64,LONG
 LGDT		mem				[m:	0f 01 /2]				286,PRIV
-LGS		reg16,mem			[rm:	o16 0f b5 /r]				386
-LGS		reg32,mem			[rm:	o32 0f b5 /r]				386
-LGS		reg64,mem			[rm:	o64 0f b5 /r]				X86_64,LONG
 LIDT		mem				[m:	0f 01 /3]				286,PRIV
 LLDT		mem				[m:	0f 00 /2]				286,PROT,PRIV
 LLDT		mem16				[m:	0f 00 /2]				286,PROT,PRIV
@@ -597,44 +651,10 @@ LMSW		mem16				[m:	0f 01 /6]				286,PRIV
 LMSW		reg16				[m:	0f 01 /6]				286,PRIV
 LOADALL		void				[	0f 07]					386,UNDOC,ND,OBSOLETE
 LOADALL286	void				[	0f 05]					286,UNDOC,ND,OBSOLETE
-LOOP		imm				[i:	adf nw e2 rel8]				8086,NOAPX
-LOOP		imm,reg_cx			[i-:	a16 nw e2 rel8]				8086,NOLONG
-LOOP		imm,reg_ecx			[i-:	a32 nw e2 rel8]				386,NOAPX
-LOOP		imm,reg_rcx			[i-:	a64 nw e2 rel8]				X86_64,LONG,NOAPX
-LOOPE		imm				[i:	adf nw e1 rel8]				8086,NOAPX
-LOOPE		imm,reg_cx			[i-:	a16    e1 rel8]				8086,NOLONG
-LOOPE		imm,reg_ecx			[i-:	a32 nw e1 rel8]				386,NOAPX
-LOOPE		imm,reg_rcx			[i-:	a64 nw e1 rel8]				X86_64,LONG,NOAPX
-LOOPZ		imm				[i:	adf nw e1 rel8]				8086,NOAPX,ND
-LOOPZ		imm,reg_cx			[i-:	a16    e1 rel8]				8086,NOLONG,ND
-LOOPZ		imm,reg_ecx			[i-:	a32 nw e1 rel8]				386,NOAPX,ND
-LOOPZ		imm,reg_rcx			[i-:	a64 nw e1 rel8]				X86_64,LONG,NOAPX,ND
-LOOPNE		imm				[i:	adf nw e0 rel8]				8086,NOAPX
-LOOPNE		imm,reg_cx			[i-:	a16    e0 rel8]				8086,NOLONG
-LOOPNE		imm,reg_ecx			[i-:	a32 nw e0 rel8]				386,NOAPX
-LOOPNE		imm,reg_rcx			[i-:	a64 nw e0 rel8]				X86_64,LONG,NOAPX
-LOOPNZ		imm				[i:	adf nw e0 rel8]				8086,NOAPX,ND
-LOOPNZ		imm,reg_cx			[i-:	a16    e0 rel8]				8086,NOLONG,ND
-LOOPNZ		imm,reg_ecx			[i-:	a32 nw e0 rel8]				386,NOAPX,ND
-LOOPNZ		imm,reg_rcx			[i-:	a64 nw e0 rel8]				X86_64,LONG,NOAPX,ND
-LSL		reg16,mem			[rm:	o16 0f 03 /r]				286,PROT,SW
-LSL		reg16,reg16			[rm:	o16 0f 03 /r]				286,PROT
-LSL		reg16,reg32			[rm:	o16 0f 03 /r]				386,PROT
-LSL		reg16,reg64			[rm:	o16 0f 03 /r]				X86_64,LONG,PROT,ND
-LSL		reg32,mem			[rm:	o32 0f 03 /r]				386,PROT,SW
-LSL		reg32,reg16			[rm:	o32 0f 03 /r]				386,PROT
-LSL		reg32,reg32			[rm:	o32 0f 03 /r]				386,PROT
-LSL		reg32,reg64			[rm:	o32 0f 03 /r]				X86_64,LONG,PROT,ND
-LSL		reg64,mem			[rm:	o64 0f 03 /r]				X86_64,LONG,PROT,SW
-LSL		reg64,reg16			[rm:	o64 0f 03 /r]				X86_64,LONG,PROT
-LSL		reg64,reg32			[rm:	o64 0f 03 /r]				X86_64,LONG,PROT
-LSL		reg64,reg64			[rm:	o64 0f 03 /r]				X86_64,LONG,PROT
-LSS		reg16,mem			[rm:	o16 0f b2 /r]				386
-LSS		reg32,mem			[rm:	o32 0f b2 /r]				386
-LSS		reg64,mem			[rm:	o64 0f b2 /r]				X86_64,LONG
-LTR		mem				[m:	0f 00 /3]				286,PROT,PRIV
-LTR		mem16				[m:	0f 00 /3]				286,PROT,PRIV
-LTR		reg16				[m:	0f 00 /3]				286,PROT,PRIV
+$wdq  LSL	reg#,rm16			[rm:	o# 0f 03 /r]				286,PROT
+$wdq  LSL	reg#,reg32			[rm:	o# 0f 03 /r]				386,PROT
+$wdq  LSL	reg#,reg64			[rm:	o# 0f 03 /r]				X86_64,LONG,PROT
+LTR		rm16				[m:	0f 00 /3]				286,PROT,PRIV
 MFENCE		void				[	np 0f ae f0]				X86_64,LONG,AMD
 MONITOR		void				[	0f 01 c8]				PRESCOTT
 MONITOR		reg_eax,reg_ecx,reg_edx		[---:	0f 01 c8]				PRESCOTT,NOLONG,ND
@@ -716,12 +736,6 @@ NOT		rm8				[m:	hle f6 /2]				8086,LOCK
 NOT		rm16				[m:	hle o16 f7 /2]				8086,LOCK
 NOT		rm32				[m:	hle o32 f7 /2]				386,LOCK
 NOT		rm64				[m:	hle o64 f7 /2]				X86_64,LONG,LOCK
-OUT		imm,reg_al			[i-:	e6 ib,u]				8086,SB,NOAPX
-OUT		imm,reg_ax			[i-:	o16 e7 ib,u]				8086,SB,NOAPX
-OUT		imm,reg_eax			[i-:	o32 e7 ib,u]				386,SB,NOAPX
-OUT		reg_dx,reg_al			[--:	ee]					8086,NOAPX
-OUT		reg_dx,reg_ax			[--:	o16 ef]					8086,NOAPX
-OUT		reg_dx,reg_eax			[--:	o32 ef]					386,NOAPX
 PACKSSDW	mmxreg,mmxrm			[rm:	np 0f 6b /r]			PENT,MMX,SQ
 PACKSSWB	mmxreg,mmxrm			[rm:	np 0f 63 /r]			PENT,MMX,SQ
 PACKUSWB	mmxreg,mmxrm			[rm:	np 0f 67 /r]			PENT,MMX,SQ
@@ -812,34 +826,20 @@ PUNPCKLWD	mmxreg,mmxrm			[rm:	np 0f 61 /r]			PENT,MMX,SQ
 ;# Stack operations
 $wdq  PUSH	reg#				[r:	nw o# 50+r]				8086
 $wdq  PUSH	rm#				[m:	nw o# ff /6]				8086,SIZE
-PUSH		reg_es				[-:	06]					8086,NOLONG
-PUSH		reg_cs				[-:	0e]					8086,NOLONG
-PUSH		reg_ss				[-:	16]					8086,NOLONG
-PUSH		reg_ds				[-:	1e]					8086,NOLONG
-PUSH		reg_fs				[-:	0f a0]					386
-PUSH		reg_gs				[-:	0f a8]					386
-PUSH		imm8				[i:	nw osz 6a ib,s]				186,SX,ND
+      PUSH	imm8				[i:	nw osz 6a ib,s]				186,SX,ND
 $wdq  PUSH	sbyte#				[i:	nw o# 6a ib,s]				186,SIZE
 $wdq  PUSH	imm#				[i:	nw o# 68 i#]				186,SIZE
 
-PUSHA		void				[	osz 60]					186,NOLONG
-$wd   PUSHA%	void				[	o# 60]					186,NOLONG
-PUSHF		void				[	nw osz 9c]				8086
-$wdq  PUSHF%	void				[	nw o# 9c]				8086
 
 $wdq  POP	reg#				[r:	nw o# 58+r]				8086
 $wdq  POP	rm#				[m:	nw o# 8f /0]				8086
-POP		reg_es				[-:	07]					8086,NOLONG
-POP		reg_cs				[-:	m0 0f]					8086,NOLONG,UNDOC,ND,OBSOLETE
-POP		reg_ss				[-:	17]					8086,NOLONG
-POP		reg_ds				[-:	1f]					8086,NOLONG
-POP		reg_fs				[-:	0f a1]					386
-POP		reg_gs				[-:	0f a9]					386
 
-POPA		void				[	osz 61]					186,NOLONG
-$wd   POPA%	void				[	o# 61]					186,NOLONG
-POPF		void				[	nw osz 9d]				8086
-$wdq  POPF%	void				[	nw o#  9d]				8086
+$zwd  PUSHA%	void				[	o# 60]					186,NOLONG
+$zwd  POPA%	void				[	o# 61]					186,NOLONG
+
+$zwdq ENTER%	imm16,imm8			[ij:	nw o# c8 iw ib,u]			186
+$zwdq ENTER%	imm16				[i:	nw o# c8 iw 00]				186,ND
+$zwdq LEAVE%	void				[	nw o# c9]				186
 
 PXOR		mmxreg,mmxrm			[rm:	np 0f ef /r]				PENT,MMX,SQ
 RDSHR		rm32				[m:	o32 0f 36 /0]				P6,CYRIX,SMM,NOAPX
@@ -847,38 +847,12 @@ RDMSR		void				[	0f 32]					PENT,PRIV,NOAPX
 RDPMC		void				[	0f 33]					P6,NOAPX
 RDTSC		void				[	0f 31]					PENT,NOAPX
 RDTSCP		void				[	0f 01 f9]				X86_64
-RET		void				[	c3]					8086,BND
-RET		imm				[i:	c2 iw]					8086,SW,BND
-RETF		void				[	cb]					8086
-RETF		imm				[i:	ca iw]					8086,SW
-RETN		void				[	c3]					8086,BND
-RETN		imm				[i:	c2 iw]					8086,SW,BND
-RETW		void				[	o16 c3]					8086,BND
-RETW		imm				[i:	c2 iw]					8086,SW,BND
-RETFW		void				[	o16 cb]					8086
-RETFW		imm				[i:	o16 ca iw]				8086,SW
-RETNW		void				[	o16 c3]					8086,BND
-RETNW		imm				[i:	o16 c2 iw]				8086,SW,BND
-RETD		void				[	o32 c3]					8086,BND,NOLONG
-RETD		imm				[i:	o32 c2 iw]				8086,SW,BND,NOLONG
-RETFD		void				[	o32 cb]					8086
-RETFD		imm				[i:	o32 ca iw]				8086,SW
-RETND		void				[	o32 c3]					8086,BND,NOLONG
-RETND		imm				[i:	o32 c2 iw]				8086,SW,BND,NOLONG
-RETQ		void				[	o64nw c3]				X86_64,LONG,BND
-RETQ		imm				[i:	o64nw c2 iw]				X86_64,LONG,SW,BND
-RETFQ		void				[	o64 cb]					X86_64,LONG
-RETFQ		imm				[i:	o64 ca iw]				X86_64,LONG,SW
-RETNQ		void				[	o64nw c3]				X86_64,LONG,BND
-RETNQ		imm				[i:	o64nw c2 iw]				X86_64,LONG,SW,BND
 
 RDM		void				[	0f 3a]					P6,CYRIX,ND,NOLONG,OBSOLETE
 RSDC		reg_sreg,mem80			[rm:	0f 79 /r]				486,CYRIX,SMM
 RSLDT		mem80				[m:	0f 7b /0]				486,CYRIX,SMM
 RSM		void				[	0f aa]					PENT,SMM
 RSTS		mem80				[m:	0f 7d /0]				486,CYRIX,SMM
-SAHF		void				[	9e]					8086
-SALC		void				[	d6]					8086,UNDOC
 SFENCE		void				[	np 0f ae f8]				X86_64,LONG,AMD
 SGDT		mem				[m:	0f 01 /0]				286
 SHLD		mem,reg16,imm			[mri:	o16 0f a4 /r ib,u]			386,SM0-1,SB,AR2
@@ -931,10 +905,6 @@ SVDC		mem80,reg_sreg			[mr:	0f 78 /r]				486,CYRIX,SMM
 SVLDT		mem80				[m:	0f 7a /0]				486,CYRIX,SMM,ND
 SVTS		mem80				[m:	0f 7c /0]				486,CYRIX,SMM
 SWAPGS		void				[	0f 01 f8]				X86_64,LONG
-SYSCALL		void				[	0f 05]					P6,AMD
-SYSENTER	void				[	0f 34]					P6,NOAPX
-SYSEXIT		void				[	0f 35]					P6,PRIV,NOAPX
-SYSRET		void				[	0f 07]					P6,PRIV,AMD
 TEST		mem,reg8			[mr:	84 /r]					8086,SM
 TEST		reg8,reg8			[mr:	84 /r]					8086
 TEST		mem,reg16			[mr:	o16 85 /r]				8086,SM
@@ -5833,12 +5803,6 @@ CMPccXADD       mem32,reg32,reg32			[mrv:	vex.128.66.0f38.w0 e0+c /r]	CMPCCXADD,
 CMPccXADD       mem64,reg64,reg64			[mrv:	vex.128.66.0f38.w1 e0+c /r]	CMPCCXADD,FUTURE,LONG,SQ
 
 ;# Flexible Return and Exception Delivery
-ERETS           void					[	f2 0f 01 ca		]	FRED,FUTURE,PRIV,LONG
-ERETU		void					[	f3 0f 01 ca		]	FRED,FUTURE,PRIV,LONG
-LKGS		rm16					[m:	f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG
-LKGS		reg32					[m:	f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG,ND
-LKGS		reg64					[m:	f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG,ND,OPT
-LKGS		reg64					[m:	o64 f2 0f 00 /6		]	LKGS,FUTURE,PRIV,LONG,ND
 
 ;# WRMSRNS and MSRLIST instructions
 WRMSRNS		void					[	np 0f 01 c6		]	WRMSRNS,FUTURE,PRIV,LONG
