@@ -11,7 +11,9 @@
 	xchg ax,ax
 	xchg eax,eax
 	xchg rax,rax
-	
+
 	rep xchg ax,ax
 	rep xchg eax,eax
 	rep xchg rax,rax
+
+	hint_nop 0x18,dx,[rcx]

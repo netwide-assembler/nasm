@@ -397,6 +397,7 @@ char * safe_alloc nasm_catfile(const char *dir, const char *path);
  */
 const char * pure_func register_name(int);
 const char * pure_func prefix_name(int);
+bool const_func is_hint_nop(uint64_t);
 
 /*
  * Wrappers around fopen()... for future change to a dedicated structure

@@ -82,3 +82,19 @@ const char *prefix_name(int token)
 
     return name;
 }
+
+/*
+ * True for a valid hinting-NOP opcode, after 0F.
+ */
+bool is_hint_nop(uint64_t op)
+{
+    if (op >> 16)
+        return false;
+
+    if ((op >> 8) == 0x0f)
+        op = (uint8_t)op;
+    else if (op >> 8)
+        return false;
+
+    return ((op & ~7) == 0x18) || (op == 0x0d);
+}

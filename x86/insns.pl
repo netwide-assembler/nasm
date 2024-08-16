@@ -981,6 +981,7 @@ sub byte_code_compile($$$) {
         'rel'       => 064,     # 16 or 32 bit relative operand
         'rel32'     => 070,
         'seg'       => 074,
+	'ibn'       => 0300,
     );
     my %plain_codes = (
 	'o8'        => undef,   # 8-bit operand size (for orthogonality)
@@ -988,8 +989,9 @@ sub byte_code_compile($$$) {
         'o32'       => 0321,    # 32-bit operand size
         'odf'       => 0322,    # Operand size is default
         'o64'       => 0324,    # 64-bit operand size requiring REX.W
+	'w1'        => 0324,
         'o64nw'     => 0323,    # Implied 64-bit operand size (no REX.W)
-	'nw'        => 0327,	# Conditional o64nw
+	'nw'        => 0327,	# REX.W not needed
         'a16'       => 0310,
         'a32'       => 0311,
         'adf'       => 0312,    # Address size is default (disassembly)
@@ -1007,6 +1009,7 @@ sub byte_code_compile($$$) {
         'norexx'    => 0315,
         'norexr'    => 0316,
         'norexw'    => 0317,
+	'w0'        => 0317,
         'repe'      => 0335,
         'nohi'      => 0325,    # Use spl/bpl/sil/dil even without REX
         'nof3'      => 0326,    # No REP 0xF3 prefix permitted

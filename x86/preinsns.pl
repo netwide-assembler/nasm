@@ -128,6 +128,22 @@ sub func_multisize($$$) {
     return @ol;
 }
 
+# Common pattern for the HINT_NOPx pseudo-instructions
+$macros{'hint_nops'} = {
+    'func' =>
+    sub {
+	my($mac, $args, $rawargs) = @_;
+	my @ol;
+
+	for (my $i = 0; $i < 64; $i++) {
+	    push(@ol,
+		 sprintf("\$wdq HINT_NOP%d\trm#\t[m: o# 0f %02x /%d]\tP6,UNDOC,ND",
+			 $i, 0x18+($i >> 3), $i & 7));
+	}
+	return @ol;
+    }
+};
+
 #
 # Macro helper functions for common constructs
 #
@@ -344,7 +360,7 @@ sub adjust_instruction(@) {
     if ($i[2] =~ /\ba16\b/) {
 	add_flag($i[3], 'NOLONG');
     }
-    if ($i[2] =~ /\b(o64(nw)?\b|rex2?|a64\b)/) {
+    if ($i[2] =~ /\b(o64(nw)?\b|w1\b|rex2?|a64\b)/) {
 	add_flag($i[3], 'LONG');
     }
     if (has_flag($i[3], 'NOLONG') && has_flag($i[3], 'LONG')) {

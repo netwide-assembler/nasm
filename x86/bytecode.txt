@@ -102,6 +102,7 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \273             hle                         instruction takes XACQUIRE/XRELEASE with lock only
 \274..\277       ib,s                        a byte immediate operand, from operand 0..3, sign-extended
                                              to the operand size (if o16/o32/o64 present) or the bit size
+\300..\303	 ibn			     a valid 0F NOP opcode.
 \310             a16                         indicates fixed 16-bit address size, i.e. optional 0x67.
 \311             a32                         indicates fixed 32-bit address size, i.e. optional 0x67.
 \312             adf, asz                    (disassembler only) invalid with non-default address size.

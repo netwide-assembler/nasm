@@ -113,6 +113,25 @@ $wdq  MUL	reg#,rm#,imm#			[rmi:	evex.nf.zu.l0.m4.o# 69 /r i#]		APX,SM,ND
 $bwdq IDIV	rm#				[m:	o# f6# /7]				8086
 $bwdq DIV	rm#				[m:	o# f6# /6]				8086
 
+$bwdq NEG	rm#				[m:	hle o# f6 /3]				8086,LOCK
+$bwdq NOT	rm#				[m:	hle o# f6 /2]				8086,LOCK
+
+;# Bit operations
+$wdq  BSF	reg#,rm#			[rm:	o# nof3 0f bc /r]			386,SM
+$wdq  BSR	reg#,rm#			[rm:	o# nof3 0f bd /r]			386,SM
+
+$wdq  BT	rm#,reg#			[mr:	o# 0f a3 /r]				386,SM
+$wdq  BT	rm#,imm8			[mi:	o# 0f ba /4 ib,u]			386
+$wdq  BTC	rm#,reg#			[mr:	o# 0f bb /r]				386,SM,LOCK
+$wdq  BTC	rm#,imm8			[mi:	o# 0f ba /7 ib,u]			386,LOCK
+$wdq  BTR	rm#,reg#			[mr:	o# 0f b3 /r]				386,SM,LOCK
+$wdq  BTR	rm#,imm8			[mi:	o# 0f ab /6 ib,u]			386,LOCK
+$wdq  BTC	rm#,reg#			[mr:	o# 0f ab /r]				386,SM,LOCK
+$wdq  BTC	rm#,imm8			[mi:	o# 0f ba /5 ib,u]			386,LOCK
+
+$wd   IBTS	rm#,reg#			[mr:	o# 0f a7 /r]				386,UNDOC,ND,OBSOLETE,NOLONG
+$wd   XBTS	rm#,reg#			[mr:	o# 0f a6 /r]				386,UNDOC,ND,OBSOLETE,NOLONG
+
 ;# Decimal arithmetic
 AAA		void				[	37]					8086,NOLONG
 AAD		void				[	d5 0a]					8086,NOLONG
@@ -124,9 +143,6 @@ DAA		void				[	27]					8086,NOLONG
 DAS		void				[	2f]					8086,NOLONG
 
 ; ---
-ARPL		rm16,reg16			[mr:	63 /r]					286,PROT,SM,NOLONG
-BB0_RESET	void				[	0f 3a]					PENT,CYRIX,NOLONG,OBSOLETE,ND
-BB1_RESET	void				[	0f 3b]					PENT,CYRIX,NOLONG,OBSOLETE,ND
 
 $wd   BOUND	reg#,mem			[rm:	o# 62 /r]				186,NOLONG
 ; ---
@@ -158,22 +174,6 @@ $wdq  MOVZX	reg#,rm16			[rm:	o# 0f b7 /r]				386
       MOVZX	reg64,rm32			[rm:	o64nw norexw 8b /r]			X86_64,LONG,OPT,ND
 $wd   MOVZXD	reg#,rm32			[rm:	o# 8b /r]				X86_64,LONG,OPT,ND
 $wd   MOVZX	reg#,rm32			[rm:	o# 8b /r]				X86_64,LONG,OPT,ND
-
-;# Bit operations
-$wdq  BSF	reg#,rm#			[rm:	o# nof3 0f bc /r]			386,SM
-$wdq  BSR	reg#,rm#			[rm:	o# nof3 0f bd /r]			386,SM
-
-$wdq  BT	rm#,reg#			[mr:	o# 0f a3 /r]				386,SM
-$wdq  BT	rm#,imm8			[mi:	o# 0f ba /4 ib,u]			386
-$wdq  BTC	rm#,reg#			[mr:	o# 0f bb /r]				386,SM,LOCK
-$wdq  BTC	rm#,imm8			[mi:	o# 0f ba /7 ib,u]			386,LOCK
-$wdq  BTR	rm#,reg#			[mr:	o# 0f b3 /r]				386,SM,LOCK
-$wdq  BTR	rm#,imm8			[mi:	o# 0f ab /6 ib,u]			386,LOCK
-$wdq  BTC	rm#,reg#			[mr:	o# 0f ab /r]				386,SM,LOCK
-$wdq  BTC	rm#,imm8			[mi:	o# 0f ba /5 ib,u]			386,LOCK
-
-$wd   IBTS	rm#,reg#			[mr:	o# 0f a7 /r]				386,UNDOC,ND,OBSOLETE,NOLONG
-$wd   XBTS	rm#,reg#			[mr:	o# 0f a6 /r]				386,UNDOC,ND,OBSOLETE,NOLONG
 
 ;# Atomic operations
 $bwdq CMPXCHG	 rm#,reg#			[mr:	hle 0f b0# /r]				PENT,SM,LOCK
@@ -227,6 +227,12 @@ JMP		mem				[m:	odf ff /4]				8086,BND
 JMP		rm16				[m:	o16 ff /4]				8086,NOLONG,BND
 JMP		rm32				[m:	o32 ff /4]				386,NOLONG,BND
 JMP		rm64				[m:	o64nw ff /4]				X86_64,LONG,BND
+
+; APX absolute 64-bit jmp
+JMP		imm|abs				[i:	a64 np rex2 a1 iq		]	APX
+JMP		imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,ND
+JMPABS		imm				[i:	a64 np rex2 a1 iq		]	APX,ND
+JMPABS		imm64				[i:	a64 np rex2 a1 iq		]	APX,ND
 
 Jcc		imm|near			[i:	odf 0f 80+c rel]			386,BND,SX,NOAPX
 Jcc		imm16|near			[i:	o16 0f 80+c rel]			386,NOLONG,SX,BND
@@ -354,17 +360,98 @@ $bwdq SCAS%	void				[	repe o# ae#]				8086,NOAPX
 $bwd  INS%	void				[	o# 6c#]					186
 $bwd  OUTS%	void				[	o# 6e#]					186
 
+;# Synchronization and fencing
+LFENCE		void				[	np 0f ae e8]				X86_64,LONG,AMD
+MFENCE		void				[	np 0f ae f0]				X86_64,LONG,AMD
+SFENCE		void				[	np 0f ae f8]				X86_64,LONG,AMD
+SERIALIZE	void				[	np 0f 01 e8]				SERIALIZE,FUTURE
+
+;# Memory management and control
+CLFLUSH		mem				[m:	np 0f ae /7]				WILLAMETTE,SSE2
+CLFLUSHOPT	mem				[m:	66 0f ae /7]				FUTURE
+CLWB            mem                             [m:     66 0f ae /6]                            FUTURE
+
+; This one was killed before it saw the light of day
+PCOMMIT         void                            [       66 0f ae f8]                            FUTURE,NEVER,NOP
+
+; AMD Zen v1
+CLZERO		void				[	0f 01 fc]				FUTURE,AMD
+CLZERO		reg_ax				[-:	a16 0f 01 fc]				FUTURE,AMD,ND,NOLONG
+CLZERO		reg_eax				[-:	a32 0f 01 fc]				FUTURE,AMD,ND
+CLZERO		reg_rax				[-:	a64 0f 01 fc]				FUTURE,AMD,ND,LONG
+
+INVD		void				[	   0f 08]				486,PRIV
+WBINVD		void				[	np 0f 09]				486,PRIV
+WBNOINVD	void				[	f3 0f 09]				WBNOINVD,FUTURE,PRIV
+
+INVPCID		reg32,mem128			[rm:	66 0f38 82 /r]				FUTURE,INVPCID,PRIV,NOLONG
+INVPCID		reg64,mem128			[rm:	66 0f38 82 /r]				FUTURE,INVPCID,PRIV,LONG
+INVLPG		mem				[m:	0f 01 /7]				486,PRIV
+      INVLPGA	void				[	adf 0f 01 df]				X86_64,AMD
+$wdq  INVLPGA	ax#,reg_ecx			[--:	a#  0f 01 df]				X86_64,AMD,NOLONG
+
+;# Special reads: timestamp, CPU number, performance counters, randomness
+      RDPMC	void				[	0f 33]					P6,NOAPX
+      RDTSC	void				[	0f 31]					PENT,NOAPX
+      RDTSCP	void				[	0f 01 f9]				X86_64
+$wdq  RDRAND	reg#				[m:	o# 0f c7 /6]				FUTURE
+$wdq  RDSEED	reg#				[m:	o# 0f c7 /7]				FUTURE
+      RDPID	reg64				[m:	o32 f3 0f c7 /7]			LONG,OPT,FUTURE,ND
+$dq   RDPID	reg#				[m:	o#  f3 0f c7 /7]			FUTURE
+
 ;# Machine control and management instructions
 CLTS		void				[	0f 06]					286,PRIV
-
 CPUID		void				[	0f a2]					PENT
-CPU_READ	void				[	0f 3d]					PENT,NOLONG,CYRIX,NOAPX,OBSOLETE
-CPU_WRITE	void				[	0f 3c]					PENT,NOLONG,CYRIX,NOAPX,OBSOLETE
+LMSW		mem				[m:	0f 01 /6]				286,PRIV
+LMSW		mem16				[m:	0f 01 /6]				286,PRIV
+LMSW		reg16				[m:	0f 01 /6]				286,PRIV
+SMSW		mem				[m:	0f 01 /4]				286
+SMSW		mem16				[m:	0f 01 /4]				286
+SMSW		reg16				[m:	o16 0f 01 /4]				286
+SMSW		reg32				[m:	o32 0f 01 /4]				386
+SMSW		reg64				[m:	o64 0f 01 /4]				X86_64,LONG
+MOV		reg32,reg_creg			[mr:	rex.l 0f 20 /r]				386,PRIV,NOLONG
+MOV		reg64,reg_creg			[mr:	o64nw 0f 20 /r]				X86_64,LONG,PRIV
+MOV		reg_creg,reg32			[rm:	rex.l 0f 22 /r]				386,PRIV,NOLONG
+MOV		reg_creg,reg64			[rm:	o64nw 0f 22 /r]				X86_64,LONG,PRIV
+MOV		reg32,reg_dreg			[mr:	0f 21 /r]				386,PRIV,NOLONG
+MOV		reg64,reg_dreg			[mr:	o64nw 0f 21 /r]				X86_64,LONG,PRIV
+MOV		reg_dreg,reg32			[rm:	0f 23 /r]				386,PRIV,NOLONG
+MOV		reg_dreg,reg64			[rm:	o64nw 0f 23 /r]				X86_64,LONG,PRIV
+MOV		reg32,reg_treg			[mr:	0f 24 /r]				386,NOLONG,ND,OBSOLETE
+MOV		reg_treg,reg32			[rm:	0f 26 /r]				386,NOLONG,ND,OBSOLETE
+WRMSR		void				[	0f 30]					PENT,PRIV,NOAPX
+RDMSR		void				[	0f 32]					PENT,PRIV,NOAPX
+WRMSRNS		void				[	np 0f 01 c6		]		WRMSRNS,FUTURE,PRIV,LONG
+RDMSRLIST	void				[	f2 0f 01 c6		]		MSRLIST,FUTURE,PRIV,LONG
+WRMSRLIST	void				[	f3 0f 01 c6		]		MSRLIST,FUTURE,PRIV,LONG
 
-DMINT		void				[	0f 39]					P6,NOLONG,CYRIX,NOAPX,OBSOLETE
+; Machine control instructions from old Cyrix machines, probably obsolete
+BB0_RESET	void				[	m1 3a]					PENT,CYRIX,NOLONG,OBSOLETE,ND
+BB1_RESET	void				[	m1 3b]					PENT,CYRIX,NOLONG,OBSOLETE,ND
+CPU_READ	void				[	m1 3d]					PENT,NOLONG,CYRIX,OBSOLETE,ND
+CPU_WRITE	void				[	m1 3c]					PENT,NOLONG,CYRIX,OBSOLETE,ND
+DMINT		void				[	m1 39]					P6,NOLONG,CYRIX,NOAPX,OBSOLETE,ND
+RDM		void				[	0f 3a]					P6,CYRIX,ND,NOLONG,OBSOLETE
+SMINT		void				[	m1 38]					P6,CYRIX,ND,NOLONG,OBSOLETE
+SMINTOLD	void				[	m1 7e]					486,CYRIX,ND,NOLONG,,OBSOLETE
+
+;# System management mode
+RSM		void				[	0f aa]					PENT,SMM
+; From old Cyrix machines, probably obsolete
+WRSHR		rm32				[m:	o32 0f 37 /0]				P6,CYRIX,SMM,NOLONG,OBSOLETE,ND
+RDSHR		rm32				[m:	o32 0f 36 /0]				P6,CYRIX,SMM,ND,NOLONG,OBSOLETE
+RSDC		reg_sreg,mem80			[rm:	0f 79 /r]				486,CYRIX,SMM,NOLONG,ND,OBSOLETE
+RSLDT		mem80				[m:	0f 7b /0]				486,CYRIX,SMM,NOLONG,ND,OBSOLETE
+RSTS		mem80				[m:	0f 7d /0]				486,CYRIX,SMM,NOLONG,OBSOLETE,ND
+SVDC		mem80,reg_sreg			[mr:	m1 78 /r]				486,CYRIX,SMM,ND,NOLONG,OBSOLETE
+SVLDT		mem80				[m:	m1 7a /0]				486,CYRIX,SMM,ND,NOLONG,OBSOLETE
+SVTS		mem80				[m:	m1 7c /0]				486,CYRIX,SMM,ND,NOLONG,OBSOLETE
+
+
 EMMS		void				[	0f 77]					PENT,MMX
 
-;# x86
+;# x87 floating point
 F2XM1		void				[	d9 f0]					8086,FPU
 FABS		void				[	d9 e1]					8086,FPU
 FADD		mem32				[m:	d8 /0]					8086,FPU
@@ -592,16 +679,6 @@ $bwd  IN	ax#,reg_dx			[--:	o# ec#]					8086,NOAPX
 $bwd  OUT	imm8,ax#			[i-:	o# e6# ib,u]				8086,NOAPX
 $bwd  OUT	reg_dx,ax#			[--:	o# ee#]					8086,NOAPX
 
-;#
-INVD		void				[	0f 08]					486,PRIV
-INVPCID		reg32,mem128			[rm:	66 0f38 82 /r]				FUTURE,INVPCID,PRIV,NOLONG
-INVPCID		reg64,mem128			[rm:	66 0f38 82 /r]				FUTURE,INVPCID,PRIV,LONG
-INVLPG		mem				[m:	0f 01 /7]				486,PRIV
-INVLPGA		reg_ax,reg_ecx			[--:	a16 0f 01 df]				X86_64,AMD,NOLONG
-INVLPGA		reg_eax,reg_ecx			[--:	a32 0f 01 df]				X86_64,AMD
-INVLPGA		reg_rax,reg_ecx			[--:	a64 0f 01 df]				X86_64,LONG,AMD
-INVLPGA		void				[	0f 01 df]				X86_64,AMD
-
 ;# Segment handling instructions
       MOV	reg64,reg_sreg			[mr:	o32 8c /r]				X86_64,LONG,OPT,ND
 $wdq  MOV	reg#,reg_sreg			[mr:	o#  8c /r]				8086
@@ -631,6 +708,12 @@ POP		reg_ds				[-:	1f]					8086,NOLONG
 POP		reg_fs				[-:	0f a1]					386
 POP		reg_gs				[-:	0f a9]					386
 
+$dq   RDFSBASE	reg#				[m:	w# f3 0f ae /0]				LONG,FUTURE
+$dq   RDGSBASE	reg#				[m:	w# f3 0f ae /1]				LONG,FUTURE
+$dq   WRFSBASE	reg#				[m:	w# f3 0f ae /2]				LONG,FUTURE
+$dq   WRGSBASE	reg#				[m:	w# f3 0f ae /3]				LONG,FUTURE
+
+ARPL		rm16,reg16			[mr:	63 /r]					286,PROT,SM,NOLONG
 LAR		reg16,mem			[rm:	o16 0f 02 /r]				286,PROT,SW
 LAR		reg16,reg16			[rm:	o16 0f 02 /r]				286,PROT
 LAR		reg16,reg32			[rm:	o16 0f 02 /r]				386,PROT
@@ -688,13 +771,8 @@ STR		reg64				[m:	o64 0f 00 /1]				X86_64,LONG
 $wdq LEA	reg#,mem			[rm:	o# 8d /r]				8086
 $wdq LEA	reg#,imm#			[rm:	o# 8d /r]				8086,ND
 
-LFENCE		void				[	np 0f ae e8]				X86_64,LONG,AMD
-LMSW		mem				[m:	0f 01 /6]				286,PRIV
-LMSW		mem16				[m:	0f 01 /6]				286,PRIV
-LMSW		reg16				[m:	0f 01 /6]				286,PRIV
 LOADALL		void				[	0f 07]					386,UNDOC,ND,OBSOLETE
 LOADALL286	void				[	0f 05]					286,UNDOC,ND,OBSOLETE
-MFENCE		void				[	np 0f ae f0]				X86_64,LONG,AMD
 MONITOR		void				[	0f 01 c8]				PRESCOTT
 MONITOR		reg_eax,reg_ecx,reg_edx		[---:	0f 01 c8]				PRESCOTT,NOLONG,ND
 MONITOR		reg_rax,reg_ecx,reg_edx		[---:	0f 01 c8]				X86_64,LONG,ND
@@ -702,24 +780,8 @@ MONITORX	void				[	0f 01 fa]				AMD
 MONITORX	reg_rax,reg_ecx,reg_edx		[---:	0f 01 fa]				X86_64,LONG,AMD,ND
 MONITORX	reg_eax,reg_ecx,reg_edx		[---:	0f 01 fa]				AMD,ND
 MONITORX	reg_ax,reg_ecx,reg_edx		[---:	0f 01 fa]				AMD,ND
-MOV		reg_al,mem_offs			[-i:	a0 iwdq]				8086,SM,NOAPX
-MOV		reg_ax,mem_offs			[-i:	o16 a1 iwdq]				8086,SM,NOAPX
-MOV		reg_eax,mem_offs		[-i:	o32 a1 iwdq]				386,SM,NOAPX
-MOV		reg_rax,mem_offs		[-i:	o64 a1 iwdq]				X86_64,LONG,SM,NOAPX
-MOV		mem_offs,reg_al			[i-:	a2 iwdq]				8086,SM,NOHLE,NOAPX
-MOV		mem_offs,reg_ax			[i-:	o16 a3 iwdq]				8086,SM,NOHLE,NOAPX
-MOV		mem_offs,reg_eax		[i-:	o32 a3 iwdq]				386,SM,NOHLE,NOAPX
-MOV		mem_offs,reg_rax		[i-:	o64 a3 iwdq]				X86_64,LONG,SM,NOHLE,NOAPX
-MOV		reg32,reg_creg			[mr:	rex.l 0f 20 /r]				386,PRIV,NOLONG
-MOV		reg64,reg_creg			[mr:	o64nw 0f 20 /r]				X86_64,LONG,PRIV
-MOV		reg_creg,reg32			[rm:	rex.l 0f 22 /r]				386,PRIV,NOLONG
-MOV		reg_creg,reg64			[rm:	o64nw 0f 22 /r]				X86_64,LONG,PRIV
-MOV		reg32,reg_dreg			[mr:	0f 21 /r]				386,PRIV,NOLONG
-MOV		reg64,reg_dreg			[mr:	o64nw 0f 21 /r]				X86_64,LONG,PRIV
-MOV		reg_dreg,reg32			[rm:	0f 23 /r]				386,PRIV,NOLONG
-MOV		reg_dreg,reg64			[rm:	o64nw 0f 23 /r]				X86_64,LONG,PRIV
-MOV		reg32,reg_treg			[mr:	0f 24 /r]				386,NOLONG,ND
-MOV		reg_treg,reg32			[rm:	0f 26 /r]				386,NOLONG,ND
+$bwdq  MOV	ax#,mem_offs			[-i:	o# a0# iwdq]				8086,SM,NOAPX
+$bwdq  MOV	mem_offs,ax#			[i-:	o# a2# iwdq]				8086,SM,NOHLE,NOAPX
 MOV		mem8,reg8			[mr:	hlexr 88 /r]				8086,SM
 MOV		reg8,reg8			[mr:	88 /r]					8086
 MOV		mem16,reg16			[mr:	hlexr o16 89 /r]			8086,SM
@@ -755,14 +817,6 @@ MWAIT		void				[	0f 01 c9]				PRESCOTT
 MWAIT		reg_eax,reg_ecx			[--:	0f 01 c9]				PRESCOTT,ND
 MWAITX		void				[	0f 01 fb]				AMD
 MWAITX		reg_eax,reg_ecx			[--:	0f 01 fb]				AMD,ND
-NEG		rm8				[m:	hle f6 /3]				8086,LOCK
-NEG		rm16				[m:	hle o16 f7 /3]				8086,LOCK
-NEG		rm32				[m:	hle o32 f7 /3]				386,LOCK
-NEG		rm64				[m:	hle o64 f7 /3]				X86_64,LONG,LOCK
-NOT		rm8				[m:	hle f6 /2]				8086,LOCK
-NOT		rm16				[m:	hle o16 f7 /2]				8086,LOCK
-NOT		rm32				[m:	hle o32 f7 /2]				386,LOCK
-NOT		rm64				[m:	hle o64 f7 /2]				X86_64,LONG,LOCK
 PACKSSDW	mmxreg,mmxrm			[rm:	np 0f 6b /r]			PENT,MMX,SQ
 PACKSSWB	mmxreg,mmxrm			[rm:	np 0f 63 /r]			PENT,MMX,SQ
 PACKUSWB	mmxreg,mmxrm			[rm:	np 0f 67 /r]			PENT,MMX,SQ
@@ -857,7 +911,6 @@ $wdq  PUSH	rm#				[m:	nw o# ff /6]				8086,SIZE
 $wdq  PUSH	sbyte#				[i:	nw o# 6a ib,s]				186,SIZE
 $wdq  PUSH	imm#				[i:	nw o# 68 i#]				186,SIZE
 
-
 $wdq  POP	reg#				[r:	nw o# 58+r]				8086
 $wdq  POP	rm#				[m:	nw o# 8f /0]				8086
 
@@ -868,19 +921,29 @@ $zwdq ENTER%	imm16,imm8			[ij:	nw o# c8 iw ib,u]			186
 $zwdq ENTER%	imm16				[i:	nw o# c8 iw 00]				186,ND
 $zwdq LEAVE%	void				[	nw o# c9]				186
 
-PXOR		mmxreg,mmxrm			[rm:	np 0f ef /r]				PENT,MMX,SQ
-RDSHR		rm32				[m:	o32 0f 36 /0]				P6,CYRIX,SMM,NOAPX
-RDMSR		void				[	0f 32]					PENT,PRIV,NOAPX
-RDPMC		void				[	0f 33]					P6,NOAPX
-RDTSC		void				[	0f 31]					PENT,NOAPX
-RDTSCP		void				[	0f 01 f9]				X86_64
+; APX PUSH/POP extensions
+PUSHP		reg64				[r:	o64nw rex.w rex2 50+r			]	APX
+POPP		reg64				[r:	o64nw rex.w rex2 58+r			]	APX
 
-RDM		void				[	0f 3a]					P6,CYRIX,ND,NOLONG,OBSOLETE
-RSDC		reg_sreg,mem80			[rm:	0f 79 /r]				486,CYRIX,SMM
-RSLDT		mem80				[m:	0f 7b /0]				486,CYRIX,SMM
-RSM		void				[	0f aa]					PENT,SMM
-RSTS		mem80				[m:	0f 7d /0]				486,CYRIX,SMM
-SFENCE		void				[	np 0f ae f8]				X86_64,LONG,AMD
+PUSH		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0        ff /6	]	APX,ND
+PUSH		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  ff /6	]	APX,ND
+PUSHP		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX,ND
+PUSHP		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX,ND
+PUSH2		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  ff /6	]	APX
+PUSH2		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  ff /6	]	APX,ND
+PUSH2P		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX
+PUSH2P		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX,ND
+
+POP		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX,ND
+POP		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX,ND
+POPP		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
+POPP		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
+POP2		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX
+POP2		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX,ND
+POP2P		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX
+POP2P		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
+
+PXOR		mmxreg,mmxrm			[rm:	np 0f ef /r]				PENT,MMX,SQ
 SHLD		mem,reg16,imm			[mri:	o16 0f a4 /r ib,u]			386,SM0-1,SB,AR2
 SHLD		reg16,reg16,imm			[mri:	o16 0f a4 /r ib,u]			386,SM0-1,SB,AR2
 SHLD		mem,reg32,imm			[mri:	o32 0f a4 /r ib,u]			386,SM0-1,SB,AR2
@@ -906,18 +969,6 @@ SHRD		reg32,reg32,reg_cl		[mr-:	o32 0f ad /r]				386
 SHRD		mem,reg64,reg_cl		[mr-:	o64 0f ad /r]				X86_64,LONG,SM
 SHRD		reg64,reg64,reg_cl		[mr-:	o64 0f ad /r]				X86_64,LONG
 SKINIT		void				[	0f 01 de]				X86_64,LONG
-SMI		void				[	f1]					386,UNDOC
-SMINT		void				[	0f 38]					P6,CYRIX,ND,NOLONG,OBSOLETE
-; Older Cyrix chips had this; they had to move due to conflict with MMX
-SMINTOLD	void				[	0f 7e]					486,CYRIX,ND,NOLONG,OBSOLETE
-SMSW		mem				[m:	0f 01 /4]				286
-SMSW		mem16				[m:	0f 01 /4]				286
-SMSW		reg16				[m:	o16 0f 01 /4]				286
-SMSW		reg32				[m:	o32 0f 01 /4]				386
-SMSW		reg64				[m:	o64 0f 01 /4]				X86_64,LONG
-SVDC		mem80,reg_sreg			[mr:	0f 78 /r]				486,CYRIX,SMM
-SVLDT		mem80				[m:	0f 7a /0]				486,CYRIX,SMM,ND
-SVTS		mem80				[m:	0f 7c /0]				486,CYRIX,SMM
 TEST		mem,reg8			[mr:	84 /r]					8086,SM
 TEST		reg8,reg8			[mr:	84 /r]					8086
 TEST		mem,reg16			[mr:	o16 85 /r]				8086,SM
@@ -968,19 +1019,25 @@ UMOV		reg16,reg16			[rm:	np o16 0f 13 /r]			386,UNDOC,ND
 UMOV		reg32,mem			[rm:	np o32 0f 13 /r]			386,UNDOC,SM,ND
 UMOV		reg32,reg32			[rm:	np o32 0f 13 /r]			386,UNDOC,ND
 FWAIT		void				[	wait]					8086
-WBINVD		void				[	0f 09]					486,PRIV
-WRSHR		rm32				[m:	o32 0f 37 /0]				P6,CYRIX,SMM,NOAPX
-WRMSR		void				[	0f 30]					PENT,PRIV,NOAPX
+
 XLATB		void				[	d7]					8086
-XLAT		void				[	d7]					8086
-CMOVcc		reg16,mem			[rm:	o16 0f 40+c /r]				P6,SM
-CMOVcc		reg16,reg16			[rm:	o16 0f 40+c /r]				P6
-CMOVcc		reg32,mem			[rm:	o32 0f 40+c /r]				P6,SM
-CMOVcc		reg32,reg32			[rm:	o32 0f 40+c /r]				P6
-CMOVcc		reg64,mem			[rm:	o64 0f 40+c /r]				X86_64,LONG,SM
-CMOVcc		reg64,reg64			[rm:	o64 0f 40+c /r]				X86_64,LONG
+XLAT		void				[	d7]					8086,ND
+
+;# Conditional instructions
+$wdq  CMOVcc	reg#,rm#			[rm:	o#  0f 40+c /r]				P6,SM
 
 SETcc		rm8				[m:	0f 90+c /0]				386,SB
+SETcc		reg64				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU
+SETcc		reg32				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
+SETccZU		reg64				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
+SETccZU		reg32				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
+SETcc		rm8				[m:	evex.zu.l0.f2.m4.wig   40+c /0	]	APX
+SETccZU		rm8				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
+
+$bwdq CCMPscc	spec4,rm#,reg#			[vmr:	evex.scc.dfv.l0.np.m4.o# 38# /r	]	APX,SM1-2
+$bwdq CCMPscc	spec4,reg#,rm#			[vrm:   evex.scc.dfv.l0.np.m4.o# 3a# /r	]	APX,SM1-2
+$wdq  CCMPscc	spec4,rm#,sbyte#		[vmi:	evex.scc.dfv.l0.66.m4.o# 83  /7	ib,s ]	APX,SM1-2
+$bwdq CCMPscc	spec4,rm#,imm#			[vmi:	evex.scc.dfv.l0.np.m4.o# 80# /7	ib   ]	APX,SM1-2
 
 ;# Katmai Streaming SIMD instructions (SSE -- a.k.a. KNI, XMM, MMX2)
 ADDPS		xmmreg,xmmrm128			[rm:	np 0f 58 /r]				KATMAI,SSE
@@ -1121,8 +1178,6 @@ PSWAPD		mmxreg,mmxrm			[rm:	0f 0f /r bb]			PENT,3DNOW,SQ
 
 ;# Willamette SSE2 Cacheability Instructions
 MASKMOVDQU	xmmreg,xmmreg			[rm:	66 0f f7 /r]				WILLAMETTE,SSE2
-; CLFLUSH needs its own feature flag implemented one day
-CLFLUSH		mem				[m:	np 0f ae /7]				WILLAMETTE,SSE2
 MOVNTDQ		mem,xmmreg			[mr:	66 0f e7 /r]				WILLAMETTE,SSE2,SO
 MOVNTI		mem,reg32			[mr:	np 0f c3 /r]				WILLAMETTE,SD
 MOVNTI		mem,reg64			[mr:	o64 np 0f c3 /r]			X86_64,LONG,SQ
@@ -2461,17 +2516,6 @@ VFNMSUB321SD	xmmreg,xmmreg,xmmrm64		[rvm:	vex.dds.128.66.0f38.w1 bf /r]		FMA,FUT
 ;# Intel post-32 nm processor instructions
 ;
 ; Per AVX spec revision 7, document 319433-007
-RDFSBASE	reg32				[m:	norexw f3 0f ae /0]			LONG,FUTURE
-RDFSBASE	reg64				[m:	o64 f3 0f ae /0]			LONG,FUTURE
-RDGSBASE	reg32				[m:	norexw f3 0f ae /1]			LONG,FUTURE
-RDGSBASE	reg64				[m:	o64 f3 0f ae /1]			LONG,FUTURE
-RDRAND		reg16				[m:	o16 0f c7 /6]				FUTURE
-RDRAND		reg32				[m:	o32 0f c7 /6]				FUTURE
-RDRAND		reg64				[m:	o64 0f c7 /6]				LONG,FUTURE
-WRFSBASE	reg32				[m:	norexw f3 0f ae /2]			LONG,FUTURE
-WRFSBASE	reg64				[m:	o64 f3 0f ae /2]			LONG,FUTURE
-WRGSBASE	reg32				[m:	norexw f3 0f ae /3]			LONG,FUTURE
-WRGSBASE	reg64				[m:	o64 f3 0f ae /3]			LONG,FUTURE
 VCVTPH2PS	ymmreg,xmmrm128			[rm:	vex.256.66.0f38.w0 13 /r]		AVX,FUTURE
 VCVTPH2PS	xmmreg,xmmrm64			[rm:	vex.128.66.0f38.w0 13 /r]		AVX,FUTURE
 VCVTPS2PH	xmmrm128,ymmreg,imm8		[mri:	vex.256.66.0f3a.w0 1d /r ib]		AVX,FUTURE
@@ -2482,9 +2526,6 @@ ADCX		reg32,rm32			[rm:	norexw 66 0f38 f6 /r]			FUTURE
 ADCX		reg64,rm64			[rm:	o64 66 0f38 f6 /r]			LONG,FUTURE
 ADOX		reg32,rm32			[rm:	norexw f3 0f38 f6 /r]			FUTURE
 ADOX		reg64,rm64			[rm:	o64 f3 0f38 f6 /r]			LONG,FUTURE
-RDSEED		reg16				[m:	o16 0f c7 /7]				FUTURE
-RDSEED		reg32				[m:	o32 0f c7 /7]				FUTURE
-RDSEED		reg64				[m:	o64 0f c7 /7]				LONG,FUTURE
 
 ;# Supervisor Mode Access Prevention (SMAP)
 
@@ -5318,21 +5359,7 @@ RDPKRU		void				[	0f 01 ee]				LONG,FUTURE
 WRPKRU		void				[	0f 01 ef]				LONG,FUTURE
 
 ;# Read Processor ID
-RDPID		reg32				[m:	f3 0f c7 /7]				NOLONG,FUTURE
-RDPID		reg64				[m:	o64nw f3 0f c7 /7]			LONG,FUTURE
-RDPID		reg32				[m:	f3 0f c7 /7]				LONG,UNDOC,FUTURE,ND
 
-;# New memory instructions
-CLFLUSHOPT	mem				[m:	66 0f ae /7]				FUTURE
-CLWB            mem                             [m:     66 0f ae /6]                            FUTURE
-; This one was killed before it saw the light of day
-PCOMMIT         void                            [       66 0f ae f8]                            FUTURE,NEVER,NOP
-
-; AMD Zen v1
-CLZERO		void				[	0f 01 fc]				FUTURE,AMD
-CLZERO		reg_ax				[-:	a16 0f 01 fc]				FUTURE,AMD,ND,NOLONG
-CLZERO		reg_eax				[-:	a32 0f 01 fc]				FUTURE,AMD,ND
-CLZERO		reg_rax				[-:	a64 0f 01 fc]				FUTURE,AMD,ND,LONG
 
 ;# Processor trace write
 PTWRITE		rm32				[m:	f3 0f ae /4]				FUTURE
@@ -5354,7 +5381,6 @@ UMONITOR	reg32				[m:	a32 f3 0f ae /6]			FUTURE
 UMONITOR	reg64				[m:	a64 f3 0f ae /6]			FUTURE,LONG
 UMWAIT		reg32				[m:	f2 0f ae /6]				FUTURE
 UMWAIT		reg32,reg_edx,reg_eax		[m--:	f2 0f ae /6]				FUTURE,ND
-WBNOINVD	void				[	f3 0f 09]				FUTURE
 
 ;# Galois field operations (GFNI)
 GF2P8AFFINEINVQB	xmmreg,xmmrm128,imm8			[rmi:	  66 0f3a cf /r ib]			GFNI,SSE,FUTURE
@@ -5504,8 +5530,6 @@ ENQCMDS		reg32,mem512			[rm:	a16 f3 0f38 f8 /r]			ENQCMD,FUTURE,SZ,NOLONG,PRIV,N
 ENQCMDS		reg32,mem512			[rm:	a32 f3 0f38 f8 /r]			ENQCMD,FUTURE,SZ,PRIV
 ENQCMDS		reg64,mem512			[rm:	a64 f3 0f38 f8 /r]			ENQCMD,FUTURE,SZ,PRIV,LONG
 PCONFIG		void				[	np 0f 01 c5]				PCONFIG,FUTURE,PRIV
-SERIALIZE	void				[	np 0f 01 e8]				SERIALIZE,FUTURE
-WBNOINVD	void				[	f3 0f 09]				WBNOINVD,FUTURE,PRIV
 XRESLDTRK	void				[	f2 0f 01 e9]				TSXLDTRK,FUTURE
 XSUSLDTRK	void				[	f2 0f 01 e8]				TSXLDTRK,FUTURE
 
@@ -5811,265 +5835,19 @@ CMPccXADD       mem64,reg64,reg64			[mrv:	vex.128.66.0f38.w1 e0+c /r]	CMPCCXADD,
 
 ;# Flexible Return and Exception Delivery
 
-;# WRMSRNS and MSRLIST instructions
-WRMSRNS		void					[	np 0f 01 c6		]	WRMSRNS,FUTURE,PRIV,LONG
-RDMSRLIST	void					[	f2 0f 01 c6		]	MSRLIST,FUTURE,PRIV,LONG
-WRMSRLIST	void					[	f3 0f 01 c6		]	MSRLIST,FUTURE,PRIV,LONG
-
 ;# History reset
 HRESET		imm,reg_eax				[i-:	f3 0f3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB
 HRESET		imm					[i:	f3 0f3a f0 c0 ib	]	HRESET,FUTURE,PRIV,SB,ND
 
 ;# Intel Advanced Performance Extensions (APX) new or extended instructions
-CCMPscc		spec4,rm8,reg8			[vmr:	    evex.scc.dfv.l0.np.m4.wig 38 /r	]	APX,SM1-2
-CCMPscc		spec4,rm16,reg16		[vmr:	o16 evex.scc.dfv.l0.66.m4.w0  39 /r	]	APX,SM1-2
-CCMPscc		spec4,rm32,reg32		[vmr:	o32 evex.scc.dfv.l0.np.m4.w0  39 /r	]	APX,SM1-2
-CCMPscc		spec4,rm64,reg64		[vmr:	o64 evex.scc.dfv.l0.np.m4.w1  39 /r	]	APX,SM1-2
-
-CCMPscc		spec4,reg8,rm8			[vrm:	    evex.scc.dfv.l0.np.m4.wig 3a /r	]	APX,SM1-2
-CCMPscc		spec4,reg16,rm16		[vrm:	o16 evex.scc.dfv.l0.66.m4.w0  3b /r	]	APX,SM1-2
-CCMPscc		spec4,reg32,rm32		[vrm:	o32 evex.scc.dfv.l0.np.m4.w0  3b /r	]	APX,SM1-2
-CCMPscc		spec4,reg64,rm64		[vrm:	o64 evex.scc.dfv.l0.np.m4.w1  3b /r	]	APX,SM1-2
-
-CCMPscc		spec4,rm8,imm			[vmi:	    evex.scc.dfv.l0.np.m4.wig 80 /7	ib   ]	APX,SM1-2
-CCMPscc		spec4,rm16,imm8			[vmi:	o16 evex.scc.dfv.l0.66.m4.w0  83 /7	ib,s ]	APX
-CCMPscc		spec4,rm16,sbyteword		[vmi:	o16 evex.scc.dfv.l0.66.m4.w0  83 /7	ib,s ]	APX,SM1-2,ND
-CCMPscc		spec4,rm16,imm			[vmi:	o16 evex.scc.dfv.l0.66.m4.w0  81 /7	iw   ]	APX,SM1-2
-CCMPscc		spec4,rm32,imm8			[vmi:	o32 evex.scc.dfv.l0.np.m4.w0  83 /7	ib,s ]	APX
-CCMPscc		spec4,rm32,sbytedword		[vmi:	o32 evex.scc.dfv.l0.np.m4.w0  83 /7	ib,s ]	APX,SM1-2,ND
-CCMPscc		spec4,rm32,imm			[vmi:	o32 evex.scc.dfv.l0.np.m4.w0  81 /7	id   ]	APX,SM1-2
-CCMPscc		spec4,rm64,imm8			[vmi:	o64 evex.scc.dfv.l0.np.m4.w1  83 /7	ib,s ]	APX
-CCMPscc		spec4,rm64,sbytedword		[vmi:	o64 evex.scc.dfv.l0.np.m4.w1  83 /7	ib,s ]	APX,SM1-2,ND
-CCMPscc		spec4,rm64,imm			[vmi:	o64 evex.scc.dfv.l0.np.m4.w1  81 /7	id,s ]	APX,SM1-2
-
-PUSH2		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  ff /6	]	APX
-PUSH		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0        ff /6	]	APX,ND
-PUSH2		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  ff /6	]	APX,ND
-PUSH		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  ff /6	]	APX,ND
-PUSH2P		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX
-PUSHP		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX,ND
-PUSH2P		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX,ND
-PUSHP		reg64:reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  ff /6	]	APX,ND
-POP2		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX
-POP		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX,ND
-POP2		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX,ND
-POP		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w0	  8f /0	]	APX,ND
-POP2P		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX
-POPP		reg64,reg64			[vm:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
-POP2P		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
-POPP		reg64:reg64			[mv:	o64nw evex.nd1.l0.np.m4.w1	  8f /0	]	APX,ND
-
-PUSHP		reg64				[r:	o64nw rex.w rex2 50+r		]	APX
-POPP		reg64				[r:	o64nw rex.w rex2 58+r		]	APX
 
 ADCX		reg32?,reg32,rm32		[vrm:	evex.ndx.l0.66.m4.w0 66 /r	]	APX,ZU
 ADCX		reg64?,reg64,rm64		[vrm:	evex.ndx.l0.66.m4.w1 66 /r	]	APX,ZU
 ADOX		reg32?,reg32,rm32		[vrm:	evex.ndx.l0.f3.m4.w0 66 /r	]	APX,ZU
 ADOX		reg64?,reg64,rm64		[vrm:	evex.ndx.l0.f3.m4.w1 66 /r	]	APX,ZU
 
-SETcc		reg64				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU
-SETcc		reg32				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
-SETccZU		reg64				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
-SETccZU		reg32				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
-SETcc		rm8				[m:	evex.zu.l0.f2.m4.wig   40+c /0	]	APX
-SETccZU		rm8				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
-
-JMP		imm|abs				[i:	a64 np rex2 a1 iq		]	APX
-JMP		imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,ND
-JMPABS		imm				[i:	a64 np rex2 a1 iq		]	APX,ND
-JMPABS		imm64				[i:	a64 np rex2 a1 iq		]	APX,ND
-
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
-HINT_NOP0	rm16				[m:	o16 0f 18 /0]				P6,UNDOC
-HINT_NOP0	rm32				[m:	o32 0f 18 /0]				P6,UNDOC
-HINT_NOP0	rm64				[m:	o64 0f 18 /0]				X86_64,LONG,UNDOC
-HINT_NOP1	rm16				[m:	o16 0f 18 /1]				P6,UNDOC
-HINT_NOP1	rm32				[m:	o32 0f 18 /1]				P6,UNDOC
-HINT_NOP1	rm64				[m:	o64 0f 18 /1]				X86_64,LONG,UNDOC
-HINT_NOP2	rm16				[m:	o16 0f 18 /2]				P6,UNDOC
-HINT_NOP2	rm32				[m:	o32 0f 18 /2]				P6,UNDOC
-HINT_NOP2	rm64				[m:	o64 0f 18 /2]				X86_64,LONG,UNDOC
-HINT_NOP3	rm16				[m:	o16 0f 18 /3]				P6,UNDOC
-HINT_NOP3	rm32				[m:	o32 0f 18 /3]				P6,UNDOC
-HINT_NOP3	rm64				[m:	o64 0f 18 /3]				X86_64,LONG,UNDOC
-HINT_NOP4	rm16				[m:	o16 0f 18 /4]				P6,UNDOC
-HINT_NOP4	rm32				[m:	o32 0f 18 /4]				P6,UNDOC
-HINT_NOP4	rm64				[m:	o64 0f 18 /4]				X86_64,LONG,UNDOC
-HINT_NOP5	rm16				[m:	o16 0f 18 /5]				P6,UNDOC
-HINT_NOP5	rm32				[m:	o32 0f 18 /5]				P6,UNDOC
-HINT_NOP5	rm64				[m:	o64 0f 18 /5]				X86_64,LONG,UNDOC
-HINT_NOP6	rm16				[m:	o16 0f 18 /6]				P6,UNDOC
-HINT_NOP6	rm32				[m:	o32 0f 18 /6]				P6,UNDOC
-HINT_NOP6	rm64				[m:	o64 0f 18 /6]				X86_64,LONG,UNDOC
-HINT_NOP7	rm16				[m:	o16 0f 18 /7]				P6,UNDOC
-HINT_NOP7	rm32				[m:	o32 0f 18 /7]				P6,UNDOC
-HINT_NOP7	rm64				[m:	o64 0f 18 /7]				X86_64,LONG,UNDOC
-HINT_NOP8	rm16				[m:	o16 0f 19 /0]				P6,UNDOC
-HINT_NOP8	rm32				[m:	o32 0f 19 /0]				P6,UNDOC
-HINT_NOP8	rm64				[m:	o64 0f 19 /0]				X86_64,LONG,UNDOC
-HINT_NOP9	rm16				[m:	o16 0f 19 /1]				P6,UNDOC
-HINT_NOP9	rm32				[m:	o32 0f 19 /1]				P6,UNDOC
-HINT_NOP9	rm64				[m:	o64 0f 19 /1]				X86_64,LONG,UNDOC
-HINT_NOP10	rm16				[m:	o16 0f 19 /2]				P6,UNDOC
-HINT_NOP10	rm32				[m:	o32 0f 19 /2]				P6,UNDOC
-HINT_NOP10	rm64				[m:	o64 0f 19 /2]				X86_64,LONG,UNDOC
-HINT_NOP11	rm16				[m:	o16 0f 19 /3]				P6,UNDOC
-HINT_NOP11	rm32				[m:	o32 0f 19 /3]				P6,UNDOC
-HINT_NOP11	rm64				[m:	o64 0f 19 /3]				X86_64,LONG,UNDOC
-HINT_NOP12	rm16				[m:	o16 0f 19 /4]				P6,UNDOC
-HINT_NOP12	rm32				[m:	o32 0f 19 /4]				P6,UNDOC
-HINT_NOP12	rm64				[m:	o64 0f 19 /4]				X86_64,LONG,UNDOC
-HINT_NOP13	rm16				[m:	o16 0f 19 /5]				P6,UNDOC
-HINT_NOP13	rm32				[m:	o32 0f 19 /5]				P6,UNDOC
-HINT_NOP13	rm64				[m:	o64 0f 19 /5]				X86_64,LONG,UNDOC
-HINT_NOP14	rm16				[m:	o16 0f 19 /6]				P6,UNDOC
-HINT_NOP14	rm32				[m:	o32 0f 19 /6]				P6,UNDOC
-HINT_NOP14	rm64				[m:	o64 0f 19 /6]				X86_64,LONG,UNDOC
-HINT_NOP15	rm16				[m:	o16 0f 19 /7]				P6,UNDOC
-HINT_NOP15	rm32				[m:	o32 0f 19 /7]				P6,UNDOC
-HINT_NOP15	rm64				[m:	o64 0f 19 /7]				X86_64,LONG,UNDOC
-HINT_NOP16	rm16				[m:	o16 0f 1a /0]				P6,UNDOC
-HINT_NOP16	rm32				[m:	o32 0f 1a /0]				P6,UNDOC
-HINT_NOP16	rm64				[m:	o64 0f 1a /0]				X86_64,LONG,UNDOC
-HINT_NOP17	rm16				[m:	o16 0f 1a /1]				P6,UNDOC
-HINT_NOP17	rm32				[m:	o32 0f 1a /1]				P6,UNDOC
-HINT_NOP17	rm64				[m:	o64 0f 1a /1]				X86_64,LONG,UNDOC
-HINT_NOP18	rm16				[m:	o16 0f 1a /2]				P6,UNDOC
-HINT_NOP18	rm32				[m:	o32 0f 1a /2]				P6,UNDOC
-HINT_NOP18	rm64				[m:	o64 0f 1a /2]				X86_64,LONG,UNDOC
-HINT_NOP19	rm16				[m:	o16 0f 1a /3]				P6,UNDOC
-HINT_NOP19	rm32				[m:	o32 0f 1a /3]				P6,UNDOC
-HINT_NOP19	rm64				[m:	o64 0f 1a /3]				X86_64,LONG,UNDOC
-HINT_NOP20	rm16				[m:	o16 0f 1a /4]				P6,UNDOC
-HINT_NOP20	rm32				[m:	o32 0f 1a /4]				P6,UNDOC
-HINT_NOP20	rm64				[m:	o64 0f 1a /4]				X86_64,LONG,UNDOC
-HINT_NOP21	rm16				[m:	o16 0f 1a /5]				P6,UNDOC
-HINT_NOP21	rm32				[m:	o32 0f 1a /5]				P6,UNDOC
-HINT_NOP21	rm64				[m:	o64 0f 1a /5]				X86_64,LONG,UNDOC
-HINT_NOP22	rm16				[m:	o16 0f 1a /6]				P6,UNDOC
-HINT_NOP22	rm32				[m:	o32 0f 1a /6]				P6,UNDOC
-HINT_NOP22	rm64				[m:	o64 0f 1a /6]				X86_64,LONG,UNDOC
-HINT_NOP23	rm16				[m:	o16 0f 1a /7]				P6,UNDOC
-HINT_NOP23	rm32				[m:	o32 0f 1a /7]				P6,UNDOC
-HINT_NOP23	rm64				[m:	o64 0f 1a /7]				X86_64,LONG,UNDOC
-HINT_NOP24	rm16				[m:	o16 0f 1b /0]				P6,UNDOC
-HINT_NOP24	rm32				[m:	o32 0f 1b /0]				P6,UNDOC
-HINT_NOP24	rm64				[m:	o64 0f 1b /0]				X86_64,LONG,UNDOC
-HINT_NOP25	rm16				[m:	o16 0f 1b /1]				P6,UNDOC
-HINT_NOP25	rm32				[m:	o32 0f 1b /1]				P6,UNDOC
-HINT_NOP25	rm64				[m:	o64 0f 1b /1]				X86_64,LONG,UNDOC
-HINT_NOP26	rm16				[m:	o16 0f 1b /2]				P6,UNDOC
-HINT_NOP26	rm32				[m:	o32 0f 1b /2]				P6,UNDOC
-HINT_NOP26	rm64				[m:	o64 0f 1b /2]				X86_64,LONG,UNDOC
-HINT_NOP27	rm16				[m:	o16 0f 1b /3]				P6,UNDOC
-HINT_NOP27	rm32				[m:	o32 0f 1b /3]				P6,UNDOC
-HINT_NOP27	rm64				[m:	o64 0f 1b /3]				X86_64,LONG,UNDOC
-HINT_NOP28	rm16				[m:	o16 0f 1b /4]				P6,UNDOC
-HINT_NOP28	rm32				[m:	o32 0f 1b /4]				P6,UNDOC
-HINT_NOP28	rm64				[m:	o64 0f 1b /4]				X86_64,LONG,UNDOC
-HINT_NOP29	rm16				[m:	o16 0f 1b /5]				P6,UNDOC
-HINT_NOP29	rm32				[m:	o32 0f 1b /5]				P6,UNDOC
-HINT_NOP29	rm64				[m:	o64 0f 1b /5]				X86_64,LONG,UNDOC
-HINT_NOP30	rm16				[m:	o16 0f 1b /6]				P6,UNDOC
-HINT_NOP30	rm32				[m:	o32 0f 1b /6]				P6,UNDOC
-HINT_NOP30	rm64				[m:	o64 0f 1b /6]				X86_64,LONG,UNDOC
-HINT_NOP31	rm16				[m:	o16 0f 1b /7]				P6,UNDOC
-HINT_NOP31	rm32				[m:	o32 0f 1b /7]				P6,UNDOC
-HINT_NOP31	rm64				[m:	o64 0f 1b /7]				X86_64,LONG,UNDOC
-HINT_NOP32	rm16				[m:	o16 0f 1c /0]				P6,UNDOC
-HINT_NOP32	rm32				[m:	o32 0f 1c /0]				P6,UNDOC
-HINT_NOP32	rm64				[m:	o64 0f 1c /0]				X86_64,LONG,UNDOC
-HINT_NOP33	rm16				[m:	o16 0f 1c /1]				P6,UNDOC
-HINT_NOP33	rm32				[m:	o32 0f 1c /1]				P6,UNDOC
-HINT_NOP33	rm64				[m:	o64 0f 1c /1]				X86_64,LONG,UNDOC
-HINT_NOP34	rm16				[m:	o16 0f 1c /2]				P6,UNDOC
-HINT_NOP34	rm32				[m:	o32 0f 1c /2]				P6,UNDOC
-HINT_NOP34	rm64				[m:	o64 0f 1c /2]				X86_64,LONG,UNDOC
-HINT_NOP35	rm16				[m:	o16 0f 1c /3]				P6,UNDOC
-HINT_NOP35	rm32				[m:	o32 0f 1c /3]				P6,UNDOC
-HINT_NOP35	rm64				[m:	o64 0f 1c /3]				X86_64,LONG,UNDOC
-HINT_NOP36	rm16				[m:	o16 0f 1c /4]				P6,UNDOC
-HINT_NOP36	rm32				[m:	o32 0f 1c /4]				P6,UNDOC
-HINT_NOP36	rm64				[m:	o64 0f 1c /4]				X86_64,LONG,UNDOC
-HINT_NOP37	rm16				[m:	o16 0f 1c /5]				P6,UNDOC
-HINT_NOP37	rm32				[m:	o32 0f 1c /5]				P6,UNDOC
-HINT_NOP37	rm64				[m:	o64 0f 1c /5]				X86_64,LONG,UNDOC
-HINT_NOP38	rm16				[m:	o16 0f 1c /6]				P6,UNDOC
-HINT_NOP38	rm32				[m:	o32 0f 1c /6]				P6,UNDOC
-HINT_NOP38	rm64				[m:	o64 0f 1c /6]				X86_64,LONG,UNDOC
-HINT_NOP39	rm16				[m:	o16 0f 1c /7]				P6,UNDOC
-HINT_NOP39	rm32				[m:	o32 0f 1c /7]				P6,UNDOC
-HINT_NOP39	rm64				[m:	o64 0f 1c /7]				X86_64,LONG,UNDOC
-HINT_NOP40	rm16				[m:	o16 0f 1d /0]				P6,UNDOC
-HINT_NOP40	rm32				[m:	o32 0f 1d /0]				P6,UNDOC
-HINT_NOP40	rm64				[m:	o64 0f 1d /0]				X86_64,LONG,UNDOC
-HINT_NOP41	rm16				[m:	o16 0f 1d /1]				P6,UNDOC
-HINT_NOP41	rm32				[m:	o32 0f 1d /1]				P6,UNDOC
-HINT_NOP41	rm64				[m:	o64 0f 1d /1]				X86_64,LONG,UNDOC
-HINT_NOP42	rm16				[m:	o16 0f 1d /2]				P6,UNDOC
-HINT_NOP42	rm32				[m:	o32 0f 1d /2]				P6,UNDOC
-HINT_NOP42	rm64				[m:	o64 0f 1d /2]				X86_64,LONG,UNDOC
-HINT_NOP43	rm16				[m:	o16 0f 1d /3]				P6,UNDOC
-HINT_NOP43	rm32				[m:	o32 0f 1d /3]				P6,UNDOC
-HINT_NOP43	rm64				[m:	o64 0f 1d /3]				X86_64,LONG,UNDOC
-HINT_NOP44	rm16				[m:	o16 0f 1d /4]				P6,UNDOC
-HINT_NOP44	rm32				[m:	o32 0f 1d /4]				P6,UNDOC
-HINT_NOP44	rm64				[m:	o64 0f 1d /4]				X86_64,LONG,UNDOC
-HINT_NOP45	rm16				[m:	o16 0f 1d /5]				P6,UNDOC
-HINT_NOP45	rm32				[m:	o32 0f 1d /5]				P6,UNDOC
-HINT_NOP45	rm64				[m:	o64 0f 1d /5]				X86_64,LONG,UNDOC
-HINT_NOP46	rm16				[m:	o16 0f 1d /6]				P6,UNDOC
-HINT_NOP46	rm32				[m:	o32 0f 1d /6]				P6,UNDOC
-HINT_NOP46	rm64				[m:	o64 0f 1d /6]				X86_64,LONG,UNDOC
-HINT_NOP47	rm16				[m:	o16 0f 1d /7]				P6,UNDOC
-HINT_NOP47	rm32				[m:	o32 0f 1d /7]				P6,UNDOC
-HINT_NOP47	rm64				[m:	o64 0f 1d /7]				X86_64,LONG,UNDOC
-HINT_NOP48	rm16				[m:	o16 0f 1e /0]				P6,UNDOC
-HINT_NOP48	rm32				[m:	o32 0f 1e /0]				P6,UNDOC
-HINT_NOP48	rm64				[m:	o64 0f 1e /0]				X86_64,LONG,UNDOC
-HINT_NOP49	rm16				[m:	o16 0f 1e /1]				P6,UNDOC
-HINT_NOP49	rm32				[m:	o32 0f 1e /1]				P6,UNDOC
-HINT_NOP49	rm64				[m:	o64 0f 1e /1]				X86_64,LONG,UNDOC
-HINT_NOP50	rm16				[m:	o16 0f 1e /2]				P6,UNDOC
-HINT_NOP50	rm32				[m:	o32 0f 1e /2]				P6,UNDOC
-HINT_NOP50	rm64				[m:	o64 0f 1e /2]				X86_64,LONG,UNDOC
-HINT_NOP51	rm16				[m:	o16 0f 1e /3]				P6,UNDOC
-HINT_NOP51	rm32				[m:	o32 0f 1e /3]				P6,UNDOC
-HINT_NOP51	rm64				[m:	o64 0f 1e /3]				X86_64,LONG,UNDOC
-HINT_NOP52	rm16				[m:	o16 0f 1e /4]				P6,UNDOC
-HINT_NOP52	rm32				[m:	o32 0f 1e /4]				P6,UNDOC
-HINT_NOP52	rm64				[m:	o64 0f 1e /4]				X86_64,LONG,UNDOC
-HINT_NOP53	rm16				[m:	o16 0f 1e /5]				P6,UNDOC
-HINT_NOP53	rm32				[m:	o32 0f 1e /5]				P6,UNDOC
-HINT_NOP53	rm64				[m:	o64 0f 1e /5]				X86_64,LONG,UNDOC
-HINT_NOP54	rm16				[m:	o16 0f 1e /6]				P6,UNDOC
-HINT_NOP54	rm32				[m:	o32 0f 1e /6]				P6,UNDOC
-HINT_NOP54	rm64				[m:	o64 0f 1e /6]				X86_64,LONG,UNDOC
-HINT_NOP55	rm16				[m:	o16 0f 1e /7]				P6,UNDOC
-HINT_NOP55	rm32				[m:	o32 0f 1e /7]				P6,UNDOC
-HINT_NOP55	rm64				[m:	o64 0f 1e /7]				X86_64,LONG,UNDOC
-HINT_NOP56	rm16				[m:	o16 0f 1f /0]				P6,UNDOC
-HINT_NOP56	rm32				[m:	o32 0f 1f /0]				P6,UNDOC
-HINT_NOP56	rm64				[m:	o64 0f 1f /0]				X86_64,LONG,UNDOC
-HINT_NOP57	rm16				[m:	o16 0f 1f /1]				P6,UNDOC
-HINT_NOP57	rm32				[m:	o32 0f 1f /1]				P6,UNDOC
-HINT_NOP57	rm64				[m:	o64 0f 1f /1]				X86_64,LONG,UNDOC
-HINT_NOP58	rm16				[m:	o16 0f 1f /2]				P6,UNDOC
-HINT_NOP58	rm32				[m:	o32 0f 1f /2]				P6,UNDOC
-HINT_NOP58	rm64				[m:	o64 0f 1f /2]				X86_64,LONG,UNDOC
-HINT_NOP59	rm16				[m:	o16 0f 1f /3]				P6,UNDOC
-HINT_NOP59	rm32				[m:	o32 0f 1f /3]				P6,UNDOC
-HINT_NOP59	rm64				[m:	o64 0f 1f /3]				X86_64,LONG,UNDOC
-HINT_NOP60	rm16				[m:	o16 0f 1f /4]				P6,UNDOC
-HINT_NOP60	rm32				[m:	o32 0f 1f /4]				P6,UNDOC
-HINT_NOP60	rm64				[m:	o64 0f 1f /4]				X86_64,LONG,UNDOC
-HINT_NOP61	rm16				[m:	o16 0f 1f /5]				P6,UNDOC
-HINT_NOP61	rm32				[m:	o32 0f 1f /5]				P6,UNDOC
-HINT_NOP61	rm64				[m:	o64 0f 1f /5]				X86_64,LONG,UNDOC
-HINT_NOP62	rm16				[m:	o16 0f 1f /6]				P6,UNDOC
-HINT_NOP62	rm32				[m:	o32 0f 1f /6]				P6,UNDOC
-HINT_NOP62	rm64				[m:	o64 0f 1f /6]				X86_64,LONG,UNDOC
-HINT_NOP63	rm16				[m:	o16 0f 1f /7]				P6,UNDOC
-HINT_NOP63	rm32				[m:	o32 0f 1f /7]				P6,UNDOC
-HINT_NOP63	rm64				[m:	o64 0f 1f /7]				X86_64,LONG,UNDOC
+$wdq  NOP       imm,reg#,rm#			[irm:	o#  0f ibn /r]				P6,UNDOC,SM1-2
+$wdq  HINT_NOP  imm,reg#,rm#			[irm:	o#  0f ibn /r]				P6,UNDOC,SM1-2,ND
+$hint_nops

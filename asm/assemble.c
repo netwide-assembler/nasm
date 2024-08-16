@@ -1590,6 +1590,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case4(0300):
+            length++;
             break;
 
         case 0310:
@@ -2611,7 +2612,18 @@ static void gencode(struct out_data *data, insn *ins)
         }
 
         case4(0300):
+        {
+            emit_rex(data, ins);
+            if (absolute_op(opx)) {
+                if (!is_hint_nop(opx->offset)) {
+                    nasm_warn(ERR_PASS2, "not a valid hint-NOP opcode (0D, 18-1F)");
+                }
+                out_rawbyte(data, opx->offset);
+            } else {
+                out_imm(data, opx, 1, OUT_UNSIGNED);
+            }
             break;
+        }
 
         case 0310:
         case 0311:
