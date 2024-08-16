@@ -22,15 +22,15 @@ our($macro, $outfile, $infile, $line);	# Public for error messages
 $macros{'arith'} = {
     'def' => *def_eightfold,
     'txt' => <<'EOL'
-$$quad $op	rm#,reg#			[mr:	$hle o# $00# /r				]	8086,SM,$lock
-$$quad $op	reg#,rm#			[rm:	o# $02# /r				]	8086,SM
-$$trio $op	rm#,sbyte#			[mi:	$hle o# 83  /$n ib,s			]	8086,SM,$lock
-$$quad $op	ax#,imm#			[-i:	o# $04# i#				]	8086,SM
-$$quad $op	rm#,imm#			[mi:	$hle o# 80# /$n i#			]	8086,SM,$lock
-$$quad $op	reg#?,reg#,rm#			[vrm:	evex.ndx.nf.l0.m4.o#     $02# /r	]	$apx,SM
-$$quad $op	reg#?,rm#,reg#			[vmr:	evex.ndx.nf.l0.m4.o#     $00# /r	]	$apx,SM
-$$trio $op	reg#?,rm#,sbyte#		[vmi:	evex.ndx.nf.l0.m4.o#     83 /$n ib,s	]	$apx,SM
-$$quad $op	reg#?,rm#,imm#			[vmi:	evex.ndx.nf.l0.m4.o#     80# /$n ib	]	$apx,SM
+$$bwdq $op	rm#,reg#			[mr:	$hle o# $00# /r				]	8086,SM,$lock
+$$bwdq $op	reg#,rm#			[rm:	o# $02# /r				]	8086,SM
+$$wdq  $op	rm#,sbyte#			[mi:	$hle o# 83  /$n ib,s			]	8086,SM,$lock
+$$bwdq $op	ax#,imm#			[-i:	o# $04# i#				]	8086,SM
+$$bwdq $op	rm#,imm#			[mi:	$hle o# 80# /$n i#			]	8086,SM,$lock
+$$bwdq $op	reg#?,reg#,rm#			[vrm:	evex.ndx.nf.l0.m4.o#     $02# /r	]	$apx,SM
+$$bwdq $op	reg#?,rm#,reg#			[vmr:	evex.ndx.nf.l0.m4.o#     $00# /r	]	$apx,SM
+$$wdq  $op	reg#?,rm#,sbyte#		[vmi:	evex.ndx.nf.l0.m4.o#     83 /$n ib,s	]	$apx,SM
+$$bwdq $op	reg#?,rm#,imm#			[vmi:	evex.ndx.nf.l0.m4.o#     80# /$n ib	]	$apx,SM
 EOL
 };
 
@@ -38,36 +38,42 @@ EOL
 $macros{'shift'} = {
     'def' => *def_eightfold,
 	'txt' => <<'EOL'
-$$quad $op	rm#,unity			[m-:	o# d0# /$n]				]	8086
-$$quad $op	rm#,reg_cl			[m-:	o# d2# /$n]				]	8086
-$$quad $op	rm#,imm8			[mi:	o# c0# /$n ib,u]			]	186
-$$pair ${op}X	reg#?,rm#,reg#			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL
-$$pair ${op}X	reg#?,rm#,reg8			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL,ND
-$$pair $op	reg#?,rm#,reg#			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL
-$$pair $op	reg#?,rm#,reg8			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL,ND
-$$quad $op	reg#?,rm#,unity			[vm-:	evex.ndx.nf.l0.m4.o#  d0# /$n		]	$apx,SM0-1
-$$quad $op	reg#?,rm#,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o#  d2# /$n		]	$apx,SM0-1
-$$quad $op	reg#?,rm#,imm8			[vmi:	evex.ndx.nf.l0.m4.o#  c0# /$n ib,u	]	$apx,SM0-1
+$$bwdq $op	rm#,unity			[m-:	o# d0# /$n]				]	8086
+$$bwdq $op	rm#,reg_cl			[m-:	o# d2# /$n]				]	8086
+$$bwdq $op	rm#,imm8			[mi:	o# c0# /$n ib,u]			]	186
+$$dq   ${op}X	reg#?,rm#,reg#			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL
+$$dq   ${op}X	reg#?,rm#,reg8			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL,ND
+$$dq   $op	reg#?,rm#,reg#			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL
+$$dq   $op	reg#?,rm#,reg8			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL,ND
+$$bwdq $op	reg#?,rm#,unity			[vm-:	evex.ndx.nf.l0.m4.o#  d0# /$n		]	$apx,SM0-1
+$$bwdq $op	reg#?,rm#,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o#  d2# /$n		]	$apx,SM0-1
+$$bwdq $op	reg#?,rm#,imm8			[vmi:	evex.ndx.nf.l0.m4.o#  c0# /$n ib,u	]	$apx,SM0-1
 EOL
 };
 
 #
-# Common pattern for 32/64, 16/32/64, or 8/16/32/64 instructions
+# Common pattern for multiple 32/64, 16/32/64, or 8/16/32/64 instructions
 #
-$macros{'pair'} = { 'func' => *func_trio_quad, 'first' => 32 };
-$macros{'trio'} = { 'func' => *func_trio_quad, 'first' => 16 };
-$macros{'quad'} = { 'func' => *func_trio_quad, 'first' =>  8 };
+my @sizename = ('b', 'w', 'd', 'q');
 
-sub func_trio_quad($$$) {
+for (my $i = 1; $i <= 15; $i++) {
+    my $n;
+    for (my $j = 0; $j < scalar @sizename; $j++) {
+	$n .= $sizename[$j] if ($i & (1 << $j));
+    }
+    $macros{$n} = { 'func' => *func_multisize, 'mask' => $i };
+}
+
+sub func_multisize($$$) {
     my($mac, $args, $rawargs) = @_;
+    my @sbyte = ('imm8', 'sbyteword16', 'sbytedword32', 'sbytedword64');
 
     my @ol;
+    my $mask = $mac->{'mask'};
 
-    my %sizename = ( 8 => 'B', 16 => 'W', 32 => 'D', 64 => 'Q' );
-    my %sbyte = ( 8 => 'imm8', 16 => 'sbyteword16',
-		  32 => 'sbytedword32', 64 => 'sbytedword64' );
-
-    for (my $i = $mac->{'first'}; $i <= 64; $i <<= 1) {
+    for (my $i = 0; $i < scalar(@sizename); $i++) {
+	next unless ($mask & (1 << $i));
+	my $s = 8 << $i;
 	my $o;
 	my $ins = join("\t", @$rawargs);
 	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}|\bsbyte|\bimm|\bi|\b(?:reg_)?[abcd]x|\bw)?\#|\%)(.*)$/) {
@@ -75,34 +81,38 @@ sub func_trio_quad($$$) {
 	    my $mw = $2;
 	    $ins = $3;
 	    if ($mw eq '%') {
-		$o .= $sizename{$i};
+		$o .= uc($sizename[$i]);
 	    } elsif ($mw =~ /^([0-9a-f]{2})\#$/) {
-		$o .= sprintf('%02x', hex($1) | ($i >= 16));
+		$o .= sprintf('%02x', hex($1) | ($s >= 16));
 	    } elsif ($mw eq 'sbyte#') {
-		$o .= $sbyte{$i};
+		$o .= $sbyte[$i];
 	    } elsif ($mw eq 'imm#') {
-		$o .= ($i >= 64) ? "sdword$i" : "imm$i";
+		$o .= ($i >= 3) ? "sdword$s" : "imm$s";
 	    } elsif ($mw eq 'i#') {
-		$o .= ($i >= 64) ? 'id,s' : 'i'.lc($sizename{$i});
+		$o .= ($i >= 3) ? 'id,s' : 'i'.$sizename[$i];
 	    } elsif ($mw =~ /^(?:reg_)?([abcd])x\#$/) {
-		if ($i == 8) {
+		if ($i == 0) {
 		    $o .= "reg_${1}l";
-		} elsif ($i == 16) {
+		} elsif ($i == 1) {
 		    $o .= "reg_${1}x";
-		} elsif ($i == 32) {
+		} elsif ($i == 2) {
 		    $o .= "reg_e${1}x";
 		} else {
 		    $o .= "reg_r${1}x";
 		}
 	    } elsif ($mw eq 'w#') {
-		$o .= ($i >= 64) ? 'w1' : 'w0';
+		$o .= ($i >= 3) ? 'w1' : 'w0';
 	    } else {
-		$o .= $i;
+		$o .= $s;
 	    }
 	}
 	$o .= $ins;
 	$o =~ s/\bNOLONG${i}\b/NOLONG/;
 	$o =~ s/\bNOLONG[0-9]+\b//;
+	if ($o =~ /\[[^\]]*\bnw\b[^\]]*\bo32\b[^\]]*\]/) {
+	    # nw o32 -> NOLONG
+	    $o .= ',NOLONG';
+	}
 	if ($i >= 64) {
 	    next if ($o =~ /\bNOLONG\b/);
 	    $o .= ',X86_64,LONG';
@@ -326,6 +336,21 @@ sub adjust_instruction(@) {
 
     @i = adjust_instruction_flags(@i);
 
+    return undef unless (@i);
+
+    if ($i[2] =~ /\b(o64(nw)?\b|rex2?|a64\b)/) {
+	add_flag($i[3], 'LONG');
+    }
+    if (has_flag($i[3], 'NOLONG') && has_flag($i[3], 'LONG')) {
+	# This is obviously not very useful...
+	return undef;
+    }
+
+    if ($i[0] =~ /\bKILL\b/ || $i[1] =~ /\bKILL\b/ ||
+	$i[2] =~ /\bKILL\b/ || has_flag($i[3], 'KILL')) {
+	return undef;
+    }
+
     return @i;
 }
 
@@ -350,11 +375,7 @@ sub process_insn($$) {
     my %flags = split_flags($f[7]);
     set_implied_flags(\%flags, $nopr);
 
-    adjust_instruction($f[1], $f[3], $f[5], \%flags);
-
-    # The symbol KILL can be used in macros to eliminate a pattern entirely
-    next if ($f[1] =~ /\bKILL\b/ || $f[3] =~ /\bKILL\b/ ||
-	     $f[5] =~ /\bKILL\b/ || $flags{'KILL'});
+    next unless (adjust_instruction($f[1], $f[3], $f[5], \%flags));
 
     $f[7] = merge_flags(\%flags, 1);
     print $out @f, "\n";

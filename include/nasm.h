@@ -547,6 +547,10 @@ enum {
  * 0x40 bit. REX_[BXR]1 must match the locations of these bits
  * within the REX2 prefix, shifted into the second byte (<< 12).
  * Finally, REX_[BXR]V are should match BXR << 16.
+ *
+ * REX_W64 is a separate bit to indicate that REX.W should be set
+ * if the operand size is 64. It can be overridden by the "nw" (0327)
+ * byte code.
  */
 #define REX_MASK    0x4f    /* Actual REX prefix bits */
 #define REX_B       0x01    /* ModRM r/m extension */
@@ -563,6 +567,7 @@ enum {
 #define REX_B1      0x1000  /* REX2/EVEX B second bit */
 #define REX_X1      0x2000  /* REX2/EVEX X second bit */
 #define REX_R1      0x4000  /* REX2/EVEX R second bit */
+#define REX_NW	    0x8000  /* REX.W not required for 64-bit operand mode */
 
 #define REX_BV      0x10000 /* B is not a GPR or CREG */
 #define REX_XV      0x20000 /* X is not a GPR or CREG */

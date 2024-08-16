@@ -1644,6 +1644,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case 0320:
+        is_o16:
         {
             /*! prefix-opsize [on] invalid operand size prefix
              *!   warns that an operand prefix (\c{o16}, \c{o32}, \c{o64},
@@ -1665,10 +1666,15 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
         }
 
         case 0321:
+        is_o32:
         {
             enum prefixes pfx = ins->prefixes[PPS_OSIZE];
             ins->op_size = 32;
-            if (bits == 16 && pfx == P_OSP) {
+            if (ins->rex & REX_NW) {
+                nasm_nonfatalf(ERR_PASS2,
+                          "instruction not valid with 32-bit operand size");
+                return -1;
+            } else if (bits == 16 && pfx == P_OSP) {
                 /* Allow osp prefix as is */
             } else if (pfx != P_none && pfx != P_O32) {
                 nasm_warn(WARN_PREFIX_OPSIZE|ERR_PASS2,
@@ -1684,16 +1690,19 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case 0327:
-            if (bits == 64)
-                goto do_o64;
+            if (bits == 64) {
+                ins->rex |= REX_NW;
+                if (ins->op_size == 32)
+                    ins->op_size = 64;
+            }
             break;
 
-        case 0324:
-            ins->rex |= REX_W;
-            goto do_o64;
-
         case 0323:
-        do_o64:
+            ins->rex |= REX_NW;
+            /* fall through */
+
+        case 0324:
+        is_o64:
         {
             enum prefixes pfx = ins->prefixes[PPS_OSIZE];
             ins->op_size = 64;
@@ -1717,25 +1726,28 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case 0330:
-            /* The actual prefixes are generated elsewhere */
             switch (ins->prefixes[PPS_OSIZE]) {
-            case P_OSP:
-                ins->op_size = bits == 16 ? 32 : 16;
-                break;
-            case P_O16:
-                ins->op_size = 16;
-                break;
-            case P_O32:
-                ins->op_size = 32;
-                break;
-            case P_O64:
-                /* This will error out elsewhere for non-64-bit mode */
-                if (bits == 64) {
-                    ins->op_size = 64;
-                    ins->rex |= REX_W;
+            case P_none:
+                switch (ins->op_size) {
+                case 16: goto is_o16;
+                case 32: goto is_o32;
+                case 64: goto is_o64;
+                default: panic(); break;
                 }
                 break;
+            case P_OSP:
+                if (bits == 16)
+                    goto is_o32;
+                else
+                    goto is_o16;
+            case P_O16:
+                goto is_o16;
+            case P_O32:
+                goto is_o32;
+            case P_O64:
+                goto is_o64;
             default:
+                panic();
                 break;
             }
             break;
@@ -1973,6 +1985,9 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
         ins->rex &= ~REX_P;        /* Don't force REX prefix due to high reg */
     }
 
+    if (ins->op_size == 64 && !(ins->rex & REX_NW))
+        ins->rex |= REX_W;
+
     switch (ins->prefixes[PPS_REX]) {
     case P_EVEX:
         if (!(ins->rex & REX_EV))
@@ -2127,6 +2142,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
         (itemp_has(temp, IF_BND) && !has_prefix(ins, PPS_REP, P_NOBND)))
             ins->prefixes[PPS_REP] = P_BND;
 
+
     /*
      * Add length of legacy prefixes
      */
@@ -2242,7 +2258,6 @@ static int prefix_byte(enum prefixes pfx, const int bits)
         return (bits == 16) ? 0x66 : PFE_NULL;
 
     case P_O64:
-        /* Handled elsewhere via REX.W */
         return (bits == 64) ? PFE_NULL : PFE_ERR;
 
     case P_OSP:

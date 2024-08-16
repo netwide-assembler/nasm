@@ -110,18 +110,25 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \315             norexx                      (disassembler only) invalid with REX.X
 \316             norexr                      (disassembler only) invalid with REX.R
 \317             norexw                      (disassembler only) invalid with REX.W
+-		 o8			     generates no byte code; for orthogonality.
 \320             o16*                        indicates fixed 16-bit operand size, i.e. optional 0x66.
 \321             o32*                        indicates fixed 32-bit operand size, i.e. optional 0x66.
 \322             odf                         indicates that this instruction is only valid when the
                                              operand size is the default (instruction to disassembler,
                                              generates no code in the assembler)
-\323             o64nw*                      indicates fixed 64-bit operand size, REX.W not required.
+\323             o64nw*                      indicates fixed 64-bit operand size (equivalent to nw o64)
 \324             o64*                        indicates 64-bit operand size requiring REX.W.
 \325             nohi                        instruction which always uses spl/bpl/sil/dil
 \326             nof3                        (disassembler only) not valid with 0xF3 REP prefix.
-\327		 nw			     o64nw if in 64-bit mode, otherwise ignore. Can be prefixed
-					     with o16 or o32; this code overrides those for 64-bit mode.
-\330		 osz			     generate 0x66 or REX.W if operand size is not the default (16/32/32).
+\327		 nw			     indicates that the operand size defaults to 64 in 64-bit mode;
+					     REX.W is not required. As a side effect, 32-bit operand size is
+					     not available. If followed by an oxx code, this has the
+					     following effects:
+					     o16 - 66 prefix generated in 32- or 64-bit mode.
+					     o32 - 66 prefix generated in 16-bit mode; treated as o64 in 64-bit mode.
+					     o64 - only permitted in 64-bit mode, does not set REX.W unless combined
+					     with code rex.w (\347).
+\330		 osz			     treated as o16 or o32 depending on the current mode.
 \331             norep                       not valid with 0xF2 or 0xF3 REP prefixes.
 \332             f2i                         REP prefix (0xF2 byte) used as opcode extension.
 \333             f3i                         REP prefix (0xF3 byte) used as opcode extension.
@@ -139,6 +146,8 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 					     insns.dat supports the syntax rex2? for an optional REX2 prefix.
 \355..\357	 m[1-3] 0f 0f38 0f3a	     Set the legacy map number. Unless a REX2, VEX, or EVEX prefix
 					     is also generated, these are emitted as legacy prefix bytes.
+-		 m0			     Generates no byte code, but can be used to indicate that
+					     following bytes are literal and not part of a prefix.
 \360             np                          no SSE prefix (== \364\331)
 \361                                         66 SSE prefix (== \366\331)
 \364             !osp                        operand-size prefix (0x66) not permitted
