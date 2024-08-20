@@ -168,7 +168,7 @@ size_t strlcpy(char *, const char *, size_t);
 #endif
 
 #if !defined(HAVE_STRCHRNUL) || !HAVE_DECL_STRCHRNUL
-char *strrchrnul(const char *, int);
+char * pure_func strrchrnul(const char *, int);
 #endif
 
 #ifndef __cplusplus		/* C++ has false, true, bool as keywords */

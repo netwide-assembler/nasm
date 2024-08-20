@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,7 +31,7 @@
  *
  * ----------------------------------------------------------------------- */
 
-/* 
+/*
  * floats.h   header file for the floating-point constant module of
  *	      the Netwide Assembler
  */
@@ -61,7 +61,7 @@ struct ieee_format {
 extern const struct ieee_format fp_formats[FLOAT_ERR];
 
 int float_const(const char *str, int s, uint8_t *result, enum floatize ffmt);
-enum floatize float_deffmt(int bytes);
+enum floatize const_func float_deffmt(int bytes);
 int float_option(const char *option);
 
 #endif /* NASM_FLOATS_H */

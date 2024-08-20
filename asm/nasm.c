@@ -1776,7 +1776,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 /**
  * get warning index; 0 if this is non-suppressible.
  */
-static size_t warn_index(errflags severity)
+static size_t pure_func warn_index(errflags severity)
 {
     size_t index;
 
@@ -1853,7 +1853,7 @@ static bool is_suppressed(errflags severity)
  * @param severity the severity of the warning or error
  * @return true if we should error out
  */
-static errflags true_error_type(errflags severity)
+static errflags pure_func true_error_type(errflags severity)
 {
     const uint8_t warn_is_err = WARN_ST_ENABLED|WARN_ST_ERROR;
     int type;

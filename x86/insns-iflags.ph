@@ -195,7 +195,7 @@ sub set_implied_flags($;$) {
 sub size_flag($) {
     my %sflags = ( 'SB' => 8, 'SW' => 16, 'SD' => 32, 'SQ' => 64,
 		   'ST' => 80, 'SO' => 128, 'SY' => 256, 'SZ' => 512,
-		   'SX' => 0, 'SIZE' => 0, 'ANYSIZE' => 0 );
+		   'SX' => 0, 'OSIZE' => 0, 'ASIZE' => 0, 'ANYSIZE' => 0 );
     my($flags) = @_;
 
     foreach my $fl (keys(%sflags)) {
@@ -260,14 +260,14 @@ sub split_flags($) {
 
 # Merge a flags field and strip flags with leading !
 sub merge_flags($;$) {
-    my($flags, $merge) = @_;
+    my($flags, $human) = @_;
 
     clean_flags(\%flags);
 
     my @flagslist = sort { $flag_byname{$a} <=> $flag_byname{$b} }
 	grep { !/^(\s*|\!.*)$/ } keys(%$flags);
 
-    if ($merge) {
+    if ($human) {
 	# For possibe human consumption. Merge subsequent SM and AR
 	# flags back into ranges.
 	my @ofl = @flagslist;
@@ -309,7 +309,7 @@ sub merge_flags($;$) {
 	}
     }
 
-    return scalar(@flagslist) ? join(',', @flagslist) : '0';
+    return scalar(@flagslist) ? join(',', @flagslist) : $human ? 'ignore' : '0';
 }
 
 # Compute the combinations of instruction flags actually used in templates

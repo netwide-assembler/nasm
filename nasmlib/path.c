@@ -90,7 +90,7 @@
  * This is an inline, because most compilers can greatly simplify this
  * for a fixed string, like we have here.
  */
-static inline bool ismatch(const char *charset, char ch)
+static inline bool pure_func ismatch(const char *charset, char ch)
 {
     const char *p;
 
@@ -102,7 +102,7 @@ static inline bool ismatch(const char *charset, char ch)
     return false;
 }
 
-static const char *first_filename_char(const char *path)
+static const char * pure_func first_filename_char(const char *path)
 {
 #ifdef separators
     const char *p = path + strlen(path);

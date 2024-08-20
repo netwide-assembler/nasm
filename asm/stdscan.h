@@ -43,7 +43,7 @@ struct stdscan_state;
 
 void stdscan_set(const struct stdscan_state *);
 const struct stdscan_state *stdscan_get(void);
-char *stdscan_tell(void);
+char * pure_func stdscan_tell(void);
 void stdscan_reset(char *buffer);
 int stdscan(void *pvt, struct tokenval *tv);
 void stdscan_pushback(const struct tokenval *tv);

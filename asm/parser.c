@@ -1230,27 +1230,39 @@ restart_parse:
                 nasm_nonfatal("invalid use of FAR operand specifier");
                 recover = true;
         } else {                /* it's not a memory reference */
-            if (is_just_unknown(value)) {       /* it's immediate but unknown */
-                op->type      |= IMM_NORMAL;
-                op->opflags   |= OPFLAG_UNKNOWN;
-                op->offset    = 0;        /* don't care */
-                op->segment   = NO_SEG;   /* don't care again */
-                op->wrt       = NO_SEG;   /* still don't care */
+            const enum expr_classes eclass = expr_class(value);
 
-                set_imm_flags(op, result->opt);
-            } else if (is_reloc(value)) {       /* it's immediate */
-                uint64_t n = reloc_value(value);
-
-                op->type      |= IMM_NORMAL;
-                op->offset    = n;
+            if (!(eclass & ~(EC_RELOC | EC_UNKNOWN))) {
+                /* It is an immediate */
+                op->offset    = reloc_value(value);
                 op->segment   = reloc_seg(value);
                 op->wrt       = reloc_wrt(value);
-                if (is_self_relative(value))
+                if (eclass & EC_SELFREL)
                     op->opflags |= OPFLAG_RELATIVE;
-                if (is_simple(value))
+                if (!(eclass & ~EC_SIMPLE))
                     op->opflags |= OPFLAG_SIMPLE;
+                if (eclass & EC_UNKNOWN)
+                    op->opflags |= OPFLAG_UNKNOWN;
 
+                op->type |= IMM_NORMAL;
                 set_imm_flags(op, result->opt);
+
+                /*
+                 * Special hack: if the previous operand was a colon
+                 * immediate operand with an explicit size, and this
+                 * one does not have an explicit size, move the size
+                 * specifier to this operand. This handles the case:
+                 * "jmp dword foo:bar" (really being "jmp foo:dword bar".)
+                 */
+                if (opnum > 0 &&
+                    unlikely(is_class(op[-1].type, IMM_NORMAL|COLON))) {
+                    opflags_t nsize = op->type    & SIZE_MASK;
+                    opflags_t osize = op[-1].type & SIZE_MASK;
+                    if (osize && !nsize) {
+                        op->type    ^= osize;
+                        op[-1].type ^= osize;
+                    }
+                }
             } else if (value->type == EXPR_RDSAE) {
                 /*
                  * it's not an operand but a rounding or SAE decorator.
@@ -1316,7 +1328,7 @@ restart_parse:
                      * we want to produce a warning iff the specified size
                      * is different from the register size
                      */
-                    rs = op->type & SIZE_MASK;
+                    rs = op->type & (SIZE_MASK & ~NEAR);
                 } else {
                     rs = 0;
                 }
@@ -1346,7 +1358,7 @@ restart_parse:
                 op->basereg   = value->type;
 
                 if (rs) {
-                    opflags_t opsize = nasm_reg_flags[value->type] & SIZE_MASK;
+                    opflags_t opsize = nasm_reg_flags[value->type] & (SIZE_MASK & ~NEAR);
                     if (!opsize) {
                         op->type |= rs; /* For non-size-specific registers, permit size override */
                     } else if (opsize != rs) {

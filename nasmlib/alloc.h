@@ -38,7 +38,7 @@
 
 fatal_func nasm_alloc_failed(void);
 
-static inline void *validate_ptr(void *p)
+static inline void * pure_func validate_ptr(void *p)
 {
     if (unlikely(!p))
         nasm_alloc_failed();

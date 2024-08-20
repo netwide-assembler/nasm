@@ -35,7 +35,7 @@
 
 #ifndef HAVE_STRRCHRNUL
 
-char *strrchrnul(const char *s, int c)
+char * pure_func strrchrnul(const char *s, int c)
 {
     char *p;
 

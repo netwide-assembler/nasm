@@ -364,14 +364,14 @@ void fwriteaddr(uint64_t data, int size, FILE * fp);
  *
  * bsi() is case sensitive, bsii() is case insensitive.
  */
-int bsi(const char *string, const char **array, int size);
-int bsii(const char *string, const char **array, int size);
+int pure_func bsi(const char *string, const char **array, int size);
+int pure_func bsii(const char *string, const char **array, int size);
 
 /*
  * Convenient string processing helper routines
  */
-char *nasm_skip_spaces(const char *p);
-char *nasm_skip_word(const char *p);
+char * pure_func nasm_skip_spaces(const char *p);
+char * pure_func nasm_skip_word(const char *p);
 char *nasm_zap_spaces_fwd(char *p);
 char *nasm_zap_spaces_rev(char *p);
 char *nasm_trim_spaces(char *p);
@@ -395,8 +395,8 @@ char * safe_alloc nasm_catfile(const char *dir, const char *path);
 /*
  * Various tokens to readable strings, with limit checking
  */
-const char * pure_func register_name(int);
-const char * pure_func prefix_name(int);
+const char * const_func register_name(int);
+const char * const_func prefix_name(int);
 bool const_func is_hint_nop(uint64_t);
 
 /*

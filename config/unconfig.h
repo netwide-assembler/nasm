@@ -107,6 +107,22 @@
 # endif
 #endif
 
+#ifndef used_func
+# ifdef HAVE_FUNC_ATTRIBUTE_USED
+#  define used_func ATTRIBUTE(used)
+# else
+#  define used_func
+# endif
+#endif
+
+#ifndef used_func_ptr
+# ifdef HAVE_FUNC_PTR_ATTRIBUTE_USED
+#  define used_func_ptr ATTRIBUTE(used)
+# else
+#  define used_func_ptr
+# endif
+#endif
+
 #ifndef unused_func
 # ifdef HAVE_FUNC_ATTRIBUTE_UNUSED
 #  define unused_func ATTRIBUTE(unused)

@@ -133,7 +133,7 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \331             norep                       not valid with 0xF2 or 0xF3 REP prefixes.
 \332             f2i                         REP prefix (0xF2 byte) used as opcode extension.
 \333             f3i                         REP prefix (0xF3 byte) used as opcode extension.
-\334             rex.l                       LOCK prefix used as REX.
+\334             rex.l                       LOCK prefix used as REX.R in 16/32-bit mode.
 \335             repe                        disassemble a rep (0xF3 byte) prefix as repe not rep.
 \340             resb                        reserve <operand 0> bytes of uninitialized storage.
                                              Operand 0 had better be a segmentless constant.

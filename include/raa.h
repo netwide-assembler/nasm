@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -41,8 +41,8 @@ typedef uint64_t raaindex;
 
 #define raa_init() NULL
 void raa_free(struct RAA *);
-int64_t raa_read(struct RAA *, raaindex);
-void *raa_read_ptr(struct RAA *, raaindex);
+int64_t pure_func raa_read(struct RAA *, raaindex);
+void * pure_func raa_read_ptr(struct RAA *, raaindex);
 struct RAA * never_null raa_write(struct RAA *r, raaindex posn, int64_t value);
 struct RAA * never_null raa_write_ptr(struct RAA *r, raaindex posn, void *value);
 

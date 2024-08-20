@@ -80,45 +80,64 @@ bool is_really_simple(const expr *vect)
 }
 
 /*
+ * Classify an expression based on its components
+ */
+enum expr_classes expr_class(const expr *vect)
+{
+    enum expr_classes class = EC_ZERO;
+
+    for (; vect->type; vect++) {
+        if (!vect->value) {
+            /* Value-0 term */
+        } else if (vect->type < EXPR_UNKNOWN) {
+            if ((class & EC_REGISTER) || vect->value != 1)
+                class |= EC_REGEXPR;
+            else
+                class |= EC_REGISTER;
+        } else if (vect->type == EXPR_UNKNOWN) {
+            class |= EC_UNKNOWN;
+        } else if (vect->type == EXPR_SIMPLE) {
+            /* Pure number term */
+            class |= EC_CONST;
+        } else if (vect->type == EXPR_WRT) {
+            class |= EC_WRT;
+        } else if (vect->type < EXPR_SEGBASE) {
+            class |= EC_COMPLEX;
+        } else if (vect->type >= EXPR_SEGBASE + SEG_ABS) {
+            /* It is an absolute segment */
+            if (class & (EC_SEG|EC_SEGABS))
+                class |= EC_COMPLEX;
+            class |= EC_SEGABS;
+        } else {
+            /* It is a segment */
+            if (vect->value == 1) {
+                if (class & (EC_SEG|EC_SEGABS))
+                    class |= EC_COMPLEX;
+                class |= EC_SEG;
+            } else if (vect->value == -1) {
+                /* can only subtract current segment, and only once */
+                if (vect->type != location.segment + EXPR_SEGBASE ||
+                    (class & EC_SELFREL))
+                    class |= EC_COMPLEX;
+                class |= EC_SELFREL;
+            } else {
+                /* Non-simple segment arithmetic */
+                class |= EC_COMPLEX;
+            }
+        }
+    }
+
+    return class;
+}
+
+/*
  * Return true if the argument is relocatable (i.e. a simple
  * scalar, plus at most one segment-base, possibly a subtraction
  * of the current segment base, plus possibly a WRT).
  */
 bool is_reloc(const expr *vect)
 {
-    bool has_rel = false;       /* Has a self-segment-subtract */
-    bool has_seg = false;       /* Has a segment base */
-
-    for (; vect->type; vect++) {
-        if (!vect->value) {
-            /* skip value-0 terms */
-            continue;
-        } else if (vect->type < EXPR_SIMPLE) {
-            /* false if a register is present */
-            return false;
-        } else if (vect->type == EXPR_SIMPLE) {
-            /* skip over a pure number term... */
-            continue;
-        } else if (vect->type == EXPR_WRT) {
-            /* skip over a WRT term... */
-            continue;
-        } else if (vect->type < EXPR_SEGBASE) {
-            /* other special type -> problem */
-            return false;
-        } else if (vect->value == 1) {
-            if (has_seg)
-                return false;   /* only one segbase allowed */
-            has_seg = true;
-        } else if (vect->value == -1) {
-            if (vect->type != location.segment + EXPR_SEGBASE)
-                return false;   /* can only subtract current segment */
-            if (has_rel)
-                return false;   /* already is relative */
-            has_rel = true;
-        }
-    }
-
-    return true;
+    return !(expr_class(vect) & ~EC_RELOC);
 }
 
 /*
@@ -126,9 +145,7 @@ bool is_reloc(const expr *vect)
  */
 bool is_unknown(const expr *vect)
 {
-    while (vect->type && vect->type < EXPR_UNKNOWN)
-        vect++;
-    return (vect->type == EXPR_UNKNOWN);
+    return !!(expr_class(vect) & EC_UNKNOWN);
 }
 
 /*
@@ -137,9 +154,7 @@ bool is_unknown(const expr *vect)
  */
 bool is_just_unknown(const expr *vect)
 {
-    while (vect->type && !vect->value)
-        vect++;
-    return (vect->type == EXPR_UNKNOWN);
+    return expr_class(vect) == EC_UNKNOWN;
 }
 
 /*
@@ -191,10 +206,5 @@ int32_t reloc_wrt(const expr *vect)
  */
 bool is_self_relative(const expr *vect)
 {
-    for (; vect->type; vect++) {
-        if (vect->type == location.segment + EXPR_SEGBASE && vect->value == -1)
-            return true;
-    }
-
-    return false;
+    return !!(expr_class(vect) & EC_SELFREL);
 }

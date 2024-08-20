@@ -18,7 +18,7 @@ require 'x86/insns-iflags.ph';
 our %macros;
 our($macro, $outfile, $infile, $line);	# Public for error messages
 
-# Common pattern for the basic 8 arithmetric functions
+# Common pattern for the basic 7 arithmetric functions
 $macros{'arith'} = {
     'def' => *def_eightfold,
     'txt' => <<'EOL'
@@ -68,27 +68,62 @@ for (my $i = 1; $i <= 31; $i++) {
 sub func_multisize($$$) {
     my($mac, $args, $rawargs) = @_;
     my @sbyte = ('imm8', 'imm8', 'sbyteword16', 'sbytedword32', 'sbytedword64');
+    my $long = 0;		# 1 for LONG, 2 for NOLONG, 3 for invalid
 
     my @ol;
     my $mask = $mac->{'mask'};
 
     for (my $i = 0; $i < scalar(@sizename); $i++) {
 	next unless ($mask & (1 << $i));
-	my $s = ($i > 0) ? 4 << $i : 'sz';
+	my $s = ($i > 0) ? 4 << $i : '';
+	my $sn = $sizename[$i];
+	my $sz = $s || 'sz';
 	my $o;
 	my $ins = join("\t", @$rawargs);
-	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}|\bsbyte|\bimm|\bi|\b(?:reg_)?[abcd]x|\bw)?\#|\%)(.*)$/) {
+
+	# Conditional pattern inclusions
+	# Syntax: (which1:text1/which2:text2/text3)
+	# ... where "which" is a combination of sizename letters.
+	# No colon means unconditional ("else" clause)
+	while ($ins =~ /^(.*?)\(([^\)]+)\)(.*)$/) {
+	    $o .= $1;
+	    my @cpp = split(/\//, $2);
+	    $ins = $3;
+
+	    my $found;
+	    foreach my $cp (@cpp) {
+		if ($cp =~ /^([a-z]+)\:(.*)$/) {
+		    $cp = $2;
+		    $found = $1 =~ /$sn/;
+		} else {
+		    $found = 1;
+		}
+		if ($found) {
+		    $o .= $cp;
+		    last;
+		}
+	    }
+	}
+
+	$ins = $o.$ins;
+	$o = '';
+
+	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\b[ioa]|\b(?:reg_)?[abcd]x|\breg|\brm|\bw)?\#|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%)(.*)$/) {
 	    $o .= $1;
 	    my $mw = $2;
 	    $ins = $3;
 	    if ($mw eq '%') {
-		$o .= uc($sizename[$i]) if ($i);
-	    } elsif ($mw =~ /^([0-9a-f]{2})\#$/) {
-		$o .= sprintf('%02x', hex($1) | ($s != 8));
+		$o .= uc($sn) if ($i);
+	    } elsif ($mw =~ /^([0-9a-f]{2})(\+r)?\#$/) {
+		$o .= sprintf('%02x%s', hex($1) |
+			      (($s == 8) ? 0 :
+			       ($2 eq '') ? 1 : 8), $2);
 	    } elsif ($mw eq 'sbyte#') {
 		$o .= $sbyte[$i];
 	    } elsif ($mw eq 'imm#') {
 		$o .= !$i ? 'imm' : ($s >= 64) ? "sdword$s" : "imm$s";
+	    } elsif ($mw =~ '^([ao])\#$') {
+		$o .= $1 . $sz;
 	    } elsif ($mw eq 'i#') {
 		$o .= !$i ? 'iwd' : ($s >= 64) ? 'id,s' : 'i'.$sizename[$i];
 	    } elsif ($mw =~ /^(?:reg_)?([abcd])x\#$/) {
@@ -100,28 +135,38 @@ sub func_multisize($$$) {
 		    $o .= "reg_e${1}x";
 		} elsif ($i == 4) {
 		    $o .= "reg_r${1}x";
+		    $long |= 1;
 		} else {
 		    die "$0:$infile:$line: register cannot be used with z\n";
 		}
+	    } elsif ($mw =~ /^(o64)?nw$/) {
+		$long |= 2 if ($i == 32); # nw = 32 bits not encodable in long mode
+		$o .= $mw;
+	    } elsif ($mw =~ /^(reg|rm)(\#|[0-9]+)$/) {
+		# (Possible) GPR reference
+		$o .= $1;
+		my $n = ($2 eq '#') ? $s : $2;
+		$o .= $n;
+		$long |= 1 if ($n >= 64);
+	    } elsif ($mw =~ /^(NO)?LONG(\w+)$/) {
+		my $longflag = $1 ? 2 : 1;
+		$long |= $longflag if ($2 =~ /$sn/i);
+		# Drop
 	    } elsif ($mw eq 'w#') {
 		$o .= !$i ? 'ww' : ($s >= 64) ? 'w1' : 'w0';
-	    } else {
+	    } elsif ($mw eq '#') {
 		$o .= $s;
+	    } else {
+		die "$0:$infile:$line: unknown sequence \"$mw\" should not match regexp\n";
 	    }
 	}
 	$o .= $ins;
-	$o =~ s/\bNOLONG${i}\b/NOLONG/;
-	$o =~ s/\bNOLONG[0-9]+\b//;
-	if ($o =~ /\[[^\]]*\bnw\b[^\]]*\bo32\b[^\]]*\]/) {
-	    # nw o32 -> NOLONG
-	    $o .= ',NOLONG';
-	}
-	if ($i >= 64) {
-	    next if ($o =~ /\bNOLONG\b/);
-	    $o .= ',X86_64,LONG';
-	} elsif ($i >= 32) {
-	    $o .= ',386';
-	}
+
+	$o .= ',LONG'   if ($long & 1);
+	$o .= ',NOLONG' if ($long & 2);
+
+	$o .= ',386'    if ($s >= 32 && $o !~ /\B\!386\b/);
+
 	push(@ol, $o);
     }
 
@@ -322,7 +367,7 @@ sub has_flag($@) {
     return undef;
 }
 
-sub adjust_instruction_flags(@) {
+sub adjust_fl_zu(@) {
     my($opcode, $operands, $encoding, $flags) = @_;
 
     # Flag-changing instructions
@@ -347,20 +392,25 @@ sub adjust_instruction_flags(@) {
 	add_flag($flags, 'ZU');
     }
 
-    return ($opcode, $operands, $encoding, $flags);
+    return $flags;
 }
 
-sub adjust_instruction(@) {
+sub adjust_instruction_flags(@) {
     my @i = @_;
 
-    @i = adjust_instruction_flags(@i);
+    $i[3] = adjust_fl_zu(@i);
 
-    return undef unless (@i);
+    return undef unless (defined($i[3]));
+
+    if ($i[0] =~ /\bKILL\b/ || $i[1] =~ /\bKILL\b/ ||
+	$i[2] =~ /\bKILL\b/ || has_flag($i[3], 'KILL')) {
+	return undef;
+    }
 
     if ($i[2] =~ /\ba16\b/) {
 	add_flag($i[3], 'NOLONG');
     }
-    if ($i[2] =~ /\b(o64(nw)?\b|w1\b|rex2?|a64\b)/) {
+    if ($i[2] =~ /\b(o64(nw)?\b|rex2?|a64\b)/) {
 	add_flag($i[3], 'LONG');
     }
     if (has_flag($i[3], 'NOLONG') && has_flag($i[3], 'LONG')) {
@@ -368,39 +418,45 @@ sub adjust_instruction(@) {
 	return undef;
     }
 
-    if ($i[0] =~ /\bKILL\b/ || $i[1] =~ /\bKILL\b/ ||
-	$i[2] =~ /\bKILL\b/ || has_flag($i[3], 'KILL')) {
-	return undef;
+    if (has_flag($i[3], 'LONG')) {
+	add_flag($i[3], 'X86_64');
     }
 
-    return @i;
+    return $i[3];
 }
 
 sub process_insn($$) {
     my($out, $l) = @_;
 
-    if ($l !~ /^(\s*)([^\s\;]+)(\s+)([^\s\;]+)(\s+)([^\s\;]+|\[[^\;]*\])(\s+)([^\s\;]+)(\s*(\;.*)?)$/) {
+    if ($l !~ /^\s*([^\s\;]+)\s+([^\s\;]+)\s+([^\s\;]+|\[[^\;]*?\])\s+([^\s\;]+)\s*(\;.*?)?\s*$/) {
 	print $out $l, "\n";
 	return;
     }
 
-    # Opcode   = $f[1]
-    # Operands = $f[3]
-    # Encoding = $f[5]
-    # Flags    = $f[7]
-    my @f = ($1, $2, $3, $4, $5, $6, $7, $8);
+    print $out $5, "\n" unless ($5 eq ''); # Comment
 
-    my $nopr = ($f[3] =~ /^(void|ignore)$/) ? 0 :
-	scalar(split(/[\,\:]/, $f[3]));
+    my $opcode   = $1;
+    my $operands = $2;
+    my $encoding = $3;
+    my $flagstr  = $4;
+
+    my $nopr = ($operands =~ /^(void|ignore)$/) ? 0 : scalar(split(/[\,\:]/, $operands));
 
     # Modify the instruction flags
-    my %flags = split_flags($f[7]);
-    set_implied_flags(\%flags, $nopr);
+    my $flags = {split_flags($flagstr)};
+    set_implied_flags($flags, $nopr);
 
-    next unless (adjust_instruction($f[1], $f[3], $f[5], \%flags));
+    $flags = adjust_instruction_flags($opcode, $operands, $encoding, $flags);
+    return unless (defined($flags));
+    $flagstr = merge_flags($flags, 1);
 
-    $f[7] = merge_flags(\%flags, 1);
-    print $out @f, "\n";
+    # Tidy up the encoding for readability
+    $encoding =~ s/\s+/ /g;
+    if ($encoding =~ /^\s*\[\s*(.*?\:)?\s*([^\:]*?)\s*\]\s*$/) {
+	$encoding = sprintf('[%-10s%-34s]', $1, $2);
+    }
+
+    print $out sprintf("%-23s %-39s %-47s %s\n", $opcode, $operands, $encoding, $flagstr);
 }
 
 open(my $in, '<', $infile) or die "$0:$infile: $!\n";

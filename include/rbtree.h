@@ -70,27 +70,27 @@ struct rbtree *rb_insert(struct rbtree *, struct rbtree *);
  * Find a node in the tree corresponding to the key immediately
  * <= the passed-in key value.
  */
-struct rbtree *rb_search(const struct rbtree *, uint64_t);
+struct rbtree * pure_func rb_search(const struct rbtree *, uint64_t);
 
 /*
  * Find a node in the tree exactly matching the key value.
  */
-struct rbtree *rb_search_exact(const struct rbtree *, uint64_t);
+struct rbtree * pure_func rb_search_exact(const struct rbtree *, uint64_t);
 
 /*
  * Return the immediately previous or next node in key order.
  * Returns NULL if this node is the end of the tree.
- * These operations are safe for complee (but not partial!)
+ * These operations are safe for complete (but not partial!)
  * tree walk-with-destruction in key order.
  */
-struct rbtree *rb_prev(const struct rbtree *);
-struct rbtree *rb_next(const struct rbtree *);
+struct rbtree * pure_func rb_prev(const struct rbtree *);
+struct rbtree * pure_func rb_next(const struct rbtree *);
 
 /*
  * Return the very first or very last node in key order.
  */
-struct rbtree *rb_first(const struct rbtree *);
-struct rbtree *rb_last(const struct rbtree *);
+struct rbtree * pure_func rb_first(const struct rbtree *);
+struct rbtree * pure_func rb_last(const struct rbtree *);
 
 /*
  * Left and right nodes, if real. These operations are

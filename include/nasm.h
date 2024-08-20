@@ -368,6 +368,22 @@ typedef struct {
 /*
  * Library routines to manipulate expression data types.
  */
+enum expr_classes {
+    EC_ZERO          =   0,   /* All-zero expression */
+    EC_CONST         =   1,   /* Additive constant */
+    EC_SEGABS        =   2,   /* Absolute segment reference */
+    EC_SIMPLE        = EC_CONST | EC_SEGABS,
+    EC_SELFREL       =   4,   /* Self-relative expression */
+    EC_SEG           =   8,   /* Has a segment base */
+    EC_WRT           =  16,   /* Has WRT */
+    EC_RELOC         = EC_SIMPLE | EC_SELFREL | EC_SEG | EC_WRT,
+    EC_UNKNOWN       =  32,   /* Has an "unknown" part */
+    EC_REGISTER      =  64,   /* Has a register */
+    EC_REGEXPR       = 128,   /* Has more than one register and/or reg*n */
+    EC_COMPLEX       = 256    /* Even more complex, problematic */
+};
+
+enum expr_classes expr_class(const expr *vect);
 bool is_reloc(const expr *vect);
 bool is_simple(const expr *vect);
 bool is_really_simple(const expr *vect);

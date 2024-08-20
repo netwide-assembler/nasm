@@ -47,6 +47,6 @@ struct perfect_hash {
     const char * const *strings;
 };
 
-int perfhash_find(const struct perfect_hash *, const char *);
+int pure_func perfhash_find(const struct perfect_hash *, const char *);
 
 #endif /* PERFHASH_H */

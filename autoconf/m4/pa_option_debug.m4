@@ -9,5 +9,7 @@ AC_DEFUN([PA_OPTION_DEBUG],
  [PA_ADD_LANGFLAGS([-g3])], [PA_ADD_LANGFLAGS([-ggdb3 -g3])])
  PA_ARG_ENABLED([debug], [optimize for debugging],
  [PA_ADD_LANGFLAGS([-Og -O0])
+  AC_DEFINE([WITH_DEBUG], 1,
+  [Define to 1 to include code specifically indended to help debugging.])
   $1],
  [$2])])

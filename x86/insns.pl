@@ -990,8 +990,6 @@ sub byte_code_compile($$$) {
         'odf'       => 0322,    # Operand size is default
         'o64'       => 0324,    # 64-bit operand size requiring REX.W
 	'w1'        => 0324,
-        'o64nw'     => 0323,    # Implied 64-bit operand size (no REX.W)
-	'nw'        => 0327,	# REX.W not needed
         'a16'       => 0310,
         'a32'       => 0311,
         'adf'       => 0312,    # Address size is default (disassembly)
@@ -1070,6 +1068,9 @@ sub byte_code_compile($$$) {
             # Plain code
 	    my $pc = $plain_codes{$op};
             push(@codes, $pc) if (defined($pc));
+	} elsif ($op =~ /^(o64)?(nw)$/) {
+	    push(@codes, $1 eq '' ? 0327 : 0323);
+	    $flags->{'NWSIZE'}++;
         } elsif ($prefix_ok && $op =~ /^(66|f2|f3)$/) {
             # 66/F2/F3 prefix used as an opcode extension
             if ($op eq '66') {

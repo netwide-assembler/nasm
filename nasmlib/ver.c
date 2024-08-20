@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -59,22 +59,22 @@ static const char * const _nasm_signature[2] = {
     "NASM"
 };
 
-const char *nasm_comment(void)
+const char * pure_func nasm_comment(void)
 {
     return _nasm_comment[reproducible];
 }
 
-size_t nasm_comment_len(void)
+size_t pure_func nasm_comment_len(void)
 {
     return strlen(nasm_comment());
 }
 
-const char *nasm_signature(void)
+const char * pure_func nasm_signature(void)
 {
     return _nasm_signature[reproducible];
 }
 
-size_t nasm_signature_len(void)
+size_t pure_func nasm_signature_len(void)
 {
     return strlen(nasm_signature());
 }

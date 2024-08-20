@@ -114,7 +114,8 @@ void raa_free(struct RAA *r)
     nasm_free(r);
 }
 
-static const union intorptr *real_raa_read(struct RAA *r, raaindex posn)
+static const union intorptr * pure_func
+real_raa_read(struct RAA *r, raaindex posn)
 {
     nasm_assert(posn <= (~(raaindex)0 >> 1));
 

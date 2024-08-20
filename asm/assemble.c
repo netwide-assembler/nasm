@@ -113,6 +113,7 @@ static uint32_t rexflags(int, opflags_t, uint32_t);
 static uint32_t op_rexflags(const operand *, uint32_t);
 static uint32_t op_evexflags(const operand *, uint32_t);
 static void add_asp(insn *);
+static void set_initial_opsize(insn *);
 
 static int process_ea(operand *input, int rfield, opflags_t rflags,
                       insn *ins, enum ea_type expected,
@@ -944,6 +945,9 @@ int64_t assemble(insn *instruction)
 
         /* Check to see if we need an address-size prefix */
         add_asp(instruction);
+
+        /* Set default/prefix-controlled operand size */
+        set_initial_opsize(instruction);
 
         m = find_match(&temp, instruction);
 
@@ -1785,7 +1789,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
         }
 
         case 0334:
-            ins->rex |= REX_L;
+                ins->rex |= REX_L; /* Ignored in 64-bit mode */
             break;
 
         case 0335:
@@ -2934,10 +2938,14 @@ static enum match_result matches(const struct itemplate * const itemp,
     unsigned int arflag;
     unsigned int armask, smmask;
     bool if_anysize, if_sx;
-    opflags_t arsize, smsize;
+    opflags_t opsize, arsize, smsize;
     opflags_t isize[MAX_OPERANDS]; /* Adjusted instruction operand sizes */
     opflags_t tsize[MAX_OPERANDS]; /* Adjusted template operand sizes */
     opflags_t itype[MAX_OPERANDS]; /* Adjusted instruction flags */
+
+    /* Jump size/type declarators are more like types than sizes */
+    const opflags_t jsize_mask = NEAR|FAR|SHORT|ABS;
+    const opflags_t msize_mask = SIZE_MASK & ~jsize_mask;
 
     /*
      * Check the opcode
@@ -3012,13 +3020,22 @@ static enum match_result matches(const struct itemplate * const itemp,
         const struct operand * const op = &ins->oprs[i];
         const opflags_t ttype  = itemp->opd[i];
 
-        isize[i] = op->type & SIZE_MASK;
+        isize[i] = op->type & msize_mask;
         itype[i] = op->type - isize[i];
         if (op->type & ~ttype & (COLON | TO))
             return MERR_INVALOP;
         if (op->iflag && !itemp_has(itemp, op->iflag))
             return MERR_WRONGIMM;
     }
+
+    /* "Default" operand size (from mode and prefixes only) */
+    opsize = mode_to_op(ins->op_size);
+    if (itemp_has(itemp, IF_NWSIZE) && bits == 64 && opsize == BITS32)
+        opsize = BITS64;
+
+    /* Some key flags */
+    if_anysize = itemp_has(itemp, IF_ANYSIZE);
+    if_sx      = itemp_has(itemp, IF_SX);
 
     /*
      * Compare various operand flags that don't depend on sizes,
@@ -3030,8 +3047,8 @@ static enum match_result matches(const struct itemplate * const itemp,
         const decoflags_t ideco = itemp->deco[i];
         const bool is_broadcast = deco & BRDCAST_MASK;
 
-        if (!is_broadcast) {
-            tsize[i] = ttype & SIZE_MASK;
+        if (likely(!is_broadcast)) {
+            tsize[i] = ttype & msize_mask;
         } else {
             const decoflags_t ideco_brsize = ideco & BRSIZE_MASK;
 
@@ -3048,12 +3065,32 @@ static enum match_result matches(const struct itemplate * const itemp,
                 tsize[i] = 0;   /* Is this even possible? */
         }
 
+        /* Handle implied SHORT or NEAR */
+        if (unlikely(ttype & (NEAR|SHORT))) {
+            if ((ttype & (NEAR|SHORT)) == (NEAR|SHORT)) {
+                /* Only a short form exists; allow both NEAR and SHORT */
+                if (!(itype[i] & (FAR|ABS)))
+                    itype[i] |= NEAR|SHORT;
+            } else if ((itype[i] & SHORT) || isize[i] == BITS8) {
+                /* An explicit SHORT or BITS8 cancel NEAR; are synonyms */
+                itype[i] &= ~NEAR;
+                if (!isize[i])
+                    isize[i] = BITS8;
+            } else if (!(itype[i] & (FAR|ABS|SHORT))) {
+                /* NEAR is implicit unless otherwise specified */
+                itype[i] |= ttype & NEAR;
+            }
+        }
+
         /* Check to see if we need to coerce an explicitly sized immediate */
         if (unlikely(itype[i] & ttype & IMMEDIATE)) {
             /*
              * If this is an *explicitly* sized immediate,
              * allow it to match an extending pattern.
+             *
+             * Handle sizing of SHORT/NEAR here, too.
              */
+
             switch (isize[i]) {
             case BITS8:
                 if (ttype & BYTEEXTMASK) {
@@ -3077,7 +3114,7 @@ static enum match_result matches(const struct itemplate * const itemp,
                 itype[i] |= SDWORD;
         }
 
-        if (ttype & ~itype[i] & ~(SIZE_MASK|REGSET_MASK))
+        if (ttype & ~itype[i] & ~(msize_mask|REGSET_MASK))
             return MERR_INVALOP;
 
         if (~ideco & deco & OPMASK_MASK)
@@ -3098,35 +3135,33 @@ static enum match_result matches(const struct itemplate * const itemp,
 
     nasm_static_assert(SIZE_SHIFT >= IF_SB);
     nasm_static_assert((BITS8 >> SIZE_SHIFT) == 1);
-    arsize = (arflag & (IFM_SB|IFM_SW|IFM_SD|IFM_SQ|
-                        IFM_ST|IFM_SO|IFM_SY|IFM_SZ))
-        << (SIZE_SHIFT - IF_SB);
+    arsize = (arflag & IF_TSMASK) << (SIZE_SHIFT - IF_SB);
 
-    if (arflag & IFM_SIZE)
-        arsize = mode_to_op(bits);
-
-    if_anysize = itemp_has(itemp, IF_ANYSIZE);
-    if_sx      = itemp_has(itemp, IF_SX);
+    if (arflag & IFM_OSIZE)
+        arsize = opsize;
+    else if (arflag & IFM_ASIZE)
+        arsize = mode_to_op(ins->addr_size);
 
     /* Flags for which the AR and SM flags apply */
     armask = itemp_arx(itemp);
     smmask = itemp_smx(itemp);
 
     /* Apply ARx sizes and handle size coersion */
-    for (i = 0; i < oprs; i++) {
-        const unsigned int bit = 1U << i;
+    if (!if_sx) {
+        for (i = 0; i < oprs; i++) {
+            const unsigned int bit = 1U << i;
 
-        if (!isize[i] && is_class(REGISTER, itype[i]))
-            isize[i] = tsize[i];
-
-        if (armask & bit) {
-            if (!isize[i] && !if_sx)
-                isize[i] = arsize;
+            if (!isize[i]) {
+                if (is_class(REGISTER, itype[i]) && tsize[i])
+                    isize[i] = tsize[i];
+                else if (armask & bit)
+                    isize[i] = arsize;
+            }
         }
     }
 
     /* Look the common subset for the size-matched operands */
-    smsize = SIZE_MASK;
+    smsize = msize_mask;
     if (smmask) {
         unsigned int nosizemask = 0;
         for (i = 0; i < oprs; i++) {
@@ -3921,6 +3956,33 @@ static void add_asp(insn *ins)
              */
             ins->oprs[j].type &= ~(MEM_OFFS & ~MEMORY);
         }
+    }
+}
+
+/*
+ * Set the initial operand size, based only on the mode and any prefixes.
+ * The actual operand size may change after instruction pattern selection.
+ */
+static void set_initial_opsize(insn *ins)
+{
+    const int bits = ins->bits;
+
+    switch (ins->prefixes[PPS_OSIZE]) {
+    case P_OSP:
+        ins->op_size = bits == 16 ? 32 : 16;
+        break;
+    case P_O16:
+        ins->op_size = 16;
+        break;
+    case P_O32:
+        ins->op_size = 32;
+        break;
+    case P_O64:
+        ins->op_size = 64;
+        break;
+    default:
+        ins->op_size = bits == 16 ? 16 : 32;
+        break;
     }
 }
 
