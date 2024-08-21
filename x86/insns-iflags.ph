@@ -185,7 +185,7 @@ sub set_implied_flags($;$) {
 
     # Retain only the highest CPU level flag
     # CPU levels really need to be replaced with feature sets.
-    my $found = 0;
+    my $found = $flags->{'PSEUDO'}; # Pseudo-ops don't have a CPU level
     for (my $i = $flag_byname{'ANY'}->[0]; $i >= $flag_byname{'8086'}->[0]; $i--) {
 	my $f = $flag_bynum[$i]->[1];
 	if ($found) {

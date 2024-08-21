@@ -13,7 +13,6 @@
 #include "tokens.h"
 #include "iflag.h"
 
-/* if changed, ITEMPLATE_END should be also changed accordingly */
 struct itemplate {
     enum opcode     opcode;             /* the token, passed from "parser.c" */
     int             operands;           /* number of operands */
@@ -31,19 +30,19 @@ static inline bool itemp_has(const struct itemplate *itemp, unsigned int bit)
 
 /* Disassembler table structure */
 
-/* Instruction tables for the assembler and disassembler, respectively */
-extern const struct itemplate * const nasm_instructions[];
+/* Instruction tables for the assembler */
+struct itemplate_list {
+    unsigned int ntemp;
+    const struct itemplate *temp;
+};
+extern const struct itemplate_list nasm_instructions[];
 
+/* Instruction tables for the disassembler */
 extern const struct itemplate * const * const * const
 ndisasm_itable[NASM_VEX_CLASSES][NASM_MAX_MAPS];
 
 /* Common table for the byte codes */
 extern const uint8_t nasm_bytecodes[];
-
-/*
- * this define is used to signify the end of an itemplate
- */
-#define ITEMPLATE_END {I_none,0,{0,},{0,},NULL,0}
 
 /*
  * Pseudo-op tests

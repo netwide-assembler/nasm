@@ -35,6 +35,7 @@ if_("SX",                "Unsized operands not allowed");
 if_("SDWORD",		 "Strict sdword64 matching");
 if_break_ok();
 
+if_("PSEUDO",            "Pseudo-instruction (directive)");
 if_("JMP_RELAX",         "Relaxable jump instruction");
 if_("OPT",               "Optimizing assembly only");
 if_("LATEVEX",           "Only if EVEX instructions are disabled");
@@ -57,6 +58,8 @@ if_("NOHLE",             "HLE prefixes forbidden");
 if_("MIB",               "split base/index EA");
 if_("BND",               "BND (0xF2) prefix available");
 if_("REX2",              "REX2 encoding required");
+if_("HLE",               "HLE prefixed");
+if_("FL",                "Instruction modifies the flags");
 
 #
 # Special immediates types like {dfv=}
@@ -82,8 +85,6 @@ if_("PRIV",              "Privileged instruction");
 if_("SMM",               "Only valid in SMM");
 if_("PROT",              "Protected mode only");
 if_("UNDOC",             "Undocumented");
-if_("HLE",               "HLE prefixed");
-if_("FL",                "Instruction modifies the flags");
 if_("FPU",               "FPU");
 if_("MMX",               "MMX");
 if_("3DNOW",             "3DNow!");

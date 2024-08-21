@@ -411,18 +411,28 @@ if ( $output eq 'a' ) {
     print A "#include \"nasm.h\"\n";
     print A "#include \"insns.h\"\n\n";
 
-    foreach $i (@opcodes) {
-        print A "static const struct itemplate instrux_${i}[] = {\n";
-        foreach $j (@{$aname{$i}}) {
-	    print A '    /* ', join(' ', @{$j->[1]}), " */\n";
-	    print A '        /* ', show_bytecodes($j->[0]), ' : ', show_iflags($j->[0]), " */\n";
-            print A '        ', codesubst($j->[0]), "\n";
-        }
-        print A "    ITEMPLATE_END\n};\n\n";
+    foreach my $i (@opcodes) {
+	my $pat = $aname{$i};
+	if (scalar(@$pat)) {
+	    printf A "static const struct itemplate instrux_%s[%d] = {\n",
+		$i, scalar(@$pat);
+	    my $e = '}';
+	    my $n = 0;
+	    foreach $j (@$pat) {
+		printf A "    /* %3d : %s */\n", $n++, join(' ', @{$j->[1]});
+		print A '        /* ', show_bytecodes($j->[0]), ' : ', show_iflags($j->[0]), " */\n";
+		print A '        ', codesubst($j->[0]), "\n";
+	    }
+	    print A "};\n\n";
+	}
     }
-    print A "const struct itemplate * const nasm_instructions[] = {\n";
-    foreach $i (@opcodes) {
-        print A "    instrux_${i},\n";
+    printf A "const struct itemplate_list nasm_instructions[%d] = {\n",
+	scalar(@opcodes);
+    foreach my $i (@opcodes) {
+	my $pat  = $aname{$i};
+	my $npat = scalar(@$pat);
+	my $tbl  = $npat ? "instrux_$i" : "NULL /* $i */";
+	printf A "    { %3d, %s },\n", $npat, $tbl;
     }
     print A "};\n";
 

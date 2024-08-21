@@ -2880,11 +2880,13 @@ static enum match_result find_match(const struct itemplate **tempp,
                                     insn *instruction)
 {
     const int bits = instruction->bits;
+    const struct itemplate_list *templist;
     const struct itemplate *temp;
     const struct itemplate *best = NULL;
     enum match_result m, merr;
     int this_good;
     int rex = instruction->prefixes[PPS_REX];
+    unsigned int n;
 
     /* Impossible encoding request? */
     if (bits != 64) {
@@ -2896,23 +2898,27 @@ static enum match_result find_match(const struct itemplate **tempp,
     best = NULL;
     this_good = 0;
 
-    for (temp = nasm_instructions[instruction->opcode];
-         temp->opcode != I_none; temp++) {
+    templist = &nasm_instructions[instruction->opcode];
+    n    = templist->ntemp;
+    temp = templist->temp;
+
+    while (n--) {
         m = matches(temp, instruction);
         if (m > merr) {
             best = temp;
             merr = m;
             this_good = 1;
             if (merr == MOK_GOOD)
-                goto done;      /* Not fuzzy at all */
+                break;
         } else if (m == merr) {
             this_good++;
         }
+        temp++;
     }
 
     if (merr >= MOK_FIRST)
         merr = MOK_GOOD;        /* Fuzzy match but valid */
-done:
+
     *tempp = best;
     return merr;
 }
