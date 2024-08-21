@@ -639,6 +639,7 @@ enum vex_class {
  */
 enum prefixes { /* instruction prefixes */
     P_none = 0,
+    P_any  = 1,
     PREFIX_ENUM_START = REG_ENUM_LIMIT,
     P_A16 = PREFIX_ENUM_START,
     P_A32,
@@ -858,10 +859,21 @@ enum optimization {
     OPTIM_DEFAULT = OPTIM_ALL_ENABLED
 };
 
+/*
+ * Used with byte values for prefixes when no single byte value applies
+ */
+enum prefix_err {
+    PFE_NULL  = -1,             /* No output */
+    PFE_MULTI = -2,             /* Multibyte output (VEX, EVEX, REX2) */
+    PFE_ERR   = -3,             /* Invalid prefix use */
+    PFE_WHAT  = -4              /* Not a valid prefix (internal error) */
+};
+
 typedef struct insn { /* an instruction itself */
     enum opcode     opcode;                 /* the opcode - not just the string */
     struct location loc;                    /* assembly location */
     int             prefixes[MAXPREFIX];    /* instruction prefixes, if any */
+    int             need_pfx[MAXPREFIX];    /* byte prefixes used as opcodes */
     char            *label;                 /* the label defined, or NULL */
     extop           *eops;                  /* extended operands */
     int             eops_float;             /* true if DD and floating */

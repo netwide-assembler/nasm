@@ -997,6 +997,7 @@ sub byte_code_compile($$$) {
         'a64'       => 0313,
         '!osp'      => 0364,
         '!asp'      => 0365,
+	'osp'       => 0366,
 	'osz'       => 0330,	# 66 or REX.W if operand size != default
         'f2i'       => 0332,    # F2 prefix, but 66 for operand size is OK
         'f3i'       => 0333,    # F3 prefix, but 66 for operand size is OK
@@ -1142,6 +1143,8 @@ sub byte_code_compile($$$) {
             my ($m,$w,$l,$p) = (undef,undef,undef,0);
             my $has_nds = 0;
             my @subops = split(/\./, $2);
+	    my $opsize = undef;
+
 	    if (defined($opmap)) {
 		warn "$fname:$line: $opcode: legacy prefix ignored with VEX\n";
 	    }
@@ -1165,6 +1168,31 @@ sub byte_code_compile($$$) {
 		} elsif ($oq eq 'ww') {
 		    $w = 0;
 		    $flags->{'WW'}++;
+		} elsif ($oq eq 'o8') {
+		    $p = 0 unless (defined($p)); # np
+		    if (!defined($w)) {		 # wig
+			$w = 0;
+			$flags->{'WIG'}++;
+		    }
+		} elsif ($oq eq 'o16') {
+		    $p = 1 unless (defined($p)); # 66
+		    $w = 0 unless (defined($w)); # w0
+		    $opsize = 0320;
+		} elsif ($oq eq 'ko8') {
+		    $p = 1 unless (defined($p)); # 66
+		    $w = 0 unless (defined($w)); # w0
+		} elsif ($oq eq 'ko16') {
+		    $p = 1 unless (defined($p)); # 66
+		    $w = 1 unless (defined($w)); # w1
+		    $opsize = 0320;
+		} elsif ($oq =~ /^k?o32$/) {
+		    $p = 0 unless (defined($p)); # np
+		    $w = 0 unless (defined($w)); # w0
+		    $opsize = 0321;
+		} elsif ($oq =~ /^k?o64$/) {
+		    $p = 0 unless (defined($p)); # np
+		    $w = 1 unless (defined($w)); # w1
+		    $opsize = 0323 + $w;
 		} elsif ($oq eq 'np' || $oq eq 'p0') {
 		    $p = 0;
 		} elsif ($oq eq '66' || $oq eq 'p1') {
@@ -1206,6 +1234,8 @@ sub byte_code_compile($$$) {
 	    push(@codes, 05) if ($oppos{'v'} > 3);
             push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
                  ($c << 6)+$m, ($w << 7)+($l << 2)+$p);
+
+	    push(@codes, $opsize) if (defined($opsize));
 
 	    $flags->{'VEX'}++;
 	    $flags->{'NOAPX'}++; # VEX doesn't support registers 16+
@@ -1263,11 +1293,18 @@ sub byte_code_compile($$$) {
 		    $p = 1 unless (defined($p)); # 66
 		    $w = 0 unless (defined($w)); # w0
 		    $opsize = 0320;
-		} elsif ($oq eq 'o32') {
+		} elsif ($oq eq 'ko8') {
+		    $p = 1 unless (defined($p)); # 66
+		    $w = 0 unless (defined($w)); # w0
+		} elsif ($oq eq 'ko16') {
+		    $p = 1 unless (defined($p)); # 66
+		    $w = 1 unless (defined($w)); # w1
+		    $opsize = 0320;
+		} elsif ($oq =~ /^k?o32$/) {
 		    $p = 0 unless (defined($p)); # np
 		    $w = 0 unless (defined($w)); # w0
 		    $opsize = 0321;
-		} elsif ($oq eq 'o64') {
+		} elsif ($oq =~ /^k?o64$/) {
 		    $p = 0 unless (defined($p)); # np
 		    $w = 1 unless (defined($w)); # w1
 		    $opsize = 0323 + $w;

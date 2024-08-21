@@ -87,6 +87,12 @@ our $MAX_OPERANDS = 5;
 sub if_($$) {
     my($name, $def) = @_;
     my $num = $n_iflags++;
+
+    $name = uc($name);
+    if (defined($flag_byname{$name})) {
+	die "iflags: flag $name defined more than once\n";
+    }
+
     my $v = [$num, $name, $def];
 
     if (!($n_iflags & 31) && $no_word_break) {
@@ -178,6 +184,7 @@ sub set_implied_flags($;$) {
     $flags->{'ZU'}++ if ($flags->{'ZU_R'} || $flags->{'ZU_E'});
 
     # Retain only the highest CPU level flag
+    # CPU levels really need to be replaced with feature sets.
     my $found = 0;
     for (my $i = $flag_byname{'ANY'}->[0]; $i >= $flag_byname{'8086'}->[0]; $i--) {
 	my $f = $flag_bynum[$i]->[1];
@@ -186,6 +193,10 @@ sub set_implied_flags($;$) {
 	} else {
 	    $found = $flags->{$f};
 	}
+    }
+    if (!$found) {
+	# No CPU level flag at all; tag it FUTURE
+	$flags->{'FUTURE'}++;
     }
 }
 

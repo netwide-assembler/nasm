@@ -98,19 +98,18 @@ if_("SSE42",             "SSE4.2");
 if_("SSE5",              "SSE5");
 if_("AVX",               "AVX  (256-bit floating point)");
 if_("AVX2",              "AVX2 (256-bit integer)");
-if_("FMA",               "");
-if_("BMI1",              "");
-if_("BMI2",              "");
+if_("FMA",               "Fused multiply-add");
+if_("BMI1",              "Bit manipulation instructions 1");
+if_("BMI2",              "Bit manipulation instructions 2");
 if_("TBM",               "");
 if_("RTM",               "");
-if_("INVPCID",           "");
-if_("AVX512",            "AVX-512F (512-bit base architecture)");
+if_("AVX512",            "AVX-512");
+if_("AVX512F",           "AVX-512F (base architecture)");
 if_("AVX512CD",          "AVX-512 Conflict Detection");
 if_("AVX512ER",          "AVX-512 Exponential and Reciprocal");
 if_("AVX512PF",          "AVX-512 Prefetch");
 if_("MPX",               "MPX");
 if_("SHA",               "SHA");
-if_("PREFETCHWT1",       "PREFETCHWT1");
 if_("AVX512VL",          "AVX-512 Vector Length Orthogonality");
 if_("AVX512DQ",          "AVX-512 Dword and Qword");
 if_("AVX512BW",          "AVX-512 Byte and Word");
@@ -131,22 +130,17 @@ if_("AVX512FC16",        "AVX-512 FC16 instructions");
 if_("SGX",               "Intel Software Guard Extensions (SGX)");
 if_("CET",               "Intel Control-Flow Enforcement Technology (CET)");
 if_("ENQCMD",            "Enqueue command instructions");
-if_("PCONFIG",           "Platform configuration instruction");
-if_("WBNOINVD",          "Writeback and do not invalidate instruction");
 if_("TSXLDTRK",          "TSX suspend load address tracking");
-if_("SERIALIZE",         "SERIALIZE instruction");
 if_("AVX512BF16",        "AVX-512 bfloat16");
 if_("AVX512VP2INTERSECT", "AVX-512 VP2INTERSECT instructions");
 if_("AMXTILE",           "AMX tile configuration instructions");
 if_("AMXBF16",           "AMX bfloat16 multiplication");
 if_("AMXINT8",           "AMX 8-bit integer multiplication");
 if_("FRED",              "Flexible Return and Exception Delivery (FRED)");
-if_("LKGS",              "Load User GS from Kernel (LKGS)");
 if_("RAOINT",		 "Remote atomic operations (RAO-INT)");
 if_("UINTR",		 "User interrupts");
 if_("CMPCCXADD",         "CMPccXADD instructions");
 if_("PREFETCHI",         "PREFETCHI0 and PREFETCHI1");
-if_("WRMSRNS",		 "WRMSRNS");
 if_("MSRLIST",           "RDMSRLIST and WRMSRLIST");
 if_("AVXNECONVERT",	 "AVX exceptionless floating-point conversions");
 if_("AVXVNNIINT8",       "AVX Vector Neural Network 8-bit integer instructions");
@@ -159,6 +153,16 @@ if_("HSM4",              "SM4 hash instructions");
 if_("APX",               "Advanced Performance Extensions (APX)");
 if_("AVX10_1",           "AVX 10.1 instructions");
 if_("AVX10_2",           "AVX 10.2 instructions");
+if_("ADX",               "ADCX and ADOX instructions");
+if_("PKU",		 "Protection key for user mode");
+if_("WAITPKG",           "User wait instruction package");
+
+# Single-instruction CPUID bits without additional help text
+foreach my $ins (qw(invpcid prefetchwt1 pconfig wbnoinvd serialize lkgs
+		    wrmsrns clflushopt clwb rdrand rdseed rdpid
+		    lzcnt ptwrite cldemote movdiri movdir64b)) {
+    if_($ins, "\U$ins\E instruction");
+}
 
 # Put these last to minimize their relevance
 if_("OBSOLETE",          "Instruction removed from architecture");
@@ -183,12 +187,12 @@ if_("P6",                "P6");
 if_("KATMAI",            "Katmai");
 if_("WILLAMETTE",        "Willamette");
 if_("PRESCOTT",          "Prescott");
+if_("IA64",              "IA64 (in x86 mode)");
 if_("X86_64",            "x86-64 (long or legacy mode)");
 if_("NEHALEM",           "Nehalem");
 if_("WESTMERE",          "Westmere");
 if_("SANDYBRIDGE",       "Sandy Bridge");
 if_("FUTURE",            "Ivy Bridge or newer");
-if_("IA64",              "IA64 (in x86 mode)");
 
 # Default CPU level
 if_("DEFAULT",           "Default CPU level");

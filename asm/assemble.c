@@ -119,17 +119,7 @@ static int process_ea(operand *input, int rfield, opflags_t rflags,
                       insn *ins, enum ea_type expected,
                       const char **errmsgp);
 
-/*
- * Return the byte value of a legacy prefix (possibly depending on context)
- * Returns one of the following values if the prefix has no byte value:
- */
-enum prefix_err {
-    PFE_NULL  = -1,             /* No output */
-    PFE_MULTI = -2,             /* Multibyte output (VEX, EVEX, REX2) */
-    PFE_ERR   = -3,             /* Invalid prefix use */
-    PFE_WHAT  = -4              /* Not a valid prefix (internal error) */
-};
-
+/* Convert a prefix to a byte value */
 static int prefix_byte(enum prefixes pfx, const int bits);
 
 /*
@@ -1439,8 +1429,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
     bool lockcheck = true;
     enum reg_enum mib_index = R_none;   /* For a separate index reg form */
     const char *errmsg;
-    int need_byte;
-    enum prefixes need_pfx;
+    int need_pfx[MAXPREFIX];
 
     ins->rex     = 0;           /* Ensure REX is reset */
     ins->evex    = 0;		/* Ensure EVEX is reset */
@@ -1452,6 +1441,8 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
 
     /* Default operand size */
     ins->op_size = bits != 16 ? 32 : 16;
+
+    nasm_zero(need_pfx);
 
     while (*codes) {
         c = *codes++;
@@ -1758,38 +1749,19 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case 0331:
-            need_byte = PFE_NULL;
-            need_pfx  = P_none;
-            goto check_rep;
+            ins->need_pfx[PPS_REP] = PFE_NULL;
+            break;
 
         case 0332:
-            need_byte = 0xf2;
-            need_pfx  = P_REPNE;
-            goto check_rep;
+            ins->need_pfx[PPS_REP] = 0xf2;
+            break;
 
         case 0333:
-            need_byte = 0xf3;
-            need_pfx  = P_REP;
-            goto check_rep;
-
-        check_rep:
-        {
-            const enum prefixes pfx = ins->prefixes[PPS_REP];
-            const int byte = prefix_byte(pfx, bits);
-            if (byte != need_byte) {
-                if (pfx) {
-                    nasm_warn(ERR_PASS2,
-                              "%s prefix invalid for this instruction",
-                              prefix_name(pfx));
-                } else {
-                    ins->prefixes[PPS_REP] = need_pfx;
-                }
-            }
+            ins->need_pfx[PPS_REP] = 0xf3;
             break;
-        }
 
         case 0334:
-                ins->rex |= REX_L; /* Ignored in 64-bit mode */
+            ins->rex |= REX_L;  /* Ignored in 64-bit mode */
             break;
 
         case 0335:
@@ -1856,19 +1828,27 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case 0360:
+            ins->need_pfx[PPS_REP]   = PFE_NULL;
+            ins->need_pfx[PPS_OSIZE] = PFE_NULL;
             break;
 
         case 0361:
-            length++;
+            ins->need_pfx[PPS_REP]   = PFE_NULL;
+            /* fall through */
+        case 0366:
+            ins->need_pfx[PPS_OSIZE] = 0x66;
             break;
 
         case 0364:
-        case 0365:
+            ins->need_pfx[PPS_OSIZE] = PFE_NULL;
             break;
 
-        case 0366:
+        case 0365:
+            ins->need_pfx[PPS_ASIZE] = PFE_NULL;
+            break;
+
         case 0367:
-            length++;
+            ins->need_pfx[PPS_ASIZE] = 0x67;
             break;
 
         case 0370:
@@ -2297,9 +2277,37 @@ static int emit_prefixes(struct out_data *data, const insn *ins)
 
     for (j = 0; j < MAXPREFIX; j++) {
         const enum prefixes pfx = ins->prefixes[j];
+        const int r = ins->need_pfx[j];
         int c = prefix_byte(pfx, bits);
 
-        /* Various warnings and error conditions */
+        if (r && r != c && !(r <= 0 && c <= 0)) {
+            switch (pfx) {
+            case P_none:
+            case P_O16:
+            case P_O32:
+            case P_O64:
+            case P_A16:
+            case P_A32:
+            case P_A64:
+                /* In these cases, allow the instruction to simply override */
+                c = r;
+                break;
+            default:
+                /*!
+                 *!prefix-invalid [on] invalid prefix for instruction
+                 *!  this instruction is only valid with certain combinations
+                 *!  of prefixes. The prefix will still be generated as
+                 *!  requested, but the result may be a completely different
+                 *!  instruction.
+                 */
+                nasm_warn(WARN_PREFIX_INVALID|ERR_PASS2,
+                          "invalid prefix %s for instruction, result may be unexpected",
+                          prefix_name(pfx));
+                break;
+            }
+        }
+
+	/* Various warnings and error conditions */
         switch ((int)pfx) {
         case R_ES:
         case R_SS:
@@ -2698,7 +2706,6 @@ static void gencode(struct out_data *data, insn *ins)
             break;
 
         case 0361:
-            out_rawbyte(data, 0x66);
             break;
 
         case 0364:
@@ -2707,7 +2714,6 @@ static void gencode(struct out_data *data, insn *ins)
 
         case 0366:
         case 0367:
-            out_rawbyte(data, c - 0366 + 0x66);
             break;
 
         case3(0370):

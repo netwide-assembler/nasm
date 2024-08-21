@@ -1,4 +1,5 @@
-[BITS 64]
+	bits 64
+	[warning -obsolete]
 
 	bextr rax, rsi, 1
 	bextr eax, esi, 1

@@ -79,7 +79,7 @@ sub func_multisize($$$) {
 	my $sn = $sizename[$i];
 	my $sz = $s || 'sz';
 	my $o;
-	my $ins = join("\t", @$rawargs);
+	my $ins = join(' ', @$rawargs);
 
 	# Conditional pattern inclusions
 	# Syntax: (which1:text1/which2:text2/text3)
@@ -108,16 +108,26 @@ sub func_multisize($$$) {
 	$ins = $o.$ins;
 	$o = '';
 
-	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\b[ioa]|\b(?:reg_)?[abcd]x|\breg|\brm|\bw)?\#|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%)(.*)$/) {
+	print '>', $ins, "\n";
+
+	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\b[ioa]|\b(?:reg_)?[abcd]x|\breg|\brm|\bw)?\#{1,2}|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%{1,2})(.*)$/) {
 	    $o .= $1;
 	    my $mw = $2;
 	    $ins = $3;
-	    if ($mw eq '%') {
+	    if (!$i && $mw =~ /\#\#$/) {
+		die "$0:$infile:$line: $mw cannot be used with z\n";
+	    } elsif ($mw eq '%') {
 		$o .= uc($sn) if ($i);
-	    } elsif ($mw =~ /^([0-9a-f]{2})(\+r)?\#$/) {
-		$o .= sprintf('%02x%s', hex($1) |
-			      (($s == 8) ? 0 :
-			       ($2 eq '') ? 1 : 8), $2);
+	    } elsif ($mw eq '%%') {
+		if ($i < 2) {
+		    die "$0:$infile:$line: $mw cannot be used with zb\n";
+		}
+		$o .= uc($sizename[$i-1]) . uc($sn);
+	    } elsif ($mw =~ /^([0-9a-f]{2})(\+r)?(\#)?\#$/) {
+		my $n;
+		$n = ($3 ne '') ? $s > 16 : $s > 8;
+		$n <<= 3 if ($2 ne '');
+		$o .= sprintf('%02x%s', hex($1) | $n, $2);
 	    } elsif ($mw eq 'sbyte#') {
 		$o .= $sbyte[$i];
 	    } elsif ($mw eq 'imm#') {
@@ -154,6 +164,8 @@ sub func_multisize($$$) {
 		# Drop
 	    } elsif ($mw eq 'w#') {
 		$o .= !$i ? 'ww' : ($s >= 64) ? 'w1' : 'w0';
+	    } elsif ($mw eq 'w##') {
+		$o .= 'w'.(($i-1) & 1);
 	    } elsif ($mw eq '#') {
 		$o .= $s;
 	    } else {
@@ -173,19 +185,67 @@ sub func_multisize($$$) {
     return @ol;
 }
 
+# Common pattern for K-register instructions
+$macros{'k'} = {
+    'func' =>
+	sub {
+	    my($mac, $args, $rawargs) = @_;
+	    my @ol;
+	    my $ins = join(' ', @$rawargs);
+	    my $xins;
+	    my $n;
+
+	    $ins .= ',ZU';
+	    ($xins = $ins) =~ s/\bSM[0-9-]*,?//;
+	    push(@ol, $xins);
+	    ($xins = $ins) =~ s/\%//;
+	    push(@ol, $xins);
+	    if ($xins =~ s/\%//) {
+		push(@ol, $xins);
+	    }
+
+	    # Allow instruction without K
+	    my @on;
+	    foreach my $oi (@ol) {
+		# Remove first capital K
+		($xins = $oi) =~ s/\bK//;
+		push(@on, $xins);
+	    }
+	    push(@ol, @on);
+	    undef @on;
+
+	    # Allow SHIFT -> SH
+	    if ($ins =~ /SHIFT/) {
+		foreach my $oi (@ol) {
+		    # Remove first capital K
+		    ($xins = $oi) =~ s/SHIFT/SH/;
+		    push(@on, $xins);
+		}
+	    }
+	    push(@ol, @on);
+	    undef @on;
+
+	    # All instruction patterns except the first are ND
+	    for (my $i = 1; $i < scalar(@ol); $i++) {
+		$ol[$i] .= ',ND';
+	    }
+	    return(@ol);
+    }
+};
+
 # Common pattern for the HINT_NOPx pseudo-instructions
 $macros{'hint_nops'} = {
     'func' =>
-    sub {
-	my($mac, $args, $rawargs) = @_;
-	my @ol;
+	sub {
+	    my($mac, $args, $rawargs) = @_;
+	    my @ol;
 
-	for (my $i = 0; $i < 64; $i++) {
-	    push(@ol,
-		 sprintf("\$wdq HINT_NOP%d\trm#\t[m: o# 0f %02x /%d]\tP6,UNDOC,ND",
-			 $i, 0x18+($i >> 3), $i & 7));
-	}
-	return @ol;
+	    for (my $i = 0; $i < 64; $i++) {
+		push(@ol,
+		     sprintf("\$wdq HINT_NOP%d\trm#\t[m: o# 0f %02x /%d]\tP6,UNDOC,ND",
+			     $i, 0x18+($i >> 3), $i & 7));
+	    }
+	    return @ol;
     }
 };
 
