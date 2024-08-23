@@ -271,36 +271,14 @@ $wdq  JMPE	rm#|near			[m:	nw o# np 0f 00 /6]			IA64
 $wd   JMPE	rm#|near			[m:	o#       0f 00 /6]			IA64,NOLONG
 
 ;# Call and return
-CALL		imm				[i:	odf e8 rel]				8086,BND,NOAPX,OSIZE
-CALL		imm|near			[i:	odf e8 rel]				8086,ND,BND,NOAPX,OSIZE
-CALL		imm|far				[i:	odf 9a iwd seg]				8086,ND,NOLONG,OSIZE
-CALL		imm:imm				[ji:	odf 9a iwd iw]				8086,NOLONG,OSIZE,AR1
-; Call/jmp near imm/reg/mem is always 64-bit in long mode.
-CALL		imm16				[i:	o16 e8 rel]				8086,NOLONG,BND,SX
-CALL		imm16|near			[i:	o16 e8 rel]				8086,ND,NOLONG,BND,SX,ND
-CALL		imm16|far			[i:	o16 9a iwd seg]				8086,ND,NOLONG,SX,ND
-CALL		imm32				[i:	o32 e8 rel]				386,NOLONG,BND,SX,ND
-CALL		imm32|near			[i:	o32 e8 rel]				386,ND,NOLONG,BND,SX,ND
-CALL		imm32|far			[i:	o32 9a iwd seg]				386,ND,NOLONG,SX,ND
-CALL		imm64				[i:	o64nw e8 rel]				X86_64,LONG,BND,NOAPX,SX,ND
-CALL		imm64|near			[i:	o64nw e8 rel]				X86_64,LONG,ND,BND,NOAPX
-CALL		imm16:imm			[ji:	o16 9a iw iw]				8086,NOLONG,SX,AR0,ND
-CALL		imm:imm16			[ji:	o16 9a iw iw]				8086,NOLONG,SX,AR1
-CALL		imm32:imm			[ji:	o32 9a id iw]				386,NOLONG,SX,AR0,ND
-CALL		imm:imm32			[ji:	o32 9a id iw]				386,NOLONG,SX,AR1
-CALL		mem|far				[m:	odf ff /3]				8086,NOLONG,SX
-CALL		mem|far				[m:	o64 ff /3]				X86_64,LONG,SX
-CALL		mem16|far			[m:	o16 ff /3]				8086,SX
-CALL		mem32|far			[m:	o32 ff /3]				386,SX
-CALL		mem64|far			[m:	o64 ff /3]				X86_64,SX,LONG
-CALL		mem|near			[m:	odf ff /2]				8086,ND,BND,SX
-CALL		rm16|near			[m:	o16 ff /2]				8086,NOLONG,ND,BND,SX
-CALL		rm32|near			[m:	o32 ff /2]				386,NOLONG,ND,BND,SX
-CALL		rm64|near			[m:	o64nw ff /2]				X86_64,LONG,ND,BND,SX
-CALL		mem				[m:	odf ff /2]				8086,BND,OSIZE
-CALL		rm16				[m:	o16 ff /2]				8086,NOLONG,BND
-CALL		rm32				[m:	o32 ff /2]				386,NOLONG,BND
-CALL		rm64				[m:	o64nw ff /2]				X86_64,LONG,BND
+$wdq  CALL	imm##|near			[i:	nw o# e8 rel]				8086,BND,NOAPX,OSIZE
+$wd   CALL	imm#|far			[i:	o# 9a iwd seg]				8086,ND,NOLONG,OSIZE
+$wd   CALL	imm16:imm#			[ji:	o# 9a iwd iw]				8086,NOLONG,OSIZE,AR1
+$wd   CALL	imm16:imm#|far			[ji:	o# 9a iwd iw]				8086,NOLONG,OSIZE,AR1
+$wdq  CALL	rm#|near			[m:	nw o# ff /2]				8086,BND,OSIZE
+; OSIZE,NWSIZE makes us match 64 bits by default in 64-bit mode, even though a REX.W is required.
+; This is an intentional "programmer friendliness" quirk.
+$wdq  CALL	mem#|far			[m:	o# ff /3]				8086,OSIZE,NWSIZE
 
 $zwdq RET%	void				[	nw o# c3]				8086,BND
 $zwdq RET%	imm16				[i:	nw o# c2 iw]				8086,BND
