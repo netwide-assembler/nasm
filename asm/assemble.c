@@ -1437,6 +1437,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
     enum reg_enum mib_index = R_none;   /* For a separate index reg form */
     const char *errmsg;
     int need_pfx[MAXPREFIX];
+    int opt_opsize = 0;
 
     ins->rex     = 0;           /* Ensure REX is reset */
     ins->evex    = 0;		/* Ensure EVEX is reset */
@@ -1663,7 +1664,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
                 nasm_warn(WARN_PREFIX_OPSIZE|ERR_PASS2,
                           "invalid operand size prefix %s, must be o16",
                           prefix_name(pfx));
-            } else {
+            } else if (!(opt_opsize & 16)) {
                 ins->prefixes[PPS_OSIZE] = P_O16;
             }
             break;
@@ -1684,7 +1685,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
                 nasm_warn(WARN_PREFIX_OPSIZE|ERR_PASS2,
                           "invalid operand size prefix %s, must be o32",
                           prefix_name(pfx));
-            } else {
+            } else if (!(opt_opsize & 32)) {
                 ins->prefixes[PPS_OSIZE] = P_O32;
             }
             break;
@@ -1711,12 +1712,14 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             enum prefixes pfx = ins->prefixes[PPS_OSIZE];
             ins->op_size = 64;
             if (pfx == P_OSP) {
-                /* Ignore operand size prefix */
+                /* If osp is specified, leave it, but force REX.W */
+                if (!(ins->rex & REX_NW))
+                    ins->rex |= REX_W;
             } else if (pfx != P_none && pfx != P_O64) {
                 nasm_warn(WARN_PREFIX_OPSIZE|ERR_PASS2,
                           "invalid operand size prefix %s, must be o64",
                           prefix_name(pfx));
-            } else {
+            } else if (!(opt_opsize & 64)) {
                 ins->prefixes[PPS_OSIZE] = P_O64;
             }
             break;
@@ -1773,6 +1776,16 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case 0335:
+            break;
+
+        case 0336:
+            if (!(optimizing & OPTIM_STRICT_OSIZE))
+                opt_opsize = 16|32|64;
+            break;
+
+        case 0337:
+            if (!(optimizing & OPTIM_STRICT_OSIZE))
+                opt_opsize = 64;
             break;
 
         case 0340:
@@ -1978,8 +1991,9 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
         ins->rex &= ~REX_P;        /* Don't force REX prefix due to high reg */
     }
 
-    if (ins->op_size == 64 && !(ins->rex & REX_NW))
-        ins->rex |= REX_W;
+    if (ins->prefixes[PPS_OSIZE] == P_O64) {
+        ins->rex |= !(ins->rex & REX_NW) ? REX_W : 0;
+    }
 
     switch (ins->prefixes[PPS_REX]) {
     case P_EVEX:

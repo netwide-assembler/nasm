@@ -24,11 +24,13 @@
 	mov ds,word [rsi]
 	mov fs,word [rsi]
 	mov gs,word [rsi]
+%ifdef ERR
 	mov es,qword [rsi]
 	mov ss,qword [rsi]
 	mov ds,qword [rsi]
 	mov fs,qword [rsi]
 	mov gs,qword [rsi]
+%endif
 	mov rax,es
 	mov rax,cs
 	mov rax,ss

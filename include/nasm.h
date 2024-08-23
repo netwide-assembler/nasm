@@ -592,6 +592,7 @@ enum {
 #define REX_BXR0    0x0007
 #define REX_BXR1    0x7000
 #define REX_BXR     0x7007
+#define REX_BXRV    0x70000
 
 /* All flags pertaining to B, X, and R */
 #define REX_rB	    (REX_B | REX_B1 | REX_BV | REX_H | REX_P)
@@ -839,6 +840,7 @@ enum optimization {
     OPTIM_STRICT_INSTR     =  4, /* Disable alternate instructions */
     OPTIM_STRICT_OPER      =  8, /* Disable operand relaxation */
     OPTIM_DISABLE_FWREF    = 16, /* Disable forward reference relaxation */
+    OPTIM_STRICT_OSIZE	   = 32, /* Disable osize adjustments */
 
     /* Everything */
     OPTIM_ALL_ENABLED       = 0,
@@ -848,12 +850,13 @@ enum optimization {
 
     /* Level 0 : 0.98 behavior */
     OPTIM_LEVEL_0 =
-    OPTIM_STRICT_INSTR | OPTIM_STRICT_OPER | OPTIM_NO_JMP_RELAX,
+    OPTIM_STRICT_INSTR | OPTIM_STRICT_OSIZE | OPTIM_STRICT_OPER |
+    OPTIM_NO_JMP_RELAX,
 
     /* Level 1 : 0.98.09 behavior */
     OPTIM_LEVEL_1 =
-    OPTIM_STRICT_INSTR | OPTIM_NO_Jcc_RELAX | OPTIM_NO_JMP_RELAX |
-    OPTIM_DISABLE_FWREF,
+    OPTIM_STRICT_INSTR | OPTIM_STRICT_OSIZE | OPTIM_NO_Jcc_RELAX |
+    OPTIM_NO_JMP_RELAX | OPTIM_DISABLE_FWREF,
 
     /* Default */
     OPTIM_DEFAULT = OPTIM_ALL_ENABLED

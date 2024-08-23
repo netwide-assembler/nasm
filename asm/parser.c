@@ -301,6 +301,7 @@ static void mref_set_optype(operand *op)
     int b = op->basereg;
     int i = op->indexreg;
     int s = op->scale;
+    opflags_t size;
 
     /* It is memory, but it can match any r/m operand */
     op->type |= MEMORY_ANY;
@@ -325,6 +326,10 @@ static void mref_set_optype(operand *op)
         else if (is_class(ZMMREG,iclass))
             op->type |= ZMEM;
     }
+
+    size = op->type & SIZE_MASK;
+    if (!size || size == BITS16)
+        op->type |= RM_SEL;
 }
 
 /*

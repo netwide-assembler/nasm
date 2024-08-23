@@ -134,6 +134,12 @@ $bwdq DIV	rm#				[m:	o# f6# /6]				8086
 $bwdq NEG	rm#				[m:	hle o# f6 /3]				8086,LOCK
 $bwdq NOT	rm#				[m:	hle o# f6 /2]				8086,LOCK
 
+;# Interleaved flags arithmetic
+$dq   ADCX	reg#,rm#			[rm:	66 o# 0f38 f6 /r		]	ADX,ZU,FL
+$dq   ADCX	reg#?,reg#,rm#			[vrm:	evex.ndx.l0.66.m4.w# 66 /r	]	ADX,APX,ZU,FL
+$dq   ADOX	reg#,rm#			[rm:	f3 !osp o# 0f38 f6 /r		]	ADX,ZU,FL
+$dq   ADOX	reg#?,reg#,rm#			[vrm:	evex.ndx.l0.f3.m4.w# 66 /r	]	ADX,APX,ZU,FL
+
 ;# Double width shift
 $wdq  SHLD	rm#,reg#,imm8			[mri:	o# 0f a4 /r ib,u]			386,SM0-1
 $wdq  SHLD	rm#,reg#,reg_cl			[mr-:	o# 0f a5 /r]				386,SM0-1
@@ -473,13 +479,8 @@ $bwd  OUT	imm8,ax#			[i-:	o# e6# ib,u]				8086,NOAPX
 $bwd  OUT	reg_dx,ax#			[--:	o# ee#]					8086,NOAPX
 
 ;# Segment handling instructions
-      MOV	reg64,reg_sreg			[mr:	o32 8c /r]				X86_64,LONG,OPT,ND
-$wdq  MOV	reg#,reg_sreg			[mr:	o#  8c /r]				8086
-$wdq  MOV	reg_sreg,reg#			[rm:	osz 8e /r]				8086,OPT,ND
-$wdq  MOV	reg_sreg,reg#			[rm:	o#  8e /r]				8086
-      MOV	mem16,reg_sreg			[mr:	osz 8c /r]				8086
-      MOV	reg_sreg,mem16			[rm:	osz 8e /r]				8086
-      MOV	reg_sreg,mem64			[rm:	o64 8e /r]				X86_64,LONG
+$zwdq MOV	sel#,reg_sreg			[mr:	optd# o# 8c /r]				8086
+$zwdq MOV	reg_sreg,sel#			[rm:	optw# o# 8e /r]				8086
 
 $wd   LDS	reg#,mem#			[rm:	o# c5 /r]				8086,NOLONG
 $wd   LES	reg#,mem#			[rm:	o# c4 /r]				8086,NOLONG
@@ -506,56 +507,26 @@ $dq   RDGSBASE	reg#				[m:	w# f3 0f ae /1]				LONG
 $dq   WRFSBASE	reg#				[m:	w# f3 0f ae /2]				LONG
 $dq   WRGSBASE	reg#				[m:	w# f3 0f ae /3]				LONG
 
-ARPL		rm16,reg16			[mr:	63 /r]					286,PROT,SM,NOLONG
-LAR		reg16,mem			[rm:	o16 0f 02 /r]				286,PROT,SW
-LAR		reg16,reg16			[rm:	o16 0f 02 /r]				286,PROT
-LAR		reg16,reg32			[rm:	o16 0f 02 /r]				386,PROT
-LAR		reg16,reg64			[rm:	o16 0f 02 /r]				X86_64,LONG,PROT,ND
-LAR		reg32,mem			[rm:	o32 0f 02 /r]				386,PROT,SW
-LAR		reg32,reg16			[rm:	o32 0f 02 /r]				386,PROT
-LAR		reg32,reg32			[rm:	o32 0f 02 /r]				386,PROT
-LAR		reg32,reg64			[rm:	o32 0f 02 /r]				X86_64,LONG,PROT,ND,OPT
-LAR		reg64,mem			[rm:	o64nw 0f 02 /r]				X86_64,LONG,PROT,SW,ND,OPT
-LAR		reg64,reg16			[rm:	o64nw 0f 02 /r]				X86_64,LONG,PROT,ND,OPT
-LAR		reg64,reg32			[rm:	o64nw 0f 02 /r]				X86_64,LONG,PROT,ND,OPT
-LAR		reg64,reg64			[rm:	o64nw 0f 02 /r]				X86_64,LONG,PROT,ND,OPT
-LAR		reg64,mem			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT,SW
-LAR		reg64,reg16			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT
-LAR		reg64,reg32			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT
-LAR		reg64,reg64			[rm:	o64 0f 02 /r]				X86_64,LONG,PROT
+$zwd  ARPL	rm16,sel#			[mr:	optw# 63 /r]				286,PROT,SM,NOLONG
+$wdq  LAR	reg#,rm_sel			[rm:	optd# 0f 02 /r]				286,PROT
+$wdq  LSL	reg#,rm_sel			[rm:	optd# 0f 03 /r]				286,PROT
 
-$wdq  LSL	reg#,rm16			[rm:	o# 0f 03 /r]				286,PROT
-$wdq  LSL	reg#,reg32			[rm:	o# 0f 03 /r]				386,PROT
-$wdq  LSL	reg#,reg64			[rm:	o# 0f 03 /r]				X86_64,LONG,PROT
-
-VERR		rm16				[m:	0f 00 /4]				286,PROT
-VERW		rm16				[m:	0f 00 /5]				286,PROT
+      VERR	rm_sel				[m:	0f 00 /4]				286,PROT
+      VERW	rm_sel				[m:	0f 00 /5]				286,PROT
 
 ; The privileged ones...
       SWAPGS	void				[	0f 01 f8]				X86_64,LONG
-      LKGS	rm16				[m:	f2 0f 00 /6		]		LKGS,PRIV,LONG
-$dq   LKGS	reg#				[m:	f2 0f 00 /6		]		LKGS,PRIV,LONG,ND
+      LKGS	rm_sel				[m:	f2 0f 00 /6		]		LKGS,PRIV,LONG
 
-LGDT		mem				[m:	0f 01 /2]				286,PRIV
-LIDT		mem				[m:	0f 01 /3]				286,PRIV
-LLDT		mem				[m:	0f 00 /2]				286,PROT,PRIV
-LLDT		mem16				[m:	0f 00 /2]				286,PROT,PRIV
-LLDT		reg16				[m:	0f 00 /2]				286,PROT,PRIV
-LTR		rm16				[m:	0f 00 /3]				286,PROT,PRIV
+$dq   LGDT	mem#				[m:	0f 01 /2]				286,PRIV,NOLONG32
+$dq   LIDT	mem#				[m:	0f 01 /3]				286,PRIV,NOLONG32
+$zwdq LLDT	sel#				[m:	optw# 0f 00 /2]				286,PROT,PRIV
+$zwdq LTR	sel#				[m:	optw# 0f 00 /3]				286,PROT,PRIV
 
-$wdq  SGDT	mem#				[m:	nw o# 0f 01 /0]				286,OSIZE
-$wdq  SIDT	mem#				[m:	nw o# 0f 01 /1]				286,OSIZE
-      SLDT	reg64				[m:	o64nw 0f 00 /0]				X86_64,LONG,ND
-$wdq  SLDT	reg#				[m:	o#    0f 00 /0]				286
-      SLDT	mem16				[m:	osz 0f 00   /0]				286
-      STR	reg64				[m:	o64nw 0f 00 /1]				X86_64,LONG,ND
-$wdq  STR	reg#				[m:	o#    0f 00 /1]				286
-      STR	mem16				[m:	osz 0f 00   /1]				286
-
-STR		mem16				[m:	0f 00 /1]				286,PROT
-STR		reg16				[m:	o16 0f 00 /1]				286,PROT
-STR		reg32				[m:	o32 0f 00 /1]				386,PROT
-STR		reg64				[m:	o64 0f 00 /1]				X86_64,LONG
+$dq   SGDT	mem#				[m:	nw o# 0f 01 /0]				286
+$dq   SIDT	mem#				[m:	nw o# 0f 01 /1]				286
+$zwdq SLDT	sel#				[m:	optd# 0f 00 /0]				286,PROT
+$zwdq STR	sel#				[m:	optd# 0f 00 /1]				286,PROT
 
 LOADALL		void				[	0f 07]					386,UNDOC,ND,OBSOLETE
 LOADALL286	void				[	0f 05]					286,UNDOC,ND,OBSOLETE
@@ -2441,10 +2412,6 @@ VCVTPH2PS	ymmreg,xmmrm128			[rm:	vex.256.66.0f38.w0 13 /r]		AVX
 VCVTPH2PS	xmmreg,xmmrm64			[rm:	vex.128.66.0f38.w0 13 /r]		AVX
 VCVTPS2PH	xmmrm128,ymmreg,imm8		[mri:	vex.256.66.0f3a.w0 1d /r ib]		AVX
 VCVTPS2PH	xmmrm64,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 1d /r ib]		AVX
-
-; Per AVX spec revision 13, document 319433-013
-$dq   ADCX	reg#,rm#			[rm:	o# 66 0f38 f6 /r]			ADX
-$dq   ADOX	reg#,rm#			[rm:	o# f3 0f38 f6 /r]			ADX
 
 ;# Supervisor Mode Access Prevention (SMAP)
 
@@ -5588,12 +5555,6 @@ UIRET		void					[	f3 0f 01 ec		]	UINTR,LONG
 HRESET		imm,reg_eax				[i-:	f3 0f3a f0 c0 ib	]	HRESET,PRIV,SB
 HRESET		imm					[i:	f3 0f3a f0 c0 ib	]	HRESET,PRIV,SB,ND
 
-;# Intel Advanced Performance Extensions (APX) new or extended instructions
-
-ADCX		reg32?,reg32,rm32		[vrm:	evex.ndx.l0.66.m4.w0 66 /r	]	APX,ZU
-ADCX		reg64?,reg64,rm64		[vrm:	evex.ndx.l0.66.m4.w1 66 /r	]	APX,ZU
-ADOX		reg32?,reg32,rm32		[vrm:	evex.ndx.l0.f3.m4.w0 66 /r	]	APX,ZU
-ADOX		reg64?,reg64,rm64		[vrm:	evex.ndx.l0.f3.m4.w1 66 /r	]	APX,ZU
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file

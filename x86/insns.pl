@@ -1040,6 +1040,9 @@ sub byte_code_compile($$$) {
         'hlenl'     => 0272,
         'hle'       => 0273,
 
+	'optw'      => 0336,
+	'optd'      => 0337,
+
         # This instruction takes XMM VSIB
         'vsibx'     => 0374,
         'vm32x'     => 0374,

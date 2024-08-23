@@ -80,6 +80,7 @@ sub func_multisize($$$) {
 	my $sz = $s || 'sz';
 	my $o;
 	my $ins = join(' ', @$rawargs);
+	my $nd = 0;
 
 	# Conditional pattern inclusions
 	# Syntax: (which1:text1/which2:text2/text3)
@@ -108,7 +109,7 @@ sub func_multisize($$$) {
 	$ins = $o.$ins;
 	$o = '';
 
-	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\b[ioa]|\b(?:reg_)?[abcd]x|\breg|\brm|\bw)?\#{1,2}|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%{1,2})(.*)$/) {
+	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\bsel|\bopt\w?|\b[ioa]|\b(?:reg_)?[abcd]x|\breg|\brm|\bw)?\#{1,2}|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%{1,2})(.*)$/) {
 	    $o .= $1;
 	    my $mw = $2;
 	    $ins = $3;
@@ -131,9 +132,9 @@ sub func_multisize($$$) {
 	    } elsif ($mw =~ '^([ao])\#$') {
 		$o .= $1 . $sz;
 	    } elsif ($mw eq 'i#') {
-		$o .= !$i ? 'iwd' : ($s >= 64) ? 'id,s' : 'i'.$sizename[$i];
+		$o .= !$i ? 'iwd' : ($s >= 64) ? 'id,s' : "i$sn";
 	    } elsif ($mw eq 'i##') {
-		$o .= !$i ? 'iwdq' : 'i'.$sizename[$i];
+		$o .= !$i ? 'iwdq' : "i$sn";
 	    } elsif ($mw =~ /^(?:reg_)?([abcd])x\#$/) {
 		if ($i == 1) {
 		    $o .= "reg_${1}l";
@@ -147,6 +148,23 @@ sub func_multisize($$$) {
 		} else {
 		    die "$0:$infile:$line: register cannot be used with z\n";
 		}
+	    } elsif ($mw eq 'sel#') {
+		# z is (ab)used to mean the memory form of a segment selector
+		if ($i == 0) {
+		    $o .= 'mem16';
+		} elsif ($i == 1) {
+		    die "$0:$infile:$line: $mw cannot be used with b\n";
+		} else {
+		    $o .= "reg$s";
+		}
+	    } elsif ($mw =~ /^opt(\w?)\#$/) {
+		if ($i >= 2) {
+		    my $opt .= $1 eq '' ? "opt$sn" : "opt$1";
+		    if (!($opt eq 'optd' && $s == 16) && $opt ne 'optq') {
+			$o .= $opt.' ';
+		    }
+		}
+		$o .= "o$s" if ($s > 0);
 	    } elsif ($mw =~ /^(o64)?nw$/) {
 		$long |= 2 if ($i == 32); # nw = 32 bits not encodable in long mode
 		$o .= $mw;
@@ -174,6 +192,7 @@ sub func_multisize($$$) {
 
 	$o .= ',LONG'   if ($long & 1);
 	$o .= ',NOLONG' if ($long & 2);
+	$o .= ',ND'     if ($nd);
 
 	$o .= ',386'    if ($s >= 32 && $o !~ /\B\!386\b/);
 
