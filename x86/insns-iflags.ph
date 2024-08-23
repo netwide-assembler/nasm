@@ -180,6 +180,8 @@ sub set_implied_flags($;$) {
     $flags->{'NOREX'}++    if ($flags->{'NOLONG'});
     $flags->{'NOAPX'}++    if ($flags->{'NOREX'});
     $flags->{'X86_64'}++   if ($flags->{'LONG'});
+    $flags->{'PROT'}++     if ($flags->{'LONG'}); # LONG mode is a submode of PROT
+    $flags->{'PROT'}++     if ($flags->{'EVEX'}); # EVEX not supported in real/v86 mode
     $flags->{'OBSOLETE'}++ if ($flags->{'NEVER'});
     $flags->{'NF'}++ if ($flags->{'NF_R'} || $flags->{'NF_E'});
     $flags->{'ZU'}++ if ($flags->{'ZU_R'} || $flags->{'ZU_E'});
