@@ -273,21 +273,25 @@ int64_t switch_segment(int32_t segment)
     return location.offset;
 }
 
-static void set_curr_offs(int64_t l_off)
+static int64_t set_curr_offs(int64_t l_off)
 {
-        if (in_absolute)
-            absolute.offset = l_off;
-        else
-            offsets = raa_write(offsets, location.segment, l_off);
+    location.offset = l_off;
+    if (in_absolute) {
+        absolute.offset = l_off;
+    } else {
+        offsets = raa_write(offsets, location.segment, l_off);
+    }
+    return l_off;
 }
 
-void increment_offset(int64_t delta)
+int64_t increment_offset(int64_t delta)
 {
-    if (unlikely(delta == 0))
-        return;
+    int64_t newoffs = location.offset + delta;
 
-    location.offset += delta;
-    set_curr_offs(location.offset);
+    if (unlikely(!delta))
+        return newoffs;
+
+    return set_curr_offs(newoffs);
 }
 
 /*
@@ -1654,7 +1658,10 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         globalbits = cmd_sb;  /* set 'bits' to command line default */
         cpu = cmd_cpu;
         if (listname) {
-            if (pass_final() || list_on_every_pass()) {
+            if (list_on_this_pass()) {
+                /*
+                 * Generating a list file on this pass.
+                 */
                 lfmt->init(listname);
             } else if (list_active()) {
                 /*

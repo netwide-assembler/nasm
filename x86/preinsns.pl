@@ -108,19 +108,15 @@ sub func_multisize($$$) {
 	$ins = $o.$ins;
 	$o = '';
 
-	print '>', $ins, "\n";
-
 	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\b[ioa]|\b(?:reg_)?[abcd]x|\breg|\brm|\bw)?\#{1,2}|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%{1,2})(.*)$/) {
 	    $o .= $1;
 	    my $mw = $2;
 	    $ins = $3;
-	    if (!$i && $mw =~ /\#\#$/) {
-		die "$0:$infile:$line: $mw cannot be used with z\n";
-	    } elsif ($mw eq '%') {
+	    if ($mw eq '%') {
 		$o .= uc($sn) if ($i);
 	    } elsif ($mw eq '%%') {
 		if ($i < 2) {
-		    die "$0:$infile:$line: $mw cannot be used with zb\n";
+		    die "$0:$infile:$line: $mw cannot be used with z|b\n";
 		}
 		$o .= uc($sizename[$i-1]) . uc($sn);
 	    } elsif ($mw =~ /^([0-9a-f]{2})(\+r)?(\#)?\#$/) {
@@ -130,8 +126,8 @@ sub func_multisize($$$) {
 		$o .= sprintf('%02x%s', hex($1) | $n, $2);
 	    } elsif ($mw eq 'sbyte#') {
 		$o .= $sbyte[$i];
-	    } elsif ($mw eq 'imm#') {
-		$o .= !$i ? 'imm' : ($s >= 64) ? "sdword$s" : "imm$s";
+	    } elsif ($mw =~ /^imm\#(\#?)$/) {
+		$o .= (($1 eq '' && $s >= 64) ? 'sdword' : 'imm').$s;
 	    } elsif ($mw =~ '^([ao])\#$') {
 		$o .= $1 . $sz;
 	    } elsif ($mw eq 'i#') {
@@ -169,7 +165,7 @@ sub func_multisize($$$) {
 	    } elsif ($mw eq '#') {
 		$o .= $s;
 	    } else {
-		die "$0:$infile:$line: unknown sequence \"$mw\" should not match regexp\n";
+		die "$0:$infile:$line: unknown or invalid sequence \"$mw\"\n";
 	    }
 	}
 	$o .= $ins;
@@ -265,6 +261,7 @@ sub parse_args($@) {
 	$vars{'n'}  = $n;
 	$vars{'nd'} = 0;
 	my @oaa;
+	my $is_op;
 	foreach my $op ($ops =~ /(?:[^\,\[\]\"]+|\[.*?\]|\".*?\")+/g) {
 	    $op =~ s/\"//g;
 
@@ -280,14 +277,17 @@ sub parse_args($@) {
 		    '';
 		next;
 	    } elsif ($op =~ /^\-?$/) {
+		# Null (placeholder) operand
+		$is_op = 1;
 		next;
 	    }
 
 	    $vars{'op'} = $op;
 	    push(@oaa, {%vars});
 	    $vars{'nd'} = 'nd';
+	    $is_op = 1;
 	}
-	if (scalar(@oaa)) {
+	if ($is_op) {
 	    push(@oa, [@oaa]);
 	    $n++;
 	} else {

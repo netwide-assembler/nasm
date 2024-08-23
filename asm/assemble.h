@@ -47,7 +47,7 @@ void set_cpu(const char *cpuspec);
 extern bool in_absolute;        /* Are we in an absolute segment? */
 extern struct location absolute;
 
-void increment_offset(int64_t delta);
+int64_t increment_offset(int64_t delta);
 void process_insn(insn *instruction);
 
 bool process_directives(char *);

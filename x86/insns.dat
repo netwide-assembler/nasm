@@ -97,7 +97,7 @@ $wdq  IMUL	reg#?,reg#,rm#			[vrm:	evex.nf.ndx.l0.m4.o# af /r]		APX,SM
 $wdq  IMUL	reg#,rm#,sbyte#			[rmi:	evex.nf.zu.l0.m4.o# 6b /r i#]		APX,SM
 $wdq  IMUL	reg#,rm#,imm#			[rmi:	evex.nf.zu.l0.m4.o# 69 /r i#]		APX,SM
 
-$bwdq MUL	rm#				[m:	o# f6 /4]				8086
+$bwdq MUL	rm#				[m:	o# f6# /4]				8086
 $dq   MULX	reg#,reg#*,rm#			[rvm:	vex.ndd.lz.f2.0f38.w# f6 /r]		BMI2
 $dq   MUL	reg#,reg#*,rm#			[rvm:	vex.ndd.lz.f2.0f38.w# f6 /r]		BMI2,NF!,OPT,ND
 $bwdq MUL	rm#				[m:	evex.nf.nd0.l0.m4.o# f6# /4]		APX,SM
@@ -224,15 +224,17 @@ $bwdq XCHG	rm#,reg#			[mr:	hlenl o# 86# /r]			8086,SM,LOCK
 $bwdq XCHG	reg#,rm#			[rm:	hlenl o16 87 /r]			8086,SM,LOCK1,ND
 
 ;# Jumps
-; Call/jmp near imm/reg/mem is always 64-bit in long mode.
+; Call/jmp near imm/reg/mem are always 64-bit in long mode.
       JMP	imm8|short			[i:	nw eb rel8]				8086,NOAPX
       JMP	imm				[i:	jmp8 nw eb rel8]			8086,SX,ND,NOAPX
-$wdq  JMP	imm#|near			[i:	nw o# e9 rel]				8086,OSIZE,ND,BND,NOLONG16
+$wdq  JMP	imm##|near			[i:	nw o# e9 rel]				8086,OSIZE,ND,BND,NOLONG16
 $wdq  JMP	rm#|near			[m:	nw o# ff /4]				8086,OSIZE,BND,NOLONG16
 $wd   JMP	imm#|far			[i:	o# ea iwd seg]				8086,OSIZE,ND,NOLONG
 $wd   JMP	imm16:imm#			[ji:	o# ea iwd iw]				8086,OSIZE,AR1,NOLONG
 $wd   JMP	imm16:imm#|far			[ji:	o# ea iwd iw]				8086,OSIZE,AR1,NOLONG,ND
-$wdq  JMP	mem#|far			[m:	o# ff /5]				8086,OSIZE
+; OSIZE,NWSIZE makes us match 64 bits by default in 64-bit mode, even though a REX.W is required.
+; This is an intentional "programmer friendliness" quirk.
+$wdq  JMP	mem#|far			[m:	o# ff /5]				8086,OSIZE,NWSIZE
 
 ; APX absolute 64-bit jmp
       JMP	imm64|abs			[i:	a64 np rex2 a1 iq		]	APX
@@ -241,7 +243,7 @@ $wdq  JMP	mem#|far			[m:	o# ff /5]				8086,OSIZE
 
 Jcc		imm8|short			[i:	nw 70+c rel8]				8086,ND,BND,SX,NOAPX
 Jcc		imm				[i:	jcc8 nw 70+c rel8]			8086,BND,SX,NOAPX
-$zwdq Jcc	imm#|near			[i:	o# 0f 80+c rel]				386,BND,NOAPX,NOLONGwd
+$zwdq Jcc	imm##|near			[i:	o# 0f 80+c rel]				386,BND,NOAPX,NOLONGwd
 ; Jump-over emulation of Jcc on < 386
 Jcc		imm16|near			[i:	nw 71+c jlen e9 rel]			8086,ND,NOAPX,NOLONG
 
@@ -263,7 +265,7 @@ $wdq  LOOPZ	imm8|near|short,cx#		[i-:	a#  nw e1 rel8]				8086,NOAPX,ND
 $wdq  LOOPNZ	imm8|near|short,cx#		[i-:	a#  nw e0 rel8]				8086,NOAPX,ND
 
 ; JMPE is obsolete, but seems to be used by a fair number of virtual environments?
-$zwdq JMPE	imm#|near			[i:	nw o# 0f b8 rel]			IA64
+$zwdq JMPE	imm##|near			[i:	nw o# 0f b8 rel]			IA64
 ; 0f 00 /6 with a prefix has been repurposed in long mode
 $wdq  JMPE	rm#|near			[m:	nw o# np 0f 00 /6]			IA64
 $wd   JMPE	rm#|near			[m:	o#       0f 00 /6]			IA64,NOLONG
@@ -393,8 +395,8 @@ $wdq  INVLPGA	ax#,reg_ecx			[--:	a#  0f 01 df]				X86_64,AMD
       RDTSCP	void				[	0f 01 f9]				X86_64
 $wdq  RDRAND	reg#				[m:	o# 0f c7 /6]				RDRAND
 $wdq  RDSEED	reg#				[m:	o# 0f c7 /7]				RDSEED
-      RDPID	reg64				[m:	o32 f3 0f c7 /7]			RDPID,LONG,OPT,ND
-$dq   RDPID	reg#				[m:	o#  f3 0f c7 /7]			RDPID
+      RDPID	reg64				[m:	f3 0f c7 /7]				RDPID,LONG,OPT,ND
+$dq   RDPID	reg#				[m:	f3 !osp o# 0f c7 /7]			RDPID
 
 ;# Machine control and management instructions
 CLTS		void				[	0f 06]					286,PRIV

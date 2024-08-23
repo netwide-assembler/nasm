@@ -222,8 +222,11 @@ static void dbg_out(const struct out_data *data)
             out_type(data->type), out_flags(data->flags),
             data->bits, data->insoffs, data->inslen, data->size);
     if (data->itemp) {
-        fprintf(ofile, " ins %s(%d)",
-                nasm_insn_names[data->itemp->opcode], data->itemp->operands);
+        fprintf(ofile, " ins %s#%u(%d)",
+                nasm_insn_names[data->itemp->opcode],
+                (unsigned int)
+                (data->itemp - nasm_instructions[data->itemp->opcode].temp),
+                data->itemp->operands);
     } else {
         fprintf(ofile, " no ins (plain data)");
     }

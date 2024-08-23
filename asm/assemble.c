@@ -57,6 +57,7 @@ enum match_result {
      * errors (higher priority) come later in the sequence.
      */
     MERR_INVALOP,
+    MERR_OPSIZEINVAL,
     MERR_OPSIZEMISSING,
     MERR_OPSIZEMISMATCH,
     MERR_BRNOTHERE,
@@ -112,8 +113,7 @@ static int32_t regval(const operand *);
 static uint32_t rexflags(int, opflags_t, uint32_t);
 static uint32_t op_rexflags(const operand *, uint32_t);
 static uint32_t op_evexflags(const operand *, uint32_t);
-static void add_asp(insn *);
-static void set_initial_opsize(insn *);
+static void insn_early_setup(insn *);
 
 static int process_ea(operand *input, int rfield, opflags_t rflags,
                       insn *ins, enum ea_type expected,
@@ -505,6 +505,7 @@ static void out(struct out_data *data)
         /* No need to push to the backend */
     }
 
+    /* Prepare for the next instruction */
     data->loc.offset  += data->size;
     data->insoffs     += data->size;
 
@@ -662,17 +663,20 @@ static enum match_result jmp_match(const struct itemplate *temp, const insn *ins
     }
 
     /*
-     * An instruction can only range between 1 and 15 bytes.
-     * If that is guaranteed true or false, there is no reason
-     * to go through the process of calculating the exact instruction
-     * size.
+     * An instruction with a rel8 operand can only range between 2 and
+     * 15 bytes.  If that is guaranteed true or false, there is no
+     * reason to go through the process of calculating the exact
+     * instruction size.
+     *
+     * Note that the instruction size is to be *subtracted* from the
+     * initial (beginning-of-instruction) delta value.
      */
     delta = op0->offset - ins->loc.offset;
-    if (delta < -128 + 1 || delta > 127 + 15) {
+    if (delta - 2 < -128 || delta - 15 > 127) {
         /* This cannot be a byte-sized jump */
         return MERR_INVALOP;
-    } else if (delta >= -128 + 15 && delta <= 127 + 1) {
-        /* It is guaranteed to be safe, no need to go through test */
+    } else if (delta - 15 >= -128 && delta - 2 <= 127) {
+        /* It is guaranteed to be a valid byte-sized jump, no need to test */
     } else {
         /*
          * Need to do this the hard way.
@@ -933,11 +937,8 @@ int64_t assemble(insn *instruction)
     } else {
         /* "Real" instruction */
 
-        /* Check to see if we need an address-size prefix */
-        add_asp(instruction);
-
-        /* Set default/prefix-controlled operand size */
-        set_initial_opsize(instruction);
+        /* Pre-match instruction structure update */
+        insn_early_setup(instruction);
 
         m = find_match(&temp, instruction);
 
@@ -999,12 +1000,21 @@ int64_t assemble(insn *instruction)
             data.insoffs = 0;
             gencode(&data, instruction);
             if (unlikely(data.insoffs != data.inslen)) {
-                nasm_nonfatal("instruction length changed during code generation: %u -> %u",
+                nasm_nonfatal("instruction length changed during code generation (%u -> %u)",
                            (unsigned int)data.insoffs, (unsigned int)data.inslen);
             }
+
+            nasm_assert(data.loc.offset - start == data.inslen);
         } else {
             /* No match */
             switch (m) {
+            case MERR_INVALOP:
+            default:
+                nasm_nonfatal("invalid combination of opcode and operands");
+                break;
+            case MERR_OPSIZEINVAL:
+                nasm_nonfatal("invalid operand sizes for instruction");
+                break;
             case MERR_OPSIZEMISSING:
                 nasm_nonfatal("operation size not specified");
                 break;
@@ -1062,9 +1072,6 @@ int64_t assemble(insn *instruction)
                 break;
             case MERR_REQNF:
                 nasm_nonfatal("{nf} required for this instruction");
-                break;
-            default:
-                nasm_nonfatal("invalid combination of opcode and operands");
                 break;
             }
 
@@ -1281,8 +1288,8 @@ int64_t insn_size(insn *instruction)
     } else {
         /* Normal instruction, or RESx */
 
-        /* Check to see if we need an address-size prefix */
-        add_asp(instruction);
+        /* Pre-matching setup */
+        insn_early_setup(instruction);
 
         m = find_match(&temp, instruction);
         if (m < MOK_GOOD)
@@ -2950,10 +2957,12 @@ static enum match_result matches(const struct itemplate * const itemp,
     unsigned int arflag;
     unsigned int armask, smmask;
     bool if_anysize, if_sx;
+    int op_size;
     opflags_t opsize, arsize, smsize;
     opflags_t isize[MAX_OPERANDS]; /* Adjusted instruction operand sizes */
     opflags_t tsize[MAX_OPERANDS]; /* Adjusted template operand sizes */
     opflags_t itype[MAX_OPERANDS]; /* Adjusted instruction flags */
+    bool sm_missing;
 
     /* Jump size/type declarators are more like types than sizes */
     const opflags_t jsize_mask = NEAR|FAR|SHORT|ABS;
@@ -3041,9 +3050,12 @@ static enum match_result matches(const struct itemplate * const itemp,
     }
 
     /* "Default" operand size (from mode and prefixes only) */
-    opsize = mode_to_op(ins->op_size);
-    if (itemp_has(itemp, IF_NWSIZE) && bits == 64 && opsize == BITS32)
-        opsize = BITS64;
+    op_size = ins->op_size;
+    if (itemp_has(itemp, IF_NWSIZE) && op_size == 32) {
+        /* If this is an nw instruction, default to 64 bits in 64-bit mode */
+        op_size = bits;
+    }
+    opsize = mode_to_op(op_size);
 
     /* Some key flags */
     if_anysize = itemp_has(itemp, IF_ANYSIZE);
@@ -3136,8 +3148,7 @@ static enum match_result matches(const struct itemplate * const itemp,
             return MERR_DECONOTHERE;
 
         if (~ttype & itype[i] & REGSET_MASK)
-            return (ttype & REGSET_MASK)
-                ? MERR_REGSETSIZE : MERR_REGSET;
+            return (ttype & REGSET_MASK) ? MERR_REGSETSIZE : MERR_REGSET;
     }
 
     /*
@@ -3158,7 +3169,7 @@ static enum match_result matches(const struct itemplate * const itemp,
     armask = itemp_arx(itemp);
     smmask = itemp_smx(itemp);
 
-    /* Apply ARx sizes and handle size coersion */
+    /* Apply ARx and register default sizes */
     if (!if_sx) {
         for (i = 0; i < oprs; i++) {
             const unsigned int bit = 1U << i;
@@ -3172,8 +3183,14 @@ static enum match_result matches(const struct itemplate * const itemp,
         }
     }
 
-    /* Look the common subset for the size-matched operands */
+    /*
+     * Look the common subset for the size-matched operands.
+     * However, defer the error messages to until after
+     * the final operand checking loop, to get a better
+     * order of message priorities.
+     */
     smsize = msize_mask;
+    sm_missing = false;
     if (smmask) {
         unsigned int nosizemask = 0;
         for (i = 0; i < oprs; i++) {
@@ -3181,20 +3198,11 @@ static enum match_result matches(const struct itemplate * const itemp,
             if (isize[i]) {
                 if (smmask & bit)
                     smsize &= isize[i];
-            } else if (!is_class(REGISTER, itype[i])) {
+            } else if (tsize[i] && !is_class(REGISTER, itype[i])) {
                 nosizemask |= bit;
             }
         }
-
-        if (!smsize) {
-            /* No valid common set */
-            return MERR_OPSIZEMISMATCH;
-        } else if (!(smmask & ~nosizemask)) {
-            /*
-             * No sized or register operand in the whole set...
-             */
-            return MERR_OPSIZEMISSING;
-        }
+        sm_missing = !(smmask & ~nosizemask);
     }
 
     /*
@@ -3209,6 +3217,7 @@ static enum match_result matches(const struct itemplate * const itemp,
         const bool is_broadcast = deco & BRDCAST_MASK;
         const bool has_ar      = (armask >> i) & 1;
         const bool has_sm      = (smmask >> i) & 1;
+        const bool is_reg      = is_class(REGISTER, type);
 
         /*
          * Operand sizes are considered matching at this stage
@@ -3227,12 +3236,12 @@ static enum match_result matches(const struct itemplate * const itemp,
                 if (has_ar) {
                     if (if_anysize)
                         goto isize_ok;
-                    if (unlikely(if_sx) && !is_class(REGISTER, itype[i]))
-                        return MERR_OPSIZEMISMATCH;
+                    if (unlikely(if_sx) && !is_reg)
+                        return MERR_OPSIZEINVAL;
                 }
 
                 if (isize[i])
-                    return MERR_OPSIZEMISMATCH;
+                    return is_reg ? MERR_INVALOP : MERR_OPSIZEINVAL;
             }
 
         isize_ok:
@@ -3245,7 +3254,7 @@ static enum match_result matches(const struct itemplate * const itemp,
              */
             if (unlikely(if_sx) && has_ar)
                 if (isize[i])
-                    return MERR_OPSIZEMISMATCH;
+                    return MERR_OPSIZEINVAL;
         }
 
         if (is_class(REG_HIGH, type) && ins->prefixes[PPS_REX]) {
@@ -3280,7 +3289,7 @@ static enum match_result matches(const struct itemplate * const itemp,
     if (smmask) {
         if (!smsize)
             return MERR_OPSIZEMISMATCH;
-        else if (!is_power2(smsize))
+        else if (!is_power2(smsize) || (if_sx && sm_missing))
             return MERR_OPSIZEMISSING;
     }
 
@@ -3998,63 +4007,129 @@ static void set_initial_opsize(insn *ins)
     }
 }
 
+static void insn_early_setup(insn *instruction)
+{
+    /* Check to see if we need an address-size prefix */
+    add_asp(instruction);
+
+    /* Set default/prefix-controlled operand size */
+    set_initial_opsize(instruction);
+}
+
+static void do_list_nonfinal_pass(int64_t start)
+{
+    struct out_data dummy;
+    nasm_zero(dummy);
+    /* OUT_RAWDATA with .data is special */
+    dummy.type       = OUT_RAWDATA;
+    dummy.loc        = location;
+    dummy.size       = location.offset - start;
+    dummy.loc.offset = start;
+    lfmt->output(&dummy);
+}
+
+static inline void list_nonfinal_pass(int64_t start)
+{
+    if (list_option('p'))
+        do_list_nonfinal_pass(start);
+}
+
+/*
+ * Process a single instruction without TIMES; this is a common case
+ * so optimize it.
+ */
+static void process_one_insn(insn *ins)
+{
+    int64_t l;
+
+    ins->loc = location;
+    if (!pass_final()) {
+        l = insn_size(ins);
+        if (l < 0)
+            return;             /* Invalid instruction */
+        list_nonfinal_pass(ins->loc.offset);
+    } else {
+        l = assemble(ins);
+        nasm_assert(l >= 0);    /* Invalid instruction here: bad */
+    }
+    increment_offset(l);
+}
+
+/*
+ * Process an instruction with TIMES handling. As this instruction
+ * may end up getting processed multiple times and it is permitted
+ * for the intervening layers to change the contents of the instruction
+ * structure, it is necessary to keep the original and re-initializing
+ * the structure on each iteration.
+ */
+static void process_times_insn(insn *ins)
+{
+    int64_t l;
+    insn tmpins;
+
+    ins->loc = location;
+
+    /*
+     * NOTE: insn_size() and therefore assemble() can change
+     * ins->times (usually to 1) when called due to merging certain
+     * operations (e.g. TIMES x RESB y).
+     *
+     * Therefore, it is necessary to check the returned times
+     * value for each iteration.
+     */
+    if (!pass_final()) {
+        int64_t times = ins->times;
+        while (times > 0) {
+            tmpins = *ins;
+            tmpins.loc.offset = location.offset;
+            tmpins.times = times;
+            l = insn_size(&tmpins);
+            if (l < 0)
+                break;          /* Invalid instruction */
+            increment_offset(l);
+            times = tmpins.times - 1;
+        }
+        list_nonfinal_pass(ins->loc.offset); /* The original starting offset */
+    } else {
+        int64_t times;
+
+        tmpins = *ins;
+        l = assemble(&tmpins);
+        nasm_assert(l >= 0);    /* Invalid instruction here: bad */
+        increment_offset(l);
+
+        times = tmpins.times;
+        if (times <= 1)
+            return;
+
+        lfmt->uplevel(LIST_TIMES, times);
+        times--;
+        while (times) {
+            tmpins = *ins;
+            tmpins.loc.offset = location.offset;
+            tmpins.times = times;
+            l = assemble(&tmpins);
+            nasm_assert(l >= 0);
+            increment_offset(l);
+            times = tmpins.times - 1;
+        }
+        lfmt->downlevel(LIST_TIMES);
+    }
+}
+
 /*
  * This is the main entry point to this module, called from asm/nasm.c.
  */
-void process_insn(insn *instruction)
+void process_insn(insn *ins)
 {
-    int32_t n;
-    int64_t l;
-
-    if (instruction->times <= 0) {
-        if (instruction->times)
-            nasm_nonfatalf(ERR_PASS2, "TIMES value %"PRId32" is negative",
-                           instruction->times);
-        return;
-    }
-
-    /*
-     * NOTE: insn_size() can change instruction->times
-     * (usually to 1) when called by merging certain operations.
-     * Therefore, do NOT cache instruction->times!
-     */
-    instruction->loc = location;
-
-    if (!pass_final()) {
-        int64_t start = location.offset;
-        for (n = 0; n < instruction->times; n++) {
-            l = insn_size(instruction);
-            /* l == -1 -> invalid instruction */
-            if (l != -1) {
-                increment_offset(l);
-                instruction->loc.offset += l;
-            }
-        }
-        if (list_option('p')) {
-            struct out_data dummy;
-            nasm_zero(dummy);
-            /* Handled specially with .data NULL */
-            dummy.type       = OUT_RAWDATA;
-            dummy.loc.offset = start;
-            dummy.size       = location.offset - start;
-            lfmt->output(&dummy);
-        }
+    if (likely(ins->times == 1)) {
+        process_one_insn(ins);
+    } else if (!ins->times) {
+        /* TIMES 0 = nothing to do */
+    } else if (likely(ins->times > 0)) {
+        process_times_insn(ins);
     } else {
-        instruction->loc = location;
-        l = assemble(instruction);
-        /* We can't get an invalid instruction here */
-        nasm_assert(l >= 0);
-        instruction->loc.offset += l;
-        increment_offset(l);
-
-        if (instruction->times > 1) {
-            lfmt->uplevel(LIST_TIMES, instruction->times);
-            for (n = 2; n <= instruction->times; n++) {
-                l = assemble(instruction);
-                instruction->loc.offset += l;
-                increment_offset(l);
-            }
-            lfmt->downlevel(LIST_TIMES);
-        }
+        nasm_nonfatalf(ERR_PASS2, "TIMES value %"PRId32" is negative",
+                       ins->times);
     }
 }

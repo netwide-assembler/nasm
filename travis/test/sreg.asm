@@ -57,9 +57,11 @@
 	mov word [rdi],ds
 	mov word [rdi],fs
 	mov word [rdi],gs
+%ifdef ERR
 	mov qword [rdi],es
 	mov qword [rdi],cs
 	mov qword [rdi],ss
 	mov qword [rdi],ds
 	mov qword [rdi],fs
 	mov qword [rdi],gs
+%endif

@@ -443,7 +443,7 @@ void define_label(const char *label, int32_t segment,
                   int64_t offset, bool normal)
 {
     union label *lptr;
-    bool created, changed;
+    bool created, changed, largechange;
     int64_t size;
     int64_t lpass, lastdef;
 
@@ -498,10 +498,11 @@ void define_label(const char *label, int32_t segment,
         size = 0;               /* This is a hack... */
     }
 
-    changed = created || !lastdef ||
+    /* A "large change" is one which is not the offset */
+    largechange = created || !lastdef ||
         lptr->defn.segment != segment ||
-        lptr->defn.offset != offset ||
         lptr->defn.size != size;
+    changed = largechange || (lptr->defn.offset != offset);
     global_offset_changed += changed;
 
     if (lastdef == lpass) {
@@ -548,9 +549,16 @@ void define_label(const char *label, int32_t segment,
          * Note: As a special case, LBL_SPECIAL symbols are allowed
          * to be changed even during the last pass.
          */
-        nasm_warn(WARN_LABEL_REDEF_LATE|ERR_UNDEAD,
-                   "label `%s' %s during code generation",
+        if (!largechange) {
+            nasm_warn(WARN_LABEL_REDEF_LATE,
+                      "label `%s' changed during code generation"
+                      " (offset 0x%"PRIx64" -> 0x%"PRIx64")",
+                      lptr->defn.label, lptr->defn.offset, offset);
+        } else {
+            nasm_warn(WARN_LABEL_REDEF_LATE|ERR_UNDEAD,
+                      "label `%s' %s during code generation",
                    lptr->defn.label, created ? "defined" : "changed");
+        }
     }
     lptr->defn.segment = segment;
     lptr->defn.offset  = offset;

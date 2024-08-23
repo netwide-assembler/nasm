@@ -178,10 +178,10 @@ static inline pure_func bool list_option(unsigned char x)
     return unlikely(active_list_options & list_option_mask(x));
 }
 
-/* We can't test this using active_list_options for obvious reasons... */
-static inline pure_func bool list_on_every_pass(void)
+/* This test is used to see if we should initialize the listing engine */
+static inline pure_func bool list_on_this_pass(void)
 {
-    return unlikely(list_options & list_option_mask('p'));
+    return pass_final() || unlikely(list_options & list_option_mask('p'));
 }
 
 /* Is the listing engine active? */
