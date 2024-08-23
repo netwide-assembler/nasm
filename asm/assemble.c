@@ -1566,6 +1566,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case4(0254):
+        case4(0264):
             length += 4;
             break;
 
@@ -2540,10 +2541,6 @@ static void gencode(struct out_data *data, insn *ins)
             out_rawbyte(data, (r << 4) | ((r & 0x10) >> 1) | c);
             break;
 
-        case4(0254):
-            out_imm(data, opx, 4, OUT_SIGNED);
-            break;
-
         case4(0240):
         case 0250:
             codes += 4;
@@ -2568,6 +2565,14 @@ static void gencode(struct out_data *data, insn *ins)
                     ins->evex ^= EVEX_P2ND;
             }
             out_rawdword(data, ins->evex);
+            break;
+
+        case4(0254):
+            out_imm(data, opx, 4, OUT_SIGNED);
+            break;
+
+        case4(0264):
+            out_imm(data, opx, 4, OUT_UNSIGNED);
             break;
 
         case4(0260):
@@ -3111,10 +3116,7 @@ static enum match_result matches(const struct itemplate * const itemp,
             /*
              * If this is an *explicitly* sized immediate,
              * allow it to match an extending pattern.
-             *
-             * Handle sizing of SHORT/NEAR here, too.
              */
-
             switch (isize[i]) {
             case BITS8:
                 if (ttype & BYTEEXTMASK) {
@@ -3130,7 +3132,8 @@ static enum match_result matches(const struct itemplate * const itemp,
                 break;
             }
 
-            /* MOST instructions which take an sdword64 are the only form;
+            /*
+             * MOST instructions which take an sdword64 are the only form;
              * set the SDWORD flag to be strict about sdword64 matching
              * (use when a true imm64 pattern exists.)
              */

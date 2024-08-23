@@ -156,12 +156,14 @@ if_("AVX10_1",           "AVX 10.1 instructions");
 if_("AVX10_2",           "AVX 10.2 instructions");
 if_("ADX",               "ADCX and ADOX instructions");
 if_("PKU",		 "Protection key for user mode");
+if_("MONITOR",		 "MONITOR and MWAIT");
+if_("MONITORX",		 "MONITORX and MWAITX");
 if_("WAITPKG",           "User wait instruction package");
 
 # Single-instruction CPUID bits without additional help text
 foreach my $ins (qw(invpcid prefetchwt1 pconfig wbnoinvd serialize lkgs
 		    wrmsrns clflushopt clwb rdrand rdseed rdpid
-		    lzcnt ptwrite cldemote movdiri movdir64b)) {
+		    lzcnt ptwrite cldemote movdiri movdir64b clzero)) {
     if_($ins, "\U$ins\E instruction");
 }
 

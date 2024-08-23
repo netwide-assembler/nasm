@@ -132,6 +132,8 @@ sub func_multisize($$$) {
 		$o .= $1 . $sz;
 	    } elsif ($mw eq 'i#') {
 		$o .= !$i ? 'iwd' : ($s >= 64) ? 'id,s' : 'i'.$sizename[$i];
+	    } elsif ($mw eq 'i##') {
+		$o .= !$i ? 'iwdq' : 'i'.$sizename[$i];
 	    } elsif ($mw =~ /^(?:reg_)?([abcd])x\#$/) {
 		if ($i == 1) {
 		    $o .= "reg_${1}l";

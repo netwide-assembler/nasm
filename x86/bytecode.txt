@@ -23,11 +23,11 @@ Codes            Mnemonic        Explanation
 \20..\23         ib                      a byte immediate operand, from operand 0..3
 \24..\27         ib,u                    a zero-extended byte immediate operand, from operand 0..3
 \30..\33         iw                      a word immediate operand, from operand 0..3
-\34..\37         iwd                     select between \3[0-3] and \4[0-3] depending on 16/32 bit
-                                         assembly mode or the operand-size override on the operand
+\34..\37         iwd                     select between \3[0-3] and \4[0-3]
+					 depending on the *operand* size of the instruction.
 \40..\43         id                      a long immediate operand, from operand 0..3
 \44..\47         iwdq                    select between \3[0-3], \4[0-3] and \5[4-7]
-                                         depending on the address size of the instruction.
+                                         depending on the *address* size of the instruction.
 \50..\53         rel8                    a byte relative operand, from operand 0..3
 \54..\57         iq                      a qword immediate operand, from operand 0..3
 \60..\63         rel16                   a word relative operand, from operand 0..3
@@ -73,9 +73,10 @@ EVEX prefixes are followed by the sequence:
 		tt is tuple type for Disp8*N from %tuple_codes in insns.pl
                    (compressed displacement encoding)
 
-\254..\257       id,s                    a signed 32-bit operand to be extended to 64 bits.
+\254..\257      id,s                     a signed 32-bit operand to be extended to 64 bits.
 \260..\263                               this instruction uses VEX/XOP rather than REX, with the
                                          V register taken from operand "b" 0..3.
+\264..\267	id,u			 an unsigned 32-bit operand to be extended to 64 bits.
 \270                                     this instruction uses VEX/XOP rather than REX, with the
                                          V register set to 0.
 VEX/XOP prefixes are followed by the sequence:
