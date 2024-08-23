@@ -176,10 +176,11 @@ sub set_implied_flags($;$) {
 	}
     }
 
-    $flags->{'LONG'}++  if ($flags->{'APX'});
-    $flags->{'NOAPX'}++ if ($flags->{'NOLONG'});
-    $flags->{'X86_64'}++ if ($flags->{'LONG'});
-    $flags->{'OBSOLETE'}++ if ($flags->{'NEVER'} || $flags->{'NOP'});
+    $flags->{'LONG'}++     if ($flags->{'APX'});
+    $flags->{'NOREX'}++    if ($flags->{'NOLONG'});
+    $flags->{'NOAPX'}++    if ($flags->{'NOREX'});
+    $flags->{'X86_64'}++   if ($flags->{'LONG'});
+    $flags->{'OBSOLETE'}++ if ($flags->{'NEVER'});
     $flags->{'NF'}++ if ($flags->{'NF_R'} || $flags->{'NF_E'});
     $flags->{'ZU'}++ if ($flags->{'ZU_R'} || $flags->{'ZU_E'});
 

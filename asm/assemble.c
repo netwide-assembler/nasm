@@ -3009,6 +3009,7 @@ static enum match_result matches(const struct itemplate * const itemp,
         break;
     case P_REX:
         if (bits != 64 ||
+            itemp_has(itemp, IF_NOREX) ||
             itemp_has(itemp, IF_VEX) ||
             itemp_has(itemp, IF_EVEX) ||
             itemp_has(itemp, IF_REX2))
