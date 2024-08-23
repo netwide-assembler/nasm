@@ -192,12 +192,14 @@ AAS		void				[	3f]					8086,NOLONG
 DAA		void				[	27]					8086,NOLONG
 DAS		void				[	2f]					8086,NOLONG
 
-; ---
-
-;# Endianness instructions
-$wdq   BSWAP	reg#				[r:	o#  0f c8+r]				486,(w:UNDOC)
-$wdq   MOVBE	reg#,mem#			[rm:	o#  norep 0f38 f0 /r]			NEHALEM,SM
-$wdq   MOVBE	mem#,reg#			[mr:	o#  norep 0f38 f1 /r]			NEHALEM,SM
+;# Endianness handling
+$dq    BSWAP	reg#				[r:	o#  0f c8+r]				486
+       BSWAP	reg_ax				[-:	86 c4]					8086,OPT,ND
+       BSWAP	reg_cx				[-:	86 cd]					8086,OPT,ND
+       BSWAP	reg_dx				[-:	86 d6]					8086,OPT,ND
+       BSWAP	reg_bx				[-:	86 df]					8086,OPT,ND
+$wdq   MOVBE	reg#,mem#			[rm:	o#  norep 0f38 f0 /r]			NEHALEM,MOVBE,SM
+$wdq   MOVBE	mem#,reg#			[mr:	o#  norep 0f38 f1 /r]			NEHALEM,MOVBE,SM
 
 ;# Sign and zero extension
       CBW	void				[	o16 98]					8086
