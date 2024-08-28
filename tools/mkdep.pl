@@ -253,8 +253,6 @@ sub insert_deps($) {
 	}
 	unlink($external);
     } else {
-	my $e;
-
 	foreach my $dfile ($external, sort(keys(%deps)) ) {
 	    my $ofile;
 	    my @deps;
