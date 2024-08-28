@@ -46,7 +46,6 @@ sub toint($) {
 
 sub process_line($) {
     my($line) = @_;
-    my @v;
 
     if ( $line !~ /^\s*(\S+)\s*(\S+)\s*(\S+)\s*([0-9]+)\s*(\S*)/i ) {
 	die "regs.dat:$nline: invalid input\n";
