@@ -2251,7 +2251,8 @@ the construction of an appropriately sized ENTER instruction
 as shown in the example.
 
 
-\H{pperror} Reporting \i{User-Defined Errors}: \i\c{%error}, \i\c{%warning}, \i\c{%fatal}
+\H{pperror} Reporting \i{User-generated Diagnostics}: \i\c{%error},
+\i\c{%warning}, \i\c{%fatal}, \i\c{%note}
 
 The preprocessor directive \c{%error} will cause NASM to report an
 error if it occurs in assembled code. So if other users are going to
@@ -2282,6 +2283,9 @@ Similarly, \c{%warning} issues a warning, but allows assembly to continue:
 \c     %define F1
 \c %endif
 
+User-defined error messages can be suppressed with the \c{-w-user}
+option, and promoted to errors with \c{-w+error=user}.
+
 \c{%error} and \c{%warning} are issued only on the final assembly
 pass.  This makes them safe to use in conjunction with tests that
 depend on symbol values.
@@ -2291,10 +2295,13 @@ is useful when there is no point in continuing the assembly further,
 and doing so is likely just going to cause a spew of confusing error
 messages.
 
-It is optional for the message string after \c{%error}, \c{%warning}
-or \c{%fatal} to be quoted.  If it is \e{not}, then single-line macros
-are expanded in it, which can be used to display more information to
-the user.  For example:
+\c{%note} adds an output line to the list file; it does not output
+anything on the console or error file.
+
+It is optional for the message string after \c{%error}, \c{%warning},
+\c{%fatal}, or \c{%note} to be quoted.  If it is \e{not}, then
+single-line macros are expanded in it, which can be used to display
+more information to the user.  For example:
 
 \c %if foo > 64
 \c     %assign foo_over foo-64
@@ -2459,7 +2466,3 @@ compatibility aliases)
 
 In NASM 2.14 and earlier, only the single syntax \c{%clear} was
 supported, which is equivalent to \c{%clear global all}.
-
-
-
-

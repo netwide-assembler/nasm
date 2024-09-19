@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -4436,6 +4436,9 @@ static int do_directive(Token *tline, Token **output)
          *!  controls output of \c{%warning} directives (see \k{pperror}).
          */
         severity = ERR_WARNING|WARN_USER|ERR_PASS2;
+        goto issue_error;
+    case PP_NOTE:
+        severity = ERR_NOTE;
         goto issue_error;
 
 issue_error:

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -70,6 +70,7 @@ _type nasm_ ## _name (const char *fmt, ...)				\
 }
 
 nasm_err_helpers(void,       listmsg,  ERR_LISTMSG)
+nasm_err_helpers(void,       note,     ERR_NOTE)
 nasm_err_helpers(void,       debug,    ERR_DEBUG)
 nasm_err_helpers(void,       info,     ERR_INFO)
 nasm_err_helpers(void,       nonfatal, ERR_NONFATAL)

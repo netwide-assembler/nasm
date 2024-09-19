@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2023 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -79,20 +79,21 @@ fatal_func vprintf_func(2) nasm_verror_critical(errflags severity, const char *f
  * These are the error severity codes which get passed as the first
  * argument to an efunc.
  */
-#define ERR_LISTMSG		0x00000000      /* for the listing file only */
-#define ERR_DEBUG		0x00000001	/* debugging message */
-#define ERR_INFO		0x00000002	/* information for the list file */
-#define ERR_WARNING		0x00000003	/* warn only: no further action */
-#define ERR_NONFATAL		0x00000004	/* terminate assembly after phase */
-#define ERR_FATAL		0x00000005	/* instantly fatal: exit with error */
-#define ERR_CRITICAL		0x00000006      /* fatal, but minimize code before exit */
-#define ERR_PANIC		0x00000007	/* internal error: panic instantly
+#define ERR_LISTMSG		0x00000000      /* for the listing file only (no prefix) */
+#define ERR_NOTE		0x00000001      /* for the listing file only (with prefix) */
+#define ERR_DEBUG		0x00000002	/* debugging message */
+#define ERR_INFO		0x00000003	/* information for the list file */
+#define ERR_WARNING		0x00000004	/* warn only: no further action */
+#define ERR_NONFATAL		0x00000008	/* terminate assembly after phase */
+#define ERR_FATAL		0x00000009	/* instantly fatal: exit with error */
+#define ERR_CRITICAL		0x0000000e      /* fatal, but minimize code before exit */
+#define ERR_PANIC		0x0000000f	/* internal error: panic instantly
 						 * and dump core for reference */
-#define ERR_MASK		0x00000007	/* mask off the above codes */
-#define ERR_UNDEAD		0x00000008      /* skip if we already have errors */
-#define ERR_NOFILE		0x00000010	/* don't give source file name/line */
-#define ERR_HERE		0x00000020      /* point to a specific source location */
-#define ERR_USAGE		0x00000040	/* print a usage message */
+#define ERR_MASK		0x0000000f	/* mask off the above codes */
+#define ERR_UNDEAD		0x00000010      /* skip if we already have errors */
+#define ERR_NOFILE		0x00000020	/* don't give source file name/line */
+#define ERR_HERE		0x00000040      /* point to a specific source location */
+#define ERR_USAGE		0x00000080	/* print a usage message */
 #define ERR_PASS2		0x00000100	/* ignore unless on pass_final */
 
 #define ERR_NO_SEVERITY		0x00000200	/* suppress printing severity */

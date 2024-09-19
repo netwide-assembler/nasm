@@ -71,6 +71,20 @@ static int listlevel, listlevel_e;
 
 static FILE *listfp;
 
+static inline char err_fill_char(errflags severity)
+{
+    severity &= ERR_MASK;
+
+    if (severity < ERR_NOTE)
+        return ' ';
+    else if (severity < ERR_WARNING)
+        return '-';
+    else if (severity < ERR_CRITICAL)
+        return '*';
+    else
+        return 'X';
+}
+
 static void list_emit(void)
 {
     int i;
@@ -100,12 +114,11 @@ static void list_emit(void)
     }
 
     if (list_errors) {
-        static const char fillchars[] = " --***XX";
-        char fillchar;
-
         strlist_for_each(e, list_errors) {
+            char fillchar;
+
             fprintf(listfp, "%6"PRId32"          ", listlineno);
-            fillchar = fillchars[e->pvt.u & ERR_MASK];
+            fillchar = err_fill_char(e->pvt.u);
             for (i = 0; i < LIST_HEXBIT; i++)
                 putc(fillchar, listfp);
 
