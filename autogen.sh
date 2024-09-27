@@ -46,7 +46,14 @@ fi
 mv -f autoconf/aclocal.m4 autoconf/aclocal.m4.old
 mkdir -p autoconf/m4.old autoconf/m4
 mv -f autoconf/m4/*.m4 autoconf/m4.old/ 2>/dev/null || true
-ACLOCAL_PATH="${ACLOCAL_PATH}${ACLOCAL_PATH:+:}`pwd`/autoconf/m4.old"
+if ${PATH_SEPARATOR+false} :; then
+  PATH_SEPARATOR=:
+  (PATH='/bin;/bin'; FPATH=$PATH; sh -c :) >/dev/null 2>&1 && {
+    (PATH='/bin:/bin'; FPATH=$PATH; sh -c :) >/dev/null 2>&1 ||
+      PATH_SEPARATOR=';'
+  }
+fi
+ACLOCAL_PATH="${ACLOCAL_PATH}${ACLOCAL_PATH:+${PATH_SEPARATOR}}`pwd`/autoconf/m4.old"
 export ACLOCAL_PATH
 "$ACLOCAL" --install --output=autoconf/aclocal.m4 -I autoconf/m4
 if test ! -f autoconf/aclocal.m4; then
