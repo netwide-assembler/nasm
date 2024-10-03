@@ -56,6 +56,8 @@ typedef uint32_t errflags;
 void printf_func(2, 3) nasm_error(errflags severity, const char *fmt, ...);
 void printf_func(1, 2) nasm_listmsg(const char *fmt, ...);
 void printf_func(2, 3) nasm_listmsgf(errflags flags, const char *fmt, ...);
+void printf_func(1, 2) nasm_note(const char *fmt, ...);
+void printf_func(2, 3) nasm_notef(errflags flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_debug(const char *fmt, ...);
 void printf_func(2, 3) nasm_debugf(errflags flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_info(const char *fmt, ...);
