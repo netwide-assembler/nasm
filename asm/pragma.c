@@ -272,7 +272,16 @@ void process_pragma(char *str)
     else
         pragma.opcode = directive_find(pragma.opname);
 
-    pragma.tail = nasm_trim_spaces(p);
+    /*
+     * This used to use nasm_trim_spaces, but that assumes a single word.
+     * Instead, strip spaces at either end of the directive, but allow
+     * interior spaces.
+     */
+    p = nasm_zap_spaces_fwd(p);
+    pragma.tail = p;
+    p += strlen(p);
+    while (p > pragma.tail && nasm_isspace(p[-1]))
+	*--p = 0;
 
     /*
      * Search the global pragma namespaces. This is done
