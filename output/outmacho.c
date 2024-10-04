@@ -69,11 +69,19 @@
 #define MACHO_SEGCMD64_SIZE		72
 #define MACHO_SECTCMD64_SIZE		80
 #define MACHO_NLIST64_SIZE		16
+#define MACHO_BUILD_VERSION_SIZE	24
 
 /* Mach-O relocations numbers */
 
 #define VM_PROT_DEFAULT	(VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
 #define VM_PROT_ALL	(VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
+
+/* Platforms enum */
+enum macho_platform {
+#define X(_platform, _id, _name) _platform = _id,
+    MACHO_ALL_PLATFORMS
+#undef X
+};
 
 /* Our internal relocation types */
 enum reltype {
@@ -214,6 +222,10 @@ static uint64_t seg_filesize = 0;
 static uint64_t seg_vmsize = 0;
 static uint32_t seg_nsects = 0;
 static uint64_t rel_padcnt = 0;
+
+static uint32_t buildver_platform = PLATFORM_UNKNOWN;
+static uint32_t buildver_minos = 0; // x.y.z is 0xXXXXYYZZ
+static uint32_t buildver_sdk = 0; // x.y.z is 0xXXXXYYZZ
 
 /*
  * Functions for handling fixed-length zero-padded string
@@ -1265,6 +1277,11 @@ static void macho_calculate_sizes (void)
 
     /* calculate size of all headers, load commands and sections to
     ** get a pointer to the start of all the raw data */
+    if (buildver_platform != PLATFORM_UNKNOWN) {
+	++head_ncmds;
+	head_sizeofcmds += MACHO_BUILD_VERSION_SIZE;
+    }
+
     if (seg_nsects > 0) {
         ++head_ncmds;
         head_sizeofcmds += fmt.segcmd_size  + seg_nsects * fmt.sectcmd_size;
@@ -1647,6 +1664,16 @@ static void macho_write (void)
 
     offset = fmt.header_size + head_sizeofcmds;
 
+    /* emit the build_version command early, if desired */
+    if (buildver_platform != PLATFORM_UNKNOWN) {
+	fwriteint32_t(LC_BUILD_VERSION, ofile);	/* cmd == LC_BUILD_VERSION */
+	fwriteint32_t(MACHO_BUILD_VERSION_SIZE, ofile); /* size of load command */
+	fwriteint32_t(buildver_platform, ofile); /* platform */
+	fwriteint32_t(buildver_minos, ofile);	/* minos */
+	fwriteint32_t(buildver_sdk, ofile);	/* sdk */
+	fwriteint32_t(0, ofile);		/* ntools */
+    }
+
     /* emit the segment load command */
     if (seg_nsects > 0)
 	offset = macho_write_segment (offset);
@@ -1794,6 +1821,124 @@ err:
     return rv;
 }
 
+static bool macho_match_string(const char **pp, const char *target_name)
+{
+    const char *p = *pp;
+    while (*target_name) {
+	if (*p++ != *target_name++)
+	    return false;
+    }
+
+    /* must have exhausted the run of identifier characters */
+    if (nasm_isidchar(*p)) {
+	return false;
+    }
+
+    *pp = p;
+    return true;
+}
+
+static bool macho_scan_number(const char **pp, int64_t *result)
+{
+    bool error = false;
+    const char *p = *pp;
+    while (nasm_isdigit(*p))
+	++p;
+
+    if (p == *pp) {
+	*result = 0;
+	return false;
+    }
+
+    *result = readnum(*pp, &error);
+    *pp = p;
+    return !error;
+}
+
+static bool macho_scan_version(const char **pp, uint32_t *result)
+{
+    int64_t major = 0;
+    int64_t minor = 0;
+    int64_t trailing = 0;
+
+    /* version: major, minor (, trailing)? */
+    *result = 0;
+
+    if (!macho_scan_number(pp, &major) || major < 0 || major > 65535)
+	return false;
+    *pp = nasm_skip_spaces(*pp);
+    if (**pp != ',') /* comma after major ver is required */
+	return false;
+    *pp = nasm_skip_spaces(*pp + 1);
+
+    if (!macho_scan_number(pp, &minor) || minor < 0 || minor > 255)
+	return false;
+    *pp = nasm_skip_spaces(*pp);
+
+    if (**pp == ',') {
+	/* trailing version present */
+	*pp = nasm_skip_spaces(*pp + 1);
+	if (!macho_scan_number(pp, &trailing) || trailing < 0 || trailing > 255)
+	    return false;
+    }
+
+    *result = (uint32_t) ((major << 16) | (minor << 8) | trailing);
+    return true;
+}
+
+/*
+ * Specify a build version
+ */
+static enum directive_result macho_build_version(const char *buildversion)
+{
+    /* Matching .build_version directive in LLVM-MC */
+    const char *p;
+    uint32_t platform = PLATFORM_UNKNOWN;
+    uint32_t minos = 0;
+    uint32_t sdk = 0;
+
+    p = nasm_skip_spaces(buildversion);
+
+#define X(_platform,_id,_name) if (macho_match_string(&p, _name)) platform = _platform;
+    MACHO_ALL_PLATFORMS
+#undef X
+
+    if (platform == PLATFORM_UNKNOWN) {
+	nasm_nonfatal("unknown platform name");
+	return DIRR_ERROR;
+    }
+
+    p = nasm_skip_spaces(p);
+    if (*p != ',') {
+	nasm_nonfatal("version number required, comma expected");
+	return DIRR_ERROR;
+    }
+    p = nasm_skip_spaces(p + 1);
+
+    if (!macho_scan_version(&p, &minos)) {
+	nasm_nonfatal("malformed version number");
+	return DIRR_ERROR;
+    }
+
+    p = nasm_skip_spaces(p);
+    if (*p) {
+	if (macho_match_string(&p, "sdk_version")) {
+	    p = nasm_skip_spaces(p);
+
+	    if (!macho_scan_version(&p, &sdk)) {
+		nasm_nonfatal("malformed sdk_version");
+		return DIRR_ERROR;
+	    }
+	} else
+	    nasm_nonfatal("extra characters in build_version");
+    }
+
+    buildver_platform = platform;
+    buildver_minos = minos;
+    buildver_sdk = sdk;
+    return DIRR_OK;
+}
+
 /*
  * Mach-O pragmas
  */
@@ -1815,6 +1960,12 @@ macho_pragma(const struct pragma *pragma)
 
     case D_NO_DEAD_STRIP:
 	return macho_no_dead_strip(pragma->tail);
+
+    case D_unknown:
+	if (!strcmp(pragma->opname, "build_version"))
+	    return macho_build_version(pragma->tail);
+
+	return DIRR_UNKNOWN;
 
     default:
 	return DIRR_UNKNOWN;	/* Not a Mach-O directive */

@@ -60,6 +60,7 @@
 #define LC_SEGMENT			0x1
 #define LC_SEGMENT_64			0x19
 #define LC_SYMTAB			0x2
+#define LC_BUILD_VERSION		0x32
 
 /* Symbol type bits */
 #define N_STAB				0xe0
@@ -149,6 +150,24 @@
 #define VM_PROT_READ			0x01
 #define VM_PROT_WRITE			0x02
 #define VM_PROT_EXECUTE			0x04
+
+/* Platforms */
+/* X-macro X(_platform, _id, _name) */
+#define MACHO_ALL_PLATFORMS \
+	X(PLATFORM_UNKNOWN, 0, "unknown") \
+	X(PLATFORM_MACOS, 1, "macos") \
+	X(PLATFORM_IOS, 2, "ios") \
+	X(PLATFORM_TVOS, 3, "tvos") \
+	X(PLATFORM_WATCHOS, 4, "watchos") \
+	X(PLATFORM_BRIDGEOS, 5, "bridgeos") \
+	X(PLATFORM_MACCATALYST, 6, "macCatalyst") \
+	X(PLATFORM_IOSSIMULATOR, 7, "iossimulator") \
+	X(PLATFORM_TVOSSIMULATOR, 8, "tvossimulator") \
+	X(PLATFORM_WATCHOSSIMULATOR, 9, "watchossimulator") \
+	X(PLATFORM_DRIVERKIT, 10, "driverkit") \
+	X(PLATFORM_XROS, 11, "xros") \
+	X(PLATFORM_XROS_SIMULATOR, 12, "xrsimulator") \
+	/* end */
 
 typedef struct {
 	uint32_t	magic;
@@ -278,5 +297,21 @@ typedef struct {
 	uint16_t	n_desc;
 	uint64_t	n_value;
 } macho_nlist_64_t;
+
+/* Adapted from LLVM include/llvm/BinaryFormat/MachO.h */
+typedef struct {
+	uint32_t	tool;
+	uint32_t	version;
+} macho_build_tool_version_t;
+
+typedef struct {
+	uint32_t	cmd;
+	uint32_t	cmdsize;
+	uint32_t	platform;
+	uint32_t	minos;		/* x.y.z is 0xXXXXYYZZ */
+	uint32_t	sdk;		/* x.y.z is 0xXXXXYYZZ */
+	uint32_t	ntools;
+	/* ntools macho_build_tool_version_t follow this */
+} macho_build_version_command_t;
 
 #endif /* OUTPUT_MACHO_H */

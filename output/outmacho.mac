@@ -47,3 +47,9 @@ OUT: macho macho32 macho64
         %rotate 1
     %endrep
 %endmacro
+
+; This sets LC_BUILD_VERSION in the object file, analogous to as .build_version
+%imacro build_version 3+
+    %pragma __?OUTPUT_FORMAT?__ %? %1,%2,%3
+%endmacro
+
