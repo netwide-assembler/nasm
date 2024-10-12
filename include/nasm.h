@@ -843,7 +843,7 @@ enum nasm_limit {
 };
 #define LIMIT_MAX LIMIT_LINES
 extern int64_t nasm_limit[LIMIT_MAX+1];
-extern enum directive_result  nasm_set_limit(const char *, const char *);
+enum directive_result  nasm_set_limit(const char *, const char *);
 
 /*
  * The data structure defining an output format driver, and the
