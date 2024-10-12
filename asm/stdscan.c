@@ -327,8 +327,34 @@ static int stdscan_token(struct tokenval *tv)
         stdscan_bufptr += 2;
         return tv->t_type = TOKEN_SDIV;
     } else if (stdscan_bufptr[0] == '%' && stdscan_bufptr[1] == '%') {
-        stdscan_bufptr += 2;
-        return tv->t_type = TOKEN_SMOD;
+        if(stdscan_bufptr[2] == '[') {
+            char start_quote;
+
+            stdscan_bufptr += 3;
+            stdscan_bufptr = nasm_skip_spaces(stdscan_bufptr);
+            if (*stdscan_bufptr != '\'' && *stdscan_bufptr != '"' &&
+                *stdscan_bufptr != '`') {
+                return tv->t_type = TOKEN_ERRSTR;
+            }
+
+            start_quote = *stdscan_bufptr;
+            tv->t_charptr = stdscan_bufptr;
+            tv->t_inttwo = nasm_unquote(tv->t_charptr, &stdscan_bufptr);
+            if (*stdscan_bufptr != start_quote)
+                return tv->t_type = TOKEN_ERRSTR;
+            stdscan_bufptr++;
+
+            stdscan_bufptr = nasm_skip_spaces(stdscan_bufptr);
+            if (*stdscan_bufptr != ']') {
+                return tv->t_type = TOKEN_ERRSTR;
+            }
+            stdscan_bufptr++;
+
+            return tv->t_type = TOKEN_ID;
+        } else {
+            stdscan_bufptr += 2;
+            return tv->t_type = TOKEN_SMOD;
+        }
     } else if (stdscan_bufptr[0] == '=' && stdscan_bufptr[1] == '=') {
         stdscan_bufptr += 2;
         return tv->t_type = TOKEN_EQ;
