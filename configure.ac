@@ -306,12 +306,16 @@ PA_ARG_ENABLED([werror],
   PA_ADD_CFLAGS([-Werror=return-type])
   PA_ADD_CFLAGS([-Werror=trigraphs])
   PA_ADD_CFLAGS([-Werror=pointer-arith])
-  PA_ADD_CFLAGS([-Werror=strict-prototypes])
-  PA_ADD_CFLAGS([-Werror=missing-prototypes])
-  PA_ADD_CFLAGS([-Werror=missing-declarations])
   PA_ADD_CFLAGS([-Werror=comment])
   PA_ADD_CFLAGS([-Werror=vla])]
 )
+
+dnl These warnings are apparently not included in -Wall -W -pedantic
+dnl for some bizarre reason. They are, however, absolutely forbidden
+dnl in this code base.
+PA_ADD_CFLAGS([-Werror=strict-prototypes])
+PA_ADD_CFLAGS([-Werror=missing-prototypes])
+PA_ADD_CFLAGS([-Werror=missing-declarations])
 
 dnl Variadic macros are used in this code, but only under explicit guard
 PA_ADD_CFLAGS([-Wvariadic-macros],[-Wno-variadic-macros])
