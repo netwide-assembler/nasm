@@ -620,8 +620,10 @@ static void out_eops(struct out_data *data, const extop *e)
             break;
 
         case EOT_EXTOP:
-            while (dup--)
+            while (dup) {
                 out_eops(data, e->val.subexpr);
+								dup--;
+						}
             break;
 
         case EOT_DB_NUMBER:
