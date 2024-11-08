@@ -6953,7 +6953,7 @@ static int expand_mmacro(Token * tline)
      */
     nasm_newn(paramlen, nparam+1);
 
-    for (i = 1; (t = params[i]); i++) {
+    for (i = 1; i < nparam+1 && (t = params[i]); i++) {
         bool braced = false;
         int brace = 0;
         int white = 0;

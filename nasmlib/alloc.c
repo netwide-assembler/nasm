@@ -104,8 +104,10 @@ void *nasm_realloc(void *q, size_t size)
 
 void nasm_free(void *q)
 {
-    if (q)
+    if (q){
         free(q);
+	q = NULL;
+    }
 }
 
 char *nasm_strdup(const char *s)
