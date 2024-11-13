@@ -3372,6 +3372,7 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 #if 0
     def->prev = NULL;
 #endif
+    nasm_assert(!def->name);
     def->name = dup_text(tline);
     def->plus = false;
     def->nolist = 0;
@@ -4679,12 +4680,14 @@ issue_error:
         if (!mmac_p) {
             /* No such macro */
             free_tlist(spec.dlist);
+            nasm_free(spec.name);
             break;
         }
 
         /* Check the macro to be undefined is not being expanded */
         list_for_each(l, istk->expansion) {
             if (l->finishes == *mmac_p) {
+                nasm_free(spec.name);
                 nasm_nonfatal("`%%unmacro' can't undefine the macro being expanded");
                 /*
                  * Do not release the macro instance to avoid using the freed
@@ -4708,6 +4711,7 @@ issue_error:
             }
         }
         free_tlist(spec.dlist);
+        nasm_free(spec.name);
         break;
     }
 
