@@ -59,7 +59,10 @@ STD: nasm
 %imacro endstruc 0.nolist
         %{$strucname}_size equ ($-%$strucname)
     %pop
+    [warning push]
+    [warning -other]
     __?SECT?__
+    [warning pop]
 %endmacro
 
 %imacro istruc 1.nolist
