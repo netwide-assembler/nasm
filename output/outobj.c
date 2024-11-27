@@ -1652,6 +1652,8 @@ obj_directive(enum directive directive, char *value)
             struct Segment *seg;
             struct External **extp;
             int obj_idx;
+            const char *segname;
+            int i;
 
             q = value;
             while (*q == '.')
@@ -1680,22 +1682,23 @@ obj_directive(enum directive directive, char *value)
             for (grp = grphead; grp; grp = grp->next) {
                 obj_idx++;
                 if (!strcmp(grp->name, v)) {
-                    nasm_nonfatal("group `%s' defined twice", v);
-                    return DIRR_ERROR;
+                    break;
                 }
             }
 
-            *grptail = grp = nasm_malloc(sizeof(*grp));
-            grp->next = NULL;
-            grptail = &grp->next;
-            grp->index = seg_alloc();
-            grp->obj_index = obj_idx;
-            grp->nindices = grp->nentries = 0;
-            grp->name = NULL;
+            if (!grp) {
+                *grptail = grp = nasm_malloc(sizeof(*grp));
+                grp->next = NULL;
+                grptail = &grp->next;
+                grp->index = seg_alloc();
+                grp->obj_index = obj_idx;
+                grp->nindices = grp->nentries = 0;
+                grp->name = NULL;
 
-            obj_grp_needs_update = grp;
-            backend_label(v, grp->index + 1, 0L);
-            obj_grp_needs_update = NULL;
+                obj_grp_needs_update = grp;
+                backend_label(v, grp->index + 1, 0L);
+                obj_grp_needs_update = NULL;
+            }
 
             while (*q) {
                 p = q;
@@ -1709,6 +1712,30 @@ obj_directive(enum directive directive, char *value)
                 /*
                  * Now p contains a segment name. Find it.
                  */
+                for (i = 0; i < grp->nentries; i++) {
+                    if (i < grp->nindices) {
+                        segname = NULL;     /* make compiler happy */
+                        for (seg = seghead; seg; seg = seg->next) {
+                            if (grp->segs[i].index == seg->obj_index) {
+                                segname = seg->name;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                        segname = grp->segs[i].name;
+                    /*
+                     * See if this segment is defined in this group.
+                     */
+                    if (!strcmp(segname, p))
+                        break;
+                }
+                if (i < grp->nentries) {
+                    /*
+                     * We have already this segment. Skip.
+                     */
+                    continue;
+                }
                 for (seg = seghead; seg; seg = seg->next)
                     if (!strcmp(seg->name, p))
                         break;
