@@ -1492,6 +1492,9 @@ static int32_t obj_segment(char *name, int *bits)
             }
         }
 
+        if (!seg->use32 && seg->grp && !strcmp(seg->grp->name, "FLAT"))
+           nasm_panic("wrong combination of USE16(16-bit segment) and FLAT");
+
         /* We need to know whenever we have at least one 32-bit segment */
         obj_use32 |= seg->use32;
 
