@@ -1518,7 +1518,12 @@ static int32_t obj_segment(char *name, int *bits)
                     nasm_free(grp->segs[i].name);
                     grp->segs[i] = grp->segs[grp->nindices];
                     grp->segs[grp->nindices++].index = seg->obj_index;
-                    if (seg->grp)
+                    /*
+                     * The group FLAT is a pseudo group. Therefore, it is
+                     * allowed to redefine a segment in the group FLAT as
+                     * other group.
+                     */
+                    if (seg->grp && strcmp(seg->grp->name, "FLAT"))
                         nasm_warn(WARN_OTHER, "segment `%s' is already part of"
                                   " a group: first one takes precedence",
                                   seg->name);
@@ -1633,7 +1638,12 @@ obj_directive(enum directive directive, char *value)
                      */
                     grp->segs[grp->nentries++] = grp->segs[grp->nindices];
                     grp->segs[grp->nindices++].index = seg->obj_index;
-                    if (seg->grp)
+                    /*
+                     * The group FLAT is a pseudo group. Therefore, it is
+                     * allowed to redefine a segment in the group FLAT as
+                     * other group.
+                     */
+                    if (seg->grp && strcmp(seg->grp->name, "FLAT"))
                         nasm_warn(WARN_OTHER, "segment `%s' is already part of"
                                   " a group: first one takes precedence",
                                   seg->name);
