@@ -44,6 +44,7 @@ PERLFLAGS	= -I$(top_srcdir)/perllib -I$(srcdir)
 RUNPERL         = $(PERL) $(PERLFLAGS)
 
 EMPTY		= : >
+NULLCMD		= @:
 
 PYTHON3		= python3
 
@@ -91,6 +92,7 @@ endif
 .PHONY: all doc install clean distclean cleaner spotless test
 .PHONY: install_doc everything install_everything strip perlreq dist tags TAGS
 .PHONY: nothing manpages nsis
+.PHONY: warnings
 
 .c.$(O):
 	$(CC) -c $(ALL_CFLAGS) -o $@ $<
@@ -164,12 +166,14 @@ LIBOBJ_NW = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	disasm/disasm.$(O) disasm/sync.$(O)
 
 # Warnings depend on all source files, so handle them separately
-WARNOBJ   = asm/warnings.$(O)
-WARNFILES = asm/warnings_c.h include/warnings.h doc/warnings.src
+WARNOBJ    = asm/warnings.$(O)
+WARNFILESX = asm/warnings_c.h.x include/warnings.h.x doc/warnings.src.x
 
 LIBOBJ    = $(LIBOBJ_NW) $(WARNOBJ)
 ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
+
+WARNSRCS  = $(LIBOBJ_NW:.$(O)=.c) asm/nasm.c
 
 SUBDIRS  = stdlib nasmlib include config output asm disasm x86 \
 	   common macros
@@ -196,10 +200,6 @@ nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
 ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB)
 	$(CC) $(ALL_LDFLAGS) -o ndisasm$(X) $^ $(LIBS)
 
-# These are specific to certain Makefile syntaxes...
-WARNTIMES = $(WARNFILES:=.time)
-WARNSRCS  = $(LIBOBJ_NW:.$(O)=.c) asm/nasm.c
-
 #-- Begin Generated File Rules --#
 
 # These source files are automagically generated from data files using
@@ -214,7 +214,7 @@ PERLREQ_CLEANABLE = \
 	  x86/iflag.c x86/iflaggen.h \
 	  macros/macros.c \
 	  asm/pptok.ph asm/directbl.c asm/directiv.h \
-	  $(WARNFILES) \
+	  $(WARNFILESX:.x=) \
 	  misc/nasmtok.el \
 	  version.h version.mac version.mak nsis/version.nsh
 
@@ -297,35 +297,34 @@ x86/regs.h: x86/regs.dat x86/regs.pl
 # reasonable, but doesn't update the time stamp if the files aren't
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm/warnings.time.
-.PHONY: warnings
 warnings: dirs
-	$(RM_F) $(WARNFILES) $(WARNTIMES) asm/warnings.time
+	$(RM_F) $(WARNFILESX:.x=) $(WARNFILESX:.x=.time) asm/warnings.time
 	$(MAKE) asm/warnings.time
 
 asm/warnings.time: $(WARNSRCS) asm/warnings.pl
 	$(EMPTY) asm/warnings.time
-	$(MAKE) $(WARNTIMES)
+	$(MAKE) $(WARNFILESX:.x=.time)
 
 asm/warnings_c.h.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl c asm/warnings_c.h $(srcdir)
 	$(EMPTY) asm/warnings_c.h.time
 
 asm/warnings_c.h: asm/warnings_c.h.time
-	@: Side effect
+	$(NULLCMD) Side effect
 
 include/warnings.h.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl h include/warnings.h $(srcdir)
 	$(EMPTY) include/warnings.h.time
 
 include/warnings.h: include/warnings.h.time
-	@: Side effect
+	$(NULLCMD) Side effect
 
 doc/warnings.src.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl doc doc/warnings.src $(srcdir)
 	$(EMPTY) doc/warnings.src.time
 
 doc/warnings.src : doc/warnings.src.time
-	@: Side effect
+	$(NULLCMD) Side effect
 
 # Assembler token hash
 asm/tokhash.c: x86/insns.dat x86/insnsn.c asm/tokens.dat asm/tokhash.pl \
@@ -363,7 +362,7 @@ asm/directbl.c: asm/directiv.dat nasmlib/perfhash.pl perllib/phash.ph
 # Emacs token files
 misc/nasmtok.el: misc/emacstbl.pl asm/tokhash.c asm/pptok.c \
 		 asm/directiv.dat version
-	$(RUNPERL) $< $@ "$(srcdir)" "$(objdir)"
+	$(RUNPERL) $(srcdir)/misc/emacstbl.pl $@ "$(srcdir)" "$(objdir)"
 
 #-- End Generated File Rules --#
 
