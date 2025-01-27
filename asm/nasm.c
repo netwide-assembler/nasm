@@ -42,6 +42,7 @@ struct forwrefinfo {            /* info held on forward refs. */
 
 const char *_progname;
 
+static void open_and_process_respfile(char *, int);
 static void parse_cmdline(int, char **, int);
 static void assemble_file(const char *, struct strlist *);
 static bool skip_this_pass(errflags severity);
@@ -966,13 +967,16 @@ static bool process_arg(char *p, char *q, int pass)
         return false;
 
     if (p[0] == '-' && !stopoptions) {
-        if (strchr("oOfpPdDiIlLFXuUZwW", p[1])) {
+        if (strchr("oOfpPdDiIlLFXuUZwW@", p[1])) {
             /* These parameters take values */
             if (!(param = get_param(p, q, &advance)))
                 return advance;
         }
 
         switch (p[1]) {
+        case '@':
+            open_and_process_respfile(param, pass);
+            break;
         case 's':
             if (pass == 1)
                 error_file = stdout;
@@ -1454,10 +1458,22 @@ static void process_response_file(const char *file, int pass)
     fclose(f);
 }
 
-static void parse_cmdline(int argc, char **argv, int pass)
+static void open_and_process_respfile(char *respfile, int pass)
 {
     FILE *rfile;
-    char *envreal, *envcopy = NULL, *p;
+
+    rfile = nasm_open_read(respfile, NF_TEXT);
+    if (rfile) {
+        process_respfile(rfile, pass);
+        fclose(rfile);
+    } else {
+        nasm_nonfatalf(ERR_USAGE, "unable to open response file `%s'", respfile);
+    }
+}
+
+static void parse_cmdline(int argc, char **argv, int pass)
+{
+    char *envreal, *envcopy = NULL;
 
     /*
      * Initialize all the warnings to their default state, including
@@ -1493,19 +1509,8 @@ static void parse_cmdline(int argc, char **argv, int pass)
             argc--;
             argv++;
         }
-        if (!stopoptions && argv[0][0] == '-' && argv[0][1] == '@') {
-            p = get_param(argv[0], argc > 1 ? argv[1] : NULL, &advance);
-            if (p) {
-                rfile = nasm_open_read(p, NF_TEXT);
-                if (rfile) {
-                    process_respfile(rfile, pass);
-                    fclose(rfile);
-                } else {
-                    nasm_nonfatalf(ERR_USAGE, "unable to open response file `%s'", p);
-                }
-            }
-        } else
-            advance = process_arg(argv[0], argc > 1 ? argv[1] : NULL, pass);
+
+        advance = process_arg(argv[0], argc > 1 ? argv[1] : NULL, pass);
         argv += advance, argc -= advance;
     }
 
