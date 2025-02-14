@@ -3598,9 +3598,12 @@ VSM3RNDS2       xmmreg,xmmreg,xmmreg,imm8           [rvmi: vex.nds.128.66.0f3a.w
 
 ;# SM4
 VSM4KEY4        xmmreg,xmmreg,xmmrm128              [rvm: vex.nds.128.f3.0f38.w0 da /r] SM4,AVX,FUTURE
-VSM4KEY4        ymmreg,ymmreg,ymmrm128              [rvm: vex.nds.256.f3.0f38.w0 da /r] SM4,AVX,FUTURE
+VSM4KEY4        ymmreg,ymmreg,ymmrm256              [rvm: vex.nds.256.f3.0f38.w0 da /r] SM4,AVX,FUTURE
 VSM4RNDS4       xmmreg,xmmreg,xmmrm128              [rvm: vex.nds.128.f2.0f38.w0 da /r] SM4,AVX,FUTURE
-VSM4RNDS4       ymmreg,ymmreg,ymmrm128              [rvm: vex.nds.256.f2.0f38.w0 da /r] SM4,AVX,FUTURE
+VSM4RNDS4       ymmreg,ymmreg,ymmrm256              [rvm: vex.nds.256.f2.0f38.w0 da /r] SM4,AVX,FUTURE
+VSM4RNDS4       xmmreg,xmmreg,xmmrm128              [rvm: evex.nds.128.f2.0f38.w0 da /r] SM4,AVX,FUTURE
+VSM4RNDS4       ymmreg,ymmreg,ymmrm256              [rvm: evex.nds.256.f2.0f38.w0 da /r] SM4,AVX,FUTURE
+VSM4RNDS4       zmmreg,zmmreg,zmmrm512              [rvm: evex.nds.512.f2.0f38.w0 da /r] SM4,AVX,FUTURE
 
 ;# AVX no exception conversions
 ; Must precede AVX-512 versions
