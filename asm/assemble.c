@@ -102,6 +102,9 @@ enum match_result {
 #define GEN_MODRM(mod, reg, rm)                     \
         (((mod) << 6) | (((reg) & 7) << 3) | ((rm) & 7))
 
+static int64_t assemble(insn *instruction);
+static int64_t insn_size(insn *instruction);
+
 static int64_t calcsize(insn *, const struct itemplate *);
 static int emit_prefixes(struct out_data *data, const insn *ins);
 static void gencode(struct out_data *data, insn *ins);
@@ -803,7 +806,7 @@ static void out_eops(struct out_data *data, const extop *e)
 /* This is totally just a wild guess what is reasonable... */
 #define INCBIN_MAX_BUF (ZERO_BUF_SIZE * 16)
 
-int64_t assemble(insn *instruction)
+static int64_t assemble(insn *instruction)
 {
     struct out_data data;
     const struct itemplate *temp;
@@ -1241,7 +1244,7 @@ static int64_t len_extops(const extop *e)
     return isize;
 }
 
-int64_t insn_size(insn *instruction)
+static int64_t insn_size(insn *instruction)
 {
     const struct itemplate *temp;
     enum match_result m;
