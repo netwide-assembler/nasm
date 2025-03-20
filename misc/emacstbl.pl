@@ -187,13 +187,14 @@ sub write_output($) {
 
     my($vol,$dir,$file) = File::Spec->splitpath($outfile);
 
-    print $out ";;; ${file} --- lists of NASM assembler tokens\n";
-    print $out ";;;\n";
-    print $out ";;; This file contains list of tokens from the NASM x86\n";
-    print $out ";;; assembler, automatically extracted from NASM ${version}.\n";
-    print $out ";;;\n";
-    print $out ";;; This file is intended to be (require)d from a `nasm-mode\'\n";
-    print $out ";;; major mode definition.\n";
+    print $out ";;; ${file} --- lists of NASM assembler tokens\n\n";
+    print $out ";;; Commentary:\n\n";
+    print $out ";; This file contains list of tokens from the NASM x86\n";
+    print $out ";; assembler, automatically extracted from NASM ${version}.\n";
+    print $out ";;\n";
+    print $out ";; This file is intended to be (require)d from a `nasm-mode\'\n";
+    print $out ";; major mode definition.\n\n";
+    print $out ";;; Code:\n";
 
     foreach my $type (sort keys(%tokens)) {
 	print $out "\n(defconst nasm-${type}\n";
@@ -203,6 +204,9 @@ sub write_output($) {
 	print $out ")\n";
 	print $out "  \"NASM ${version} ${type} tokens for `nasm-mode\'.\")\n";
     }
+
+    print $out "\n(provide 'nasmtok)\n";
+    print $out ";;; nasmtok.el ends here\n";
 
     close($out);
 }
