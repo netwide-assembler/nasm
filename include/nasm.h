@@ -60,10 +60,10 @@ extern const char *_progname;
 /* Time stamp for the official start of compilation */
 struct compile_time {
     time_t t;
-    bool have_local, have_gm, have_posix;
     int64_t posix;
     struct tm local;
     struct tm gm;
+    bool have_local, have_gm, have_posix;
 };
 extern struct compile_time official_compile_time;
 
@@ -314,10 +314,10 @@ struct tokenval {
     char                *t_charptr;
     int64_t             t_integer;
     int64_t             t_inttwo;
+    const char		    *t_start; /* Pointer to token in input buffer */
+    int			        t_len;    /* Length of token in input buffer */
     enum token_type     t_type;
     int8_t              t_flag;
-    const char		*t_start; /* Pointer to token in input buffer */
-    int			t_len;    /* Length of token in input buffer */
 };
 typedef int (*scanner)(void *private_data, struct tokenval *tv);
 
@@ -760,15 +760,15 @@ typedef struct insn { /* an instruction itself */
     int             eops_float;             /* true if DD and floating */
     int32_t         times;                  /* repeat count (TIMES prefix) */
     bool            rex_done;               /* REX prefix emitted? */
+    uint8_t         evex_p[3];              /* EVEX.P0: [RXB,R',00,mm], P1: [W,vvvv,1,pp] */
+                                            /* EVEX.P2: [z,L'L,b,V',aaa] */
     int             rex;                    /* Special REX Prefix */
     int             vexreg;                 /* Register encoded in VEX prefix */
     int             vex_cm;                 /* Class and M field for VEX prefix */
     int             vex_wlp;                /* W, P and L information for VEX prefix */
-    uint8_t         evex_p[3];              /* EVEX.P0: [RXB,R',00,mm], P1: [W,vvvv,1,pp] */
-                                            /* EVEX.P2: [z,L'L,b,V',aaa] */
-    enum ttypes     evex_tuple;             /* Tuple type for compressed Disp8*N */
     int             evex_rm;                /* static rounding mode for AVX512 (EVEX) */
     struct operand *evex_brerop;            /* BR/ER/SAE operand position */
+    enum ttypes     evex_tuple;             /* Tuple type for compressed Disp8*N */
 } insn;
 
 /* Instruction flags type: IF_* flags are defined in insns.h */

@@ -822,8 +822,8 @@ static void coff_sect_write(struct coff_Section *sect,
 
 typedef struct tagString {
     struct tagString *next;
-    int len;
     char *String;
+    int len;
 } STRING;
 
 #define EXPORT_SECTION_NAME ".drectve"

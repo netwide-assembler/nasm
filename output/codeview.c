@@ -82,15 +82,16 @@ struct source_file;
 struct source_file {
     const char *filename;
     char *fullname;
-    uint32_t fullnamelen;
 
     struct source_file *next;
+
+    uint32_t fullnamelen;
 
     uint32_t filetbl_off;
     uint32_t sourcetbl_off;
 
-    struct SAA *lines;
     uint32_t num_lines;
+    struct SAA *lines;
 
     unsigned char md5sum[MD5_HASHBYTES];
 };
@@ -110,13 +111,8 @@ enum symbol_type {
 };
 
 struct cv8_symbol {
-    enum symbol_type type;
     char *name;
-
-    uint32_t secrel;
-    uint16_t section;
-    uint32_t size;
-    uint32_t typeindex;
+    enum symbol_type type;
 
     enum symtype {
         TYPE_UNREGISTERED = 0x0000, /* T_NOTYPE */
@@ -132,13 +128,16 @@ struct cv8_symbol {
         TYPE_REAL256= 0x0044,
         TYPE_REAL512= 0x0045
     } symtype;
+
+    uint32_t secrel;
+    uint32_t size;
+    uint32_t typeindex;
+    uint16_t section;
 };
 
 struct cv8_state {
     int symbol_sect;
     int type_sect;
-
-    uint32_t text_offset;
 
     struct source_file *source_files, **source_files_tail;
     const char *last_filename;
@@ -147,7 +146,7 @@ struct cv8_state {
     unsigned num_files;
     uint32_t total_filename_len;
 
-
+    uint32_t text_offset;
     unsigned total_lines;
 
     struct SAA *symbols;

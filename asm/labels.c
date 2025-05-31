@@ -115,9 +115,9 @@ union label {                   /* actual label structures */
         enum label_type type, mangled_type;
     } defn;
     struct {
-        int32_t movingon;
         int64_t dummy;
         union label *next;
+        int32_t movingon;
     } admin;
 };
 

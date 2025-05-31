@@ -613,8 +613,8 @@ static struct ImpDef {
     struct ImpDef *next;
     char *extname;
     char *libname;
-    unsigned int impindex;
     char *impname;
+    unsigned int impindex;
 } *imphead, **imptail;
 
 static struct ExpDef {

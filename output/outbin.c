@@ -115,7 +115,6 @@ static struct Section {
     int64_t length;                /* section length in bytes */
 
 /* Section attributes */
-    int flags;                  /* see flag definitions above */
     uint64_t align;        /* section alignment */
     uint64_t valign;       /* notional section alignment */
     uint64_t start;        /* section start address */
@@ -129,6 +128,8 @@ static struct Section {
     struct bin_label **labels_end;      /* Holds address of end of labels list. */
     struct Section *prev;       /* Points to previous section (implicit follows). */
     struct Section *next;       /* This links sections with a defined start address. */
+
+    int flags;                  /* see flag definitions above */
 
 /* The extended bin format allows for sections to have a "virtual"
  * start address.  This is accomplished by creating two sections:

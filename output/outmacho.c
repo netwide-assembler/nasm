@@ -112,21 +112,10 @@ static void fwriteptr(uint64_t data, FILE * fp)
 }
 
 struct section {
-    /* nasm internal data */
-    struct section *next;
-    struct SAA *data;
-    int32_t index;		/* Main section index */
-    int32_t subsection;		/* Current subsection index */
-    int32_t fileindex;
-    struct reloc *relocs;
-    struct rbtree *syms[2]; /* All/global symbols symbols in section */
-    int align;
-    bool by_name;	    /* This section was specified by full MachO name */
-    char namestr[34];	    /* segment,section as a C string */
-
     /* data that goes into the file */
-    char sectname[16];     /* what this section is called */
-    char segname[16];      /* segment this section will be in */
+    char sectname[16]; /* what this section is called */
+    char segname[16]; /* segment this section will be in */
+
     uint64_t addr;         /* in-memory address (subject to alignment) */
     uint64_t size;         /* in-memory and -file size  */
     uint64_t offset;	   /* in-file offset */
@@ -134,6 +123,18 @@ struct section {
     uint32_t nreloc;       /* relocation entry count */
     uint32_t flags;        /* type and attributes (masked) */
     uint32_t extreloc;     /* external relocations */
+
+	/* nasm internal data */
+	struct section *next;
+	struct SAA *data;
+	int32_t index;		/* Main section index */
+	int32_t subsection;		/* Current subsection index */
+	struct reloc *relocs;
+	struct rbtree *syms[2]; /* All/global symbols symbols in section */
+	char namestr[34];	    /* segment,section as a C string */
+	int align;         /* align changed int -> int16_t for reduce cache size and fill mem holes */
+	uint32_t fileindex;
+	bool by_name;	       /* This section was specified by full MachO name */
 };
 
 #define S_NASM_TYPE_MASK	 0x800004ff	/* we consider these bits "section type" */
@@ -300,8 +301,8 @@ struct file_list {
     struct file_list *next;
     struct file_list *last;
     const char *file_name;
-    uint32_t file;
     struct dir_list *dir;
+	uint32_t file;
 };
 
 struct dw_sect_list {
@@ -309,9 +310,9 @@ struct dw_sect_list {
     int32_t section;
     uint32_t line;
     uint64_t offset;
-    uint32_t file;
     struct dw_sect_list *next;
     struct dw_sect_list *last;
+	uint32_t file;
 };
 
 struct section_info {

@@ -219,9 +219,9 @@ enum sparmflags {
 
 struct smac_param {
     Token name;
+    const Token *def;           /* Default, if any */
     enum sparmflags flags;
     char radix;                 /* Radix type for SPARM_EVAL */
-    const Token *def;           /* Default, if any */
 };
 
 struct SMacro {
@@ -285,15 +285,10 @@ struct MMacro {
 #endif
     char *name;
     int nparam_min, nparam_max;
-    enum nolist_flags nolist;   /* is this macro listing-inhibited? */
-    bool casesense;
-    bool plus;                  /* is the last parameter greedy? */
-    bool capture_label;         /* macro definition has %00; capture label */
     int32_t in_progress;        /* is this macro currently being expanded? */
     int32_t max_depth;          /* maximum number of recursive expansions allowed */
     Token *dlist;               /* All defaults as one list */
     Token **defaults;           /* Parameter default pointers */
-    int ndefs;                  /* number of default parameters */
     Line *expansion;
 
     struct mstk mstk;           /* Macro expansion stack */
@@ -310,6 +305,12 @@ struct MMacro {
         struct debug_macro_def *def; /* Definition */
         struct debug_macro_inv *inv; /* Current invocation (if any) */
     } dbg;
+
+    int ndefs;                  /* number of default parameters */
+    enum nolist_flags nolist;   /* is this macro listing-inhibited? */
+    bool casesense;
+    bool plus;                  /* is the last parameter greedy? */
+    bool capture_label;         /* macro definition has %00; capture label */
 };
 
 
@@ -7595,28 +7596,28 @@ stdmac_map(const SMacro *s, Token **params, int nparam)
 /* Add magic standard macros */
 struct magic_macros {
     const char *name;
-    bool casesense;
+    ExpandSMacro func;
     int nparam;
     enum sparmflags flags;
-    ExpandSMacro func;
+    bool casesense;
 };
 
 static void pp_add_magic_stdmac(void)
 {
     static const struct magic_macros magic_macros[] = {
-        { "__?FILE?__", true, 0, 0, stdmac_file },
-        { "__?LINE?__", true, 0, 0, stdmac_line },
-        { "__?BITS?__", true, 0, 0, stdmac_bits },
-        { "__?PTR?__",  true, 0, 0, stdmac_ptr },
-        { "%abs",       false, 1, SPARM_EVAL, stdmac_abs },
-        { "%count",     false, 1, SPARM_VARADIC, stdmac_count },
-        { "%eval",      false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
-        { "%map",	false, 1, SPARM_VARADIC, stdmac_map },
-        { "%str",       false, 1, SPARM_GREEDY|SPARM_STR, stdmac_join },
-        { "%strcat",    false, 1, SPARM_STR|SPARM_CONDQUOTE|SPARM_VARADIC, stdmac_strcat },
-        { "%strlen",    false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_strlen },
-        { "%tok",       false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_tok },
-        { NULL, false, 0, 0, NULL }
+        { "__?FILE?__", stdmac_file,   0, 0, true },
+        { "__?LINE?__", stdmac_line,   0, 0, true },
+        { "__?BITS?__", stdmac_bits,   0, 0, true },
+        { "__?PTR?__",  stdmac_ptr,    0, 0, true },
+        { "%abs",       stdmac_abs,    1, SPARM_EVAL, false },
+        { "%count",     stdmac_count,  1, SPARM_VARADIC, false },
+        { "%eval",      stdmac_join,   1, SPARM_EVAL|SPARM_VARADIC, false },
+        { "%map",       stdmac_map,    1, SPARM_VARADIC, false },
+        { "%str",       stdmac_join,   1, SPARM_GREEDY|SPARM_STR, false },
+        { "%strcat",    stdmac_strcat, 1, SPARM_STR|SPARM_CONDQUOTE|SPARM_VARADIC, false },
+        { "%strlen",    stdmac_strlen, 1, SPARM_STR|SPARM_CONDQUOTE, false },
+        { "%tok",       stdmac_tok,    1, SPARM_STR|SPARM_CONDQUOTE, false },
+        { NULL, NULL, 0, 0, false }
     };
     const struct magic_macros *m;
     SMacro tmpl;

@@ -476,24 +476,24 @@
 
 struct coff_Section {
     struct SAA *data;
+    struct coff_Reloc *head, **tail;
     uint32_t len;
     int nrelocs;
     int32_t index;
-    struct coff_Reloc *head, **tail;
     uint32_t flags;             /* section flags */
     uint32_t align_flags;       /* user-specified alignment flags */
     uint32_t sectalign_flags;   /* minimum alignment from sectalign */
     char *name;
+    int64_t pass_last_seen;
     int32_t namepos;            /* Offset of name into the strings table */
     int32_t pos, relpos;
-    int64_t pass_last_seen;
 
     /* comdat-related members */
-    char *comdat_name;
     uint32_t checksum;          /* set only for comdat sections */
+    char *comdat_name;
+    int32_t comdat_associated;  /* associated section for selection==5 */
     int8_t comdat_selection;
     int8_t comdat_symbol;       /* is the "comdat name" in symbol table? */
-    int32_t comdat_associated;  /* associated section for selection==5 */
 };
 
 struct coff_Reloc {
@@ -509,11 +509,11 @@ struct coff_Reloc {
 };
 
 struct coff_Symbol {
-    char name[9];
     int32_t strpos;             /* string table position of name */
     int32_t value;              /* address, or COMMON variable size */
     int section;                /* section number where it's defined
                                  * - in COFF codes, not NASM codes */
+    char name[9];
     bool is_global;             /* is it a global symbol or not? */
     int16_t type;               /* 0 - notype, 0x20 - function */
     int32_t namlen;             /* full name length */
