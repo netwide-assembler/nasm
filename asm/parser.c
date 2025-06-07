@@ -1175,6 +1175,11 @@ restart_parse:
                  * put the decorator information in the (opflag_t) type field
                  * of previous operand.
                  */
+                if (opnum == 0) {
+                    nasm_nonfatal("decorator without an operand");
+                    goto fail;
+                }
+
                 opnum--; op--;
                 switch (value->value) {
                 case BRC_RN:
