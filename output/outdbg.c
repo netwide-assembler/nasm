@@ -409,8 +409,19 @@ dbg_pragma(const struct pragma *pragma)
 }
 
 static const char * const types[] = {
-    "unknown", "label", "byte", "word", "dword", "float", "qword", "tbyte"
+    "unknown",
+    "label",
+    "byte",
+    "word",
+    "dword",
+    "float",
+    "qword",
+    "tbyte",
+    "oword",
+    "yword",
+    "zword",
 };
+
 static void dbgdbg_init(void)
 {
     fprintf(ofile, "dbg init: debug information enabled\n");
