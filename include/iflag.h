@@ -4,8 +4,8 @@
 #include "compiler.h"
 #include "ilog2.h"
 
-
 #include "iflaggen.h"
+#include "featureinfo.h"
 
 #define IF_GENBIT(bit)          (UINT32_C(1) << ((bit) & 31))
 
@@ -37,6 +37,31 @@ static inline void iflag_clear_all(iflag_t *f)
 static inline void iflag_set_all(iflag_t *f)
 {
      memset(f, ~0, sizeof(*f));
+}
+
+static inline bool iflag_bits_ok(const iflag_t *f, int bits)
+{
+    switch (bits) {
+    case 16:
+        return true;
+    case 32:
+        return iflag_test(f, IF_386);
+    case 64:
+        return iflag_test(f, IF_X86_64);
+    default:
+        return false;
+    }
+}
+
+static inline bool iflag_features_ok(const iflag_t *have, const iflag_t *need)
+{
+    uint32_t bad = 0;
+    size_t i;
+
+    for (i = IF_FEATURE_FIELD; i < IF_FEATURE_FIELD+IF_FEATURE_NFIELDS; i++)
+        bad |= need->field[i] & ~have->field[i];
+
+    return !bad;
 }
 
 #define iflag_for_each_field(v) for ((v) = 0; (v) < IF_FIELD_COUNT; (v)++)
@@ -91,37 +116,46 @@ IF_GEN_HELPER(xor, ^)
 #define itemp_arx(itemp)        _itemp_arx((itemp)->iflag_idx)
 #define itemp_smx(itemp)        _itemp_smx((itemp)->iflag_idx)
 
-/*
- * IF_ANY is the highest CPU level by definition
- */
-#define IF_CPU_LEVEL_MASK      ((IFM_ANY << 1) - 1)
-
-static inline int iflag_cmp_cpu(const iflag_t *a, const iflag_t *b)
-{
-    return ifcomp(a->field[IF_CPU_FIELD], b->field[IF_CPU_FIELD]);
-}
-
-static inline uint32_t _iflag_cpu_level(const iflag_t *a)
-{
-    return a->field[IF_CPU_FIELD] & IF_CPU_LEVEL_MASK;
-}
-
-static inline int iflag_cmp_cpu_level(const iflag_t *a, const iflag_t *b)
-{
-    return ifcomp(_iflag_cpu_level(a), _iflag_cpu_level(b));
-}
-
-/* Returns true if the CPU level is at least a certain value */
-static inline bool iflag_cpu_level_ok(const iflag_t *a, unsigned int bit)
-{
-    return _iflag_cpu_level(a) >= IF_GENBIT(bit);
-}
-
-static inline void iflag_set_all_features(iflag_t *a)
+static inline void iflag_set_features(iflag_t *a, const uint32_t *features)
 {
     uint32_t *p = &a->field[IF_FEATURE_FIELD];
 
-    memset(p, -1, IF_FEATURE_NFIELDS * sizeof(uint32_t));
+    memcpy(p, features, IF_FEATURE_NFIELDS * sizeof(uint32_t));
+}
+
+static inline void iflag_clear_features(iflag_t *a)
+{
+    uint32_t *p = &a->field[IF_FEATURE_FIELD];
+
+    memset(p, 0, IF_FEATURE_NFIELDS * sizeof(uint32_t));
+}
+
+static inline bool iflag_test_feature(const iflag_t *a, unsigned int feature)
+{
+    return iflag_test(a, feature + IF_FEATURE_FIRST);
+}
+
+/*
+ * When ADDING a feature, enable all features that depend on it as
+ * well, for user sanity.  When REMOVING a feature, delete only that
+ * feature bit; the instruction feature masks take care of
+ * dependencies (e.g. AVX512F depends on AVX512, so if the AVX512 bit
+ * is off, an AVX512F instruction will not match even if the AVX512F
+ * bit is still set.)
+ */
+static inline void iflag_add_feature(iflag_t *a, unsigned int feature)
+{
+    unsigned int i;
+    const uint32_t *p = cpu_feature_info[feature - IF_FEATURE_FIRST].deps;
+    uint32_t *q = &a->field[IF_FEATURE_FIELD];
+
+    for (i = 0; i < IF_FEATURE_NFIELDS; i++)
+        *q++ |= *p++;
+}
+
+static inline void iflag_del_feature(iflag_t *a, unsigned int feature)
+{
+    iflag_clear(a, feature + IF_FEATURE_FIRST);
 }
 
 static inline iflag_t _iflag_pfmask(const iflag_t *a)

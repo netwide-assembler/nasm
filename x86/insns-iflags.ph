@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2025 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -64,13 +64,13 @@
 # for a set of flags, so be careful moving bits (and
 # don't forget to update C code generation then).
 #
+
 sub dword_align($) {
     my($n) = @_;
 
     $$n = ($$n + 31) & ~31;
     return $n;
 }
-
 
 my $n_iflags = 0;
 my %flag_byname;

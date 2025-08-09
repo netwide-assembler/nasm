@@ -94,6 +94,8 @@ TAGS
 /version.mac
 /version.mak
 /version.sed
+/x86/cpunames.h
+/x86/featureinfo.h
 /x86/iflag.c
 /x86/iflaggen.h
 /x86/insnsa.c

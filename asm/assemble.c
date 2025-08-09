@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -124,6 +124,9 @@ static int process_ea(operand *input, int rfield, opflags_t rflags,
 
 /* Convert a prefix to a byte value */
 static int prefix_byte(enum prefixes pfx, const int bits);
+
+/* Map of feature flag indicies for which the current CPU flags are OK */
+static bool itemp_features_ok[ARRAY_SIZE(insns_flags)];
 
 /*
  * Convert operand/address/mode size to a BITS opflag constant.
@@ -981,7 +984,7 @@ static int64_t assemble(insn *instruction)
 
                 whathappened = never ? "never implemented" : "obsolete";
 
-                if (!never && !iflag_cmp_cpu_level(&insns_flags[temp->iflag_idx], &cpu)) {
+                if (!never && 1 /* !iflag_cmp_cpu_level(&insns_flags[temp->iflag_idx], &cpu) */) {
                     warning = WARN_OBSOLETE_VALID;
                     validity = "but valid on";
                 } else if (itemp_has(temp, IF_NOP)) {
@@ -2100,7 +2103,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             ins->rex &= ~REX_L;
             ins->rex |= REX_P;
         } else if ((ins->rex & (REX_L|REX_W|REX_BXR)) == (REX_L|REX_R) &&
-                   iflag_cpu_level_ok(&cpu, IF_X86_64)) {
+                   iflag_test(&cpu, IF_LOCKREX)) {
             /* LOCK-as-REX.R */
             if (assert_no_prefix(ins, PPS_LOCK))
                 return -1;
@@ -3315,9 +3318,9 @@ static enum match_result matches(const struct itemplate * const itemp,
     }
 
     /*
-     * Check template is okay at the set cpu level
+     * Check CPU feature masking flags
      */
-    if (iflag_cmp_cpu_level(&insns_flags[itemp->iflag_idx], &cpu) > 0)
+    if (!itemp_features_ok[itemp->iflag_idx])
         return MERR_BADCPU;
 
     /*
@@ -3373,6 +3376,17 @@ static enum match_result matches(const struct itemplate * const itemp,
         return jmp_match(itemp, ins);
 
     return MOK_GOOD;
+}
+
+/*
+ * Recompute the list of valid instruction pattern indicies
+ */
+void asm_revalidate_cpu(void)
+{
+    size_t i;
+
+    for (i = 0; i < ARRAY_SIZE(insns_flags); i++)
+        itemp_features_ok[i] = iflag_features_ok(&insns_flags[i], &cpu);
 }
 
 /*

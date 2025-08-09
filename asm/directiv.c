@@ -52,124 +52,87 @@
 #include "listing.h"
 #include "labels.h"
 #include "iflag.h"
-
-struct cpunames {
-    const char *name;
-    unsigned int level;
-    /* Eventually a table of features */
-};
-
-static void iflag_set_cpu(iflag_t *a, unsigned int lvl)
-{
-    a->field[0] = 0;     /* Not applicable to the CPU type */
-    iflag_set_all_features(a);    /* All feature masking bits set for now */
-    if (lvl >= IF_ANY) {
-        /* This is a hack for now */
-        iflag_set(a, IF_LATEVEX);
-    }
-    a->field[IF_CPU_FIELD] &= ~IF_CPU_LEVEL_MASK;
-    iflag_set(a, lvl);
-}
+#include "featureinfo.h"
+#include "cpunames.h"
 
 void set_cpu(const char *value)
 {
     const char *p;
     char modifier;
-    const struct cpunames *cpuflag;
-    static const struct cpunames cpunames[] = {
-        { "default", IF_DEFAULT }, /* Must be first */
-        { "8086", IF_8086 },
-        { "186",  IF_186  },
-        { "286",  IF_286  },
-        { "386",  IF_386  },
-        { "486",  IF_486  },
-        { "586",  IF_PENT },
-        { "pentium", IF_PENT },
-        { "pentiummmx", IF_PENT },
-        { "686",  IF_P6 },
-        { "p6",   IF_P6 },
-        { "ppro", IF_P6 },
-        { "pentiumpro", IF_P6 },
-        { "p2", IF_P6 },        /* +MMX */
-        { "pentiumii", IF_P6 },
-        { "p3", IF_KATMAI },
-        { "katmai", IF_KATMAI },
-        { "p4", IF_WILLAMETTE },
-        { "willamette", IF_WILLAMETTE },
-        { "prescott", IF_PRESCOTT },
-        { "x64", IF_X86_64 },
-        { "x86-64", IF_X86_64 },
-        { "ia64", IF_IA64 },
-        { "ia-64", IF_IA64 },
-        { "itanium", IF_IA64 },
-        { "itanic", IF_IA64 },
-        { "merced", IF_IA64 },
-        { "nehalem", IF_NEHALEM },
-        { "westmere", IF_WESTMERE },
-        { "sandybridge", IF_SANDYBRIDGE },
-        { "ivybridge", IF_FUTURE },
-        { "any", IF_ANY },
-        { "all", IF_ANY },
-        { "latevex", IF_LATEVEX },
-        { "apx", IF_APX },
-        { "evex", IF_EVEX },
-        { "vex", IF_VEX },
-        { NULL, 0 }
-    };
 
-    if (!value) {
-        iflag_set_cpu(&cpu, cpunames[0].level);
-        return;
-    }
+    if (!value)
+        value = "default";
 
     p = value;
-    modifier = '+';
-    while (*p) {
-        int len = strcspn(p, " ,");
-
-        while (len && (*p == '+' || *p == '-' || *p == '*')) {
+    modifier = 0;
+    while (*(p = nasm_skip_spaces(p))) {
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '^' || *p == ',') {
             modifier = *p++;
-            len--;
-            if (!len && modifier == '*')
-                cpu = cmd_cpu;
+            continue;
+        }
+
+        int len = strcspn(p, " ,+-*^");
+        if (!len && modifier == '*') {
+            cpu = cmd_cpu;
+            continue;
         }
 
         if (len) {
+            const struct cpu_feature_info *feat = NULL;
             bool invert_flag = false;
 
-            if (len >= 3 && !nasm_memicmp(p, "no", 2)) {
+            if (len >= 2 && *p == '!') {
+                invert_flag = true;
+                do {
+                    p++;
+                    len--;
+                } while (nasm_isspace(*p));
+            } else if (len >= 3 && !nasm_memicmp(p, "no", 2)) {
                 invert_flag = true;
                 p += 2;
                 len -= 2;
             }
 
-            for (cpuflag = cpunames; cpuflag->name; cpuflag++)
-                if (!nasm_strnicmp(p, cpuflag->name, len))
-                    break;
-
-            if (!cpuflag->name) {
-                nasm_nonfatal("unknown CPU type or flag '%.*s'", len, p);
-                return;
-            }
-
-            if (cpuflag->level >= IF_CPU_FIRST && cpuflag->level <= IF_ANY) {
-                iflag_set_cpu(&cpu, cpuflag->level);
-            } else {
-                switch (modifier) {
-                case '-':
-                    invert_flag = !invert_flag;
-                    break;
-                case '*':
-                    invert_flag ^= iflag_test(&cmd_cpu, cpuflag->level);
-                    break;
-                default:
-                    break;
+            if (!modifier && !invert_flag) {
+                /* Search list of known CPUs */
+                array_foreach (feat, known_cpus) {
+                    if (!nasm_strnicmp(p, feat->name, len)) {
+                        iflag_set_features(&cpu, feat->deps);
+                        goto next;
+                    }
                 }
-
-                iflag_set(&cpu, cpuflag->level);
-                if (invert_flag)
-                    iflag_clear(&cpu, cpuflag->level);
             }
+
+            /* Otherwise it should be a single feature flag */
+            array_foreach (feat, cpu_feature_info) {
+                if (!nasm_strnicmp(p, feat->name, len))
+                    goto found;
+            }
+
+            /* Otherwise... */
+            nasm_nonfatal("unknown CPU type or feature flag '%.*s'", len, p);
+            return;
+
+        found:
+            switch (modifier) {
+            case '-':
+                invert_flag = !invert_flag;
+                break;
+            case '*':
+            case '^':
+                invert_flag ^= iflag_test_feature(&cmd_cpu, feat->num);
+                break;
+            default:
+                break;
+            }
+
+            if (invert_flag)
+                iflag_del_feature(&cpu, feat->num);
+            else
+                iflag_add_feature(&cpu, feat->num);
+
+        next:
+            modifier = '+';
         }
         p += len;
         if (!*p)
@@ -181,27 +144,24 @@ void set_cpu(const char *value)
 static int get_bits(const char *value)
 {
     int i = atoi(value);
+    if (!i)
+        return globalbits;
 
-    switch (i) {
-    case 16:
-        break;                  /* Always safe */
-    case 32:
-        if (!iflag_cpu_level_ok(&cpu, IF_386)) {
+    if (!iflag_bits_ok(&cpu, i)) {
+        i = globalbits;
+
+        switch (i) {
+        case 32:
             nasm_nonfatal("cannot specify 32-bit segment on processor below a 386");
-            i = 16;
-        }
-        break;
-    case 64:
-        if (!iflag_cpu_level_ok(&cpu, IF_X86_64)) {
+            break;
+        case 64:
             nasm_nonfatal("cannot specify 64-bit segment on processor below an x86-64");
-            i = 16;
+            break;
+        default:
+            nasm_nonfatal("`%s' is not a valid segment size; must be 16, 32 or 64",
+                          value);
+            break;
         }
-        break;
-    default:
-        nasm_nonfatal("`%s' is not a valid segment size; must be 16, 32 or 64",
-                      value);
-        i = 16;
-        break;
     }
     return i;
 }
@@ -503,6 +463,12 @@ bool process_directives(char *directive)
 
     case D_CPU:         /* [CPU] */
         set_cpu(value);
+        if (!iflag_bits_ok(&cpu, globalbits)) {
+            nasm_nonfatal("invalid CPU for %d-bit mode", globalbits);
+            while (!iflag_bits_ok(&cpu, globalbits >>= 1))
+                ;
+        }
+        asm_revalidate_cpu();
         break;
 
     case D_LIST:        /* [LIST {+|-}] */

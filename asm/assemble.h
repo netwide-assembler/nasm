@@ -53,6 +53,8 @@ void process_insn(insn *instruction);
 bool process_directives(char *);
 void process_pragma(char *);
 
+void asm_revalidate_cpu(void);
+
 /* Is this a compile-time absolute constant? */
 static inline bool op_compile_abs(const struct operand * const op)
 {

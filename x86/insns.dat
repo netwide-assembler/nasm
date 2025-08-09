@@ -73,7 +73,7 @@ EQU		imm:imm				ignore						PSEUDO
 ;# No operation
 ; In 64-bit mode NOP (90) is technically always 64 bits, but allow "o64 nop" to generate 48 90
 NOP		void				[	osz norexb nof3 90]			8086
-NOP2		void				[	norexb nof3 66 90]			386,ND
+NOP2		void				[	norexb nof3 66 90]			386,ND,UNDOC
 $wdq  NOP	rm#				[m:	o# 0f 1f /0]				P6
 
 ;# Integer data move instructions
@@ -237,7 +237,7 @@ $wdq  MOVZXD	reg#,rm32			[rm:	nw o# 8b /r]				8086,OPT,ND
 ;# Atomic operations
 $bwdq CMPXCHG	 rm#,reg#			[mr:	hle 0f b0# /r]				PENT,SM,LOCK
       CMPXCHG8B	 mem64				[m:	hle norexw 0f c7 /1]			PENT,LOCK
-      CMPXCHG16B mem128				[m:	o64 0f c7 /1]				X86_64,LONG,LOCK
+      CMPXCHG16B mem128				[m:	o64 0f c7 /1]				CX16,LONG,LOCK
 
 $bwdq XADD	rm#,reg#			[mr:	hle o# 0f c0# /r]			486,SM,LOCK
 
@@ -294,12 +294,6 @@ $wdq  LOOPNE	imm8|near|short,cx#		[i-:	a#  nw e0 rel8]				8086,NOAPX
 $wdq  LOOPZ	imm8|near|short,cx#		[i-:	a#  nw e1 rel8]				8086,NOAPX,ND
 $wdq  LOOPNZ	imm8|near|short,cx#		[i-:	a#  nw e0 rel8]				8086,NOAPX,ND
 
-; JMPE is obsolete, but seems to be used by a fair number of virtual environments?
-$zwdq JMPE	imm##|near			[i:	nw o# 0f b8 rel]			IA64
-; 0f 00 /6 with a prefix has been repurposed in long mode
-$wdq  JMPE	rm#|near			[m:	nw o# np 0f 00 /6]			IA64
-$wd   JMPE	rm#|near			[m:	o#       0f 00 /6]			IA64,NOLONG
-
 ;# Call and return
 $wdq  CALL	imm##|near			[i:	nw o# e8 rel]				8086,BND,NOAPX,OSIZE
 $wd   CALL	imm#|far			[i:	o# 9a iwd seg]				8086,ND,NOLONG,OSIZE
@@ -327,16 +321,21 @@ INT03		void				[	cc]					8086,ND
 BRKPT		void				[	cc]					8086,ND
 INTO		void				[	ce]					8086,NOLONG
 
-SYSCALL		void				[	0f 05]					P6,AMD
-SYSENTER	void				[	0f 34]					P6,NOAPX
-
-SYSEXIT		void				[	0f 35]					P6,PRIV,NOAPX
+SYSCALL		void				[	0f 05]					SYSCALL,AMD
 SYSRET		void				[	0f 07]					P6,PRIV,AMD
+SYSENTER	void				[	0f 34]					SYSENTER,NOAPX
+SYSEXIT		void				[	0f 35]					SYSENTER,PRIV,NOAPX
 
 $zwdq IRET%	void				[	o# cf]					8086
 
 ERETS           void				[	f2 0f 01 ca		]		FRED,PRIV,LONG
 ERETU		void				[	f3 0f 01 ca		]		FRED,PRIV,LONG
+
+;# Jump to Emulator
+$zwdq JMPE	imm##|near			[i:	nw o# 0f b8 rel]			JMPE
+; 0f 00 /6 with a prefix has been repurposed in long mode
+$wdq  JMPE	rm#|near			[m:	nw o# np 0f 00 /6]			JMPE
+$wd   JMPE	rm#|near			[m:	o#       0f 00 /6]			JMPE,NOLONG
 
 ;# Flag register instructions
 CLC		void				[	f8]					8086
@@ -351,9 +350,11 @@ STAC		void				[	np 0f 01 cb]				SMAP,PRIV
 
 CMC		void				[	f5]					8086
 
-LAHF		void				[	9f]					8086
-SAHF		void				[	9e]					8086
-SALC		void				[	d6]					8086,UNDOC
+LAHF		void				[	9f]					8086,NOLONG
+SAHF		void				[	9e]					8086,NOLONG
+LAHF		void				[	9f]					LONG,LAHF_LM
+SAHF		void				[	9e]					LONG,LAHF_LM
+SALC		void				[	d6]					8086,NOLONG,UNDOC
 
 $zwdq PUSHF%	void				[	nw o# 9c]				8086
 $zwdq POPF%	void				[	nw o# 9d]				8086
@@ -368,22 +369,22 @@ $bwd  INS%	void				[	o# 6c#]					186
 $bwd  OUTS%	void				[	o# 6e#]					186
 
 ;# Synchronization and fencing
-LFENCE		void				[	np 0f ae e8]				X86_64,LONG,AMD
-MFENCE		void				[	np 0f ae f0]				X86_64,LONG,AMD
-SFENCE		void				[	np 0f ae f8]				X86_64,LONG,AMD
 SERIALIZE	void				[	np 0f 01 e8]				SERIALIZE
+LFENCE		void				[	np 0f ae e8]				SSE2
+MFENCE		void				[	np 0f ae f0]				SSE2
+SFENCE		void				[	np 0f ae f8]				KATMAI
 
-;# Memory management and control
-CLFLUSH		mem				[m:	np 0f ae /7]				WILLAMETTE,SSE2
+;# Cache and TLB management and control
+CLFLUSH		mem				[m:	np 0f ae /7]				SSE2
 CLFLUSHOPT	mem				[m:	66 0f ae /7]				CLFLUSHOPT
 CLWB            mem                             [m:     66 0f ae /6]                            CLWB
 
 ; This one was killed before it saw the light of day
-PCOMMIT         void                            [       66 0f ae f8]                            NEVER,NOP
+PCOMMIT         void                            [       66 0f ae f8]                            NEVER,OBSOLETE,NOP
 
 ; AMD Zen v1
-$wdq   CLZERO	ax#				[-:	a# 0f 01 fc]				AMD,CLZERO
-       CLZERO	void				[	0f 01 fc]				AMD,CLZERO,ND
+$wdq   CLZERO	ax#				[-:	a# 0f 01 fc]				CLZERO
+       CLZERO	void				[	0f 01 fc]				CLZERO,ND
 
 INVD		void				[	   0f 08]				486,PRIV
 WBINVD		void				[	np 0f 09]				486,PRIV
@@ -436,7 +437,7 @@ CPU_WRITE	void				[	m1 3c]					PENT,NOLONG,CYRIX,OBSOLETE,ND
 DMINT		void				[	m1 39]					P6,NOLONG,CYRIX,NOAPX,OBSOLETE,ND
 RDM		void				[	0f 3a]					P6,CYRIX,ND,NOLONG,OBSOLETE
 SMINT		void				[	m1 38]					P6,CYRIX,ND,NOLONG,OBSOLETE
-SMINTOLD	void				[	m1 7e]					486,CYRIX,ND,NOLONG,,OBSOLETE
+SMINTOLD	void				[	m1 7e]					486,CYRIX,ND,NOLONG,OBSOLETE
 
 ;# System management mode
 RSM		void				[	0f aa]					PENT,SMM
@@ -496,7 +497,7 @@ $wdq  LSS	reg#,mem#			[rm:	o# 0f b2 /r]				386,SM
       PUSH	reg_gs				[-:	0f a8]					386
 
       POP	reg_es				[-:	07]					8086,NOLONG
-      POP	reg_cs				[-:	m0 0f]					8086,NOLONG,UNDOC,ND,OBSOLETE
+      POP	reg_cs				[-:	m0 0f]					8086ONLY,NOLONG,SUPERCEDED
       POP	reg_ss				[-:	17]					8086,NOLONG
       POP	reg_ds				[-:	1f]					8086,NOLONG
       POP	reg_fs				[-:	0f a1]					386
@@ -528,8 +529,8 @@ $dq   SIDT	mem#				[m:	nw o# 0f 01 /1]				286
 $zwdq SLDT	sel#				[m:	optd# 0f 00 /0]				286,PROT
 $zwdq STR	sel#				[m:	optd# 0f 00 /1]				286,PROT
 
-LOADALL		void				[	0f 07]					386,UNDOC,ND,OBSOLETE
-LOADALL286	void				[	0f 05]					286,UNDOC,ND,OBSOLETE
+LOADALL		void				[	0f 07]					386ONLY,UNDOC,OBSOLETE,SUPERCEDED
+LOADALL286	void				[	0f 05]					286ONLY,UNDOC,OBSOLETE,SUPERCEDED
 
 ;# x87 floating point
 F2XM1		void				[	d9 f0]					8086,FPU
@@ -1048,7 +1049,6 @@ PREFETCHT1	mem8				[m:	0f 18 /2]				KATMAI,SB
 PREFETCHT2	mem8				[m:	0f 18 /3]				KATMAI,SB
 PREFETCHIT0	mem8				[m:	0f 18 /7]				PREFETCHI,SB
 PREFETCHIT1	mem8				[m:	0f 18 /6]				PREFETCHI,SB
-SFENCE		void				[	np 0f ae f8]				KATMAI
 
 ;# New MMX instructions introduced in Katmai
 MASKMOVQ	mmxreg,mmxreg			[rm:	np 0f f7 /r]				KATMAI,MMX
@@ -1083,8 +1083,6 @@ MOVNTDQ		mem,xmmreg			[mr:	66 0f e7 /r]				WILLAMETTE,SSE2,SO
 MOVNTI		mem,reg32			[mr:	np 0f c3 /r]				WILLAMETTE,SD
 MOVNTI		mem,reg64			[mr:	o64 np 0f c3 /r]			X86_64,LONG,SQ
 MOVNTPD		mem,xmmreg			[mr:	66 0f 2b /r]				WILLAMETTE,SSE2,SO
-LFENCE		void				[	np 0f ae e8]				WILLAMETTE,SSE2
-MFENCE		void				[	np 0f ae f0]				WILLAMETTE,SSE2
 
 ;# Willamette MMX instructions (SSE2 SIMD Integer Instructions)
 MOVD		mem,xmmreg			[mr:	66 norexw 0f 7e /r]			WILLAMETTE,SSE2,SD
@@ -1352,77 +1350,77 @@ MOVNTSS		mem32,xmmreg			[mr:	f3 0f 2b /r]				SSE4A,AMD,SD
 ;# New instructions in Barcelona
 
 ;# Penryn New Instructions (SSE4.1)
-BLENDPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 0d /r ib,u]			SSE41
-BLENDPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 0c /r ib,u]			SSE41
-BLENDVPD	xmmreg,xmmrm128,xmm0		[rm-:	66 0f38 15 /r]				SSE41
-BLENDVPD	xmmreg,xmmrm128			[rm:	66 0f38 15 /r]				SSE41
-BLENDVPS	xmmreg,xmmrm128,xmm0		[rm-:	66 0f38 14 /r]				SSE41
-BLENDVPS	xmmreg,xmmrm128			[rm:	66 0f38 14 /r]				SSE41
-DPPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 41 /r ib,u]			SSE41
-DPPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 40 /r ib,u]			SSE41
-EXTRACTPS	rm32,xmmreg,imm8		[mri:	66 0f3a 17 /r ib,u]			SSE41
-EXTRACTPS	reg64,xmmreg,imm8		[mri:	o64 66 0f3a 17 /r ib,u]		SSE41,X86_64,LONG
-INSERTPS	xmmreg,xmmrm32,imm8		[rmi:	66 0f3a 21 /r ib,u]			SSE41
-MOVNTDQA	xmmreg,mem128			[rm:	66 0f38 2a /r]				SSE41
-MPSADBW		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 42 /r ib,u]			SSE41
-PACKUSDW	xmmreg,xmmrm128			[rm:	66 0f38 2b /r]				SSE41
-PBLENDVB	xmmreg,xmmrm,xmm0		[rm-:	66 0f38 10 /r]				SSE41
-PBLENDVB	xmmreg,xmmrm128			[rm:	66 0f38 10 /r]				SSE41
-PBLENDW		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 0e /r ib,u]			SSE41
-PCMPEQQ		xmmreg,xmmrm128			[rm:	66 0f38 29 /r]				SSE41
-PEXTRB		reg32,xmmreg,imm8		[mri:	66 0f3a 14 /r ib,u]			SSE41
-PEXTRB		mem8,xmmreg,imm8		[mri:	66 0f3a 14 /r ib,u]			SSE41
-PEXTRB		reg64,xmmreg,imm8		[mri:	o64nw 66 0f3a 14 /r ib,u]		SSE41,X86_64,LONG
-PEXTRD		rm32,xmmreg,imm8		[mri:	norexw 66 0f3a 16 /r ib,u]		SSE41
-PEXTRQ		rm64,xmmreg,imm8		[mri:	o64 66 0f3a 16 /r ib,u]		SSE41,X86_64,LONG
-PEXTRW		reg32,xmmreg,imm8		[mri:	66 0f3a 15 /r ib,u]			SSE41
-PEXTRW		mem16,xmmreg,imm8		[mri:	66 0f3a 15 /r ib,u]			SSE41
-PEXTRW		reg64,xmmreg,imm8		[mri:	o64 66 0f3a 15 /r ib,u]		SSE41,X86_64,LONG
-PHMINPOSUW	xmmreg,xmmrm128			[rm:	66 0f38 41 /r]				SSE41
-PINSRB		xmmreg,mem,imm8			[rmi:	66 0f3a 20 /r ib,u]			SSE41,SB,AR2
-PINSRB		xmmreg,rm8,imm8			[rmi:	nohi 66 0f3a 20 /r ib,u]		SSE41,SB,AR2
-PINSRB		xmmreg,reg32,imm8		[rmi:	66 0f3a 20 /r ib,u]			SSE41,SB,AR2
-PINSRD		xmmreg,rm32,imm8		[rmi:	norexw 66 0f3a 22 /r ib,u]		SSE41,SB,AR2
-PINSRQ		xmmreg,rm64,imm8		[rmi:	o64 66 0f3a 22 /r ib,u]		SSE41,X86_64,LONG,SB,AR2
-PMAXSB		xmmreg,xmmrm128			[rm:	66 0f38 3c /r]				SSE41
-PMAXSD		xmmreg,xmmrm128			[rm:	66 0f38 3d /r]				SSE41
-PMAXUD		xmmreg,xmmrm128			[rm:	66 0f38 3f /r]				SSE41
-PMAXUW		xmmreg,xmmrm128			[rm:	66 0f38 3e /r]				SSE41
-PMINSB		xmmreg,xmmrm128			[rm:	66 0f38 38 /r]				SSE41
-PMINSD		xmmreg,xmmrm128			[rm:	66 0f38 39 /r]				SSE41
-PMINUD		xmmreg,xmmrm128			[rm:	66 0f38 3b /r]				SSE41
-PMINUW		xmmreg,xmmrm128			[rm:	66 0f38 3a /r]				SSE41
-PMOVSXBW	xmmreg,xmmrm64			[rm:	66 0f38 20 /r]				SSE41,SQ
-PMOVSXBD	xmmreg,xmmrm32			[rm:	66 0f38 21 /r]				SSE41,SD
-PMOVSXBQ	xmmreg,xmmrm16			[rm:	66 0f38 22 /r]				SSE41,SW
-PMOVSXWD	xmmreg,xmmrm64			[rm:	66 0f38 23 /r]				SSE41,SQ
-PMOVSXWQ	xmmreg,xmmrm32			[rm:	66 0f38 24 /r]				SSE41,SD
-PMOVSXDQ	xmmreg,xmmrm64			[rm:	66 0f38 25 /r]				SSE41,SQ
-PMOVZXBW	xmmreg,xmmrm64			[rm:	66 0f38 30 /r]				SSE41,SQ
-PMOVZXBD	xmmreg,xmmrm32			[rm:	66 0f38 31 /r]				SSE41,SD
-PMOVZXBQ	xmmreg,xmmrm16			[rm:	66 0f38 32 /r]				SSE41,SW
-PMOVZXWD	xmmreg,xmmrm64			[rm:	66 0f38 33 /r]				SSE41,SQ
-PMOVZXWQ	xmmreg,xmmrm32			[rm:	66 0f38 34 /r]				SSE41,SD
-PMOVZXDQ	xmmreg,xmmrm64			[rm:	66 0f38 35 /r]				SSE41,SQ
-PMULDQ		xmmreg,xmmrm128			[rm:	66 0f38 28 /r]				SSE41
-PMULLD		xmmreg,xmmrm128			[rm:	66 0f38 40 /r]				SSE41
-PTEST		xmmreg,xmmrm128			[rm:	66 0f38 17 /r]				SSE41
-ROUNDPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 09 /r ib,u]			SSE41
-ROUNDPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 08 /r ib,u]			SSE41
-ROUNDSD		xmmreg,xmmrm64,imm8		[rmi:	66 0f3a 0b /r ib,u]			SSE41
-ROUNDSS		xmmreg,xmmrm32,imm8		[rmi:	66 0f3a 0a /r ib,u]			SSE41
+BLENDPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 0d /r ib,u]			SSE4_1
+BLENDPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 0c /r ib,u]			SSE4_1
+BLENDVPD	xmmreg,xmmrm128,xmm0		[rm-:	66 0f38 15 /r]				SSE4_1
+BLENDVPD	xmmreg,xmmrm128			[rm:	66 0f38 15 /r]				SSE4_1
+BLENDVPS	xmmreg,xmmrm128,xmm0		[rm-:	66 0f38 14 /r]				SSE4_1
+BLENDVPS	xmmreg,xmmrm128			[rm:	66 0f38 14 /r]				SSE4_1
+DPPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 41 /r ib,u]			SSE4_1
+DPPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 40 /r ib,u]			SSE4_1
+EXTRACTPS	rm32,xmmreg,imm8		[mri:	66 0f3a 17 /r ib,u]			SSE4_1
+EXTRACTPS	reg64,xmmreg,imm8		[mri:	o64 66 0f3a 17 /r ib,u]		SSE4_1,X86_64,LONG
+INSERTPS	xmmreg,xmmrm32,imm8		[rmi:	66 0f3a 21 /r ib,u]			SSE4_1
+MOVNTDQA	xmmreg,mem128			[rm:	66 0f38 2a /r]				SSE4_1
+MPSADBW		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 42 /r ib,u]			SSE4_1
+PACKUSDW	xmmreg,xmmrm128			[rm:	66 0f38 2b /r]				SSE4_1
+PBLENDVB	xmmreg,xmmrm,xmm0		[rm-:	66 0f38 10 /r]				SSE4_1
+PBLENDVB	xmmreg,xmmrm128			[rm:	66 0f38 10 /r]				SSE4_1
+PBLENDW		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 0e /r ib,u]			SSE4_1
+PCMPEQQ		xmmreg,xmmrm128			[rm:	66 0f38 29 /r]				SSE4_1
+PEXTRB		reg32,xmmreg,imm8		[mri:	66 0f3a 14 /r ib,u]			SSE4_1
+PEXTRB		mem8,xmmreg,imm8		[mri:	66 0f3a 14 /r ib,u]			SSE4_1
+PEXTRB		reg64,xmmreg,imm8		[mri:	o64nw 66 0f3a 14 /r ib,u]		SSE4_1,X86_64,LONG
+PEXTRD		rm32,xmmreg,imm8		[mri:	norexw 66 0f3a 16 /r ib,u]		SSE4_1
+PEXTRQ		rm64,xmmreg,imm8		[mri:	o64 66 0f3a 16 /r ib,u]		SSE4_1,X86_64,LONG
+PEXTRW		reg32,xmmreg,imm8		[mri:	66 0f3a 15 /r ib,u]			SSE4_1
+PEXTRW		mem16,xmmreg,imm8		[mri:	66 0f3a 15 /r ib,u]			SSE4_1
+PEXTRW		reg64,xmmreg,imm8		[mri:	o64 66 0f3a 15 /r ib,u]		SSE4_1,X86_64,LONG
+PHMINPOSUW	xmmreg,xmmrm128			[rm:	66 0f38 41 /r]				SSE4_1
+PINSRB		xmmreg,mem,imm8			[rmi:	66 0f3a 20 /r ib,u]			SSE4_1,SB,AR2
+PINSRB		xmmreg,rm8,imm8			[rmi:	nohi 66 0f3a 20 /r ib,u]		SSE4_1,SB,AR2
+PINSRB		xmmreg,reg32,imm8		[rmi:	66 0f3a 20 /r ib,u]			SSE4_1,SB,AR2
+PINSRD		xmmreg,rm32,imm8		[rmi:	norexw 66 0f3a 22 /r ib,u]		SSE4_1,SB,AR2
+PINSRQ		xmmreg,rm64,imm8		[rmi:	o64 66 0f3a 22 /r ib,u]		SSE4_1,X86_64,LONG,SB,AR2
+PMAXSB		xmmreg,xmmrm128			[rm:	66 0f38 3c /r]				SSE4_1
+PMAXSD		xmmreg,xmmrm128			[rm:	66 0f38 3d /r]				SSE4_1
+PMAXUD		xmmreg,xmmrm128			[rm:	66 0f38 3f /r]				SSE4_1
+PMAXUW		xmmreg,xmmrm128			[rm:	66 0f38 3e /r]				SSE4_1
+PMINSB		xmmreg,xmmrm128			[rm:	66 0f38 38 /r]				SSE4_1
+PMINSD		xmmreg,xmmrm128			[rm:	66 0f38 39 /r]				SSE4_1
+PMINUD		xmmreg,xmmrm128			[rm:	66 0f38 3b /r]				SSE4_1
+PMINUW		xmmreg,xmmrm128			[rm:	66 0f38 3a /r]				SSE4_1
+PMOVSXBW	xmmreg,xmmrm64			[rm:	66 0f38 20 /r]				SSE4_1,SQ
+PMOVSXBD	xmmreg,xmmrm32			[rm:	66 0f38 21 /r]				SSE4_1,SD
+PMOVSXBQ	xmmreg,xmmrm16			[rm:	66 0f38 22 /r]				SSE4_1,SW
+PMOVSXWD	xmmreg,xmmrm64			[rm:	66 0f38 23 /r]				SSE4_1,SQ
+PMOVSXWQ	xmmreg,xmmrm32			[rm:	66 0f38 24 /r]				SSE4_1,SD
+PMOVSXDQ	xmmreg,xmmrm64			[rm:	66 0f38 25 /r]				SSE4_1,SQ
+PMOVZXBW	xmmreg,xmmrm64			[rm:	66 0f38 30 /r]				SSE4_1,SQ
+PMOVZXBD	xmmreg,xmmrm32			[rm:	66 0f38 31 /r]				SSE4_1,SD
+PMOVZXBQ	xmmreg,xmmrm16			[rm:	66 0f38 32 /r]				SSE4_1,SW
+PMOVZXWD	xmmreg,xmmrm64			[rm:	66 0f38 33 /r]				SSE4_1,SQ
+PMOVZXWQ	xmmreg,xmmrm32			[rm:	66 0f38 34 /r]				SSE4_1,SD
+PMOVZXDQ	xmmreg,xmmrm64			[rm:	66 0f38 35 /r]				SSE4_1,SQ
+PMULDQ		xmmreg,xmmrm128			[rm:	66 0f38 28 /r]				SSE4_1
+PMULLD		xmmreg,xmmrm128			[rm:	66 0f38 40 /r]				SSE4_1
+PTEST		xmmreg,xmmrm128			[rm:	66 0f38 17 /r]				SSE4_1
+ROUNDPD		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 09 /r ib,u]			SSE4_1
+ROUNDPS		xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 08 /r ib,u]			SSE4_1
+ROUNDSD		xmmreg,xmmrm64,imm8		[rmi:	66 0f3a 0b /r ib,u]			SSE4_1
+ROUNDSS		xmmreg,xmmrm32,imm8		[rmi:	66 0f3a 0a /r ib,u]			SSE4_1
 
 ;# Nehalem New Instructions (SSE4.2)
-CRC32		reg32,rm8			[rm:	f2i 0f38 f0 /r]			SSE42
-CRC32		reg32,rm16			[rm:	o16 f2i 0f38 f1 /r]			SSE42
-CRC32		reg32,rm32			[rm:	o32 f2i 0f38 f1 /r]			SSE42
-CRC32		reg64,rm8			[rm:	o64 f2i 0f38 f0 /r]			SSE42,X86_64,LONG
-CRC32		reg64,rm64			[rm:	o64 f2i 0f38 f1 /r]			SSE42,X86_64,LONG
-PCMPESTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 61 /r ib,u]			SSE42
-PCMPESTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 60 /r ib,u]			SSE42
-PCMPISTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 63 /r ib,u]			SSE42
-PCMPISTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 62 /r ib,u]			SSE42
-PCMPGTQ		xmmreg,xmmrm128			[rm:	66 0f38 37 /r]				SSE42
+CRC32		reg32,rm8			[rm:	f2i 0f38 f0 /r]			SSE4_2
+CRC32		reg32,rm16			[rm:	o16 f2i 0f38 f1 /r]			SSE4_2
+CRC32		reg32,rm32			[rm:	o32 f2i 0f38 f1 /r]			SSE4_2
+CRC32		reg64,rm8			[rm:	o64 f2i 0f38 f0 /r]			SSE4_2,X86_64,LONG
+CRC32		reg64,rm64			[rm:	o64 f2i 0f38 f1 /r]			SSE4_2,X86_64,LONG
+PCMPESTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 61 /r ib,u]			SSE4_2
+PCMPESTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 60 /r ib,u]			SSE4_2
+PCMPISTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 63 /r ib,u]			SSE4_2
+PCMPISTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 62 /r ib,u]			SSE4_2
+PCMPGTQ		xmmreg,xmmrm128			[rm:	66 0f38 37 /r]				SSE4_2
 POPCNT		reg16,rm16			[rm:	o16 f3i 0f b8 /r]			NEHALEM,SW
 POPCNT		reg32,rm32			[rm:	o32 f3i 0f b8 /r]			NEHALEM,SD
 POPCNT		reg64,rm64			[rm:	o64 f3i 0f b8 /r]			NEHALEM,SQ,LONG

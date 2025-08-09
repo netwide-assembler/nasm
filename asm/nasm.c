@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -1603,20 +1603,10 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
     uint64_t prev_offset_changed;
     int64_t stall_count = 0; /* Make sure we make forward progress... */
 
-    switch (cmd_sb) {
-    case 16:
-        break;
-    case 32:
-        if (!iflag_cpu_level_ok(&cmd_cpu, IF_386))
-            nasm_fatal("command line: 32-bit segment size requires a higher cpu");
-        break;
-    case 64:
-        if (!iflag_cpu_level_ok(&cmd_cpu, IF_X86_64))
-            nasm_fatal("command line: 64-bit segment size requires a higher cpu");
-        break;
-    default:
-        panic();
-        break;
+    if (!iflag_bits_ok(&cmd_cpu, cmd_sb)) {
+        nasm_fatal("command line: %d-bit segment size requires a higher cpu",
+                   cmd_sb);
+        return;
     }
 
     prev_offset_changed = INT64_MAX;
@@ -1657,6 +1647,8 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
         globalbits = cmd_sb;  /* set 'bits' to command line default */
         cpu = cmd_cpu;
+        asm_revalidate_cpu();
+
         if (listname) {
             if (list_on_this_pass()) {
                 /*

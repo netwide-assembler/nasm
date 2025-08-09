@@ -306,6 +306,12 @@ const char *filename_set_extension(const char *inname, const char *extension);
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 /*
+ * Iterate over all the elements of a known sized array
+ */
+#define array_foreach(var, arr) \
+    for ((var) = (arr); (var) < &(arr)[ARRAY_SIZE(arr)]; (var)++)
+
+/*
  * List handling
  *
  *  list_for_each - regular iterator over list
