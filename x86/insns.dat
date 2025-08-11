@@ -1398,18 +1398,18 @@ TEST		rm64,imm			[mi:	o64 f7 /0 id,s]				X86_64,LONG,SM
 TEST		mem,imm8			[mi:	f6 /0 ib]				8086,SM
 TEST		mem,imm16			[mi:	o16 f7 /0 iw]				8086,SM
 TEST		mem,imm32			[mi:	o32 f7 /0 id]				386,SM
-UD0		void				[	0f ff]					186,OBSOLETE
 UD0		reg16,rm16			[rm:	o16 0f ff /r]				186
 UD0		reg32,rm32			[rm:	o32 0f ff /r]				186
 UD0		reg64,rm64			[rm:	o64 0f ff /r]				186
+UD0		void				[	0f ff]					186,ND
 UD1		reg16,rm16			[rm:	o16 0f b9 /r]				186
 UD1		reg32,rm32			[rm:	o32 0f b9 /r]				186
 UD1		reg64,rm64			[rm:	o64 0f b9 /r]				186
 UD1		void				[	0f b9]					186,ND
-UD2B		void				[	0f b9]					186,ND
 UD2B		reg16,rm16			[rm:	o16 0f b9 /r]				186,ND
 UD2B		reg32,rm32			[rm:	o32 0f b9 /r]				186,ND
 UD2B		reg64,rm64			[rm:	o64 0f b9 /r]				186,ND
+UD2B		void				[	0f b9]					186,ND
 UD2		void				[	0f 0b]					186
 UD2A		void				[	0f 0b]					186,ND
 UDB		void				[	d6]					X86_64,LONG
