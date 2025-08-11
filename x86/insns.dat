@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2025 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -1193,7 +1193,7 @@ SAL		rm32,imm8			[mi:	o32 c1 /4 ib,u]				386,ND
 SAL		rm64,unity			[m-:	o64 d1 /4]				X86_64,LONG,ND
 SAL		rm64,reg_cl			[m-:	o64 d3 /4]				X86_64,LONG,ND
 SAL		rm64,imm8			[mi:	o64 c1 /4 ib,u]				X86_64,LONG,ND
-SALC		void				[	d6]					8086,UNDOC
+SALC		void				[	d6]					8086,NOLONG,UNDOC
 SAR		rm8,unity			[m-:	d0 /7]					8086
 SAR		rm8,reg_cl			[m-:	d2 /7]					8086
 SAR		rm8,imm8			[mi:	c0 /7 ib,u]				186
@@ -1398,20 +1398,21 @@ TEST		rm64,imm			[mi:	o64 f7 /0 id,s]				X86_64,LONG,SM
 TEST		mem,imm8			[mi:	f6 /0 ib]				8086,SM
 TEST		mem,imm16			[mi:	o16 f7 /0 iw]				8086,SM
 TEST		mem,imm32			[mi:	o32 f7 /0 id]				386,SM
-UD0		void				[	0f ff]					186,OBSOLETE
 UD0		reg16,rm16			[rm:	o16 0f ff /r]				186
 UD0		reg32,rm32			[rm:	o32 0f ff /r]				186
 UD0		reg64,rm64			[rm:	o64 0f ff /r]				186
+UD0		void				[	0f ff]					186,ND
 UD1		reg16,rm16			[rm:	o16 0f b9 /r]				186
 UD1		reg32,rm32			[rm:	o32 0f b9 /r]				186
 UD1		reg64,rm64			[rm:	o64 0f b9 /r]				186
 UD1		void				[	0f b9]					186,ND
-UD2B		void				[	0f b9]					186,ND
 UD2B		reg16,rm16			[rm:	o16 0f b9 /r]				186,ND
 UD2B		reg32,rm32			[rm:	o32 0f b9 /r]				186,ND
 UD2B		reg64,rm64			[rm:	o64 0f b9 /r]				186,ND
+UD2B		void				[	0f b9]					186,ND
 UD2		void				[	0f 0b]					186
 UD2A		void				[	0f 0b]					186,ND
+UDB		void				[	d6]					X86_64,LONG
 UMOV		mem,reg8			[mr:	np 0f 10 /r]				386,UNDOC,SM,ND
 UMOV		reg8,reg8			[mr:	np 0f 10 /r]				386,UNDOC,ND
 UMOV		mem,reg16			[mr:	np o16 0f 11 /r]			386,UNDOC,SM,ND
