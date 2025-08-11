@@ -2374,7 +2374,7 @@ static FILE *inc_fopen(const char *file,
                     nasm_new(full);
                     full->path = fullpath;
                     full->full = full;
-                    hash_add(&hi, path, full);
+                    hash_add(&hi, full->path, full);
                 }
                 fhe->full = full;
             }
