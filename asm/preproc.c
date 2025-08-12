@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -268,6 +268,8 @@ enum nolist_flags {
  * When a MMacro is being expanded, `params', `iline', `nparam',
  * `paramlen', `rotate' and `unique' are local to the invocation.
  */
+
+static MMacro *anon_mmacros;    /* Head of anonymous mmacro list */
 
 /*
  * Expansion stack. Note that .mmac can point back to the macro itself,
@@ -984,13 +986,26 @@ static Token **steal_tlist(Token *tlist, Token **tailp)
 /*
  * Free an MMacro
  */
-static void free_mmacro(MMacro * m)
+static void free_mmacro(MMacro *m)
 {
     nasm_free(m->name);
     free_tlist(m->dlist);
     nasm_free(m->defaults);
     free_llist(m->expansion);
     nasm_free(m);
+}
+
+/*
+ * Free a list of MMacros
+ */
+static void free_mmacro_list(MMacro **list_p)
+{
+    MMacro *m, *tmp;
+    MMacro *list = *list_p;
+
+    *list_p = NULL;
+    list_for_each_safe(m, tmp, list)
+        free_mmacro(m);
 }
 
 /*
@@ -1084,11 +1099,9 @@ static void free_mmacro_table(struct hash_table *mmt)
     const struct hash_node *np;
 
     hash_for_each(mmt, it, np) {
-        MMacro *tmp;
         MMacro *m = np->data;
         nasm_free((void *)np->key);
-        list_for_each_safe(m, tmp, m)
-            free_mmacro(m);
+        free_mmacro_list(&m);
     }
     hash_free(mmt);
 }
@@ -1097,6 +1110,7 @@ static void free_macros(void)
 {
     free_smacro_table(&smacros);
     free_mmacro_table(&mmacros);
+    free_mmacro_list(&anon_mmacros);
 }
 
 /*
@@ -1104,6 +1118,7 @@ static void free_macros(void)
  */
 static void init_macros(void)
 {
+    anon_mmacros = NULL;
 }
 
 /*
@@ -2359,7 +2374,7 @@ static FILE *inc_fopen(const char *file,
                     nasm_new(full);
                     full->path = fullpath;
                     full->full = full;
-                    hash_add(&hi, path, full);
+                    hash_add(&hi, full->path, full);
                 }
                 fhe->full = full;
             }
@@ -4682,18 +4697,6 @@ issue_error:
             break;
         }
 
-        /* Check the macro to be undefined is not being expanded */
-        list_for_each(l, istk->expansion) {
-            if (l->finishes == *mmac_p) {
-                nasm_nonfatal("`%%unmacro' can't undefine the macro being expanded");
-                /*
-                 * Do not release the macro instance to avoid using the freed
-                 * memory while proceeding the expansion.
-                 */
-                goto done;
-            }
-        }
-
         while (mmac_p && *mmac_p) {
             mmac = *mmac_p;
             if (mmac->casesense == spec.casesense &&
@@ -4702,7 +4705,13 @@ issue_error:
                 mmac->nparam_max == spec.nparam_max &&
                 mmac->plus == spec.plus) {
                 *mmac_p = mmac->next;
-                free_mmacro(mmac);
+                /*
+                 * To avoid lifetime problems, defer the deallocation
+                 * of the macro until the end of the pass. Until then,
+                 * add it to the anonymous mmacro list.
+                 */
+                mmac->next = anon_mmacros;
+                anon_mmacros = mmac;
             } else {
                 mmac_p = &mmac->next;
             }
@@ -4811,6 +4820,8 @@ issue_error:
         defining->dstk.mstk = tmp_defining;
         defining->dstk.mmac = tmp_defining ? tmp_defining->dstk.mmac : NULL;
         defining->where = istk->where;
+        defining->next = anon_mmacros;
+        anon_mmacros = defining;
         break;
     }
 
@@ -7880,8 +7891,6 @@ static Token *pp_tokline(void)
         while (l && l->finishes) {
             MMacro *fm = l->finishes;
 
-            nasm_assert(fm == istk->mstk.mstk);
-
             if (!fm->name && fm->in_progress > 1) {
                 /*
                  * This is a macro-end marker for a macro with no
@@ -7985,8 +7994,18 @@ static Token *pp_tokline(void)
 
                 istk->where = l->where;
 
+#if 0
+                /*
+                 * This is incorrect: it is possible for the anonymous
+                 * macro to still be referenced somewhere in the mstk
+                 * stack (how?). This is similar to the problem with
+                 * %unmacro inside a macro itself. For now, defer freeing
+                 * anonymous mmacros until the end of the pass, just as with
+                 * other mmacros.
+                 */
                 if (!m->name)
                     free_mmacro(m);
+#endif
             }
             istk->expansion = l->next;
             nasm_free(l);
