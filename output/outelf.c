@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -1098,10 +1098,9 @@ static int64_t elf_add_gsym_reloc(struct elf_section *sect,
     return r->offset;
 }
 
-static void elf32_out(int32_t segto, const void *data,
-                      enum out_type type, uint64_t size,
-                      int32_t segment, int32_t wrt)
+static void elf32_out(const struct out_data *out)
 {
+    OUT_LEGACY(out,segto,data,type,size,segment,wrt);
     struct elf_section *s;
     int64_t addr;
     int reltype, bytes;
@@ -1303,10 +1302,10 @@ rel12adr:
         panic();
     }
 }
-static void elf64_out(int32_t segto, const void *data,
-                      enum out_type type, uint64_t size,
-                      int32_t segment, int32_t wrt)
+
+static void elf64_out(const struct out_data *out)
 {
+    OUT_LEGACY(out,segto,data,type,size,segment,wrt);
     struct elf_section *s;
     int64_t addr;
     int reltype, bytes;
@@ -1584,10 +1583,9 @@ rel12adr:
     }
 }
 
-static void elfx32_out(int32_t segto, const void *data,
-                       enum out_type type, uint64_t size,
-                       int32_t segment, int32_t wrt)
+static void elfx32_out(const struct out_data *out)
 {
+    OUT_LEGACY(out,segto,data,type,size,segment,wrt);
     struct elf_section *s;
     int64_t addr;
     int reltype, bytes;
@@ -2469,7 +2467,6 @@ const struct ofmt of_elf32 = {
     elf_stdmac,
     elf32_init,
     null_reset,
-    nasm_do_legacy_output,
     elf32_out,
     elf_deflabel,
     elf_section_names,
@@ -2527,7 +2524,6 @@ const struct ofmt of_elf64 = {
     elf_stdmac,
     elf64_init,
     null_reset,
-    nasm_do_legacy_output,
     elf64_out,
     elf_deflabel,
     elf_section_names,
@@ -2585,7 +2581,6 @@ const struct ofmt of_elfx32 = {
     elf_stdmac,
     elfx32_init,
     null_reset,
-    nasm_do_legacy_output,
     elfx32_out,
     elf_deflabel,
     elf_section_names,

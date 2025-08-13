@@ -679,10 +679,9 @@ static int32_t coff_add_reloc(struct coff_Section *sect, int32_t segment,
     return 0;
 }
 
-static void coff_out(int32_t segto, const void *data,
-                     enum out_type type, uint64_t size,
-                     int32_t segment, int32_t wrt)
+static void coff_out(const struct out_data *out)
 {
+    OUT_LEGACY(out,segto,data,type,size,segment,wrt);
     struct coff_Section *s;
     uint8_t mydata[8], *p;
     int i;
@@ -1355,7 +1354,6 @@ const struct ofmt of_coff = {
     coff_stdmac,
     coff_std_init,
     null_reset,
-    nasm_do_legacy_output,
     coff_out,
     coff_deflabel,
     coff_section_names,
@@ -1392,7 +1390,6 @@ const struct ofmt of_win32 = {
     coff_stdmac,
     coff_win32_init,
     null_reset,
-    nasm_do_legacy_output,
     coff_out,
     coff_deflabel,
     coff_section_names,
@@ -1421,7 +1418,6 @@ const struct ofmt of_win64 = {
     coff_stdmac,
     coff_win64_init,
     null_reset,
-    nasm_do_legacy_output,
     coff_out,
     coff_deflabel,
     coff_section_names,

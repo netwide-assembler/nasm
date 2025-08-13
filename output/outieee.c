@@ -387,10 +387,9 @@ static void ieee_deflabel(char *name, int32_t segment,
 /*
  * Put data out
  */
-static void ieee_out(int32_t segto, const void *data,
-		     enum out_type type, uint64_t size,
-                     int32_t segment, int32_t wrt)
+static void ieee_out(const struct out_data *out)
 {
+    OUT_LEGACY(out,segto,data,type,size,segment,wrt);
     const uint8_t *ucdata;
     int32_t ldata;
     struct ieeeSection *seg;
@@ -1506,7 +1505,6 @@ const struct ofmt of_ieee = {
     NULL,
     ieee_init,
     null_reset,
-    nasm_do_legacy_output,
     ieee_out,
     ieee_deflabel,
     ieee_segment,

@@ -213,6 +213,8 @@ static const char *out_flags(enum out_flags flags)
     return flags_buf;
 }
 
+static void dbg_legacy_out(const struct out_data *out);
+
 static void dbg_out(const struct out_data *data)
 {
     fprintf(ofile,
@@ -276,14 +278,13 @@ static void dbg_out(const struct out_data *data)
         }
     }
 
-    /* This is probably the only place were we'll call this this way... */
-    nasm_do_legacy_output(data);
+    /* Show the legacy format data, too. */
+    dbg_legacy_out(data);
 }
 
-static void dbg_legacy_out(int32_t segto, const void *data,
-                           enum out_type type, uint64_t size,
-                           int32_t segment, int32_t wrt)
+static void dbg_legacy_out(const struct out_data *out)
 {
+    OUT_LEGACY(out,segto,data,type,size,segment,wrt);
     int32_t ldata;
 
     if (type == OUT_ADDRESS)
@@ -562,7 +563,6 @@ const struct ofmt of_dbg = {
     dbg_init,
     dbg_reset,
     dbg_out,
-    dbg_legacy_out,
     dbg_deflabel,
     dbg_section_names,
     dbg_herelabel,

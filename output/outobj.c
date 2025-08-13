@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -1017,10 +1017,9 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
                             int segrel, int32_t seg, int32_t wrt,
                             struct Segment *segto);
 
-static void obj_out(int32_t segto, const void *data,
-		    enum out_type type, uint64_t size,
-                    int32_t segment, int32_t wrt)
+static void obj_out(const struct out_data *out)
 {
+    OUT_LEGACY(out,segto,data,type,size,segment,wrt);
     const uint8_t *ucdata;
     int32_t ldata;
     struct Segment *seg;
@@ -2687,7 +2686,6 @@ const struct ofmt of_obj = {
     obj_stdmac,
     obj_init,
     null_reset,
-    nasm_do_legacy_output,
     obj_out,
     obj_deflabel,
     obj_segment,

@@ -97,7 +97,7 @@ LIBOBJ_NW = stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj &
 	asm\srcfile.obj &
 	macros\macros.obj &
 	&
-	output\outform.obj output\outlib.obj output\legacy.obj &
+	output\outform.obj output\outlib.obj &
 	output\nulldbg.obj output\nullout.obj &
 	output\outbin.obj output\outaout.obj output\outcoff.obj &
 	output\outelf.obj &
