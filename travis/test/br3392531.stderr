@@ -24,6 +24,4 @@
 ./travis/test/br3392531.asm:11: ... from macro `section' defined here
 ./travis/test/br3392531.asm:21: error: `%unmacro' expects a parameter count
 ./travis/test/br3392531.asm:12: ... from macro `section' defined here
-./travis/test/br3392531.asm:21: error: `%unmacro' can't undefine the macro being expanded
-./travis/test/br3392531.asm:12: ... from macro `section' defined here
 ./travis/test/br3392531.asm:22: error: parser: instruction expected

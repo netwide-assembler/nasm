@@ -14,8 +14,6 @@
 ./travis/test/br3392716.asm:6: ... from macro `sst' defined here
 ./travis/test/br3392716.asm:21: error: `%unmacro' expects a parameter count
 ./travis/test/br3392716.asm:7: ... from macro `sst' defined here
-./travis/test/br3392716.asm:21: error: `%unmacro' can't undefine the macro being expanded
-./travis/test/br3392716.asm:7: ... from macro `sst' defined here
 ./travis/test/br3392716.asm:21: error: label or instruction expected at start of line
 ./travis/test/br3392716.asm:8: ... from macro `sst' defined here
 ./travis/test/br3392716.asm:21: error: parser: instruction expected
@@ -23,8 +21,6 @@
 ./travis/test/br3392716.asm:21: error: label or instruction expected at start of line
 ./travis/test/br3392716.asm:11: ... from macro `sst' defined here
 ./travis/test/br3392716.asm:21: error: `%unmacro' expects a parameter count
-./travis/test/br3392716.asm:12: ... from macro `sst' defined here
-./travis/test/br3392716.asm:21: error: `%unmacro' can't undefine the macro being expanded
 ./travis/test/br3392716.asm:12: ... from macro `sst' defined here
 ./travis/test/br3392716.asm:21: error: label or instruction expected at start of line
 ./travis/test/br3392716.asm:13: ... from macro `sst' defined here
