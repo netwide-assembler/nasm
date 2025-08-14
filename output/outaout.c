@@ -74,10 +74,10 @@ struct Symbol {
     int32_t value;                 /* address, or COMMON variable size */
     int32_t size;                  /* size for data or function exports */
     int32_t segment;               /* back-reference used by gsym_reloc */
+    int32_t symnum;                /* index into symbol table */
     struct Symbol *next;        /* list of globals in each section */
     struct Symbol *nextfwd;     /* list of unresolved-size symbols */
     char *name;                 /* for unresolved-size symbols */
-    int32_t symnum;                /* index into symbol table */
 };
 
 /*

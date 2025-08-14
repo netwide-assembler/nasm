@@ -52,8 +52,8 @@
 
 struct Section {
     struct Section *next;
-    int32_t number;
     char *name;
+    int32_t number;
 } *dbgsect;
 
 static unsigned long dbg_max_data_dump = 128;

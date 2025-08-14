@@ -118,7 +118,6 @@ struct elf_section {
     uint64_t            nrelocs;
     int32_t             index;		/* NASM index or NO_SEG if internal */
     int			shndx;          /* ELF index */
-    int                 type;           /* SHT_* */
     uint64_t            align;          /* alignment: power of two */
     uint64_t            flags;          /* section flags */
     int64_t		pass_last_seen;
@@ -128,6 +127,7 @@ struct elf_section {
     struct elf_reloc    *head;
     struct elf_reloc    **tail;
     struct rbtree       *gsyms;         /* global symbols in section */
+    int                 type;           /* SHT_* */
 };
 
 #endif /* OUTPUT_OUTELF_H */

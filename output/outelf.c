@@ -116,8 +116,8 @@ static int sec_debug;
 struct symlininfo {
     int                 offset;
     int                 section;        /* index into sects[] */
-    int                 segto;          /* internal section number */
     char                *name;          /* shallow-copied pointer of section name */
+    int                 segto;          /* internal section number */
 };
 
 struct linelist {

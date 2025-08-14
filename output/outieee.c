@@ -164,6 +164,10 @@ struct ieeeObjData {
 
 struct ieeeFixupp {
     struct ieeeFixupp *next;
+    int32_t id1;
+    int32_t id2;
+    int32_t offset;
+    int32_t addend;
     enum {
         FT_SEG = 0,
         FT_REL = 1,
@@ -175,10 +179,6 @@ struct ieeeFixupp {
         FT_EXTSEG = 7
     } ftype;
     int16_t size;
-    int32_t id1;
-    int32_t id2;
-    int32_t offset;
-    int32_t addend;
 };
 
 static int32_t ieee_entry_seg, ieee_entry_ofs;

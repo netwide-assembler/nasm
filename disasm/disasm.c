@@ -76,6 +76,9 @@
  * Prefix information
  */
 struct prefix_info {
+    uint32_t rex;       /* REX prefix present */
+    uint8_t evex[3];    /* EVEX prefix present */
+
     uint8_t osize;      /* Operand size */
     uint8_t asize;      /* Address size */
     uint8_t osp;        /* Operand size prefix present */
@@ -89,8 +92,6 @@ struct prefix_info {
     uint8_t vex_m;      /* VEX.M field */
     uint8_t vex_v;
     uint8_t vex_lp;     /* VEX.LP fields */
-    uint32_t rex;       /* REX prefix present */
-    uint8_t evex[3];    /* EVEX prefix present */
 };
 
 #define getu8(x) (*(uint8_t *)(x))

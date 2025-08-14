@@ -125,13 +125,13 @@ struct ol_symhead {
 };
 
 struct ol_sect {
-    uint32_t flags;             /* Section/symbol flags */
     struct ol_sect *next;       /* Next section in declared order */
     const char *name;           /* Name of section */
     struct ol_symhead syml;     /* All symbols in this section */
     struct ol_symhead symg;     /* Global symbols in this section */
     struct SAA *data;           /* Contents of section */
     struct SAA *reloc;          /* Section relocations */
+    uint32_t flags;             /* Section/symbol flags */
     uint32_t index;             /* Primary section index */
     uint32_t subindex;          /* Current subsection index */
 };
