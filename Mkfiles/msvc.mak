@@ -49,7 +49,11 @@ RUNPERL         = $(PERL) $(PERLFLAGS)
 
 MAKENSIS        = makensis
 
+EMPTY		= echo >
+NULLCMD		= REM
+
 RM_F		= -del /f
+RM_RF		= -del /f/s
 LN_S		= copy
 
 # Binary suffixes
@@ -120,12 +124,15 @@ LIBOBJ_NW = stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj \
 	disasm\disasm.obj disasm\sync.obj
 
 # Warnings depend on all source files, so handle them separately
-WARNOBJ   = asm\warnings.obj
-WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
+WARNOBJ    = asm\warnings.obj
+WARNFILESX = asm\warnings_c.h.x include\warnings.h.x doc\warnings.src.x
 
 LIBOBJ    = $(LIBOBJ_NW) $(WARNOBJ)
 ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
+
+# These are specific to certain Makefile syntaxes...
+WARNSRCS  = $(LIBOBJ_NW:.obj=.c)
 
 SUBDIRS  = stdlib nasmlib include config output asm disasm x86 \
 	   common macros
@@ -146,10 +153,6 @@ ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB)
 $(NASMLIB): $(LIBOBJ)
 	$(AR) $(ARFLAGS) /OUT:$@ $**
 
-# These are specific to certain Makefile syntaxes...
-WARNTIMES = $(patsubst %,%.time,$(WARNFILES))
-WARNSRCS  = $(patsubst %.obj,%.c,$(LIBOBJ_NW))
-
 #-- Begin Generated File Rules --#
 # Edit in Makefile.in, not here!
 
@@ -165,7 +168,7 @@ PERLREQ_CLEANABLE = \
 	  x86\iflag.c x86\iflaggen.h \
 	  macros\macros.c \
 	  asm\pptok.ph asm\directbl.c asm\directiv.h \
-	  $(WARNFILES) \
+	  $(WARNFILESX:.x=) \
 	  misc\nasmtok.el \
 	  version.h version.mac version.mak nsis\version.nsh
 
@@ -175,9 +178,11 @@ PERLREQ = config\unconfig.h $(PERLREQ_CLEANABLE)
 
 INSDEP = x86\insns.dat x86\insns.pl x86\insns-iflags.ph x86\iflags.ph
 
-config\unconfig.h: config\config.h.in autoconf\unconfig.pl
-	$(RUNPERL) '$(srcdir)'\autoconf\unconfig.pl \
-		'$(srcdir)' config\config.h.in config\unconfig.h
+!IF EXISTS($(srcdir)\config\config.h.in)
+config\unconfig.h: autoconf\unconfig.pl config\config.h.in
+	$(RUNPERL) $(srcdir)\autoconf\unconfig.pl \
+		$(srcdir) config\config.h.in config\unconfig.h
+!ENDIF
 
 x86\iflag.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)\x86\insns.pl -fc \
@@ -248,35 +253,34 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 # reasonable, but doesn't update the time stamp if the files aren't
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm\warnings.time.
-.PHONY: warnings
 warnings: dirs
-	$(RM_F) $(WARNFILES) $(WARNTIMES) asm\warnings.time
-	$(MAKE) asm\warnings.time
+	$(RM_F) $(WARNFILESX:.x=) $(WARNFILESX:.x=.time) asm\warnings.time
+	$(MAKE) -f mkfiles\msvc.mak asm\warnings.time
 
 asm\warnings.time: $(WARNSRCS) asm\warnings.pl
 	$(EMPTY) asm\warnings.time
-	$(MAKE) $(WARNTIMES)
+	$(MAKE) -f mkfiles\msvc.mak $(WARNFILESX:.x=.time)
 
 asm\warnings_c.h.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings_c.h $(srcdir)
 	$(EMPTY) asm\warnings_c.h.time
 
 asm\warnings_c.h: asm\warnings_c.h.time
-	@: Side effect
+	$(NULLCMD) Side effect
 
 include\warnings.h.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h $(srcdir)
 	$(EMPTY) include\warnings.h.time
 
 include\warnings.h: include\warnings.h.time
-	@: Side effect
+	$(NULLCMD) Side effect
 
 doc\warnings.src.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src $(srcdir)
 	$(EMPTY) doc\warnings.src.time
 
 doc\warnings.src : doc\warnings.src.time
-	@: Side effect
+	$(NULLCMD) Side effect
 
 # Assembler token hash
 asm\tokhash.c: x86\insns.dat x86\insnsn.c asm\tokens.dat asm\tokhash.pl \
@@ -314,7 +318,7 @@ asm\directbl.c: asm\directiv.dat nasmlib\perfhash.pl perllib\phash.ph
 # Emacs token files
 misc\nasmtok.el: misc\emacstbl.pl asm\tokhash.c asm\pptok.c \
 		 asm\directiv.dat version
-	$(RUNPERL) $< $@ "$(srcdir)" "$(objdir)"
+	$(RUNPERL) $(srcdir)\misc\emacstbl.pl $@ "$(srcdir)" "$(objdir)"
 
 #-- End Generated File Rules --#
 
@@ -335,42 +339,42 @@ nsis: nsis\nasm.nsi nsis\arch.nsh nsis\version.nsh
 #-- End NSIS Rules --#
 
 clean:
-	-del /f /s *.obj
-	-del /f /s *.pdb
-	-del /f /s *.s
-	-del /f /s *.i
-	-del /f $(NASMLIB) $(RDFLIB)
-	-del /f nasm$(X)
-	-del /f ndisasm$(X)
+	$(RM_RF) *.obj
+	$(RM_RF) *.pdb
+	$(RM_RF) *.s
+	$(RM_RF) *.i
+	$(RM_F) $(NASMLIB) $(RDFLIB)
+	$(RM_F) nasm$(X)
+	$(RM_F) ndisasm$(X)
 
 distclean: clean
-	-del /f config.h
-	-del /f config.log
-	-del /f config.status
-	-del /f Makefile
-	-del /f /s *~
-	-del /f /s *.bak
-	-del /f /s *.lst
-	-del /f /s *.bin
-	-del /f /s *.dep
-	-del /f output\*~
-	-del /f output\*.bak
-	-del /f test\*.lst
-	-del /f test\*.bin
-	-del /f test\*.obj
-	-del /f test\*.bin
-	-del /f/s autom4te*.cache
+	$(RM_F) config.h
+	$(RM_F) config.log
+	$(RM_F) config.status
+	$(RM_F) Makefile
+	$(RM_RF) *~
+	$(RM_RF) *.bak
+	$(RM_RF) *.lst
+	$(RM_RF) *.bin
+	$(RM_RF) *.dep
+	$(RM_F) output\*~
+	$(RM_F) output\*.bak
+	$(RM_F) test\*.lst
+	$(RM_F) test\*.bin
+	$(RM_F) test\*.obj
+	$(RM_F) test\*.bin
+	$(RM_RF) autom4te*.cache
 
 cleaner: clean
-	-del /f $(PERLREQ)
-	-del /f *.man
-	-del /f nasm.spec
+	$(RM_F) $(PERLREQ)
+	$(RM_F) *.man
+	$(RM_F) nasm.spec
 	rem cd doc && $(MAKE) clean
 
 spotless: distclean cleaner
-	-del /f doc\Makefile
-	-del doc\*~
-	-del doc\*.bak
+	$(RM_F) doc\Makefile
+	$(RM_F) doc\*~
+	$(RM_F) doc\*.bak
 
 strip:
 
@@ -394,7 +398,7 @@ EXTERNAL_DEPENDENCIES = 1
 # pollute the git logs.
 #
 msvc.dep: $(PERLREQ) tools\mkdep.pl
-	$(RUNPERL) tools\mkdep.pl -M Mkfiles\msvc.mak -- $(DEPDIRS)
+	$(RUNPERL) $(srcdir)\tools\mkdep.pl -M Mkfiles\msvc.mak -- $(DEPDIRS)
 
 dep: msvc.dep
 
