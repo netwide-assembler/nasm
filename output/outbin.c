@@ -229,7 +229,7 @@ static void bin_cleanup(void)
     int h;
 
     if (debug_level(1)) {
-        nasm_debug("bin_cleanup: Sections were initially referenced in this order:\n");
+        nasm_debug("%s: Sections were initially referenced in this order:\n", __func__);
         for (h = 0, s = sections; s; h++, s = s->next)
             nasm_debug("%i. %s\n", h, s->name);
     }
@@ -514,7 +514,7 @@ static void bin_cleanup(void)
         nasm_fatal("circular vfollows path detected");
 
     if (debug_level(1)) {
-        nasm_debug("bin_cleanup: Confirm final section order for output file:\n");
+        nasm_debug("%s: Confirm final section order for output file:\n", __func__);
         for (h = 0, s = sections; s && (s->flags & TYPE_PROGBITS);
              h++, s = s->next)
             nasm_debug("%i. %s\n", h, s->name);
