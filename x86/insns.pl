@@ -729,7 +729,6 @@ sub hexstr(@) {
 # \24x \250    skip EVEX control bytes
 sub startseq($$) {
     my ($codestr, $relax) = @_;
-    my $word;
     my @codes = ();
     my $c = $codestr;
     my($c0, $c1, $i);
