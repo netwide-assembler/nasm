@@ -682,7 +682,7 @@ int main(int argc, char **argv)
 
                 /* Skip blank lines if we will need a %line anyway */
                 if (linnum == -1 && !line[0])
-                    continue;
+                    goto done;
 
                 if (linnum != where.lineno) {
                     fprintf(out, "%%line %"PRId32"%+"PRId32" %s\n",
@@ -692,6 +692,9 @@ int main(int argc, char **argv)
 
                 fputs(line, out);
                 fputc('\n', out);
+
+            done:
+                nasm_free(line);
             }
 
             nasm_free(quoted_file_name);
