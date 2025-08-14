@@ -142,7 +142,7 @@ void nasm_write(const void *, size_t, FILE *);
 # define nasm_static_assert(x)                                              \
     do {                                                                    \
         if (!(x)) {                                                         \
-            extern void __attribute__((error("assertion " #x " failed")))   \
+            void __attribute__((error("assertion " #x " failed")))          \
                 _nasm_static_fail(void);                                    \
             _nasm_static_fail();                                            \
         }                                                                   \
@@ -169,7 +169,7 @@ void nasm_write(const void *, size_t, FILE *);
 # define nasm_try_static_assert(x)                                          \
     do {                                                                    \
         if (!if_constant(x, true)) {                                        \
-            extern void __attribute__((error("assertion " #x " failed")))   \
+            void __attribute__((error("assertion " #x " failed")))          \
                 _nasm_static_fail(void);                                    \
             _nasm_static_fail();                                            \
         }                                                                   \
@@ -493,6 +493,6 @@ static inline int64_t const_func signed_bits(int64_t value, int bits)
 #define is_power2(v)   ((v) && ((v) & ((v) - 1)) == 0)
 
 /* try to get the system stack size */
-extern size_t nasm_get_stack_size_limit(void);
+size_t nasm_get_stack_size_limit(void);
 
 #endif
