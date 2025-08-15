@@ -123,7 +123,7 @@ sub _alldeps($$$) {
 
     return if ($adeps->{$file});
 
-    printf STDERR " %s-> %s\n", ('   ' x $level), $file;
+    printf STDERR " %s-> %s\n", ('   ' x $level), $file if ( $debug );
     $adeps->{$file}++;
 
     foreach my $dep ( @{$deps{$file}} ) {
@@ -266,7 +266,7 @@ sub insert_deps($) {
 		@deps = sort(keys(%deps));
 	    } elsif ( $dfile =~ /^(.*)\.[Cc]$/ ) {
 		$ofile = convert_file($1, $sep).$obj.':';
-		print STDERR "mkdep: dependencies for: $dfile\n";
+		print STDERR "mkdep: dependencies for: $dfile\n" if ( $debug );
 		@deps = alldeps($dfile);
 	    }
 
