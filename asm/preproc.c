@@ -2278,25 +2278,31 @@ static Context *get_ctx(const char *name, const char **namep)
  * instead look for a filename in *slpath.
  */
 enum incopen_mode {
-    INC_NEEDED,                 /* File must exist */
-    INC_REQUIRED,               /* File must exist, but only open once/pass */
-    INC_OPTIONAL,               /* Missing is OK */
-    INC_PROBE                   /* Only an existence probe */
+    INC_OPTIONAL      = 0,
+    INC_NEEDED        = 1,      /* File must exist */
+    INC_REQUIRED      = 2,      /* File must exist, but only open once/pass */
+    INC_PROBE         = 4,      /* Existence probe (don't open the file) */
+    INC_EXACT         = 8       /* Exact filename match only (no path search) */
 };
 
 /* This is conducts a full pathname search */
-static FILE *inc_fopen_search(const char *file, char **slpath,
-                              enum incopen_mode omode, enum file_flags fmode)
+static FILE *inc_fopen_search(const char *file,
+                              char **slpath,
+                              enum incopen_mode *omp,
+                              enum file_flags fmode)
 {
-    const struct strlist_entry *ip = strlist_head(ipath_list);
+    const struct strlist_entry *ip;
     FILE *fp;
     const char *prefix = "";
     char *sp;
     bool found;
+    enum incopen_mode omode = *omp;
+
+    ip = omode & INC_EXACT ? NULL : strlist_head(ipath_list);
 
     while (1) {
         sp = nasm_catfile(prefix, file);
-        if (omode == INC_PROBE) {
+        if (omode & INC_PROBE) {
             fp = NULL;
             found = nasm_file_exists(sp);
         } else {
@@ -2305,6 +2311,8 @@ static FILE *inc_fopen_search(const char *file, char **slpath,
         }
         if (found) {
             *slpath = sp;
+            if (!prefix[0])
+                *omp |= INC_EXACT;
             return fp;
         }
 
@@ -2327,12 +2335,13 @@ static FILE *inc_fopen_search(const char *file, char **slpath,
 struct file_hash_entry {
     const char *path;
     struct file_hash_entry *full; /* Hash entry for the full path */
-    int64_t include_pass; /* Pass in which last included (for %require) */
+    int64_t include_pass;	  /* Pass in which last included (for %require) */
+    enum incopen_mode omode;      /* Flags */
 };
 
 static FILE *inc_fopen(const char *file,
                        struct strlist *dhead,
-                       const char **found_path,
+                       const struct file_hash_entry **found_fhe,
                        enum incopen_mode omode,
                        enum file_flags fmode)
 {
@@ -2342,29 +2351,44 @@ static FILE *inc_fopen(const char *file,
     const char *path = NULL;
     FILE *fp = NULL;
     const int64_t pass = pass_count();
-    bool skip_open = (omode == INC_PROBE);
+    bool skip_open = !!(omode & INC_PROBE);
 
     fhep = (struct file_hash_entry **)hash_find(&FileHash, file, &hi);
     if (fhep) {
         fhe = *fhep;
-        if (fhe) {
-            path = fhe->path;
-            skip_open |= (omode == INC_REQUIRED) &&
-                (fhe->full->include_pass >= pass);
+        path = fhe->path;
+        if ((omode ^ fhe->omode) & INC_EXACT) {
+            if (omode & INC_EXACT)
+                path = NULL;    /* Entry found, but it is non-exact */
+            else if (!path)
+                fhe = NULL;     /* No exact entry found, but maybe searchable */
         }
-    } else {
+    }
+
+    if (!fhe) {
         /* Need to do the actual path search */
         char *pptr;
-        fp = inc_fopen_search(file, &pptr, omode, fmode);
+        fp = inc_fopen_search(file, &pptr, &omode, fmode);
         path = pptr;
 
         /* Positive or negative result */
-        if (path) {
-            nasm_new(fhe);
-            fhe->path = path;
-            fhe->full = fhe;    /* It is *possible*... */
+        nasm_new(fhe);
+        fhe->path  = path;
+        fhe->full  = fhe;    /* It is *possible*... */
+        fhe->omode = omode & INC_EXACT;
+
+        /*
+         * Don't cache a negative result if INC_EXACT is specified
+         * (used by %iffile).  In the future consider making it
+         * possible to distinguish, but for now don't worry about
+         * it...
+         */
+        if (fhep) {
+            nasm_free(*fhep);
+            *fhep = fhe;
+        } else {
+            hash_add(&hi, nasm_strdup(file), fhe);
         }
-        hash_add(&hi, nasm_strdup(file), fhe);
 
         /*
          * Add a hash entry for the canonical path if there isn't one
@@ -2388,24 +2412,41 @@ static FILE *inc_fopen(const char *file,
                     nasm_free(fullpath);
                 } else {
                     nasm_new(full);
-                    full->path = fullpath;
-                    full->full = full;
+                    full->path  = fullpath;
+                    full->full  = full;
+                    full->omode = INC_EXACT;
                     hash_add(&hi, full->path, full);
                 }
                 fhe->full = full;
             }
         }
+    }
 
+    if (dhead) {
         /*
-         * Add file to dependency path.
+         * This file could have previously probed for but never added;
+         * in that case it may be necessary to try to re-add it here.
+         *
+         * This could be fixed by merging the file hash and dependency
+         * array at some point...
          */
         strlist_add(dhead, path ? path : file);
     }
 
-    if (path && !fp && omode != INC_PROBE)
-        fp = nasm_open_read(path, fmode);
+    if (path) {
+        skip_open |=
+            ((omode | fhe->full->omode) & INC_REQUIRED) &&
+            (fhe->full->include_pass >= pass);
 
-    if (omode < INC_OPTIONAL && !fp) {
+        if (!skip_open) {
+            fp = nasm_open_read(path, fmode);
+
+            if (fp)
+                fhe->full->include_pass = pass;
+        }
+    }
+
+    if (!fp && !skip_open && (omode & INC_NEEDED)) {
         if (!path)
             errno = ENOENT;
 
@@ -2413,11 +2454,8 @@ static FILE *inc_fopen(const char *file,
                       file, strerror(errno));
     }
 
-    if (fp)
-        fhe->full->include_pass = pass;
-
-    if (found_path)
-        *found_path = path;
+    if (found_fhe)
+        *found_fhe = path ? fhe : NULL;
 
     return fp;
 }
@@ -2433,17 +2471,21 @@ FILE *pp_input_fopen(const char *filename, enum file_flags mode)
 }
 
 /*
- * This implements the %pathsearch directive and %pathsearch() function.
+ * Expand a token list that is expected to contain a filename string.
+ * Returns a token containing a TOK_INTERNAL_STR with the given filename,
+ * or NULL on error.  If the argument "*otp" is set, set that to point
+ * to the actual quoted string token.
  */
-static Token *pp_do_pathsearch(Token **tp, const char *dname)
+static Token *tlist_filename(Token **tp, Token **otp, const char *dname)
 {
-    const char *p, *found_path;
     Token *t;
 
     *tp = t = expand_smacro_noreset(*tp);
 
     t = skip_white(t);
     if (!tok_string(t)) {
+        if (otp)
+            *otp = NULL;
         nasm_nonfatal("`%s' expects a file name", dname);
         return NULL;
     }
@@ -2453,13 +2495,33 @@ static Token *pp_do_pathsearch(Token **tp, const char *dname)
                   "trailing garbage after `%s' ignored", dname);
     }
 
-    p = unquote_token_cstr(t);
+    if (otp)
+        *otp = t;
 
-    inc_fopen(p, NULL, &found_path, INC_PROBE, NF_BINARY);
-    if (!found_path)
-        found_path = p;
+    t = dup_Token(NULL, t);
+    unquote_token_cstr(t);
+    return t;
+}
 
-    return make_tok_qstr(NULL, found_path);
+/*
+ * This implements the %pathsearch directive and %pathsearch() function.
+ */
+static Token *pp_do_pathsearch(Token **tp, const char *dname)
+{
+    const struct file_hash_entry *fhe;
+    Token *t, *ot;
+
+    t = tlist_filename(tp, &ot, dname);
+    if (!t)
+        return NULL;
+
+    inc_fopen(tok_text(t), NULL, &fhe, INC_PROBE, NF_BINARY);
+    if (fhe) {
+        delete_Token(t);
+        return make_tok_qstr(NULL, fhe->path);
+    } else {
+        return steal_Token(t, ot);
+    }
 }
 
 /*
@@ -2469,27 +2531,14 @@ static Token *pp_do_pathsearch(Token **tp, const char *dname)
  */
 static Token *pp_do_depend(Token **tp, const char *dname)
 {
-    const char *p;
-    Token *t, *tt;
+    Token *t, *ot;
 
-    *tp = t = expand_smacro_noreset(*tp);
-
-    t = skip_white(t);
-    if (!tok_string(t)) {
-        nasm_nonfatal("`%s' expects a file name", dname);
+    t = tlist_filename(tp, &ot, dname);
+    if (!t)
         return NULL;
-    }
 
-    if (skip_white(t->next)) {
-        nasm_warn(WARN_PP_TRAILING,
-                  "trailing garbage after `%s' ignored", dname);
-    }
-
-    tt = dup_Token(NULL, t);
-    p = unquote_token_cstr(tt);
-
-    strlist_add(deplist, p);
-    return steal_Token(tt, t);
+    strlist_add(deplist, tok_text(t));
+    return steal_Token(t, ot);
 }
 
 /*
@@ -2644,7 +2693,8 @@ static Token **count_mmac_params(Token *tline, int *nparamp, Token ***paramsp)
  *
  * We must free the tline we get passed.
  */
-static enum cond_state if_condition(Token * tline, enum preproc_token ct)
+static enum cond_state
+if_condition(Token * tline, enum preproc_token ct, const char *dname)
 {
     bool j;
     Token *t, *tt, *origline;
@@ -2652,7 +2702,6 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
     struct tokenval tokval;
     expr *evalresult;
     enum token_type needtype;
-    const char *dname = pp_directives[ct];
     bool casesense = true;
     enum preproc_token cond = PP_COND(ct);
 
@@ -2733,6 +2782,20 @@ static enum cond_state if_condition(Token * tline, enum preproc_token ct)
             tline = tline->next;
 	}
 	break;
+
+    case PP_IFFILE:
+    {
+        const struct file_hash_entry *fhe;
+
+        t = tlist_filename(&origline, NULL, dname);
+        if (!t)
+            goto fail;
+
+        inc_fopen(tok_text(t), NULL, &fhe, INC_PROBE|INC_EXACT, NF_BINARY);
+        j = fhe && (fhe->omode & INC_EXACT);
+        delete_Token(t);
+        break;
+    }
 
     case PP_IFIDNI:
         casesense = false;
@@ -3975,7 +4038,6 @@ static int do_directive(Token *tline, Token **output)
     int offset;
     const char *p;
     char *q;
-    const char *found_path;
     const char *mname;
     struct ppscan pps;
     Include *inc;
@@ -4386,23 +4448,17 @@ static int do_directive(Token *tline, Token **output)
 
     case PP_INCLUDE:
     case PP_REQUIRE:
-        t = tline->next = expand_smacro(tline->next);
-        t = skip_white(t);
+    {
+        const struct file_hash_entry *fhe;
 
-        if (!t || (t->type != TOKEN_STR &&
-                   t->type != TOKEN_INTERNAL_STR)) {
-            nasm_nonfatal("`%s' expects a file name", dname);
+        t = tlist_filename(&tline->next, NULL, dname);
+        if (!t)
             goto done;
-        }
-        if (skip_white(t->next)) {
-            nasm_warn(WARN_PP_TRAILING,
-                      "trailing garbage after `%s' ignored", dname);
-        }
-        p = unquote_token_cstr(t);
+
         nasm_new(inc);
         inc->next = istk;
-        found_path = NULL;
-        inc->fp = inc_fopen(p, deplist, &found_path,
+        p = tok_text(t);
+        inc->fp = inc_fopen(p, deplist, &fhe,
                             (pp_mode == PP_DEPS) ? INC_OPTIONAL :
                             (op == PP_REQUIRE) ? INC_REQUIRED :
                             INC_NEEDED, NF_TEXT);
@@ -4416,7 +4472,7 @@ static int do_directive(Token *tline, Token **output)
             inc->lineinc = 0;
             istk = inc;
             if (!istk->noline) {
-                src_set(0, found_path ? found_path : p);
+                src_set(0, fhe ? fhe->path : p);
                 istk->where = src_where();
                 istk->lineinc = 1;
                 if (ppdbg & PDBG_INCLUDE)
@@ -4425,7 +4481,9 @@ static int do_directive(Token *tline, Token **output)
             if (!istk->nolist)
                 lfmt->uplevel(LIST_INCLUDE, 0);
         }
+        delete_Token(t);
         break;
+    }
 
     case PP_USE:
     {
@@ -4547,7 +4605,7 @@ issue_error:
         if (istk->conds && !emitting(istk->conds->state))
             j = COND_NEVER;
         else {
-            j = if_condition(tline->next, op);
+            j = if_condition(tline->next, op, dname);
             tline->next = NULL; /* it got freed */
         }
         cond = nasm_malloc(sizeof(Cond));
@@ -4594,7 +4652,7 @@ issue_error:
              * the normal invocation of expand_mmac_params().
              * Therefore, we have to do it explicitly here.
              */
-            j = if_condition(expand_mmac_params(tline->next), op);
+            j = if_condition(expand_mmac_params(tline->next), op, dname);
             tline->next = NULL; /* it got freed */
             istk->conds->state = j;
             break;
@@ -5074,7 +5132,6 @@ issue_error:
         if (macro_start)
             define_smacro(mname, casesense, macro_start, NULL);
 
-        free_tlist(tline);
         break;
     }
 
@@ -7244,7 +7301,7 @@ stdmac_is(const SMacro *s, Token **params, int nparams)
 
     params[0] = NULL;           /* Don't free this later */
 
-    retval = if_condition(pline, s->expandpvt.u) == COND_IF_TRUE;
+    retval = if_condition(pline, s->expandpvt.u, s->name) == COND_IF_TRUE;
     return make_tok_num(NULL, retval);
 }
 
@@ -7664,6 +7721,27 @@ stdmac_depend(const SMacro *s, Token **params, int nparam)
     return pp_do_depend(&params[0], s->name);
 }
 
+static Token *
+stdmac_realpath(const SMacro *s, Token **params, int nparam)
+{
+    const struct file_hash_entry *fhe;
+    Token *t, *ot;
+    (void)nparam;
+
+    t = tlist_filename(&params[0], &ot, s->name);
+    if (!t)
+        return NULL;
+
+    inc_fopen(tok_text(t), NULL, &fhe, INC_PROBE|INC_EXACT, NF_BINARY);
+
+    if (fhe) {
+        delete_Token(t);
+        return make_tok_qstr(NULL, fhe->full->path);
+    } else {
+        return steal_Token(t, ot);
+    }
+}
+
 /* Add magic standard macros */
 struct magic_macros {
     const char *name;
@@ -7686,6 +7764,7 @@ static void pp_add_magic_stdmac(void)
         { "%eval",       false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
         { "%map",	 false, 1, SPARM_VARADIC, stdmac_map },
         { "%pathsearch", false, 1, SPARM_PLAIN, stdmac_pathsearch },
+        { "%realpath",	 false, 1, SPARM_PLAIN, stdmac_realpath },
         { "%str",        false, 1, SPARM_GREEDY|SPARM_STR, stdmac_join },
         { "%strcat",     false, 1, SPARM_STR|SPARM_CONDQUOTE|SPARM_VARADIC, stdmac_strcat },
         { "%strlen",     false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_strlen },

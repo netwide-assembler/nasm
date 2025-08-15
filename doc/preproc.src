@@ -765,6 +765,16 @@ The expressions passed to \c{%eval()} are \i{critical expressions},
 see \k{crit}.
 
 
+\S{f_fullpath} \i\c{%fullpath()} Function
+
+The \c{%fullpath()} function takes a quoted string as argument and, if
+supported by the operating system, attempts to convert it to a
+canonical absolute path name; then expands to a quoted string
+containing that path name.
+
+If unable, it expands to the unmodified string.
+
+
 \S{f_hex} \i\c{%hex()} Function
 
 Equivalent to \i\c\{%eval()}, except that the results generated are
@@ -898,6 +908,22 @@ This is the function equivalent of the \c{%pathsearch} directive, see
 \S{pathsearch}.
 
 See also the \c{%depend()} function (\k{f_depend}).
+
+
+\S{f_realpath} \i\c{%realpath()} Function
+
+The \c{%realpath()} function takes a quoted string as argument, and
+attempts to convert it to a fully qualified absolute path name if
+supported by the underlying host operating system.
+
+If successful, it expands to a quoted string with the resulting
+path name, otherwise to the unmodified string.
+
+The include path is \e{not} searched; to search for the file using the
+include path, use the \c{%pathsearch()} function in conjunction with
+this function, for example:
+
+\c %define SOMEREALPATH %realpath(%pathsearch("somefile.asm"))
 
 
 \S{f_sel} \i\c{%sel()} Function
@@ -1774,6 +1800,25 @@ variants are also provided.
 Just as for \c{%!}\e{variable} the argument should be written as a
 string if it contains characters that would not be legal in an
 identifier.  See \k{getenv}.
+
+\S{iffile} \i\c{%iffile}: Test If a File Exists
+
+The conditional assembly construct \c{%iffile} assembles the
+subsequent code if and only if a quoted string is specified which
+contains the name of a file that is available for NASM to read.
+
+The include path is \e{not} searched; to search for the file using the
+include path, use the \c{%pathsearch()} function in conjunction with
+this test, for example:
+
+\c %define MYFILE "file.asm"
+\c %iffile %pathsearch(MYFILE)
+\c      ; ...
+\c %endif
+
+The usual \i\c{%eliffile}, \i\c\{%ifnfile}, and \i\c{%elifnfile}
+variants are also provided.
+
 
 \H{rep} \i{Preprocessor Loops}\I{repeating code}: \i\c{%rep}
 
