@@ -651,6 +651,7 @@ static bool *use_loaded;
 static void pp_add_stdmac(macros_t *macros);
 static Token *expand_mmac_params(Token * tline);
 static Token *expand_smacro(Token * tline);
+static Token *expand_smacro_noreset(Token * tline);
 static Token *expand_id(Token * tline);
 static Context *get_ctx(const char *name, const char **namep);
 static Token *make_tok_num(Token *next, int64_t val);
@@ -694,6 +695,12 @@ static inline bool tok_isnt(const Token *x, enum token_type t)
 static inline bool tok_white(const Token *x)
 {
     return tok_is(x, TOKEN_WHITESPACE);
+}
+
+/* A string? */
+static inline bool tok_string(const Token *x)
+{
+    return x && (x->type == TOKEN_STR || x->type == TOKEN_INTERNAL_STR);
 }
 
 /* Skip past any whitespace */
@@ -1938,7 +1945,12 @@ static Token *new_Token_free(Token * next, enum token_type type,
 
 static Token *dup_Token(Token *next, const Token *src)
 {
-    Token *t = alloc_Token();
+    Token *t;
+
+    if (unlikely(!src))
+        return NULL;
+
+    t = alloc_Token();
 
     memcpy(t, src, sizeof *src);
     t->next = next;
@@ -1971,6 +1983,10 @@ static Token *new_White(Token *next)
  */
 static Token *steal_Token(Token *dst, Token *src)
 {
+    /* Delete any previous text string allocation */
+    if (unlikely(dst->len > INLINE_TEXT))
+        nasm_free(dst->text.p.ptr);
+
     /* Overwrite everything except the next pointers */
     memcpy((char *)dst + sizeof(Token *), (char *)src + sizeof(Token *),
 	   sizeof(Token) - sizeof(Token *));
@@ -2414,6 +2430,66 @@ static FILE *inc_fopen(const char *file,
 FILE *pp_input_fopen(const char *filename, enum file_flags mode)
 {
     return inc_fopen(filename, NULL, NULL, INC_OPTIONAL, mode);
+}
+
+/*
+ * This implements the %pathsearch directive and %pathsearch() function.
+ */
+static Token *pp_do_pathsearch(Token **tp, const char *dname)
+{
+    const char *p, *found_path;
+    Token *t;
+
+    *tp = t = expand_smacro_noreset(*tp);
+
+    t = skip_white(t);
+    if (!tok_string(t)) {
+        nasm_nonfatal("`%s' expects a file name", dname);
+        return NULL;
+    }
+
+    if (skip_white(t->next)) {
+        nasm_warn(WARN_PP_TRAILING,
+                  "trailing garbage after `%s' ignored", dname);
+    }
+
+    p = unquote_token_cstr(t);
+
+    inc_fopen(p, NULL, &found_path, INC_PROBE, NF_BINARY);
+    if (!found_path)
+        found_path = p;
+
+    return make_tok_qstr(NULL, found_path);
+}
+
+/*
+ * This implements the %depend directive and the %depend() function.
+ * It returns a stolen copy of the original string token after skipping
+ * leading spaces, or NULL on error.
+ */
+static Token *pp_do_depend(Token **tp, const char *dname)
+{
+    const char *p;
+    Token *t, *tt;
+
+    *tp = t = expand_smacro_noreset(*tp);
+
+    t = skip_white(t);
+    if (!tok_string(t)) {
+        nasm_nonfatal("`%s' expects a file name", dname);
+        return NULL;
+    }
+
+    if (skip_white(t->next)) {
+        nasm_warn(WARN_PP_TRAILING,
+                  "trailing garbage after `%s' ignored", dname);
+    }
+
+    tt = dup_Token(NULL, t);
+    p = unquote_token_cstr(tt);
+
+    strlist_add(deplist, p);
+    return steal_Token(tt, t);
 }
 
 /*
@@ -4303,19 +4379,9 @@ static int do_directive(Token *tline, Token **output)
     }
 
     case PP_DEPEND:
-        t = tline->next = expand_smacro(tline->next);
-        t = skip_white(t);
-        if (!t || (t->type != TOKEN_STR &&
-                   t->type != TOKEN_INTERNAL_STR)) {
-            nasm_nonfatal("`%s' expects a file name", dname);
-            goto done;
-        }
-        if (skip_white(t->next)) {
-            nasm_warn(WARN_PP_TRAILING,
-                      "trailing garbage after `%s' ignored", dname);
-        }
-
-        strlist_add(deplist, unquote_token_cstr(t));
+        t = pp_do_depend(&tline->next, dname);
+        if (t)
+            delete_Token(t);
         goto done;
 
     case PP_INCLUDE:
@@ -4995,39 +5061,19 @@ issue_error:
 
     case PP_PATHSEARCH:
     {
-        const char *found_path;
-
         if (!(mname = get_id(&tline, dname)))
             goto done;
 
-        last = tline;
-        tline = expand_smacro(tline->next);
-        last->next = NULL;
-
-        t = skip_white(tline);
-        if (!t || (t->type != TOKEN_STR &&
-                   t->type != TOKEN_INTERNAL_STR)) {
-            nasm_nonfatal("`%s' expects a file name", dname);
-            free_tlist(tline);
-            goto done;
-        }
-        if (t->next)
-            nasm_warn(WARN_PP_TRAILING,
-                      "trailing garbage after `%s' ignored", dname);
-
-	p = unquote_token_cstr(t);
-
-        inc_fopen(p, NULL, &found_path, INC_PROBE, NF_BINARY);
-        if (!found_path)
-            found_path = p;
-	macro_start = make_tok_qstr(NULL, found_path);
+        macro_start = pp_do_pathsearch(&tline->next, dname);
 
         /*
          * We now have a macro name, an implicit parameter count of
          * zero, and a string token to use as an expansion. Create
          * and store an SMacro.
          */
-        define_smacro(mname, casesense, macro_start, NULL);
+        if (macro_start)
+            define_smacro(mname, casesense, macro_start, NULL);
+
         free_tlist(tline);
         break;
     }
@@ -5659,7 +5705,6 @@ static Token *expand_mmac_params(Token * tline)
     return thead;
 }
 
-static Token *expand_smacro_noreset(Token * tline);
 static SMacro *expand_one_smacro(Token ***tpp);
 
 /*
@@ -7603,6 +7648,22 @@ stdmac_map(const SMacro *s, Token **params, int nparam)
     return tline;
 }
 
+/* %pathsearch() function */
+static Token *
+stdmac_pathsearch(const SMacro *s, Token **params, int nparam)
+{
+    (void)nparam;
+    return pp_do_pathsearch(&params[0], s->name);
+}
+
+/* %depend() function */
+static Token *
+stdmac_depend(const SMacro *s, Token **params, int nparam)
+{
+    (void)nparam;
+    return pp_do_depend(&params[0], s->name);
+}
+
 /* Add magic standard macros */
 struct magic_macros {
     const char *name;
@@ -7615,18 +7676,20 @@ struct magic_macros {
 static void pp_add_magic_stdmac(void)
 {
     static const struct magic_macros magic_macros[] = {
-        { "__?FILE?__", true, 0, 0, stdmac_file },
-        { "__?LINE?__", true, 0, 0, stdmac_line },
-        { "__?BITS?__", true, 0, 0, stdmac_bits },
-        { "__?PTR?__",  true, 0, 0, stdmac_ptr },
-        { "%abs",       false, 1, SPARM_EVAL, stdmac_abs },
-        { "%count",     false, 1, SPARM_VARADIC, stdmac_count },
-        { "%eval",      false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
-        { "%map",	false, 1, SPARM_VARADIC, stdmac_map },
-        { "%str",       false, 1, SPARM_GREEDY|SPARM_STR, stdmac_join },
-        { "%strcat",    false, 1, SPARM_STR|SPARM_CONDQUOTE|SPARM_VARADIC, stdmac_strcat },
-        { "%strlen",    false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_strlen },
-        { "%tok",       false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_tok },
+        { "__?FILE?__",  true, 0, 0, stdmac_file },
+        { "__?LINE?__",  true, 0, 0, stdmac_line },
+        { "__?BITS?__",  true, 0, 0, stdmac_bits },
+        { "__?PTR?__",   true, 0, 0, stdmac_ptr },
+        { "%abs",        false, 1, SPARM_EVAL, stdmac_abs },
+        { "%count",      false, 1, SPARM_VARADIC, stdmac_count },
+        { "%depend",     false, 1, SPARM_PLAIN, stdmac_depend },
+        { "%eval",       false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
+        { "%map",	 false, 1, SPARM_VARADIC, stdmac_map },
+        { "%pathsearch", false, 1, SPARM_PLAIN, stdmac_pathsearch },
+        { "%str",        false, 1, SPARM_GREEDY|SPARM_STR, stdmac_join },
+        { "%strcat",     false, 1, SPARM_STR|SPARM_CONDQUOTE|SPARM_VARADIC, stdmac_strcat },
+        { "%strlen",     false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_strlen },
+        { "%tok",        false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_tok },
         { NULL, false, 0, 0, NULL }
     };
     const struct magic_macros *m;

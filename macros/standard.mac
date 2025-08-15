@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
-;;   
-;;   Copyright 1996-2019 The NASM Authors - All Rights Reserved
+;;
+;;   Copyright 1996-2025 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -241,11 +241,7 @@ STD: nasm
 %endmacro
 
 %imacro incbin 1-2+.nolist 0
-    %push
-        %pathsearch %$dep %1
-        %depend %$dep
-        %? %$dep,%2
-    %pop
+    %? %depend(%pathsearch(%1)),%2
 %endmacro
 
 ; Compatibility macro aliases
