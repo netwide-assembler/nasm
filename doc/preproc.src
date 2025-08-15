@@ -783,6 +783,8 @@ argument to the conditional using \c{\{\}}:
 \c       db "foo is defined, but not as ')'"
 \c %endif
 
+Unlike the C \c{defined()} preprocessor construct, these functions are
+valid anywhere in the source code, not just in \c{%if} expressions.
 
 \S{f_map} \i\c{%map()} Function
 
@@ -1507,6 +1509,13 @@ There are a number of variants of the \c{%if} directive.  Each has its
 corresponding \c{%elif}, \c{%ifn}, and \c{%elifn} directives; for
 example, the equivalents to the \c{%ifdef} directive are \c{%elifdef},
 \c{%ifndef}, and \c{%elifndef}.
+
+Futhermore, each variant of the \c{%if} directive has a corresponding
+\c{%is()} preprocessor function (see \k{f_is}.) These are
+particularly useful for testing multiple conditions at the same
+time. Unlike the C \c{defined()} preprocessor construct, these
+functions are valid anywhere in the source code, not just in \c{%if}
+expressions.
 
 \S{ifdef} \i\c{%ifdef}: Testing Single-Line Macro Existence\I{testing,
 single-line macro existence}
