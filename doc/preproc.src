@@ -1455,12 +1455,17 @@ Or like this:
 
 \c %macro bar 1-5+.nolist a,b,c,d,e,f,g,h
 
-\S{unmacro} Undefining Multi-Line Macros: \I\c{%unimacro}\i\c{%unmacro}
+\S{unmacro} Undefining Multi-Line Macros: \i\c{%unmacro}, \i\c{%unimacro}
 
-Multi-line macros can be removed with the \c{%unmacro} directive.
-Unlike the \c{%undef} directive, however, \c{%unmacro} takes an
+Multi-line macros can be removed with the \c{%unmacro} or
+\c{%unimacro} directives.
+
+Unlike the \c{%undef} directive, however, these directives take an
 argument specification, and will only remove \i{exact matches} with
-that argument specification.
+that argument specification. Furthermore, case sensitive macros have
+match the directive: a case-sensitive macro has to be removed with
+\c{%unmacro}, and a case-insensitive one with \c{%unimacro}. This
+ensures that only the specific macro intended is removed.
 
 For example:
 
@@ -1478,9 +1483,6 @@ removes the previously defined macro \c{foo}, but
 
 does \e{not} remove the macro \c{bar}, since the argument
 specification does not match exactly.
-
-A case-insensitive macro needs to be removed with the \c{%unimacro}
-directive.
 
 \H{condasm} \i{Conditional Assembly}\I\c{%if}
 
