@@ -658,7 +658,8 @@ restart_parse:
         i != TOKEN_INSN     &&
         i != TOKEN_PREFIX   &&
         (i != TOKEN_REG || !IS_SREG(tokval.t_integer))) {
-        nasm_nonfatal("label or instruction expected at start of line");
+        nasm_nonfatal("label, instruction or prefix expected at start of line, found `%.*s'",
+                      tokval.t_len, tokval.t_start);
         goto fail;
     }
 
@@ -768,7 +769,8 @@ restart_parse:
             result->oprs[0].segment = result->oprs[0].wrt = NO_SEG;
             return result;
         } else {
-            nasm_nonfatal("parser: instruction expected");
+            nasm_nonfatal("instruction expected, found `%.*s'",
+                          tokval.t_len, tokval.t_start);
             goto fail;
         }
     }
