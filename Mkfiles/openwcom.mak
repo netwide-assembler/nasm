@@ -52,6 +52,8 @@ X               = .exe
 
 MANIFEST =
 
+ZLIB    = $(ZLIBOBJ)
+
 #-- Begin File Lists --#
 # Edit in Makefile.in, not here!
 NASM    = asm\nasm.obj
@@ -60,8 +62,50 @@ NDISASM = disasm\ndisasm.obj
 PROGOBJ = $(NASM) $(NDISASM)
 PROGS   = nasm$(X) ndisasm$(X)
 
-LIBOBJ_NW = stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj &
+# Files dependent on extracted warnings
+WARNOBJ   = asm\warnings.obj
+WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
+
+OUTPUTOBJ = &
+	output\outform.obj output\outlib.obj &
+	output\nulldbg.obj output\nullout.obj &
+	output\outbin.obj output\outaout.obj output\outcoff.obj &
+	output\outelf.obj &
+	output\outobj.obj output\outas86.obj &
+	output\outdbg.obj output\outieee.obj output\outmacho.obj &
+	output\codeview.obj
+
+# The source files for these objects are scanned for warnings
+LIBOBJ_W = &
+	nasmlib\readnum.obj &
+	&
+	asm\error.obj &
+	asm\floats.obj &
+	asm\directiv.obj &
+	asm\pragma.obj &
+	asm\assemble.obj asm\labels.obj asm\parser.obj &
+	asm\preproc.obj asm\quote.obj &
+	asm\listing.obj asm\eval.obj asm\exprlib.obj asm\exprdump.obj &
+	asm\stdscan.obj &
+	asm\strfunc.obj &
+	asm\segalloc.obj &
+	asm\rdstrnum.obj &
+	asm\srcfile.obj
+
+# The source files for these objects are NOT scanned for warnings;
+# normally this will include all generated files.
+# It is entirely possible that it may be necessary to move some of these
+# files to LIBOBJ_W, notably $(OUTPUTOBJ)
+LIBOBJ_NW = &
+	stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj &
 	stdlib\strnlen.obj stdlib\strrchrnul.obj &
+	&
+	asm\directbl.obj &
+	asm\pptok.obj &
+	asm\tokhash.obj &
+	asm\uncompress.obj &
+	&
+	macros\macros.obj &
 	&
 	nasmlib\ver.obj &
 	nasmlib\alloc.obj nasmlib\asprintf.obj nasmlib\errfile.obj &
@@ -70,7 +114,7 @@ LIBOBJ_NW = stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj &
 	nasmlib\file.obj nasmlib\mmap.obj nasmlib\ilog2.obj &
 	nasmlib\realpath.obj nasmlib\path.obj &
 	nasmlib\filename.obj nasmlib\rlimit.obj &
-	nasmlib\readnum.obj nasmlib\numstr.obj &
+	nasmlib\numstr.obj &
 	nasmlib\zerobuf.obj nasmlib\bsi.obj &
 	nasmlib\rbtree.obj nasmlib\hashtbl.obj &
 	nasmlib\raa.obj nasmlib\saa.obj &
@@ -83,40 +127,27 @@ LIBOBJ_NW = stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj &
 	x86\regs.obj x86\regvals.obj x86\regflags.obj x86\regdis.obj &
 	x86\disp8.obj x86\iflag.obj &
 	&
-	asm\error.obj &
-	asm\floats.obj &
-	asm\directiv.obj asm\directbl.obj &
-	asm\pragma.obj &
-	asm\assemble.obj asm\labels.obj asm\parser.obj &
-	asm\preproc.obj asm\quote.obj asm\pptok.obj &
-	asm\listing.obj asm\eval.obj asm\exprlib.obj asm\exprdump.obj &
-	asm\stdscan.obj &
-	asm\strfunc.obj asm\tokhash.obj &
-	asm\segalloc.obj &
-	asm\rdstrnum.obj &
-	asm\srcfile.obj &
-	macros\macros.obj &
+	$(OUTPUTOBJ) &
+	disasm\disasm.obj disasm\sync.obj &
 	&
-	output\outform.obj output\outlib.obj &
-	output\nulldbg.obj output\nullout.obj &
-	output\outbin.obj output\outaout.obj output\outcoff.obj &
-	output\outelf.obj &
-	output\outobj.obj output\outas86.obj &
-	output\outdbg.obj output\outieee.obj output\outmacho.obj &
-	output\codeview.obj &
-	&
-	disasm\disasm.obj disasm\sync.obj
+	$(WARNOBJ)
 
-# Warnings depend on all source files, so handle them separately
-WARNOBJ   = asm\warnings.obj
-WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
+# Objects for the local copy of zlib. The variable ZLIB is set to
+# $(ZLIBOBJ) if the internal version of zlib should be used.
+ZLIBOBJ = &
+	zlib\adler32.obj &
+	zlib\crc32.obj &
+	zlib\infback.obj &
+	zlib\inffast.obj &
+	zlib\inflate.obj &
+	zlib\inftrees.obj &
+	zlib\zutil.obj
 
-LIBOBJ    = $(LIBOBJ_NW) $(WARNOBJ)
-ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
+LIBOBJ    = $(LIBOBJ_W) $(LIBOBJ_NW) $(ZLIB)
+ALLOBJ_W  = $(NASM) $(LIBOBJ_W)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
-
 SUBDIRS  = stdlib nasmlib include config output asm disasm x86 &
-	   common macros
+	   common zlib macros
 XSUBDIRS = test doc nsis win
 DEPDIRS  = . $(SUBDIRS)
 #-- End File Lists --#
@@ -271,21 +302,24 @@ asm\warnings.time: $(WARNSRCS) asm\warnings.pl
 	$(MAKE) $(WARNTIMES)
 
 asm\warnings_c.h.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings_c.h $(srcdir)
+	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings_c.h &
+		'$(srcdir)' $(WARNSRCS)
 	$(EMPTY) asm\warnings_c.h.time
 
 asm\warnings_c.h: asm\warnings_c.h.time
 	@: Side effect
 
 include\warnings.h.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h $(srcdir)
+	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h &
+		'$(srcdir)' $(WARNSRCS)
 	$(EMPTY) include\warnings.h.time
 
 include\warnings.h: include\warnings.h.time
 	@: Side effect
 
 doc\warnings.src.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src $(srcdir)
+	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src &
+		'$(srcdir)' $(WARNSRCS)
 	$(EMPTY) doc\warnings.src.time
 
 doc\warnings.src : doc\warnings.src.time

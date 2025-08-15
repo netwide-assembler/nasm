@@ -43,12 +43,8 @@ sub add_alias($$) {
     }
 }
 
-sub find_warnings {
-    my $infile = $_;
-
-    return unless (basename($infile) =~ /^\w.*\.[ch]$/i);
-    open(my $in, '<', $infile)
-	or die "$0: cannot open input file $infile: $!\n";
+sub find_warnings($$) {
+    my($infile,$in) = @_;
 
     my $in_comment = 0;
     my $nline = 0;
@@ -123,13 +119,29 @@ sub find_warnings {
     close($in);
 }
 
-my($what, $outfile, @indirs) = @ARGV;
+my($what, $outfile, $srcdir, @files) = @ARGV;
 
 if (!defined($outfile)) {
-    die "$0: usage: [c|h|doc] outfile indir...\n";
+    die "$0: usage: [c|h|doc] outfile srcdir files...\n";
 }
 
-find({ wanted => \&find_warnings, no_chdir => 1, follow => 1 }, @indirs);
+my @indirs = (undef);
+push(@indirs, $srcdir) if ($srcdir ne File::Spec->curdir());
+
+foreach my $f (@files) {
+    my $in;
+    my $infile;
+    foreach my $d (@indirs) {
+	$infile = defined($d) ? File::Spec->catfile($d, $f) : $f;
+	last if (open($in, '<', $infile));
+    }
+    if (!defined($in)) {
+	print STDERR "$infile: $!\n";
+	$err++;
+    } else {
+	find_warnings($infile, $in);
+    }
+}
 
 exit(1) if ($err);
 

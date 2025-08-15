@@ -109,6 +109,8 @@ endif
 
 MANIFEST = @MANIFEST@
 
+ZLIB = @ZLIB@
+
 #-- Begin File Lists --#
 NASM    = asm/nasm.$(O)
 NDISASM = disasm/ndisasm.$(O)
@@ -116,8 +118,50 @@ NDISASM = disasm/ndisasm.$(O)
 PROGOBJ = $(NASM) $(NDISASM)
 PROGS   = nasm$(X) ndisasm$(X)
 
-LIBOBJ_NW = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
+# Files dependent on extracted warnings
+WARNOBJ   = asm/warnings.$(O)
+WARNFILES = asm/warnings_c.h include/warnings.h doc/warnings.src
+
+OUTPUTOBJ = \
+	output/outform.$(O) output/outlib.$(O) \
+	output/nulldbg.$(O) output/nullout.$(O) \
+	output/outbin.$(O) output/outaout.$(O) output/outcoff.$(O) \
+	output/outelf.$(O) \
+	output/outobj.$(O) output/outas86.$(O) \
+	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
+	output/codeview.$(O)
+
+# The source files for these objects are scanned for warnings
+LIBOBJ_W = \
+	nasmlib/readnum.$(O) \
+	\
+	asm/error.$(O) \
+	asm/floats.$(O) \
+	asm/directiv.$(O) \
+	asm/pragma.$(O) \
+	asm/assemble.$(O) asm/labels.$(O) asm/parser.$(O) \
+	asm/preproc.$(O) asm/quote.$(O) \
+	asm/listing.$(O) asm/eval.$(O) asm/exprlib.$(O) asm/exprdump.$(O) \
+	asm/stdscan.$(O) \
+	asm/strfunc.$(O) \
+	asm/segalloc.$(O) \
+	asm/rdstrnum.$(O) \
+	asm/srcfile.$(O)
+
+# The source files for these objects are NOT scanned for warnings;
+# normally this will include all generated files.
+# It is entirely possible that it may be necessary to move some of these
+# files to LIBOBJ_W, notably $(OUTPUTOBJ)
+LIBOBJ_NW = \
+	stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	stdlib/strnlen.$(O) stdlib/strrchrnul.$(O) \
+	\
+	asm/directbl.$(O) \
+	asm/pptok.$(O) \
+	asm/tokhash.$(O) \
+	asm/uncompress.$(O) \
+	\
+	macros/macros.$(O) \
 	\
 	nasmlib/ver.$(O) \
 	nasmlib/alloc.$(O) nasmlib/asprintf.$(O) nasmlib/errfile.$(O) \
@@ -126,7 +170,7 @@ LIBOBJ_NW = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) \
 	nasmlib/realpath.$(O) nasmlib/path.$(O) \
 	nasmlib/filename.$(O) nasmlib/rlimit.$(O) \
-	nasmlib/readnum.$(O) nasmlib/numstr.$(O) \
+	nasmlib/numstr.$(O) \
 	nasmlib/zerobuf.$(O) nasmlib/bsi.$(O) \
 	nasmlib/rbtree.$(O) nasmlib/hashtbl.$(O) \
 	nasmlib/raa.$(O) nasmlib/saa.$(O) \
@@ -139,40 +183,27 @@ LIBOBJ_NW = stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	x86/regs.$(O) x86/regvals.$(O) x86/regflags.$(O) x86/regdis.$(O) \
 	x86/disp8.$(O) x86/iflag.$(O) \
 	\
-	asm/error.$(O) \
-	asm/floats.$(O) \
-	asm/directiv.$(O) asm/directbl.$(O) \
-	asm/pragma.$(O) \
-	asm/assemble.$(O) asm/labels.$(O) asm/parser.$(O) \
-	asm/preproc.$(O) asm/quote.$(O) asm/pptok.$(O) \
-	asm/listing.$(O) asm/eval.$(O) asm/exprlib.$(O) asm/exprdump.$(O) \
-	asm/stdscan.$(O) \
-	asm/strfunc.$(O) asm/tokhash.$(O) \
-	asm/segalloc.$(O) \
-	asm/rdstrnum.$(O) \
-	asm/srcfile.$(O) \
-	macros/macros.$(O) \
+	$(OUTPUTOBJ) \
+	disasm/disasm.$(O) disasm/sync.$(O) \
 	\
-	output/outform.$(O) output/outlib.$(O) \
-	output/nulldbg.$(O) output/nullout.$(O) \
-	output/outbin.$(O) output/outaout.$(O) output/outcoff.$(O) \
-	output/outelf.$(O) \
-	output/outobj.$(O) output/outas86.$(O) \
-	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
-	output/codeview.$(O) \
-	\
-	disasm/disasm.$(O) disasm/sync.$(O)
+	$(WARNOBJ)
 
-# Warnings depend on all source files, so handle them separately
-WARNOBJ   = asm/warnings.$(O)
-WARNFILES = asm/warnings_c.h include/warnings.h doc/warnings.src
+# Objects for the local copy of zlib. The variable ZLIB is set to
+# $(ZLIBOBJ) if the internal version of zlib should be used.
+ZLIBOBJ = \
+	zlib/adler32.$(O) \
+	zlib/crc32.$(O) \
+	zlib/infback.$(O) \
+	zlib/inffast.$(O) \
+	zlib/inflate.$(O) \
+	zlib/inftrees.$(O) \
+	zlib/zutil.$(O)
 
-LIBOBJ    = $(LIBOBJ_NW) $(WARNOBJ)
-ALLOBJ_NW = $(PROGOBJ) $(LIBOBJ_NW)
+LIBOBJ    = $(LIBOBJ_W) $(LIBOBJ_NW) $(ZLIB)
+ALLOBJ_W  = $(NASM) $(LIBOBJ_W)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
-
 SUBDIRS  = stdlib nasmlib include config output asm disasm x86 \
-	   common macros
+	   common zlib macros
 XSUBDIRS = test doc nsis win
 DEPDIRS  = . $(SUBDIRS)
 #-- End File Lists --#
@@ -198,7 +229,7 @@ ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB)
 
 # These are specific to certain Makefile syntaxes...
 WARNTIMES = $(WARNFILES:=.time)
-WARNSRCS  = $(LIBOBJ_NW:.$(O)=.c) asm/nasm.c
+WARNSRCS  = $(ALLOBJ_W:.$(O)=.c)
 
 #-- Begin Generated File Rules --#
 
@@ -307,21 +338,24 @@ asm/warnings.time: $(WARNSRCS) asm/warnings.pl
 	$(MAKE) $(WARNTIMES)
 
 asm/warnings_c.h.time: asm/warnings.pl asm/warnings.time
-	$(RUNPERL) $(srcdir)/asm/warnings.pl c asm/warnings_c.h $(srcdir)
+	$(RUNPERL) $(srcdir)/asm/warnings.pl c asm/warnings_c.h \
+		'$(srcdir)' $(WARNSRCS)
 	$(EMPTY) asm/warnings_c.h.time
 
 asm/warnings_c.h: asm/warnings_c.h.time
 	@: Side effect
 
 include/warnings.h.time: asm/warnings.pl asm/warnings.time
-	$(RUNPERL) $(srcdir)/asm/warnings.pl h include/warnings.h $(srcdir)
+	$(RUNPERL) $(srcdir)/asm/warnings.pl h include/warnings.h \
+		'$(srcdir)' $(WARNSRCS)
 	$(EMPTY) include/warnings.h.time
 
 include/warnings.h: include/warnings.h.time
 	@: Side effect
 
 doc/warnings.src.time: asm/warnings.pl asm/warnings.time
-	$(RUNPERL) $(srcdir)/asm/warnings.pl doc doc/warnings.src $(srcdir)
+	$(RUNPERL) $(srcdir)/asm/warnings.pl doc doc/warnings.src \
+		'$(srcdir)' $(WARNSRCS)
 	$(EMPTY) doc/warnings.src.time
 
 doc/warnings.src : doc/warnings.src.time

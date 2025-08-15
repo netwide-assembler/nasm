@@ -38,6 +38,28 @@ PA_ARG_ENABLED([panic-abort],
 AH_TEMPLATE(ABORT_ON_PANIC,
 [Define to 1 to call abort() on panics (internal errors), for debugging.])
 
+dnl Externally specified zlib
+AC_ARG_WITH([zlib],
+[AS_HELP_STRING([--with-zlib=path], [specify location of external zlib library])],
+[AS_IF([test "x$with_zlib" = xno],
+ [ac_cv_search_inflate=no],
+ [AS_IF([test -d "x$with_zlib"],
+  [for p in "$with_zlib"/include "$with_zlib"
+   do
+     AS_IF([test -d "$p"], [CPPFLAGS="$CPPFLAGS -I$p"])
+   done
+   for p in "$with_zlib"/lib64 "$with_zlib"/lib "$with_zlib"
+   do
+     AS_IF([test -d "$p"], [LDFLAGS="-L$p $LDFLAGS"])
+   done])])])
+
+AS_IF([test "x$ac_cv_search_inflate" != xno],
+      [AC_SEARCH_LIBS([inflate], [z zlib])])
+
+AS_IF([test "x$ac_cv_search_inflate" = xno],
+      [AC_SUBST([ZLIB],['$(ZLIBOBJ)'])
+       AC_SUBST([ZLIBINC],["$srcdir/zlib"])])
+
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 

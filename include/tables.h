@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------- *
- *   
+ *
  *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -42,21 +42,6 @@
 
 #include "compiler.h"
 #include "insnsi.h"		/* For enum opcode */
-
-/* --- From standard.mac via macros.pl: --- */
-
-/* macros.c */
-extern const unsigned char nasm_stdmac_tasm[];
-extern const unsigned char nasm_stdmac_nasm[];
-extern const unsigned char nasm_stdmac_version[];
-
-struct use_package {
-    const char *package;
-    const unsigned char *macros;
-    int index;
-};
-extern const struct use_package *nasm_find_use_package(const char *);
-extern const int use_package_count;
 
 /* --- From insns.dat via insns.pl: --- */
 

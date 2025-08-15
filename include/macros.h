@@ -32,22 +32,35 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * preproc.h  header file for preproc.c
+ * macros.h - format of builtin macro data
  */
 
-#ifndef NASM_PREPROC_H
-#define NASM_PREPROC_H
+#ifndef NASM_MACROS_H
+#define NASM_MACROS_H
 
-#include "nasmlib.h"
-#include "pptok.h"
+#include "compiler.h"
 
-extern const char * const pp_directives[];
-extern const uint8_t pp_directives_len[];
+/* Builtin macro set */
+struct builtin_macros {
+    unsigned int dsize, zsize;
+    const void *zdata;
+};
+typedef const struct builtin_macros macros_t;
 
-enum preproc_token pp_token_hash(const char *token);
-enum preproc_token pp_tasm_token_hash(const char *token);
+char *uncompress_stdmac(const macros_t *sm);
 
-/* Opens an include file or input file. This uses the include path. */
-FILE *pp_input_fopen(const char *filename, enum file_flags mode);
+/* --- From standard.mac via macros.pl -> macros.c --- */
+
+extern macros_t nasm_stdmac_tasm;
+extern macros_t nasm_stdmac_nasm;
+extern macros_t nasm_stdmac_version;
+
+struct use_package {
+    const char *package;
+    macros_t *macros;
+    unsigned int index;
+};
+extern const struct use_package *nasm_find_use_package(const char *);
+extern const unsigned int use_package_count;
 
 #endif

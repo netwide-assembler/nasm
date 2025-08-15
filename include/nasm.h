@@ -46,6 +46,7 @@
 #include "nctype.h"
 #include "strlist.h"
 #include "preproc.h"
+#include "macros.h"
 #include "insnsi.h"     /* For enum opcode */
 #include "directiv.h"   /* For enum directive */
 #include "labels.h"     /* For enum mangle_index, enum label_type */
@@ -469,9 +470,6 @@ void pp_cleanup_pass(void);
  * last pass.
  */
 void pp_cleanup_session(void);
-
-/* Additional macros specific to output format */
-void pp_extra_stdmac(macros_t *macros);
 
 /* Early definitions and undefinitions for macros */
 void pp_pre_define(char *definition);

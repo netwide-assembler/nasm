@@ -43,7 +43,7 @@
  *
  * or
  *   {
- *   read_line  gets raw text from stdmacpos, or predef, or current input file
+ *   read_line  gets raw text from stdmacs, predef, or current input file
  *   tokenize   converts to tokens
  *   }
  *
@@ -481,9 +481,12 @@ struct Line {
  */
 struct Include {
     Include *next;
-    FILE *fp;
     Cond *conds;
     Line *expansion;
+    FILE *fp;
+    unsigned char *data;        /* Data preloaded */
+    size_t datasz;              /* Total preloaded data */
+    size_t datapos;             /* Index into preloaded data buffer */
     uint64_t nolist;            /* Listing inhibit counter */
     uint64_t noline;            /* Line number update inhibit counter */
     struct mstk mstk;
@@ -635,10 +638,8 @@ static uint64_t nested_rep_count;
  * This gives our position in any macro set, while we are processing it.
  * The stdmacset is an array of such macro sets.
  */
-static macros_t *stdmacpos;
-static macros_t **stdmacnext;
-static macros_t *stdmacros[8];
-static macros_t *extrastdmac;
+static macros_t **stdmaclist;
+static macros_t *stdmacset[8];
 
 /*
  * Map of which %use packages have been loaded
@@ -648,6 +649,7 @@ static bool *use_loaded;
 /*
  * Forward declarations.
  */
+static void pp_start_stdmac(void);
 static void pp_add_stdmac(macros_t *macros);
 static Token *expand_mmac_params(Token * tline);
 static Token *expand_smacro(Token * tline);
@@ -701,6 +703,12 @@ static inline bool tok_white(const Token *x)
 static inline bool tok_string(const Token *x)
 {
     return x && (x->type == TOKEN_STR || x->type == TOKEN_INTERNAL_STR);
+}
+
+/* A macro identifier? */
+static bool tok_macro_id(const Token *x)
+{
+    return x && (x->type == TOKEN_ID || x->type == TOKEN_LOCAL_MACRO);
 }
 
 /* Skip past any whitespace */
@@ -1176,86 +1184,78 @@ hash_findix(struct hash_table *hash, const char *str)
     return p ? *p : NULL;
 }
 
-/*
- * read line from standard macros set,
- * if there no more left -- return NULL
- */
-static char *line_from_stdmac(void)
+static void inject_predefs(void)
 {
-    unsigned char c;
-    const unsigned char *p = stdmacpos;
-    char *line, *q;
-    size_t len = 0;
-
-    if (!stdmacpos)
-        return NULL;
+    Line *pd, *l;
 
     /*
-     * 32-126 is ASCII, 127 is end of line, 128-31 are directives
-     * (allowed to wrap around) corresponding to PP_* tokens 0-159.
+     * Nasty hack: here we push the contents of
+     * `predef' on to the top-level expansion stack,
+     * since this is the most convenient way to
+     * implement the pre-include and pre-define
+     * features.
      */
-    while ((c = *p++) != 127) {
-        uint8_t ndir = c - 128;
-        if (ndir < 256-96)
-            len += pp_directives_len[ndir] + 1;
-        else
-            len++;
+    list_for_each(pd, predef) {
+        nasm_new(l);
+        l->next     = istk->expansion;
+        l->first    = dup_tlist(pd->first, NULL);
+        l->finishes = NULL;
+
+        istk->expansion = l;
     }
+    do_predef = false;
+}
+
+static char *line_from_stdmac(void)
+{
+    static const char *stdmacpos = NULL;
+    static char *stdmacbuf = NULL;
+    char *line;
+    size_t len = 0;
+    uint8_t c;
+
+    if (!stdmacpos || !*stdmacpos) {
+        macros_t *next = *stdmaclist;
+
+        stdmacpos = NULL;
+        nasm_delete(stdmacbuf);
+
+        if (!next) {
+            if (do_predef)
+                inject_predefs();
+            return NULL;
+        }
+
+        *stdmaclist++ = NULL;
+        if (next->dsize == next->zsize)
+            stdmacpos = next->zdata; /* Incompressible */
+        else
+            stdmacpos = stdmacbuf = uncompress_stdmac(next);
+    }
+
+    /* Length encoded using uleb128 encoding */
+    while ((c = *stdmacpos++) >= 128) {
+        len += c - 128;
+        len <<= 7;
+    }
+    len += c;
 
     line = nasm_malloc(len + 1);
-    q = line;
-
-    while ((c = *stdmacpos++) != 127) {
-        uint8_t ndir = c - 128;
-        if (ndir < 256-96) {
-            memcpy(q, pp_directives[ndir], pp_directives_len[ndir]);
-            q += pp_directives_len[ndir];
-            *q++ = ' ';
-        } else {
-            *q++ = c;
-        }
-    }
-    stdmacpos = p;
-    *q = '\0';
-
-    if (*stdmacpos == 127) {
-        /* This was the last of this particular macro set */
-        stdmacpos = NULL;
-        if (*stdmacnext) {
-            stdmacpos = *stdmacnext++;
-        } else if (do_predef) {
-            Line *pd, *l;
-
-            /*
-             * Nasty hack: here we push the contents of
-             * `predef' on to the top-level expansion stack,
-             * since this is the most convenient way to
-             * implement the pre-include and pre-define
-             * features.
-             */
-            list_for_each(pd, predef) {
-                nasm_new(l);
-                l->next     = istk->expansion;
-                l->first    = dup_tlist(pd->first, NULL);
-                l->finishes = NULL;
-
-                istk->expansion = l;
-            }
-            do_predef = false;
-        }
-    }
+    memcpy(line, stdmacpos, len);
+    line[len] = '\0';
+    stdmacpos += len;
 
     return line;
 }
 
 /*
- * Read a line from a file. Return NULL on end of file.
+ * Read a line from the a file. Return NULL on end of file.
  */
 static char *line_from_file(FILE *f)
 {
     int c;
     unsigned int size, next;
-    const unsigned int delta = 512;
+    const unsigned int delta = BUFSIZ;
     const unsigned int pad = 8;
     bool cont = false;
     char *buffer, *p;
@@ -2736,8 +2736,7 @@ if_condition(Token * tline, enum preproc_token ct, const char *dname)
         j = false;              /* have we matched yet? */
         while (tline) {
             tline = skip_white(tline);
-            if (!tline || (tline->type != TOKEN_ID &&
-			   tline->type != TOKEN_LOCAL_MACRO)) {
+            if (!tok_macro_id(tline)) {
                 nasm_nonfatal("`%s' expects macro identifiers",
                               dname);
                 goto fail;
@@ -3639,11 +3638,6 @@ static void do_pragma_preproc(Token *tline)
     }
 }
 
-static bool is_macro_id(const Token *t)
-{
-    return tok_is(t, TOKEN_ID) || tok_is(t, TOKEN_LOCAL_MACRO);
-}
-
 static const char *get_id_noskip(Token **tp, const char *dname);
 
 static const char *get_id(Token **tp, const char *dname)
@@ -3660,7 +3654,7 @@ static const char *get_id_noskip(Token **tp, const char *dname)
     t = skip_white(t);
     t = expand_id(t);
 
-    if (!is_macro_id(t)) {
+    if (!tok_macro_id(t)) {
         nasm_nonfatal("`%s' expects a macro identifier", dname);
         return NULL;
     }
@@ -4502,18 +4496,8 @@ static int do_directive(Token *tline, Token **output)
              * producing a listing.
              */
             use_loaded[pkg->index] = true;
-            stdmacpos = pkg->macros;
-            nasm_new(inc);
-            inc->next = istk;
-            if (!list_option('b')) {
-                inc->nolist++;
-                inc->noline++;
-            }
-            istk = inc;
-            if (!istk->nolist)
-                lfmt->uplevel(LIST_INCLUDE, 0);
-            if (!inc->noline)
-                src_set(0, NULL);
+            pp_start_stdmac();
+            pp_add_stdmac(pkg->macros);
         }
         break;
     }
@@ -5018,7 +5002,7 @@ issue_error:
 
         if (unlikely(op == PP_DEFALIAS)) {
             macro_start = tline;
-            if (!is_macro_id(macro_start)) {
+            if (!tok_macro_id(macro_start)) {
                 nasm_nonfatal("`%s' expects a macro identifier to alias",
                               dname);
                 goto done;
@@ -6580,12 +6564,17 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
     MMacro *head, *m, *found;
     Token **params, **comma;
     int raw_nparam, nparam;
-    const char *finding = tok_text(tline);
-    bool empty_args = !tline->next;
+    const char *finding;
+    bool empty_args;
 
     *nparamp = 0;
     *paramsp = NULL;
 
+    if (!tok_macro_id(tline))
+        return NULL;
+
+    finding = tok_text(tline);
+    empty_args =  !tline->next;
     head = (MMacro *) hash_findix(&mmacros, finding);
 
     /*
@@ -7018,7 +7007,7 @@ static int expand_mmacro(Token * tline)
 
     t = tline;
     t = skip_white(t);
-    if (!tok_is(t, TOKEN_ID) && !tok_is(t, TOKEN_LOCAL_MACRO))
+    if (!tok_macro_id(t))
         return 0;
     m = is_mmacro(t, &nparam, &params);
     if (m) {
@@ -7041,7 +7030,8 @@ static int expand_mmacro(Token * tline)
             if (tok_white(t))
                 last = t, t = t->next;
         }
-        if (!tok_is(t, TOKEN_ID) || !(m = is_mmacro(t, &nparam, &params)))
+        m = is_mmacro(t, &nparam, &params);
+        if (!m)
             return 0;
         last->next = NULL;
         mname = tok_text(t);
@@ -7880,10 +7870,11 @@ static void pp_add_magic_stdmac(void)
     }
 }
 
-static void pp_reset_stdmac(enum preproc_mode mode)
+static void pp_start_stdmac(void)
 {
-    int apass;
     struct Include *inc;
+
+    stdmaclist = &stdmacset[0];
 
     /*
      * Set up the stdmac packages as a virtual include file,
@@ -7903,20 +7894,22 @@ static void pp_reset_stdmac(enum preproc_mode mode)
         if (ppdbg & PDBG_INCLUDE)
             dfmt->debug_include(true, istk->next->where, istk->where);
     }
+}
+
+static void pp_reset_stdmac(enum preproc_mode mode)
+{
+    int apass;
+
+    pp_start_stdmac();
 
     pp_add_magic_stdmac();
 
     if (tasm_compatible_mode)
-        pp_add_stdmac(nasm_stdmac_tasm);
+        pp_add_stdmac(&nasm_stdmac_tasm);
 
-    pp_add_stdmac(nasm_stdmac_nasm);
-    pp_add_stdmac(nasm_stdmac_version);
-
-    if (extrastdmac)
-        pp_add_stdmac(extrastdmac);
-
-    stdmacpos  = stdmacros[0];
-    stdmacnext = &stdmacros[1];
+    pp_add_stdmac(&nasm_stdmac_nasm);
+    pp_add_stdmac(&nasm_stdmac_version);
+    pp_add_stdmac(ofmt->stdmac);
 
     do_predef = true;
 
@@ -8155,7 +8148,7 @@ static Token *pp_tokline(void)
             return &tok_pop;
         }
 
-        do {                    /* until we get a line we can use */
+        while (1) {
             char *line;
 
             if (istk->expansion) {      /* from a macro expansion */
@@ -8174,12 +8167,17 @@ static Token *pp_tokline(void)
                     lfmt->line(LIST_MACRO, istk->where.lineno, line);
                     nasm_free(line);
                 }
+                break;
             } else if ((line = read_line())) {
                 tline = tokenize(line);
                 nasm_free(line);
+                break;
+            } else if (istk->expansion) {
+                /* read_line() might have modified istk->expansion */
+                continue;
             } else {
                 /*
-                 * The current file has ended; work down the istk
+                 * The current file/input has ended; work down the istk
                  */
                 Include *i = istk;
 
@@ -8206,7 +8204,7 @@ static Token *pp_tokline(void)
                 nasm_free(i);
                 return &tok_pop;
             }
-        } while (0);
+        }
 
         /*
          * We must expand MMacro parameters and MMacro-local labels
@@ -8445,19 +8443,14 @@ static void pp_add_stdmac(macros_t *macros)
     macros_t **mp;
 
     /* Find the end of the list and avoid duplicates */
-    for (mp = stdmacros; *mp; mp++) {
+    for (mp = stdmacset; *mp; mp++) {
         if (*mp == macros)
             return;             /* Nothing to do */
     }
 
-    nasm_assert(mp < &stdmacros[ARRAY_SIZE(stdmacros)-1]);
+    nasm_assert(mp < &stdmacset[ARRAY_SIZE(stdmacset)-1]);
 
     *mp = macros;
-}
-
-void pp_extra_stdmac(macros_t *macros)
-{
-        extrastdmac = macros;
 }
 
 /* Create a numeric token, with possible - token in front */

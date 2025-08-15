@@ -337,12 +337,6 @@ static void define_macros(void)
     pp_pre_define(temp);
 
     /*
-     * Output-format specific macros.
-     */
-    if (ofmt->stdmac)
-        pp_extra_stdmac(ofmt->stdmac);
-
-    /*
      * Debug format, if any
      */
     if (dfmt != &null_debug_form) {
