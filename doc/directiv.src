@@ -288,16 +288,30 @@ declared as \c{EXTERN} and then defined, it will be treated as
 \c{GLOBAL}. If a variable is declared both as \c{COMMON} and
 \c{EXTERN}, it will be treated as \c{COMMON}.
 
+Since NASM version 2.15, the \c{EXTERN} keyword (since version 2.15)
+does not request import of symbols that are never actually referenced
+in the code, as that prevents using common header files, as it might
+cause the linker to pull in a bunch of unnecessary modules.  To
+unconditionally request import of external symbols, use the
+\c{REQUIRED} directive instead (see \k{required}).
+
+If the old behavior is required, rather than changing the source code,
+one can override the user macro definition:
+
+\c %ifmacro required	  ; Test for NASM new enough to support REQUIRED
+\c   %unimacro extern 1-*
+\c   %imacro extern 1+.nolist
+\c      required %1
+\c   %endmacro
+\c %endif
 
 \H{required} \i\c{REQUIRED}: \i{Unconditionally Importing Symbols} from Other Modules
 
 The \c{REQUIRED} keyword is similar to \c{EXTERN} one. The difference
-is that the \c{EXTERN} keyword as of version 2.15 does not generate
-unknown symbols as that prevents using common header files, as it
-might cause the linker to pull in a bunch of unnecessary modules.
-
-If the old behavior is required, use \c{REQUIRED} keyword instead.
-
+is that the \c{EXTERN} keyword (since version 2.15) does not request
+import of symbols that are never actually referenced in the code, as
+that prevents using common header files, as it might cause the linker
+to pull in a bunch of unnecessary modules.
 
 \H{global} \i\c{GLOBAL}: \i{Exporting Symbols} to Other Modules
 
@@ -559,5 +573,3 @@ The \c{[WARNING]} directive also accepts the \c{all}, \c{error} and
 \c{error=}\e{warning-class} specifiers, see \k{opt-w}.
 
 No "user form" (without the brackets) currently exists.
-
-
