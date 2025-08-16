@@ -1206,13 +1206,29 @@ static void inject_predefs(void)
     do_predef = false;
 }
 
+static uint64_t get_uleb128(const char **pp)
+{
+    const char *p = *pp;
+    unsigned int shcnt = 0;
+    uint8_t c;
+    uint64_t v = 0;
+
+    do {
+        c = *p++;
+        v += ((uint64_t)(c & 127)) << shcnt;
+        shcnt += 7;
+    } while (c & 128);
+
+    *pp = p;
+    return v;
+}
+
 static char *line_from_stdmac(void)
 {
     static const char *stdmacpos = NULL;
     static char *stdmacbuf = NULL;
     char *line;
     size_t len = 0;
-    uint8_t c;
 
     if (!stdmacpos || !*stdmacpos) {
         macros_t *next = *stdmaclist;
@@ -1234,11 +1250,7 @@ static char *line_from_stdmac(void)
     }
 
     /* Length encoded using uleb128 encoding */
-    while ((c = *stdmacpos++) >= 128) {
-        len += c - 128;
-        len <<= 7;
-    }
-    len += c;
+    len = get_uleb128(&stdmacpos);
 
     line = nasm_malloc(len + 1);
     memcpy(line, stdmacpos, len);

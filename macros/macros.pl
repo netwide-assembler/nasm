@@ -70,22 +70,26 @@ sub print_data($$) {
 #
 # Prefix a string with its length in uleb128 encoding
 #
+sub uleb128($)
+{
+    my($n) = @_;
+    my $o = '';
+
+    do {
+	my $nn = $n >> 7;
+	$o .= pack('C', ($n & 127) | ($nn ? 128 : 0));
+	$n = $nn;
+    } while ($n);
+
+    return $o;
+}
+
 sub addstringlen($)
 {
     my($s) = @_;
 
     my $l = length($s);
-    return '' if (!$l);		# Drop empty line
-
-    my $lc = '';
-
-    for (my $shcnt = 0; $l >> $shcnt; $shcnt += 7) {
-	my $b = ($l >> $shcnt) & 127;
-	$b += 128 if ($shcnt);
-	$lc = pack('C', $b) . $lc;
-    }
-
-    return $lc.$s;
+    return $l ? uleb128($l).$s : '';
 }
 
 sub init_mac() {
