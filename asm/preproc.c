@@ -5731,6 +5731,7 @@ static Token *expand_mmac_params(Token * tline)
                 tail = &t->next;
 		set_text(t, text, tok_strlen(text));
                 t->type = type;
+                nasm_free(text);
             }
             changed = true;
         } else {
