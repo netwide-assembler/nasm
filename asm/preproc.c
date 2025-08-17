@@ -711,6 +711,14 @@ static bool tok_macro_id(const Token *x)
     return x && (x->type == TOKEN_ID || x->type == TOKEN_LOCAL_MACRO);
 }
 
+/* A macro or preprocessor function identifier? */
+static bool tok_macro_or_func_id(const Token *x)
+{
+    return x && (x->type == TOKEN_ID ||
+                 x->type == TOKEN_PREPROC_ID ||
+                 x->type == TOKEN_LOCAL_MACRO);
+}
+
 /* Skip past any whitespace */
 static inline Token *skip_white(Token *x)
 {
@@ -2748,7 +2756,7 @@ if_condition(Token * tline, enum preproc_token ct, const char *dname)
         j = false;              /* have we matched yet? */
         while (tline) {
             tline = skip_white(tline);
-            if (!tok_macro_id(tline)) {
+            if (!tok_macro_or_func_id(tline)) {
                 nasm_nonfatal("`%s' expects macro identifiers",
                               dname);
                 goto fail;

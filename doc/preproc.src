@@ -701,6 +701,10 @@ arguments, and can be used in any context where single-line macro
 expansion would be performed. Preprocessor functions were introduced
 in NASM 2.16.
 
+Starting with NASM 2.17, the \c{%ifdef} directive or \c{%isdef()}
+function can also test for the availability of preprocessor
+functions. They cannot, however, be undefined, aliased or redefined.
+
 \S{f_abs} \i\c{%abs()} Function
 
 The \c{%abs()} function evaluates its first argument as an expression,
@@ -1588,6 +1592,20 @@ such as
 Then you could use the command-line option \c{-dDEBUG} to create a
 version of the program which produced debugging messages, and remove
 the option to generate the final release version of the program.
+
+From NASM 2.17 onward, \c{%ifdef} can also test for the availability
+of a preprocessor function, for example:
+
+\c %ifdef %newfunc
+\c   db %newfunc(99)     ; Generates something magic
+\c %else
+\c   %warning "This version of NASM doesn't support %newfunc()"
+\c   db -1              ; Feature not supported
+\c %endif
+
+or, if the warning is not needed, using the function form:
+
+\c   db %cond(%isdef(%newfunc),%newfunc(99),-1)
 
 You can test for a macro \e{not} being defined by using
 \i\c{%ifndef} instead of \c{%ifdef}. You can also test for macro
