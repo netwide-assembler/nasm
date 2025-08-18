@@ -10,6 +10,21 @@ BITS 64
 	vsm4rnds4 ymm3, ymm4, [rax+0x12]
 	vsm4rnds4 ymm4, ymm5, [rax+rbx*2]
 
+	vsm4rnds4 xmm16, xmm16, xmm0
+	vsm4rnds4 xmm17, xmm17, [rax]
+	vsm4rnds4 xmm18, xmm18, [rax+0x12]
+	vsm4rnds4 xmm19, xmm19, [rax+rbx*2]
+
+	vsm4rnds4 ymm16, ymm16, ymm0
+	vsm4rnds4 ymm17, ymm17, [rax]
+	vsm4rnds4 ymm18, ymm18, [rax+0x12]
+	vsm4rnds4 ymm19, ymm19, [rax+rbx*2]
+
+	vsm4rnds4 zmm16, zmm16, zmm0
+	vsm4rnds4 zmm17, zmm17, [rax]
+	vsm4rnds4 zmm18, zmm18, [rax+0x12]
+	vsm4rnds4 zmm19, zmm19, [rax+rbx*2]
+
 	vsm4key4 xmm1, xmm2, xmm0
 	vsm4key4 xmm2, xmm3, [rax]
 	vsm4key4 xmm3, xmm4, [rax+0x12]
@@ -19,3 +34,18 @@ BITS 64
 	vsm4key4 ymm2, ymm3, [rax]
 	vsm4key4 ymm3, ymm4, [rax+0x12]
 	vsm4key4 ymm4, ymm5, [rax+rbx*2]
+
+	vsm4key4 xmm16, xmm16, xmm0
+	vsm4key4 xmm17, xmm17, [rax]
+	vsm4key4 xmm18, xmm18, [rax+0x12]
+	vsm4key4 xmm19, xmm19, [rax+rbx*2]
+
+	vsm4key4 ymm16, ymm16, ymm0
+	vsm4key4 ymm17, ymm17, [rax]
+	vsm4key4 ymm18, ymm18, [rax+0x12]
+	vsm4key4 ymm19, ymm19, [rax+rbx*2]
+
+	vsm4key4 zmm16, zmm16, zmm0
+	vsm4key4 zmm17, zmm17, [rax]
+	vsm4key4 zmm18, zmm18, [rax+0x12]
+	vsm4key4 zmm19, zmm19, [rax+rbx*2]
