@@ -516,7 +516,7 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
                     }
 
                 } else
-                    nasm_panic("unrecognised WRT value in ieee_write_fixup");
+                    nasm_panic("unrecognised WRT value in %s", __func__);
             } else
                 nasm_nonfatal("target of WRT must be a section");
         }
@@ -557,7 +557,7 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
                  */
                 if (eb) {
                     if (realtype == OUT_REL2ADR || realtype == OUT_REL4ADR) {
-                        nasm_panic("Segment of a rel not supported in ieee_write_fixup");
+                        nasm_panic("Segment of a rel not supported in %s", __func__);
                     } else {
                         /* If we want the segment */
                         s.ftype = FT_EXTSEG;
@@ -567,7 +567,7 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
 
                 } else
                     /* If we get here the seg value doesn't make sense */
-                    nasm_panic("unrecognised segment value in ieee_write_fixup");
+                    nasm_panic("unrecognised segment value in %s", __func__);
             }
 
         } else {
@@ -621,7 +621,7 @@ static void ieee_write_fixup(int32_t segment, int32_t wrt,
 
                 } else
                     /* If we get here the seg value doesn't make sense */
-                    nasm_panic("unrecognised segment value in ieee_write_fixup");
+                    nasm_panic("unrecognised segment value in %s", __func__);
             }
         }
         if (size != 2 && s.ftype == FT_SEG)
