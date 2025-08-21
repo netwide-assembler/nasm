@@ -5539,12 +5539,14 @@ VSUBSH		xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.f3.map5.w0 5c /r
 VUCOMISH	xmmreg,xmmrm16|sae			[rm:t1s: evex.lig.np.map5.w0 2e /r]	AVX512FP16
 
 ;# RAO-INT weakly ordered atomic operations
-AADD		mem32,reg32				[mr:	norexw np 0f38 fc /r	]	RAOINT,SD
-AADD		mem64,reg64				[mr:	o64 np 0f38 fc /r	]	RAOINT,SQ,LONG
-AAND		mem32,reg32				[mr:	norexw 66 0f38 fc /r	]	RAOINT,SD
-AAND		mem64,reg64				[mr:	o64 66 0f38 fc /r	]	RAOINT,SQ,LONG
-AXOR		mem32,reg32				[mr:	norexw f3 0f38 fc /r	]	RAOINT,SD
-AXOR		mem64,reg64				[mr:	o64 f3 0f38 fc /r	]	RAOINT,SQ,LONG
+$dq  AADD	rm#,reg#				[mr:	o# np 0f38 fc /r	]	RAOINT,SQ,LONG
+$dq  AADD	rm#,reg#				[mr:	evex.nf0.nd0.l0.np.m4.o# fc /r	]	APX,RAOINT,SQ,LONG
+$dq  AAND	rm#,reg#				[mr:	o# 66 0f38 fc /r	]	RAOINT,SQ,LONG
+$dq  AAND	rm#,reg#				[mr:	evex.nf0.nd0.l0.66.m4.o# fc /r	]	APX,RAOINT,SQ,LONG
+$dq  AOR	rm#,reg#				[mr:	o# f2 0f38 fc /r	]	RAOINT,SQ,LONG
+$dq  AOR	rm#,reg#				[mr:	evex.nf0.nd0.l0.f2.m4.o# fc /r	]	APX,RAOINT,SQ,LONG
+$dq  AXOR	rm#,reg#				[mr:	o# f3 0f38 fc /r	]	RAOINT,SQ,LONG
+$dq  AXOR	rm#,reg#				[mr:	evex.nf0.nd0.l0.f3.m4.o# fc /r	]	APX,RAOINT,SQ,LONG
 
 ;# User interrupts
 CLUI		void					[	f3 0f 01 ee		]	UINTR,LONG
