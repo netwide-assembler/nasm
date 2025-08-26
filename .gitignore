@@ -71,7 +71,7 @@ TAGS
 /doc/Makefile
 /doc/html
 /doc/info
-/doc/inslist.src
+/doc/insns.src
 /doc/version.src
 /doc/warnings.src
 /doc/perlbreq.src

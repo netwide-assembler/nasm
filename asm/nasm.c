@@ -340,12 +340,6 @@ static void define_macros(void)
     pp_pre_define(temp);
 
     /*
-     * Output-format specific macros.
-     */
-    if (ofmt->stdmac)
-        pp_extra_stdmac(ofmt->stdmac);
-
-    /*
      * Debug format, if any
      */
     if (dfmt != &null_debug_form) {
@@ -1812,17 +1806,18 @@ static bool skip_this_pass(errflags severity)
         return false;
 
     /*
-     * ERR_LISTMSG messages are always skipped; the list file
-     * receives them anyway as this function is not consulted
-     * for sending to the list file.
+     * ERR_LISTMSG and ERR_NOTE messages are always skipped; the list
+     * file receives them anyway as this function is not consulted for
+     * sending to the list file.
      */
-    if (type == ERR_LISTMSG)
+    if (type <= ERR_NOTE)
         return true;
 
     /*
-     * This message not applicable unless it is the last pass we are going
-     * to execute; this can be either the final code-generation pass or
-     * the single pass executed in preproc-only mode.
+     * This message is not applicable unless it is the last pass we
+     * are going to execute; this can be either the final
+     * code-generation pass or the single pass executed in
+     * preproc-only mode.
      */
     return (severity & ERR_PASS2) && !pass_final_or_preproc();
 }
@@ -1880,10 +1875,34 @@ static errflags pure_func true_error_type(errflags severity)
 /*
  * The various error type prefixes
  */
-static const char * const error_pfx_table[ERR_MASK+1] = {
-    ";;; ", "debug: ", "info: ", "warning: ",
-        "error: ", "fatal: ", "critical: ", "panic: "
-};
+/*
+ * The various error type prefixes
+ */
+static inline const char *error_pfx(errflags severity)
+{
+    switch (severity & ERR_MASK) {
+    case ERR_LISTMSG:
+        return ";;; ";
+    case ERR_NOTE:
+        return "note: ";
+    case ERR_DEBUG:
+        return "debug: ";
+    case ERR_INFO:
+        return "info: ";
+    case ERR_WARNING:
+        return "warning: ";
+    case ERR_NONFATAL:
+        return "error: ";
+    case ERR_FATAL:
+        return "fatal: ";
+    case ERR_CRITICAL:
+        return "critical: ";
+    case ERR_PANIC:
+        return "panic: ";
+    default:
+        return "internal error: ";
+    }
+}
 static const char no_file_name[] = "nasm"; /* What to print if no file name */
 
 /*
@@ -1956,7 +1975,7 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args
     if (!where.filename)
         where.filename = no_file_name;
 
-    fputs(error_pfx_table[severity], error_file);
+    fputs(error_pfx(severity), error_file);
     fputs(where.filename, error_file);
     if (where.lineno) {
         fprintf(error_file, "%s%"PRId32"%s",
@@ -2109,7 +2128,7 @@ static void nasm_issue_error(struct nasm_errtext *et)
     if (severity & ERR_NO_SEVERITY)
         pfx = "";
     else
-        pfx = error_pfx_table[true_type];
+        pfx = error_pfx(true_type);
 
     *warnsuf = 0;
     if ((severity & (ERR_MASK|ERR_HERE|ERR_PP_LISTMACRO)) == ERR_WARNING) {

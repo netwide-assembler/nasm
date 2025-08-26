@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
- *   
- *   Copyright 1996-2020 The NASM Authors - All Rights Reserved
+ *
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -14,7 +14,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *     
+ *
  *     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
  *     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
  *     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -31,7 +31,7 @@
  *
  * ----------------------------------------------------------------------- */
 
-/* 
+/*
  * preproc.h  header file for preproc.c
  */
 
@@ -43,9 +43,6 @@
 
 extern const char * const pp_directives[];
 extern const uint8_t pp_directives_len[];
-
-/* Pointer to a macro chain */
-typedef const unsigned char macros_t;
 
 enum preproc_token pp_token_hash(const char *token);
 enum preproc_token pp_tasm_token_hash(const char *token);

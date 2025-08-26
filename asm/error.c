@@ -70,6 +70,7 @@ _type nasm_ ## _name (const char *fmt, ...)				\
 }
 
 nasm_err_helpers(void,       listmsg,  ERR_LISTMSG)
+nasm_err_helpers(void,       note,     ERR_NOTE)
 nasm_err_helpers(void,       debug,    ERR_DEBUG)
 nasm_err_helpers(void,       info,     ERR_INFO)
 nasm_err_helpers(void,       nonfatal, ERR_NONFATAL)

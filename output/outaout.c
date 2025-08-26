@@ -570,10 +570,9 @@ static int32_t aout_add_gotoff_reloc(struct Section *sect, int32_t segment,
     return offset - asym->value;
 }
 
-static void aout_out(int32_t segto, const void *data,
-		     enum out_type type, uint64_t size,
-                     int32_t segment, int32_t wrt)
+static void aout_out(const struct out_data *out)
 {
+    OUT_LEGACY(out,segto,data,type,size,segment,wrt);
     struct Section *s;
     int32_t addr;
     uint8_t mydata[4], *p;
@@ -879,7 +878,6 @@ const struct ofmt of_aout = {
     aout_stdmac,
     aout_init,
     null_reset,
-    nasm_do_legacy_output,
     aout_out,
     aout_deflabel,
     aout_section_names,
@@ -906,7 +904,6 @@ const struct ofmt of_aoutb = {
     aout_stdmac,
     aoutb_init,
     null_reset,
-    nasm_do_legacy_output,
     aout_out,
     aout_deflabel,
     aout_section_names,

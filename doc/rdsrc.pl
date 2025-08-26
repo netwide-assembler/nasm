@@ -135,10 +135,15 @@ use File::Spec;
 @include_path = ();
 $out_path = File::Spec->curdir();
 
+my %srcfiles;			# For dependencies
+my $depend_path;
+
 while ($ARGV[0] =~ /^-/) {
     my $opt = shift @ARGV;
     if ($opt eq '-d') {
 	$diag = 1;
+    } elsif ($opt =~ /^\-M(.*)$/) {
+	$depend_path = $1;
     } elsif ($opt =~ /^\-[Ii](.*)$/) {
 	push(@include_path, $1);
     } elsif ($opt =~ /^\-[Oo](.*)$/) {
@@ -159,7 +164,6 @@ $tstruct_last[$tstruct_level{$tstruct_previtem}] = $tstruct_previtem;
 $MAXLEVEL = 10;  # really 3, but play safe ;-)
 
 # Read the file; pass a paragraph at a time to the paragraph processor.
-print "Reading input...";
 $pname = [];
 @pnames = @pflags = ();
 $para = undef;
@@ -167,44 +171,70 @@ foreach $file (@files) {
   &include($file);
 }
 &got_para($para);
-print "done.\n";
+print "$outfile: done.\n";
 
 # Now we've read in the entire document and we know what all the
 # heading keywords refer to. Go through and fix up the \k references.
-print "Fixing up cross-references...";
+print "$outfile: Fixing up cross-references...\n";
 &fixup_xrefs;
-print "done.\n";
 
 # Sort the index tags, according to the slightly odd order I've decided on.
-print "Sorting index tags...";
+print "$outfile: sorting index tags...\n";
 &indexsort;
-print "done.\n";
 
 # Make output directory if necessary
 mkdir($out_path);
 
 if ($diag) {
-  print "Writing index-diagnostic file...";
+  print "$outfile: writing index-diagnostic file...\n";
   &indexdiag;
-  print "done.\n";
 }
 
 # OK. Write out the various output files.
+my $outfile;
 if ($out_format eq 'txt') {
-    print "Producing text output: ";
+    $outfile = 'nasmdoc.txt';
+    print "$outfile: producing text output...\n";
     &write_txt;
-    print "done.\n";
 } elsif ($out_format eq 'html') {
-    print "Producing HTML output: ";
+    $outfile = 'nasmdoc0.html';
+    print "$outfile: producing HTML output...\n";
     &write_html;
-    print "done.\n";
 } elsif ($out_format eq 'dip') {
-    print "Producing Documentation Intermediate Paragraphs: ";
+    $outfile = 'nasmdoc.dip';
+    print "$outfile: producing Documentation Intermediate Paragraphs...\n";
     &write_dip;
-    print "done.\n";
 } else {
     die "$0: unknown output format: $out_format\n";
 }
+
+if (defined($depend_path)) {
+    # Write dependencies
+    print "$outfile: writing dependencies\n";
+    open(my $dep, '>', $depend_path)
+	or die "$outfile: $depend_path: $!\n";
+
+    if ($out_path ne File::Spec->curdir()) {
+	$outfile = File::Spec->catfile($out_path, $outfile);
+    }
+
+    my $o = $outfile.' :';
+    my $ol = length($o);
+    foreach my $sf (sort(keys(%srcfiles))) {
+	my $l = length($sf);
+	if ($l + $ol > 77) {
+	    print $dep $o, " \\\n";
+	    $o = '';
+	    $ol = 0;
+	}
+	$o .= ' '.$sf;
+	$ol += $l+1;
+    }
+    print $dep $o, "\n\n";
+    close($dep);
+}
+
+print "$outfile: done.\n";
 
 sub untabify($) {
   my($s) = @_;
@@ -251,17 +281,22 @@ sub include {
   my $F;
 
   if ($name eq '-') {
-    open($F, '<-');		# stdin
+      open($F, '<&', \*STDIN);		# stdin
+      print "$outfile: reading stdin...\n";
   } else {
     my $found = 0;
     foreach my $idir ( File::Spec->curdir, @include_path ) {
 	my $fpath = File::Spec->catfile($idir, $name);
-      if (open($F, '<', $fpath)) {
-	$found = 1;
-	last;
-      }
+	if (open($F, '<', $fpath)) {
+	    # Assume that make uses VPATH for the input search path,
+	    # and so dependencies should not include the search directory.
+	    $srcfiles{$name}++;
+	    $found = 1;
+	    print "$outfile: reading $fpath...\n";
+	    last;
+	}
     }
-    die "Cannot open $name: $!\n" unless ($found);
+    die "$0:$outfile: Cannot open $name: $!\n" unless ($found);
   }
   while (defined($_ = <$F>)) {
      &read_line($_);
@@ -308,7 +343,7 @@ sub got_para {
     $snum = 0;
     $xref = "chapter-$cnum";
     $pflags = "chap $cnum :$xref";
-    die "badly formatted chapter heading: $_\n" if !/^\\C\{([^\}]*)\}\s*(.*)$/;
+    die "$outfile: badly formatted chapter heading: $_\n" if !/^\\C\{([^\}]*)\}\s*(.*)$/;
     $refs{$1} = "chapter $cnum";
     $node = "Chapter $cnum";
     &add_item($node, 1, $para);
@@ -325,7 +360,7 @@ sub got_para {
     $snum = 0;
     $xref = "appendix-$cnum";
     $pflags = "appn $cnum :$xref";
-    die "badly formatted appendix heading: $_\n" if !/^\\A\{([^\}]*)}\s*(.*)$/;
+    die "$outfile: badly formatted appendix heading: $_\n" if !/^\\A\{([^\}]*)}\s*(.*)$/;
     $refs{$1} = "appendix $cnum";
     $node = "Appendix $cnum";
     &add_item($node, 1, $para);
@@ -339,7 +374,7 @@ sub got_para {
     $snum = 0;
     $xref = "section-$cnum.$hnum";
     $pflags = "head $cnum.$hnum :$xref";
-    die "badly formatted heading: $_\n" if !/^\\[HP]\{([^\}]*)\}\s*(.*)$/;
+    die "$outfile: badly formatted heading: $_\n" if !/^\\[HP]\{([^\}]*)\}\s*(.*)$/;
     $refs{$1} = "section $cnum.$hnum";
     $node = "Section $cnum.$hnum";
     &add_item($node, 2, $para);
@@ -352,7 +387,7 @@ sub got_para {
     $snum++;
     $xref = "section-$cnum.$hnum.$snum";
     $pflags = "subh $cnum.$hnum.$snum :$xref";
-    die "badly formatted subheading: $_\n" if !/^\\S\{([^\}]*)\}\s*(.*)$/;
+    die "$outfile: badly formatted subheading: $_\n" if !/^\\S\{([^\}]*)\}\s*(.*)$/;
     $refs{$1} = "section $cnum.$hnum.$snum";
     $node = "Section $cnum.$hnum.$snum";
     &add_item($node, 3, $para);
@@ -362,18 +397,18 @@ sub got_para {
     # the standard word-by-word code will happen next
   } elsif (/^\\IR/) {
     # An index-rewrite.
-    die "badly formatted index rewrite: $_\n" if !/^\\IR\{([^\}]*)\}\s*(.*)$/;
+    die "$outfile: badly formatted index rewrite: $_\n" if !/^\\IR\{([^\}]*)\}\s*(.*)$/;
     $irewrite = $1;
     $_ = $2;
     # the standard word-by-word code will happen next
   } elsif (/^\\IA/) {
     # An index-alias.
-    die "badly formatted index alias: $_\n" if !/^\\IA\{([^\}]*)}\{([^\}]*)\}\s*$/;
+    die "$outfile: badly formatted index alias: $_\n" if !/^\\IA\{([^\}]*)}\{([^\}]*)\}\s*$/;
     $idxalias{$1} = $2;
     return; # avoid word-by-word code
   } elsif (/^\\M/) {
     # Metadata
-    die "badly formed metadata: $_\n" if !/^\\M\{([^\}]*)}\{([^\}]*)\}\s*$/;
+    die "$outfile: badly formed metadata: $_\n" if !/^\\M\{([^\}]*)}\{([^\}]*)\}\s*$/;
     $metadata{$1} = $2;
     return; # avoid word-by-word code
   } elsif (/^\\([b\>q])/) {
@@ -425,7 +460,7 @@ sub got_para {
       $qindex = 1 if $1 eq "\\I";
       $indexing = 1, s/^\\[iI]// if $1;
       s/^\\c//;
-      die "badly formatted \\c: \\c$_\n" if !/\{(([^\\}]|\\.)*)\}(.*)$/;
+      die "$outfile: badly formatted \\c: \\c$_\n" if !/\{(([^\\}]|\\.)*)\}(.*)$/;
       $w = $1;
       $_ = $3;
       $w =~ s/\\\{/\{/g;
@@ -441,7 +476,7 @@ sub got_para {
       $indexing = 1, $type = "\\i" if $1;
       $emph = 1, $type = "\\e" if $2;
       s/^(\\[iI])?(\\e?)//;
-      die "badly formatted $type: $type$_\n" if !/\{(([^\\}]|\\.)*)\}(.*)$/;
+      die "$outfile: badly formatted $type: $type$_\n" if !/\{(([^\\}]|\\.)*)\}(.*)$/;
       $w = $1;
       $_ = $3;
       $w =~ s/\\\{/\{/g;
@@ -474,12 +509,12 @@ sub got_para {
       $t = "k ";
       $t = "kK" if /^\\K/;
       s/^\\[kK]//;
-      die "badly formatted \\k: \\k$_\n" if !/\{([^\}]*)\}(.*)$/;
+      die "$outfile: badly formatted \\k: \\k$_\n" if !/\{([^\}]*)\}(.*)$/;
       $_ = $2;
       push @$para,"$t$1";
     } elsif (/^\\[Ww]/) {
 	if (/^\\w/) {
-	    die "badly formatted \\w: $_\n"
+	    die "$outfile: badly formatted \\w: $_\n"
 		if !/^\\w(\\i)?\{([^\\}]*)\}(.*)$/;
 	    $l = $2;
 	    $w = $2;
@@ -487,7 +522,7 @@ sub got_para {
 	    $c = 1;
 	    $_ = $3;
 	} else {
-	    die "badly formatted \\W: $_\n"
+	    die "$outfile: badly formatted \\W: $_\n"
 		if !/^\\W\{([^\\}]*)\}(\\i)?(\\c)?\{(([^\\}]|\\.)*)\}(.*)$/;
 	    $l = $1;
 	    $w = $4;
@@ -503,8 +538,8 @@ sub got_para {
 	push(@$para, addidx($node, $w, "c $w")) if $indexing;
 	push(@$para, "$t<$l>$w");
     } else {
-      die "what the hell? $_\n" if !/^(([^\s\\\-]|\\[\\{}\-])*-?)(.*)$/;
-      die "painful death! $_\n" if !length $1;
+      die "$outfile: what the hell? $_\n" if !/^(([^\s\\\-]|\\[\\{}\-])*-?)(.*)$/;
+      die "$outfile: painful death! $_\n" if !length $1;
       $w = $1;
       $_ = $3;
       $w =~ s/\\\{/\{/g;
@@ -633,7 +668,7 @@ sub fixup_xrefs {
         $caps = ($k =~ /^kK/);
 	$k = substr($k,2);
         $repl = $refs{$k};
-	die "undefined keyword `$k'\n" unless $repl;
+	die "$outfile: undefined keyword `$k'\n" unless $repl;
 	substr($repl,0,1) =~ tr/a-z/A-Z/ if $caps;
 	@repl = ();
 	push @repl,"x $xrefs{$k}";
@@ -777,7 +812,7 @@ sub word_txt {
   } elsif ($wmajt eq "x" || $wmajt eq "i") {
     return "\001";
   } else {
-    die "panic in word_txt: $wtype$w\n";
+    die "$outfile: panic in word_txt: $wtype$w\n";
   }
 }
 
@@ -1142,7 +1177,7 @@ sub word_html($) {
   } elsif ($wmajt eq "i") {
     return "\001";
   } else {
-    die "panic in word_html: $wtype$w\n";
+    die "$outfile: panic in word_html: $wtype$w\n";
   }
 }
 

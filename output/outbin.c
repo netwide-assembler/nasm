@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2017 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -720,10 +720,9 @@ static void bin_cleanup(void)
     }
 }
 
-static void bin_out(int32_t segto, const void *data,
-		    enum out_type type, uint64_t size,
-                    int32_t segment, int32_t wrt)
+static void bin_out(const struct out_data *out)
 {
+    OUT_LEGACY(out,segto,data,type,size,segment,wrt);
     uint8_t *p, mydata[8];
     struct Section *s;
 
@@ -1606,7 +1605,6 @@ const struct ofmt of_bin = {
     bin_stdmac,
     bin_init,
     null_reset,
-    nasm_do_legacy_output,
     bin_out,
     bin_deflabel,
     bin_secname,
@@ -1629,7 +1627,6 @@ const struct ofmt of_ith = {
     bin_stdmac,
     ith_init,
     null_reset,
-    nasm_do_legacy_output,
     bin_out,
     bin_deflabel,
     bin_secname,
@@ -1652,7 +1649,6 @@ const struct ofmt of_srec = {
     bin_stdmac,
     srec_init,
     null_reset,
-    nasm_do_legacy_output,
     bin_out,
     bin_deflabel,
     bin_secname,

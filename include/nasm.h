@@ -46,6 +46,7 @@
 #include "nctype.h"
 #include "strlist.h"
 #include "preproc.h"
+#include "macros.h"
 #include "insnsi.h"     /* For enum opcode */
 #include "directiv.h"   /* For enum directive */
 #include "labels.h"     /* For enum mangle_index, enum label_type */
@@ -108,10 +109,11 @@ enum out_type {
     OUT_SEGMENT,    /* A segment number */
 
     /*
-     * These values are used by the legacy backend interface only;
-     * see output/legacy.c for more information.  These should never
-     * be used otherwise.  Once all backends have been migrated to the
-     * new interface they should be removed.
+     * These values are used by the legacy backend interface only; see
+     * nasm_ofmt_output() in asm/assemble.c for more information.
+     * These should never be used otherwise.  Once all backends have
+     * been fully migrated to the new interface they should be
+     * removed.
      */
     OUT_REL1ADR,
     OUT_REL2ADR,
@@ -158,6 +160,19 @@ struct out_data {
     int64_t relbase;            /* Relative base for OUT_RELADDR */
     struct src_location where;  /* Source file and line */
     const char *what;           /* Additional description, e.g. "immediate" */
+
+    /*
+     * Legacy output data fields; some of these differ in their
+     * definition from the corresponding modern fields.
+     * See nasm_ofmt_output() in asm/assemble.c.
+     */
+    struct out_data_legacy {
+	const void *data;
+	enum out_type type;
+	uint64_t size;
+	int32_t tsegment;	/* Legacy name "segment" */
+	int32_t twrt;		/* Legacy name "wrt" */
+    } legacy;
 };
 
 /*
@@ -491,9 +506,6 @@ void pp_cleanup_pass(void);
  * last pass.
  */
 void pp_cleanup_session(void);
-
-/* Additional macros specific to output format */
-void pp_extra_stdmac(macros_t *macros);
 
 /* Early definitions and undefinitions for macros */
 void pp_pre_define(char *definition);
@@ -1000,7 +1012,8 @@ struct ofmt {
      * Output format flags.
      */
 #define OFMT_TEXT		1	/* Text file format */
-#define OFMT_KEEP_ADDR	2	/* Keep addr; no conversion to data */
+#define OFMT_KEEP_ADDR		2	/* Keep addr; no conversion to data */
+#define OFMT_ZERODATA		4	/* "Native" OUT_ZERODATA support */
 
     unsigned int flags;
 
@@ -1042,24 +1055,6 @@ struct ofmt {
      * definition of struct out_data.
      */
     void (*output)(const struct out_data *data);
-
-    /*
-     * This procedure is called by assemble() to write actual
-     * generated code or data to the object file. Typically it
-     * doesn't have to actually _write_ it, just store it for
-     * later.
-     *
-     * The `type' argument specifies the type of output data, and
-     * usually the size as well: its contents are described below.
-     *
-     * This is used for backends which have not yet been ported to
-     * the new interface, and should be NULL on ported backends.
-     * To use this entry point, set the output pointer to
-     * nasm_do_legacy_output.
-     */
-    void (*legacy_output)(int32_t segto, const void *data,
-                          enum out_type type, uint64_t size,
-                          int32_t segment, int32_t wrt);
 
     /*
      * This procedure is called once for every symbol defined in

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -289,6 +289,96 @@ static void debug_macro_out(const struct out_data *data)
  *!  this. Instead, this will be replaced with explicit zero
  *!  content, which may produce a large output file.
  */
+
+/*
+ * Add the entries in struct out_data for the rather bizarre legacy
+ * backend interface, and then submit to the backend.
+ *
+ * The "data" parameter for the output function points to a "int64_t",
+ * containing the address of the target in question, unless the type is
+ * OUT_RAWDATA, in which case it points to an "uint8_t"
+ * array.
+ *
+ * Exceptions are OUT_RELxADR, which denote an x-byte relocation
+ * which will be a relative jump. For this we need to know the
+ * distance in bytes from the start of the relocated record until
+ * the end of the containing instruction. _This_ is what is stored
+ * in the size part of the parameter, in this case.
+ *
+ * Also OUT_RESERVE denotes reservation of N bytes of BSS space,
+ * and the contents of the "data" parameter is irrelevant.
+ */
+
+static void nasm_ofmt_output(struct out_data *data)
+{
+    const void *dptr   = data->data;
+    enum out_type type = data->type;
+    int32_t tsegment   = data->tsegment;
+    int32_t twrt       = data->twrt;
+    uint64_t size      = data->size;
+
+    switch (data->type) {
+    case OUT_RELADDR:
+        switch (data->size) {
+        case 1:
+            type = OUT_REL1ADR;
+            break;
+        case 2:
+            type = OUT_REL2ADR;
+            break;
+        case 4:
+            type = OUT_REL4ADR;
+            break;
+        case 8:
+            type = OUT_REL8ADR;
+            break;
+        default:
+            panic();
+            break;
+        }
+
+        dptr = &data->toffset;
+        size = data->relbase - data->loc.offset;
+        break;
+
+    case OUT_SEGMENT:
+        type = OUT_ADDRESS;
+        if (tsegment != NO_SEG && tsegment < SEG_ABS)
+            tsegment |= 1;
+        dptr = zero_buffer;
+        size = data->size;
+        break;
+
+    case OUT_ADDRESS:
+        dptr = &data->toffset;
+        size = (data->flags & OUT_SIGNED) ? -data->size : data->size;
+        break;
+
+    case OUT_RAWDATA:
+    case OUT_RESERVE:
+        tsegment = twrt = NO_SEG;
+        break;
+
+    case OUT_ZERODATA:
+        tsegment = twrt = NO_SEG;
+        type = OUT_RAWDATA;
+        dptr = zero_buffer;
+        break;
+
+    default:
+        panic();
+        break;
+    }
+
+    data->legacy.data     = dptr;
+    data->legacy.type     = type;
+    data->legacy.size     = size;
+    data->legacy.tsegment = tsegment;
+    data->legacy.twrt     = twrt;
+
+    ofmt->output(data);
+}
+
 static void out(struct out_data *data)
 {
     static struct last_debug_info {
@@ -301,11 +391,14 @@ static void out(struct out_data *data)
     } xdata;
     size_t asize, amax;
     uint64_t zeropad = 0;
+    uint64_t real_size;
     int64_t addrval;
     int32_t fixseg;             /* Segment for which to produce fixed data */
 
     if (!data->size)
         return;                 /* Nothing to do */
+
+    real_size = data->size;
 
     /*
      * Convert addresses to RAWDATA if possible
@@ -500,7 +593,25 @@ static void out(struct out_data *data)
         if (debug_current_macro)
             debug_macro_out(data);
 
-        ofmt->output(data);
+	if (unlikely(data->type == OUT_ZERODATA) &&
+            !(ofmt->flags & OFMT_ZERODATA)) {
+	    /*
+	     * Break OFMT_ZERODATA up into ZERO_BUF_SIZE chunks unless the
+	     * backend has indicated it can handle arbitrary sizes
+	     * by setting the OFMT_ZERODATA flag.
+	     */
+	    uint64_t size = data->size;
+	    while (size > ZERO_BUF_SIZE) {
+		data->type        = OUT_ZERODATA; /* Help the compiler? */
+		data->size        = ZERO_BUF_SIZE;
+		nasm_ofmt_output(data);
+		size             -= ZERO_BUF_SIZE;
+		data->loc.offset += ZERO_BUF_SIZE;
+		data->insoffs    += ZERO_BUF_SIZE;
+	    }
+	    data->size = size;
+	}
+        nasm_ofmt_output(data);
     } else {
         /* Outputting to ABSOLUTE section - only reserve is permitted */
         if (data->type != OUT_RESERVE)
@@ -512,17 +623,20 @@ static void out(struct out_data *data)
     data->loc.offset  += data->size;
     data->insoffs     += data->size;
 
+    /* Note: this is never called with zeropad > ZERO_BUF_SIZE */
     if (zeropad) {
         data->type         = OUT_ZERODATA;
         data->size         = zeropad;
         lfmt->output(data);
-        ofmt->output(data);
+        nasm_ofmt_output(data);
         data->loc.offset  += zeropad;
         data->insoffs     += zeropad;
-        data->size        += zeropad;  /* Restore original size value */
     }
 
-    /* FOr the next time... */
+    /* Restore real data size in case the transaction was broken up */
+    data->size = real_size;
+
+    /* Avoid confusion when this struct out_data is reused */
     data->what = NULL;
 }
 

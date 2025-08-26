@@ -739,7 +739,11 @@ restart_parse:
     result->bits        = bits;     /* Current assembly mode */
     result->opt         = optimizing; /* Optimization flags */
 
-    if (i == TOKEN_ID || insn_is_label) {
+    /* Ignore blank lines */
+    if (i == TOKEN_EOS)
+        goto fail;
+
+    if (i == TOKEN_ID || (insn_is_label && i == TOKEN_INSN)) {
         /* there's a label here */
         first = false;
         result->label = tokval.t_charptr;
@@ -823,9 +827,11 @@ restart_parse:
                 set_imm_flags(&result->oprs[0], result->opt);
             }
         } else if (!first) {
-            nasm_nonfatal("instruction expected");
+            nasm_nonfatal("instruction expected, found `%.*s'",
+                          tokval.t_len, tokval.t_start);
         } else if (!result->label) {
-            nasm_nonfatal("label or instruction expected at start of line");
+            nasm_nonfatal("label, instruction or prefix expected at start of line, found `%.*s'",
+                          tokval.t_len, tokval.t_start);
         }
         return result;
     }

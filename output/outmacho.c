@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -544,10 +544,9 @@ static int64_t add_reloc(struct section *sect, int32_t section,
     return 0;
 }
 
-static void macho_output(int32_t secto, const void *data,
-			 enum out_type type, uint64_t size,
-                         int32_t section, int32_t wrt)
+static void macho_output(const struct out_data *out)
 {
+    OUT_LEGACY(out,secto,data,type,size,section,wrt);
     struct section *s;
     int64_t addr, offset;
     uint8_t mydata[16], *p;
@@ -1926,8 +1925,7 @@ static void macho_dbg_generate(void)
             saa_free(p_linep);
         }
 
-        macho_output(p_section->index, p_buf_base, OUT_RAWDATA, buf_size, NO_SEG, 0);
-
+        sect_write(p_section, p_buf_base, buf_size);
         nasm_free(p_buf_base);
     }
 
@@ -1949,7 +1947,7 @@ static void macho_dbg_generate(void)
         saa_len = p_str->datalen;
         p_buf = nasm_malloc(saa_len);
         saa_rnbytes(p_str, p_buf, saa_len);
-        macho_output(p_section->index, p_buf, OUT_RAWDATA, saa_len, NO_SEG, 0);
+        sect_write(p_section, p_buf, saa_len);
 
         nasm_free(cur_path);
         nasm_free(cur_file);
@@ -2002,7 +2000,7 @@ static void macho_dbg_generate(void)
 
         WRITELONG(p_buf, saa_len);
         saa_rnbytes(p_info, p_buf, saa_len);
-        macho_output(p_section->index, p_buf_base, OUT_RAWDATA, saa_len + 4, NO_SEG, 0);
+        sect_write(p_section, p_buf_base, saa_len + 4);
 
         saa_free(p_info);
         nasm_free(p_buf_base);
@@ -2063,7 +2061,7 @@ static void macho_dbg_generate(void)
         p_buf = nasm_malloc(saa_len);
 
         saa_rnbytes(p_abbrev, p_buf, saa_len);
-        macho_output(p_section->index, p_buf, OUT_RAWDATA, saa_len, NO_SEG, 0);
+        sect_write(p_section, p_buf, saa_len);
 
         saa_free(p_abbrev);
         nasm_free(p_buf);
@@ -2317,7 +2315,6 @@ const struct ofmt of_macho32 = {
     macho_stdmac,
     macho32_init,
     null_reset,
-    nasm_do_legacy_output,
     macho_output,
     macho_symdef,
     macho_section,
@@ -2387,7 +2384,6 @@ const struct ofmt of_macho64 = {
     macho_stdmac,
     macho64_init,
     null_reset,
-    nasm_do_legacy_output,
     macho_output,
     macho_symdef,
     macho_section,

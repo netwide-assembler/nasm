@@ -1,10 +1,9 @@
 dnl --------------------------------------------------------------------------
-dnl PA_ADD_FLAGS(flagvar, flags [, real-flags [, success [, failure]]])
+dnl PA_ADD_FLAGS(flagvar, flags)
 dnl
-dnl  Add [real-flags] (default [flags]) to the variable [flagvar] if
-dnl  and only if [flags] are accepted by all languages affected by
-dnl  [flagvar], if those languages have been previously seen in the
-dnl  script.
+dnl  Add [flags] to the variable [flagvar] if and only if it is accepted
+dnl  by all languages affected by [flagvar], if those languages have
+dnl  been previously seen in the script.
 dnl --------------------------------------------------------------------------
 AC_DEFUN([PA_ADD_FLAGS],
 [

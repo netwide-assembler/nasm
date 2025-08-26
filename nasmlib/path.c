@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 2017 The NASM Authors - All Rights Reserved
+ *   Copyright 2017-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -42,40 +42,64 @@
 #include "nasmlib.h"
 #include "error.h"
 
-#if defined(__MSDOS__) || defined(__DOS__) || \
+#define PATH_UNKNOWN	0
+#define PATH_UNIX	1
+#define PATH_MSDOS	2
+#define PATH_MACCLASSIC	3
+#define PATH_VMS	4
+
+#ifdef PATHSTYLE
+/* PATHSTYLE set externally, hope it is correct */
+#elif defined(__MSDOS__) || defined(__DOS__) || \
     defined(__WINDOWS__) || defined(_Windows) ||                        \
     defined(__OS2__) || defined(_WIN16) || defined(WIN32) || defined(_WIN32)
-/* MS-DOS/Windows and like operating systems */
-# define separators "/\\:"
-# define cleandirend "/\\"
-# define catsep '\\'
-# define leaveonclean 2         /* Leave \\ at the start alone */
-# define curdir "."
+/*
+ * MS-DOS, Windows and like operating systems
+ */
+# define PATHSTYLE PATH_MSDOS
 #elif defined(unix) || defined(__unix) || defined(__unix__) ||   \
     defined(__UNIX__) || defined(__Unix__) || \
-    defined(__MACH__) || defined(__BEOS__)
-/* Unix and Unix-like operating systems and others using
+    defined(_POSIX_VERSION) || defined(_XOPEN_VERSION) || \
+    defined(__MACH__) || defined(__BEOS__) || defined(__HAIKU__)
+/*
+ * Unix and Unix-like operating systems and others using
  * the equivalent syntax (slashes as only separators, no concept of volume)
  *
  * This must come after the __MSDOS__ section, since it seems that at
  * least DJGPP defines __unix__ despite not being a Unix environment at all.
  */
+# define PATHSTYLE PATH_UNIX
+#elif defined(Macintosh) || defined(macintosh)
+# define PATHSTYLE PATH_MACCLASSIC
+#elif defined(__VMS)
+/* VMS (only partially supported, really) */
+# define PATHSTYLE PATH_VMS
+#else
+/* Something else entirely? */
+# define PATHSTYLE PATH_UNKNOWN
+#endif
+
+#if PATHSTYLE == PATH_MSDOS
+# define separators "/\\:"
+# define cleandirend "/\\"
+# define catsep '\\'
+# define leaveonclean 2         /* Leave \\ at the start alone */
+# define curdir "."
+#elif PATHSTYLE == PATH_UNIX
 # define separators "/"
 # define cleandirend "/"
 # define catsep '/'
 # define leaveonclean 1
 # define curdir "."
-#elif defined(Macintosh) || defined(macintosh)
-/* MacOS classic */
+#elif PATHSTYLE == PATH_MACCLASSIC
 # define separators ":"
 # define curdir ":"
 # define catsep ':'
 # define cleandirend ":"
 # define leaveonclean 0
 # define leave_leading 1
-#elif defined(__VMS)
-/* VMS *
- *
+#elif PATHSTYLE == PATH_VMS
+/*
  * VMS filenames may have ;version at the end.  Assume we should count that
  * as part of the filename anyway.
  */
