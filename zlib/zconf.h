@@ -10,6 +10,8 @@
 
 #define Z_SOLO 1                /* All that is needed for now */
 
+#define HAVE_VSNPRINTF 1        /* If it doesn't exist we add it */
+
 /*
  * If you *really* need a unique prefix for all types and library functions,
  * compile with -DZ_PREFIX. The "standard" zlib should be compiled without it.
