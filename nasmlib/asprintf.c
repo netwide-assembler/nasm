@@ -52,15 +52,19 @@ void *nasm_vaxprintf(size_t extra, const char *fmt, va_list ap)
     char *strp;
     va_list xap;
     size_t bytes;
+    int len;
 
     va_copy(xap, ap);
-    bytes = vsnprintf(NULL, 0, fmt, xap) + 1;
+    len = vsnprintf(NULL, 0, fmt, xap);
+    nasm_assert(len >= 0);
+    bytes = (size_t)len + 1;
     _nasm_last_string_size = bytes;
     va_end(xap);
 
     strp = nasm_malloc(extra+bytes);
     memset(strp, 0, extra);
-    vsnprintf(strp+extra, bytes, fmt, ap);
+    len = vsnprintf(strp+extra, bytes, fmt, ap);
+    nasm_assert(bytes == (size_t)len + 1);
     return strp;
 }
 

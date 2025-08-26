@@ -75,11 +75,11 @@ char * safe_alloc end_with_null nasm_strcatn(const char *one, ...);
  * nasm_[v]asprintf() are variants of the semi-standard [v]asprintf()
  * functions, except that we return the pointer instead of a count.
  * The size of the string (including the final NUL!) is available
- * by calling nasm_aprintf_size() afterwards.
+ * by calling nasm_last_string_size() afterwards.
  *
  * nasm_[v]axprintf() are similar, but allocates a user-defined amount
  * of storage before the string, and returns a pointer to the
- * allocated buffer. The value of nasm_aprintf_size() does *not* include
+ * allocated buffer. The value of nasm_last_string_size() does *not* include
  * this additional storage.
  */
 char * safe_alloc printf_func(1, 2) nasm_asprintf(const char *fmt, ...);
