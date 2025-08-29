@@ -168,6 +168,7 @@ $wdq  LZCNT	reg#,rm#			[rm:	o# f3i 0f bd /r]			LZCNT,SM
 $wdq  TZCNT	reg#,rm#			[rm:	o# f3i 0f bc /r]			BMI1,SM
 
 $dq   ANDN	reg#,reg#*,rm#			[rvm:	vex.nds.lz.0f38.w# f2 /r]		BMI1,SM
+$dq   ANDN	reg#,reg#*,rm#			[rvm:	evex.np.nf.lz.0f38.w# f2 /r]		APX,BMI1,SM
 $dq   BEXTR	reg#,rm#*,reg#			[rmv:	vex.nds.lz.0f38.w# f7 /r]		BMI1,SM
 $dq   BLSMSK	reg#,rm#			[vm:	vex.ndd.lz.0f38.w# f3 /2]		BMI1,SM
 $dq   BLSR	reg#,rm#			[vm:	vex.ndd.lz.0f38.w# f3 /1]		BMI1,SM
