@@ -47,6 +47,7 @@
 #include "insns.h"
 #include "tables.h"
 #include "regdis.h"
+#include "bytesex.h"
 #include "disp8.h"
 
 #define fetch_safe(_start, _ptr, _size, _need, _op)         \
@@ -106,32 +107,6 @@ struct prefix_info {
     uint32_t rex;       /* REX prefix present */
     uint8_t evex[3];    /* EVEX prefix present */
 };
-
-#define getu8(x) (*(uint8_t *)(x))
-#if X86_MEMORY
-/* Littleendian CPU which can handle unaligned references */
-#define getu16(x) (*(uint16_t *)(x))
-#define getu32(x) (*(uint32_t *)(x))
-#define getu64(x) (*(uint64_t *)(x))
-#else
-static uint16_t getu16(uint8_t *data)
-{
-    return (uint16_t)data[0] + ((uint16_t)data[1] << 8);
-}
-static uint32_t getu32(uint8_t *data)
-{
-    return (uint32_t)getu16(data) + ((uint32_t)getu16(data+2) << 16);
-}
-static uint64_t getu64(uint8_t *data)
-{
-    return (uint64_t)getu32(data) + ((uint64_t)getu32(data+4) << 32);
-}
-#endif
-
-#define gets8(x) ((int8_t)getu8(x))
-#define gets16(x) ((int16_t)getu16(x))
-#define gets32(x) ((int32_t)getu32(x))
-#define gets64(x) ((int64_t)getu64(x))
 
 /* Important: regval must already have been adjusted for rex extensions */
 static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
