@@ -11,7 +11,7 @@ byte first (like Motorola and SPARC, unlike Intel and VAX).])
 AH_TEMPLATE(WORDS_LITTLEENDIAN,
 [Define to 1 if your processor stores words with the least significant
 byte first (like Intel and VAX, unlike Motorola and SPARC).])
-PA_ADD_HEADERS(endian.h sys/endian.h machine/endian.h)
+PA_ADD_HEADERS(stdbit.h endian.h sys/endian.h machine/endian.h)
 PA_HAVE_FUNC(cpu_to_le16, (0))
 PA_HAVE_FUNC(cpu_to_le32, (0))
 PA_HAVE_FUNC(cpu_to_le64, (0))

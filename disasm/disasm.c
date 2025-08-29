@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2022 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -47,6 +47,7 @@
 #include "insns.h"
 #include "tables.h"
 #include "regdis.h"
+#include "bytesex.h"
 #include "disp8.h"
 
 #define fetch_safe(_start, _ptr, _size, _need, _op)         \
@@ -59,18 +60,32 @@
     fetch_safe(_start, _ptr, _size, _need, return 0)
 
 /*
- * Flags that go into the `segment' field of `insn' structures
- * during disassembly.
+ * Flags that go into the `segment' field of `operand' structures
  */
 #define SEG_RELATIVE    1
-#define SEG_32BIT       2
-#define SEG_RMREG       4
+#define SEG_RMREG       2
+#define SEG_NODISP      4
 #define SEG_DISP8       8
 #define SEG_DISP16     16
 #define SEG_DISP32     32
-#define SEG_NODISP     64
+#define SEG_DISP64     64
+#define SEG_DISPMASK  (SEG_NODISP|SEG_DISP8|SEG_DISP16|SEG_DISP32|SEG_DISP64)
 #define SEG_SIGNED    128
-#define SEG_64BIT     256
+#define SEG_RMMEM     256
+#define SEG_16BIT     (16 << 8)
+#define SEG_32BIT     (32 << 8)
+#define SEG_64BIT     (64 << 8)
+#define SEG_BITMASK   (SEG_16BIT|SEG_32BIT|SEG_64BIT)
+
+/* These get the address size associated with *one particular operand* */
+static inline uint32_t seg_set_asize(uint32_t seg, unsigned int asize)
+{
+    return (seg & ~SEG_BITMASK) | (asize << 8);
+}
+static inline unsigned int seg_get_asize(uint32_t seg)
+{
+    return (seg & SEG_BITMASK) >> 8;
+}
 
 /*
  * Prefix information
@@ -92,32 +107,6 @@ struct prefix_info {
     uint32_t rex;       /* REX prefix present */
     uint8_t evex[3];    /* EVEX prefix present */
 };
-
-#define getu8(x) (*(uint8_t *)(x))
-#if X86_MEMORY
-/* Littleendian CPU which can handle unaligned references */
-#define getu16(x) (*(uint16_t *)(x))
-#define getu32(x) (*(uint32_t *)(x))
-#define getu64(x) (*(uint64_t *)(x))
-#else
-static uint16_t getu16(uint8_t *data)
-{
-    return (uint16_t)data[0] + ((uint16_t)data[1] << 8);
-}
-static uint32_t getu32(uint8_t *data)
-{
-    return (uint32_t)getu16(data) + ((uint32_t)getu16(data+2) << 16);
-}
-static uint64_t getu64(uint8_t *data)
-{
-    return (uint64_t)getu32(data) + ((uint64_t)getu32(data+4) << 32);
-}
-#endif
-
-#define gets8(x) ((int8_t)getu8(x))
-#define gets16(x) ((int16_t)getu16(x))
-#define gets32(x) ((int32_t)getu32(x))
-#define gets64(x) ((int64_t)getu64(x))
 
 /* Important: regval must already have been adjusted for rex extensions */
 static enum reg_enum whichreg(opflags_t regflags, int regval, int rex)
@@ -311,6 +300,9 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
 
     op->disp_size = 0;
     op->eaflags = 0;
+    op->segment |= SEG_RMMEM;
+
+    op->segment = seg_set_asize(op->segment, asize) | SEG_RMMEM;
 
     if (asize == 16) {
         /*
@@ -355,25 +347,28 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
             op->basereg = R_BX;
             break;
         }
-        if (rm == 6 && mod == 0) {      /* special case */
-            op->basereg = -1;
-            if (segsize != 16)
-                op->disp_size = 16;
-            mod = 2;            /* fake disp16 */
-        }
         switch (mod) {
         case 0:
-            op->segment |= SEG_NODISP;
+            if (rm != 6) {
+                op->segment |= SEG_NODISP;
+                op->disp_size = 0;
+                break;
+            } else {
+                /* disp16 only, no base register */
+                op->basereg = -1;
+            }
+            /* fall through */
+        case 2:
+            op->segment |= SEG_DISP16;
+            op->disp_size = 16;
+            op->offset = gets16(data);
+            data += 2;
             break;
         case 1:
             op->segment |= SEG_DISP8;
             op->offset = gets8(data) << get_disp8_shift(ins);
+            op->disp_size = 8;
             data++;
-            break;
-        case 2:
-            op->segment |= SEG_DISP16;
-            op->offset = *data++;
-            op->offset |= ((unsigned)*data++) << 8;
             break;
         }
         return data;
@@ -456,9 +451,11 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
         switch (mod) {
         case 0:
             op->segment |= SEG_NODISP;
+            op->disp_size = 0;
             break;
         case 1:
             op->segment |= SEG_DISP8;
+            op->disp_size = 8;
             if (ins->evex_tuple != 0) {
                 op->offset = gets8(data) * get_disp8N(ins);
             } else {
@@ -468,6 +465,7 @@ static uint8_t *do_ea(uint8_t *data, int modrm, int asize,
             break;
         case 2:
             op->segment |= SEG_DISP32;
+            op->disp_size = 32;
             op->offset = gets32(data);
             data += 4;
             break;
@@ -502,8 +500,15 @@ static int matches(const struct itemplate *t, uint8_t *data,
     enum ea_type eat = EA_SCALAR;
 
     for (i = 0; i < MAX_OPERANDS; i++) {
-        ins->oprs[i].segment = ins->oprs[i].disp_size =
-            (segsize == 64 ? SEG_64BIT : segsize == 32 ? SEG_32BIT : 0);
+        ins->oprs[i].disp_size = segsize;
+        if (is_class(IMMEDIATE, t->opd[i])) {
+            ins->oprs[i].segment = seg_set_asize(segsize, segsize);
+        } else if (is_class(MEM_OFFS, t->opd[i])) {
+            a_used = true;
+            ins->oprs[i].segment = seg_set_asize(segsize, asize) | SEG_RMMEM;
+        } else {
+            ins->oprs[i].segment = seg_set_asize(segsize, asize);
+        }
     }
     ins->evex_tuple = 0;
     ins->rex = prefix->rex;
@@ -562,61 +567,63 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
         case4(0274):
             opx->offset = (int8_t)*data++;
+            opx->disp_size = 8;
             opx->segment |= SEG_SIGNED;
             break;
 
         case4(020):
             opx->offset = *data++;
+            opx->disp_size = 8;
             break;
 
         case4(024):
             opx->offset = *data++;
+            opx->disp_size = 8;
             break;
 
         case4(030):
             opx->offset = getu16(data);
+            opx->disp_size = 16;
             data += 2;
             break;
 
         case4(034):
             if (osize == 32) {
                 opx->offset = getu32(data);
+                opx->disp_size = 32;
                 data += 4;
             } else {
                 opx->offset = getu16(data);
+                opx->disp_size = 16;
                 data += 2;
             }
-            if (segsize != asize)
-                opx->disp_size = asize;
             break;
 
         case4(040):
             opx->offset = getu32(data);
+            opx->disp_size = 32;
             data += 4;
             break;
 
         case4(0254):
             opx->offset = gets32(data);
+            opx->disp_size = 32;
             data += 4;
             break;
 
         case4(044):
+            opx->disp_size = asize;
             switch (asize) {
             case 16:
                 opx->offset = getu16(data);
                 data += 2;
-                if (segsize != 16)
-                    opx->disp_size = 16;
                 break;
             case 32:
                 opx->offset = getu32(data);
                 data += 4;
-                if (segsize == 16)
-                    opx->disp_size = 32;
                 break;
             case 64:
                 opx->offset = getu64(data);
-                opx->disp_size = 64;
                 data += 8;
                 break;
             }
@@ -624,43 +631,54 @@ static int matches(const struct itemplate *t, uint8_t *data,
 
         case4(050):
             opx->offset = gets8(data++);
+            opx->disp_size = 8;
             opx->segment |= SEG_RELATIVE;
+            opx->disp_size = 8;
             break;
 
         case4(054):
             opx->offset = getu64(data);
+            opx->disp_size = 64;
             data += 8;
             break;
 
         case4(060):
             opx->offset = gets16(data);
+            opx->disp_size = 16;
             data += 2;
-            opx->segment |= SEG_RELATIVE;
-            opx->segment &= ~SEG_32BIT;
+            opx->segment = seg_set_asize(opx->segment, 16) | SEG_RELATIVE;
             break;
 
         case4(064):  /* rel */
-            opx->segment |= SEG_RELATIVE;
-            /* In long mode rel is always 32 bits, sign extended. */
-            if (segsize == 64 || osize == 32) {
+            if (segsize == 64) {
+                /*
+                 * In long mode rel is always 32 bits, sign extended.
+                 * REX.W or 66 prefixes have no effect.
+                 */
                 opx->offset = gets32(data);
+                opx->disp_size = 32;
                 data += 4;
-                if (segsize != 64)
-                    opx->segment |= SEG_32BIT;
-                opx->type = (opx->type & ~SIZE_MASK)
-                    | (segsize == 64 ? BITS64 : BITS32);
+                opx->segment = seg_set_asize(opx->segment, 64) | SEG_RELATIVE;
+            } else if (osize == 32) {
+                opx->offset = gets32(data);
+                opx->disp_size = 32;
+                data += 4;
+                opx->segment = seg_set_asize(opx->segment, 32) | SEG_RELATIVE;
             } else {
                 opx->offset = gets16(data);
+                opx->disp_size = 16;
                 data += 2;
-                opx->segment &= ~SEG_32BIT;
-                opx->type = (opx->type & ~SIZE_MASK) | BITS16;
+                opx->segment = seg_set_asize(opx->segment, 16) | SEG_RELATIVE;
             }
             break;
 
         case4(070):
             opx->offset = gets32(data);
+            opx->disp_size = 32;
             data += 4;
-            opx->segment |= SEG_32BIT | SEG_RELATIVE;
+            opx->disp_size = 32;
+            opx->segment = seg_set_asize(opx->segment, segsize == 64 ? 64 : 32)
+                | SEG_RELATIVE;
             break;
 
         case4(0100):
@@ -669,10 +687,11 @@ static int matches(const struct itemplate *t, uint8_t *data,
         case4(0130):
         {
             int modrm = *data++;
-            opx->segment |= SEG_RMREG;
             data = do_ea(data, modrm, asize, segsize, eat, opy, ins);
             if (!data)
                 return 0;
+            a_used |= !!(opy->segment & SEG_RMMEM);
+            opx->segment |= SEG_RMREG;
             opx->basereg = ((modrm >> 3) & 7) + (ins->rex & REX_R ? 8 : 0);
             if ((ins->rex & REX_EV) && (segsize == 64))
                 opx->basereg += (ins->evex_p[0] & EVEX_P0RP ? 0 : 16);
@@ -740,6 +759,7 @@ static int matches(const struct itemplate *t, uint8_t *data,
             if (((modrm >> 3) & 07) != (c & 07))
                 return 0;   /* spare field doesn't match up */
             data = do_ea(data, modrm, asize, segsize, eat, opy, ins);
+            a_used |= !!(opy->segment & SEG_RMMEM);
             if (!data)
                 return 0;
             break;
@@ -1066,11 +1086,6 @@ static int matches(const struct itemplate *t, uint8_t *data,
     /*
      * Check for unused rep or a/o prefixes.
      */
-    for (i = 0; i < t->operands; i++) {
-        if (ins->oprs[i].segment != SEG_RMREG)
-            a_used = true;
-    }
-
     if (lock) {
         if (ins->prefixes[PPS_LOCK])
             return 0;
@@ -1326,30 +1341,27 @@ int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, i
     for (n = ix->n; n; n--, p++) {
         if ((length = matches(*p, data, &prefix, segsize, &tmp_ins))) {
             works = true;
+
             /*
-             * Final check to make sure the types of r/m match up.
-             * XXX: Need to make sure this is actually correct.
+             * Final check to make sure the operand types
              */
             for (i = 0; i < (*p)->operands; i++) {
-                if (
-                        /* If it's a mem-only EA but we have a
-                           register, die. */
-                        ((tmp_ins.oprs[i].segment & SEG_RMREG) &&
-                         is_class(MEMORY, (*p)->opd[i])) ||
-                        /* If it's a reg-only EA but we have a memory
-                           ref, die. */
-                        (!(tmp_ins.oprs[i].segment & SEG_RMREG) &&
-                         !(REG_EA & ~(*p)->opd[i]) &&
-                         !((*p)->opd[i] & REG_SMASK)) ||
-                        /* Register type mismatch (eg FS vs REG_DESS):
-                           die. */
-                        ((((*p)->opd[i] & (REGISTER | FPUREG)) ||
-                          (tmp_ins.oprs[i].segment & SEG_RMREG)) &&
-                         !whichreg((*p)->opd[i],
-                             tmp_ins.oprs[i].basereg, tmp_ins.rex))
-                   ) {
-                    works = false;
-                    break;
+                opflags_t opt = (*p)->opd[i];
+
+                if (is_class(REGISTER, opt)) {
+                    /* Must be a register, check that it is not a memory
+                       reference or a non-matching register number */
+                    if ((tmp_ins.oprs[i].segment & SEG_RMMEM) ||
+                        !whichreg(opt, tmp_ins.oprs[i].basereg, tmp_ins.rex)) {
+                        works = false;
+                        break;
+                    }
+                } else if (is_class(MEMORY, opt)) {
+                    /* Must be a memory address */
+                    if (tmp_ins.oprs[i].segment & SEG_RMREG) {
+                        works = false;
+                        break;
+                    }
                 }
             }
 
@@ -1417,6 +1429,8 @@ int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, i
         decoflags_t deco = (*p)->deco[i];
         const operand *o = &ins.oprs[i];
         int64_t offs;
+        int asize = seg_get_asize(o->segment);
+        int nasize = 64 - asize; /* Address bits to mask off */
 
         output[slen++] = (colon ? ':' : i == 0 ? ' ' : ',');
 
@@ -1426,10 +1440,22 @@ int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, i
             /*
              * sort out wraparound
              */
-            if (!(o->segment & (SEG_32BIT|SEG_64BIT)))
-                offs &= 0xffff;
-            else if (segsize != 64)
-                offs &= 0xffffffff;
+            offs = (uint64_t)offs << nasize >> nasize;
+            if ((t & (IMMEDIATE|SIZE_MASK)) == IMMEDIATE) {
+                if (asize != segsize) {
+                    switch (asize) {
+                    case 16:
+                        t |= BITS16;
+                        break;
+                    case 32:
+                        t |= BITS32;
+                        break;
+                    case 64:
+                        t |= BITS64;
+                        break;
+                    }
+                }
+            }
 
             /*
              * add sync marker, if autosync is on
@@ -1465,10 +1491,11 @@ int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, i
                     snprintf(output + slen, outbufsize - slen, "byte ");
                 if (o->segment & SEG_SIGNED) {
                     if (offs < 0) {
-                        offs *= -1;
+                        offs = -offs;
                         output[slen++] = '-';
-                    } else
+                    } else {
                         output[slen++] = '+';
+                    }
                 }
             } else if (t & BITS16) {
                 slen +=
@@ -1489,18 +1516,18 @@ int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, i
             slen +=
                 snprintf(output + slen, outbufsize - slen, "0x%"PRIx64"",
                         offs);
-        } else if (!(MEM_OFFS & ~t)) {
-            slen +=
-                snprintf(output + slen, outbufsize - slen,
-                        "[%s%s%s0x%"PRIx64"]",
-                        (segover ? segover : ""),
-                        (segover ? ":" : ""),
-                        (o->disp_size == 64 ? "qword " :
-                         o->disp_size == 32 ? "dword " :
-                         o->disp_size == 16 ? "word " : ""), offs);
-            segover = NULL;
         } else if (is_class(REGMEM, t)) {
             int started = false;
+            enum reg_enum breg, xreg;
+
+            if (is_class(MEM_OFFS, t)) {
+                /* Plain memory offset */
+                breg = xreg = -1;
+            } else {
+                breg = o->basereg;
+                xreg = o->indexreg;
+            }
+
             if (t & BITS8)
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "byte ");
@@ -1544,30 +1571,23 @@ int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, i
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "near ");
             output[slen++] = '[';
-            if (o->disp_size)
-                slen += snprintf(output + slen, outbufsize - slen, "%s",
-                        (o->disp_size == 64 ? "qword " :
-                         o->disp_size == 32 ? "dword " :
-                         o->disp_size == 16 ? "word " :
-                         ""));
-            if (o->eaflags & EAF_REL)
-                slen += snprintf(output + slen, outbufsize - slen, "rel ");
+
             if (segover) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "%s:",
                             segover);
                 segover = NULL;
             }
-            if (o->basereg != -1) {
+            if (breg != -1) {
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
-                        nasm_reg_names[(o->basereg-EXPR_REG_START)]);
+                        nasm_reg_names[breg-EXPR_REG_START]);
                 started = true;
             }
-            if (o->indexreg != -1 && !itemp_has(*best_p, IF_MIB)) {
+            if (xreg != -1 && !itemp_has(*best_p, IF_MIB)) {
                 if (started)
                     output[slen++] = '+';
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
-                        nasm_reg_names[(o->indexreg-EXPR_REG_START)]);
+                        nasm_reg_names[xreg-EXPR_REG_START]);
                 if (o->scale > 1)
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "*%d",
@@ -1576,73 +1596,58 @@ int32_t disasm(uint8_t *data, int32_t data_size, char *output, int outbufsize, i
             }
 
 
-            if (o->segment & SEG_DISP8) {
-                if (is_evex) {
-                    const char *prefix;
-                    uint32_t offset = offs;
-                    if ((int32_t)offset < 0) {
-                        prefix = "-";
-                        offset = -offset;
-                    } else {
-                        prefix = "+";
+            /* Show a displacement */
+            if (o->disp_size) {
+                unsigned int defdisp = asize == 16 ? 16 : 32;
+                bool do_sign = started || (o->segment & SEG_SIGNED);
+                bool do_sext = do_sign || o->disp_size < asize;
+                uint64_t offset;
+                const char *rel = "";
+                const char *sizename = "";
+                const char *sign = "";
+
+                if (o->eaflags & EAF_REL)
+                    rel = "rel ";
+                else if (!started && segsize == 64)
+                    rel = "abs ";
+
+                if (o->disp_size != defdisp ||
+                    (!started && asize != segsize)) {
+                    switch (o->disp_size) {
+                    case 16:
+                        sizename = "word ";
+                        break;
+                    case 32:
+                        sizename = "dword ";
+                        break;
+                    case 64:
+                        sizename = "qword ";
+                        break;
+                    default:
+                        break;  /* This includes 8 bits */
                     }
-                    slen +=
-                        snprintf(output + slen, outbufsize - slen, "%s0x%"PRIx32"",
-                                prefix, offset);
-                } else {
-                    const char *prefix;
-                    uint8_t offset = offs;
-                    if ((int8_t)offset < 0) {
-                        prefix = "-";
-                        offset = -offset;
-                    } else {
-                        prefix = "+";
-                    }
-                    slen +=
-                        snprintf(output + slen, outbufsize - slen, "%s0x%"PRIx8"",
-                                prefix, offset);
                 }
-            } else if (o->segment & SEG_DISP16) {
-                const char *prefix;
-                uint16_t offset = offs;
-                if ((int16_t)offset < 0 && started) {
-                    offset = -offset;
-                    prefix = "-";
-                } else {
-                    prefix = started ? "+" : "";
-                }
-                slen +=
-                    snprintf(output + slen, outbufsize - slen,
-                            "%s0x%"PRIx16"", prefix, offset);
-            } else if (o->segment & SEG_DISP32) {
-                if (prefix.asize == 64) {
-                    const char *prefix;
-                    uint64_t offset = offs;
-                    if ((int32_t)offs < 0 && started) {
+
+                if (do_sext)
+                    offset = (int64_t)offs << nasize >> nasize;
+                else
+                    offset = (uint64_t)offs << nasize >> nasize;
+
+                if (do_sign) {
+                    if (started)
+                        sign = "+";
+                    if ((int64_t)offset < 0) {
+                        sign = "-";
                         offset = -offset;
-                        prefix = "-";
-                    } else {
-                        prefix = started ? "+" : "";
                     }
-                    slen +=
-                        snprintf(output + slen, outbufsize - slen,
-                                "%s0x%"PRIx64"", prefix, offset);
-                } else {
-                    const char *prefix;
-                    uint32_t offset = offs;
-                    if ((int32_t) offset < 0 && started) {
-                        offset = -offset;
-                        prefix = "-";
-                    } else {
-                        prefix = started ? "+" : "";
-                    }
-                    slen +=
-                        snprintf(output + slen, outbufsize - slen,
-                                "%s0x%"PRIx32"", prefix, offset);
                 }
+
+                slen += snprintf(output + slen, outbufsize - slen,
+                                 "%s%s%s0x%"PRIx64"",
+                                 rel, sizename, sign, offset);
             }
 
-            if (o->indexreg != -1 && itemp_has(*best_p, IF_MIB)) {
+            if (xreg != -1 && itemp_has(*best_p, IF_MIB)) {
                 output[slen++] = ',';
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
                         nasm_reg_names[(o->indexreg-EXPR_REG_START)]);

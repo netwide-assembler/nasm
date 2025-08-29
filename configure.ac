@@ -227,14 +227,6 @@ AC_CHECK_FUNCS([access _access faccessat])
 
 PA_HAVE_FUNC(__builtin_expect, (1,1))
 
-dnl ilog2() building blocks
-PA_ADD_HEADERS(intrin.h)
-PA_HAVE_FUNC(__builtin_clz, (0U))
-PA_HAVE_FUNC(__builtin_clzl, (0UL))
-PA_HAVE_FUNC(__builtin_clzll, (0ULL))
-PA_HAVE_FUNC(_BitScanReverse, (0))
-PA_HAVE_FUNC(_BitScanReverse64, (0))
-
 PA_FUNC_SNPRINTF
 PA_FUNC_VSNPRINTF
 AC_CHECK_FUNCS([strlcpy])
@@ -271,9 +263,20 @@ PA_ARG_DISABLED([pdf-compression],
 AC_SUBST([PDFOPT])
 
 dnl
-dnl Look for byte-swapping support...
+dnl Look for byte-swapping support and <stdbit.h>
 dnl
 PA_ENDIAN
+
+dnl
+dnl ilog2() building blocks, must come after PA_ENDIAN for <stdbit.h>
+dnl
+PA_HAVE_FUNC(stdc_leading_zeros, (0UL))
+PA_ADD_HEADERS(intrin.h)
+PA_HAVE_FUNC(__builtin_clz, (0U))
+PA_HAVE_FUNC(__builtin_clzl, (0UL))
+PA_HAVE_FUNC(__builtin_clzll, (0ULL))
+PA_HAVE_FUNC(_BitScanReverse, (0))
+PA_HAVE_FUNC(_BitScanReverse64, (0))
 
 dnl
 dnl Some rather useful gcc extensions...

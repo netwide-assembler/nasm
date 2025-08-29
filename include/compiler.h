@@ -99,13 +99,27 @@
 # include <sys/types.h>
 #endif
 
-#ifdef HAVE_ENDIAN_H
-# include <endian.h>
-#elif defined(HAVE_SYS_ENDIAN_H)
-# include <sys/endian.h>
-#elif defined(HAVE_MACHINE_ENDIAN_H)
-# include <machine/endian.h>
-#endif
+#ifdef HAVE_STDBIT_H
+
+# include <stdbit.h>
+
+# undef WORDS_LITTLEENDIAN
+# undef WORDS_BIGENDIAN
+# if __STDC_ENDIAN_NATIVE__ == __STDC_ENDIAN_LITTLE__
+#  define WORDS_LITTLEENDIAN 1
+# elif __STDC_ENDIAN_NATIVE__ == __STDC_ENDIAN_BIG__
+#  define WORDS_BIGENDIAN 1
+# endif
+
+#else  /* No <stdbit.h> */
+
+# ifdef HAVE_ENDIAN_H
+#  include <endian.h>
+# elif defined(HAVE_SYS_ENDIAN_H)
+#  include <sys/endian.h>
+# elif defined(HAVE_MACHINE_ENDIAN_H)
+#  include <machine/endian.h>
+# endif
 
 /*
  * If we have BYTE_ORDER defined, or the compiler provides
@@ -113,22 +127,24 @@
  * came up with, especially since autoconf obviously can't figure
  * things out for a universal compiler.
  */
-#if defined(__BIG_ENDIAN__) && !defined(__LITTLE_ENDIAN__)
-# undef WORDS_LITTLEENDIAN
-# undef WORDS_BIGENDIAN
-# define WORDS_BIGENDIAN 1
-#elif defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
-# undef WORDS_LITTLEENDIAN
-# undef WORDS_BIGENDIAN
-# define WORDS_LITTLEENDIAN 1
-#elif defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
-# undef WORDS_LITTLEENDIAN
-# undef WORDS_BIGENDIAN
-# if BYTE_ORDER == LITTLE_ENDIAN
-#  define WORDS_LITTLEENDIAN 1
-# elif BYTE_ORDER == BIG_ENDIAN
+# if defined(__BIG_ENDIAN__) && !defined(__LITTLE_ENDIAN__)
+#  undef WORDS_LITTLEENDIAN
+#  undef WORDS_BIGENDIAN
 #  define WORDS_BIGENDIAN 1
+# elif defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
+#  undef WORDS_LITTLEENDIAN
+#  undef WORDS_BIGENDIAN
+#  define WORDS_LITTLEENDIAN 1
+# elif defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
+#  undef WORDS_LITTLEENDIAN
+#  undef WORDS_BIGENDIAN
+#  if BYTE_ORDER == LITTLE_ENDIAN
+#   define WORDS_LITTLEENDIAN 1
+#  elif BYTE_ORDER == BIG_ENDIAN
+#   define WORDS_BIGENDIAN 1
+#  endif
 # endif
+
 #endif
 
 /*
