@@ -116,7 +116,7 @@ NASM    = asm/nasm.$(O)
 NDISASM = disasm/ndisasm.$(O)
 
 PROGOBJ = $(NASM) $(NDISASM)
-PROGS   = nasm$(X) # ndisasm$(X)
+PROGS   = nasm$(X) ndisasm$(X)
 
 # Files dependent on extracted warnings
 WARNOBJ   = asm/warnings.$(O)
@@ -186,7 +186,9 @@ LIBOBJ_NW = \
 	$(OUTPUTOBJ) \
 	\
 	$(WARNOBJ)
-# disasm/disasm.$(O) disasm/sync.$(O) \
+
+# Objects which are only used for the disassembler
+LIBOBJ_DIS = disasm/disasm.$(O) disasm/sync.$(O) disasm/rexdis.$(O)
 
 # Objects for the local copy of zlib. The variable ZLIB is set to
 # $(ZLIBOBJ) if the internal version of zlib should be used.
@@ -212,6 +214,7 @@ all: dirs
 	$(MAKE) $(PROGS)
 
 NASMLIB = libnasm.$(A)
+DISLIB  = libndis.$(A)
 
 dirs:
 	$(MKDIR_P) $(SUBDIRS) $(XSUBDIRS)
@@ -221,10 +224,15 @@ $(NASMLIB): $(LIBOBJ)
 	$(AR) cq $(NASMLIB) $(LIBOBJ)
 	$(RANLIB) $(NASMLIB)
 
+$(DISLIB): $(LIBOBJ_DIS)
+	$(RM_F) $(DISLIB)
+	$(AR) cq $(DISLIB) $(LIBOBJ_DIS)
+	$(RANLIB) $(DISLIB)
+
 nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
 	$(CC) $(ALL_LDFLAGS) -o nasm$(X) $^ $(LIBS)
 
-ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB)
+ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB) $(DISLIB)
 	$(CC) $(ALL_LDFLAGS) -o ndisasm$(X) $^ $(LIBS)
 
 # These are specific to certain Makefile syntaxes...

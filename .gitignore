@@ -87,6 +87,7 @@ TAGS
 /nsis/arch.nsh
 /nsis/version.nsh
 /rdoff
+/test/Makefile
 /test/golden
 /test/perf/*.asm
 /test/testresults
