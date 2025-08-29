@@ -1957,7 +1957,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case 0351:
-            ins->rex |= REX_P | REX_2 | REX_X1;
+            ins->rex |= REX_P | REX_2 | REX_W;
             break;
 
         case3(0355):
@@ -2413,6 +2413,15 @@ static int emit_prefixes(struct out_data *data, const insn *ins)
     uint8_t buf[MAXPREFIX];
     int bytes = 0;
     int j;
+    bool do_warn;
+
+    /*
+     * Note: do not issue warnings if data is NULL during the
+     * data-generation pass, or the warnings will be issued twice.
+     * Warnings are still issued on previous passes, in case we
+     * terminate with an error.
+     */
+    do_warn = !pass_final() || data;
 
     for (j = 0; j < MAXPREFIX; j++) {
         const enum prefixes pfx = ins->prefixes[j];
@@ -2439,27 +2448,32 @@ static int emit_prefixes(struct out_data *data, const insn *ins)
                  *!  requested, but the result may be a completely different
                  *!  instruction.
                  */
-                nasm_warn(WARN_PREFIX_INVALID|ERR_PASS2,
-                          "invalid prefix %s for instruction, result may be unexpected",
-                          prefix_name(pfx));
+                if (do_warn)
+                    nasm_warn(WARN_PREFIX_INVALID,
+                              "invalid prefix %s for instruction, result may be unexpected",
+                              prefix_name(pfx));
                 break;
             }
         }
 
 	/* Various warnings and error conditions */
         switch ((int)pfx) {
-        case R_ES:
-        case R_SS:
         case R_CS:
         case R_DS:
+            /* Hintable Jcc instructions OK even in 64-bit mode */
+            if (itemp_has(ins->itemp, IF_JCC_HINT))
+                break;
+            /* fall through */
+        case R_ES:
+        case R_SS:
             /*!
              *!prefix-seg [on] segment prefix ignored in 64-bit mode
              *!  warns that an \c{es}, \c{cs}, \c{ss} or \c{ds} segment override
              *!  prefix has no effect in 64-bit mode. The prefix will still be
              *!  generated as requested.
              */
-            if (bits == 64) {
-                nasm_warn(WARN_PREFIX_SEG|ERR_PASS2,
+            if (do_warn) {
+                nasm_warn(WARN_PREFIX_SEG,
                           "%s segment override will be ignored in 64-bit mode",
                           prefix_name(pfx));
             }

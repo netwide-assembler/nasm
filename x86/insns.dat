@@ -267,15 +267,15 @@ $wd   JMP	imm16:imm#|far			[ji:	o# ea iwd iw]				8086,OSIZE,AR1,NOLONG,ND
 $wdq  JMP	mem#|far			[m:	o# ff /5]				8086,OSIZE,NWSIZE
 
 ; APX absolute 64-bit jmp
-      JMP	imm64|abs			[i:	a64 np rex2 a1 iq		]	APX
-      JMPABS	imm64				[i:	a64 np rex2 a1 iq		]	APX,ND
-      JMPABS	imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,ND
+      JMP	imm64|abs			[i:	a64 np rex2.w a1 iq		]	APX
+      JMPABS	imm64				[i:	a64 np rex2.w a1 iq		]	APX,ND
+      JMPABS	imm64|abs			[i:	a64 np rex2.w a1 iq		]	APX,ND
 
-      Jcc	imm8|short			[i:	nw 70+c rel8]				8086,ND,BND,SX,NOAPX
-      Jcc	imm				[i:	jcc8 nw 70+c rel8]			8086,BND,SX,NOAPX
-$zwdq Jcc	imm##|near			[i:	o# 0f 80+c rel]				386,BND,NOAPX,NOLONGwd
+      Jcc	imm8|short			[i:	nw 70+c rel8]				8086,ND,BND,SX,JCC_HINT,NOAPX
+      Jcc	imm				[i:	jcc8 nw 70+c rel8]			8086,BND,SX,JCC_HINT,NOAPX
+$zwdq Jcc	imm##|near			[i:	o# 0f 80+c rel]				386,BND,NOAPX,JCC_HINT,NOLONGwd
 ; Jump-over emulation of Jcc on < 386
-       Jcc	imm16|near			[i:	nw 71+c jlen e9 rel]			8086,ND,NOAPX,NOLONG
+       Jcc	imm16|near			[i:	nw 71+c jlen e9 rel]			8086,ND,NOAPX,JCC_HINT,NOLONG
 
 ; The following only have short forms, hence imm8|near|short
       JCXZ	imm8|near|short			[i:	a16 e3 rel8]				8086,NOLONG
@@ -353,7 +353,7 @@ CMC		void				[	f5]					8086
 
 LAHF		void				[	9f]					8086
 SAHF		void				[	9e]					8086
-SALC		void				[	d6]					8086,UNDOC
+SALC		void				[	d6]					8086,UNDOC,NOLONG
 
 $zwdq PUSHF%	void				[	nw o# 9c]				8086
 $zwdq POPF%	void				[	nw o# 9d]				8086
@@ -905,6 +905,8 @@ $wdq  UD2B	reg#,rm#			[rm:	o# 0f b9 /r]				186,ND,SM
 $wdq  UD2	reg#,rm#			[rm:	o# 0f 0b /r]				186,ND,SM
       UD2A	void				[	0f 0b]					186,ND
 $wdq  UD2A	reg#,rm#			[rm:	o# 0f 0b /r]				186,ND
+; UDB: 64-bit mode only, single byte
+      UDB       void                            [       d6]                                     X86_64,LONG
 
 FWAIT		void				[	wait]					8086
 

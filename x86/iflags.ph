@@ -1,6 +1,19 @@
 # -*- perl -*-
 
 #
+# Flags consumed by preinsns.pl/insns.pl and not actually present in
+# the generated C code:
+#
+#  ND		- not for disassembler
+#  DISASM	- disassembler only
+#  KILL		- ignore this instruction pattern entirely
+#  !ZU		- no zero-upper version of this instruction
+#  !FL          - instruction never modifies the flags
+#  NF!          - alias for NF_R: {nf} syntactic prefix required
+#  SMx-y        - alias for SMx,SMx+1,SMx+2,...,SMy
+#
+
+#
 # dword bound, index 0 - specific flags
 #
 if_align('IGEN', $NOBREAK);
@@ -37,6 +50,7 @@ if_break_ok();
 
 if_("PSEUDO",            "Pseudo-instruction (directive)");
 if_("JMP_RELAX",         "Relaxable jump instruction");
+if_("JCC_HINT",          "Hintable jump instruction");
 if_("OPT",               "Optimizing assembly only");
 if_("LATEVEX",           "Only if EVEX instructions are disabled");
 if_("NOREX",             "Instruction does not support REX encoding");
@@ -61,6 +75,7 @@ if_("BND",               "BND (0xF2) prefix available");
 if_("REX2",              "REX2 encoding required");
 if_("HLE",               "HLE prefixed");
 if_("FL",                "Instruction modifies the flags");
+if_("MOPVEC",		 "M operand is a vector"); # Autodetected
 
 #
 # Special immediates types like {dfv=}

@@ -1411,12 +1411,8 @@ sub byte_code_compile($$$) {
 	    foreach $oq (@subops) {
 		if ($oq eq '') {
 		    next;
-		} elsif ($oq =~ /^x[15]$/) {
+		} elsif ($oq eq 'w') {
 		    $c |= 01;
-		    if ($optional) {
-			warn "$fname:$line: $opcode: $name.$oq promoted to unconditional\n";
-			$optional = 0;
-		    }
 		} else {
 		    die "$fname:$line: $opcode: unknown modifier: $name.$oq\n";
 		}

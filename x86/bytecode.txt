@@ -64,11 +64,11 @@ EVEX prefixes are followed by the sequence:
 
 		These are used in conjunction with the following instruction flags:
 
-		I_LIG	hint to the disassembler: ignore EVEX.L
-		I_WIG	hint to the disassembler: ignore EVEX.W
-		I_WW	W is used as REX_W
-		I_NF	the {nf} prefix is permitted for this instruction
-		I_DFV	this instruction uses the V field as DFV
+		IF_LIG	hint to the disassembler: ignore EVEX.L
+		IF_WIG	hint to the disassembler: ignore EVEX.W
+		IF_WW	W is used as REX_W
+		IF_NF	the {nf} prefix is permitted for this instruction
+		IF_DFV	this instruction uses the V field as DFV
 
 		tt is tuple type for Disp8*N from %tuple_codes in insns.pl
                    (compressed displacement encoding)
@@ -145,9 +145,7 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \345		 rex.x			     REX[2].X used as an opcode extension.
 \346		 rex.r			     REX[2].R used as an opcode extension.
 \347		 rex.w			     REX[2].W used as an opcode extension.
-\350..\351	 rex2[.x1]		     obligatory REX2 prefix, bit 0 sets the X1 bit
-					     when used as opcode extensions.
-					     insns.dat supports the syntax rex2? for an optional REX2 prefix.
+\350..\351	 rex2[.w]		     obligatory REX2 prefix, rex2.w = rex.w rex2
 \355..\357	 m[1-3] 0f 0f38 0f3a	     Set the legacy map number. Unless a REX2, VEX, or EVEX prefix
 					     is also generated, these are emitted as legacy prefix bytes.
 -		 m0			     Generates no byte code, but can be used to indicate that
