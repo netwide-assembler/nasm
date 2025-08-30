@@ -766,6 +766,7 @@ static expr *eval_strfunc(enum strfunc type, const char *name)
     }
 
     val = readstrnum(string, string_len, &rn_warn);
+    nasm_free(string);
     if (parens) {
         scan();
         if (tt != ')') {
