@@ -31,7 +31,7 @@
 ;;
 ;; --------------------------------------------------------------------------
 
-OUT: obj
+OUT: obj obj2
 %define __?SECT?__ [section .text]
 %imacro group 1+.nolist
 [group %1]
