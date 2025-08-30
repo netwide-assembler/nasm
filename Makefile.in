@@ -179,8 +179,8 @@ LIBOBJ_NW = \
 	\
 	common/common.$(O) \
 	\
-	x86/insnsa.$(O) x86/insnsb.$(O) x86/insnsd.$(O) x86/insnsn.$(O) \
-	x86/regs.$(O) x86/regvals.$(O) x86/regflags.$(O) x86/regdis.$(O) \
+	x86/insnsa.$(O) x86/insnsb.$(O) x86/insnsn.$(O) \
+	x86/regs.$(O) x86/regvals.$(O) x86/regflags.$(O) \
 	x86/iflag.$(O) \
 	\
 	$(OUTPUTOBJ) \
@@ -188,7 +188,10 @@ LIBOBJ_NW = \
 	$(WARNOBJ)
 
 # Objects which are only used for the disassembler
-LIBOBJ_DIS = disasm/disasm.$(O) disasm/sync.$(O) disasm/rexdis.$(O)
+LIBOBJ_DIS = \
+	disasm/disasm.$(O) disasm/sync.$(O) disasm/prefix.$(O) \
+	\
+	x86/insnsd.$(O) x86/regdis.$(O)
 
 # Objects for the local copy of zlib. The variable ZLIB is set to
 # $(ZLIBOBJ) if the internal version of zlib should be used.
@@ -232,7 +235,7 @@ $(DISLIB): $(LIBOBJ_DIS)
 nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
 	$(CC) $(ALL_LDFLAGS) -o nasm$(X) $^ $(LIBS)
 
-ndisasm$(X): $(NDISASM) $(MANIFEST) $(NASMLIB) $(DISLIB)
+ndisasm$(X): $(NDISASM) $(MANIFEST) $(DISLIB) $(NASMLIB)
 	$(CC) $(ALL_LDFLAGS) -o ndisasm$(X) $^ $(LIBS)
 
 # These are specific to certain Makefile syntaxes...

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2025 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -44,13 +44,15 @@
 require 'x86/insns-iflags.ph';
 
 # Create disassembly root tables
-my @vex_class = ( 'novex', 'vex', 'xop', 'evex' );
+my @vex_class = ( 'novex', 'vex', 'xop', 'evex', 'rex2' );
 my $vex_classes = scalar(@vex_class);
-my $max_maps = 32;
-my @distable;
+my @map_count  = ( 4, 32, 24, 8, 2 );
+my @map_start = ( 0, 0, 8, 0, 0 );
+my @map_max;
 for ($c = 0; $c < $vex_classes; $c++) {
-    push(@distable, []);
-    for ($m = 0; $m < $max_maps; $m++) {
+    push(@distable, [(undef) x $map_start[$c]]);
+    push(@map_max, $map_start[$c] + $map_count[$c] - 1);
+    for ($m = $map_start[$c]; $m <= $map_max[$c]; $m++) {
 	push(@{$distable[$c]}, {});
     }
 }
@@ -65,6 +67,98 @@ sub xpush($@) {
 
     $$ref = [] unless (defined($$ref));
     return push(@$$ref, @_);
+}
+
+#
+# Here we determine the set of possible [encoding, map, opcode] sets
+# for a given instruction, used to generate the disassembler tables.
+#
+# It is only necessary to take into account the following byte codes:
+# \[1234]      mean literal bytes, of course
+# \1[0123]     mean byte plus register value
+# \30[0123]    0F 1[8-F]
+# \35[01]      REX2 prefix
+# \35[567]     legacy map number
+# \26x \270    VEX prefix and map
+# \24x \250    EVEX prefix and map
+# prefixes     ignored
+#
+my @skip_bytecode = ((0) x 256);
+map { $skip_bytecode[$_] = 1; }
+(05...07, 014...017, 0271...0273, 0310...0337,
+ 0341...0347, 0360...0372, 0374...0376);
+
+# To assist with debugging...
+my %skipped_due_to;
+
+# Create combinatorial sets of possible encodings
+sub genseqs($$$@) {
+    my($flags, $enc, $map, @opcodes) = @_;
+    my @encs = ($enc);
+
+    if ($enc == 0 && $map < 2 && $flags !~ /\bNO(?:APX|REX)\b/) {
+	push(@encs, 4);		# Allow REX2 encoding
+    }
+
+    my @seqs = ();
+    foreach my $enc (@encs) {
+	push(@seqs, map { [$enc, $map, $_] } @opcodes);
+    }
+
+    return @seqs;
+}
+
+sub startseq($$) {
+    my ($codestr,$flags) = @_;
+    my $word;
+    my @codes = ();
+    my $c = $codestr;
+    my($c0, $c1, $i);
+    my $prefix = '';
+    my $enc = 0;		# Legacy
+    my $map = 0;		# Map 0
+
+    @codes = decodify(undef, $codestr, {});
+
+    while (defined($c0 = shift(@codes))) {
+        $c1 = $codes[0];	# The immediate following code
+        if ($c0 >= 01 && $c0 <= 04) {
+            # Fixed byte string, this should be the opcode
+	    return genseqs($flags, $enc, $map, $c1);
+        } elsif ($c0 >= 010 && $c0 <= 013) {
+            return genseqs($flags, $enc, $map, $c1...($c1+7));
+        } elsif (($c0 & ~013) == 0144) {
+            return genseqs($flags, $enc, $map, $c1, $c1|2);
+	} elsif (($c0 & ~3) == 0300) {
+	    return genseqs($flags, $enc, $map, 0x18...0x1f);
+	} elsif ($c0 >= 0355 && $c0 <= 0357) {
+	    $map = $c0 - 0354;
+	} elsif (($c0 & ~1) == 0350) {
+	    # REX2
+	    $enc = 4;		# rex2 required
+        } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
+	    # VEX/XOP
+            my($cm,$wlp);
+            $cm  = shift(@codes);
+            $wlp = shift(@codes);
+            $enc = (($cm >> 6) & 1) + 1; # vex or xop
+            $map = $cm & 31;
+	} elsif (($c0 & ~3) == 0240 || $c0 == 0250) {
+	    # EVEX
+	    my @p;
+	    push(@p, shift(@codes));
+	    push(@p, shift(@codes));
+	    push(@p, shift(@codes));
+	    my $tuple = shift(@codes);
+	    $map = $p[0] & 7;
+	    $enc = 3;	# evex
+	} elsif (!$skip_bytecode[$c0]) {
+	    # This cannot be an opcode
+	    $skipped_due_to{$c0}++;
+	    last;
+	}
+    }
+    return ();
 }
 
 # Generate relaxed form patterns if applicable
@@ -447,6 +541,15 @@ if ( $output eq 'd' ) {
     print D "/* This file auto-generated from insns.dat by insns.pl" .
         " - don't edit it */\n\n";
 
+    my @skipped = sort { $a <=> $b } keys(%skipped_due_to);
+
+    if (scalar @skipped) {
+	print D "/*\n";
+	print D " * Note: skipped patterns due to byte codes:\n";
+	print D " *", map { sprintf(' 0%o', $_) } @skipped;
+	print D "\n */\n\n";
+    }
+
     print D "#include \"nasm.h\"\n";
     print D "#include \"insns.h\"\n\n";
 
@@ -460,12 +563,12 @@ if ( $output eq 'd' ) {
     my @dinstname;
     for (my $c = 0; $c < $vex_classes; $c++) {
 	push(@dinstname, []);
-	for (my $m = 0; $m < $max_maps; $m++) {
+	for (my $m = $map_base[$c]; $m <= $map_max[$c]; $m++) {
 	    my $ninst = scalar(keys %{$distable[$c][$m]});
 	    if (!$ninst) {
 		push(@{$dinstname[$c]}, 'NULL');
 	    } else {
-		my $tname = sprintf("itbl_%s%d", $vex_class[$c], $m);
+		my $tname = sprintf("itbl_%s_map%d", $vex_class[$c], $m);
 		push(@{$dinstname[$c]}, $tname);
 		my @itbls = ();
 		for (my $o = 0; $o < 256; $o++) {
@@ -491,13 +594,13 @@ if ( $output eq 'd' ) {
     }
 
     print D "\nconst struct itemplate * const * const * const\n";
-    print D "ndisasm_itable[NASM_VEX_CLASSES][NASM_MAX_MAPS] = {\n";
+    print D "ndisasm_itable[] = {\n";
     for (my $c = 0; $c < $vex_classes; $c++) {
-        print D "    { /* ", $vex_class[$c], " */\n";
-	for (my $m = 0; $m < $max_maps; $m++) {
-	    print D "        ", $dinstname[$c][$m], ",\n";
+	my $class = $vex_class[$c];
+	printf D "    /* ---- %s ---- */\n", $class;
+	for (my $m = $map_start[$c]; $m <= $map_max[$c]; $m++) {
+	    printf D "    /* %2d */ %s,\n", $m, $dinstname[$c][$m];
 	}
-        print D "    },\n";
     }
     print D "};\n";
 
@@ -528,7 +631,13 @@ if ( $output eq 'i' ) {
     print I "#define MAX_INSLEN ", $maxlen, "\n";
     print I "#define MAX_OPERANDS ", $MAX_OPERANDS, "\n";
     print I "#define NASM_VEX_CLASSES ", $vex_classes, "\n";
-    print I "#define NASM_MAX_MAPS ", $max_maps, "\n";
+    my $mapcnt = 0;
+    for (my $c = 0; $c < $vex_classes; $c++) {
+	printf I "#define MAP_BASE_%s (%d-%d)\n",
+	    uc($vex_class[$c]), $mapcnt, $map_start[$c];
+	$mapcnt += $map_count[$c];
+    }
+
     print I "#define NO_DECORATOR\t{", join(',',(0) x $MAX_OPERANDS), "}\n";
     print I "\n#endif /* NASM_INSNSI_H */\n";
 
@@ -596,6 +705,7 @@ sub format_insn($$$$) {
     my ($num, $flagsindex);
     my @bytecode;
     my ($op, @ops, @opsize, $opp, @opx, @oppx, @decos, @opevex);
+    my %oppos;
 
     return (undef, undef) if $operands eq 'ignore';
 
@@ -606,12 +716,12 @@ sub format_insn($$$$) {
     set_implied_flags(\%flags);
 
     # Generate byte code. This may modify the flags.
-    @bytecode = (decodify($opcode, $codes, \%flags), 0);
+    @bytecode = (decodify($opcode, $codes, \%flags, \%oppos), 0);
     push(@bytecode_list, [@bytecode]);
     $codes = hexstr(@bytecode);
     count_bytecodes(@bytecode);
 
-    my $nd = !!$flags{'ND'};
+    my $nd = !!($flags{'ND'} || $flags{'PSEUDO'});
     delete $flags{'ND'};
 
     # format the operands
@@ -621,6 +731,7 @@ sub format_insn($$$$) {
     @opsize = ();
     @decos = ();
     if ($operands ne 'void') {
+	my $opnum = scalar(@ops);
         foreach $op (split(/,/, $operands)) {
 	    my $iszero = 0;
 	    my $opsz = 0;
@@ -662,6 +773,10 @@ sub format_insn($$$$) {
 		if ($isreg && !(($flags{'EVEX'} && $isvec) || !$flags{'NOAPX'})) {
 		    # Register numbers >= 16 disallowed
 		    push(@oppx, 'rn_l16');
+		}
+		if ($isreg && $isvec &&
+		    defined($oppos->{'b'}) && $opnum == $oppos->{'b'}) {
+		    $flags{'MOPVEC'}++;
 		}
                 push(@opx, $opp, @oppx) if $opp;
             }
@@ -852,68 +967,6 @@ sub hexstr(@) {
     return $s;
 }
 
-# Here we determine the set of possible [encoding, map, opcode] sets
-# for a given instruction. We need only consider the codes:
-# \[1234]      mean literal bytes, of course
-# \1[0123]     mean byte plus register value
-# \35[567]     legacy map number
-# \26x \270    VEX prefix and map
-# \24x \250    EVEX prefix and map
-# prefixes     ignored
-my @ignore_bytecodes = (05...07, 014...017, 0271...0273, 0310...0337,
-			0341...0351, 0360...0372, 0374..0376);
-my @ignore_bytecode = (0 x 256);
-foreach my $pfx (@ignore_bytecodes) {
-    $ignore_bytecode[$pfx] = 1;
-}
-
-sub startseq($) {
-    my ($codestr) = @_;
-    my $word;
-    my @codes = ();
-    my $c = $codestr;
-    my($c0, $c1, $i);
-    my $prefix = '';
-    my $enc = 0;		# Legacy
-    my $map = 0;		# Map 0
-
-    @codes = decodify(undef, $codestr, {});
-
-    while (defined($c0 = shift(@codes))) {
-        $c1 = $codes[0];
-        if ($c0 >= 01 && $c0 <= 04) {
-            # Fixed byte string, this should be the opcode
-	    return ([$enc, $map, $c1]);
-        } elsif ($c0 >= 010 && $c0 <= 013) {
-            return map { [$enc, $map, $_] } ($c1..($c1+7));
-        } elsif (($c0 & ~013) == 0144) {
-            return map { [$enc, $map, $_] } ($c1, $c1|2);
-	} elsif ($c0 >= 0355 && $c0 <= 0357) {
-	    $map = $c0 - 0354;
-        } elsif (($c0 & ~3) == 0260 || $c0 == 0270) {
-	    # VEX/XOP
-            my($cm,$wlp);
-            $cm  = shift(@codes);
-            $wlp = shift(@codes);
-            $enc = ($cm >> 6) + 1; # vex or xop
-            $map = $cm & 31;
-	} elsif (($c0 & ~3) == 0240 || $c0 == 0250) {
-	    # EVEX
-	    my @p;
-	    push(@p, shift(@codes));
-	    push(@p, shift(@codes));
-	    push(@p, shift(@codes));
-	    my $tuple = shift(@codes);
-	    $map = $p[0] & 7;
-	    $enc = 3;	# evex
-	} elsif (!$ignore_bytecode[$c0]) {
-	    # This cannot be an opcode
-	    last;
-	}
-    }
-    return ();
-}
-
 # EVEX tuple types offset is 0300. e.g. 0301 is for full vector(fv).
 sub tupletype($) {
     my ($tuplestr) = @_;
@@ -965,13 +1018,12 @@ sub tupletype($) {
 # For an operand that should be filled into more than one field,
 # enter it as e.g. "r+v".
 #
-sub byte_code_compile($$$) {
-    my($opcode, $str, $flags) = @_;
+sub byte_code_compile($$$$) {
+    my($opcode, $str, $flags, $oppos) = @_;
     my $opr;
     my $opc;
     my @codes = ();
     my $litix = undef;
-    my %oppos = ();
     my $i;
     my ($op, $oq);
     my $opex;
@@ -1067,12 +1119,13 @@ sub byte_code_compile($$$) {
     $opc = lc($4);
 
     $op = 0;
+    $oppos = {};
     for ($i = 0; $i < length($opr); $i++) {
         my $c = substr($opr,$i,1);
         if ($c eq '+') {
             $op--;
         } else {
-            $oppos{$c} = $op++;
+            $oppos->{$c} = $op++;
         }
     }
     $tup = tupletype($tuple);
@@ -1130,30 +1183,30 @@ sub byte_code_compile($$$) {
             }
             $prefix_ok = 0;
         } elsif ($op eq '/r') {
-            if (!defined($oppos{'r'}) || !defined($oppos{'m'})) {
+            if (!defined($oppos->{'r'}) || !defined($oppos->{'m'})) {
                 die "$fname:$line: $opcode: $op requires r and m operands\n";
             }
-            $opex = (($oppos{'m'} & 4) ? 06 : 0) |
-                (($oppos{'r'} & 4) ? 05 : 0);
+            $opex = (($oppos->{'m'} & 4) ? 06 : 0) |
+                (($oppos->{'r'} & 4) ? 05 : 0);
             push(@codes, $opex) if ($opex);
             # if mib is composed with two separate operands - ICC style
-            push(@codes, 014 + ($oppos{'x'} & 3)) if (defined($oppos{'x'}));
-            push(@codes, 0100 + (($oppos{'m'} & 3) << 3) + ($oppos{'r'} & 3));
+            push(@codes, 014 + ($oppos->{'x'} & 3)) if (defined($oppos->{'x'}));
+            push(@codes, 0100 + (($oppos->{'m'} & 3) << 3) + ($oppos->{'r'} & 3));
             $prefix_ok = 0;
         } elsif ($op =~ m:^/([0-7])$:) {
-            if (!defined($oppos{'m'})) {
+            if (!defined($oppos->{'m'})) {
                 die "$fname:$line: $opcode: $op requires an m operand\n";
             }
-            push(@codes, 06) if ($oppos{'m'} & 4);
-            push(@codes, 0200 + (($oppos{'m'} & 3) << 3) + $1);
+            push(@codes, 06) if ($oppos->{'m'} & 4);
+            push(@codes, 0200 + (($oppos->{'m'} & 3) << 3) + $1);
             $prefix_ok = 0;
 	} elsif ($op =~ m:^/([0-3]?)r([0-7])$:) {
-	    if (!defined($oppos{'r'})) {
+	    if (!defined($oppos->{'r'})) {
                 die "$fname:$line: $opcode: $op requires an r operand\n";
 	    }
-	    push(@codes, 05) if ($oppos{'r'} & 4);
+	    push(@codes, 05) if ($oppos->{'r'} & 4);
 	    push(@codes, 0171);
-	    push(@codes, (($1+0) << 6) + (($oppos{'r'} & 3) << 3) + $2);
+	    push(@codes, (($1+0) << 6) + (($oppos->{'r'} & 3) << 3) + $2);
 	    $prefix_ok = 0;
         } elsif ($op =~ /^(vex|xop)(|\..*)$/) {
             my $vexname = $1;
@@ -1228,7 +1281,7 @@ sub byte_code_compile($$$) {
 		} elsif ($oq =~ /^(m|map)([0-9]+)$/) {
 		    $m = $2+0;
 		} elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {
-		    if (!defined($oppos{'v'})) {
+		    if (!defined($oppos->{'v'})) {
 			die "$fname:$line: $opcode: $vexname.$oq without 'v' operand\n";
 		    }
 		    $has_nds = 1;
@@ -1249,8 +1302,8 @@ sub byte_code_compile($$$) {
 	    if ($m < $minmap || $m > 31) {
 		die "$fname:$line: $opcode: Only maps ${minmap}-31 are valid for \U${vexname}\n";
 	    }
-	    push(@codes, 05) if ($oppos{'v'} > 3);
-            push(@codes, defined($oppos{'v'}) ? 0260+$oppos{'v'} : 0270,
+	    push(@codes, 05) if ($oppos->{'v'} > 3);
+            push(@codes, defined($oppos->{'v'}) ? 0260+$oppos->{'v'} : 0270,
                  ($c << 6)+$m, ($w << 7)+($l << 2)+$p);
 
 	    push(@codes, $opsize) if (defined($opsize));
@@ -1357,7 +1410,7 @@ sub byte_code_compile($$$) {
 		    # Set .ND if {zu} prefix is present
 		    $flags->{'ZU_E'}++;
 		} elsif ($oq =~ /^(nds|ndd|nd|dds)$/) {
-		    if (!defined($oppos{'v'})) {
+		    if (!defined($oppos->{'v'})) {
 			die "$fname:$line: $opcode: evex.$oq without 'v' operand\n";
 		    }
 		    $nds = 1;
@@ -1377,7 +1430,7 @@ sub byte_code_compile($$$) {
 	    }
 	    foreach my $bad (@bad_op) {
 		my($what, $because) = @$inv;
-		if (defined($oppos{$what})) {
+		if (defined($oppos->{$what})) {
 		    die "$fname:$line: $opcode: $what and evex.$because are mutually incompatible\n";
 		}
 	    }
@@ -1395,8 +1448,8 @@ sub byte_code_compile($$$) {
 	    $p[2] |= 0x04 if ($nf);
 	    $p[2] |= 0x10 if ($nd);
 
-	    push(@codes, 05) if ($oppos{'v'} > 3);
-	    push(@codes, defined($oppos{'v'}) ? 0240+$oppos{'v'} : 0250, @p);
+	    push(@codes, 05) if ($oppos->{'v'} > 3);
+	    push(@codes, defined($oppos->{'v'}) ? 0240+$oppos->{'v'} : 0250, @p);
 	    push(@codes, $tup);
 
 	    push(@codes, $opsize) if (defined($opsize));
@@ -1434,39 +1487,39 @@ sub byte_code_compile($$$) {
                     die "$fname:$line: $opcode: too many immediate operands\n";
                 }
             }
-            if (!defined($oppos{$last_imm})) {
+            if (!defined($oppos->{$last_imm})) {
                 die "$fname:$line: $opcode: $op without '$last_imm' operand\n";
             }
-            push(@codes, 05) if ($oppos{$last_imm} & 4);
-            push(@codes, $imm_codes{$op} + ($oppos{$last_imm} & 3));
+            push(@codes, 05) if ($oppos->{$last_imm} & 4);
+            push(@codes, $imm_codes{$op} + ($oppos->{$last_imm} & 3));
             $prefix_ok = 0;
         } elsif ($op eq '/is4') {
-            if (!defined($oppos{'s'})) {
+            if (!defined($oppos->{'s'})) {
                 die "$fname:$line: $opcode: $op without 's' operand\n";
             }
-            if (defined($oppos{'i'})) {
-                push(@codes, 0172, ($oppos{'s'} << 3)+$oppos{'i'});
+            if (defined($oppos->{'i'})) {
+                push(@codes, 0172, ($oppos->{'s'} << 3)+$oppos->{'i'});
             } else {
-                push(@codes, 05) if ($oppos{'s'} & 4);
-                push(@codes, 0174+($oppos{'s'} & 3));
+                push(@codes, 05) if ($oppos->{'s'} & 4);
+                push(@codes, 0174+($oppos->{'s'} & 3));
             }
             $prefix_ok = 0;
         } elsif ($op =~ /^\/is4\=([0-9]+)$/) {
             my $imm = $1;
-            if (!defined($oppos{'s'})) {
+            if (!defined($oppos->{'s'})) {
                 die "$fname:$line: $opcode: $op without 's' operand\n";
             }
             if ($imm < 0 || $imm > 15) {
                 die "$fname:$line: $opcode: invalid imm4 value for $op: $imm\n";
             }
-            push(@codes, 0173, ($oppos{'s'} << 4) + $imm);
+            push(@codes, 0173, ($oppos->{'s'} << 4) + $imm);
             $prefix_ok = 0;
         } elsif ($op =~ /^([0-9a-f]{2})\+r$/) {
-            if (!defined($oppos{'r'})) {
+            if (!defined($oppos->{'r'})) {
                 die "$fname:$line: $opcode: $op without 'r' operand\n";
             }
-            push(@codes, 05) if ($oppos{'r'} & 4);
-            push(@codes, 010 + ($oppos{'r'} & 3), hex $1);
+            push(@codes, 05) if ($oppos->{'r'} & 4);
+            push(@codes, 010 + ($oppos->{'r'} & 3), hex $1);
             $prefix_ok = 0;
 	} elsif ($op =~ /^(jcc|jmp)8$/) {
 	    # A relaxable jump instruction

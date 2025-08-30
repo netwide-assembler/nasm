@@ -38,8 +38,7 @@ struct itemplate_list {
 extern const struct itemplate_list nasm_instructions[];
 
 /* Instruction tables for the disassembler */
-extern const struct itemplate * const * const * const
-ndisasm_itable[NASM_VEX_CLASSES][NASM_MAX_MAPS];
+extern const struct itemplate * const * const * const ndisasm_itable[];
 
 /* Common table for the byte codes */
 extern const uint8_t nasm_bytecodes[];

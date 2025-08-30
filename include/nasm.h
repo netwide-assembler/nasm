@@ -612,7 +612,8 @@ enum {
 #define REX_rR	    (REX_R | REX_R1 | REX_RV | REX_H | REX_P)
 
 /*
- * EVEX bit field
+ * EVEX bit field. Note that the P[] numbers in the SDM does not include
+ * the leading 0x62 byte.
  */
 #define EVEX_P0MM       0x0700      /* EVEX P[2:0] : Opcode map           */
 #define EVEX_P0BP       0x0800      /* EVEX P[3] : High-16 B register     */
@@ -628,6 +629,7 @@ enum {
 #define EVEX_P2AAA      0x07000000  /* EVEX P[18:16] : Embedded opmask    */
 #define EVEX_P2NF       0x04000000  /* EVEX P[18]: No flags bit           */
 #define EVEX_P2VP       0x08000000  /* EVEX P[19] : High-16 NDS reg       */
+#define EVEX_P2SCC	0x0f000000  /* EVEX P[19:16]: Modified condition  */
 #define EVEX_P2B        0x10000000  /* EVEX P[20] : Broadcast / RC / SAE  */
 #define EVEX_P2ND       EVEX_P2B    /* EVEX P[20] : New destination       */
 #define EVEX_P2LL       0x60000000  /* EVEX P[22:21] : Vector length      */
@@ -1329,6 +1331,7 @@ enum byte_sizes {
     SIZE_BYTE	=  1,
     SIZE_WORD	=  2,
     SIZE_DWORD	=  4,
+    SIZE_LONG   =  4,
     SIZE_QWORD	=  8,
     SIZE_TWORD  = 10,
     SIZE_OWORD  = 16,
@@ -1341,6 +1344,7 @@ enum special_tokens {
     S_BYTE              = SIZE_ENUM_START,
     S_WORD,
     S_DWORD,
+    S_LONG,
     S_QWORD,
     S_TWORD,
     S_OWORD,
@@ -1351,7 +1355,6 @@ enum special_tokens {
     SPECIAL_ENUM_START  = SIZE_ENUM_LIMIT,
     S_ABS		= SPECIAL_ENUM_START,
     S_FAR,
-    S_LONG,
     S_NEAR,
     S_NOSPLIT,
     S_REL,

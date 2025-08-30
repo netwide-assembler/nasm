@@ -62,7 +62,7 @@ static const char *help =
     "   -k avoids disassembling <bytes> bytes from position <start>\n"
     "   -p selects the preferred vendor instruction set (intel, amd, cyrix, idt)\n";
 
-static void output_ins(uint64_t, uint8_t *, int, char *);
+static void output_ins(uint64_t, const uint8_t *, int, const char *);
 static void skip(uint32_t dist, FILE * fp);
 
 void nasm_verror(errflags severity, const char *fmt, va_list val)
@@ -82,7 +82,8 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list val)
 
 int main(int argc, char **argv)
 {
-    char buffer[INSN_MAX * 2], *p, *ep, *q;
+    uint8_t buffer[INSN_MAX * 2], *p;
+    const uint8_t *q;
     char outbuf[256];
     char *pname = *argv;
     char *filename = NULL;
@@ -135,8 +136,9 @@ int main(int argc, char **argv)
                                 pname);
                         return 1;
                     }
-		    b = strtoul(v, &ep, 10);
-		    if (*ep || !(bits == 16 || bits == 32 || bits == 64)) {
+		    b = readnum(v, &rn_error);
+		    if (rn_error ||
+                        !(bits == 16 || bits == 32 || bits == 64)) {
                         fprintf(stderr, "%s: argument to `-b' should"
                                 " be 16, 32 or 64\n", pname);
                     } else {
@@ -294,7 +296,7 @@ int main(int argc, char **argv)
      * find the energy...
      */
 
-    p = q = buffer;
+    q = p = buffer;
     nextsync = next_sync(offset, &synclen);
     do {
         int32_t to_read = buffer + sizeof(buffer) - p;
@@ -316,25 +318,23 @@ int main(int argc, char **argv)
                 offset += synclen;
                 skip(synclen, fp);
             }
-            p = q = buffer;
+            q = p = buffer;
             nextsync = next_sync(offset, &synclen);
         }
         while (p > q && (p - q >= INSN_MAX || lenread == 0)) {
-            lendis = disasm((uint8_t *)q, INSN_MAX, outbuf, sizeof(outbuf),
+            lendis = disasm(q, INSN_MAX, outbuf, sizeof(outbuf),
 			    bits, offset, autosync, &prefer);
             if (!lendis || lendis > (p - q)
                 || ((nextsync || synclen) &&
 		    (uint32_t)lendis > nextsync - offset))
-                lendis = eatbyte((uint8_t *) q, outbuf, sizeof(outbuf), bits);
-            output_ins(offset, (uint8_t *) q, lendis, outbuf);
+                lendis = eatbyte(*q, outbuf, sizeof(outbuf), bits);
+            output_ins(offset, q, lendis, outbuf);
             q += lendis;
             offset += lendis;
         }
         if (q >= buffer + INSN_MAX) {
-            uint8_t *r = (uint8_t *) buffer, *s = (uint8_t *) q;
             int count = p - q;
-            while (count--)
-                *r++ = *s++;
+            memmove(buffer, q, count);
             p -= (q - buffer);
             q = buffer;
         }
@@ -346,8 +346,8 @@ int main(int argc, char **argv)
     return 0;
 }
 
-static void output_ins(uint64_t offset, uint8_t *data,
-                       int datalen, char *insn)
+static void output_ins(uint64_t offset, const uint8_t *data,
+                       int datalen, const char *insn)
 {
     int bytes;
     fprintf(stdout, "%08"PRIX64"  ", offset);

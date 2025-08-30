@@ -31,7 +31,7 @@
 ##
 ## --------------------------------------------------------------------------
 
-# The token parameters are in the other:
+# The token parameters are in the order:
 # TOKEN_TYPE, t_inttwo, t_flags, t_integer
 #
 # * is replaced with the token name converted to upper case.
@@ -93,6 +93,7 @@ zu
 byte
 word
 dword
+long
 qword
 tword
 oword
@@ -102,7 +103,6 @@ zword
 % TOKEN_SPECIAL, 0, 0, S_*
 abs
 far
-long
 near
 nosplit
 rel

@@ -48,17 +48,16 @@ static inline unsigned int get_disp8_shift(const insn *ins)
     bool evex_b;
     unsigned int  evex_w;
     unsigned int  vectlen;
-    enum ttypes   tuple;
+    enum ttypes   tuple = ins->evex_tuple;
 
-    if (likely(!(ins->rex & REX_EV)))
+    if (likely(!tuple))
         return 0;
 
     evex_b  = !!(ins->evex & EVEX_P2B);
-    tuple   = ins->evex_tuple;
     vectlen = (ins->evex & EVEX_P2LL) >> 29;
     evex_w  = !!(ins->evex & EVEX_P1W);
 
-    switch(tuple) {
+    switch (tuple) {
         /* Full, half vector unless broadcast */
     case FV:
         return evex_b ? 2 + evex_w : vectlen + 4;

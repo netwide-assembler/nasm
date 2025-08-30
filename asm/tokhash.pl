@@ -73,7 +73,7 @@ close(ID);
 #
 open(RD, '<', $regs_dat) or die "$0: cannot open $regs_dat: $!\n";
 while (defined($line = <RD>)) {
-    if ($line =~ /^([\?\@a-z0-9_-]+)\s*\S+\s*\S+\s*[0-9]+\s*(\S*)/) {
+    if ($line =~ /^([\?\@a-z0-9_-]+)\s*\S+\s*\S+\s*[0-9]+\s*(?:\&\s*[0-9]+\s*)?(\S*)/) {
 	$reg = $1;
 	$reg_flag = $2;
 

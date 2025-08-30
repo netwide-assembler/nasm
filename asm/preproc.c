@@ -3796,11 +3796,11 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
  * Decode a size directive
  */
 static int parse_size(const char *str) {
-    static const char *size_names[] =
-        { "byte", "dword", "oword", "qword", "tword", "word", "yword" };
-    static const int sizes[] =
-        { 0, 1, 4, 16, 8, 10, 2, 32 };
-    return str ? sizes[bsii(str, size_names, ARRAY_SIZE(size_names))+1] : 0;
+    struct tokenval tv;
+    if (nasm_token_hash(str, &tv) != TOKEN_SIZE)
+        return 0;
+
+    return tv.t_inttwo;
 }
 
 /*

@@ -257,7 +257,7 @@ $bwd  CMPXCHG486 rm#,reg#			[mr:	0f a6# /r]				486,SM,UNDOC,NOLONG,ND,LOCK,OBSOL
 ; Call/jmp near imm/reg/mem are always 64-bit in long mode.
       JMP	imm8|short			[i:	nw eb rel8]				8086,NOAPX
       JMP	imm				[i:	jmp8 nw eb rel8]			8086,SX,ND,NOAPX
-$wdq  JMP	imm##|near			[i:	nw o# e9 rel]				8086,OSIZE,ND,BND,NOLONG16
+$wdq  JMP	imm##|near			[i:	nw o# e9 rel]				8086,OSIZE,BND,NOLONG16
 $wdq  JMP	rm#|near			[m:	nw o# ff /4]				8086,OSIZE,BND,NOLONG16
 $wd   JMP	imm#|far			[i:	o# ea iwd seg]				8086,OSIZE,ND,NOLONG
 $wd   JMP	imm16:imm#			[ji:	o# ea iwd iw]				8086,OSIZE,AR1,NOLONG

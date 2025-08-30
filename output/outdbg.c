@@ -412,9 +412,44 @@ dbg_pragma(const struct pragma *pragma)
     return DIRR_OK;
 }
 
-static const char * const types[] = {
-    "unknown", "label", "byte", "word", "dword", "float", "qword", "tbyte"
-};
+static const char *type_name(uint32_t type)
+{
+    switch (TYM_TYPE(type)) {
+    case TY_UNKNOWN:
+        return "unknown";
+    case TY_LABEL:
+        return "label";
+    case TY_BYTE:
+        return "byte";
+    case TY_WORD:
+        return "word";
+    case TY_DWORD:
+        return "dword";
+    case TY_FLOAT:
+        return "float";
+    case TY_QWORD:
+        return "qword";
+    case TY_TBYTE:
+        return "tbyte";
+    case TY_OWORD:
+        return "oword";
+    case TY_YWORD:
+        return "yword";
+    case TY_ZWORD:
+        return "zword";
+    case TY_COMMON:
+        return "common";
+    case TY_SEG:
+        return "seg";
+    case TY_EXTERN:
+        return "extern";
+    case TY_EQU:
+        return "equ";
+    default:
+        return "<invalid type code>";
+    }
+}
+
 static void dbgdbg_init(void)
 {
     fprintf(ofile, "dbg init: debug information enabled\n");
@@ -461,7 +496,7 @@ static void dbgdbg_output(int output_type, void *param)
 static void dbgdbg_typevalue(int32_t type)
 {
     fprintf(ofile, "dbg typevalue: %s(%"PRIX32")\n",
-            types[TYM_TYPE(type) >> 3], TYM_ELEMENTS(type));
+            type_name(type), TYM_ELEMENTS(type));
 }
 
 static void
