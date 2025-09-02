@@ -232,12 +232,13 @@ static void parse_evex(struct rexfields *rf, uint32_t val)
     rf->z      = evex_z(val);
     rf->b      = evex_b(val);
     rf->nd     = rf->b;
+    rf->zu     = rf->b;
     rf->aaa    = evex_aaa(val);
     rf->scc    = evex_scc(val);
     rf->dfl    = evex_dfl(val);
     rf->nf     = evex_nf(val);
 
-    rf->flags  = REX_EV | REX_P | ((~val >> 8) & 7) | (rf->w << 3);
+    rf->flags  = REX_EV | REX_P | ((~val >> 13) & 7) | (rf->w << 3);
 }
 
 /* ------ Set value for all moptypes ------ */

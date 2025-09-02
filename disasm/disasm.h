@@ -88,6 +88,7 @@ struct rexfields {
     uint8_t z;
     uint8_t b;
     uint8_t nd;
+    uint8_t zu;
     uint8_t aaa;
     uint8_t nf;
     uint8_t dfl;

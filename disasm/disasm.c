@@ -64,6 +64,7 @@
 #define SEG_DISPMASK  (SEG_NODISP|SEG_DISP8|SEG_DISP16|SEG_DISP32|SEG_DISP64)
 #define SEG_SIGNED    128
 #define SEG_RMMEM     256
+#define SEG_DFV       512
 #define SEG_16BIT     (16 << 8)
 #define SEG_32BIT     (32 << 8)
 #define SEG_64BIT     (64 << 8)
@@ -90,34 +91,6 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, uint32_t rex)
     const size_t r = regval;
     size_t i;
 
-    static const struct {
-        opflags_t       flags;
-        enum reg_enum   reg;
-    } specific_registers[] = {
-        {REG_AL,  R_AL},
-        {REG_AX,  R_AX},
-        {REG_EAX, R_EAX},
-        {REG_RAX, R_RAX},
-        {REG_DL,  R_DL},
-        {REG_DX,  R_DX},
-        {REG_EDX, R_EDX},
-        {REG_RDX, R_RDX},
-        {REG_CL,  R_CL},
-        {REG_CX,  R_CX},
-        {REG_ECX, R_ECX},
-        {REG_RCX, R_RCX},
-        {FPU0,    R_ST0},
-        {XMM0,    R_XMM0},
-        {YMM0,    R_YMM0},
-        {ZMM0,    R_ZMM0},
-        {REG_ES,  R_ES},
-        {REG_CS,  R_CS},
-        {REG_SS,  R_SS},
-        {REG_DS,  R_DS},
-        {REG_FS,  R_FS},
-        {REG_GS,  R_GS},
-        {OPMASK0, R_K0},
-    };
     static const struct {
         opflags_t flags;
         const enum reg_enum *regs;
@@ -146,12 +119,6 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, uint32_t rex)
     if (r >= DISREGTBLSZ)
         return 0;
 
-    regflags |= REGISTER;
-
-    for (i = 0; i < ARRAY_SIZE(specific_registers); i++)
-        if (is_class(regflags, specific_registers[i].flags))
-            return specific_registers[i].reg;
-
     if (is_class(regflags, REG8)) {
         if (rex & (REX_P|REX_NH))
             return nasm_rd_reg8_rex[r];
@@ -159,11 +126,46 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, uint32_t rex)
             return nasm_rd_reg8[r];
     }
 
-    for (i = 0; i < ARRAY_SIZE(regclasses); i++)
-        if (is_class(regflags, regclasses[i].flags))
-            return regclasses[i].regs[r];
+    for (i = 0; i < ARRAY_SIZE(regclasses); i++) {
+        enum reg_enum reg = regclasses[i].regs[r];
+        if (is_class(regflags, nasm_reg_flags[reg]))
+            return reg;
+    }
 
     return 0;                   /* Unknown register type */
+}
+
+/*
+ * An implicit register operand
+ */
+static enum reg_enum implicit_reg(opflags_t regflags)
+{
+    switch (regflags) {
+    case REG_AL:  return R_AL;
+    case REG_AX:  return R_AX;
+    case REG_EAX: return R_EAX;
+    case REG_RAX: return R_RAX;
+    case REG_DL:  return R_DL;
+    case REG_DX:  return R_DX;
+    case REG_EDX: return R_EDX;
+    case REG_RDX: return R_RDX;
+    case REG_CL:  return R_CL;
+    case REG_CX:  return R_CX;
+    case REG_ECX: return R_ECX;
+    case REG_RCX: return R_RCX;
+    case FPU0:    return R_ST0;
+    case XMM0:    return R_XMM0;
+    case YMM0:    return R_YMM0;
+    case ZMM0:    return R_ZMM0;
+    case REG_ES:  return R_ES;
+    case REG_CS:  return R_CS;
+    case REG_SS:  return R_SS;
+    case REG_DS:  return R_DS;
+    case REG_FS:  return R_FS;
+    case REG_GS:  return R_GS;
+    case OPMASK0: return R_K0;
+    default:      return 0;
+    }
 }
 
 /*
@@ -471,7 +473,7 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
 {
     const struct itemplate * const t = ins->itemp;
     const uint8_t *r = t->code;
-    const uint8_t *origdata = data; /* First byte after prefixes */
+    const uint8_t * const origdata = data; /* First byte after prefixes */
     bool a_used = false, o_used = false;
     enum prefixes drep  = 0;
     enum prefixes dwait = 0;
@@ -479,6 +481,7 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
     int osize = prefix->osize;
     int asize = prefix->asize;
     const int bits = ins->bits;
+    const int defosize = (bits == 16) ? 16 : 32;
     int i, c;
     int op1, op2;
     struct operand *opx, *opy;
@@ -486,6 +489,9 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
     uint8_t regmask = (bits == 64) ? 31 : 7;
     enum ea_type eat = EA_SCALAR;
     decoflags_t decoflags = 0;
+
+    if (bits == 64 && prefix->rex.w && itemp_has(t, IF_WW))
+        ins->op_size = osize = 64;
 
     ins->addr_size  = asize;
     ins->op_size    = osize;
@@ -735,7 +741,7 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
         {
             uint8_t ximm = *data++;
             unsigned int nreg = ((ximm >> 4) + ((ximm & 8) << 1)) & regmask;
-            opx->basereg = whichreg(opx->type, nreg, ins->rex);
+            opx->basereg = whichbreg(opx->type, nreg, ins->rex, prefix);
             if (!opx->basereg)
                 return 0;
             opx->segment |= SEG_RMREG;
@@ -764,8 +770,9 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
         case4(0240):
         case 0250:
         {
-            uint32_t evextemp, mismatch;
+            uint32_t evextemp, mismatch, matchmask;
             bool memop;
+            unsigned int vmask;
 
             if (prefix->rex.type != REX_EVEX)
                 return 0;
@@ -775,17 +782,46 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             /* Get the evex prefix expected by the template */
             evextemp = (getu32(r-1) & ~0xff) + 0x62; r += 3;
             mismatch = prefix->rex.raw ^ evextemp;
-            memop = is_mem_modrm(r, data);
+            memop = is_mem_modrm(r, data+1);
 
             /* Now mask out "mismatched" bits that are proper parameters */
-            mismatch &= ~(EVEX_P0BP|EVEX_P0RP|EVEX_P0B|EVEX_P0X|EVEX_P0R|
+            matchmask = ~(EVEX_P0BP|EVEX_P0RP|EVEX_P0B|EVEX_P0X|EVEX_P0R|
                           EVEX_P1XP);
 
-            if (memop)
-                mismatch &= ~EVEX_P2VP; /* Either V4 or X4 */
+            if (memop && !itemp_has(t, IF_SCC)) {
+                /*
+                 * V4 if X is a is a vector, which is only possible if
+                 * this is a memory operation; otherwise X4. However,
+                 * X4 is explicitly forbidden if this is not a memory
+                 * operation, otherwise this bit is supposedly
+                 * ignored if not used.
+                 */
+                matchmask &= ~EVEX_P2VP; /* Either V4 or X4 */
+            }
 
-            if (c != 0250 || itemp_has(t, IF_DFV))
-                mismatch &= ~EVEX_P1VVVV; /* V operand or DFV present */
+            if (c == 0250) {
+                vmask = 0;      /* No V register */
+            } else if (is_class(IMMEDIATE, opx->type)) {
+                vmask = 15;     /* V operand is used as immediate */
+                opx->offset = (mismatch >> 19) & vmask;
+                if (itemp_has(t, IF_DFV))
+                    opx->segment |= SEG_DFV;
+            } else {
+                unsigned int regnum;
+                vmask = regmask;
+
+                opx->segment |= SEG_RMREG;
+                if (eat >= EA_XMMVSIB)
+                    regnum = prefix->rex.vregxv;
+                else
+                    regnum = prefix->rex.vreg;
+
+                opx->basereg = whichreg(opx->type, regnum & vmask, ins->rex);
+                if (!opx->basereg)
+                    return 0;
+            }
+
+            matchmask &= ~((vmask & 15) << 19); /* VVVV field */
 
             if (prefix->rex.w)
                 ins->rex |= REX_W;
@@ -793,36 +829,50 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             if (itemp_has(t, IF_WIG)) {
                 ins->rex &= ~REX_W;
                 ins->rex |=  REX_NW;
-                mismatch &= ~EVEX_P1W;
+                matchmask &= ~EVEX_P1W;
             }
+
             if (itemp_has(t, IF_LIG) ||
                 (prefix->rex.b && !memop)) /* LL used for rounding control */
-                mismatch &= ~EVEX_P2LL;
+                matchmask &= ~EVEX_P2LL;
 
             if (decoflags & MASK)
                 mismatch &= ~EVEX_P2AAA;
 
             if (decoflags & Z)
-                mismatch &= ~EVEX_P2Z;
+                matchmask &= ~EVEX_P2Z;
 
-            if (mismatch)
+            if (itemp_has(t, IF_NF_E)) {
+                matchmask &= ~EVEX_P2NF;
+                if (prefix->rex.nf)
+                    ins->prefixes[PPS_NF] = P_NF;
+            }
+
+            if (itemp_has(t, IF_ZU_E)) {
+                matchmask &= ~EVEX_P2ZU;
+                if (prefix->rex.zu)
+                    ins->prefixes[PPS_ZU] = P_ZU;
+            }
+#if 0
+            if (mismatch & matchmask) {
+                extern const struct itemplate instrux[];
+
+                printf("EVEX mismatch: %4zd: raw %08x template %08x mask %08x -> %08x\n",
+                       t - instrux, prefix->rex.raw, evextemp, matchmask,
+                       mismatch & matchmask);
+            }
+#endif
+
+            if (mismatch & matchmask)
                 return 0;
 
             ins->evex_tuple = *r++ - 0300;
 
-            if (itemp_has(t, IF_WW) && prefix->rex.w)
-                ins->rex |= REX_W;
+            if (itemp_has(t, IF_NF_E) && prefix->rex.nf)
+                ins->prefixes[PPS_NF] = P_NF;
 
-            if (c != 0250) {
-                unsigned int regnum = prefix->rex.vreg;
-                opx->segment |= SEG_RMREG;
-                if (eat >= EA_XMMVSIB)
-                    regnum = prefix->rex.vregxv;
-
-                opx->basereg = whichreg(opx->type, regnum, ins->rex);
-                if (!opx->basereg)
-                    return 0;
-            }
+            if (itemp_has(t, IF_ZU_E) && prefix->rex.zu)
+                ins->prefixes[PPS_ZU] = P_ZU;
             break;
         }
 
@@ -948,28 +998,31 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             break;
 
         case 0320:
-            if (osize != 16)
+            if (ins->rex & (REX_V | REX_EV))
+                osize = 16;
+            else if (osize != 16)
                 return 0;
-            else
-                o_used = true;
+            o_used = true;
             break;
 
         case 0321:
-            if (osize != 32)
+            if (ins->rex & (REX_V | REX_EV))
+                osize = 32;
+            else if (osize != 32)
                 return 0;
-            else
-                o_used = true;
+            o_used = true;
             break;
 
         case 0322:
-            if (osize != (bits == 16 ? 16 : 32))
+            if (ins->rex & (REX_V | REX_EV))
+                osize = defosize;
+            else if (osize != defosize)
                 return 0;
-            else
-                o_used = true;
+            o_used = true;
             break;
 
         case 0323:
-            /* 64-bit only instruction */
+            /* 64-bit only instruction, no REX.W required */
             ins->op_size = osize = 64;
             ins->rex |= REX_NW;
             break;
@@ -994,6 +1047,10 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
                 ins->op_size = osize = 64;
                 ins->rex |= REX_NW;
             }
+            break;
+
+        case 0330:
+            /* Somewhat unclear what needs to be done here? */
             break;
 
         case 0331:
@@ -1180,6 +1237,20 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
         }
     }
 
+    if (itemp_has(t, IF_NF_R))
+        ins->prefixes[PPS_NF] = P_NF;
+    if (itemp_has(t, IF_ZU_R))
+        ins->prefixes[PPS_ZU] = P_ZU;
+
+    if (itemp_has(t, IF_LATEVEX) && prefix->rex.type == REX_VEX) {
+            ins->prefixes[PPS_REX] = P_VEX;
+    }
+
+    if ((prefix->rex.raw & 0x807fff) == 0x0061c4) {
+        /* A VEX3-prefixed instruction which could have been VEX2-encoded */
+        ins->prefixes[PPS_REX] = P_VEX3;
+    }
+
     /* Final fixup of operands */
     for (i = 0; i < ins->operands; i++) {
         struct operand *o = &ins->oprs[i];
@@ -1188,6 +1259,12 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
         } else if (o->segment & SEG_RMMEM) {
             o->type &= ~(REGISTER | IMMEDIATE);
             o->type |= MEMORY;
+        } else if (is_class(REGISTER, o->type) && !o->basereg) {
+            /* An implicit register operand? */
+           o->basereg = implicit_reg(o->type);
+            if (!o->basereg)
+                return 0;
+            o->segment |= SEG_RMREG;
         }
     }
     return data - origdata;
@@ -1252,7 +1329,7 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
     int length, best_length = 0;
     int maxlen = 15;
     int i, slen;
-    bool colon;
+    char separator;
     const uint8_t *origdata = dp;
     int works;
     insn ins;
@@ -1315,11 +1392,11 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
 
                 if (!is_class(tt, it)) {
                     bool is_reg = !!(tmp_ins.oprs[i].segment & SEG_RMREG);
-                    fprintf(stderr, "flags 0x%lx%s%s do not match template 0x%lx\n",
+                    printf("flags 0x%lx%s%s do not match template 0x%lx\n",
                             tt,
                             is_reg ? " for register " : "",
                             is_reg ? regname(tmp_ins.oprs[i].basereg) : "",
-                            tt);
+                            it);
                     works = false;
                     break;
                 }
@@ -1375,7 +1452,7 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
 
     remove_redundant_sizes(&ins);
 
-    colon = false;
+    separator = ' ';
     length += dp - origdata;  /* fix up for prefixes */
     for (i = 0; i < ins.operands; i++) {
         decoflags_t deco = itemp->deco[i];
@@ -1385,7 +1462,7 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
         int asize = seg_get_asize(o->segment);
         int nasize = 64 - asize; /* Address bits to mask off */
 
-        output[slen++] = (colon ? ':' : i == 0 ? ' ' : ',');
+        output[slen++] = separator;
 
         offs = o->offset;
         if (o->segment & SEG_RELATIVE) {
@@ -1416,7 +1493,7 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
                 add_sync(offs, 0L);
         }
 
-        colon = !!(t & COLON);
+        separator = (t & COLON) ? ':' : ',';
 
         if ((t & (REGISTER | FPUREG)) ||
                 (o->segment & SEG_RMREG)) {
@@ -1431,41 +1508,60 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
             if (deco)
                 slen += append_evex_reg_deco(output + slen, outbufsize - slen,
                                              deco, &prefix);
-        } else if (!(UNITY & ~t)) {
-            output[slen++] = '1';
         } else if (t & IMMEDIATE) {
-            if (o->segment & SEG_RELATIVE) {
-                /* Don't print any sizes for near jump targets */
-            } else if (t & BITS8) {
-                    slen +=
-                        snprintf(output + slen, outbufsize - slen, "byte ");
-                if (o->segment & SEG_SIGNED) {
-                    if (offs < 0) {
-                        offs = -offs;
-                        output[slen++] = '-';
-                    } else {
-                        output[slen++] = '+';
+            if (is_class(t, UNITY)) {
+                output[slen++] = '1';
+            } else if (o->segment & SEG_DFV) {
+                int fl;
+                static const char dfv_flags[] = "czso";
+                const char *flsep = "";
+                memcpy(&output[slen], "{dfv=", 5);
+                slen += 5;
+                for (fl = 0; fl < 4; fl++) {
+                    if (offs & (1 << fl)) {
+                        slen += snprintf(output + slen, outbufsize - slen,
+                                         "%s%cf", flsep, dfv_flags[fl]);
+                        flsep = ",";
                     }
                 }
-            } else if (t & BITS16) {
+                output[slen++] = '}';
+                separator = ' '; /* No comma after dfv */
+            } else {
+                /* Immediates that will actually be printed as numbers */
+
+                if (o->segment & SEG_RELATIVE) {
+                    /* Don't print any sizes for near jump targets */
+                } else if (t & BITS8) {
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "byte ");
+                    if (o->segment & SEG_SIGNED) {
+                        if (offs < 0) {
+                            offs = -offs;
+                            output[slen++] = '-';
+                        } else {
+                            output[slen++] = '+';
+                        }
+                    }
+                } else if (t & BITS16) {
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "word ");
+                } else if (t & BITS32) {
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "dword ");
+                } else if (t & BITS64) {
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "qword ");
+                } else if (t & NEAR) {
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "near ");
+                } else if (t & SHORT) {
+                    slen +=
+                        snprintf(output + slen, outbufsize - slen, "short ");
+                }
                 slen +=
-                    snprintf(output + slen, outbufsize - slen, "word ");
-            } else if (t & BITS32) {
-                slen +=
-                    snprintf(output + slen, outbufsize - slen, "dword ");
-            } else if (t & BITS64) {
-                slen +=
-                    snprintf(output + slen, outbufsize - slen, "qword ");
-            } else if (t & NEAR) {
-                slen +=
-                    snprintf(output + slen, outbufsize - slen, "near ");
-            } else if (t & SHORT) {
-                slen +=
-                    snprintf(output + slen, outbufsize - slen, "short ");
+                    snprintf(output + slen, outbufsize - slen, "0x%"PRIx64"",
+                             offs);
             }
-            slen +=
-                snprintf(output + slen, outbufsize - slen, "0x%"PRIx64"",
-                        offs);
         } else if (is_class(REGMEM, t)) {
             int started = false;
 

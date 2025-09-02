@@ -17,12 +17,12 @@ TESTS	= $(wildcard *.asm)
 RM_F	= rm -f
 RM_RF	= rm -rf
 
+.PHONY: tools nasm ndisasm
 tools:
 	$(MAKE) -C .. all
 
-nasm: $(NASM)
-
-ndisasm: $(NDISASM)
+nasm ndisasm:
+	$(MAKE) -C .. $(@F)
 
 $(NASM) $(NDISASM):
 	$(MAKE) -C .. $(@F)
