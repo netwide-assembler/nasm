@@ -1666,7 +1666,10 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case4(0240):
-            ins->vexreg = regval(opx);
+            if (is_class(opx->type, IMMEDIATE))
+                ins->veximm = opx->offset;
+            else
+                ins->vexreg = regval(opx);
             goto evex_common;
 
         case 0250:
@@ -1689,7 +1692,10 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             break;
 
         case4(0260):
-            ins->vexreg = regval(opx);
+            if (is_class(opx->type, IMMEDIATE))
+                ins->veximm = opx->offset;
+            else
+                ins->vexreg = regval(opx);
             goto vex_common;
 
         case 0270:
@@ -2688,6 +2694,9 @@ static void gencode(struct out_data *data, insn *ins)
 
         case4(0240):
         case 0250:
+        {
+            uint8_t vregbits = ins->vexreg | ins->veximm;
+
             codes += 4;
             ins->evex ^= op_evexflags(&ins->oprs[0], EVEX_P2Z|EVEX_P2AAA);
             ins->evex ^= (ins->rex & REX_BXR0) << 13; /* R0 X0 B0 */
@@ -2695,10 +2704,12 @@ static void gencode(struct out_data *data, insn *ins)
                 ins->evex ^= (ins->rex & REX_BV) ? EVEX_P0X  : EVEX_P0BP;
             if (ins->rex & REX_X1)
                 ins->evex ^= (ins->rex & REX_XV) ? EVEX_P2VP : EVEX_P1XP;
-            ins->evex ^= (ins->rex & REX_R1)   >> (14-12);
-            ins->evex ^= (ins->rex & REX_W)    << (23-3);
-            ins->evex ^= (ins->vexreg & 15) << 19;
-            ins->evex ^= (ins->vexreg & 16) << (27 - 4);
+            if (ins->rex & REX_R1)
+                ins->evex ^= EVEX_P0RP;
+            if (ins->rex & REX_W)
+                ins->evex |= EVEX_P1W; /* OR is correct here */
+            ins->evex ^= (vregbits & 15) << 19;
+            ins->evex ^= (vregbits & 16) << (27 - 4);
             /* Set NF if {nd} and this is applicable */
             if (ins->prefixes[PPS_NF] == P_NF) {
                 if (itemp_has(ins->itemp, IF_NF_E))
@@ -2711,6 +2722,7 @@ static void gencode(struct out_data *data, insn *ins)
             }
             out_rawdword(data, ins->evex);
             break;
+        }
 
         case4(0254):
             out_imm(data, opx, 4, OUT_SIGNED);
@@ -2953,14 +2965,14 @@ static void gencode(struct out_data *data, insn *ins)
     }
 }
 
-static opflags_t regflag(const operand * o)
+static opflags_t regflag(const operand *o)
 {
     if (!is_register(o->basereg))
         nasm_panic("invalid operand passed to regflag()");
     return nasm_reg_flags[o->basereg];
 }
 
-static int32_t regval(const operand * o)
+static int32_t regval(const operand *o)
 {
     /*
      * Certain instruction patterns allow an immediate to be put

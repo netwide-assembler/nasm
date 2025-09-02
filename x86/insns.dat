@@ -924,10 +924,10 @@ $bwdq TEST	rm#,reg#			[mr:	o# 84# /r		]		8086,SM
 $bwdq TEST	ax#,imm#			[-i:	o# a8# i#		]		8086,SM,NOAPX
 $bwdq TEST	rm#,imm#			[mi:	o# f6# /0 i#		]		8086,SM
 
-$bwdq CCMPscc	spec4,rm#,reg#			[vmr:	evex.scc.dfv.l0.np.m4.o# 38# /r	]	APX,SM1-2
-$bwdq CCMPscc	spec4,reg#,rm#			[vrm:   evex.scc.dfv.l0.np.m4.o# 3a# /r	]	APX,SM1-2
-$wdq  CCMPscc	spec4,rm#,sbyte#		[vmi:	evex.scc.dfv.l0.66.m4.o# 83  /7	ib,s ]	APX,SM1-2
-$bwdq CCMPscc	spec4,rm#,imm#			[vmi:	evex.scc.dfv.l0.np.m4.o# 80# /7	ib   ]	APX,SM1-2
+$bwdq CCMPscc	spec4,rm#,reg#			[vmr:	evex.scc.dfv.l0.m4.o# 38# /r	]	APX,SM1-2
+$bwdq CCMPscc	spec4,reg#,rm#			[vrm:   evex.scc.dfv.l0.m4.o# 3a# /r	]	APX,SM1-2
+$wdq  CCMPscc	spec4,rm#,sbyte#		[vmi:	evex.scc.dfv.l0.m4.o# 83  /7	ib,s ]	APX,SM1-2
+$bwdq CCMPscc	spec4,rm#,imm#			[vmi:	evex.scc.dfv.l0.m4.o# 80# /7	i#   ]	APX,SM1-2
 
 ;# Conditional instructions
 $wdq  CMOVcc	reg#,rm#			[rm:	o#  0f 40+c /r]				P6,SM

@@ -417,7 +417,7 @@ while (<F>) {
 	    $k_opcodes{$fields->[0]} = $n_opcodes++;
 	}
         if ($formatted && !$nd) {
-            push @big, $formatted;
+            push(@big, [$formatted, $fields]);
             my @sseq = startseq($fields->[2], $fields->[4]);
             foreach my $i (@sseq) {
 		xpush(\$distable[$i->[0]][$i->[1]]{$i->[2]}, $#big);
@@ -556,7 +556,9 @@ if ( $output eq 'd' ) {
     print D "static const struct itemplate instrux[] = {\n";
     $n = 0;
     foreach $j (@big) {
-        printf D "    /* %4d */ %s\n", $n++, codesubst($j);
+	printf D "    /* %3d : %s */\n", $n++, join(' ', @{$j->[1]});
+	print D '        /* ', show_bytecodes($j->[0]), ' : ', show_iflags($j->[0]), " */\n";
+	print D '        ', codesubst($j->[0]), "\n";
     }
     print D "};\n";
 
@@ -862,7 +864,7 @@ sub codesubst($) {
 
 #
 # Extract byte codes in human-friendly form. Added as a comment
-# to insnsa.c to help debugging.
+# to insnsa.c/insnsd.c to help debugging.
 #
 sub show_bytecodes($) {
     my($s) = @_;
@@ -1361,6 +1363,9 @@ sub byte_code_compile($$$$) {
 			$flags->{'WIG'}++;
 		    }
 		} elsif ($oq eq 'o16') {
+		    if (defined($p) && $p != 1) {
+			warn "$fname:$line: $opcode: evex.p$p.o16 conflicts\n";
+		    }
 		    $p = 1 unless (defined($p)); # 66
 		    $w = 0 unless (defined($w)); # w0
 		    $opsize = 0320;
@@ -1373,12 +1378,18 @@ sub byte_code_compile($$$$) {
 		    $opsize = 0320;
 		} elsif ($oq =~ /^k?o32$/) {
 		    $p = 0 unless (defined($p)); # np
-		    $w = 0 unless (defined($w)); # w0
+		    unless (defined($w)) {
+			$w = 0;
+			$flags->{'WW'}++;
+		    }
 		    $opsize = 0321;
 		} elsif ($oq =~ /^k?o64$/) {
 		    $p = 0 unless (defined($p)); # np
-		    $w = 1 unless (defined($w)); # w1
+		    $w = 1 unless (defined($w));
+		    $flags->{'WW'}++;
 		    $opsize = 0323 + $w;
+		} elsif ($oq eq 'ww') {
+		    $flags->{'WW'}++;
 		} elsif ($oq eq '0f') {
 		    $m = 1;
 		} elsif ($oq eq '0f38') {
@@ -1389,6 +1400,7 @@ sub byte_code_compile($$$$) {
 		    $m = $2+0;
 		} elsif ($oq =~ /^scc([0-9]+)$/) {
 		    $scc = $1+0;
+		    $flags->{'SCC'}++;
 		    push(@bad_op, ['v', $oq]);
 		} elsif ($oq eq 'u') {
 		    $u = 1;

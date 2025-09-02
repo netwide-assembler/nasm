@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -632,6 +632,7 @@ enum {
 #define EVEX_P2SCC	0x0f000000  /* EVEX P[19:16]: Modified condition  */
 #define EVEX_P2B        0x10000000  /* EVEX P[20] : Broadcast / RC / SAE  */
 #define EVEX_P2ND       EVEX_P2B    /* EVEX P[20] : New destination       */
+#define EVEX_P2ZU       EVEX_P2B    /* EVEX P[20] : Zero upper            */
 #define EVEX_P2LL       0x60000000  /* EVEX P[22:21] : Vector length      */
 #define EVEX_P2RC       EVEX_P2LL   /* EVEX P[22:21] : Rounding control   */
 #define EVEX_P2Z        0x80000000  /* EVEX P[23] : Zeroing/Merging       */
@@ -900,11 +901,13 @@ typedef struct insn { /* an instruction itself */
     uint8_t         bits;                   /* Execution mode (16, 32, 64) */
     uint8_t         op_size;                /* operand size */
     uint8_t         addr_size;              /* address size */
-    int             operands;               /* how many operands? 0-7 unless eops */
-    int             rex;                    /* REX prefix flags */
-    int             vexreg;                 /* Register encoded in VEX.V */
-    int             vex_cm;                 /* Class and M field for VEX prefix */
-    int             vex_wlp;                /* W, P and L information for VEX prefix */
+    uint8_t         operands;               /* how many operands? 0-7 unless eops */
+    uint8_t         vexreg;                 /* Register encoded in VEX.V */
+    uint8_t         veximm;                 /* Bit-inverted immediate encoded
+                                               in VEX.V */
+    uint8_t         vex_cm;                 /* Class and M field for VEX prefix */
+    uint8_t         vex_wlp;                /* W, P and L information for VEX prefix */
+    uint32_t        rex;                    /* REX prefix flags */
     uint32_t	    evex;                   /* EVEX prefix under construction */
     enum ttypes     evex_tuple;             /* Tuple type for compressed Disp8*N */
     int             evex_rm;                /* static rounding mode for AVX512 (EVEX) */

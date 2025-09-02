@@ -76,6 +76,7 @@ if_("REX2",              "REX2 encoding required");
 if_("HLE",               "HLE prefixed");
 if_("FL",                "Instruction modifies the flags");
 if_("MOPVEC",		 "M operand is a vector"); # Autodetected
+if_("SCC",		 "EVEX[27:24] is special condition code");
 
 #
 # Special immediates types like {dfv=}
