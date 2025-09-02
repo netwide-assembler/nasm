@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -48,14 +48,16 @@
 #include "sync.h"
 #include "disasm.h"
 
-#define BPL 8                   /* bytes per line of hex dump */
+static int bpl = 8;             /* bytes per line of hex dump */
 
 static const char *help =
-    "usage: ndisasm [-a] [-i] [-h] [-r] [-u] [-b bits] [-o origin] [-s sync...]\n"
+    "usage: ndisasm [-aihlruvw] [-b bits] [-o origin] [-s sync...]\n"
     "               [-e bytes] [-k start,bytes] [-p vendor] file\n"
     "   -a or -i activates auto (intelligent) sync\n"
-    "   -u same as -b 32\n"
     "   -b 16, -b 32 or -b 64 sets the processor mode\n"
+    "   -u same as -b 32\n"
+    "   -l same as -b 64\n"
+    "   -w wide output (avoids continuation lines)\n"
     "   -h displays this text\n"
     "   -r or -v displays the version number\n"
     "   -e skips <bytes> bytes of header\n"
@@ -127,6 +129,14 @@ int main(int argc, char **argv)
                 case 'u':	/* -u for -b 32, -uu for -b 64 */
 		    if (bits < 64)
 			bits <<= 1;
+                    p++;
+                    break;
+                case 'l':
+                    bits = 64;
+                    p++;
+                    break;
+                case 'w':
+                    bpl = 16;
                     p++;
                     break;
                 case 'b':      /* bits */
@@ -353,18 +363,18 @@ static void output_ins(uint64_t offset, const uint8_t *data,
     fprintf(stdout, "%08"PRIX64"  ", offset);
 
     bytes = 0;
-    while (datalen > 0 && bytes < BPL) {
+    while (datalen > 0 && bytes < bpl) {
         fprintf(stdout, "%02X", *data++);
         bytes++;
         datalen--;
     }
 
-    fprintf(stdout, "%*s%s\n", (BPL + 1 - bytes) * 2, "", insn);
+    fprintf(stdout, "%*s%s\n", (bpl + 1 - bytes) * 2, "", insn);
 
     while (datalen > 0) {
         fprintf(stdout, "         -");
         bytes = 0;
-        while (datalen > 0 && bytes < BPL) {
+        while (datalen > 0 && bytes < bpl) {
             fprintf(stdout, "%02X", *data++);
             bytes++;
             datalen--;
