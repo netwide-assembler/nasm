@@ -1423,11 +1423,12 @@ ROUNDSD		xmmreg,xmmrm64,imm8		[rmi:	66 0f3a 0b /r ib,u]			SSE41
 ROUNDSS		xmmreg,xmmrm32,imm8		[rmi:	66 0f3a 0a /r ib,u]			SSE41
 
 ;# Nehalem New Instructions (SSE4.2)
-CRC32		reg32,rm8			[rm:	f2i 0f38 f0 /r]			SSE42
-CRC32		reg32,rm16			[rm:	o16 f2i 0f38 f1 /r]			SSE42
-CRC32		reg32,rm32			[rm:	o32 f2i 0f38 f1 /r]			SSE42
-CRC32		reg64,rm8			[rm:	o64 f2i 0f38 f0 /r]			SSE42,X86_64,LONG
-CRC32		reg64,rm64			[rm:	o64 f2i 0f38 f1 /r]			SSE42,X86_64,LONG
+$dq  CRC32	reg#,rm8			[rm:	o# f2i 0f38 f0 /r]			SSE42
+     CRC32	reg32,rm16			[rm:	o16 f2i 0f38 f1 /r]			SSE42
+$dq  CRC32	reg#,rm#			[rm:	o# f2i 0f38 f1 /r]			SSE42
+$dq  CRC32	reg#,rm8			[rm:	evex.nd0.nf0.np.l0.m4.o# f0 /r]		APX,SSE42
+     CRC32	reg32,rm16			[rm:	evex.nd0.nf0.66.l0.m4.o16 f1 /r]	APX,SSE42
+$dq  CRC32	reg#,rm#			[rm:	evex.nd0.nf0.np.l0.m4.o# f1 /r]		APX,SSE42
 PCMPESTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 61 /r ib,u]			SSE42
 PCMPESTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 60 /r ib,u]			SSE42
 PCMPISTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 63 /r ib,u]			SSE42
