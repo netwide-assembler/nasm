@@ -220,7 +220,7 @@ static void warn_overflow(int size, const char *prefix, const char *suffix)
     if (!suffix)
         suffix = ++sufsp;
 
-    nasm_warn(ERR_PASS2 | WARN_NUMBER_OVERFLOW,
+    nasm_warn(WARN_NUMBER_OVERFLOW|ERR_PASS2,
               "%s%s%s%s%s exceeds bounds",
               prefix, pfxsp, size_name(size), sufsp, suffix);
 }
@@ -1451,14 +1451,14 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
 
     case w_lock:
         if (ins->prefixes[PPS_LOCK] != P_LOCK) {
-            nasm_warn(WARN_PREFIX_HLE|ERR_PASS2,
+            nasm_warn(WARN_PREFIX_HLE,
                        "%s with this instruction requires lock",
                        prefix_name(rep_pfx));
         }
         break;
 
     case w_inval:
-        nasm_warn(WARN_PREFIX_HLE|ERR_PASS2,
+        nasm_warn(WARN_PREFIX_HLE,
                    "%s invalid with this instruction",
                    prefix_name(rep_pfx));
         break;
@@ -1784,7 +1784,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             if (bits != 16 && pfx == P_OSP) {
                 /* Allow osp prefix as is */
             } else if (pfx != P_none && pfx != P_O16) {
-                nasm_warn(WARN_PREFIX_OPSIZE|ERR_PASS2,
+                nasm_warn(WARN_PREFIX_OPSIZE,
                           "invalid operand size prefix %s, must be o16",
                           prefix_name(pfx));
             } else if (!(opt_opsize & 16)) {
@@ -1805,7 +1805,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             } else if (bits == 16 && pfx == P_OSP) {
                 /* Allow osp prefix as is */
             } else if (pfx != P_none && pfx != P_O32) {
-                nasm_warn(WARN_PREFIX_OPSIZE|ERR_PASS2,
+                nasm_warn(WARN_PREFIX_OPSIZE,
                           "invalid operand size prefix %s, must be o32",
                           prefix_name(pfx));
             } else if (!(opt_opsize & 32)) {
@@ -1839,7 +1839,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
                 if (!(ins->rex & REX_NW))
                     ins->rex |= REX_W;
             } else if (pfx != P_none && pfx != P_O64) {
-                nasm_warn(WARN_PREFIX_OPSIZE|ERR_PASS2,
+                nasm_warn(WARN_PREFIX_OPSIZE,
                           "invalid operand size prefix %s, must be o64",
                           prefix_name(pfx));
             } else if (!(opt_opsize & 64)) {
@@ -2013,7 +2013,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
                  *!  \c{bnd jmp dword}.
                  */
                 if (!ins->dummy)
-                    nasm_warn(WARN_PREFIX_BND|ERR_PASS2 ,
+                    nasm_warn(WARN_PREFIX_BND,
                               "jmp short does not init bnd regs - bnd prefix dropped");
             }
             break;
@@ -2246,7 +2246,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
              *!=lock
              *!  warns about \c{LOCK} prefixes on unlockable instructions.
              */
-            nasm_warn(WARN_PREFIX_LOCK_ERROR|ERR_PASS2 , "instruction is not lockable");
+            nasm_warn(WARN_PREFIX_LOCK_ERROR, "instruction is not lockable");
         } else if (temp->opcode == I_XCHG) {
             /*!
              *!prefix-lock-xchg [on] superfluous \c{LOCK} prefix on \c{XCHG} instruction
@@ -2256,7 +2256,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
              *!  explicitly provided by the user, so this warning indicates that
              *!  suboptimal code is being generated.
              */
-            nasm_warn(WARN_PREFIX_LOCK_XCHG|ERR_PASS2,
+            nasm_warn(WARN_PREFIX_LOCK_XCHG,
                       "superfluous LOCK prefix on XCHG instruction");
         }
     }
@@ -2272,6 +2272,27 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
         (itemp_has(temp, IF_BND) && !has_prefix(ins, PPS_REP, P_NOBND)))
             ins->prefixes[PPS_REP] = P_BND;
 
+    /*
+     * Warn on {pt} or {pn} on a nonhintable instruction
+     */
+    if (ins->prefixes[PPS_SEG] == P_PT || ins->prefixes[PPS_SEG] == P_PN) {
+        if (!itemp_has(temp, IF_JCC_HINT)) {
+            /*!
+             *!prefix-hint-dropped [on] invalid branch hint prefix dropped
+             *!  warns that the \c{{PT}} (predict taken) or \c{{PN}}
+             *!  (predict not taken) branch prediction hint prefixes
+             *!  are specified on an instruction that does not take
+             *!  these prefixes. As these prefixes alias the segment
+             *!  override prefixes, this may be a very serious error,
+             *!  and therefore NASM will not generate these prefixes.
+             *!  To force these prefixes to be emitted, use \c{DS} or
+             *!  \c{CS}, instead, respectively.
+             */
+            nasm_warn(WARN_PREFIX_HINT_DROPPED,
+                      "invalid branch hint prefix dropped");
+            ins->prefixes[PPS_SEG] = 0;
+        }
+    }
 
     /*
      * Add length of legacy prefixes
@@ -2347,9 +2368,11 @@ static int prefix_byte(enum prefixes pfx, const int bits)
         return 0xF3;
 
     case R_CS:
+    case P_PN:
         return 0x2E;
 
     case R_DS:
+    case P_PT:
         return 0x3E;
 
     case R_ES:
@@ -2673,7 +2696,7 @@ static void gencode(struct out_data *data, insn *ins)
                 nasm_nonfatal("non-absolute expression not permitted "
                               "as argument %d", op2);
             else if (opy->offset & ~mask)
-                nasm_warn(ERR_PASS2|WARN_NUMBER_OVERFLOW,
+                nasm_warn(WARN_NUMBER_OVERFLOW,
                            "is4 argument exceeds bounds");
             c = opy->offset & mask;
             goto emit_is4;
@@ -2776,7 +2799,7 @@ static void gencode(struct out_data *data, insn *ins)
                      * If this wasn't explicitly byte-sized, warn as though we
                      * had fallen through to the imm16/32/64 case.
                      */
-                    nasm_warn(ERR_PASS2|WARN_NUMBER_OVERFLOW,
+                    nasm_warn(WARN_NUMBER_OVERFLOW|ERR_PASS2,
                                "%s exceeds bounds",
                                (opx->type & BITS8) ? "signed byte" :
                                s == 16 ? "word" :
@@ -2797,7 +2820,7 @@ static void gencode(struct out_data *data, insn *ins)
             emit_rex(data, ins);
             if (absolute_op(opx)) {
                 if (!is_hint_nop(opx->offset)) {
-                    nasm_warn(ERR_PASS2, "not a valid hint-NOP opcode (0D, 18-1F)");
+                    nasm_warn(0, "not a valid hint-NOP opcode (0D, 18-1F)");
                 }
                 out_rawbyte(data, opx->offset);
             } else {
@@ -3629,7 +3652,7 @@ static int process_ea(operand *input, int rfield, opflags_t rflags,
                      */
                     if (input->segment == NO_SEG ||
                         (input->opflags & OPFLAG_RELATIVE)) {
-                        nasm_warn(WARN_EA_ABSOLUTE|ERR_PASS2,
+                        nasm_warn(WARN_EA_ABSOLUTE,
                                   "absolute address can not be RIP-relative");
                         input->type &= ~IP_REL;
                         input->type |= MEMORY;

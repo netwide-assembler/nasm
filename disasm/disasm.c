@@ -1226,9 +1226,16 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             return 0;
         ins->prefixes[PPS_OSIZE] = pfx;
     }
+
+    if (itemp_has(t, IF_JCC_HINT)) {
+        if ((prefix->seg & ~0x10) == 0x2e)
+            ins->prefixes[PPS_SEG] = prefix->seg & 0x10 ? P_PT : P_PN;
+    }
+
     if (!a_used) {
-        /* Emit segment override prefix explicitly */
-        ins->prefixes[PPS_SEG] = prefix->segover;
+        /* Emit any possible segment override prefix explicitly */
+        if (!ins->prefixes[PPS_SEG])
+            ins->prefixes[PPS_SEG] = prefix->segover;
 
         if (prefix->asp) {
             if (ins->prefixes[PPS_ASIZE])

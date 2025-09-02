@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -67,7 +67,8 @@ const char *prefix_name(int token)
         "a16", "a32", "a64", "asp", "lock", "o16", "o32", "o64", "osp",
         "rep", "repe", "repne", "repnz", "repz", "wait",
         "xacquire", "xrelease", "bnd", "nobnd", "{rex}", "{rex2}",
-        "{evex}", "{vex}", "{vex3}", "{vex2}", "{nf}", "{zu}"
+        "{evex}", "{vex}", "{vex3}", "{vex2}", "{nf}", "{zu}",
+        "{pt}", "{pn}"
     };
     const char *name;
 

@@ -684,6 +684,8 @@ enum prefixes { /* instruction prefixes */
     P_VEX2,
     P_NF,
     P_ZU,
+    P_PT,
+    P_PN,
     PREFIX_ENUM_LIMIT
 };
 
