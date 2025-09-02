@@ -948,6 +948,7 @@ SETcc		rm8				[m:	evex.zu.l0.f2.m4.wig   40+c /0	]	APX
 SETccZU		rm8				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
 
 $dq   CMPccXADD mem#,reg#,reg#			[mrv:	vex.128.66.0f38.w# e0+c /r]		CMPCCXADD,LONG,SM
+$dq   CMPccXADD mem#,reg#,reg#			[mrv:	evex.nf0.128.66.0f38.w# e0+c /r]		APX,CMPCCXADD,LONG,SM
 
 ;# Katmai Streaming SIMD instructions (SSE -- a.k.a. KNI, XMM, MMX2)
 ADDPS		xmmreg,xmmrm128			[rm:	np 0f 58 /r]				KATMAI,SSE
