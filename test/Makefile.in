@@ -8,6 +8,7 @@ X		= @EXEEXT@
 A		= @LIBEXT@
 
 NASM	= ../nasm$(X)
+NDISASM	= ../ndisasm$(X)
 OMFDUMP = ../misc/omfdump$(X)
 LISTOPT = -L+
 NASMOPT = -Ox -I../misc $(LISTOPT) $(OPT)
@@ -16,7 +17,14 @@ TESTS	= $(wildcard *.asm)
 RM_F	= rm -f
 RM_RF	= rm -rf
 
-$(NASM):
+tools:
+	$(MAKE) -C .. all
+
+nasm: $(NASM)
+
+ndisasm: $(NDISASM)
+
+$(NASM) $(NDISASM):
 	$(MAKE) -C .. $(@F)
 
 %.bin: %.asm $(NASM)
