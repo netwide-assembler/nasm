@@ -937,6 +937,7 @@ $bwdq CCMPscc	spec4,rm#,imm#			[vmi:	evex.scc.dfv.l0.m4.o# 80# /7	i#   ]	APX,SM1
 
 ;# Conditional instructions
 $wdq  CMOVcc	reg#,rm#			[rm:	o#  0f 40+c /r]				P6,SM
+$wdq  CMOVcc	reg#,reg#,rm#			[vrm:	evex.nf0.nd1.l0.m4.o# 40+c /r]		APX,P6,SM
 
 SETcc		rm8				[m:	0f 90+c /0]				386,SB
 SETcc		reg64				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU
