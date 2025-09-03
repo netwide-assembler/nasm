@@ -1213,7 +1213,7 @@ sub byte_code_compile($$$$) {
         } elsif ($op =~ /^(vex|xop)(|\..*)$/) {
             my $vexname = $1;
             my $c = $vexname eq 'xop' ? 1 : 0;
-            my ($m,$w,$l,$p) = (undef,undef,undef,0);
+            my ($m,$w,$l,$p) = (undef,undef,undef,undef);
             my $has_nds = 0;
             my @subops = split(/\./, $2);
 	    my $opsize = undef;
@@ -1250,24 +1250,32 @@ sub byte_code_compile($$$$) {
 		    $p = 1 unless (defined($p)); # 66
 		    $w = 0 unless (defined($w)); # w0
 		    $opsize = 0320;
-		} elsif ($oq eq 'ko8') {
-		    $p = 1 unless (defined($p)); # 66
-		    $w = 0 unless (defined($w)); # w0
-		} elsif ($oq eq 'ko16') {
-		    $p = 1 unless (defined($p)); # 66
-		    $w = 1 unless (defined($w)); # w1
-		    $opsize = 0320;
-		} elsif ($oq =~ /^k?o32$/) {
+		} elsif ($oq eq 'o32') {
 		    $p = 0 unless (defined($p)); # np
 		    if (!defined($w)) {
 			$w = 0 unless (defined($w)); # w0
 			$flags->{'WW'}++;
 		    }
 		    $opsize = 0321;
-		} elsif ($oq =~ /^k?o64$/) {
+		} elsif ($oq eq 'o64') {
 		    $p = 0 unless (defined($p)); # np
 		    $w = 1 unless (defined($w)); # w1
 		    $flags->{'WW'}++;
+		    $opsize = 0323 + $w;
+		} elsif ($oq eq 'ko8') {
+		    $p = 1 unless (defined($p)); # 66
+		    $w = 0 unless (defined($w)); # w0
+		} elsif ($oq eq 'ko16') {
+		    $p = 0 unless (defined($p)); # np
+		    $w = 0 unless (defined($w)); # w0
+		    $opsize = 0320;
+		} elsif ($oq eq 'ko32') {
+		    $p = 1 unless (defined($p)); # 66
+		    $w = 1 unless (defined($w)); # w1
+		    $opsize = 0321;
+		} elsif ($oq eq 'ko64') {
+		    $p = 1 unless (defined($p)); # 66
+		    $w = 1 unless (defined($w)); # w1
 		    $opsize = 0323 + $w;
 		} elsif ($oq eq 'np' || $oq eq 'p0') {
 		    $p = 0;
@@ -1294,7 +1302,7 @@ sub byte_code_compile($$$$) {
 		    die "$fname:$line: $opcode: undefined modifier: $vexname.$oq\n";
 		}
 	    }
-            if (!defined($m) || !defined($l) || !defined($p)) {
+            if (!defined($m) || !defined($l)) {
                 die "$fname:$line: $opcode: missing fields in \U$vexname\E specification\n";
             }
 
@@ -1366,30 +1374,35 @@ sub byte_code_compile($$$$) {
 			$flags->{'WIG'}++;
 		    }
 		} elsif ($oq eq 'o16') {
-		    if (defined($p) && $p != 1) {
-			warn "$fname:$line: $opcode: evex.p$p.o16 conflicts\n";
-		    }
 		    $p = 1 unless (defined($p)); # 66
 		    $w = 0 unless (defined($w)); # w0
 		    $opsize = 0320;
+		} elsif ($oq eq 'o32') {
+		    $p = 0 unless (defined($p)); # np
+		    if (!defined($w)) {
+			$w = 0 unless (defined($w)); # w0
+			$flags->{'WW'}++;
+		    }
+		    $opsize = 0321;
+		} elsif ($oq eq 'o64') {
+		    $p = 0 unless (defined($p)); # np
+		    $w = 1 unless (defined($w)); # w1
+		    $flags->{'WW'}++;
+		    $opsize = 0323 + $w;
 		} elsif ($oq eq 'ko8') {
 		    $p = 1 unless (defined($p)); # 66
 		    $w = 0 unless (defined($w)); # w0
 		} elsif ($oq eq 'ko16') {
+		    $p = 0 unless (defined($p)); # np
+		    $w = 0 unless (defined($w)); # w0
+		    $opsize = 0320;
+		} elsif ($oq eq 'ko32') {
 		    $p = 1 unless (defined($p)); # 66
 		    $w = 1 unless (defined($w)); # w1
-		    $opsize = 0320;
-		} elsif ($oq =~ /^k?o32$/) {
-		    $p = 0 unless (defined($p)); # np
-		    unless (defined($w)) {
-			$w = 0;
-			$flags->{'WW'}++;
-		    }
 		    $opsize = 0321;
-		} elsif ($oq =~ /^k?o64$/) {
-		    $p = 0 unless (defined($p)); # np
-		    $w = 1 unless (defined($w));
-		    $flags->{'WW'}++;
+		} elsif ($oq eq 'ko64') {
+		    $p = 1 unless (defined($p)); # 66
+		    $w = 1 unless (defined($w)); # w1
 		    $opsize = 0323 + $w;
 		} elsif ($oq eq 'ww') {
 		    $flags->{'WW'}++;

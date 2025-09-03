@@ -69,6 +69,7 @@ sub func_multisize($$$) {
     my($mac, $args, $rawargs) = @_;
     my @sbyte = ('imm8', 'imm8', 'sbyteword16', 'sbytedword32', 'sbytedword64');
     my $long = 0;		# 1 for LONG, 2 for NOLONG, 3 for invalid
+    my $wwflag = 0;
 
     my @ol;
     my $mask = $mac->{'mask'};
@@ -185,6 +186,7 @@ sub func_multisize($$$) {
 		# Drop
 	    } elsif ($mw eq 'w#') {
 		$o .= !$i ? 'ww' : ($s >= 64) ? 'w1' : 'w0';
+		$wwflag = 1;
 	    } elsif ($mw eq 'w##') {
 		$o .= 'w'.(($i-1) & 1);
 	    } elsif ($mw eq '#') {
@@ -195,6 +197,7 @@ sub func_multisize($$$) {
 	}
 	$o .= $ins;
 
+	$o .= ',WW'     if ($wwflag);
 	$o .= ',LONG'   if ($long & 1);
 	$o .= ',NOLONG' if ($long & 2);
 	$o .= ',ND'     if ($nd);
