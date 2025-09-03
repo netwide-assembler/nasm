@@ -185,8 +185,12 @@ sub func_multisize($$$) {
 		$long |= $longflag if ($2 =~ /$sn/i);
 		# Drop
 	    } elsif ($mw eq 'w#') {
-		$o .= !$i ? 'ww' : ($s >= 64) ? 'w1' : 'w0';
-		$wwflag = 1;
+		if (!$i) {
+			$o .= 'ww';
+			$wwflag = 1;
+		} else {
+			$o .= ($s >= 64) ? 'w1' : 'w0';
+		}
 	    } elsif ($mw eq 'w##') {
 		$o .= 'w'.(($i-1) & 1);
 	    } elsif ($mw eq '#') {
