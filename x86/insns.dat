@@ -2963,7 +2963,7 @@ VPMADD52LUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b4 /r]	AVXIFMA
 
 ;# AVX-512 mask register instructions
 $k $bwdq KMOV%	kreg#,krm#			    [rm: vex.l0.0f.ko# 90 /r	     ]		AVX512(b:DQ/w:F/BW),SM
-$k $bwdq KMOV%	krm#,kreg#			    [rm: vex.l0.0f.ko# 91 /r	     ]		AVX512(bw:DQ/BW),SM
+$k $bwdq KMOV%	krm#,kreg#			    [mr: vex.l0.0f.ko# 91 /r	     ]		AVX512(bw:DQ/BW),SM
 $k $dq   KMOV%  kreg#,reg#                          [rm: vex.l0.f2.0f.ko# 92 /r      ]		AVX512BW,SM
 $k $dq   KMOV%  reg#,kreg#                          [rm: vex.l0.f2.0f.ko# 93 /r	     ]		AVX512BW,SM
 $k $bw   KMOV%  kreg#,reg32                         [rm: vex.l0.0f.ko# 92 /r	     ]		AVX512(b:DQ/F)
@@ -2980,7 +2980,7 @@ $k $bwdq KORTEST% kreg#,kreg#                       [rm:  vex.l0.0f.ko# 98 /r ]	
 $k $bwdq KSHIFTL% kreg#,kreg#,imm8                  [rmi: vex.l0.66.0f3a.w## 32## /r ib ]	AVX512(b:DQ/w:F/BW),SM0-1
 $k $bwdq KSHIFTR% kreg#,kreg#,imm8                  [rmi: vex.l0.66.0f3a.w## 32## /r ib ]	AVX512(b:DQ/w:F/BW),SM0-1
 $k $bwdq KTEST%   kreg#,kreg#                       [rm:  vex.l0.0f.ko# 99 /r ]			AVX512(bw:DQ/BW),SM,FL
-$k $wdq  KUNPCK%% kreg#,kreg#*,kreg#                [rvm: vex.nds.l1.0f.ko# 4b /r ]		AVX512(w:F/BW),SM0-1
+$k $wdq  KUNPCK%% kreg#,kreg##*,kreg##              [rvm: vex.nds.l1.0f.ko# 4b /r ]		AVX512(w:F/BW),SM1-2
 $k $bwdq KXNOR%   kreg#,kreg#*,kreg#                [rvm: vex.nds.l1.0f.ko# 46 /r ]		AVX512(b:DQ/w:F/BW),SM
 $k $bwdq KXOR%    kreg#,kreg#*,kreg#                [rvm: vex.nds.l1.0f.ko# 47 /r ]		AVX512(b:DQ/w:F/BW),SM
 

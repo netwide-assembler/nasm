@@ -1239,7 +1239,6 @@ sub byte_code_compile($$$$) {
 		    $w = 0;
 		    $flags->{'WIG'}++;
 		} elsif ($oq eq 'ww') {
-		    $w = 0;
 		    $flags->{'WW'}++;
 		} elsif ($oq eq 'o8') {
 		    $p = 0 unless (defined($p)); # np
@@ -1260,11 +1259,15 @@ sub byte_code_compile($$$$) {
 		    $opsize = 0320;
 		} elsif ($oq =~ /^k?o32$/) {
 		    $p = 0 unless (defined($p)); # np
-		    $w = 0 unless (defined($w)); # w0
+		    if (!defined($w)) {
+			$w = 0 unless (defined($w)); # w0
+			$flags->{'WW'}++;
+		    }
 		    $opsize = 0321;
 		} elsif ($oq =~ /^k?o64$/) {
 		    $p = 0 unless (defined($p)); # np
 		    $w = 1 unless (defined($w)); # w1
+		    $flags->{'WW'}++;
 		    $opsize = 0323 + $w;
 		} elsif ($oq eq 'np' || $oq eq 'p0') {
 		    $p = 0;

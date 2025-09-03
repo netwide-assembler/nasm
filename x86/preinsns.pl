@@ -109,7 +109,7 @@ sub func_multisize($$$) {
 	$ins = $o.$ins;
 	$o = '';
 
-	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\bsel|\bopt\w?|\b[ioa]|\b(?:reg_)?[abcd]x|\breg|\brm|\bw)?\#{1,2}|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%{1,2})(.*)$/) {
+	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\bsel|\bopt\w?|\b[ioa]|\b(?:reg_)?[abcd]x|\bk?reg|\bk?rm|\bw)?\#{1,2}|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%{1,2})(.*)$/) {
 	    $o .= $1;
 	    my $mw = $2;
 	    $ins = $3;
@@ -168,10 +168,15 @@ sub func_multisize($$$) {
 	    } elsif ($mw =~ /^(o64)?nw$/) {
 		$long |= 2 if ($i == 32); # nw = 32 bits not encodable in long mode
 		$o .= $mw;
-	    } elsif ($mw =~ /^(reg|rm)(\#|[0-9]+)$/) {
+	    } elsif ($mw =~ /^(k?(?:reg|rm))(\#{1,2}|[0-9]+)$/) {
 		# (Possible) GPR reference
 		$o .= $1;
-		my $n = ($2 eq '#') ? $s : $2;
+		my $n = $2;
+		if ($n eq '#') {
+		    $n = $s;
+		} elsif ($n eq '##') {
+		    $n = $s >> 1;
+		}
 		$o .= $n;
 		$long |= 1 if ($n >= 64);
 	    } elsif ($mw =~ /^(NO)?LONG(\w+)$/) {
@@ -221,8 +226,8 @@ $macros{'k'} = {
 		push(@ol, $xins);
 	    }
 
-	    # Allow instruction without K
-	    if ($ins !~ /^\bKTEST/) {
+	    # Allow instruction without K, as long as they aren't "TEST"
+	    if ($ins !~ /^\bK\w*TEST/) {
 		my @on;
 		foreach my $oi (@ol) {
 		    # Remove first capital K
