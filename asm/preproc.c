@@ -2316,6 +2316,8 @@ static int ppscan(void *private_data, struct tokenval *tokval)
     case TOKEN_NUM:
     {
         bool rn_error;
+        if (*txt == '$')
+            warn_dollar_hex();
         tokval->t_integer = readnum(txt, &rn_error);
         if (rn_error)
             return tokval->t_type = TOKEN_ERRNUM;
