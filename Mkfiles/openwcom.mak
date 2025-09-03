@@ -60,7 +60,7 @@ NASM    = asm\nasm.obj
 NDISASM = disasm\ndisasm.obj
 
 PROGOBJ = $(NASM) $(NDISASM)
-PROGS   = nasm$(X) # ndisasm$(X)
+PROGS   = nasm$(X) ndisasm$(X)
 
 # Files dependent on extracted warnings
 WARNOBJ   = asm\warnings.obj
@@ -123,14 +123,19 @@ LIBOBJ_NW = &
 	&
 	common\common.obj &
 	&
-	x86\insnsa.obj x86\insnsb.obj x86\insnsd.obj x86\insnsn.obj &
-	x86\regs.obj x86\regvals.obj x86\regflags.obj x86\regdis.obj &
+	x86\insnsa.obj x86\insnsb.obj x86\insnsn.obj &
+	x86\regs.obj x86\regvals.obj x86\regflags.obj &
 	x86\iflag.obj &
 	&
 	$(OUTPUTOBJ) &
 	&
 	$(WARNOBJ)
-# disasm\disasm.obj disasm\sync.obj &
+
+# Objects which are only used for the disassembler
+LIBOBJ_DIS = &
+	disasm\disasm.obj disasm\sync.obj disasm\prefix.obj &
+	&
+	x86\insnsd.obj x86\regdis.obj
 
 # Objects for the local copy of zlib. The variable ZLIB is set to
 # $(ZLIBOBJ) if the internal version of zlib should be used.
@@ -179,15 +184,19 @@ all: perlreq nasm$(X) ndisasm$(X) .SYMBOLIC
 #   cd rdoff && $(MAKE) all
 
 NASMLIB = nasm.lib
+NDISLIB = ndisasm.lib
 
 nasm$(X): $(NASM) $(NASMLIB)
     $(LD) $(LDFLAGS) name nasm$(X) libr {$(NASMLIB) $(LIBS)} file {$(NASM)}
 
-ndisasm$(X): $(NDISASM) $(LIBOBJ)
-    $(LD) $(LDFLAGS) name ndisasm$(X) libr {$(NASMLIB) $(LIBS)} file {$(NDISASM)}
+ndisasm$(X): $(NDISASM) $(NDISLIB) $(NASMLIB)
+    $(LD) $(LDFLAGS) name ndisasm$(X) libr {$(NDISLIB) $(NASMLIB) $(LIBS)} file {$(NDISASM)}
 
 nasm.lib: $(LIBOBJ)
     wlib -q -b -n $@ $(LIBOBJ)
+
+ndisasm.lib: $(LIBOBJ_DIS)
+    wlib -q -b -n $@ $(LIBOBJ_DIS)
 
 # These are specific to certain Makefile syntaxes (what are they
 # actually supposed to look like for wmake?)
@@ -396,7 +405,7 @@ clean: .SYMBOLIC
     rm -f nasmlib\*.obj nasmlib\*.s nasmlib\*.i
     rm -f disasm\*.obj disasm\*.s disasm\*.i
     rm -f config.h config.log config.status
-    rm -f nasm$(X) ndisasm$(X) $(NASMLIB)
+    rm -f nasm$(X) ndisasm$(X) $(NASMLIB) $(NDISLIB)
 
 distclean: clean .SYMBOLIC
     rm -f config.h config.log config.status
