@@ -368,7 +368,7 @@ static int stdscan_token(struct tokenval *tv)
         }
         return tv->t_type = TOKEN_ID;
     } else if (*scan.bufptr == '$' &&
-               (!globl.dollarhex || !nasm_isnumchar(scan.bufptr[1]))) {
+               (!globl.dollarhex || !nasm_isdigit(scan.bufptr[1]))) {
         /*
          * It's a $ sign with no following hex number; this must
          * mean it's a Here token ($), evaluating to the current

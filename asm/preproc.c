@@ -1737,7 +1737,7 @@ static Token *tokenize(const char *line)
             p++;
         } else if (nasm_isidstart(*p) ||
                    (*p == '$' && nasm_isidchar(p[1]) &&
-                    (!globl.dollarhex || !nasm_isnumchar(p[1])))) {
+                    (!globl.dollarhex || !nasm_isdigit(p[1])))) {
             /*
              * A regular identifier. This includes keywords which are not
              * special to the preprocessor.
