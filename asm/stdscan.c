@@ -312,68 +312,86 @@ int stdscan(void *private_data, struct tokenval *tv)
     return i;
 }
 
+/* Skip id chars and return an appropriate string */
+static int stdscan_symbol(struct tokenval *tv)
+{
+    char *p = scan.bufptr;
+    const char *r = p;
+    size_t len;
+
+    p++;                        /* Leading character already verified */
+
+    /* Skip the entire symbol but only copy up to IDLEN_MAX characters */
+    while (nasm_isidchar(*p))
+        p++;
+
+    scan.bufptr = p;
+    len = p - r;
+    if (len >= IDLEN_MAX)
+        len = IDLEN_MAX - 1;
+
+    tv->t_len  = len;
+    tv->t_charptr = stdscan_copy(r, len);
+    return tv->t_type = TOKEN_ID;
+}
+
 static int stdscan_token(struct tokenval *tv)
 {
     const char *r;
 
     /* we have a token; either an id, a number, operator or char */
-    if (nasm_isidstart(*scan.bufptr) ||
-        (*scan.bufptr == '$' && nasm_isidstart(scan.bufptr[1]))) {
-        /* now we've got an identifier */
-        bool is_sym = false;
+    if (nasm_isidstart(*scan.bufptr)) {
         int token_type;
 
-        if (*scan.bufptr == '$') {
-            is_sym = true;
-            scan.bufptr++;
+        stdscan_symbol(tv);
+
+        if (tv->t_len <= MAX_KEYWORD) {
+            /* Check to see if it is a keyword of some kind */
+
+            token_type = nasm_token_hash(tv->t_charptr, tv);
+            if (unlikely(tv->t_flag & TFLAG_WARN)) {
+                /*! ptr [on] non-NASM keyword used in other assemblers
+                 *!  warns about keywords used in other assemblers that
+                 *!  might indicate a mistake in the source code.
+                 *!  Currently only the MASM \c{PTR} keyword is
+                 *!  recognized. If (limited) MASM compatibility is
+                 *!  desired, the \c{%use masm} macro package is
+                 *!  available, see \k{pkg_masm}; however, carefully note
+                 *!  the caveats listed.
+                 */
+                nasm_warn(WARN_PTR, "`%s' is not a NASM keyword",
+                          tv->t_charptr);
+            }
+
+            if (likely(!(tv->t_flag & TFLAG_BRC))) {
+                /* most of the tokens fall into this case */
+                return token_type;
+            }
         }
-
-        r = scan.bufptr++;
-        /* read the entire buffer to advance the buffer pointer but... */
-        while (nasm_isidchar(*scan.bufptr))
-            scan.bufptr++;
-
-        /* ... copy only up to IDLEN_MAX-1 characters */
-        tv->t_charptr = stdscan_copy(r, scan.bufptr - r < IDLEN_MAX ?
-                                     scan.bufptr - r : IDLEN_MAX - 1);
-
-        if (is_sym || scan.bufptr - r > MAX_KEYWORD)
-            return tv->t_type = TOKEN_ID;       /* bypass all other checks */
-
-        token_type = nasm_token_hash(tv->t_charptr, tv);
-        if (unlikely(tv->t_flag & TFLAG_WARN)) {
-            /*! ptr [on] non-NASM keyword used in other assemblers
-             *!  warns about keywords used in other assemblers that
-             *!  might indicate a mistake in the source code.
-             *!  Currently only the MASM \c{PTR} keyword is
-             *!  recognized. If (limited) MASM compatibility is
-             *!  desired, the \c{%use masm} macro package is
-             *!  available, see \k{pkg_masm}; however, carefully note
-             *!  the caveats listed.
-             */
-            nasm_warn(WARN_PTR, "`%s' is not a NASM keyword",
-                       tv->t_charptr);
-        }
-
-        if (likely(!(tv->t_flag & TFLAG_BRC))) {
-            /* most of the tokens fall into this case */
-            return token_type;
-        } else {
-            return tv->t_type = TOKEN_ID;
-        }
+        return tv->t_type = TOKEN_ID;
     } else if (*scan.bufptr == '$' && !nasm_isnumchar(scan.bufptr[1])) {
         /*
          * It's a $ sign with no following hex number; this must
          * mean it's a Here token ($), evaluating to the current
-         * assembly location, or a Base token ($$), evaluating to
-         * the base of the current segment.
+         * assembly location, a Base token ($$), evaluating to
+         * the base of the current segment, or an identifier beginning
+         * with $ (escaped by a previous $).
          */
         scan.bufptr++;
         if (*scan.bufptr == '$') {
-            scan.bufptr++;
-            return tv->t_type = TOKEN_BASE;
+            if (nasm_isidchar(scan.bufptr[1])) {
+                /* $-escaped symbol starting with $ */
+                return stdscan_symbol(tv);
+            } else {
+                scan.bufptr++;
+                return tv->t_type = TOKEN_BASE;
+            }
+        } else if (nasm_isidstart(*scan.bufptr)) {
+            /* $-escaped symbol that does NOT start with $ */
+            return stdscan_symbol(tv);
+        } else {
+            return tv->t_type = TOKEN_HERE;
         }
-        return tv->t_type = TOKEN_HERE;
     } else if (nasm_isnumstart(*scan.bufptr)) {   /* now we've got a number */
         bool rn_error;
         bool is_hex = false;
