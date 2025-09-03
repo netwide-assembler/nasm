@@ -307,9 +307,9 @@ static void mref_set_optype(operand *op)
     op->type |= MEMORY_ANY;
 
     if (b == -1 && (i == -1 || s == 0)) {
-        int is_rel = globalbits == 64 &&
+        int is_rel = globl.bits == 64 &&
             !(op->eaflags & EAF_ABS) &&
-            ((globalrel &&
+            ((globl.rel &&
               !(op->eaflags & EAF_FSGS)) ||
              (op->eaflags & EAF_REL));
 

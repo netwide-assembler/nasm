@@ -206,6 +206,66 @@ static int get_bits(const char *value)
     return i;
 }
 
+/*
+ * 1. An expression (true if nonzero 0)
+ * 2. The keywords true, on, yes for true
+ * 3. The keywords false, off, no for false
+ * 4. An empty line, for true
+ *
+ * This is equivalent to pp_get_boolean_option() outside of the
+ * preprocessor.
+ *
+ * On error, return defval (usually the previous value)
+ */
+static bool get_boolean_option(char **strp, bool defval)
+{
+    static const char * const noyes[] = {
+        "no", "yes",
+        "false", "true",
+        "off", "on"
+    };
+    bool result = true;
+    struct tokenval tokval;
+    expr *evalresult;
+    int tt;
+
+    tokval.t_type  = TOKEN_INVALID;
+    tokval.t_start = *strp;
+    stdscan_reset(*strp);
+
+    tt = stdscan(NULL, &tokval);
+    if (tt == TOKEN_EOS || tt == ']') {
+        result = true;
+        goto done;
+    }
+
+    if (tt == TOKEN_ID) {
+        size_t i;
+        for (i = 0; i < ARRAY_SIZE(noyes); i++)
+            if (!nasm_stricmp(tokval.t_charptr, noyes[i])) {
+                result = i & 1;
+                goto done;
+            }
+    }
+
+    evalresult = evaluate(stdscan, NULL, &tokval, NULL, true, NULL);
+
+    if (!evalresult)
+        goto done;
+
+    if (!is_really_simple(evalresult)) {
+        nasm_nonfatal("boolean flag expression must be a constant");
+        result = defval;
+        goto done;
+    }
+
+    result = reloc_value(evalresult) != 0;
+
+done:
+    *strp = (char *)tokval.t_start;
+    return result;
+}
+
 static enum directive parse_directive_line(char **directive, char **value)
 {
     char *p, *q, *buf;
@@ -303,13 +363,13 @@ bool process_directives(char *directive)
     case D_SEGMENT:         /* [SEGMENT n] */
     case D_SECTION:
     {
-	int sb = globalbits;
+	int sb = globl.bits;
         int32_t seg = ofmt->section(value, &sb);
 
         if (seg == NO_SEG) {
             nasm_nonfatal("segment name `%s' not recognized", value);
         } else {
-            globalbits = sb;
+            globl.bits = sb;
             switch_segment(seg);
         }
         break;
@@ -348,7 +408,7 @@ bool process_directives(char *directive)
     }
 
     case D_BITS:            /* [BITS bits] */
-        globalbits = get_bits(value);
+        globl.bits = get_bits(value);
         break;
 
     case D_GLOBAL:          /* [GLOBAL|STATIC|EXTERN|COMMON symbol:special] */
@@ -369,18 +429,22 @@ bool process_directives(char *directive)
 
     symdef:
     {
-        bool validid = true;
+        bool validid;
         int64_t size = 0;
         char *sizestr;
         bool rn_error;
 
-        if (*value == '$')
-            value++;        /* skip initial $ if present */
+        if (*value == '$') {
+            value++;        /* skip escaping $ if present */
+            validid = nasm_isidchar(*value);
+            if (globl.dollarhex)
+                validid &= !nasm_isnumchar(*value);
+        } else {
+            validid = nasm_isidstart(*value);
+        }
 
         q = value;
-        if (!nasm_isidstart(*q)) {
-            validid = false;
-        } else {
+        if (validid) {
             q++;
             while (*q && *q != ':' && !nasm_isspace(*q)) {
                 if (!nasm_isidchar(*q))
@@ -462,9 +526,17 @@ bool process_directives(char *directive)
         p = value;
         q = debugid;
         badid = overlong = false;
-        if (!nasm_isidstart(*p)) {
-            badid = true;
+        if (*p == '$') {
+            /* Skip $ used to escape an identifier */
+            p++;
+            badid = !nasm_isidchar(*p);
+            if (globl.dollarhex)
+                badid |= nasm_isnumchar(*p);
         } else {
+            badid = !nasm_isidstart(*p);
+        }
+
+        if (!badid) {
             while (*p && !nasm_isspace(*p)) {
                 if (q >= debugid + sizeof debugid - 1) {
                     overlong = true;
@@ -524,16 +596,16 @@ bool process_directives(char *directive)
         if (stdscan(NULL, &tokval) != TOKEN_INVALID) {
             switch (tokval.t_integer) {
             case S_REL:
-                globalrel = 1;
+                globl.rel = 1;
                 break;
             case S_ABS:
-                globalrel = 0;
+                globl.rel = 0;
                 break;
             case P_BND:
-                globalbnd = 1;
+                globl.bnd = 1;
                 break;
             case P_NOBND:
-                globalbnd = 0;
+                globl.bnd = 0;
                 break;
             default:
                 bad_param = true;
@@ -548,6 +620,10 @@ bool process_directives(char *directive)
         if (float_option(value)) {
             nasm_nonfatal("unknown 'float' directive: %s", value);
         }
+        break;
+
+    case D_DOLLARHEX:
+        globl.dollarhex = get_boolean_option(&value, globl.dollarhex);
         break;
 
     case D_PRAGMA:

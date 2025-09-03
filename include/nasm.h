@@ -1569,9 +1569,15 @@ static inline int64_t pass_count(void)
 }
 
 extern enum optimization optimizing;
-extern int globalbits;          /* 16, 32 or 64-bit mode */
-extern int globalrel;           /* default to relative addressing? */
-extern int globalbnd;           /* default to using bnd prefix? */
+
+/* Pass-wide state; reset on top of each pass */
+struct globalopt {
+    int  bits;                  /* 16, 32 or 64-bit mode */
+    bool rel;                   /* default to relative addressing? */
+    bool bnd;                   /* default to using bnd prefix? */
+    bool dollarhex;             /* $-prefixed hexadecimal numbers? */
+};
+extern struct globalopt globl;
 
 extern const char *inname;	/* primary input filename */
 extern const char *outname;     /* output filename */

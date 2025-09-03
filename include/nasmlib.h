@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -247,6 +247,11 @@ static inline unsigned int numvalue(unsigned char c)
  * `*error' to true if an error occurs, and false otherwise.
  */
 int64_t readnum(const char *str, bool *error);
+
+/*
+ * Warn for the use of $ as a hexadecimal prefix
+ */
+void warn_dollar_hex(void);
 
 /*
  * Get the numeric base corresponding to a character

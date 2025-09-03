@@ -1628,7 +1628,7 @@ static Token *tokenize(const char *line)
                 /* Conditional comma */
                 p++;
             } else if (nasm_isidchar(*p) ||
-                       ((*p == '%' || *p == '$') && nasm_isidchar(p[1]))) {
+                       (*p == '%' && nasm_isidchar(p[1]))) {
                 /* Identifier or some sort */
                 do {
                     p++;
@@ -1735,7 +1735,9 @@ static Token *tokenize(const char *line)
             /* ? operator */
             type = TOKEN_QMARK;
             p++;
-        } else if (nasm_isidstart(*p) || (*p == '$' && nasm_isidstart(p[1]))) {
+        } else if (nasm_isidstart(*p) ||
+                   (*p == '$' && nasm_isidchar(p[1]) &&
+                    (!globl.dollarhex || !nasm_isnumchar(p[1])))) {
             /*
              * A regular identifier. This includes keywords which are not
              * special to the preprocessor.
@@ -7443,7 +7445,7 @@ stdmac_bits(const SMacro *s, Token **params, int nparams)
     (void)params;
     (void)nparams;
 
-    return make_tok_num(NULL, globalbits);
+    return make_tok_num(NULL, globl.bits);
 }
 
 static Token *
@@ -7453,7 +7455,7 @@ stdmac_ptr(const SMacro *s, Token **params, int nparams)
     (void)params;
     (void)nparams;
 
-    switch (globalbits) {
+    switch (globl.bits) {
     case 16:
 	return new_Token(NULL, TOKEN_ID, "word", 4);
     case 32:

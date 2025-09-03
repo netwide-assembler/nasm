@@ -2268,7 +2268,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
      * BND prefix is added to every appropriate instruction line
      * unless it is overridden by NOBND prefix.
      */
-    if (globalbnd &&
+    if (globl.bnd &&
         (itemp_has(temp, IF_BND) && !has_prefix(ins, PPS_REP, P_NOBND)))
             ins->prefixes[PPS_REP] = P_BND;
 
@@ -3640,7 +3640,7 @@ static int process_ea(operand *input, int rfield, opflags_t rflags,
             if (long_mode) {
                 if (is_class(IMMEDIATE, input->type)) {
                     if (!(input->eaflags & EAF_ABS) &&
-                        ((input->eaflags & EAF_REL) || globalrel))
+                        ((input->eaflags & EAF_REL) || globl.rel))
                         input->type |= IP_REL;
                 }
                 if ((input->type & IP_REL) == IP_REL) {

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2016 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -41,9 +41,22 @@
 
 #include "nasmlib.h"
 #include "error.h"
-#include "nasm.h"               /* For globalbits */
+#include "nasm.h"               /* For globl.dollarhex */
 
 #define lib_isnumchar(c)    (nasm_isalnum(c) || (c) == '$' || (c) == '_')
+
+void warn_dollar_hex(void)
+{
+    /*!
+     *!number-deprecated-hex [on] $ prefix for hexadecimal is deprecated
+     *!    warns that the \c{$} prefix for hexadecimal numbers is
+     *!    deprecated, due to the syntactic conflict with \c{$} used
+     *!    as a symbol escape prefix. This syntax may be disabled by
+     *!    default in a future version of NASM.
+     */
+    nasm_warn(WARN_NUMBER_DEPRECATED_HEX,
+              "$ prefix for hexadecimal is deprecated");
+}
 
 int64_t readnum(const char *str, bool *error)
 {
@@ -91,10 +104,12 @@ int64_t readnum(const char *str, bool *error)
     pradix = sradix = 0;
     plen = slen = 0;
 
-    if (len > 2 && *r == '0' && (pradix = radix_letter(r[1])) != 0)
+    if (len > 2 && *r == '0' && (pradix = radix_letter(r[1])) != 0) {
 	plen = 2;
-    else if (len > 1 && *r == '$')
+    } else if (len > 1 && *r == '$' && globl.dollarhex) {
+        /* Warning here would probably duplicate warnings */
 	pradix = 16, plen = 1;
+    }
 
     if (len > 1 && (sradix = radix_letter(q[-1])) != 0)
 	slen = 1;

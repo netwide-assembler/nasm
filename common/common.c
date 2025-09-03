@@ -41,9 +41,9 @@
 #include "insns.h"
 
 /*
- * The current bit size of the CPU
+ * Per-pass global (across segments) state
  */
-int globalbits = 0;
+struct globalopt globl;
 
 /*
  * Name of a register token, if applicable; otherwise NULL

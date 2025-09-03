@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -108,8 +108,6 @@ const char * const _pass_types[] =
     "init", "preproc-only", "first", "optimize", "stabilize", "final"
 };
 int64_t _passn;
-int globalrel = 0;
-int globalbnd = 0;
 
 struct compile_time official_compile_time;
 
@@ -1649,7 +1647,11 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 	if (!pass_final() && !warn_list)
             warn_list = strlist_alloc(false);
 
-        globalbits = cmd_sb;  /* set 'bits' to command line default */
+        globl.bits = cmd_sb;  /* set 'bits' to command line default */
+        globl.bnd = false;
+        globl.rel = false;
+        globl.dollarhex = true;
+
         cpu = cmd_cpu;
         if (listname) {
             if (list_on_this_pass()) {
@@ -1680,7 +1682,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         if (pass_first())
             location.known = true;
         ofmt->reset();
-        switch_segment(ofmt->section(NULL, &globalbits));
+        switch_segment(ofmt->section(NULL, &globl.bits));
         pp_reset(fname, PP_NORMAL, depend_list);
 
         globallineno = 0;
@@ -1698,7 +1700,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                 goto end_of_line; /* Just do final cleanup */
 
             /* Not a directive, or even something that starts with [ */
-            parse_line(line, &output_ins, globalbits);
+            parse_line(line, &output_ins, globl.bits);
             forward_refs(&output_ins);
             process_insn(&output_ins);
             cleanup_insn(&output_ins);

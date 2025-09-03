@@ -330,7 +330,7 @@ static int stdscan_symbol(struct tokenval *tv)
     if (len >= IDLEN_MAX)
         len = IDLEN_MAX - 1;
 
-    tv->t_len  = len;
+    tv->t_len = len;
     tv->t_charptr = stdscan_copy(r, len);
     return tv->t_type = TOKEN_ID;
 }
@@ -341,14 +341,12 @@ static int stdscan_token(struct tokenval *tv)
 
     /* we have a token; either an id, a number, operator or char */
     if (nasm_isidstart(*scan.bufptr)) {
-        int token_type;
-
         stdscan_symbol(tv);
 
         if (tv->t_len <= MAX_KEYWORD) {
             /* Check to see if it is a keyword of some kind */
+            int token_type = nasm_token_hash(tv->t_charptr, tv);
 
-            token_type = nasm_token_hash(tv->t_charptr, tv);
             if (unlikely(tv->t_flag & TFLAG_WARN)) {
                 /*! ptr [on] non-NASM keyword used in other assemblers
                  *!  warns about keywords used in other assemblers that
@@ -369,7 +367,8 @@ static int stdscan_token(struct tokenval *tv)
             }
         }
         return tv->t_type = TOKEN_ID;
-    } else if (*scan.bufptr == '$' && !nasm_isnumchar(scan.bufptr[1])) {
+    } else if (*scan.bufptr == '$' &&
+               (!globl.dollarhex || !nasm_isnumchar(scan.bufptr[1]))) {
         /*
          * It's a $ sign with no following hex number; this must
          * mean it's a Here token ($), evaluating to the current
@@ -378,15 +377,10 @@ static int stdscan_token(struct tokenval *tv)
          * with $ (escaped by a previous $).
          */
         scan.bufptr++;
-        if (*scan.bufptr == '$') {
-            if (nasm_isidchar(scan.bufptr[1])) {
-                /* $-escaped symbol starting with $ */
-                return stdscan_symbol(tv);
-            } else {
-                scan.bufptr++;
-                return tv->t_type = TOKEN_BASE;
-            }
-        } else if (nasm_isidstart(*scan.bufptr)) {
+        if (*scan.bufptr == '$' && !nasm_isidchar(scan.bufptr[1])) {
+            scan.bufptr++;
+            return tv->t_type = TOKEN_BASE;
+        } else if (nasm_isidchar(*scan.bufptr)) {
             /* $-escaped symbol that does NOT start with $ */
             return stdscan_symbol(tv);
         } else {
@@ -404,6 +398,7 @@ static int stdscan_token(struct tokenval *tv)
         if (*scan.bufptr == '$') {
             scan.bufptr++;
             is_hex = true;
+            warn_dollar_hex();
         }
 
         for (;;) {
