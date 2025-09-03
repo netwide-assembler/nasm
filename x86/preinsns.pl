@@ -222,25 +222,26 @@ $macros{'k'} = {
 	    }
 
 	    # Allow instruction without K
-	    my @on;
-	    foreach my $oi (@ol) {
-		# Remove first capital K
-		($xins = $oi) =~ s/\bK//;
-		push(@on, $xins);
+	    if ($ins !~ /^\bKTEST/) {
+		my @on;
+		foreach my $oi (@ol) {
+		    # Remove first capital K
+		    ($xins = $oi) =~ s/\bK//;
+		    push(@on, $xins);
+		}
+		push(@ol, @on);
 	    }
-	    push(@ol, @on);
-	    undef @on;
 
 	    # Allow SHIFT -> SH
 	    if ($ins =~ /SHIFT/) {
+		my @on;
 		foreach my $oi (@ol) {
 		    # Remove first capital K
 		    ($xins = $oi) =~ s/SHIFT/SH/;
 		    push(@on, $xins);
 		}
-	    }
 	    push(@ol, @on);
-	    undef @on;
+	    }
 
 	    # All instruction patterns except the first are ND
 	    for (my $i = 1; $i < scalar(@ol); $i++) {
