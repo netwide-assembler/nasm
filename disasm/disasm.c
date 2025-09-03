@@ -1475,7 +1475,7 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
             /*
              * sort out wraparound
              */
-            offs += ins.loc.offset;
+            offs += ins.loc.offset + length;
             offs = (uint64_t)offs << nasize >> nasize;
             if ((t & (IMMEDIATE|SIZE_MASK)) == IMMEDIATE) {
                 if (asize != bits) {
