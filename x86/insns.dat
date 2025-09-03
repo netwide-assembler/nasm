@@ -5260,10 +5260,12 @@ ENQCMD		reg16,mem512			[rm:	a16 f2 0f38 f8 /r]			ENQCMD,SZ,NOLONG
 ENQCMD		reg32,mem512			[rm:	a16 f2 0f38 f8 /r]			ENQCMD,SZ,NOLONG,ND
 ENQCMD		reg32,mem512			[rm:	a32 f2 0f38 f8 /r]			ENQCMD,SZ
 ENQCMD		reg64,mem512			[rm:	a64 f2 0f38 f8 /r]			ENQCMD,SZ,LONG
+ENQCMD		reg64,mem512			[rm:	evex.nf0.nd0.l0.f2.m4.w1 f8 /r]		APX,ENQCMD,SZ,PRIV,LONG
 ENQCMDS		reg16,mem512			[rm:	a16 f3 0f38 f8 /r]			ENQCMD,SZ,NOLONG,PRIV
 ENQCMDS		reg32,mem512			[rm:	a16 f3 0f38 f8 /r]			ENQCMD,SZ,NOLONG,PRIV,ND
 ENQCMDS		reg32,mem512			[rm:	a32 f3 0f38 f8 /r]			ENQCMD,SZ,PRIV
 ENQCMDS		reg64,mem512			[rm:	a64 f3 0f38 f8 /r]			ENQCMD,SZ,PRIV,LONG
+ENQCMDS		reg64,mem512			[rm:	evex.nf0.nd0.l0.f3.m4.w1 f8 /r]		APX,ENQCMD,SZ,PRIV,LONG
 PCONFIG		void				[	np 0f 01 c5]				PCONFIG,PRIV
 XRESLDTRK	void				[	f2 0f 01 e9]				TSXLDTRK
 XSUSLDTRK	void				[	f2 0f 01 e8]				TSXLDTRK
