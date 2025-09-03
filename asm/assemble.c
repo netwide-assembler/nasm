@@ -345,9 +345,7 @@ static void nasm_ofmt_output(struct out_data *data)
         type = OUT_ADDRESS;
         if (tsegment != NO_SEG && tsegment < SEG_ABS)
             tsegment |= 1;
-        dptr = zero_buffer;
-        size = data->size;
-        break;
+        /* fall through */
 
     case OUT_ADDRESS:
         dptr = &data->toffset;
@@ -682,7 +680,12 @@ static inline void out_reserve(struct out_data *data, uint64_t size)
     out(data);
 }
 
-static void out_segment(struct out_data *data, const struct operand *opx)
+/*
+ * Emit a segment from a far expression. In this case, the segment offset is
+ * always zero. out_imm() handles explicit segment references, which may
+ * have addends.
+ */
+static void out_farseg(struct out_data *data, const struct operand *opx)
 {
     if (opx->opflags & OPFLAG_RELATIVE)
         nasm_nonfatal("segment references cannot be relative");
@@ -690,7 +693,7 @@ static void out_segment(struct out_data *data, const struct operand *opx)
     data->type      = OUT_SEGMENT;
     data->flags     = OUT_UNSIGNED;
     data->size      = 2;
-    data->toffset   = opx->offset;
+    data->toffset   = 0;
     data->tsegment  = ofmt->segbase(opx->segment | 1);
     data->twrt      = opx->wrt;
     out(data);
@@ -2672,7 +2675,7 @@ static void gencode(struct out_data *data, insn *ins)
         case4(074):
             if (opx->segment == NO_SEG)
                 nasm_nonfatal("value referenced by FAR is not relocatable");
-            out_segment(data, opx);
+            out_farseg(data, opx);
             break;
 
         case 0171:
