@@ -490,7 +490,8 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
     enum ea_type eat = EA_SCALAR;
     decoflags_t decoflags = 0;
 
-    if (bits == 64 && prefix->rex.w && itemp_has(t, IF_WW))
+    if (bits == 64 && prefix->rex.w &&
+        (prefix->rex.type < REX_VEX || itemp_has(t, IF_WW)))
         ins->op_size = osize = 64;
 
     ins->addr_size  = asize;
@@ -1050,7 +1051,6 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             break;
 
         case 0330:
-            /* Somewhat unclear what needs to be done here? */
             break;
 
         case 0331:
@@ -1393,17 +1393,19 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
             /*
              * Final check to make sure the operand types are valid
              */
-            for (i = 0; i < itemp->operands; i++) {
+            for (i = 0; i < tmp_ins.operands; i++) {
                 opflags_t tt = itemp->opd[i];
                 opflags_t it = tmp_ins.oprs[i].type;
 
                 if (!is_class(tt, it)) {
+#if 0
                     bool is_reg = !!(tmp_ins.oprs[i].segment & SEG_RMREG);
                     printf("flags 0x%lx%s%s do not match template 0x%lx\n",
-                            tt,
+                            it,
                             is_reg ? " for register " : "",
                             is_reg ? regname(tmp_ins.oprs[i].basereg) : "",
-                            it);
+                            tt);
+#endif
                     works = false;
                     break;
                 }
@@ -1435,6 +1437,9 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
                     best_length = length;
                     ins = tmp_ins;
                 }
+
+                if (itemp_has(itemp, IF_BESTDIS))
+                    break;      /* Don't search any further */
             }
         }
     }

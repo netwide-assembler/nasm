@@ -77,6 +77,7 @@ if_("HLE",               "HLE prefixed");
 if_("FL",                "Instruction modifies the flags");
 if_("MOPVEC",		 "M operand is a vector"); # Autodetected
 if_("SCC",		 "EVEX[27:24] is special condition code");
+if_("BESTDIS",           "Preferred disassembly pattern");
 
 #
 # Special immediates types like {dfv=}
