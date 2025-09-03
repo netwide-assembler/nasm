@@ -409,16 +409,19 @@ A numeric constant is simply a number. NASM allows you to specify
 numbers in a variety of number bases, in a variety of ways: you can
 suffix \c{H} or \c{X}, \c{D} or \c{T}, \c{Q} or \c{O}, and \c{B} or
 \c{Y} for \i{hexadecimal}, \i{decimal}, \i{octal} and \i{binary}
-respectively, or you can prefix \c{0x}, for hexadecimal in the style
-of C, or you can prefix \c{$} for hexadecimal in the style of Borland
-Pascal or Motorola Assemblers. Note, though, that the \I{$,
-prefix}\c{$} prefix does double duty as a prefix on identifiers (see
-\k{syntax}), so a hex number prefixed with a \c{$} sign must have a
-digit after the \c{$} rather than a letter.  In addition, current
-versions of NASM accept the prefix \c{0h} for hexadecimal, \c{0d} or
-\c{0t} for decimal, \c{0o} or \c{0q} for octal, and \c{0b} or \c{0y}
-for binary.  Please note that unlike C, a \c{0} prefix by itself does
-\e{not} imply an octal constant!
+respectively, or you can prefix \c{0h} or \c{0x}, \c{0d} or \c{0t},
+\c{0q} or \c{0o}, and \c{0b} or \c{0y) in the style of C.  Please note
+that unlike C, a \c{0} prefix by itself does \e{not} imply an octal
+constant (this is deprecated in C23.)
+
+Previous versions of NASM allowed prefixing \c{$} for hexadecimal in
+the style of Borland Pascal or Motorola Assemblers.  Unfortunately
+though, the \I{$, prefix}\c{$} prefix does double duty as a prefix on
+identifiers (see \k{syntax}), so a hex number prefixed with a \c{$}
+sign would have to have a digit after the \c{$} rather than a letter,
+which is \e{not} what users would typically expect. This syntax is
+strongly deprecated, and can be disabled entirely with the
+\c{[DOLLARHEX]} directive, see \k{dollarhex}.
 
 Numeric constants can have underscores (\c{_}) interspersed to break
 up long strings.
@@ -430,7 +433,6 @@ Some examples (all producing exactly the same code):
 \c         mov     ax,0200d        ; explicitly decimal
 \c         mov     ax,0d200        ; also decimal
 \c         mov     ax,0c8h         ; hex
-\c         mov     ax,$0c8         ; hex again: the 0 is required
 \c         mov     ax,0xc8         ; hex yet again
 \c         mov     ax,0hc8         ; still hex
 \c         mov     ax,310q         ; octal
@@ -442,6 +444,9 @@ Some examples (all producing exactly the same code):
 \c         mov     ax,1100_1000y   ; same binary constant once more
 \c         mov     ax,0b1100_1000  ; same binary constant yet again
 \c         mov     ax,0y1100_1000  ; same binary constant yet again
+\c
+\c         ; Deprecated syntax:
+\c         mov     ax,$0c8         ; hex again: the 0 is required
 
 \S{strings} \I{string}\I{string constants}\i{Character Strings}
 
@@ -1004,5 +1009,3 @@ entry point in the \c{obj} output format (see \k{dotdotstart}),
 of the current image in the \c{win64} output format (see \k{win64pic}).
 So just keep in mind that symbols beginning with a double period are
 special.
-
-

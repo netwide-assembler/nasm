@@ -15,6 +15,8 @@ the processor supports \c{RIP}-relative addressing directly; see the
 probably desirable to make that the default, using the directive
 \c{DEFAULT REL} (\k{default}).
 
+\c{DEFAULT REL} is likely to become the default in a future version of NASM.
+
 64-bit programming is relatively similar to 32-bit programming, but
 of course pointers are 64 bits long; additionally, all existing
 platforms pass arguments in registers rather than on the stack.
@@ -180,4 +182,3 @@ Integer and SSE register arguments are counted together, so for the case of
 \c      void foo(long long a, double b, int c)
 
 \c{a} is passed in \c{RCX}, \c{b} in \c{XMM1}, and \c{c} in \c{R8D}.
-

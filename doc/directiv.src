@@ -112,7 +112,11 @@ other special functions in 64-bit mode, and generating
 
 \c{DEFAULT REL} is disabled with \c{DEFAULT ABS}.
 
-\S{BND & NOBND} \i\c{BND} & \i\c{NOBND}: \c{BND} prefix
+\c{DEFAULT REL} is likely to become the default setting in a future
+version of NASM. Specify \c{DEFAULT ABS} explicitly if you need your
+code to avoid relative offsets.
+
+S{BND & NOBND} \i\c{BND} & \i\c{NOBND}: \c{BND} prefix
 
 If \c{DEFAULT BND} is set, all bnd-prefix available instructions following
 this directive are prefixed with bnd. To override it, \c{NOBND} prefix can
@@ -519,6 +523,19 @@ instructions where the VEX instructions forms were introduced
 requiring an explicit \c{\{vex\}} prefix. This is implicit if the
 \c{EVEX} flag is disabled and the \c{VEX} flag is enabled. Default
 off.
+
+
+\H{dollarhex} \i\c{[DOLLARHEX]}: Enable or disable \c{$} hexadecimal syntax
+
+Using a \c{$} prefix for hexadecimal numbers is deprecated, as it
+conflicts with the use of \c{$} for escaping symbols (see \k{numconst}
+and \k{syntax}). The \c{[DOLLARHEX]} directive can be used to disable
+it completely:
+
+\c     [dollarhex off]
+
+When disabled, symbols beginning with digits can be escaped as well,
+e.g. \c{$3} would define a symbol \c{3}.
 
 
 \H{FLOAT} \i\c{FLOAT}: Handling of \I{floating-point, constants}floating-point constants

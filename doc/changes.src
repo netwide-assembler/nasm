@@ -11,11 +11,35 @@ since 2007.
 
 \b Improve the documentation for building from source (\k{source}).
 
-\S{cl-2.16.04} Version 2.16.04
+\b Add support for the APX and AVX10 instruction sets, and various
+   miscellaneous new instructions.
+
+\b Add new preprocessor functions: \c{%depend()}, \c{%pathsearch()},
+   \c{%realpath()}. See \k{ppfunc}.
+
+\b New preprocessor directive \c{%iffile} (and corresponding function
+   \c{%isfile()}) to test for the existence of a file. See \k{iffile}.
+
+\b New preprocessor directive \c{%note} to insert a note in the list
+   file, without issuing an external diagnosic.  Unlike a comment, it
+   is optionally macro-expanded, see \k{pperror}.
+
+\b Fix a number of invalid memory references (usually causing crashes)
+   on various invalid inputs.
+
+\b Fix multiple bugs in the handling of \c{$}-escaped symbols.
+
+\b The use of \c{$} as a prefix for hexadecimal numbers has been
+   deprecated, and will now issue a warning. A new directive
+   \c{[DOLLARHEX]} can be used to disable this syntax entirely, see
+   \k{dollarhex}.
+
+\b Fix the generation of segment selector references (mainly used in
+   the \c{obj} output format.)
 
 \b Clean up the command-line help text (\c{-h}) and break it down into
-individual topics, as the previous output was just too verbose to be
-practical as a quick reference.
+   individual topics, as the previous output was just too verbose to be
+   practical as a quick reference.
 
 \S{cl-2.16.03} Version 2.16.03
 
