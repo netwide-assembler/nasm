@@ -7105,8 +7105,14 @@ static void debug_macro_start(MMacro *m, struct src_location where)
 
 static void debug_macro_end(MMacro *m)
 {
-    struct debug_macro_inv *inv = m->dbg.inv;
+    struct debug_macro_inv *inv, *minv;
+    MMacro *mm = istk->mstk.mmac;
 
+    /* Not actually ending the current macro */
+    if (m->mstk.mmac == m)
+        return;
+
+    inv = m->dbg.inv;
     nasm_assert(inv == debug_current_macro);
 
     list_reverse(inv->down.l);
@@ -7114,16 +7120,14 @@ static void debug_macro_end(MMacro *m)
     m->dbg.inv = NULL;
     inv = inv->up;
 
-    m = istk->mstk.mmac;
-    if (m) {
-        nasm_assert(inv == m->dbg.inv);
-        debug_current_macro = inv;
+    minv = mm ? mm->dbg.inv : NULL;
+
+    nasm_assert(inv == minv);
+    debug_current_macro = inv;
+    if (inv)
         current_inv_list = &inv->down;
-    } else {
-        nasm_assert(!inv);
-        debug_current_macro = NULL;
+    else
         current_inv_list = &dmi.inv;
-    }
 }
 
 static void free_debug_macro_addr_tree(struct rbtree *tree)
