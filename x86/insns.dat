@@ -2964,12 +2964,14 @@ VPMADD52LUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b4 /r]	AVXIFMA
 ;# AVX-512 mask register instructions
 $k $bwdq KMOV%	kreg#,krm#			    [rm: vex.l0.0f.ko# 90 /r	     ]		AVX512(b:DQ/w:F/BW),SM
 $k $bwdq KMOV%	krm#,kreg#			    [mr: vex.l0.0f.ko# 91 /r	     ]		AVX512(bw:DQ/BW),SM
-$k $dq   KMOV%  kreg#,reg#                          [rm: vex.l0.f2.0f.ko# 92 /r      ]		AVX512BW,SM
-$k $dq   KMOV%  reg#,kreg#                          [rm: vex.l0.f2.0f.ko# 93 /r	     ]		AVX512BW,SM
-$k $bw   KMOV%  kreg#,reg32                         [rm: vex.l0.0f.ko# 92 /r	     ]		AVX512(b:DQ/F)
-$k $bw   KMOV%  kreg#,reg#                          [rm: vex.l0.0f.ko# 92 /r	     ]		AVX512(b:DQ/F),ND,SM
-$k $bw   KMOV%	reg32,kreg#			    [rm: vex.l0.0f.ko# 93 /r	     ]		AVX512(b:DQ/F)
-$k $bw   KMOV%	reg#,kreg#			    [rm: vex.l0.0f.ko# 93 /r	     ]		AVX512(b:DQ/F),ND,SM
+$k $dq   KMOV%  kreg#,reg#                          [rm: vex.l0.0f.f2.ww 92 /r	     ]		AVX512BW,SM
+$k $dq   KMOV%  reg#,kreg#			    [rm: vex.l0.0f.f2.ww 93 /r	     ]		AVX512BW,SM
+$k $b    KMOV%  kreg#,reg32                         [rm: vex.l0.0f.66.w0 92 /r	     ]		AVX512DQ
+$k $b    KMOV%  kreg#,reg#                          [rm: vex.l0.0f.66.w0 92 /r	     ]		AVX512DQ,ND,SM
+$k $w    KMOV%  kreg#,reg32                         [rm: vex.l0.0f.np.w0 92 /r	     ]		AVX512F
+$k $w    KMOV%  kreg#,reg#                          [rm: vex.l0.0f.np.w0 92 /r	     ]		AVX512F,ND,SM
+$k $b    KMOV%	reg32,kreg#			    [rm: vex.l0.0f.66.w0 93 /r	     ]		AVX512DQ
+$k $w    KMOV%	reg32,kreg#			    [rm: vex.l0.0f.np.w0 93 /r	     ]		AVX512F
 
 $k $bwdq KADD%  kreg#,kreg#*,kreg#                  [rvm: vex.l1.0f.ko# 4a /r ]			AVX512(bw:DQ/BW),SM
 $k $bwdq KAND%  kreg#,kreg#*,kreg#                  [rvm: vex.l1.0f.ko# 41 /r ]			AVX512(b:DQ/w:F/BW),SM
