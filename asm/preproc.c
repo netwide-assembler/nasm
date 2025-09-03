@@ -1737,6 +1737,7 @@ static Token *tokenize(const char *line)
             p++;
         } else if (nasm_isidstart(*p) ||
                    (*p == '$' && nasm_isidchar(p[1]) &&
+                    (p[1] != '$' || nasm_isidchar(p[2])) &&
                     (!globl.dollarhex || !nasm_isdigit(p[1])))) {
             /*
              * A regular identifier. This includes keywords which are not
@@ -2303,15 +2304,24 @@ static int ppscan(void *private_data, struct tokenval *tokval)
     } while (tline->type == TOKEN_WHITESPACE);
 
     txt = tok_text(tline);
+    tokval->t_start = txt;
+    tokval->t_len = tline->len;
     tokval->t_charptr = (char *)txt; /* Fix this */
 
     switch (tline->type) {
     default:
+        break;
         return tokval->t_type = tline->type;
 
     case TOKEN_ID:
-        /* This could be an assembler keyword */
-	return nasm_token_hash(txt, tokval);
+        if (txt[0] == '$') {
+            /* Escaped symbol */
+            tokval->t_charptr++;
+        } else {
+            /* This could be an assembler keyword */
+            return nasm_token_hash(txt, tokval);
+        }
+        break;
 
     case TOKEN_NUM:
     {
@@ -2333,6 +2343,8 @@ static int ppscan(void *private_data, struct tokenval *tokval)
         tokval->t_inttwo = tline->len;
 	return tokval->t_type = TOKEN_STR;
     }
+
+    return tokval->t_type = tline->type;
 }
 
 /*
