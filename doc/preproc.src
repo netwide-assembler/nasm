@@ -769,16 +769,6 @@ The expressions passed to \c{%eval()} are \i{critical expressions},
 see \k{crit}.
 
 
-\S{f_fullpath} \i\c{%fullpath()} Function
-
-The \c{%fullpath()} function takes a quoted string as argument and, if
-supported by the operating system, attempts to convert it to a
-canonical absolute path name; then expands to a quoted string
-containing that path name.
-
-If unable, it expands to the unmodified string.
-
-
 \S{f_hex} \i\c{%hex()} Function
 
 Equivalent to \i\c\{%eval()}, except that the results generated are
