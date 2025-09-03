@@ -400,13 +400,13 @@ static bool ieee_flconvert(const char *string, fp_limb *mant,
  */
 
 /* Set a bit, using *bigendian* bit numbering (0 = MSB) */
-static void set_bit(fp_limb *mant, int bit)
+static void set_bit(fp_limb *mant, size_t bit)
 {
-    mant[bit/LIMB_BITS] |= LIMB_TOP_BIT >> (bit & (LIMB_BITS-1));
+    mant[bit/LIMB_BITS] |= (fp_limb)1 << (~bit & (LIMB_BITS-1));
 }
 
 /* Test a single bit */
-static int test_bit(const fp_limb *mant, int bit)
+static int test_bit(const fp_limb *mant, size_t bit)
 {
     return (mant[bit/LIMB_BITS] >> (~bit & (LIMB_BITS-1))) & 1;
 }
