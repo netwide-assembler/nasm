@@ -315,7 +315,6 @@ parse_rex(struct rexfields *rf, uint8_t op, const uint8_t *p)
         xreg     = vex3_xreg(val);
         vreg     = vex3_vreg(val);
         rf->rreg = vex3_rreg(val);
-        rf->map += vex3_map(val);
         rf->pp   = vex3_pp(val);
         rf->l    = vex3_l(val);
         rf->w    = vex3_w(val);

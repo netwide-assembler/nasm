@@ -112,12 +112,15 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, uint32_t rex)
         {TMMREG, nasm_rd_tmmreg},
     };
 
-    if (!(regflags & (REGISTER|REGMEM)))
-        return 0;        /* Registers not permissible?! */
-
     /* All the entries below look up regval in 32-entry arrays */
     if (r >= DISREGTBLSZ)
         return 0;
+
+    if (!(regflags & (REGISTER|REGMEM)))
+        return 0;        /* Registers not permissible?! */
+
+    if (!(regflags & REG_CLASS_GPR))
+        regflags &= ~SIZE_MASK;
 
     if (is_class(regflags, REG8)) {
         if (rex & (REX_P|REX_NH))
@@ -891,30 +894,18 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             if ((vexm & 0x1f) != prefix->rex.map)
                 return 0;
 
-            switch (vexwlp & 060) {
-            case 000:
-                if (prefix->rex.w)
-                     return 0;
-                break;
-            case 020:
-                if (!(prefix->rex.w))
+            if (!itemp_has(t, IF_WIG)) {
+                if (prefix->rex.w != !!(vexwlp & 0x80))
                     return 0;
-                ins->rex &= ~REX_W; /* ? */
-                break;
-            case 040:        /* VEX.W is a don't care */
-                ins->rex &= ~REX_W;
-                ins->rex |= REX_NW;
-                break;
-            case 060:
-                break;
             }
 
             if ((vexwlp & 3) != prefix->rex.pp)
                 return 0;
 
-            /* The 010 bit of vexwlp is set if VEX.L is ignored */
-            if (!(vexwlp & 010) && !!(vexwlp & 07) != prefix->rex.l)
-                return 0;
+            if (!itemp_has(t, IF_LIG)) {
+                if (((vexwlp >> 2) & 3) != prefix->rex.l)
+                    return 0;
+            }
 
             if (c == 0270) {
                 if (prefix->rex.vreg != 0)
@@ -1397,6 +1388,10 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
                 opflags_t tt = itemp->opd[i];
                 opflags_t it = tmp_ins.oprs[i].type;
 
+                /* Strip size from a unsized register type */
+                if ((tt & (REGISTER|REG_CLASS_GPR)) == REGISTER)
+                    tt &= ~SIZE_MASK;
+
                 if (!is_class(tt, it)) {
 #if 0
                     bool is_reg = !!(tmp_ins.oprs[i].segment & SEG_RMREG);
@@ -1476,11 +1471,11 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
 
         output[slen++] = separator;
 
-        offs = o->offset;
         if (o->segment & SEG_RELATIVE) {
             /*
              * sort out wraparound
              */
+            offs += ins.loc.offset;
             offs = (uint64_t)offs << nasize >> nasize;
             if ((t & (IMMEDIATE|SIZE_MASK)) == IMMEDIATE) {
                 if (asize != bits) {
