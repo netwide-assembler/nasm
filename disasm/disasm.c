@@ -1388,9 +1388,11 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
                 opflags_t tt = itemp->opd[i];
                 opflags_t it = tmp_ins.oprs[i].type;
 
-                /* Strip size from a unsized register type */
-                if ((tt & (REGISTER|REG_CLASS_GPR)) == REGISTER)
+                /* Strip flags that are not applicable to disassembler matching */
+                if (!is_class(REG_GPR, it))
                     tt &= ~SIZE_MASK;
+                if (is_class(IMMEDIATE, tt))
+                    tt &= ~SUBCLASS_MASK;
 
                 if (!is_class(tt, it)) {
 #if 0

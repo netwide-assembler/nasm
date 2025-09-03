@@ -145,7 +145,7 @@ static uint32_t vex3_breg(uint32_t vex)
 }
 static uint32_t vex3_map(uint32_t vex)
 {
-    return xbits(~vex,8,5,0);
+    return xbits(vex,8,5,0);
 }
 static uint32_t vex3_vreg(uint32_t vex)
 {
@@ -296,7 +296,7 @@ parse_rex(struct rexfields *rf, uint8_t op, const uint8_t *p)
         goto vex_common;
 
     case 0x8f:
-        rf->raw  = val = op + (getu16(p+1) << 16);
+        rf->raw  = val = op + (getu16(p+1) << 8);
         rf->map  = vex3_map(val);
         if (rf->map < 8)
             return NULL;
@@ -305,7 +305,7 @@ parse_rex(struct rexfields *rf, uint8_t op, const uint8_t *p)
         goto vex_common;
 
     case 0xc4:
-        rf->raw  = val = op + (getu16(p+1) << 16);
+        rf->raw  = val = op + (getu16(p+1) << 8);
         rf->map  = vex3_map(val);
         rf->xmap = rf->map + MAP_BASE_VEX;
         rf->len  = 3;
