@@ -20,9 +20,10 @@ PA_CROSS_COMPILE
 dnl Enable any available C extensions
 PA_PROG_CC
 AC_USE_SYSTEM_EXTENSIONS
-PA_ADD_CPPFLAGS([-std=c17], [], [],
-[PA_ADD_CPPFLAGS([-std=c11], [], [],
- [PA_ADD_CPPFLAGS([-std=c99])])])
+PA_ADD_CPPFLAGS([-std=c23], [], [],
+[PA_ADD_CPPFLAGS([-std=c17], [], [],
+ [PA_ADD_CPPFLAGS([-std=c11], [], [],
+  [PA_ADD_CPPFLAGS([-std=c99])])])])
 
 dnl Options for debugging and profiling
 PA_OPTION_DEBUG
@@ -377,5 +378,5 @@ dnl
 PA_CHECK_BAD_STDC_INLINE
 PA_C_TYPEOF
 
-AC_CONFIG_FILES([Makefile doc/Makefile test/Makefile])
+AC_CONFIG_FILES([Makefile doc/Makefile misc/Makefile test/Makefile])
 AC_OUTPUT

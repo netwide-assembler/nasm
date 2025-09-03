@@ -81,6 +81,7 @@ TAGS
 /macros/macros.c
 /misc/nasmtok.el
 /misc/omfdump
+/misc/Makefile
 /nasm
 /ndisasm
 /nasm.spec
