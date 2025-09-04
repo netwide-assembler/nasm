@@ -401,6 +401,7 @@ WBNOINVD	void				[	f3 0f 09]				WBNOINVD,PRIV
 
 INVPCID		reg32,mem128			[rm:	66 0f38 82 /r]				INVPCID,PRIV,NOLONG
 INVPCID		reg64,mem128			[rm:	66 0f38 82 /r]				INVPCID,PRIV,LONG
+INVPCID		reg64,mem128			[rm: 	evex.nf0.nd0.l0.f3.m4.w1 f2 /r]		APX,INVPCID,PRIV,LONG
 INVLPG		mem				[m:	0f 01 /7]				486,PRIV
 $wdq  INVLPGA	ax#,reg_ecx			[--:	a#  0f 01 df]				X86_64,AMD
       INVLPGA	void				[	adf 0f 01 df]				X86_64,AMD,ND
@@ -1313,8 +1314,10 @@ VMXON		mem				[m:	f3 0f c7 /6]				VMX
 ;# Extended Page Tables VMX instructions
 INVEPT		reg32,mem			[rm: 66 0f38 80 /r]				VMX,SO,NOLONG
 INVEPT		reg64,mem			[rm: o64nw 66 0f38 80 /r]			VMX,SO,LONG
+INVEPT		reg64,mem128			[rm: evex.nf0.nd0.l0.f3.m4.w1 f0 /r]		APX,VMX,SO,LONG
 INVVPID		reg32,mem			[rm: 66 0f38 81 /r]				VMX,SO,NOLONG
 INVVPID		reg64,mem			[rm: o64nw 66 0f38 81 /r]			VMX,SO,LONG
+INVVPID		reg64,mem128			[rm: evex.nf0.nd0.l0.f3.m4.w1 f1 /r]		APX,VMX,SO,LONG
 ;# SEV-SNP AMD instructions
 PVALIDATE	void				[       f2 0f 01 ff]				VMX,AMD
 RMPADJUST	void				[       f3 0f 01 fe]				VMX,AMD
