@@ -2988,6 +2988,14 @@ $k $w    KMOV%  kreg#,reg32                         [rm: vex.l0.0f.np.w0 92 /r	 
 $k $w    KMOV%  kreg#,reg#                          [rm: vex.l0.0f.np.w0 92 /r	     ]		AVX512F,ND
 $k $b    KMOV%	reg32,kreg#			    [rm: vex.l0.0f.66.w0 93 /r	     ]		AVX512DQ
 $k $w    KMOV%	reg32,kreg#			    [rm: vex.l0.0f.np.w0 93 /r	     ]		AVX512F
+$k $bwdq KMOV%	kreg#,mem#			    [rm: evex.nf0.nd0.l0.0f.ko# 90 /r]		APX,AVX512(b:DQ/w:F/BW)
+$k $bwdq KMOV%	mem#,krm#			    [mr: evex.nf0.nd0.l0.0f.ko# 91 /r]		APX,AVX512(b:DQ/w:F/BW)
+$k $dq   KMOV%  kreg#,reg#			    [rm: evex.nf0.nd0.l0.0f.f2.w# 92 /r	     ]	APX,AVX512BW
+$k $dq   KMOV%  reg#,kreg#			    [rm: evex.nf0.nd0.l0.0f.f2.w# 93 /r	     ]	APX,AVX512BW
+$k $b    KMOV%  kreg#,reg32                         [rm: evex.nf0.nd0.l0.0f.66.w0 92 /r	     ]	APX,AVX512DQ
+$k $w    KMOV%  kreg#,reg32                         [rm: evex.nf0.nd0.l0.0f.np.w0 92 /r	     ]	APX,AVX512F
+$k $b    KMOV%	reg32,kreg#			    [rm: evex.nf0.nd0.l0.0f.66.w0 93 /r	     ]	APX,AVX512DQ
+$k $w    KMOV%	reg32,kreg#			    [rm: evex.nf0.nd0.l0.0f.np.w0 93 /r	     ]	APX,AVX512F
 
 $k $bwdq KADD%  kreg#,kreg#*,kreg#                  [rvm: vex.l1.0f.ko# 4a /r ]			AVX512(bw:DQ/BW),SM
 $k $bwdq KAND%  kreg#,kreg#*,kreg#                  [rvm: vex.l1.0f.ko# 41 /r ]			AVX512(b:DQ/w:F/BW),SM
