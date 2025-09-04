@@ -103,6 +103,7 @@ $shift !x,xs="0f38 f7" ROL x=f3,xs="0f3a f0",ROR RCL RCR x=66,SHL,SAL x=f2,SHR -
 ;# Other basic integer arithmetic
 $wd   INC	reg#				[r:	o# 40+r]				8086,NOLONG
 $bwdq INC	rm#				[m:	hle o# fe# /0]				8086,LOCK
+$bwdq INC	reg#?,rm#			[vm:	evex.nf.ndx.l0.m4.o# fe# /0]		APX,8086,LOCK
 $wd   DEC	reg#				[r:	o# 48+r]				8086,NOLONG
 $bwdq DEC	rm#				[m:	hle o# fe# /1]				8086,LOCK
 $bwdq DEC	reg#?,rm#			[vm:	evex.nf.ndx.l0.m4.o# fe# /1]		APX,8086,LOCK
