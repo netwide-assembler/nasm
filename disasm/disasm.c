@@ -792,13 +792,14 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             matchmask = ~(EVEX_P0BP|EVEX_P0RP|EVEX_P0B|EVEX_P0X|EVEX_P0R|
                           EVEX_P1XP);
 
-            if (memop && !itemp_has(t, IF_SCC)) {
+            if (c != 0250 || (memop && !itemp_has(t, IF_SCC))) {
                 /*
-                 * V4 if X is a is a vector, which is only possible if
-                 * this is a memory operation; otherwise X4. However,
-                 * X4 is explicitly forbidden if this is not a memory
-                 * operation, otherwise this bit is supposedly
-                 * ignored if not used.
+                 * V4 unless X is a is a vector (which is only
+                 * possible if this is a memory operation), in which
+                 * case this is X4.  However, X4 is explicitly
+                 * forbidden if this is not a memory operation,
+                 * otherwise this bit is supposedly ignored if not
+                 * used.
                  */
                 matchmask &= ~EVEX_P2VP; /* Either V4 or X4 */
             }
