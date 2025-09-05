@@ -801,6 +801,12 @@ static bool tok_macro_or_func_id(const Token *x)
                  x->type == TOKEN_LOCAL_MACRO);
 }
 
+/* Skip a token, checking for NULL */
+static inline Token *skip_tok(Token *x)
+{
+    return x ? x->next : NULL;
+}
+
 /* Skip past any whitespace */
 static inline Token *skip_white(Token *x)
 {
@@ -808,6 +814,12 @@ static inline Token *skip_white(Token *x)
         x = x->next;
 
     return x;
+}
+
+/* Skip past a token and any whitespace after it */
+static inline Token *skip_tok_white(Token *x)
+{
+    return skip_white(skip_tok(x));
 }
 
 /* Delete any whitespace */
@@ -4246,6 +4258,58 @@ static MMacro *do_exit_macro(const char *dname, bool named)
     }
 }
 
+/*
+ * Issue a user-originated error message
+ */
+static void user_error(enum preproc_token op, Token **tlinep)
+{
+    Token *tline, *t;
+    char *p;
+    const char *q;
+    errflags severity;
+
+    switch (op) {
+    case PP_NOTE:
+        severity = ERR_NOTE;
+        break;
+    case PP_WARNING:
+        /*!
+         *!user [on] \c{%warning} directives
+         *!  controls output of \c{%warning} directives (see \k{pperror}).
+         */
+        severity = ERR_WARNING|WARN_USER|ERR_PASS2;
+        break;
+    case PP_ERROR:
+        /* Only error out if this is the final pass */
+        severity = ERR_NONFATAL|ERR_PASS2;
+        break;
+    case PP_FATAL:
+        severity = ERR_FATAL;
+        break;
+    default:
+        panic();
+    }
+
+    *tlinep = tline = expand_smacro(skip_white(*tlinep));
+    t = skip_tok_white(tline);
+
+    if (tok_is(tline, TOKEN_STR) && !t) {
+        /* The line contains only a quoted string */
+        p = NULL;                 /* Don't try to free */
+        q = unquote_token(tline); /* Ignore NUL character truncation */
+    } else {
+        /* Not a quoted string, or more than one quoted string */
+        q = p = detoken(tline, false);
+    }
+
+    q = nasm_skip_spaces(q);
+    if (!*q)
+        q = pp_directives[op];   /* Less confusing than an empty message */
+
+    nasm_error(severity, "%s", q);
+    nasm_free(p);               /* p == NULL if nothing to free */
+}
+
 /**
  * find and process preprocessor directive in passed line
  * Find out if a line contains a preprocessor directive, and deal
@@ -4279,7 +4343,6 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
     struct tokenval tokval;
     expr *evalresult;
     int64_t count;
-    errflags severity;
     const char *dname;          /* Name of directive, for messages */
 
     *output = NULL;             /* No output generated */
@@ -4778,43 +4841,13 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
             }
         }
         break;
-    case PP_FATAL:
-        severity = ERR_FATAL;
-        goto issue_error;
-    case PP_ERROR:
-        severity = ERR_NONFATAL|ERR_PASS2;
-        goto issue_error;
-    case PP_WARNING:
-        /*!
-         *!user [on] \c{%warning} directives
-         *!  controls output of \c{%warning} directives (see \k{pperror}).
-         */
-        severity = ERR_WARNING|WARN_USER|ERR_PASS2;
-        goto issue_error;
-    case PP_NOTE:
-        severity = ERR_NOTE;
-        goto issue_error;
 
-issue_error:
-    {
-        /* Only error out if this is the final pass */
-        tline->next = expand_smacro(tline->next);
-        tline = tline->next;
-        tline = skip_white(tline);
-        t = tline ? tline->next : NULL;
-        t = skip_white(t);
-        if (tok_is(tline, TOKEN_STR) && !t) {
-            /* The line contains only a quoted string */
-            p = unquote_token(tline); /* Ignore NUL character truncation */
-            nasm_error(severity, "%s",  p);
-        } else {
-            /* Not a quoted string, or more than a quoted string */
-            q = detoken(tline, false);
-            nasm_error(severity, "%s",  q);
-            nasm_free(q);
-        }
+    case PP_FATAL:
+    case PP_ERROR:
+    case PP_WARNING:
+    case PP_NOTE:
+        user_error(op, &tline->next);
         break;
-    }
 
     CASE_PP_IF:
         if (istk->conds && !emitting(istk->conds->state))
@@ -5399,9 +5432,8 @@ issue_error:
         break;
 
     case PP_NULL:
-        /* Goes nowhere, does nothing... */
+        /* Goes nowhere, does nothing */
         break;
-
     }
 
 done:
@@ -7937,17 +7969,58 @@ stdmac_realpath(const SMacro *s, Token **params, int nparam)
     }
 }
 
-/* Add magic standard macros */
-struct magic_macros {
-    const char *name;
-    bool casesense;
-    int nparam;
-    enum sparmflags flags;
-    ExpandSMacro func;
-};
-
-static void pp_add_magic_stdmac(void)
+static Token *
+stdmac_null(const SMacro *s, Token **params, int nparam)
 {
+    (void)s;
+    (void)params;
+    (void)nparam;
+
+    return NULL;                /* Empty expansion */
+}
+
+static Token *
+stdmac_user_error(const SMacro *s, Token **params, int nparam)
+{
+    (void)nparam;
+    user_error(s->expandpvt.u, &params[0]);
+    return NULL;                /* Always expands to empty */
+}
+
+/*
+ * Wrapper around define_smacro() which also checks to see if it is
+ * a preprocessor directive, so that pp_op_may_be_function[] needs to
+ * be set.
+ */
+static SMacro *define_magic(const char *mname, bool casesense, SMacro *tmpl)
+{
+    if (mname[0] == '%') {
+        enum preproc_token op = pp_token_hash(mname);
+        if (op != PP_invalid)
+            pp_op_may_be_function[op] = true;
+    }
+
+    /* Magic functions can be recursive */
+    if (tmpl && tmpl->nparam && tmpl->expand)
+        tmpl->recursive = true;
+
+    return define_smacro(mname, casesense, NULL, tmpl);
+}
+
+/*
+ * Simple standard magic macros and functions.
+ * Note that preprocessor functions (but obviously not zero-argument macros)
+ * are allowed to recurse.
+ */
+static void pp_add_magic_simple(void)
+{
+    struct magic_macros {
+        const char *name;
+        bool casesense;
+        int nparam;
+        enum sparmflags flags;
+        ExpandSMacro func;
+    };
     static const struct magic_macros magic_macros[] = {
         { "__?FILE?__",  true, 0, 0, stdmac_file },
         { "__?LINE?__",  true, 0, 0, stdmac_line },
@@ -7958,28 +8031,20 @@ static void pp_add_magic_stdmac(void)
         { "%depend",     false, 1, SPARM_PLAIN, stdmac_depend },
         { "%eval",       false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
         { "%map",	 false, 1, SPARM_VARADIC, stdmac_map },
+        { "%null",       false, 1, SPARM_GREEDY, stdmac_null },
         { "%pathsearch", false, 1, SPARM_PLAIN, stdmac_pathsearch },
         { "%realpath",	 false, 1, SPARM_PLAIN, stdmac_realpath },
         { "%str",        false, 1, SPARM_GREEDY|SPARM_STR, stdmac_join },
         { "%strcat",     false, 1, SPARM_STR|SPARM_CONDQUOTE|SPARM_VARADIC, stdmac_strcat },
         { "%strlen",     false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_strlen },
         { "%tok",        false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_tok },
-        { NULL, false, 0, 0, NULL }
-    };
-    const struct magic_macros *m;
+    }, *m;
     SMacro tmpl;
-    enum preproc_token pt;
-    char name_buf[PP_TOKLEN_MAX+1];
 
-    /*
-     * Simple standard magic macros and functions.
-     * Note that preprocessor functions are allowed to recurse.
-     */
     nasm_zero(tmpl);
-    for (m = magic_macros; m->name; m++) {
+    array_for_each(m, magic_macros) {
         tmpl.nparam = m->nparam;
         tmpl.expand = m->func;
-        tmpl.recursive = m->nparam && m->name[0] == '%';
 
         if (m->nparam) {
             int i;
@@ -7992,73 +8057,20 @@ static void pp_add_magic_stdmac(void)
                 flags &= ~(SPARM_GREEDY|SPARM_VARADIC|SPARM_OPTIONAL);
             }
         }
-        define_smacro(m->name, m->casesense, NULL, &tmpl);
-        if (m->name[0] == '%') {
-            enum preproc_token op = pp_token_hash(m->name);
-            if (op != PP_invalid)
-                pp_op_may_be_function[op] = true;
-        }
+        define_magic(m->name, m->casesense, &tmpl);
     }
+}
 
-    /* %hex() function */
-    nasm_zero(tmpl);
-    tmpl.nparam    = 1;
-    tmpl.recursive = true;
-    tmpl.expand    =  stdmac_join;
-    nasm_newn(tmpl.params, tmpl.nparam);
-    tmpl.params[0].flags = SPARM_EVAL|SPARM_UNSIGNED|SPARM_VARADIC;
-    tmpl.params[0].radix = 'x';
-    define_smacro("%hex", false, NULL, &tmpl);
+/* %is...() macro functions */
+static void pp_add_magic_isfunc(void)
+{
+    SMacro tmpl;
+    enum preproc_token pt;
+    char name_buf[PP_TOKLEN_MAX+1];
 
-    /* %sel() function */
-    nasm_zero(tmpl);
-    tmpl.nparam    = 2;
-    tmpl.recursive = true;
-    tmpl.expand    = stdmac_cond_sel;
-    nasm_newn(tmpl.params, tmpl.nparam);
-    tmpl.params[0].flags = SPARM_EVAL;
-    tmpl.params[1].flags = SPARM_VARADIC;
-    define_smacro("%sel", false, NULL, &tmpl);
-
-    /* %cond() function, a variation on %sel */
-    tmpl.nparam = 3;
-    tmpl.expandpvt.u = 1;         /* Booleanize */
-    nasm_newn(tmpl.params, tmpl.nparam);
-    tmpl.params[0].flags = SPARM_EVAL;
-    tmpl.params[1].flags = 0;
-    tmpl.params[2].flags = SPARM_OPTIONAL;
-    define_smacro("%cond", false, NULL, &tmpl);
-
-    /* %num() function */
-    nasm_zero(tmpl);
-    tmpl.nparam = 3;
-    tmpl.expand = stdmac_num;
-    tmpl.recursive = true;
-    nasm_newn(tmpl.params, tmpl.nparam);
-    tmpl.params[0].flags = SPARM_EVAL;
-    tmpl.params[1].flags = SPARM_EVAL|SPARM_OPTIONAL;
-    tmpl.params[1].def   = make_tok_num(NULL, -1);
-    tmpl.params[2].flags = SPARM_EVAL|SPARM_OPTIONAL;
-    tmpl.params[2].def   = make_tok_num(NULL, 10);
-    define_smacro("%num", false, NULL, &tmpl);
-
-    /* %substr() function */
-    nasm_zero(tmpl);
-    tmpl.nparam = 3;
-    tmpl.expand = stdmac_substr;
-    tmpl.recursive = true;
-    nasm_newn(tmpl.params, tmpl.nparam);
-    tmpl.params[0].flags  = SPARM_STR|SPARM_CONDQUOTE;
-    tmpl.params[1].flags  = SPARM_EVAL;
-    tmpl.params[2].flags  = SPARM_EVAL|SPARM_OPTIONAL;
-    tmpl.params[2].def    = make_tok_num(NULL, -1);
-    define_smacro("%substr", false, NULL, &tmpl);
-
-    /* %is...() macro functions */
     nasm_zero(tmpl);
     tmpl.nparam  = 1;
     tmpl.expand  = stdmac_is;
-    tmpl.recursive = true;
     name_buf[0]  = '%';
     name_buf[1]  = 'i';
     name_buf[2]  = 's';
@@ -8071,8 +8083,97 @@ static void pp_add_magic_stdmac(void)
 
         strcpy(name_buf+3, pp_directives[pt]+3);
         tmpl.expandpvt.u = pt;
-        define_smacro(name_buf, false, NULL, &tmpl);
+        define_magic(name_buf, false, &tmpl);
     }
+}
+
+/* Message macro functions */
+static void pp_add_magic_msgfunc(void)
+{
+    static const enum preproc_token msg_macros[] = {
+        PP_NOTE,
+        PP_WARNING,
+        PP_ERROR,
+        PP_FATAL
+    }, *mm;
+    SMacro tmpl;
+
+    nasm_zero(tmpl);
+    tmpl.nparam    = 1;
+    tmpl.expand    = stdmac_user_error;
+    array_for_each(mm, msg_macros) {
+        nasm_new(tmpl.params);
+        tmpl.params[0].flags = SPARM_GREEDY;
+        tmpl.expandpvt.u = *mm;
+        define_magic(pp_directives[*mm], false, &tmpl);
+    }
+}
+
+/* Ad hoc preprocessor function definitions */
+static void pp_add_magic_miscfunc(void)
+{
+    SMacro tmpl;
+
+    /* %hex() function */
+    nasm_zero(tmpl);
+    tmpl.nparam    = 1;
+    tmpl.expand    =  stdmac_join;
+    nasm_newn(tmpl.params, tmpl.nparam);
+    tmpl.params[0].flags = SPARM_EVAL|SPARM_UNSIGNED|SPARM_VARADIC;
+    tmpl.params[0].radix = 'x';
+    define_magic("%hex", false, &tmpl);
+
+    /* %sel() function */
+    nasm_zero(tmpl);
+    tmpl.nparam    = 2;
+    tmpl.expand    = stdmac_cond_sel;
+    nasm_newn(tmpl.params, tmpl.nparam);
+    tmpl.params[0].flags = SPARM_EVAL;
+    tmpl.params[1].flags = SPARM_VARADIC;
+    define_magic("%sel", false, &tmpl);
+
+    /* %cond() function, a variation on %sel */
+    nasm_zero(tmpl);
+    tmpl.nparam = 3;
+    tmpl.expandpvt.u = 1;         /* Booleanize */
+    nasm_newn(tmpl.params, tmpl.nparam);
+    tmpl.params[0].flags = SPARM_EVAL;
+    tmpl.params[1].flags = 0;
+    tmpl.params[2].flags = SPARM_OPTIONAL;
+    define_magic("%cond", false, &tmpl);
+
+    /* %num() function */
+    nasm_zero(tmpl);
+    tmpl.nparam = 3;
+    tmpl.expand = stdmac_num;
+    tmpl.recursive = true;
+    nasm_newn(tmpl.params, tmpl.nparam);
+    tmpl.params[0].flags = SPARM_EVAL;
+    tmpl.params[1].flags = SPARM_EVAL|SPARM_OPTIONAL;
+    tmpl.params[1].def   = make_tok_num(NULL, -1);
+    tmpl.params[2].flags = SPARM_EVAL|SPARM_OPTIONAL;
+    tmpl.params[2].def   = make_tok_num(NULL, 10);
+    define_magic("%num", false, &tmpl);
+
+    /* %substr() function */
+    nasm_zero(tmpl);
+    tmpl.nparam = 3;
+    tmpl.expand = stdmac_substr;
+    tmpl.recursive = true;
+    nasm_newn(tmpl.params, tmpl.nparam);
+    tmpl.params[0].flags  = SPARM_STR|SPARM_CONDQUOTE;
+    tmpl.params[1].flags  = SPARM_EVAL;
+    tmpl.params[2].flags  = SPARM_EVAL|SPARM_OPTIONAL;
+    tmpl.params[2].def    = make_tok_num(NULL, -1);
+    define_magic("%substr", false, &tmpl);
+}
+
+static void pp_add_magic_stdmac(void)
+{
+    pp_add_magic_simple();
+    pp_add_magic_isfunc();
+    pp_add_magic_msgfunc();
+    pp_add_magic_miscfunc();
 }
 
 static void pp_start_stdmac(void)
