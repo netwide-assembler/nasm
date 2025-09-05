@@ -165,7 +165,7 @@ LIBOBJ_NW = \
 	macros/macros.$(O) \
 	\
 	nasmlib/ver.$(O) \
-	nasmlib/alloc.$(O) nasmlib/asprintf.$(O) nasmlib/errfile.$(O) \
+	nasmlib/alloc.$(O) nasmlib/asprintf.$(O) \
 	nasmlib/crc32.$(O) nasmlib/crc64.$(O) nasmlib/md5c.$(O) \
 	nasmlib/string.$(O) nasmlib/nctype.$(O) \
 	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) \
