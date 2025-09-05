@@ -140,9 +140,9 @@ $bwdq NEG	rm#				[m:	hle o# f6 /3]				8086,LOCK
 $bwdq NOT	rm#				[m:	hle o# f6 /2]				8086,LOCK
 
 ;# Interleaved flags arithmetic
-$dq   ADCX	reg#,rm#			[rm:	66 o# 0f38 f6 /r		]	ADX,ZU,FL
+$dq   ADCX	reg#,rm#			[rm:	66 w# 0f38 f6 /r		]	ADX,ZU,FL
 $dq   ADCX	reg#?,reg#,rm#			[vrm:	evex.ndx.l0.66.m4.w# 66 /r	]	ADX,APX,ZU,FL
-$dq   ADOX	reg#,rm#			[rm:	f3 !osp o# 0f38 f6 /r		]	ADX,ZU,FL
+$dq   ADOX	reg#,rm#			[rm:	f3 !osp w# 0f38 f6 /r		]	ADX,ZU,FL
 $dq   ADOX	reg#?,reg#,rm#			[vrm:	evex.ndx.l0.f3.m4.w# 66 /r	]	ADX,APX,ZU,FL
 
 ;# Double width shift
