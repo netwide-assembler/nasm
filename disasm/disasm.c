@@ -122,7 +122,7 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, uint32_t rex)
     if (!(regflags & REG_CLASS_GPR))
         regflags &= ~SIZE_MASK;
 
-    if (is_class(regflags, REG8)) {
+    if (is_class(REG_CLASS_GPR|BITS8, regflags)) {
         if (rex & (REX_P|REX_NH))
             return nasm_rd_reg8_rex[r];
         else
@@ -1113,6 +1113,13 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
                 return 0;
             ins->rex |= REX_2 | REX_W;
             break;
+
+        case 0355:
+        case 0356:
+        case 0357:
+            nasm_assert(prefix->rex.map == c - 0354);
+            break;
+
 
         case 0360:
             if (prefix->osp || prefix->rep)
