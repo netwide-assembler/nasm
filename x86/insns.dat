@@ -1431,10 +1431,13 @@ ROUNDSD		xmmreg,xmmrm64,imm8		[rmi:	66 0f3a 0b /r ib,u]			SSE41
 ROUNDSS		xmmreg,xmmrm32,imm8		[rmi:	66 0f3a 0a /r ib,u]			SSE41
 
 ;# Nehalem New Instructions (SSE4.2)
-$bwdq  CRC32	reg32,rm#			[rm:	o#  f2 0f38   f0# /r]			SSE42
-$bwdq  CRC32	reg32,rm#			[rm:	evex.l0.m4.o# f0# /r]			APX,SSE42
-$bwdq  CRC32	reg64,rm#			[rm:	o#  f2 0f38   f0# /r]			SSE42,ND
-$bwdq  CRC32	reg64,rm#			[rm:	evex.l0.m4.o# f0# /r]			APX,SSE42
+$bwdq  CRC32	reg32,rm#			[rm:	o#   f2 0f38   f0# /r]		SSE42,(q:ND)
+$bwdq  CRC32	reg32,rm#			[rm:	evex.l0.m4.o#  f0# /r]		APX,SSE42,(q:ND)
+$bwdq  CRC32	reg64,rm#			[rm:	o#   f2 0f38   f0# /r]		SSE42,(b:OPT)
+$bwdq  CRC32	reg64,rm#			[rm:	evex.l0.m4.o#  f0# /r]		APX,SSE42,(b:OPT)
+       ; Strict according to the documentation, although meaningless
+       CRC32    reg64,rm8                       [rm:	o64  f2 0f38   f0  /r]		SSE42
+       CRC32    reg64,rm8                       [rm:	evex.l0.m4.o64 f0  /r]		APX,SSE42
 
 PCMPESTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 61 /r ib,u]			SSE42
 PCMPESTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 60 /r ib,u]			SSE42
