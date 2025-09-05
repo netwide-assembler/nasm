@@ -50,6 +50,7 @@
 ;# Special instructions (pseudo-ops)
 ; These MUST be first in this file and must maintain the pattern of
 ; Dx by size, RESx by size, INCBIN, and EQU in that order.
+; These are also listed in directiv.dat.
 DB		ignore				ignore						PSEUDO
 DW		ignore				ignore						PSEUDO
 DD		ignore				ignore						PSEUDO

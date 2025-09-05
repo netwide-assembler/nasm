@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
+ *   Copyright 2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -31,55 +31,76 @@
  *
  * ----------------------------------------------------------------------- */
 
-/*
- * assemble.h - header file for stuff private to the assembler
- */
-
-#ifndef NASM_ASSEMBLE_H
-#define NASM_ASSEMBLE_H
-
+#include "compiler.h"
 #include "nasm.h"
-#include "iflag.h"
 #include "asmutil.h"
+#include "stdscan.h"
+#include "eval.h"
 
-extern iflag_t cpu, cmd_cpu;
-void set_cpu(const char *cpuspec);
-
-extern bool in_absolute;        /* Are we in an absolute segment? */
-extern struct location absolute;
-
-int64_t increment_offset(int64_t delta);
-void process_insn(insn *instruction);
-
-bool directive_valid(const char *);
-bool process_directives(char *);
-void process_pragma(char *);
-
-/* Is this a compile-time absolute constant? */
-static inline bool op_compile_abs(const struct operand * const op)
+/*
+ * 1. An expression (true if nonzero 0)
+ * 2. The keywords true, on, yes for true
+ * 3. The keywords false, off, no for false
+ * 4. An empty line, for true
+ *
+ * This is equivalent to pp_get_boolean_option() outside of the
+ * preprocessor.
+ *
+ * On error, return defval (usually the previous value)
+ *
+ * If str is NULL, return NULL without changing *val.
+ */
+char *get_boolean_option(const char *str, bool *val)
 {
-    if (op->opflags & OPFLAG_UNKNOWN)
-        return true;            /* Be optimistic in pass 1 */
-    if (op->opflags & OPFLAG_RELATIVE)
-        return false;
-    if (op->wrt != NO_SEG)
-        return false;
+    static const char * const noyes[] = {
+        "no", "yes",
+        "false", "true",
+        "off", "on"
+    };
+    struct tokenval tokval;
+    expr *evalresult;
+    char *p;
+    int tt;
 
-    return op->segment == NO_SEG;
+    if (!str)
+        return NULL;
+
+    str = nasm_skip_spaces(str);
+    p = nasm_strdup(str);
+
+    tokval.t_type  = TOKEN_INVALID;
+    tokval.t_start = str;
+    stdscan_reset(p);
+
+    tt = stdscan(NULL, &tokval);
+    if (tt == TOKEN_EOS || tt == ']' || tt == ',') {
+        *val = true;
+        goto done;
+    }
+
+    if (tt == TOKEN_ID) {
+        size_t i;
+        for (i = 0; i < ARRAY_SIZE(noyes); i++)
+            if (!nasm_stricmp(tokval.t_charptr, noyes[i])) {
+                *val = i & 1;
+                goto done;
+            }
+    }
+
+    evalresult = evaluate(stdscan, NULL, &tokval, NULL, true, NULL);
+
+    if (!evalresult)
+        goto done;
+
+    if (!is_really_simple(evalresult)) {
+        nasm_nonfatal("boolean flag expression must be a constant");
+        goto done;
+    }
+
+    *val = reloc_value(evalresult) != 0;
+
+done:
+    str += nasm_skip_spaces(tokval.t_start) - p;
+    nasm_free(p);
+    return (char *)str;
 }
-
-/* Is this a compile-time relative constant? */
-static inline bool op_compile_rel(const insn * const ins,
-                                  const struct operand * const op)
-{
-    if (op->opflags & OPFLAG_UNKNOWN)
-        return true;            /* Be optimistic in pass 1 */
-    if (!(op->opflags & OPFLAG_RELATIVE))
-        return false;
-    if (op->wrt != NO_SEG)      /* Is this correct?! */
-        return false;
-
-    return op->segment == ins->loc.segment;
-}
-
-#endif

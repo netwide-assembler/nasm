@@ -79,7 +79,29 @@ sectalign
 pragma
 required
 
+; --- Pseudo-op list, for the benefit of %isdirective
+#special pseudo_ops
+db
+dw
+dd
+dq
+dt
+do
+dy
+dz
+resb
+resw
+resd
+resq
+rest
+reso
+resy
+resz
+incbin
+equ
+
 ; --- Format-specific directives
+#special ofmt
 export				; outcoff, outobj
 group				; outobj
 import				; outobj
@@ -90,6 +112,9 @@ org				; outbin
 osabi				; outelf
 safeseh				; outcoff
 uppercase			; outieee, outobj
+
+; --- The following are tokens used in pragmas, not actual directives
+#special pragma_tokens
 
 ; --- Assembler pragmas
 prefix

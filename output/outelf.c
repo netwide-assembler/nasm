@@ -438,7 +438,7 @@ elf_directive(enum directive directive, char *value)
 
     switch (directive) {
     case D_OSABI:
-        if (!pass_first())      /* XXX: Why? */
+        if (!value || !pass_first())
             return DIRR_OK;
 
         n = readnum(value, &err);

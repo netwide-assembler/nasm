@@ -73,6 +73,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "asmutil.h"
 #include "error.h"
 #include "ver.h"
 
@@ -84,7 +85,7 @@
 #define ARRAY_BOT 0x1
 
 static char ieee_infile[FILENAME_MAX];
-static int ieee_uppercase;
+static bool ieee_uppercase;
 
 static bool any_segs;
 static int arrindex;
@@ -829,7 +830,7 @@ ieee_directive(enum directive directive, char *value)
 
     switch (directive) {
     case D_UPPERCASE:
-        ieee_uppercase = true;
+        get_boolean_option(value, &ieee_uppercase);
         return DIRR_OK;
 
     default:

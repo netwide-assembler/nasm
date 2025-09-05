@@ -1265,80 +1265,83 @@ bin_directive(enum directive directive, char *args)
 {
     switch (directive) {
     case D_ORG:
-    {
-        struct tokenval tokval;
-        uint64_t value;
-        expr *e;
+        if (args) {
+            struct tokenval tokval;
+            uint64_t value;
+            expr *e;
 
-        stdscan_reset(args);
-        tokval.t_type = TOKEN_INVALID;
-        e = evaluate(stdscan, NULL, &tokval, NULL, 1, NULL);
-        if (e) {
-            if (!is_really_simple(e))
-                nasm_nonfatal("org value must be a critical"
-                      " expression");
-            else {
+            stdscan_reset(args);
+            tokval.t_type = TOKEN_INVALID;
+            e = evaluate(stdscan, NULL, &tokval, NULL, 1, NULL);
+            if (!e) {
+                nasm_nonfatal("No or invalid offset specified"
+                              " in ORG directive.");
+                return DIRR_ERROR;
+            } else if (!is_really_simple(e)) {
+                nasm_nonfatal("ORG value must be a critical"
+                              " expression");
+                return DIRR_ERROR;
+            } else {
                 value = reloc_value(e);
                 /* Check for ORG redefinition. */
-                if (origin_defined && (value != origin))
+                if (origin_defined && (value != origin)) {
                     nasm_nonfatal("program origin redefined");
-                else {
+                    return DIRR_ERROR;
+                } else {
                     origin = value;
                     origin_defined = 1;
                 }
             }
-        } else
-            nasm_nonfatal("No or invalid offset specified"
-                          " in ORG directive.");
-        return DIRR_OK;
-    }
-    case D_MAP:
-    {
-    /* The 'map' directive allows the user to generate section
-     * and symbol information to stdout, stderr, or to a file. */
-	char *p;
-
-        if (!pass_first())
-            return DIRR_OK;
-        args += strspn(args, " \t");
-        while (*args) {
-            p = args;
-            args += strcspn(args, " \t");
-            if (*args != '\0')
-                *(args++) = '\0';
-            if (!nasm_stricmp(p, "all"))
-                map_control |=
-                    MAP_ORIGIN | MAP_SUMMARY | MAP_SECTIONS | MAP_SYMBOLS;
-            else if (!nasm_stricmp(p, "brief"))
-                map_control |= MAP_ORIGIN | MAP_SUMMARY;
-            else if (!nasm_stricmp(p, "sections"))
-                map_control |= MAP_ORIGIN | MAP_SUMMARY | MAP_SECTIONS;
-            else if (!nasm_stricmp(p, "segments"))
-                map_control |= MAP_ORIGIN | MAP_SUMMARY | MAP_SECTIONS;
-            else if (!nasm_stricmp(p, "symbols"))
-                map_control |= MAP_SYMBOLS;
-            else if (!rf) {
-                if (!nasm_stricmp(p, "stdout"))
-                    rf = stdout;
-                else if (!nasm_stricmp(p, "stderr"))
-                    rf = stderr;
-                else {          /* Must be a filename. */
-                    rf = nasm_open_write(p, NF_TEXT);
-                    if (!rf) {
-                        nasm_warn(WARN_OTHER, "unable to open map file `%s'", p);
-                        map_control = 0;
-                        return DIRR_OK;
-                    }
-                }
-            } else
-                nasm_warn(WARN_OTHER, "map file already specified");
         }
-        if (map_control == 0)
-            map_control |= MAP_ORIGIN | MAP_SUMMARY;
-        if (!rf)
-            rf = stdout;
         return DIRR_OK;
-    }
+
+    case D_MAP:
+        /* The 'map' directive allows the user to generate section
+         * and symbol information to stdout, stderr, or to a file. */
+        if (args && pass_first()) {
+            char *p;
+
+            args += strspn(args, " \t");
+            while (*args) {
+                p = args;
+                args += strcspn(args, " \t");
+                if (*args != '\0')
+                    *(args++) = '\0';
+                if (!nasm_stricmp(p, "all"))
+                    map_control |=
+                        MAP_ORIGIN | MAP_SUMMARY | MAP_SECTIONS | MAP_SYMBOLS;
+                else if (!nasm_stricmp(p, "brief"))
+                    map_control |= MAP_ORIGIN | MAP_SUMMARY;
+                else if (!nasm_stricmp(p, "sections"))
+                    map_control |= MAP_ORIGIN | MAP_SUMMARY | MAP_SECTIONS;
+                else if (!nasm_stricmp(p, "segments"))
+                    map_control |= MAP_ORIGIN | MAP_SUMMARY | MAP_SECTIONS;
+                else if (!nasm_stricmp(p, "symbols"))
+                    map_control |= MAP_SYMBOLS;
+                else if (!rf) {
+                    if (!nasm_stricmp(p, "stdout"))
+                        rf = stdout;
+                    else if (!nasm_stricmp(p, "stderr"))
+                        rf = stderr;
+                    else {          /* Must be a filename. */
+                        rf = nasm_open_write(p, NF_TEXT);
+                        if (!rf) {
+                            nasm_warn(WARN_OTHER, "unable to open map file `%s'", p);
+                            map_control = 0;
+                            return DIRR_OK;
+                        }
+                    }
+                } else {
+                    nasm_warn(WARN_OTHER, "map file already specified");
+                }
+            }
+            if (map_control == 0)
+                map_control |= MAP_ORIGIN | MAP_SUMMARY;
+            if (!rf)
+                rf = stdout;
+        }
+        return DIRR_OK;
+
     default:
 	return DIRR_UNKNOWN;
     }

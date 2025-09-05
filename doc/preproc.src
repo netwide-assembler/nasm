@@ -1812,6 +1812,34 @@ any tokens at all, whitespace excepted.
 The usual \i\c{%elifempty}, \i\c\{%ifnempty}, and \i\c{%elifnempty}
 variants are also provided.
 
+\S{ifdirective} \i\c{%ifdirective}: Test If a Directive Is Supported
+
+The conditional assembly construct \c{%ifdirective} assembles the
+subsequent code if and only if followed by a token that corresponds to
+a preprocessor directive, assembler directive (see \k{directive}) or a
+pseudo-instruction (see \k{pseudop}) supported in the current version
+of NASM.
+
+The argument can be a quoted string to prevent macro expansion, in
+which case it is unquoted before the test, that is, these two lines do
+the same thing:
+
+\c      %ifdirective %ifndef
+\c      %ifdirective "%ifndef"
+
+Preprocessor directives must be specified with a leading \c{%} sign
+(except for certain directives in TASM mode); assembler directives
+\e{may} be specified with surrounding brackets \c{[]}, but those are
+not required.
+
+Some assembly directives can be supported in some contexts and not
+others, for example, most output formats do not support the \c{ORG}
+directive, therefore the result of \c{%ifdirective} may depend on more
+than just the current version of NASM.
+
+The usual \i\c{%elifdirective}, \i\c\{%ifndirective}, and \i\c{%elifndirective}
+variants are also provided.
+
 \S{ifenv} \i\c{%ifenv}: Test If Environment Variable Exists
 
 The conditional assembly construct \c{%ifenv} assembles the
@@ -2356,7 +2384,7 @@ The \c{%$localsize} variable is used internally by the
 current context before the \c{%local} directive may be used.
 Failure to do so will result in one expression syntax error for
 each \c{%local} variable declared. It then may be used in
-the construction of an appropriately sized ENTER instruction
+the construction of an appropriately sized \c{ENTER} instruction
 as shown in the example.
 
 
@@ -2471,7 +2499,8 @@ output is either \c{win32} or \c{win64}:
 
 \S{pragma-preproc} Preprocessor Pragmas
 
-The only preprocessor \c{%pragma} defined in NASM 2.15 is:
+The only preprocessor \c{%pragma} defined as the current version of
+NASM is:
 
 \b \c{%pragma preproc sane_empty_expansion}: disables legacy
 compatibility handling of braceless empty arguments to multi-line

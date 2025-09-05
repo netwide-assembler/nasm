@@ -1164,6 +1164,16 @@ struct ofmt {
      * 2 - DIRR_ERROR		- backend printed its own error message
      * 3 - DIRR_BADPARAM	- print the generic message
      *				  "invalid parameter to [*] directive"
+     *
+     * When called with "value" as NULL (as opposed to the empty
+     * string!), it should perform no action and not print any
+     * messages, but return DIRR_UNKNOWN if this directive is
+     * unsupported by the backend, DIRR_OK if it is, and either
+     * DIRR_ERROR or DIRR_BADPARAM if it *would* be supported by the
+     * backend if configured otherwise, but it would be invalid in the
+     * current context, regardless of the parameter(s).
+     *
+     * This is used by %ifdirective.
      */
     enum directive_result
     (*directive)(enum directive directive, char *value);

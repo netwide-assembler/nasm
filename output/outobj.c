@@ -43,6 +43,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "asmutil.h"
 #include "error.h"
 #include "stdscan.h"
 #include "eval.h"
@@ -1575,9 +1576,9 @@ obj_directive(enum directive directive, char *value)
 {
     switch (directive) {
     case D_GROUP:
-    {
-        char *p, *q, *v;
-        if (pass_first()) {     /* XXX */
+        /* Is pass_first() really correct? */
+        if (value && pass_first()) {
+            char *p, *q, *v;
             struct Group *grp;
             struct Segment *seg;
             struct External **extp;
@@ -1682,95 +1683,18 @@ obj_directive(enum directive directive, char *value)
             }
         }
         return DIRR_OK;
-    }
+
     case D_UPPERCASE:
-        obj_uppercase = true;
+        if (value)
+            get_boolean_option(value, &obj_uppercase);
         return DIRR_OK;
 
     case D_IMPORT:
-    {
-        char *q, *extname, *libname, *impname;
+        /* Is pass_first() really correct? */
+        if (value && pass_first()) {
+            char *q, *extname, *libname, *impname;
 
-        if (!pass_first())      /* XXX */
-            return DIRR_OK;
-        extname = q = value;
-        while (*q && !nasm_isspace(*q))
-            q++;
-        if (nasm_isspace(*q)) {
-            *q++ = '\0';
-            while (*q && nasm_isspace(*q))
-                q++;
-        }
-
-        libname = q;
-        while (*q && !nasm_isspace(*q))
-            q++;
-        if (nasm_isspace(*q)) {
-            *q++ = '\0';
-            while (*q && nasm_isspace(*q))
-                q++;
-        }
-
-        impname = q;
-
-        if (!*extname || !*libname)
-            nasm_nonfatal("`import' directive requires symbol name"
-                          " and library name");
-        else {
-            struct ImpDef *imp;
-            bool err = false;
-
-            imp = *imptail = nasm_malloc(sizeof(struct ImpDef));
-            imptail = &imp->next;
-            imp->next = NULL;
-            imp->extname = nasm_strdup(extname);
-            imp->libname = nasm_strdup(libname);
-            imp->impindex = readnum(impname, &err);
-            if (!*impname || err)
-                imp->impname = nasm_strdup(impname);
-            else
-                imp->impname = NULL;
-        }
-
-        return DIRR_OK;
-    }
-    case D_EXPORT:
-    {
-        char *q, *extname, *intname, *v;
-        struct ExpDef *export;
-        int flags = 0;
-        unsigned int ordinal = 0;
-
-        if (!pass_first())
-            return DIRR_OK;     /* ignore in pass two */
-        intname = q = value;
-        while (*q && !nasm_isspace(*q))
-            q++;
-        if (nasm_isspace(*q)) {
-            *q++ = '\0';
-            while (*q && nasm_isspace(*q))
-                q++;
-        }
-
-        extname = q;
-        while (*q && !nasm_isspace(*q))
-            q++;
-        if (nasm_isspace(*q)) {
-            *q++ = '\0';
-            while (*q && nasm_isspace(*q))
-                q++;
-        }
-
-        if (!*intname) {
-            nasm_nonfatal("`export' directive requires export name");
-            return DIRR_OK;
-        }
-        if (!*extname) {
-            extname = intname;
-            intname = "";
-        }
-        while (*q) {
-            v = q;
+            extname = q = value;
             while (*q && !nasm_isspace(*q))
                 q++;
             if (nasm_isspace(*q)) {
@@ -1778,38 +1702,114 @@ obj_directive(enum directive directive, char *value)
                 while (*q && nasm_isspace(*q))
                     q++;
             }
-            if (!nasm_stricmp(v, "resident"))
-                flags |= EXPDEF_FLAG_RESIDENT;
-            else if (!nasm_stricmp(v, "nodata"))
-                flags |= EXPDEF_FLAG_NODATA;
-            else if (!nasm_strnicmp(v, "parm=", 5)) {
+
+            libname = q;
+            while (*q && !nasm_isspace(*q))
+                q++;
+            if (nasm_isspace(*q)) {
+                *q++ = '\0';
+                while (*q && nasm_isspace(*q))
+                    q++;
+            }
+
+            impname = q;
+
+            if (!*extname || !*libname)
+                nasm_nonfatal("`import' directive requires symbol name"
+                              " and library name");
+            else {
+                struct ImpDef *imp;
                 bool err = false;
-                flags |= EXPDEF_MASK_PARMCNT & readnum(v + 5, &err);
-                if (err) {
-                    nasm_nonfatal("value `%s' for `parm' is non-numeric", v + 5);
-                    return DIRR_ERROR;
-                }
-            } else {
-                bool err = false;
-                ordinal = readnum(v, &err);
-                if (err) {
-                    nasm_nonfatal("unrecognised export qualifier `%s'", v);
-                    return DIRR_ERROR;
-                }
-                flags |= EXPDEF_FLAG_ORDINAL;
+
+                imp = *imptail = nasm_malloc(sizeof(struct ImpDef));
+                imptail = &imp->next;
+                imp->next = NULL;
+                imp->extname = nasm_strdup(extname);
+                imp->libname = nasm_strdup(libname);
+                imp->impindex = readnum(impname, &err);
+                if (!*impname || err)
+                    imp->impname = nasm_strdup(impname);
+                else
+                    imp->impname = NULL;
             }
         }
-
-        export = *exptail = nasm_malloc(sizeof(struct ExpDef));
-        exptail = &export->next;
-        export->next = NULL;
-        export->extname = nasm_strdup(extname);
-        export->intname = nasm_strdup(intname);
-        export->ordinal = ordinal;
-        export->flags = flags;
-
         return DIRR_OK;
-    }
+
+    case D_EXPORT:
+        /* Is pass_first() really correct? */
+        if (value && pass_first()) {
+            char *q, *extname, *intname, *v;
+            struct ExpDef *export;
+            int flags = 0;
+            unsigned int ordinal = 0;
+
+            intname = q = value;
+            while (*q && !nasm_isspace(*q))
+                q++;
+            if (nasm_isspace(*q)) {
+                *q++ = '\0';
+                while (*q && nasm_isspace(*q))
+                    q++;
+            }
+
+            extname = q;
+            while (*q && !nasm_isspace(*q))
+                q++;
+            if (nasm_isspace(*q)) {
+                *q++ = '\0';
+                while (*q && nasm_isspace(*q))
+                    q++;
+            }
+
+            if (!*intname) {
+                nasm_nonfatal("`export' directive requires export name");
+                return DIRR_OK;
+            }
+            if (!*extname) {
+                extname = intname;
+                intname = "";
+            }
+            while (*q) {
+                v = q;
+                while (*q && !nasm_isspace(*q))
+                    q++;
+                if (nasm_isspace(*q)) {
+                    *q++ = '\0';
+                    while (*q && nasm_isspace(*q))
+                        q++;
+                }
+                if (!nasm_stricmp(v, "resident"))
+                    flags |= EXPDEF_FLAG_RESIDENT;
+                else if (!nasm_stricmp(v, "nodata"))
+                    flags |= EXPDEF_FLAG_NODATA;
+                else if (!nasm_strnicmp(v, "parm=", 5)) {
+                    bool err = false;
+                    flags |= EXPDEF_MASK_PARMCNT & readnum(v + 5, &err);
+                    if (err) {
+                        nasm_nonfatal("value `%s' for `parm' is non-numeric", v + 5);
+                        return DIRR_ERROR;
+                    }
+                } else {
+                    bool err = false;
+                    ordinal = readnum(v, &err);
+                    if (err) {
+                        nasm_nonfatal("unrecognised export qualifier `%s'", v);
+                        return DIRR_ERROR;
+                    }
+                    flags |= EXPDEF_FLAG_ORDINAL;
+                }
+            }
+
+            export = *exptail = nasm_malloc(sizeof(struct ExpDef));
+            exptail = &export->next;
+            export->next = NULL;
+            export->extname = nasm_strdup(extname);
+            export->intname = nasm_strdup(intname);
+            export->ordinal = ordinal;
+            export->flags = flags;
+        }
+        return DIRR_OK;
+
     default:
 	return DIRR_UNKNOWN;
     }

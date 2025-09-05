@@ -46,6 +46,7 @@
 *def
 *defalias
 *difi
+*directive
 *empty
 *env
 *file

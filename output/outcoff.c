@@ -904,7 +904,7 @@ coff_directives(enum directive directive, char *value)
          * is probably to mark a label as an export in the label
          * structure, in case the label doesn't actually exist.
          */
-        if (!pass_first())
+        if (!value || !pass_first())
             return DIRR_OK;           /* ignore in pass two */
         name = q = value;
         while (*q && !nasm_isspace(*q))
@@ -932,7 +932,10 @@ coff_directives(enum directive directive, char *value)
         int i;
 
         if (!win32) /* Only applicable for -f win32 */
-            return 0;
+            return DIRR_UNKNOWN;
+
+        if (!value)
+            return DIRR_OK;
 
         if (sxseg == -1) {
             for (i = 0; i < coff_nsects; i++)

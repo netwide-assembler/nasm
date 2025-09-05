@@ -66,6 +66,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "assemble.h"
 #include "error.h"
 #include "preproc.h"
 #include "hashtbl.h"
@@ -2906,6 +2907,69 @@ static Token **count_mmac_params(Token *tline, int *nparamp, Token ***paramsp)
     return comma;
 }
 
+/* Check to see if a string is a valid preprocessor directive */
+
+/* This requires that the caller has checked dname[0] == '%' */
+static inline enum preproc_token pp_get_nasm_directive(const char *dname)
+{
+    /*
+     * For it to be a directive, the second character has to be an
+     * ASCII letter; this is a very quick and dirty test for that;
+     * all other cases will get rejected by the token hash.
+     */
+    if (likely((uint8_t)((dname[1] & ~0x20) - 'A') <= 'Z'))
+        return pp_token_hash(dname);
+
+    return PP_invalid;
+}
+
+static inline enum preproc_token pp_get_tasm_directive(const char *dname)
+{
+    if (likely(!(ppopt & PP_TASM)))
+        return PP_invalid;
+
+    /*
+     * Directive in TASM mode. Again, must begin with a letter.
+     */
+    if ((uint8_t)((dname[0] & ~0x20) - 'A') <= 'Z')
+        return pp_tasm_token_hash(dname);
+
+    return PP_invalid;
+}
+
+static enum preproc_token pp_get_directive(const char *dname)
+{
+    if (dname[0] == '%')
+        return pp_get_nasm_directive(dname);
+    else
+        return pp_get_tasm_directive(dname);
+}
+
+static bool is_directive(const char *dname)
+{
+    char *p;
+    const char *q;
+    bool j;
+
+    dname = nasm_skip_spaces(dname);
+
+    if (*dname == '[') {
+        dname = nasm_skip_spaces(dname+1);
+    } else {
+        if (*dname == '%')
+            return pp_get_nasm_directive(dname) != PP_invalid;
+
+        if (pp_get_tasm_directive(dname) != PP_invalid)
+            return true;
+    }
+
+    q = nasm_skip_word(dname);
+    p = nasm_strndup(dname, q-dname);
+    j = directive_valid(p);
+    nasm_free(p);
+    return j;
+}
+
 /*
  * Determine whether one of the various `if' conditions is true or
  * not.
@@ -2981,6 +3045,13 @@ if_condition(Token * tline, enum preproc_token ct, const char *dname)
          */
         j = false;
         goto fail;
+
+    case PP_IFDIRECTIVE:
+        tline = skip_white(expand_smacro(tline));
+        j = false;
+        if (tline)
+            j = is_directive(unquote_token(tline));
+        break;
 
     case PP_IFENV:
         tline = expand_smacro(tline);
@@ -4356,30 +4427,20 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
     if (!tline)
         return NO_DIRECTIVE_FOUND;
 
+    dname = tok_text(tline);
+
     switch (tline->type) {
     case TOKEN_PREPROC_ID:
-        dname = tok_text(tline);
-        /*
-         * For it to be a directive, the second character has to be an
-         * ASCII letter; this is a very quick and dirty test for that;
-         * all other cases will get rejected by the token hash.
-         */
-        if ((uint8_t)(dname[1] - 'A') > (uint8_t)('z' - 'A'))
-            return NO_DIRECTIVE_FOUND;
-
-        op = pp_token_hash(dname);
+        op = pp_get_nasm_directive(dname);
         break;
 
     case TOKEN_ID:
-        if (likely(!(ppopt & PP_TASM)))
-            return NO_DIRECTIVE_FOUND;
-
-        dname = tok_text(tline);
-        op = pp_tasm_token_hash(dname);
+        op = pp_get_tasm_directive(tok_text(tline));
         break;
 
     default:
-        return NO_DIRECTIVE_FOUND;
+        op = PP_invalid;
+        break;
     }
 
     switch (op) {
@@ -4397,6 +4458,9 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
     default:
         break;
     }
+
+    if (op == PP_invalid)
+        return NO_DIRECTIVE_FOUND;
 
     if (unlikely(ppopt & PP_TRIVIAL))
         goto done;
@@ -7994,11 +8058,9 @@ stdmac_user_error(const SMacro *s, Token **params, int nparam)
  */
 static SMacro *define_magic(const char *mname, bool casesense, SMacro *tmpl)
 {
-    if (mname[0] == '%') {
-        enum preproc_token op = pp_token_hash(mname);
-        if (op != PP_invalid)
-            pp_op_may_be_function[op] = true;
-    }
+    enum preproc_token op = pp_get_directive(mname);
+    if (op != PP_invalid)
+        pp_op_may_be_function[op] = true;
 
     /* Magic functions can be recursive */
     if (tmpl && tmpl->nparam && tmpl->expand)

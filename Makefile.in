@@ -143,6 +143,7 @@ LIBOBJ_W = \
 	asm/preproc.$(O) asm/quote.$(O) \
 	asm/listing.$(O) asm/eval.$(O) asm/exprlib.$(O) asm/exprdump.$(O) \
 	asm/stdscan.$(O) \
+	asm/getbool.$(O) \
 	asm/strfunc.$(O) \
 	asm/segalloc.$(O) \
 	asm/rdstrnum.$(O) \

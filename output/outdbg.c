@@ -360,6 +360,8 @@ dbg_directive(enum directive directive, char *value)
 
     fprintf(ofile, "directive [%s] value [%s] pass %"PRId64" (%s)\n",
             directive_dname(directive), value, pass_count(), pass_type_name());
+
+    /* The debug output format accepts all known directives */
     return DIRR_OK;
 }
 

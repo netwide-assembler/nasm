@@ -206,66 +206,6 @@ static int get_bits(const char *value)
     return i;
 }
 
-/*
- * 1. An expression (true if nonzero 0)
- * 2. The keywords true, on, yes for true
- * 3. The keywords false, off, no for false
- * 4. An empty line, for true
- *
- * This is equivalent to pp_get_boolean_option() outside of the
- * preprocessor.
- *
- * On error, return defval (usually the previous value)
- */
-static bool get_boolean_option(char **strp, bool defval)
-{
-    static const char * const noyes[] = {
-        "no", "yes",
-        "false", "true",
-        "off", "on"
-    };
-    bool result = true;
-    struct tokenval tokval;
-    expr *evalresult;
-    int tt;
-
-    tokval.t_type  = TOKEN_INVALID;
-    tokval.t_start = *strp;
-    stdscan_reset(*strp);
-
-    tt = stdscan(NULL, &tokval);
-    if (tt == TOKEN_EOS || tt == ']') {
-        result = true;
-        goto done;
-    }
-
-    if (tt == TOKEN_ID) {
-        size_t i;
-        for (i = 0; i < ARRAY_SIZE(noyes); i++)
-            if (!nasm_stricmp(tokval.t_charptr, noyes[i])) {
-                result = i & 1;
-                goto done;
-            }
-    }
-
-    evalresult = evaluate(stdscan, NULL, &tokval, NULL, true, NULL);
-
-    if (!evalresult)
-        goto done;
-
-    if (!is_really_simple(evalresult)) {
-        nasm_nonfatal("boolean flag expression must be a constant");
-        result = defval;
-        goto done;
-    }
-
-    result = reloc_value(evalresult) != 0;
-
-done:
-    *strp = (char *)tokval.t_start;
-    return result;
-}
-
 static enum directive parse_directive_line(char **directive, char **value)
 {
     char *p, *q, *buf;
@@ -318,6 +258,26 @@ static enum directive parse_directive_line(char **directive, char **value)
 }
 
 /*
+ * Check to see if a string matches a valid directive name (sans [],
+ * whitespace must be already trimmed.)
+ */
+bool directive_valid(const char *directive)
+{
+    enum directive d;
+
+    d = directive_find(directive);
+
+    if (d <= D_corrupt)
+        return false;
+    else if (d < D_ofmt)
+        return true;            /* Global directive or pseudo-op */
+    else if (d < D_pragma_tokens)
+        return ofmt->directive(d, NULL) == DIRR_OK;
+    else
+        return false;
+}
+
+/*
  * Process a line from the assembler and try to handle it if it
  * is a directive.  Return true if the line was handled (including
  * if it was an error), false otherwise.
@@ -340,18 +300,21 @@ bool process_directives(char *directive)
 	nasm_nonfatal("invalid directive line");
 	break;
 
-    default:			/* It's a backend-specific directive */
-        switch (ofmt->directive(d, value)) {
-        case DIRR_UNKNOWN:
-            goto unknown;
-        case DIRR_OK:
-        case DIRR_ERROR:
-            break;
-        case DIRR_BADPARAM:
-            bad_param = true;
-            break;
-        default:
-            panic();
+    default:
+        if (d > D_ofmt && d < D_pragma_tokens) {
+            /* It's a backend-specific directive */
+            switch (ofmt->directive(d, value)) {
+            case DIRR_UNKNOWN:
+                goto unknown;
+            case DIRR_OK:
+            case DIRR_ERROR:
+                break;
+            case DIRR_BADPARAM:
+                bad_param = true;
+                break;
+            default:
+                panic();
+            }
         }
         break;
 
@@ -623,7 +586,7 @@ bool process_directives(char *directive)
         break;
 
     case D_DOLLARHEX:
-        globl.dollarhex = get_boolean_option(&value, globl.dollarhex);
+        get_boolean_option(value, &globl.dollarhex);
         break;
 
     case D_PRAGMA:
