@@ -182,7 +182,7 @@ if_("WAITPKG",           "User wait instruction package");
 my @oneins = qw(invpcid prefetchwt1 pconfig wbnoinvd serialize lkgs
 		wrmsrns clflushopt clwb rdrand rdseed rdpid
 		lzcnt ptwrite cldemote movdiri movdir64b clzero
-		movbe);
+		movbe movrs);
 foreach my $ins (@oneins) {
     if_($ins, "\U$ins\E instruction");
 }

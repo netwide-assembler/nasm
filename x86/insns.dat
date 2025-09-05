@@ -91,6 +91,7 @@ $bwdq MOV	reg#,imm##|abs			[ri:	o#  b0+r# i##]				8086,SM,ND
 $bwdq MOVABS	reg#,imm##			[ri:	o#  b0+r# i##]				8086,SM,ND
 $bwdq MOV	rm#,imm#			[mi:	hlexr o# c6# /0 i#]			8086,SM
 $bwdq MOVRS	reg#,mem#			[rm:	o#  norep 0f38 8a# /r]			FUTURE,SM
+$bwdq MOVRS	reg#,mem#			[rm:	evex.nf0.nd0.l0.m4.o# 8a# /r]		FUTURE,SM
 
 ;# Load effective address
 $wdq  LEA	reg#,mem			[rm:	o# 8d /r]				8086
