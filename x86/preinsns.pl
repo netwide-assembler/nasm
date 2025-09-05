@@ -481,7 +481,7 @@ sub adjust_fl_zu(@) {
     # to clear the upper part of a vector register.
     if (!$flags->{'!ZU'} &&
 	(($encoding =~ /\be?vex\b/ && $operands =~ /^(xyz)mm(reg|rm)/) ||
-	 $operands =~ /^((reg|rm)(32|64)|reg_[re]([abcd]x|[sb]p|[sd]i))\b/) &&
+	 $operands =~ /^(reg_[re]([abcd]x|[sb]p|[sd]i))\b/) &&
 	$opcode !~ /$nozero/io) {
 	add_flag($flags, 'ZU');
     }
