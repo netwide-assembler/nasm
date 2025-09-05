@@ -5135,7 +5135,9 @@ $dq   PTWRITE	rm#				[m:	f3 o# 0f ae /4]				PTWRITE,(q:SX)
 ;# doc 319433-034 May 2018
 CLDEMOTE	mem				[m:	np 0f 1c /0]				CLDEMOTE
 $dq   MOVDIRI	mem#,reg#			[mr:	np o# 0f38 f9 /r]			MOVDIRI
+$dq   MOVDIRI	mem#,reg#			[mr:	evex.nd0.nf0.np.l0.m4.w# f9 /r]		APX,MOVDIRI
 $wdq  MOVDIR64B	reg#,mem512			[rm:	a# 66 0f38 f8 /r]			MOVDIR64B
+      MOVDIR64B	reg64,mem512			[rm:	evex.nd0.nf0.66.l0.m4.w1 f8 /r]		APX,MOVDIR64B
 PCONFIG		void				[	np 0f 01 c5]				PCONFIG
 
 ;# Galois field operations (GFNI)
