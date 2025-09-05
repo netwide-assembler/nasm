@@ -104,8 +104,10 @@ $shift !x,xs="0f38 f7" ROL x=f3,xs="0f3a f0",ROR RCL RCR x=66,SHL,SAL x=f2,SHR -
 ;# Other basic integer arithmetic
 $wd   INC	reg#				[r:	o# 40+r]				8086,NOLONG
 $bwdq INC	rm#				[m:	hle o# fe# /0]				8086,LOCK
+$bwdq INC	reg#?,rm#			[vm:	evex.nf.ndx.l0.m4.o# fe# /0]		APX,8086,LOCK
 $wd   DEC	reg#				[r:	o# 48+r]				8086,NOLONG
 $bwdq DEC	rm#				[m:	hle o# fe# /1]				8086,LOCK
+$bwdq DEC	reg#?,rm#			[vm:	evex.nf.ndx.l0.m4.o# fe# /1]		APX,8086,LOCK
 
 $bwdq IMUL	rm#				[m:	o# f6# /5]				8086
 $bwdq IMUL	rm#				[m:	evex.nf.nd0.l0.m4.o# f6# /5]		APX,SM
@@ -113,7 +115,7 @@ $wdq  IMUL	reg#,rm#			[rm:	o# 0f af /r]				386,SM
 $wdq  IMUL	reg#,rm#*,sbyte#		[rmi:	o# 6b /r ib,s]				186,SM
 $wdq  IMUL	reg#,rm#*,imm#			[rmi:	o# 69 /r i#]				186,SM
 $wdq  IMUL	reg#?,reg#,rm#			[vrm:	evex.nf.ndx.l0.m4.o# af /r]		APX,SM
-$wdq  IMUL	reg#,rm#,sbyte#			[rmi:	evex.nf.zu.l0.m4.o# 6b /r i#]		APX,SM
+$wdq  IMUL	reg#,rm#,sbyte#			[rmi:	evex.nf.zu.l0.m4.o# 6b /r ib,s]		APX,SM
 $wdq  IMUL	reg#,rm#,imm#			[rmi:	evex.nf.zu.l0.m4.o# 69 /r i#]		APX,SM
 
 $bwdq MUL	rm#				[m:	o# f6# /4]				8086
@@ -130,7 +132,9 @@ $wdq  MUL	reg#,rm#,sbyte#			[rmi:	evex.nf.zu.l0.m4.o# 6b /r i#]		APX,SM,ND
 $wdq  MUL	reg#,rm#,imm#			[rmi:	evex.nf.zu.l0.m4.o# 69 /r i#]		APX,SM,ND
 
 $bwdq IDIV	rm#				[m:	o# f6# /7]				8086
+$bwdq IDIV	rm#				[m:	evex.nf.nd0.l0.m4.o# f6# /7]		APX,8086
 $bwdq DIV	rm#				[m:	o# f6# /6]				8086
+$bwdq DIV	rm#				[m:	evex.nf.nd0.l0.m4.o# f6# /6]		APX,8086
 
 $bwdq NEG	rm#				[m:	hle o# f6 /3]				8086,LOCK
 $bwdq NOT	rm#				[m:	hle o# f6 /2]				8086,LOCK
@@ -169,11 +173,17 @@ $wdq  LZCNT	reg#,rm#			[rm:	o# f3i 0f bd /r]			LZCNT,SM
 $wdq  TZCNT	reg#,rm#			[rm:	o# f3i 0f bc /r]			BMI1,SM
 
 $dq   ANDN	reg#,reg#*,rm#			[rvm:	vex.nds.lz.0f38.w# f2 /r]		BMI1,SM
+$dq   ANDN	reg#,reg#*,rm#			[rvm:	evex.np.nf.lz.0f38.w# f2 /r]		APX,BMI1,SM
 $dq   BEXTR	reg#,rm#*,reg#			[rmv:	vex.nds.lz.0f38.w# f7 /r]		BMI1,SM
+$dq   BEXTR	reg#,rm#*,reg#			[rmv:	evex.np.nf.lz.0f38.w# f7 /r]		APX,BMI1,SM
 $dq   BLSMSK	reg#,rm#			[vm:	vex.ndd.lz.0f38.w# f3 /2]		BMI1,SM
+$dq   BLSMSK	reg#,rm#			[vm:	evex.np.nf.lz.0f38.w# f3 /2]		APX,BMI1,SM
 $dq   BLSR	reg#,rm#			[vm:	vex.ndd.lz.0f38.w# f3 /1]		BMI1,SM
+$dq   BLSR	reg#,rm#			[vm:	evex.np.nf.lz.0f38.w# f3 /1]		APX,BMI1,SM
 $dq   BLSI      reg#,rm#			[vm:	vex.ndd.lz.0f38.w# f3 /3]		BMI1,SM
+$dq   BLSI	reg#,rm#			[vm:	evex.np.nf.lz.0f38.w# f3 /3]		APX,BMI1,SM
 $dq   BZHI	reg#,rm#*,reg#			[rmv:	vex.nds.lz.0f38.w# f5 /r]		BMI2,SM
+$dq   BZHI	reg#,rm#*,reg#			[rmv:	evex.np.nf.lz.0f38.w# f5 /r]		APX,BMI1,SM
 $dq   PDEP	reg#,reg#*,rm#			[rvm:	vex.nds.lz.f2.0f38.w# f5 /r]		BMI2,SM
 $dq   PEXT	reg#,reg#*,rm#			[rvm:	vex.nds.lz.f3.0f38.w# f5 /r]		BMI2,SM
 
@@ -392,6 +402,7 @@ WBNOINVD	void				[	f3 0f 09]				WBNOINVD,PRIV
 
 INVPCID		reg32,mem128			[rm:	66 0f38 82 /r]				INVPCID,PRIV,NOLONG
 INVPCID		reg64,mem128			[rm:	66 0f38 82 /r]				INVPCID,PRIV,LONG
+INVPCID		reg64,mem128			[rm: 	evex.nf0.nd0.l0.f3.m4.w1 f2 /r]		APX,INVPCID,PRIV,LONG
 INVLPG		mem				[m:	0f 01 /7]				486,PRIV
 $wdq  INVLPGA	ax#,reg_ecx			[--:	a#  0f 01 df]				X86_64,AMD
       INVLPGA	void				[	adf 0f 01 df]				X86_64,AMD,ND
@@ -932,6 +943,7 @@ $bwdq CCMPscc	spec4,rm#,imm#			[vmi:	evex.scc.dfv.l0.m4.o# 80# /7	i#   ]	APX,SM1
 
 ;# Conditional instructions
 $wdq  CMOVcc	reg#,rm#			[rm:	o#  0f 40+c /r]				P6,SM
+$wdq  CMOVcc	reg#,reg#,rm#			[vrm:	evex.nf0.nd1.l0.m4.o# 40+c /r]		APX,P6,SM
 
 SETcc		rm8				[m:	0f 90+c /0]				386,SB
 SETcc		reg64				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU
@@ -942,6 +954,7 @@ SETcc		rm8				[m:	evex.zu.l0.f2.m4.wig   40+c /0	]	APX
 SETccZU		rm8				[m:	evex.nd1.l0.f2.m4.wig  40+c /0	]	APX,ZU,ND
 
 $dq   CMPccXADD mem#,reg#,reg#			[mrv:	vex.128.66.0f38.w# e0+c /r]		CMPCCXADD,LONG,SM
+$dq   CMPccXADD mem#,reg#,reg#			[mrv:	evex.nf0.128.66.0f38.w# e0+c /r]		APX,CMPCCXADD,LONG,SM
 
 ;# Katmai Streaming SIMD instructions (SSE -- a.k.a. KNI, XMM, MMX2)
 ADDPS		xmmreg,xmmrm128			[rm:	np 0f 58 /r]				KATMAI,SSE
@@ -1302,8 +1315,10 @@ VMXON		mem				[m:	f3 0f c7 /6]				VMX
 ;# Extended Page Tables VMX instructions
 INVEPT		reg32,mem			[rm: 66 0f38 80 /r]				VMX,SO,NOLONG
 INVEPT		reg64,mem			[rm: o64nw 66 0f38 80 /r]			VMX,SO,LONG
+INVEPT		reg64,mem128			[rm: evex.nf0.nd0.l0.f3.m4.w1 f0 /r]		APX,VMX,SO,LONG
 INVVPID		reg32,mem			[rm: 66 0f38 81 /r]				VMX,SO,NOLONG
 INVVPID		reg64,mem			[rm: o64nw 66 0f38 81 /r]			VMX,SO,LONG
+INVVPID		reg64,mem128			[rm: evex.nf0.nd0.l0.f3.m4.w1 f1 /r]		APX,VMX,SO,LONG
 ;# SEV-SNP AMD instructions
 PVALIDATE	void				[       f2 0f 01 ff]				VMX,AMD
 RMPADJUST	void				[       f3 0f 01 fe]				VMX,AMD
@@ -1416,11 +1431,12 @@ ROUNDSD		xmmreg,xmmrm64,imm8		[rmi:	66 0f3a 0b /r ib,u]			SSE41
 ROUNDSS		xmmreg,xmmrm32,imm8		[rmi:	66 0f3a 0a /r ib,u]			SSE41
 
 ;# Nehalem New Instructions (SSE4.2)
-CRC32		reg32,rm8			[rm:	f2i 0f38 f0 /r]			SSE42
-CRC32		reg32,rm16			[rm:	o16 f2i 0f38 f1 /r]			SSE42
-CRC32		reg32,rm32			[rm:	o32 f2i 0f38 f1 /r]			SSE42
-CRC32		reg64,rm8			[rm:	o64 f2i 0f38 f0 /r]			SSE42,X86_64,LONG
-CRC32		reg64,rm64			[rm:	o64 f2i 0f38 f1 /r]			SSE42,X86_64,LONG
+$dq  CRC32	reg#,rm8			[rm:	o# f2i 0f38 f0 /r]			SSE42
+     CRC32	reg32,rm16			[rm:	o16 f2i 0f38 f1 /r]			SSE42
+$dq  CRC32	reg#,rm#			[rm:	o# f2i 0f38 f1 /r]			SSE42
+$dq  CRC32	reg#,rm8			[rm:	evex.nd0.nf0.np.l0.m4.o# f0 /r]		APX,SSE42
+     CRC32	reg32,rm16			[rm:	evex.nd0.nf0.66.l0.m4.o16 f1 /r]	APX,SSE42
+$dq  CRC32	reg#,rm#			[rm:	evex.nd0.nf0.np.l0.m4.o# f1 /r]		APX,SSE42
 PCMPESTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 61 /r ib,u]			SSE42
 PCMPESTRM	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 60 /r ib,u]			SSE42
 PCMPISTRI	xmmreg,xmmrm128,imm8		[rmi:	66 0f3a 63 /r ib,u]			SSE42
@@ -2973,6 +2989,14 @@ $k $w    KMOV%  kreg#,reg32                         [rm: vex.l0.0f.np.w0 92 /r	 
 $k $w    KMOV%  kreg#,reg#                          [rm: vex.l0.0f.np.w0 92 /r	     ]		AVX512F,ND
 $k $b    KMOV%	reg32,kreg#			    [rm: vex.l0.0f.66.w0 93 /r	     ]		AVX512DQ
 $k $w    KMOV%	reg32,kreg#			    [rm: vex.l0.0f.np.w0 93 /r	     ]		AVX512F
+$k $bwdq KMOV%	kreg#,mem#			    [rm: evex.nf0.nd0.l0.0f.ko# 90 /r]		APX,AVX512(b:DQ/w:F/BW)
+$k $bwdq KMOV%	mem#,krm#			    [mr: evex.nf0.nd0.l0.0f.ko# 91 /r]		APX,AVX512(b:DQ/w:F/BW)
+$k $dq   KMOV%  kreg#,reg#			    [rm: evex.nf0.nd0.l0.0f.f2.w# 92 /r	     ]	APX,AVX512BW
+$k $dq   KMOV%  reg#,kreg#			    [rm: evex.nf0.nd0.l0.0f.f2.w# 93 /r	     ]	APX,AVX512BW
+$k $b    KMOV%  kreg#,reg32                         [rm: evex.nf0.nd0.l0.0f.66.w0 92 /r	     ]	APX,AVX512DQ
+$k $w    KMOV%  kreg#,reg32                         [rm: evex.nf0.nd0.l0.0f.np.w0 92 /r	     ]	APX,AVX512F
+$k $b    KMOV%	reg32,kreg#			    [rm: evex.nf0.nd0.l0.0f.66.w0 93 /r	     ]	APX,AVX512DQ
+$k $w    KMOV%	reg32,kreg#			    [rm: evex.nf0.nd0.l0.0f.np.w0 93 /r	     ]	APX,AVX512F
 
 $k $bwdq KADD%  kreg#,kreg#*,kreg#                  [rvm: vex.l1.0f.ko# 4a /r ]			AVX512(bw:DQ/BW),SM
 $k $bwdq KAND%  kreg#,kreg#*,kreg#                  [rvm: vex.l1.0f.ko# 41 /r ]			AVX512(b:DQ/w:F/BW),SM
@@ -5250,10 +5274,12 @@ ENQCMD		reg16,mem512			[rm:	a16 f2 0f38 f8 /r]			ENQCMD,SZ,NOLONG
 ENQCMD		reg32,mem512			[rm:	a16 f2 0f38 f8 /r]			ENQCMD,SZ,NOLONG,ND
 ENQCMD		reg32,mem512			[rm:	a32 f2 0f38 f8 /r]			ENQCMD,SZ
 ENQCMD		reg64,mem512			[rm:	a64 f2 0f38 f8 /r]			ENQCMD,SZ,LONG
+ENQCMD		reg64,mem512			[rm:	evex.nf0.nd0.l0.f2.m4.w1 f8 /r]		APX,ENQCMD,SZ,PRIV,LONG
 ENQCMDS		reg16,mem512			[rm:	a16 f3 0f38 f8 /r]			ENQCMD,SZ,NOLONG,PRIV
 ENQCMDS		reg32,mem512			[rm:	a16 f3 0f38 f8 /r]			ENQCMD,SZ,NOLONG,PRIV,ND
 ENQCMDS		reg32,mem512			[rm:	a32 f3 0f38 f8 /r]			ENQCMD,SZ,PRIV
 ENQCMDS		reg64,mem512			[rm:	a64 f3 0f38 f8 /r]			ENQCMD,SZ,PRIV,LONG
+ENQCMDS		reg64,mem512			[rm:	evex.nf0.nd0.l0.f3.m4.w1 f8 /r]		APX,ENQCMD,SZ,PRIV,LONG
 PCONFIG		void				[	np 0f 01 c5]				PCONFIG,PRIV
 XRESLDTRK	void				[	f2 0f 01 e9]				TSXLDTRK
 XSUSLDTRK	void				[	f2 0f 01 e8]				TSXLDTRK
@@ -5540,12 +5566,14 @@ VSUBSH		xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.f3.map5.w0 5c /r
 VUCOMISH	xmmreg,xmmrm16|sae			[rm:t1s: evex.lig.np.map5.w0 2e /r]	AVX512FP16
 
 ;# RAO-INT weakly ordered atomic operations
-AADD		mem32,reg32				[mr:	norexw np 0f38 fc /r	]	RAOINT,SD
-AADD		mem64,reg64				[mr:	o64 np 0f38 fc /r	]	RAOINT,SQ,LONG
-AAND		mem32,reg32				[mr:	norexw 66 0f38 fc /r	]	RAOINT,SD
-AAND		mem64,reg64				[mr:	o64 66 0f38 fc /r	]	RAOINT,SQ,LONG
-AXOR		mem32,reg32				[mr:	norexw f3 0f38 fc /r	]	RAOINT,SD
-AXOR		mem64,reg64				[mr:	o64 f3 0f38 fc /r	]	RAOINT,SQ,LONG
+$dq  AADD	rm#,reg#				[mr:	o# np 0f38 fc /r	]	RAOINT,SQ,LONG
+$dq  AADD	rm#,reg#				[mr:	evex.nf0.nd0.l0.np.m4.o# fc /r	]	APX,RAOINT,SQ,LONG
+$dq  AAND	rm#,reg#				[mr:	o# 66 0f38 fc /r	]	RAOINT,SQ,LONG
+$dq  AAND	rm#,reg#				[mr:	evex.nf0.nd0.l0.66.m4.o# fc /r	]	APX,RAOINT,SQ,LONG
+$dq  AOR	rm#,reg#				[mr:	o# f2 0f38 fc /r	]	RAOINT,SQ,LONG
+$dq  AOR	rm#,reg#				[mr:	evex.nf0.nd0.l0.f2.m4.o# fc /r	]	APX,RAOINT,SQ,LONG
+$dq  AXOR	rm#,reg#				[mr:	o# f3 0f38 fc /r	]	RAOINT,SQ,LONG
+$dq  AXOR	rm#,reg#				[mr:	evex.nf0.nd0.l0.f3.m4.o# fc /r	]	APX,RAOINT,SQ,LONG
 
 ;# User interrupts
 CLUI		void					[	f3 0f 01 ee		]	UINTR,LONG

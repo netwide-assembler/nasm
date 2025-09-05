@@ -30,7 +30,7 @@ $$bwdq $op	rm#,imm#			[mi:	$hle o# 80# /$n i#			]	8086,SM,$lock
 $$bwdq $op	reg#?,reg#,rm#			[vrm:	evex.ndx.nf.l0.m4.o#     $02# /r	]	$apx,SM
 $$bwdq $op	reg#?,rm#,reg#			[vmr:	evex.ndx.nf.l0.m4.o#     $00# /r	]	$apx,SM
 $$wdq  $op	reg#?,rm#,sbyte#		[vmi:	evex.ndx.nf.l0.m4.o#     83 /$n ib,s	]	$apx,SM
-$$bwdq $op	reg#?,rm#,imm#			[vmi:	evex.ndx.nf.l0.m4.o#     80# /$n ib	]	$apx,SM
+$$bwdq $op	reg#?,rm#,imm#			[vmi:	evex.ndx.nf.l0.m4.o#     80# /$n i#	]	$apx,SM
 EOL
 };
 
@@ -185,8 +185,12 @@ sub func_multisize($$$) {
 		$long |= $longflag if ($2 =~ /$sn/i);
 		# Drop
 	    } elsif ($mw eq 'w#') {
-		$o .= !$i ? 'ww' : ($s >= 64) ? 'w1' : 'w0';
-		$wwflag = 1;
+		if (!$i) {
+			$o .= 'ww';
+			$wwflag = 1;
+		} else {
+			$o .= ($s >= 64) ? 'w1' : 'w0';
+		}
 	    } elsif ($mw eq 'w##') {
 		$o .= 'w'.(($i-1) & 1);
 	    } elsif ($mw eq '#') {
