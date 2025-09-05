@@ -170,6 +170,7 @@ $wd   XBTS	rm#,reg#			[mr:	o# 0f a6 /r]				386,UNDOC,ND,OBSOLETE,NOLONG
 
 ;# BMI1 and BMI2 bit operations
 $wdq  LZCNT	reg#,rm#			[rm:	o# f3i 0f bd /r]			LZCNT,SM
+$wdq  LZCNT	reg#,rm#			[rm:	evex.nd0.nf.l0.m4.o# f5 /r]		APX,LZCNT,SM
 $wdq  TZCNT	reg#,rm#			[rm:	o# f3i 0f bc /r]			BMI1,SM
 
 $dq   ANDN	reg#,reg#*,rm#			[rvm:	vex.nds.lz.0f38.w# f2 /r]		BMI1,SM
