@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+;;   Copyright 1996-2025 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -2979,37 +2979,29 @@ VPMADD52LUQ     xmmreg,xmmreg,xmmrm128			[rvm:	vex.128.66.0f38.w1 b4 /r]	AVXIFMA
 VPMADD52LUQ     ymmreg,ymmreg,ymmrm256			[rvm:	vex.256.66.0f38.w1 b4 /r]	AVXIFMA,LATEVEX,SY
 
 ;# AVX-512 mask register instructions
-$k $bwdq KMOV%	kreg#,krm#			    [rm: vex.l0.0f.ko# 90 /r	     ]		AVX512(b:DQ/w:F/BW)
-$k $bwdq KMOV%	mem#,kreg#			    [mr: vex.l0.0f.ko# 91 /r	     ]		AVX512(bw:DQ/BW)
-$k $dq   KMOV%  kreg#,reg#			    [rm: vex.l0.0f.f2.w# 92 /r	     ]		AVX512BW
-$k $dq   KMOV%  reg#,kreg#			    [rm: vex.l0.0f.f2.w# 93 /r	     ]		AVX512BW
-$k $b    KMOV%  kreg#,reg32                         [rm: vex.l0.0f.66.w0 92 /r	     ]		AVX512DQ
-$k $b    KMOV%  kreg#,reg#                          [rm: vex.l0.0f.66.w0 92 /r	     ]		AVX512DQ,ND
-$k $w    KMOV%  kreg#,reg32                         [rm: vex.l0.0f.np.w0 92 /r	     ]		AVX512F
-$k $w    KMOV%  kreg#,reg#                          [rm: vex.l0.0f.np.w0 92 /r	     ]		AVX512F,ND
-$k $b    KMOV%	reg32,kreg#			    [rm: vex.l0.0f.66.w0 93 /r	     ]		AVX512DQ
-$k $w    KMOV%	reg32,kreg#			    [rm: vex.l0.0f.np.w0 93 /r	     ]		AVX512F
-$k $bwdq KMOV%	kreg#,mem#			    [rm: evex.nf0.nd0.l0.0f.ko# 90 /r]		APX,AVX512(b:DQ/w:F/BW)
-$k $bwdq KMOV%	mem#,krm#			    [mr: evex.nf0.nd0.l0.0f.ko# 91 /r]		APX,AVX512(b:DQ/w:F/BW)
-$k $dq   KMOV%  kreg#,reg#			    [rm: evex.nf0.nd0.l0.0f.f2.w# 92 /r	     ]	APX,AVX512BW
-$k $dq   KMOV%  reg#,kreg#			    [rm: evex.nf0.nd0.l0.0f.f2.w# 93 /r	     ]	APX,AVX512BW
-$k $b    KMOV%  kreg#,reg32                         [rm: evex.nf0.nd0.l0.0f.66.w0 92 /r	     ]	APX,AVX512DQ
-$k $w    KMOV%  kreg#,reg32                         [rm: evex.nf0.nd0.l0.0f.np.w0 92 /r	     ]	APX,AVX512F
-$k $b    KMOV%	reg32,kreg#			    [rm: evex.nf0.nd0.l0.0f.66.w0 93 /r	     ]	APX,AVX512DQ
-$k $w    KMOV%	reg32,kreg#			    [rm: evex.nf0.nd0.l0.0f.np.w0 93 /r	     ]	APX,AVX512F
+$k $bwdq KMOV%	kreg#,krm#			    [rm:  vex+.l0.0f.ko# 90 /r	     ]		AVX512(b:DQ/w:F/BW)
+$k $bwdq KMOV%	mem#,kreg#			    [mr:  vex+.l0.0f.ko# 91 /r	     ]		AVX512(bw:DQ/BW)
+$k $dq   KMOV%  kreg#,reg#			    [rm:  vex+.l0.0f.f2.w# 92 /r     ]		AVX512BW
+$k $dq   KMOV%  reg#,kreg#			    [rm:  vex+.l0.0f.f2.w# 93 /r     ]		AVX512BW
+$k $b    KMOV%  kreg#,reg32                         [rm:  vex+.l0.0f.66.w0 92 /r     ]		AVX512DQ
+$k $b    KMOV%  kreg#,reg#                          [rm:  vex+.l0.0f.66.w0 92 /r     ]		AVX512DQ,ND
+$k $w    KMOV%  kreg#,reg32                         [rm:  vex+.l0.0f.np.w0 92 /r     ]		AVX512F
+$k $w    KMOV%  kreg#,reg#                          [rm:  vex+.l0.0f.np.w0 92 /r     ]		AVX512F,ND
+$k $b    KMOV%	reg32,kreg#			    [rm:  vex+.l0.0f.66.w0 93 /r     ]		AVX512DQ
+$k $w    KMOV%	reg32,kreg#			    [rm:  vex+.l0.0f.np.w0 93 /r     ]		AVX512F
 
-$k $bwdq KADD%  kreg#,kreg#*,kreg#                  [rvm: vex.l1.0f.ko# 4a /r ]			AVX512(bw:DQ/BW),SM
-$k $bwdq KAND%  kreg#,kreg#*,kreg#                  [rvm: vex.l1.0f.ko# 41 /r ]			AVX512(b:DQ/w:F/BW),SM
-$k $bwdq KANDN% kreg#,kreg#*,kreg#                  [rvm: vex.l1.0f.ko# 42 /r ]			AVX512(b:DQ/w:F/BW),SM
-$k $bwdq KNOT%    kreg#,kreg#*                      [rm:  vex.l0.0f.ko# 44 /r ]			AVX512(b:DQ/w:F/BW),SM
-$k $bwdq KOR%     kreg#,kreg#*,kreg#                [rvm: vex.nds.l1.0f.ko# 45 /r ]		AVX512(b:DQ/w:F/BW),SM
-$k $bwdq KORTEST% kreg#,kreg#                       [rm:  vex.l0.0f.ko# 98 /r ]			AVX512(b:DQ/w:F/BW),SM,FL
-$k $bwdq KSHIFTL% kreg#,kreg#,imm8                  [rmi: vex.l0.66.0f3a.w## 32## /r ib ]	AVX512(b:DQ/w:F/BW),SM0-1
-$k $bwdq KSHIFTR% kreg#,kreg#,imm8                  [rmi: vex.l0.66.0f3a.w## 32## /r ib ]	AVX512(b:DQ/w:F/BW),SM0-1
-$k $bwdq KTEST%   kreg#,kreg#                       [rm:  vex.l0.0f.ko# 99 /r ]			AVX512(bw:DQ/BW),SM,FL
-$k $wdq  KUNPCK%% kreg#,kreg##*,kreg##              [rvm: vex.nds.l1.0f.ko# 4b /r ]		AVX512(w:F/BW),SM1-2
-$k $bwdq KXNOR%   kreg#,kreg#*,kreg#                [rvm: vex.nds.l1.0f.ko# 46 /r ]		AVX512(b:DQ/w:F/BW),SM
-$k $bwdq KXOR%    kreg#,kreg#*,kreg#                [rvm: vex.nds.l1.0f.ko# 47 /r ]		AVX512(b:DQ/w:F/BW),SM
+$k $bwdq KADD%  kreg#,kreg#*,kreg#                  [rvm: vex+.l1.0f.ko# 4a /r ]		AVX512(bw:DQ/BW),SM
+$k $bwdq KAND%  kreg#,kreg#*,kreg#                  [rvm: vex+.l1.0f.ko# 41 /r ]		AVX512(b:DQ/w:F/BW),SM
+$k $bwdq KANDN% kreg#,kreg#*,kreg#                  [rvm: vex+.l1.0f.ko# 42 /r ]		AVX512(b:DQ/w:F/BW),SM
+$k $bwdq KNOT%    kreg#,kreg#*                      [rm:  vex+.l0.0f.ko# 44 /r ]		AVX512(b:DQ/w:F/BW),SM
+$k $bwdq KOR%     kreg#,kreg#*,kreg#                [rvm: vex+.nds.l1.0f.ko# 45 /r ]		AVX512(b:DQ/w:F/BW),SM
+$k $bwdq KORTEST% kreg#,kreg#                       [rm:  vex+.l0.0f.ko# 98 /r ]		AVX512(b:DQ/w:F/BW),SM,FL
+$k $bwdq KSHIFTL% kreg#,kreg#,imm8                  [rmi: vex+.l0.66.0f3a.w## 32## /r ib ]	AVX512(b:DQ/w:F/BW),SM0-1
+$k $bwdq KSHIFTR% kreg#,kreg#,imm8                  [rmi: vex+.l0.66.0f3a.w## 32## /r ib ]	AVX512(b:DQ/w:F/BW),SM0-1
+$k $bwdq KTEST%   kreg#,kreg#                       [rm:  vex+.l0.0f.ko# 99 /r ]		AVX512(bw:DQ/BW),SM,FL
+$k $wdq  KUNPCK%% kreg#,kreg##*,kreg##              [rvm: vex+.nds.l1.0f.ko# 4b /r ]		AVX512(w:F/BW),SM1-2
+$k $bwdq KXNOR%   kreg#,kreg#*,kreg#                [rvm: vex+.nds.l1.0f.ko# 46 /r ]		AVX512(b:DQ/w:F/BW),SM
+$k $bwdq KXOR%    kreg#,kreg#*,kreg#                [rvm: vex+.nds.l1.0f.ko# 47 /r ]		AVX512(b:DQ/w:F/BW),SM
 
 ;# AVX-512 instructions
 VADDPD          xmmreg|mask|z,xmmreg*,xmmrm128|b64  [rvm:fv: evex.nds.128.66.0f.w1 58 /r ] AVX512VL,AVX512

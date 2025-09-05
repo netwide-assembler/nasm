@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -243,8 +243,12 @@ static int parse_mref(operand *op, const expr *e)
     o = op->offset;
 
     for (; e->type; e++) {
+        if (!e->value)          /* Operand multiplied by zero */
+            continue;
+
         if (e->type <= EXPR_REG_END) {
-            bool is_gpr = is_class(REG_GPR,nasm_reg_flags[e->type]);
+            opflags_t flags = nasm_reg_flags[e->type];
+            bool is_gpr = is_class(REG_GPR, flags);
 
             if (is_gpr && e->value == 1 && b == -1) {
                 /* It can be basereg */
@@ -287,7 +291,7 @@ static int parse_mref(operand *op, const expr *e)
             nasm_nonfatal("invalid effective address: bad subexpression type");
             return -1;
         }
-   }
+    }
 
     op->basereg  = b;
     op->indexreg = i;
@@ -306,7 +310,12 @@ static void mref_set_optype(operand *op)
     /* It is memory, but it can match any r/m operand */
     op->type |= MEMORY_ANY;
 
-    if (b == -1 && (i == -1 || s == 0)) {
+    nasm_assert(i == -1 || s > 0);
+
+    if (b != -1) {
+        opflags_t bclass = nasm_reg_flags[b];
+        op->type &= bclass | ~RN_L16;
+    } else if (i == -1) {
         int is_rel = globl.bits == 64 &&
             !(op->eaflags & EAF_ABS) &&
             ((globl.rel &&
@@ -318,6 +327,7 @@ static void mref_set_optype(operand *op)
 
     if (i != -1) {
         opflags_t iclass = nasm_reg_flags[i];
+        op->type &= iclass | ~RN_L16;
 
         if (is_class(XMMREG,iclass))
             op->type |= XMEM;

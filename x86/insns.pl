@@ -365,6 +365,38 @@ sub conditional_forms(@) {
     return @field_list;
 }
 
+# APX: EVEX promoted forms of VEX instructions
+sub apx_evex_forms(@) {
+    my @field_list;
+
+    foreach my $fields (@_) {
+	my $doapx = 1;
+	my @ff = @$fields;
+
+	$doapx = 0 if ($ff[3] =~ /\bNOAPX\b/);
+	$doapx = 0 if ($ff[2] !~ /^(\[.*?)\b(vex\+)(\.[^\s]*)?(.*\])$/);
+
+	if (!$doapx) {
+	    push(@field_list, $fields);
+	    next;
+	}
+
+	my($head,$vexplus,$vexargs,$tail) = ($1,$2,$3,$4);
+
+	$doapx = $vexargs !~ /\.m([89|[1-9][0-9]+)\b/;
+
+	$ff[2] = $head.'vex'.$vexargs.$tail;
+	push(@field_list, [@ff]);
+	if ($doapx) {
+	    $ff[2] = $head.'evex'.$vexargs.$tail;
+	    $ff[3] .= ',APX';
+	    push(@field_list, [@ff]);
+	}
+    }
+
+    return @field_list;
+}
+
 print STDERR "Reading insns.dat...\n";
 
 @args   = ();
@@ -406,6 +438,7 @@ while (<F>) {
     my @field_list = ([$1, $2, $3, uc($4)]);
     @field_list = relaxed_forms(@field_list);
     @field_list = conditional_forms(@field_list);
+    @field_list = apx_evex_forms(@field_list);
 
     foreach my $fields (@field_list) {
         ($formatted, $nd) = format_insn(@$fields);
@@ -771,8 +804,10 @@ sub format_insn($$$$) {
 		$opp =~ s/^rm_k$/rm_opmask/;
 		$opp =~ s/^kreg$/opmaskreg/;
 		my $isreg = ($opp =~ /(\brm_|\breg_|reg\b)/);
+		my $isrm  = $isreg || ($opp =~ /\bmem/);
 		my $isvec = ($opp =~ /\b[xyzt]mm/);
-		if ($isreg && !(($flags{'EVEX'} && $isvec) || !$flags{'NOAPX'})) {
+		if ($isrm &&
+		    !(($flags{'EVEX'} && $isvec) || !$flags{'NOAPX'})) {
 		    # Register numbers >= 16 disallowed
 		    push(@oppx, 'rn_l16');
 		}
