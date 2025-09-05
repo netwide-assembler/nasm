@@ -2,12 +2,15 @@
 \# NASM revision history in nasmdoc format
 \#
 
-\H{cl-2.xx} NASM 2 Series
+\H{cl-3.xx} NASM 3 Series
 
-The NASM 2 series supports x86-64, and is the production version of NASM
-since 2007.
+The NASM 3 series added support for the APX instruction encodings
+(extended GPRs), as well as preprocessor enhancements meant to make
+evolving code simpler.
 
-\S{cl-2.17} Version 2.17
+It is the production version of NASM since 2025.
+
+\S{cl-3.0} Version 3.0
 
 \b Improve the documentation for building from source (\k{source}).
 
@@ -48,6 +51,11 @@ since 2007.
 \b Clean up the command-line help text (\c{-h}) and break it down into
    individual topics, as the previous output was just too verbose to be
    practical as a quick reference.
+
+\H{cl-2.xx} NASM 2 Series
+
+The NASM 2 series added support for x86-64, and was the production
+versions of NASM from 2007 to 2025.
 
 \S{cl-2.16.03} Version 2.16.03
 
