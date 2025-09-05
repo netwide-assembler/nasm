@@ -218,6 +218,8 @@ $dq    BSWAP	reg#				[r:	o#  0f c8+r]				486
        BSWAP	reg_bx				[-:	86 df]					8086,OPT,NOREX,ND
 $wdq   MOVBE	reg#,mem#			[rm:	o#  norep 0f38 f0 /r]			NEHALEM,MOVBE,SM
 $wdq   MOVBE	mem#,reg#			[mr:	o#  norep 0f38 f1 /r]			NEHALEM,MOVBE,SM
+$wdq   MOVBE	reg#,mem#			[rm:	evex.nd0.nf0.l0.m4.o# 60 /r]		APX,NEHALEM,MOVBE,SM
+$wdq   MOVBE	mem#,reg#			[mr:	evex.nd0.nf0.l0.m4.o# 61 /r]		APX,NEHALEM,MOVBE,SM
 
 ;# Sign and zero extension
       CBW	void				[	o16 98]					8086
