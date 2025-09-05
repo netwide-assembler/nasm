@@ -41,11 +41,6 @@
 #include "compiler.h"
 
 /*
- * File pointer for error messages
- */
-extern FILE *error_file;        /* Error file descriptor */
-
-/*
  * Typedef for the severity field
  */
 typedef uint32_t errflags;
@@ -56,10 +51,8 @@ typedef uint32_t errflags;
 void printf_func(2, 3) nasm_error(errflags severity, const char *fmt, ...);
 void printf_func(1, 2) nasm_listmsg(const char *fmt, ...);
 void printf_func(2, 3) nasm_listmsgf(errflags flags, const char *fmt, ...);
-void printf_func(1, 2) nasm_debug(const char *fmt, ...);
-void printf_func(2, 3) nasm_debugf(errflags flags, const char *fmt, ...);
-void printf_func(1, 2) nasm_info(const char *fmt, ...);
-void printf_func(2, 3) nasm_infof(errflags flags, const char *fmt, ...);
+void printf_func(2, 3) nasm_debug_(unsigned int level, const char *fmt, ...);
+void printf_func(2, 3) nasm_info_(unsigned int level, const char *fmt, ...);
 void printf_func(1, 2) nasm_note(const char *fmt, ...);
 void printf_func(2, 3) nasm_notef(errflags flags, const char *fmt, ...);
 void printf_func(2, 3) nasm_warn_(errflags flags, const char *fmt, ...);
@@ -77,20 +70,44 @@ fatal_func nasm_panic_from_macro(const char *func, const char *file, int line);
 void vprintf_func(2) nasm_verror(errflags severity, const char *fmt, va_list ap);
 fatal_func vprintf_func(2) nasm_verror_critical(errflags severity, const char *fmt, va_list ap);
 
+const char *error_pfx(errflags severity);
+
 /*
  * These are the error severity codes which get passed as the first
- * argument to an efunc.
+ * argument to an efunc. The order here matters!
  */
-#define ERR_LISTMSG		0x00000000      /* for the listing file only (no prefix) */
+
+/* For the list file only */
+#define ERR_LISTMSG		0x00000000      /* for the listing file only (comment prefix) */
 #define ERR_NOTE		0x00000001      /* for the listing file only (with prefix) */
-#define ERR_DEBUG		0x00000002	/* debugging message */
-#define ERR_INFO		0x00000003	/* information for the list file */
-#define ERR_WARNING		0x00000004	/* warn only: no further action */
-#define ERR_NONFATAL		0x00000008	/* terminate assembly after phase */
-#define ERR_FATAL		0x00000009	/* instantly fatal: exit with error */
+
+/* Non-terminating diagnostics; can be suppressed */
+#define ERR_DEBUG		0x00000004	/* internal debugging message */
+#define ERR_INFO		0x00000005	/* informational message */
+#define ERR_WARNING		0x00000006	/* warning */
+
+/* Errors which terminate assembly without output */
+#define ERR_NONFATAL		0x00000008	/* terminate assembly after the current pass */
+
+/*
+ * From this point, errors cannot be suppressed, and the C compiler is
+ * told that the call to nasm_verror() is terminating, to remove the
+ * need to generate further code.
+ */
+#define ERR_FATAL		0x0000000c	/* terminate immediately, but perform cleanup */
+
+/*
+ * Abort conditions - terminate with minimal or no cleanup.
+ *
+ * ERR_CRITICAL is used for system errors like out of memory, where the normal
+ * error and cleanup paths may impede informing the user of the nature of the failure.
+ *
+ * ERR_PANIC is used exclusively to trigger on bugs in the NASM code itself.
+ */
 #define ERR_CRITICAL		0x0000000e      /* fatal, but minimize code before exit */
 #define ERR_PANIC		0x0000000f	/* internal error: panic instantly
-						 * and dump core for reference */
+						 * and call abort() to dump core for reference */
+
 #define ERR_MASK		0x0000000f	/* mask off the above codes */
 #define ERR_UNDEAD		0x00000010      /* skip if we already have errors */
 #define ERR_NOFILE		0x00000020	/* don't give source file name/line */
@@ -111,6 +128,11 @@ fatal_func vprintf_func(2) nasm_verror_critical(errflags severity, const char *f
 #define WARN_SHR		16              /* how far to shift right */
 #define WARN_IDX(x)		(((errflags)(x)) >> WARN_SHR)
 #define WARN_MASK		((~(errflags)0) << WARN_SHR)
+#define WARNING(x)		((errflags)(x) << WARN_SHR)
+
+/* The same field is used for debug and info levels */
+#define LEVEL_SHR		WARN_SHR
+#define LEVEL(x)		WARNING(x)
 
 /* This is a bitmask */
 #define WARN_ST_ENABLED		1 /* Warning is currently enabled */
@@ -154,38 +176,88 @@ errflags nasm_error_hold_pop(errhold hold, bool issue);
 #include "warnings.h"
 
 /* True if a warning is enabled, either as a warning or an error */
+extern errflags errflags_never;
 static inline bool warn_active(errflags warn)
 {
-    enum warn_index wa = WARN_IDX(warn);
-    return unlikely(warning_state[wa] & WARN_ST_ENABLED);
+    if (warn & errflags_never)
+        return false;
+
+    return !!(warning_state[WARN_IDX(warn)] & WARN_ST_ENABLED);
 }
 
-#ifdef HAVE_VARIADIC_MACROS
-
-#define nasm_warn(w, ...) \
-    do { \
-        if (unlikely(warn_active(w))) \
-            nasm_warn_(w, __VA_ARGS__); \
-    } while (0)
-
-#else
-
-#define nasm_warn nasm_warn_
-
-#endif
-
-/* By defining MAX_DEBUG, we can compile out messages entirely */
+/*
+ * By defining MAX_DEBUG or MAX_INFO, it is possible to
+ * compile out messages entirely.
+ */
 #ifndef MAX_DEBUG
-# define MAX_DEBUG (~0U)
+# define MAX_DEBUG UINT_MAX
+#endif
+#ifndef MAX_INFO
+# define MAX_INFO UINT_MAX
 #endif
 
 /* Debug level checks */
+extern unsigned int debug_nasm;
 static inline bool debug_level(unsigned int level)
 {
-    extern unsigned int debug_nasm;
     if (is_constant(level) && level > MAX_DEBUG)
         return false;
     return unlikely(level <= debug_nasm);
 }
+
+/* Info level checks */
+extern unsigned int opt_verbose_info;
+static inline bool info_level(unsigned int level)
+{
+    if (is_constant(level) && level > MAX_INFO)
+        return false;
+    return unlikely(level <= opt_verbose_info);
+}
+
+#ifdef HAVE_VARIADIC_MACROS
+
+/*
+ * Marked unlikely() to avoid excessive speed penalties on disabled warnings;
+ * if the warning is issued then the performance penalty is substantial
+ * anyway.
+ */
+#define nasm_warn(w, ...)                               \
+    do {                                                \
+        const errflags _w = (w);                        \
+        if (unlikely(warn_active(_w))) {                \
+            nasm_warn_(_w, __VA_ARGS__);                \
+        }                                               \
+    } while (0)
+
+#define nasm_info(l, ...)                           \
+    do {                                            \
+            const unsigned int _l = (l);            \
+            if (unlikely(info_level(_l)))           \
+                nasm_info_(_l, __VA_ARGS__);        \
+    } while (0)
+
+#define nasm_debug(l, ...)                          \
+    do {                                            \
+            const unsigned int _l = (l);            \
+            if (unlikely(debug_level(_l)))          \
+                nasm_debug_(_l, __VA_ARGS__);       \
+    } while (0)
+
+#else
+
+#define nasm_warn  nasm_warn_
+#if MAX_DEBUG
+# define nasm_debug nasm_debug_
+#else
+# define nasm_debug (void)
+#endif
+#if MAX_INFO
+# define nasm_info nasm_info_
+#else
+# define nasm_info (void)
+#endif
+
+#endif
+
 
 #endif /* NASM_ERROR_H */

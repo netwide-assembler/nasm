@@ -82,6 +82,8 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list val)
     abort();
 }
 
+errflags errflags_never = 0;
+
 int main(int argc, char **argv)
 {
     uint8_t buffer[INSN_MAX * 2], *p;
