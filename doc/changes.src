@@ -15,14 +15,19 @@ since 2007.
    miscellaneous new instructions.
 
 \b Add new preprocessor functions: \c{%depend()}, \c{%pathsearch()},
-   \c{%realpath()}. See \k{ppfunc}.
-
-\b New preprocessor directive \c{%iffile} (and corresponding function
-   \c{%isfile()}) to test for the existence of a file. See \k{iffile}.
+   \c{%realpath()}, \c{%null()}, \c{%note()}, \c{%warning()},
+   \c{%error()}, \c{%fatal()}. See \k{ppfunc}.
 
 \b New preprocessor directive \c{%note} to insert a note in the list
    file, without issuing an external diagnosic.  Unlike a comment, it
    is optionally macro-expanded, see \k{pperror}.
+
+\b New preprocessor directive \c{%iffile} (and corresponding function
+   \c{%isfile()}) to test for the existence of a file. See \k{iffile}.
+
+\b New preprocessor directive \c{%ifdirective} to test for the
+   existence of a preprocessor directive, assembly directive, or
+   pseudo-instruction; see \k{ifdirective}.
 
 \b Fix a number of invalid memory references (usually causing crashes)
    on various invalid inputs.
@@ -36,6 +41,9 @@ since 2007.
 
 \b Fix the generation of segment selector references (mainly used in
    the \c{obj} output format.)
+
+\b Fix crash in the \c{obj} backend when code was emitted into the
+   default segment, without any labels having been defined.
 
 \b Clean up the command-line help text (\c{-h}) and break it down into
    individual topics, as the previous output was just too verbose to be
