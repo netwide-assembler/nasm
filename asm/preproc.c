@@ -8133,7 +8133,6 @@ static void pp_add_magic_miscfunc(void)
     define_magic("%sel", false, &tmpl);
 
     /* %cond() function, a variation on %sel */
-    nasm_zero(tmpl);
     tmpl.nparam = 3;
     tmpl.expandpvt.u = 1;         /* Booleanize */
     nasm_newn(tmpl.params, tmpl.nparam);
