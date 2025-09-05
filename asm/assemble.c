@@ -2504,7 +2504,7 @@ static int emit_prefixes(struct out_data *data, const insn *ins)
              *!  prefix has no effect in 64-bit mode. The prefix will still be
              *!  generated as requested.
              */
-            if (do_warn) {
+            if (do_warn && bits == 64) {
                 nasm_warn(WARN_PREFIX_SEG,
                           "%s segment override will be ignored in 64-bit mode",
                           prefix_name(pfx));
