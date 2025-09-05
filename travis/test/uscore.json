@@ -5,7 +5,8 @@
 		"format": "bin",
 		"source": "uscore.asm",
 		"target": [
-			{ "output": "uscore.bin" }
+		    { "output": "uscore.bin" },
+		    { "stderr": "uscore.stderr" }
 		]
 	}
 ]

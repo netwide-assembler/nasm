@@ -5,7 +5,8 @@
 		"format": "bin",
 		"source": "radix.asm",
 		"target": [
-			{ "output": "radix.bin" }
+		    { "output": "radix.bin" },
+		    { "stderr": "radix.stderr" }
 		]
 	}
 ]
