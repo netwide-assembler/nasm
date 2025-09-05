@@ -451,7 +451,7 @@ while (<F>) {
 	}
         if ($formatted && !$nd) {
             push(@big, [$formatted, $fields]);
-            my @sseq = startseq($fields->[2], $fields->[4]);
+            my @sseq = startseq($fields->[2], $fields->[3]);
             foreach my $i (@sseq) {
 		xpush(\$distable[$i->[0]][$i->[1]]{$i->[2]}, $#big);
             }
