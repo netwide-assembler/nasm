@@ -278,9 +278,9 @@ $wd   JMP	imm16:imm#|far			[ji:	o# ea iwd iw]				8086,OSIZE,AR1,NOLONG,ND
 $wdq  JMP	mem#|far			[m:	o# ff /5]				8086,OSIZE,NWSIZE
 
 ; APX absolute 64-bit jmp
-      JMP	imm64|abs			[i:	a64 np rex2.w a1 iq		]	APX
-      JMPABS	imm64				[i:	a64 np rex2.w a1 iq		]	APX,ND
-      JMPABS	imm64|abs			[i:	a64 np rex2.w a1 iq		]	APX,ND
+      JMPABS	imm64				[i:	a64 np rex2 a1 iq		]	APX
+      JMP	imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,ND
+      JMPABS	imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,ND
 
       Jcc	imm8|short			[i:	nw 70+c rel8]				8086,ND,BND,SX,JCC_HINT,NOAPX
       Jcc	imm				[i:	jcc8 nw 70+c rel8]			8086,BND,SX,JCC_HINT,NOAPX
