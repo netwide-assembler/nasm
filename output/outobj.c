@@ -639,6 +639,9 @@ static const struct dfmt borland_debug_form;
 /* The current segment */
 static struct Segment *current_seg;
 
+/* Name for segment to use if no segment directive is defined */
+static char DEFAULT_SEG[] = "__NASMDEFSEG";
+
 static int32_t obj_segment(char *, int *);
 static void obj_write_file(void);
 static enum directive_result obj_directive(enum directive, char *);
@@ -841,7 +844,7 @@ static void obj_deflabel(char *name, int32_t segment,
      */
     if (!any_segs && segment == first_seg) {
         int tempint = 0;
-        if (segment != obj_segment("__NASMDEFSEG", &tempint))
+        if (segment != obj_segment(DEFAULT_SEG, &tempint))
             nasm_panic("strange segment conditions in OBJ driver");
     }
 
@@ -1031,7 +1034,7 @@ static void obj_out(const struct out_data *out)
      */
     if (!any_segs) {
         int tempint = 0;
-        if (segto != obj_segment("__NASMDEFSEG", &tempint))
+        if (segto != obj_segment(DEFAULT_SEG, &tempint))
             nasm_panic("strange segment conditions in OBJ driver");
     }
 
@@ -1519,12 +1522,19 @@ static int32_t obj_segment(char *name, int *bits)
         /* We need to know whenever we have at least one 32-bit segment */
         obj_use32 |= seg->use32;
 
-        obj_seg_needs_update = seg;
-        if (seg->align >= SEG_ABS)
-            define_label(name, NO_SEG, seg->align - SEG_ABS, false);
-        else
-            define_label(name, seg->index + 1, 0L, false);
-        obj_seg_needs_update = NULL;
+        /*
+         * Trying to create a symbol on the last pass will end in tears.
+         * This can happen if there is no SEGMENT directive, and there
+         * are no labels.
+         */
+        if (!pass_final()) {
+            obj_seg_needs_update = seg;
+            if (seg->align >= SEG_ABS)
+                define_label(name, NO_SEG, seg->align - SEG_ABS, false);
+            else
+                define_label(name, seg->index + 1, 0L, false);
+            obj_seg_needs_update = NULL;
+        }
 
         /*
          * See if this segment is defined in any groups.
@@ -2503,7 +2513,7 @@ static void dbgbi_linnum(const char *lnfname, int32_t lineno, int32_t segto)
      */
     if (!any_segs) {
         int tempint = 0;
-        if (segto != obj_segment("__NASMDEFSEG", &tempint))
+        if (segto != obj_segment(DEFAULT_SEG, &tempint))
             nasm_panic("strange segment conditions in OBJ driver");
     }
 
