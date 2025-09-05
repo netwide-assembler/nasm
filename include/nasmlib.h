@@ -309,6 +309,10 @@ const char *filename_set_extension(const char *inname, const char *extension);
  * the number of elements of a statically defined array.
  */
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#define ARRAY_END(arr)  (&(arr)[ARRAY_SIZE(arr)])
+#define array_for_each(var,arr) \
+    for ((var) = (arr); (var) < ARRAY_END(arr); (var)++)
+
 
 /*
  * List handling
