@@ -90,6 +90,8 @@ $bwdq MOV	reg#,imm##			[ri:	o#  b0+r# i##]				8086,SM
 $bwdq MOV	reg#,imm##|abs			[ri:	o#  b0+r# i##]				8086,SM,ND
 $bwdq MOVABS	reg#,imm##			[ri:	o#  b0+r# i##]				8086,SM,ND
 $bwdq MOV	rm#,imm#			[mi:	hlexr o# c6# /0 i#]			8086,SM
+      MOVRS	reg8,mem8			[rm:	o8  norep 0f38 8a /r]			NEHALEM,MOVBE,SM
+$wdq  MOVRS	reg#,mem#			[rm:	o8  norep 0f38 8b /r]			NEHALEM,MOVBE,SM
 
 ;# Load effective address
 $wdq  LEA	reg#,mem			[rm:	o# 8d /r]				8086
