@@ -110,7 +110,7 @@ respectively.
 and \i\c{DZ} (collectively "\c{D}\e{x}" in this documentation) are used,
 much as in MASM, to declare initialized data in the output file. They
 can be invoked in a wide range of ways:
-\I{floating-point}\I{character constant}\I{string constant}
+\I{floating-point constant}\I{character constant}\I{string constant}
 
 \c       db    0x55                ; just the byte 0x55
 \c       db    0x55,0x56,0x57      ; three bytes in succession
@@ -536,7 +536,7 @@ effect as \c{db 'a'}, which would be silly. Similarly, three-character
 or four-character constants are treated as strings when they are
 operands to \c{DW}, and so forth.
 
-\S{unicode} \I{UTF-16}\I{UTF-32}\i{Unicode} Strings
+\S{unicode} \I{UTF-8}I{UTF-16}\I{UTF-32}\i{Unicode} Strings
 
 The special operators \i\c{__?utf16?__}, \i\c{__?utf16le?__},
 \i\c{__?utf16be?__}, \i\c{__?utf32?__}, \i\c{__?utf32le?__} and
@@ -557,7 +557,7 @@ The UTF operators can be applied either to strings passed to the
 \c{DB} family instructions, or to character constants in an expression
 context.
 
-\S{fltconst} \I{floating-point, constants}Floating-Point Constants
+\S{fltconst} \i{Floating-Point Constants}
 
 \i{Floating-point} constants are acceptable only as arguments to
 \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, and \i\c{DO}, or as
@@ -578,7 +578,8 @@ optionally a \c{P} followed by a \e{binary} (not hexadecimal) exponent
 in decimal notation.  As an extension, NASM additionally supports the
 \c{0h} and \c{$} prefixes for hexadecimal, as well binary and octal
 floating-point, using the \c{0b} or \c{0y} and \c{0o} or \c{0q}
-prefixes, respectively.
+prefixes, respectively. As with integers, the \c{$} prefix for
+hexadecimal is deprecated.
 
 Underscores to break up groups of digits are permitted in
 floating-point constants as well.

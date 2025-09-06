@@ -578,16 +578,19 @@ alignment), though the value does not matter.
 marks the section as a \I{COMDAT section, in win32}"COMDAT section".
 It allows Microsoft linkers to perform function-level linking,
 to deal with multiply defined symbols, to eliminate dead code/data.
+
 The "selection" number should be one of the
 \c{IMAGE_COMDAT_SELECT_*} constants from
 \W{https://github.com/MicrosoftDocs/win32/blob/docs/desktop-src/Debug/pe-format.md#comdat-sections-object-only}\c{COFF format specification};
 this value controls if the linker allows multiply defined symbols
 and how it handles them.
+
 The name is the \I{COMDAT symbol, in win32}"COMDAT symbol"
 - basically a new name for the section. So even though you have one
 section given by the main name (e.g. \c{.text}), it can actually
 consist of hundreds of COMDAT sections having their own name
 (and alignment).
+
 When the "selection" is IMAGE_COMDAT_SELECT_ASSOCIATIVE (5),
 the following name is the "COMDAT symbol" of the associated COMDAT
 section; this way you can link a piece of code or data only when
@@ -1093,17 +1096,20 @@ this extension:
 Using with static linker will clear the private extern attribute.
 But linker option like \c{-keep_private_externs} can avoid it.
 
-\H{elffmt} \i\c{elf32}, \i\c{elf64}, \i\c{elfx32}: \I{ELF}\I{linux, elf}\i{Executable and Linkable
-Format} Object Files
+\H{elffmt} \i\c{elf32}, \i\c{elf64}, \i\c{elfx32}:
+\I{ELF}\I{linux, elf}Executable and Linkable Format Object Files
 
 The \c{elf32}, \c{elf64} and \c{elfx32} output formats generate
-\c{ELF32 and ELF64} (Executable and Linkable Format) object files, as
+\c{ELF32} and \c{ELF64} (Executable and Linkable Format) object files, as
 used by \i{Linux} as well as \i{Unix System V}, including \i{Solaris x86},
 \i{UnixWare} and \i{SCO Unix}. ELF provides a default output
 file-name extension of \c{.o}. \c{elf} is a synonym for \c{elf32}.
 
-The \c{elfx32} format is used for the \i{x32} ABI, which is a 32-bit
-ABI with the CPU in 64-bit mode.
+The \c{elfx32} file format is an ELF32 file containing 64-bit x86
+code, and is used for the \i{x32} ABI, which runs the CPU in 64-bit
+mode while using 32-bit values for pointers to reduce memory
+footprint. Thus, code intended to be used with the x32 ABI should be
+assembled with \c{BITS 64}.
 
 \S{abisect} ELF specific directive \i\c{osabi}
 

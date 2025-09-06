@@ -136,10 +136,13 @@
 \IR{elf32} ELF, \c{elf32}
 \IR{elf64} ELF, \c{elf64}
 \IR{elfx32} ELF, \c{elfx32}
-\IR{executable and linkable format} Executable and Linkable Format
+\IC{elf}{executable and linkable format} Executable and Linkable Format (ELF)
 \IR{extern, elf extensions to} \c{EXTERN}, ELF extensions to
 \IR{extern, obj extensions to} \c{EXTERN}, \c{obj} extensions to
+\IR{floating-point} floating-point
 \IR{floating-point, constants} floating-point, constants
+\IA{floating-point constant}{floating-point, constants}
+\IA{floating-point constants}{floating-point, constants}
 \IR{floating-point, packed bcd constants} floating-point, packed BCD constants
 \IR{freebsd} FreeBSD
 \IR{freelink} FreeLink
@@ -156,11 +159,11 @@
 \IR{linux, elf} Linux, ELF
 \IR{linux, a.out} Linux, \c{a.out}
 \IR{linux, as86} Linux, \c{as86}
-\IR{mach object file format} Mach, object file format
-\IA{mach-o}{macho}
 \IR{mach-o} Mach-O, object file format
-\IR{macho32} \c{macho32}
-\IR{macho64} \c{macho64}
+\IA{mach object file format}{mach-o}
+\IA{macho}{mach-o}
+\IR{macho32} Mach-O, \c{macho32}
+\IR{macho64} Mach-O, \c{macho64}
 \IR{macos x} MacOS X
 \IR{masm} MASM
 \IR{masmdb} MASM, \c{DB} syntax
@@ -245,11 +248,13 @@
 \IR{tasm} TASM
 \IR{test subdirectory} \c{test} subdirectory
 \IR{thread local storage in elf} thread local storage, in ELF
-\IR{thread local storage in mach-o} thread local storage, in \c{macho}
+\IR{thread local storage in mach-o} thread local storage, in Mach-O
+\IR{macho} Mach-O
 \IR{tlink} \c{TLINK}
 \IR{unconditionally importing symbols} importing symbols, unconditionally
 \IR{underscore, in c symbols} underscore, in C symbols
-\IA{uninitialized storage}{storage, uninitialized}
+\IA{uninitialized}{uninitialized storage}
+\IC{uninitialized storage}{storage, uninitialized}
 \IR{unicode} Unicode
 \IR{unix} Unix
 \IR{utf-8} Unicode, UTF-8
@@ -263,6 +268,7 @@
 \IR{unixware} Unix, UnixWare
 \IC{linux}{unix, linux} Unix, Linux
 \IC{bsd}{unix, bsd} Unix, BSD
+\IR{x32} x32 ABI (ELF)
 \IR{val} VAL
 \IA{version number of nasm}{nasm, version}
 \IR{visual c++} Visual C++
