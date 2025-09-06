@@ -170,6 +170,18 @@ clock:
 \c       __?UTC_TIME_NUM?__     210042
 \c       __?POSIX_TIME?__       1262293242
 
+\H{has_ifdirective} \i\c{__?NASM_HAS_IFDIRECTIVE?__}: Directive
+Probing Support
+
+The standard macro \c{__?NASM_HAS_IFDIRECTIVE?__} is defined if this
+version of NASM supportes the preprocessor tests \c{%ifdirective},
+\c{%ifusable} and \c{%ifusing} are supported, and that \c{%ifdef} can
+test for the presence of preprocessor functions. See \k{ifdef},
+\k{ifdirective}, and \k{ifusing}.
+
+It is strongly suggested to test for the presence of this macro and,
+if present, relying on the corresponding tests instead of relying on
+NASM version number tests.
 
 \H{use_def} \I\c{__?USE_*?__}\c{__?USE_}\e{package}\c{?__}: Package
 Include Test
@@ -182,6 +194,7 @@ testing if a particular package is invoked or not.
 For example, if the \c{altreg} package is included (see
 \k{pkg_altreg}), then the macro \c{__?USE_ALTREG?__} is defined.
 
+See also the \c{%ifusable} and \c{%ifusing} directives, \k{ifusing}.
 
 \H{pass_macro} \i\c{__?PASS?__}: Assembly Pass
 
@@ -412,5 +425,3 @@ It is still possible to turn in on again by
 
 Note that \c{SECTALIGN <ON|OFF>} affects only the \c{ALIGN}/\c{ALIGNB} directives,
 not an explicit \c{SECTALIGN} directive.
-
-

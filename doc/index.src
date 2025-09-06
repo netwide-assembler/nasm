@@ -251,6 +251,7 @@ variables
 \IR{win64} Win64
 \IR{windows} Windows
 \IR{windows debugging formats} Windows, debugging formats
+\IR{__?USE_*?__} \c{__?USE_}\e{package}\c{?__}
 \# \IC{program entry point}{entry point, program}
 \# \IC{program entry point}{start point, program}
 \# \IC{MS-DOS device drivers}{device drivers, MS-DOS}

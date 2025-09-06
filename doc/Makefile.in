@@ -41,7 +41,7 @@ XZFILES         = @XZFILES@
 HTMLAUX		= nasmdoc.css local.css nasmlogw.png
 
 # Generated input files
-GENSRC		= insns.src version.src perlbreq.src
+GENSRC		= insns.src version.src pptok.src perlbreq.src
 
 # Top-level input file
 SRCS		= nasmdoc.src

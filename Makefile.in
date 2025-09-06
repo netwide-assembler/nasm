@@ -400,6 +400,9 @@ asm/pptok.c: asm/pptok.dat asm/pptok.pl perllib/phash.ph
 asm/pptok.ph: asm/pptok.dat asm/pptok.pl perllib/phash.ph
 	$(RUNPERL) $(srcdir)/asm/pptok.pl ph \
 		$(srcdir)/asm/pptok.dat asm/pptok.ph
+doc/pptok.src: asm/pptok.dat asm/pptok.pl perllib/phash.ph
+	$(RUNPERL) $(srcdir)/asm/pptok.pl src \
+		$(srcdir)/asm/pptok.dat doc/pptok.src
 
 # Directives hash
 asm/directiv.h: asm/directiv.dat nasmlib/perfhash.pl perllib/phash.ph
@@ -492,7 +495,7 @@ cscope:
 	$(FIND) . -name '*.[hcS]' -print > cscope.files
 	cscope -b -f cscope.out
 
-doc: doc/warnings.src doc/perlbreq.src
+doc: doc/warnings.src doc/perlbreq.src doc/pptok.src
 	$(MAKE) -C doc all
 
 doc_install install_doc install-doc:

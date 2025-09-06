@@ -574,7 +574,7 @@ To disable aliases without undefining them, use the \c{%aliases off}
 directive.
 
 To check whether an alias is defined, regardless of the existence of
-the aliased macro, use \c{%ifdefalias}.
+the aliased macro, use \i\c{%ifdefalias}.
 
 For example:
 
@@ -701,7 +701,7 @@ arguments, and can be used in any context where single-line macro
 expansion would be performed. Preprocessor functions were introduced
 in NASM 2.16.
 
-Starting with NASM 3.0, the \c{%ifdef} directive or \c{%isdef()}
+Starting with NASM 3.0, the \i\c{%ifdef} directive or \i\c{%isdef()}
 function can also test for the availability of preprocessor
 functions. They cannot, however, be undefined, aliased or redefined.
 
@@ -785,12 +785,15 @@ Equivalent to \i\c\{%eval()}, except that the results generated are
 given as unsigned hexadecimal, with a \c{0x} prefix.
 
 
-\S{f_is} \i\c{%is()} Family Functions
+\S{f_is} \i\c{%is()}\I\c{%isn()} Family Functions
 
-Each \i\c{%if} family directive (see \k{condasm}) has an equivalent
-\c{%is()} family function, that expands to \c{1} if the equivalent
-\c{%if} directive would process as true, and \c{0} if the equivalent
-\c{%if} directive would process as false.
+Each \c{%if} conditional assembly family directive (see \k{condasm})
+has an equivalent \c{%is()} family function, that expands to \c{1} if
+the equivalent \c{%if} directive would process as true, and \c{0} if
+the equivalent \c{%if} directive would process as false.
+
+This includes the \c{%ifn} forms of these directives, which become
+\c{%isn()}.
 
 \c ; Instead of !%isidn() could have used %isnidn()
 \c %if %isdef(foo) && !%isidn(foo,bar)
@@ -1563,28 +1566,43 @@ syntax of this feature looks like this:
 
 The inverse forms \i\c{%ifn} and \i\c{%elifn} are also supported.
 
-The \i\c{%else} clause is optional, as is the \i\c{%elif} clause.
-You can have more than one \c{%elif} clause as well.
+You can have multiple \i\c{%elif} clauses, or none. The \i\c{%else}
+clause is likewise optional.
 
 There are a number of variants of the \c{%if} directive.  Each has its
-corresponding \c{%elif}, \c{%ifn}, and \c{%elifn} directives; for
+corresponding \i\c{%elif}, \i\c{%ifn}, and \i\c{%elifn} directives; for
 example, the equivalents to the \c{%ifdef} directive are \c{%elifdef},
 \c{%ifndef}, and \c{%elifndef}.
 
-Futhermore, each variant of the \c{%if} directive has a corresponding
-\c{%is()} preprocessor function (see \k{f_is}.) These are
-particularly useful for testing multiple conditions at the same
-time. Unlike the C \c{defined()} preprocessor construct, these
-functions are valid anywhere in the source code, not just in \c{%if}
-expressions.
+Futhermore, each variant of the \c{%if} directive (including
+\c{%ifn} forms) has a corresponding \i\c{%is()} preprocessor function
+(see \k{f_is}.) These are particularly useful for testing multiple
+conditions at the same time. Unlike the C \c{defined()} preprocessor
+construct, these functions are valid anywhere in the source code, not
+just in \c{%if} expressions.
+
+The following descriptions of tests all imply the existence of these
+alternate forms.
+
+
+\S{if} \i\c{%if}: Testing Arbitrary Numeric Expressions\I{testing,
+arbitrary numeric expressions}
+
+The conditional-assembly construct \c{%if expr} will cause the
+subsequent code to be assembled if and only if the value of the
+numeric expression \c{expr} is non-zero. An example of the use of
+this feature is in deciding when to break out of a \c{%rep}
+preprocessor loop: see \k{rep} for a detailed example.
+
+The expression given to \c{%if} is a critical expression (see \k{crit}).
+
 
 \S{ifdef} \i\c{%ifdef}: Testing Single-Line Macro Existence\I{testing,
 single-line macro existence}
 
 Beginning a conditional-assembly block with the line \c{%ifdef
 MACRO} will assemble the subsequent code if, and only if, a
-single-line macro called \c{MACRO} is defined. If not, then the
-\c{%elif} and \c{%else} blocks (if any) will be processed instead.
+single-line macro called \c{MACRO} is defined.
 
 For example, when debugging a program, you might want to write code
 such as
@@ -1613,10 +1631,19 @@ or, if the warning is not needed, using the function form:
 
 \c   db %cond(%isdef(%newfunc),%newfunc(99),-1)
 
-You can test for a macro \e{not} being defined by using
-\i\c{%ifndef} instead of \c{%ifdef}. You can also test for macro
-definitions in \c{%elif} blocks by using \i\c{%elifdef} and
-\i\c{%elifndef}.
+It is strongly recommended to use this test instead of relying on NASM
+version numbers. To make it possible to probe for the existence of
+this test itself, the macro \c{__?NASM_HAS_IFDIRECTIVE?__} is defined
+on versions of NASM that support using \c{%ifdef} for preprocessor
+functions, see \k{has_ifdirective}.
+
+
+\S{ifdefalias} \i\c{%ifdefalias}: Testing Single-Line Macro Alias
+Existence\I{testing, single-line macro alias existence}
+
+The \c{%ifdefalias} directive operates in the same was as the
+\c{%ifdef} directive, except it tests for the definition of a
+single-line macro \e{alias}, as defined by \i\c{%defalias}.
 
 
 \S{ifmacro} \i\c{%ifmacro}: Testing Multi-Line Macro
@@ -1651,10 +1678,6 @@ This will create the macro "MyMacro 1-3" if no macro already exists which
 would conflict with it, and emits a warning if there would be a definition
 conflict.
 
-You can test for the macro not existing by using the \i\c{%ifnmacro} instead
-of \c{%ifmacro}. Additional tests can be performed in \c{%elif} blocks by using
-\i\c{%elifmacro} and \i\c{%elifnmacro}.
-
 
 \S{ifctx} \i\c{%ifctx}: Testing the Context Stack\I{testing, context
 stack}
@@ -1662,28 +1685,10 @@ stack}
 The conditional-assembly construct \c{%ifctx} will cause the
 subsequent code to be assembled if and only if the top context on
 the preprocessor's context stack has the same name as one of the arguments.
-As with \c{%ifdef}, the inverse and \c{%elif} forms \i\c{%ifnctx},
-\i\c{%elifctx} and \i\c{%elifnctx} are also supported.
 
 For more details of the context stack, see \k{ctxstack}. For a
 sample use of \c{%ifctx}, see \k{blockif}.
 
-
-\S{if} \i\c{%if}: Testing Arbitrary Numeric Expressions\I{testing,
-arbitrary numeric expressions}
-
-The conditional-assembly construct \c{%if expr} will cause the
-subsequent code to be assembled if and only if the value of the
-numeric expression \c{expr} is non-zero. An example of the use of
-this feature is in deciding when to break out of a \c{%rep}
-preprocessor loop: see \k{rep} for a detailed example.
-
-The expression given to \c{%if}, and its counterpart \i\c{%elif}, is
-a critical expression (see \k{crit}).
-
-
-Like other \c{%if} constructs, \c{%if} has a counterpart
-\i\c{%elif}, and negative forms \i\c{%ifn} and \i\c{%elifn}.
 
 \S{ifidn} \i\c{%ifidn} and \i\c{%ifidni}: Testing Exact Text
 Identity\I{testing, exact text identity}
@@ -1709,10 +1714,6 @@ stack, and allows you to treat \c{IP} as a real register:
 \c
 \c %endmacro
 
-Like other \c{%if} constructs, \c{%ifidn} has a counterpart
-\i\c{%elifidn}, and negative forms \i\c{%ifnidn} and \i\c{%elifnidn}.
-Similarly, \c{%ifidni} has counterparts \i\c{%elifidni},
-\i\c{%ifnidni} and \i\c{%elifnidni}.
 
 \S{iftyp} \i\c{%ifid}, \i\c{%ifnum}, \i\c{%ifstr}: Testing Token
 Types\I{testing, token types}
@@ -1774,10 +1775,6 @@ single string constant, and \c{db %2} would be adequate) or more (in
 which case, all but the first two would be lumped together into
 \c{%3}, and \c{db %2,%3} would be required).
 
-The usual \I\c{%elifid}\I\c{%elifnum}\I\c{%elifstr}\c{%elif}...,
-\I\c{%ifnid}\I\c{%ifnnum}\I\c{%ifnstr}\c{%ifn}..., and
-\I\c{%elifnid}\I\c{%elifnnum}\I\c{%elifnstr}\c{%elifn}... versions
-exist for each of \c{%ifid}, \c{%ifnum} and \c{%ifstr}.
 
 \S{iftoken} \i\c{%iftoken}: Test for a Single Token
 
@@ -1800,8 +1797,6 @@ will assemble the subsequent code, but
 will not, since \c{-1} contains two tokens: the unary minus operator
 \c{-}, and the number \c{1}.
 
-The usual \i\c{%eliftoken}, \i\c\{%ifntoken}, and \i\c{%elifntoken}
-variants are also provided.
 
 \S{ifempty} \i\c{%ifempty}: Test for Empty Expansion
 
@@ -1809,8 +1804,6 @@ The conditional assembly construct \c{%ifempty} assembles the
 subsequent code if and only if the expanded parameters do not contain
 any tokens at all, whitespace excepted.
 
-The usual \i\c{%elifempty}, \i\c\{%ifnempty}, and \i\c{%elifnempty}
-variants are also provided.
 
 \S{ifdirective} \i\c{%ifdirective}: Test If a Directive Is Supported
 
@@ -1837,21 +1830,29 @@ others, for example, most output formats do not support the \c{ORG}
 directive, therefore the result of \c{%ifdirective} may depend on more
 than just the current version of NASM.
 
-The usual \i\c{%elifdirective}, \i\c\{%ifndirective}, and \i\c{%elifndirective}
-variants are also provided.
+\c{%ifdirective} was introduced in NASM 3.0. It is strongly
+recommended to use this test instead of relying on NASM version
+numbers. To make it possible to probe for the existence of this test
+itself, the macro \i\c{__?NASM_HAS_IFDIRECTIVE?__} is defined versions
+of NASM that support \c{%ifdirective} and using \c{%ifdef} to test for
+preprocessor functions.
 
-\S{ifenv} \i\c{%ifenv}: Test If Environment Variable Exists
 
-The conditional assembly construct \c{%ifenv} assembles the
-subsequent code if and only if the environment variable referenced by
-the \c{%!}\e{variable} directive exists.
+\S{ifusing} \i\c{%ifusable} and \i\c{%ifusing}: Test For Standard
+Macro Packages
 
-The usual \i\c{%elifenv}, \i\c\{%ifnenv}, and \i\c{%elifnenv}
-variants are also provided.
+The conditional assembly construct \c{%ifusable} assembles the
+subsequent code if and only if the following argument would be valid
+as the argument to \c{%use} (see \k{use}), in other words, that a
+standard macro package with that name is available in the current
+version of NASM.
 
-Just as for \c{%!}\e{variable} the argument should be written as a
-string if it contains characters that would not be legal in an
-identifier.  See \k{getenv}.
+The conditional assembly construct \c{%ifusing} assembles the
+subsequent code if and only if the following argument would be valid
+as the argument to \c{%use}. It is more or less equivalent to the
+\c{__?USE_}\e{package}\c{?__} standard macros (see \k{use_def}) but is
+potentially more robust.
+
 
 \S{iffile} \i\c{%iffile}: Test If a File Exists
 
@@ -1868,8 +1869,16 @@ this test, for example:
 \c      ; ...
 \c %endif
 
-The usual \i\c{%eliffile}, \i\c\{%ifnfile}, and \i\c{%elifnfile}
-variants are also provided.
+
+\S{ifenv} \i\c{%ifenv}: Test If Environment Variable Exists
+
+The conditional assembly construct \c{%ifenv} assembles the
+subsequent code if and only if the environment variable referenced by
+the \c{%!}\e{variable} directive exists.
+
+Just as for \c{%!}\e{variable} the argument should be written as a
+string if it contains characters that would not be legal in an
+identifier.  See \k{getenv}.
 
 
 \H{rep} \i{Preprocessor Loops}\I{repeating code}: \i\c{%rep}
@@ -2021,6 +2030,10 @@ longer true.  Thus, the following lines are equivalent:
 Standard macro packages are protected from multiple inclusion.  When a
 standard macro package is used, a testable single-line macro of the
 form \c{__?USE_}\e{package}\c{?__} is also defined, see \k{use_def}.
+
+The \c{%ifusable} and \c{%ifusing} directives can be used for the
+existence and inclusion of a specific standard macro package, see
+\c{ifusing}.
 
 \H{ctxstack} The \i{Context Stack}
 
