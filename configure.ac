@@ -59,7 +59,7 @@ AS_IF([test "x$ac_cv_search_inflate" != xno],
 
 AS_IF([test "x$ac_cv_search_inflate" = xno],
       [AC_SUBST([ZLIB],['$(ZLIBOBJ)'])
-       AC_SUBST([ZLIBINC],["$srcdir/zlib"])])
+       AC_SUBST([ZLIBINC],['-I$(top_srcdir)/zlib'])])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T

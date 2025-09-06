@@ -21,17 +21,22 @@ datarootdir	= @datarootdir@
 CC		= @CC@
 CFLAGS		= @CFLAGS@
 CPPFLAGS	= @CPPFLAGS@
+ZLIBINC         = @ZLIBINC@
 BUILD_CFLAGS	= $(CPPFLAGS) $(CFLAGS) @DEFS@
 INTERNAL_CFLAGS = -I$(srcdir) -I$(objdir) \
 		  -I$(srcdir)/include -I$(objdir)/include \
 		  -I$(srcdir)/x86 -I$(objdir)/x86 \
 		  -I$(srcdir)/asm -I$(objdir)/asm \
 		  -I$(srcdir)/disasm -I$(objdir)/disasm \
-		  -I$(srcdir)/output -I$(objdir)/output
+		  -I$(srcdir)/output -I$(objdir)/output \
+		  $(ZLIBINC)
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LDFLAGS		= @LDFLAGS@
 ALL_LDFLAGS     = $(ALL_CFLAGS) $(LDFLAGS)
 LIBS		= @LIBS@
+
+ZLIB		= @ZLIB@
+ZLIBINC		= @ZLIBINC@
 
 AR		= @AR@
 RANLIB		= @RANLIB@
@@ -108,8 +113,6 @@ endif
 	$(XMLTO) man --skip-validation $< 2>/dev/null
 
 MANIFEST = @MANIFEST@
-
-ZLIB = @ZLIB@
 
 #-- Begin File Lists --#
 NASM    = asm/nasm.$(O)
