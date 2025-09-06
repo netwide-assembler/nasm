@@ -6477,7 +6477,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
     int nparam = 0;
 
     if (!tline)
-        return false;           /* Empty line, nothing to do */
+        return NULL;            /* Empty line, nothing to do */
 
     mname = tok_text(mstart);
 
