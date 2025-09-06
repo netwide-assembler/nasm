@@ -165,7 +165,7 @@ LIBOBJ_NW = \
 	macros/macros.$(O) \
 	\
 	nasmlib/ver.$(O) \
-	nasmlib/alloc.$(O) nasmlib/asprintf.$(O) nasmlib/errfile.$(O) \
+	nasmlib/alloc.$(O) nasmlib/asprintf.$(O) \
 	nasmlib/crc32.$(O) nasmlib/crc64.$(O) nasmlib/md5c.$(O) \
 	nasmlib/string.$(O) nasmlib/nctype.$(O) \
 	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) \
@@ -400,6 +400,9 @@ asm/pptok.c: asm/pptok.dat asm/pptok.pl perllib/phash.ph
 asm/pptok.ph: asm/pptok.dat asm/pptok.pl perllib/phash.ph
 	$(RUNPERL) $(srcdir)/asm/pptok.pl ph \
 		$(srcdir)/asm/pptok.dat asm/pptok.ph
+doc/pptok.src: asm/pptok.dat asm/pptok.pl perllib/phash.ph
+	$(RUNPERL) $(srcdir)/asm/pptok.pl src \
+		$(srcdir)/asm/pptok.dat doc/pptok.src
 
 # Directives hash
 asm/directiv.h: asm/directiv.dat nasmlib/perfhash.pl perllib/phash.ph
@@ -492,7 +495,7 @@ cscope:
 	$(FIND) . -name '*.[hcS]' -print > cscope.files
 	cscope -b -f cscope.out
 
-doc: doc/warnings.src doc/perlbreq.src
+doc: doc/warnings.src doc/perlbreq.src doc/pptok.src
 	$(MAKE) -C doc all
 
 doc_install install_doc install-doc:

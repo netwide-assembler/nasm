@@ -28,7 +28,7 @@ To get further usage instructions from NASM, try typing
 
 The option \c{--help} is an alias for the \c{-h} option.
 
-If you use Linux but aren't sure whether your system is \c{a.out}
+If you use \i{Linux} but aren't sure whether your system is \c{a.out}
 or ELF, type
 
 \c file nasm
@@ -38,12 +38,12 @@ installed it). If it says something like
 
 \c nasm: ELF 32-bit LSB executable i386 (386 and up) Version 1
 
-then your system is \c{ELF}, and you should use the option \c{-f elf}
+then your system is \i\c{ELF}, and you should use the option \c{-f elf}
 when you want NASM to produce Linux object files. If it says
 
 \c nasm: Linux/i386 demand-paged executable (QMAGIC)
 
-or something similar, your system is \c{a.out}, and you should use
+or something similar, your system is \i\c{a.out}, and you should use
 \c{-f aout} instead (Linux \c{a.out} systems have long been obsolete,
 and are rare these days.)
 
@@ -807,5 +807,3 @@ details.
 \S{masm-compat} MASM compatibility package
 
 See \k{pkg_masm}.
-
-

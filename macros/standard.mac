@@ -272,8 +272,9 @@ STD: nasm
 %defalias __PTR__             __?PTR?__
 %defalias __PASS__            __?PASS?__
 
-; Backwards compatibility aliases for tokens. The extra level of indirection here
-; means %aliases on|off will do the right thing for these as well.
+; Backwards compatibility aliases for tokens. The extra level of
+; indirection here means %aliases on|off will do the right thing for
+; these as well.
 %idefine __?infinity?__ %?
 %idefine __?nan?__ %?
 %idefine __?qnan?__ %?
@@ -325,3 +326,6 @@ STD: nasm
 %idefalias __ilog2w__ __?ilog2w?__
 %idefalias __ilog2f__ __?ilog2f?__
 %idefalias __ilog2c__ __?ilog2c?__
+
+; Declare that %ifdirective is supported
+%define __?NASM_IFDIRECTIVE?__ 1

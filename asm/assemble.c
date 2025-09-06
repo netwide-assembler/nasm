@@ -641,6 +641,9 @@ static void out(struct out_data *data)
 static inline void out_rawdata(struct out_data *data, const void *rawdata,
                                size_t size)
 {
+    if (!size)
+        return;
+
     data->type = OUT_RAWDATA;
     data->data = rawdata;
     data->size = size;
@@ -655,6 +658,7 @@ static void out_rawbyte(struct out_data *data, uint8_t byte)
     out(data);
 }
 
+#if 0                           /* Currently unused */
 static void out_rawword(struct out_data *data, uint16_t value)
 {
     uint16_t buf = cpu_to_le16(value);
@@ -663,6 +667,7 @@ static void out_rawword(struct out_data *data, uint16_t value)
     data->size = 2;
     out(data);
 }
+#endif
 
 static void out_rawdword(struct out_data *data, uint32_t value)
 {
@@ -2308,6 +2313,9 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
 /* Emit REX and REX2 prefixes, and if necessary legacy opmap bytes */
 static inline void emit_rex(struct out_data *data, insn *ins)
 {
+    uint8_t buf[4];
+    size_t n = 0;
+
     if (ins->rex_done)
         return;
 
@@ -2317,32 +2325,32 @@ static inline void emit_rex(struct out_data *data, insn *ins)
         return;                 /* Handled elsewhere */
 
     if (ins->rex & REX_2) {
-        uint16_t rex2 = 0x00d5;
-        nasm_assert(ins->vex_cm < 2);
-        rex2 |= (ins->rex & (REX_BXR0|REX_W)) << 8;
-        rex2 |= (ins->rex & REX_BXR1);
-        rex2 |= ins->vex_cm << 15;
-        out_rawword(data, rex2);
+        buf[0]  = 0xd5;
+        buf[1]  = ins->rex & (REX_BXR0|REX_W);
+        buf[1] |= (ins->rex & REX_BXR1) >> 8;
+        buf[1] |= ins->vex_cm << 7;
+        n = 2;
     } else {
         uint8_t rex = ins->rex & (REX_MASK|REX_L);
 
         if (rex == (REX_L|REX_R)) {
-            out_rawbyte(data, 0xf0);
+            buf[n++] = 0xf0;
         } else if (rex & REX_P) {
-            out_rawbyte(data, rex);
+            buf[n++] = rex;
         } else {
             nasm_assert(!rex);
         }
 
         if (ins->vex_cm) {
-            out_rawbyte(data, 0x0f);
+            buf[n++] = 0x0f;
             if (ins->vex_cm > 1) {
                 /* Map 2 = 0F 38, map 3 = 0F 3A */
-                nasm_assert(ins->vex_cm < 4);
-                out_rawbyte(data, 0x34 + (ins->vex_cm << 1));
+                buf[n++] = 0x34 + (ins->vex_cm << 1);
             }
         }
     }
+
+    out_rawdata(data, buf, n);
 }
 
 /*

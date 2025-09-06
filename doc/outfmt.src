@@ -1098,7 +1098,7 @@ Format} Object Files
 
 The \c{elf32}, \c{elf64} and \c{elfx32} output formats generate
 \c{ELF32 and ELF64} (Executable and Linkable Format) object files, as
-used by Linux as well as \i{Unix System V}, including \i{Solaris x86},
+used by \i{Linux} as well as \i{Unix System V}, including \i{Solaris x86},
 \i{UnixWare} and \i{SCO Unix}. ELF provides a default output
 file-name extension of \c{.o}. \c{elf} is a synonym for \c{elf32}.
 
@@ -1383,7 +1383,7 @@ note that only the ".text" section is executable by default.
 \H{aoutfmt} \i\c{aout}: Linux \I{a.out, Linux version}\I{linux, a.out}\c{a.out} Object Files
 
 The \c{aout} format generates \c{a.out} object files, in the form used
-by early Linux systems (current Linux systems use ELF, see
+by early \i{Linux} systems (current Linux systems use ELF, see
 \k{elffmt}.) These differ from other \c{a.out} object files in that
 the magic number in the first four bytes of the file is
 different; also, some implementations of \c{a.out}, for example
@@ -1490,5 +1490,3 @@ them all to its output file.
 where \c{<size>} is either a number or \c{unlimited}, can be used to
 control the maximum size for dumping the full contents of a
 \c{rawdata} output object.
-
-

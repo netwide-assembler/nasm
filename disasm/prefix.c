@@ -459,19 +459,26 @@ parse_prefixes(struct prefix_info *pf, const uint8_t *data, int bits)
             return NULL;        /* Invalid instruction */
     }
 
-    if (pf->rex.type > REX_REX) {
+    switch (pf->rex.type) {
+    case REX_VEX:
+    case REX_EVEX:
         if (pf->osp || pf->rep)
             return NULL;        /* Invalid instruction (illegal prefix) */
-    } else {
-        /* Redundant REX prefixes are ignored */
-        if (bits == 64) {
-            while ((*p & 0xf0) == 0x40) {
-                p++;
-                if (p > maxp)
-                    return NULL;
-            }
-        }
+        break;
 
+    case REX_REX2:
+        break;
+
+    case REX_REX:
+        /* Redundant REX prefixes are ignored */
+        while ((*p & 0xf0) == 0x40) {
+            p++;
+            if (p > maxp)
+                return NULL;
+        }
+        /* fall through */
+
+    case REX_NONE:
         /*
          * Look for legacy map prefixes. These must come after all
          * possible REX prefixes.
@@ -492,6 +499,8 @@ parse_prefixes(struct prefix_info *pf, const uint8_t *data, int bits)
                 break;
             }
         }
+        pf->rex.xmap = pf->rex.map + MAP_BASE_NOVEX;
+        break;
     }
 
     if (p > maxp)

@@ -4,12 +4,12 @@ start:
 .next:
 	dq hello
 
-	align 16
+	align 32
 	jmp abs hello
 	jmpabs hello
 	jmp abs qword hello
 	jmpabs qword hello
 
-	align 16
+	align 32
 hello:
 	nop

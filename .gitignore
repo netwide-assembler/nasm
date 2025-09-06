@@ -75,6 +75,7 @@ TAGS
 /doc/version.src
 /doc/warnings.src
 /doc/perlbreq.src
+/doc/pptok.src
 /doc/fontpath
 /doc/Fontmap
 /include/warnings.h

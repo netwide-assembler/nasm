@@ -396,7 +396,7 @@ static MMacro *pop_mmacro(MMacro **mp, MMacro *next)
         nasm_assert(m->refcnt > 0);
         if (!--m->refcnt) {
             if (m->name) {
-                nasm_info("freeing macro `%s'", m->name);
+                nasm_debug(2, "freeing macro `%s'", m->name);
                 check_mmacro_refcounts();
             }
             nasm_assert(!m->next);

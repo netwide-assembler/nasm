@@ -90,9 +90,7 @@ static const struct error_format *errfmt = &errfmt_gnu;
 static struct strlist *warn_list;
 static struct nasm_errhold *errhold_stack;
 
-unsigned int debug_nasm;        /* Debugging messages? */
-
-static bool using_debug_info, opt_verbose_info;
+static bool using_debug_info;
 static const char *debug_format;
 
 #ifndef ABORT_ON_PANIC
@@ -122,7 +120,8 @@ const struct ofmt *ofmt = &OF_DEFAULT;
 const struct ofmt_alias *ofmt_alias = NULL;
 const struct dfmt *dfmt;
 
-FILE *error_file;               /* Where to write error messages */
+static FILE *error_file;        /* Where to write error messages */
+errflags errflags_never = 0;	/* Error flags to unconditionally suppress */
 
 FILE *ofile = NULL;
 enum optimization optimizing = OPTIM_DEFAULT;
@@ -942,6 +941,7 @@ enum text_options {
     OPT_KEEP_ALL,
     OPT_NO_LINE,
     OPT_DEBUG,
+    OPT_INFO,
     OPT_REPRODUCIBLE
 };
 enum need_arg {
@@ -973,6 +973,8 @@ static const struct textargs textopts[] = {
     {"limit-",   OPT_LIMIT,   ARG_YES, 0},
     {"keep-all", OPT_KEEP_ALL, ARG_NO, 0},
     {"no-line",  OPT_NO_LINE, ARG_NO, 0},
+    {"info",     OPT_INFO , ARG_MAYBE, 0},
+    {"verbose",  OPT_INFO , ARG_MAYBE, 0},
     {"debug",    OPT_DEBUG, ARG_MAYBE, 0},
     {"reproducible", OPT_REPRODUCIBLE, ARG_NO, 0},
     {NULL, OPT_BOGUS, ARG_NO, 0}
@@ -1050,7 +1052,7 @@ static bool process_arg(char *p, char *q, int pass)
                         case 'v':
                         case '+':
                         param++;
-                        opt_verbose_info = true;
+                        opt_verbose_info++;
                         break;
 
                         case 'x':
@@ -1341,8 +1343,14 @@ static bool process_arg(char *p, char *q, int pass)
                     ppopt |= PP_NOLINE;
                     break;
                 case OPT_DEBUG:
-                    debug_nasm = param ?
-                        strtoul(param, NULL, 10) : debug_nasm+1;
+                    if (pass == 1)
+                        debug_nasm = param ?
+                            strtoul(param, NULL, 10) : debug_nasm+1;
+                    break;
+                case OPT_INFO:
+                    if (pass == 1)
+                        opt_verbose_info = param ?
+                            strtoul(param, NULL, 10) : opt_verbose_info+1;
                     break;
                 case OPT_REPRODUCIBLE:
                     reproducible = true;
@@ -1647,6 +1655,11 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 	if (!pass_final() && !warn_list)
             warn_list = strlist_alloc(false);
 
+        /* Suppress ERR_PASS2 unless we are actually in the final pass */
+        errflags_never = 0;
+        if (!pass_final())
+            errflags_never |= ERR_PASS2;
+
         globl.bits = cmd_sb;  /* set 'bits' to command line default */
         globl.bnd = false;
         globl.rel = false;
@@ -1767,32 +1780,13 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         reset_warnings();
     }
 
-    if (opt_verbose_info && pass_final()) {
+    if (pass_final()) {
         /*  -On and -Ov switches */
-        nasm_info("assembly required 1+%"PRId64"+2 passes\n", pass_count()-3);
+        nasm_info(1, "assembly required 1+%"PRId64"+2 passes\n", pass_count()-3);
     }
 
     lfmt->cleanup();
     strlist_free(&warn_list);
-}
-
-/**
- * get warning index; 0 if this is non-suppressible.
- */
-static size_t pure_func warn_index(errflags severity)
-{
-    size_t index;
-
-    if ((severity & ERR_MASK) >= ERR_FATAL)
-        return 0;               /* Fatal errors are never suppressible */
-
-    /* Warnings MUST HAVE a warning category specifier! */
-    nasm_assert((severity & (ERR_MASK|WARN_MASK)) != ERR_WARNING);
-
-    index = WARN_IDX(severity);
-    nasm_assert(index < WARN_IDX_ALL);
-
-    return index;
 }
 
 static bool skip_this_pass(errflags severity)
@@ -1830,21 +1824,42 @@ static bool skip_this_pass(errflags severity)
  * @param severity the severity of the warning or error
  * @return true if we should abort error/warning printing
  */
-static bool is_suppressed(errflags severity)
+static bool is_suppressed(errflags flags)
 {
-    /* Fatal errors must never be suppressed */
-    if ((severity & ERR_MASK) >= ERR_FATAL)
+    const errflags severity = flags & ERR_MASK;
+    const errflags level = WARN_IDX(flags);
+
+    if (severity >= ERR_FATAL) {
+        /* Fatal errors or higher can never be suppressed */
         return false;
+    }
 
-    /* This error/warning is pointless if we are dead anyway */
-    if ((severity & ERR_UNDEAD) && terminate_after_phase)
+    if (flags & errflags_never)
         return true;
 
-    if (!(warning_state[warn_index(severity)] & WARN_ST_ENABLED))
-        return true;
+    switch (severity) {
+    case ERR_WARNING:
+        if (!(warning_state[level] & WARN_ST_ENABLED))
+            return true;
+        break;
 
-    if (!(severity & ERR_PP_LISTMACRO))
-        return pp_suppress_error(severity);
+    case ERR_INFO:
+        if (!info_level(level))
+            return true;
+        break;
+
+    case ERR_DEBUG:
+        if (!debug_level(level))
+            return true;
+        break;
+
+    default:
+        break;
+    }
+
+    /* Suppressed by the preprocessor? */
+    if (!(flags & ERR_PP_LISTMACRO))
+        return pp_suppress_error(flags);
 
     return false;
 }
@@ -1866,7 +1881,7 @@ static errflags pure_func true_error_type(errflags severity)
 
     /* Promote warning to error? */
     if (type == ERR_WARNING) {
-        uint8_t state = warning_state[warn_index(severity)];
+        uint8_t state = warning_state[WARN_IDX(severity)];
         if ((state & warn_is_err) == warn_is_err)
             type = ERR_NONFATAL;
     }
@@ -1874,37 +1889,6 @@ static errflags pure_func true_error_type(errflags severity)
     return type;
 }
 
-/*
- * The various error type prefixes
- */
-/*
- * The various error type prefixes
- */
-static inline const char *error_pfx(errflags severity)
-{
-    switch (severity & ERR_MASK) {
-    case ERR_LISTMSG:
-        return ";;; ";
-    case ERR_NOTE:
-        return "note: ";
-    case ERR_DEBUG:
-        return "debug: ";
-    case ERR_INFO:
-        return "info: ";
-    case ERR_WARNING:
-        return "warning: ";
-    case ERR_NONFATAL:
-        return "error: ";
-    case ERR_FATAL:
-        return "fatal: ";
-    case ERR_CRITICAL:
-        return "critical: ";
-    case ERR_PANIC:
-        return "panic: ";
-    default:
-        return "internal error: ";
-    }
-}
 static const char no_file_name[] = "nasm"; /* What to print if no file name */
 
 /*
@@ -2084,8 +2068,10 @@ void nasm_verror(errflags severity, const char *fmt, va_list args)
     struct nasm_errtext *et;
     errflags true_type = true_error_type(severity);
 
-    if (true_type >= ERR_CRITICAL)
+    if (true_type >= ERR_CRITICAL) {
         nasm_verror_critical(severity, fmt, args);
+        abort();
+    }
 
     if (is_suppressed(severity))
         return;
@@ -2133,14 +2119,25 @@ static void nasm_issue_error(struct nasm_errtext *et)
         pfx = error_pfx(true_type);
 
     *warnsuf = 0;
-    if ((severity & (ERR_MASK|ERR_HERE|ERR_PP_LISTMACRO)) == ERR_WARNING) {
-        /*
-         * It's a warning without ERR_HERE defined, and we are not already
-         * unwinding the macros that led us here.
-         */
-        snprintf(warnsuf, sizeof warnsuf, " [-w+%s%s]",
-                 (true_type >= ERR_NONFATAL) ? "error=" : "",
-                 warning_name[warn_index(severity)]);
+    if (!(severity & (ERR_HERE|ERR_PP_LISTMACRO))) {
+        const unsigned int level = WARN_IDX(severity);
+
+        switch (severity & ERR_MASK) {
+        case ERR_WARNING:
+            snprintf(warnsuf, sizeof warnsuf, " [-w+%s%s]",
+                     (true_type >= ERR_NONFATAL) ? "error=" : "",
+                     warning_name[level]);
+            break;
+        case ERR_DEBUG:
+            snprintf(warnsuf, sizeof warnsuf, " [--debug=%u]", debug_nasm);
+            break;
+        case ERR_INFO:
+            snprintf(warnsuf, sizeof warnsuf, " [--info=%u]", opt_verbose_info);
+            break;
+        default:
+            /* Not WARNING, DEBUG or INFO, not suppressible */
+            break;
+        }
     }
 
     *linestr = 0;
@@ -2208,8 +2205,10 @@ static void nasm_issue_error(struct nasm_errtext *et)
 
     if (true_type >= ERR_FATAL)
         die_hard(true_type, severity);
-    else if (true_type >= ERR_NONFATAL)
+    else if (true_type >= ERR_NONFATAL) {
         terminate_after_phase = true;
+        errflags_never |= ERR_UNDEAD;
+    }
 
 done:
     nasm_free_error(et);
@@ -2360,8 +2359,10 @@ static void help(FILE *out, const char *what)
     }
     if (help_opt(with)) {
         fputs(
-            "    -s             redirect error messages to stdout\n"
-            "    -Zfile         redirect error messages to file\n"
+            "    -s             redirect messages to stdout\n"
+            "    -Zfile         redirect messages to file\n"
+            "    --info[=lvl]   display optional informational messages\n"
+            "    --debug[=lvl]  display NASM internal debugging messages\n"
             , out);
     }
     if (help_optor(with, 'M')) {

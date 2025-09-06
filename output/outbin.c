@@ -228,10 +228,10 @@ static void bin_cleanup(void)
     uint64_t pend;
     int h;
 
-    if (debug_level(1)) {
-        nasm_debug("bin_cleanup: Sections were initially referenced in this order:\n");
+    if (debug_level(2)) {
+        nasm_debug(2, "bin_cleanup: Sections were initially referenced in this order:\n");
         for (h = 0, s = sections; s; h++, s = s->next)
-            nasm_debug("%i. %s\n", h, s->name);
+            nasm_debug(2, "%i. %s\n", h, s->name);
     }
 
     /* Assembly has completed, so now we need to generate the output file.
@@ -513,11 +513,11 @@ static void bin_cleanup(void)
     if (h)
         nasm_fatal("circular vfollows path detected");
 
-    if (debug_level(1)) {
-        nasm_debug("bin_cleanup: Confirm final section order for output file:\n");
+    if (debug_level(2)) {
+        nasm_debug(2, "bin_cleanup: Confirm final section order for output file:\n");
         for (h = 0, s = sections; s && (s->flags & TYPE_PROGBITS);
              h++, s = s->next)
-            nasm_debug("%i. %s\n", h, s->name);
+            nasm_debug(2, "%i. %s\n", h, s->name);
     }
 
     /* Step 5: Apply relocations. */

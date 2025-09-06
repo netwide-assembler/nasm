@@ -122,7 +122,7 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, uint32_t rex)
     if (!(regflags & REG_CLASS_GPR))
         regflags &= ~SIZE_MASK;
 
-    if (is_class(regflags, REG8)) {
+    if (is_class(REG_CLASS_GPR|BITS8, regflags)) {
         if (rex & (REX_P|REX_NH))
             return nasm_rd_reg8_rex[r];
         else
@@ -792,13 +792,14 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             matchmask = ~(EVEX_P0BP|EVEX_P0RP|EVEX_P0B|EVEX_P0X|EVEX_P0R|
                           EVEX_P1XP);
 
-            if (memop && !itemp_has(t, IF_SCC)) {
+            if (c != 0250 || (memop && !itemp_has(t, IF_SCC))) {
                 /*
-                 * V4 if X is a is a vector, which is only possible if
-                 * this is a memory operation; otherwise X4. However,
-                 * X4 is explicitly forbidden if this is not a memory
-                 * operation, otherwise this bit is supposedly
-                 * ignored if not used.
+                 * V4 unless X is a is a vector (which is only
+                 * possible if this is a memory operation), in which
+                 * case this is X4.  However, X4 is explicitly
+                 * forbidden if this is not a memory operation,
+                 * otherwise this bit is supposedly ignored if not
+                 * used.
                  */
                 matchmask &= ~EVEX_P2VP; /* Either V4 or X4 */
             }
@@ -1113,6 +1114,13 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
                 return 0;
             ins->rex |= REX_2 | REX_W;
             break;
+
+        case 0355:
+        case 0356:
+        case 0357:
+            nasm_assert(prefix->rex.map == c - 0354);
+            break;
+
 
         case 0360:
             if (prefix->osp || prefix->rep)

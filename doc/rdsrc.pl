@@ -113,10 +113,20 @@
 #   operator was applied to
 #
 # Index alias
-# \IA{foobar}{bazquux}
+# \IA{foobar}{bazquux} [tidy...]
 #   aliases one index tag (as might be supplied to \i or \I) to
 #   another, so that \I{foobar} has the effect of \I{bazquux}, and
-#   \i{foobar} has the effect of \I{bazquux}foobar
+#   \i{foobar} has the effect of \I{bazquux}foobar.
+#
+#  If a "tidy" string is provided, it also performs
+#   the function of \IR.
+#
+# Index copy
+# \IC{foobar}{bazquux} [tidy...]
+#   similar to \IA, but duplicates all the index entries from
+#   "foobar" onto the index entry "bazquux", as if every \i{foobar}
+#   or \I{foobar}, or its aliases defined by \IA, was immediately followed by
+#   \I{bazquux}.
 #
 # Metadata/macros
 # \M{key}{something}
@@ -236,6 +246,18 @@ if (defined($depend_path)) {
 
 print "$outfile: done.\n";
 
+sub refpush(\$@) {
+    my $ref = shift(@_);
+    $$ref = [] unless (defined($$ref));
+    push(@$$ref, @_);
+    return $$ref;
+}
+sub reflist($) {
+    my($ref) = @_;
+    return () unless (defined($ref));
+    return @$ref;
+}
+
 sub untabify($) {
   my($s) = @_;
   my $o = '';
@@ -267,7 +289,7 @@ sub read_line {
 }
 sub get_para($_) {
   chomp;
-  if (!/\S/ || /^\\(IA|IR|M)/) { # special case: \IA \IR \M imply new-paragraph
+  if (!/\S/ || /^\\(I[ARC]|M)/) { # special case: \I[ARC] \M imply new-paragraph
     &got_para($para);
     $para = undef;
   }
@@ -397,15 +419,27 @@ sub got_para {
     # the standard word-by-word code will happen next
   } elsif (/^\\IR/) {
     # An index-rewrite.
-    die "$outfile: badly formatted index rewrite: $_\n" if !/^\\IR\{([^\}]*)\}\s*(.*)$/;
+    die "$outfile: badly formatted index rewrite: $_\n" if !/^\\IR\{([^\}]*)\}\s*(.+?)\s*$/;
     $irewrite = $1;
     $_ = $2;
     # the standard word-by-word code will happen next
-  } elsif (/^\\IA/) {
-    # An index-alias.
-    die "$outfile: badly formatted index alias: $_\n" if !/^\\IA\{([^\}]*)}\{([^\}]*)\}\s*$/;
-    $idxalias{$1} = $2;
-    return; # avoid word-by-word code
+  } elsif (/^\\I([AC])/) {
+      # An index alias or copy
+      my $what = $1 eq 'C' ? 'copy' : 'alias';
+      die "$outfile: badly formatted index $what: $_\n"
+	  if !/^\\I[AC]\{([^\}]*)}\{([^\}]*)\}\s*(.*?)\s*$/;
+      my $from = $1;
+      my $to   = $2;
+      my $tidy = $3;
+      if ($what eq 'copy') {
+	  refpush($idxcopy{$from}, $to);
+      } else {
+	  $idxalias{$from} = $to;
+      }
+      return if ($tidy eq '');	# No rewrite, skip word by word code
+
+      $irewrite = $to;
+      $_ = $tidy;
   } elsif (/^\\M/) {
     # Metadata
     die "$outfile: badly formed metadata: $_\n" if !/^\\M\{([^\}]*)}\{([^\}]*)\}\s*$/;
@@ -563,21 +597,35 @@ sub got_para {
   }
 }
 
+sub indexalias($) {
+    my($text) = @_;
+    my $a = $idxalias{$text};
+    return defined($a) ? $a : $text;
+}
+
 sub addidx($$@) {
   my($node, $text, @ientry) = @_;
-  $text = $idxalias{$text} || $text;
-  if (!exists($idxmap{$text})) {
-      $idxmap{$text} = [@ientry];
-      $idxdup{$text} = [$text];
-  } elsif (!defined($node)) {
-      my $dummy = sprintf('%s    #%05d', $text, $#{$idxdup{$text}} + 2);
-      $idxmap{$dummy} = [@ientry];
-      push(@{$idxdup{$text}}, $dummy);
+
+  my $ta = indexalias($text);
+
+  my @out;
+  foreach my $t ($text, reflist($idxcopy{$text})) {
+      $t = indexalias($t);
+      if (!exists($idxmap{$t})) {
+	  $idxmap{$t} = [@ientry];
+	  $idxdup{$t} = [$t];
+      } elsif (!defined($node)) {
+	  my $dupentry = sprintf('%s    #%05d', $t, $#{$idxdup{$t}} + 2);
+	  $idxmap{$dummy} = [@ientry];
+	  refpush($idxdup{$t}, $dummy);
+      }
+
+      if (defined($node)) {
+	  push(@out, map { $idxnodes{$node,$_} = 1; "i $_" } @{$idxdup{$t}});
+      }
   }
 
-  return undef if (!defined($node));
-
-  return map { $idxnodes{$node,$_} = 1; "i $_" } @{$idxdup{$text}};
+  return @out;
 }
 
 sub indexsort {

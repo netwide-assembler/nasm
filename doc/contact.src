@@ -41,7 +41,7 @@ there.
 If you do report a bug, \e{please} make sure your bug report includes
 the following information:
 
-\b What operating system you're running NASM under.  Linux,
+\b What operating system you're running NASM under: Linux,
 FreeBSD, NetBSD, MacOS X, Win16, Win32, Win64, MS-DOS, OS/2, VMS,
 whatever.
 
@@ -105,4 +105,3 @@ for example, the problem involves NASM failing to generate an object
 file while TASM can generate an equivalent file without trouble,
 then send us \e{both} object files, so we can see what TASM is doing
 differently from us.
-

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
 ##
-##   Copyright 1996-2022 The NASM Authors - All Rights Reserved
+##   Copyright 1996-2025 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
 ##
@@ -33,7 +33,7 @@
 ## --------------------------------------------------------------------------
 
 #
-# Produce pptok.c, pptok.h and pptok.ph from pptok.dat
+# Produce pptok.c, pptok.h, pptok.ph and pptok.src from pptok.dat
 #
 
 require 'phash.ph';
@@ -351,3 +351,41 @@ if ($what eq 'ph') {
 
     print OUT "\n1;\n";
 }
+
+#
+# Output pptok.src; a list of index directives.
+#
+if ($what eq 'src') {
+    print OUT "\\# Automatically generated from $in by $0\n";
+    print OUT "\\# Do not edit\n\n";
+
+    # Ignore internal tokens and %ifdifi, which is only for TASM support
+    my @ctails = grep { !/^(.*[A-Z].*|difi)$/ } @cond;
+
+    foreach my $cs (@cctok) {	 # Condition stem
+	my $xs = $cs eq 'if';
+	foreach my $cn ('', 'n') { # Negation infix
+	    my $xn = $cn eq '';
+	    foreach my $ct (@ctails) { # Condition tail
+		my $xt = $ct eq '';
+
+		print OUT "\\IR{\%$cs$cn$ct} \\c{\%$cs}";
+		print OUT ", \\c{\%$cs$cn$ct}" unless ($xn && $xt);
+		print OUT "\n";
+
+		print OUT "\\IC{\%if$ct}{\%$cs$cn$ct}\n" unless ($xs && $xn);
+
+		if ($xs) {
+		    print OUT "\\IR{\%is$cn$ct()} \\c{\%is$cn()}";
+		    unless ($xt) {
+			print OUT ", \\c{\%is$cn$ct()}";
+			print OUT "\n\\IC{\%is$cn()}{\%is$cn$ct()}";
+		    }
+		    print OUT "\n\\IC{\%if$ct}{\%is$cn$ct()}\n";
+		}
+	    }
+	}
+    }
+}
+
+close(OUT);
