@@ -130,7 +130,7 @@ $wdq  MUL	reg#,rm#			[rm:	o# 0f af /r]				386,SM,ND
 $wdq  MUL	reg#,rm#*,sbyte#		[rmi:	o# 6b /r ib,s]				186,SM,ND
 $wdq  MUL	reg#,rm#*,imm#			[rmi:	o# 69 /r i#]				186,SM,ND
 $wdq  MUL	reg#?,reg#,rm#			[vrm:	evex.nf.ndx.l0.m4.o# af /r]		APX,SM,ND
-$wdq  MUL	reg#,rm#,sbyte#			[rmi:	evex.nf.zu.l0.m4.o# 6b /r i#]		APX,SM,ND
+$wdq  MUL	reg#,rm#,sbyte#			[rmi:	evex.nf.zu.l0.m4.o# 6b /r ib,s]		APX,SM,ND
 $wdq  MUL	reg#,rm#,imm#			[rmi:	evex.nf.zu.l0.m4.o# 69 /r i#]		APX,SM,ND
 
 $bwdq IDIV	rm#				[m:	o# f6# /7]				8086
