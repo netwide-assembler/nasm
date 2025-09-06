@@ -12,6 +12,8 @@
 
 #define HAVE_VSNPRINTF 1        /* If it doesn't exist we add it */
 #define Z_SOLO 1
+#define z_off_t   off_t
+#define z_off64_t off_t
 
 /*
  * If you *really* need a unique prefix for all types and library functions,
@@ -438,6 +440,8 @@ typedef uLong FAR uLongf;
    typedef unsigned long z_crc_t;
 #endif
 
+#if 0                           /* NASM hack: this breaks stuff */
+
 #ifdef HAVE_UNISTD_H    /* may be set to #if 1 by ./configure */
 #  define Z_HAVE_UNISTD_H
 #endif
@@ -501,11 +505,11 @@ typedef uLong FAR uLongf;
 #endif
 
 #if defined(_LARGEFILE64_SOURCE) && defined(Z_LFS64)
-#  define Z_LARGE64
+   #  define Z_LARGE64
 #endif
 
 #if defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS-0 == 64 && defined(Z_LFS64)
-#  define Z_WANT64
+   #  define Z_WANT64
 #endif
 
 #if !defined(SEEK_SET) && !defined(Z_SOLO)
@@ -527,6 +531,8 @@ typedef uLong FAR uLongf;
 #    define z_off64_t z_off_t
 #  endif
 #endif
+
+#endif  /* NASM hack */
 
 /* MVS linker does not support external names larger than 8 bytes */
 #if defined(__MVS__)
