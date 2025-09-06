@@ -8,8 +8,10 @@
 #ifndef ZCONF_H
 #define ZCONF_H
 
+#include "compiler.h"
+
 #define HAVE_VSNPRINTF 1        /* If it doesn't exist we add it */
-#define Z_LARGE64 1		/* Better to have it... */
+#define Z_SOLO 1
 
 /*
  * If you *really* need a unique prefix for all types and library functions,
