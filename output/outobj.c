@@ -581,9 +581,10 @@ static struct Segment {
     char *name;
     int32_t index;                 /* the NASM segment id */
     int32_t obj_index;             /* the OBJ-file segment index */
-    struct Group *grp;          /* the group it beint32_ts to */
+    struct Group *grp;             /* the group it beint32_ts to */
     uint32_t currentpos;
-    int32_t align;                 /* can be SEG_ABS + absolute addr */
+    int32_t align;                /* can be SEG_ABS + absolute addr */
+    uint64_t origalign;           /* originally requested alignment */
     int64_t pass_last_seen;
     struct Public *pubhead, **pubtail, *lochead, **loctail;
     char *segclass, *overlay;   /* `class' is a C++ keyword :-) */
@@ -1327,6 +1328,40 @@ static void obj_write_fixup(ObjRecord * orp, int bytes,
     obj_commit(forp);
 }
 
+static uint32_t check_segment_alignment(const uint64_t origalign)
+{
+    /* Supported alignment values */
+    const uint32_t alignments = 1 | 2 | 4 | 16 | 256 | 4096;
+    uint32_t align = origalign;
+
+    if (origalign &&
+        (!is_power2(origalign) || origalign > alignments)) {
+        nasm_nonfatal("invalid alignment value %"PRIu64, origalign);
+        return 1;
+    }
+
+    if (align == 0)
+        align = 1;
+
+    if (align & alignments)
+        return align;           /* All good! */
+
+    while (!(align & alignments))
+        align <<= 1;
+
+    /*!
+     *!section-alignment-rounded [on] section alignment rounded up
+     *!  warn if a section alignment is specified which is
+     *!  not supported by the underlying object format, but
+     *!  can be rounded up to a supported value.
+     */
+    nasm_warn(WARN_SECTION_ALIGNMENT_ROUNDED,
+              "alignment of %"PRIu64" not supported, using %"PRIu32,
+              origalign, align);
+
+    return align;
+}
+
 static int32_t obj_segment(char *name, int *bits)
 {
     /*
@@ -1346,34 +1381,19 @@ static int32_t obj_segment(char *name, int *bits)
         struct Segment *seg;
         struct Group *grp;
         struct External **extp;
-        int obj_idx, i, attrs;
+        int obj_idx, i;
 	bool rn_error;
         char *p;
 
         /*
          * Look for segment attributes.
          */
-        attrs = 0;
         while (*name == '.')
             name++;             /* hack, but a documented one */
-        p = name;
-        while (*p && !nasm_isspace(*p))
-            p++;
+        p = nasm_skip_word(name);
         if (*p) {
             *p++ = '\0';
-            while (*p && nasm_isspace(*p))
-                *p++ = '\0';
-        }
-        while (*p) {
-            while (*p && !nasm_isspace(*p))
-                p++;
-            if (*p) {
-                *p++ = '\0';
-                while (*p && nasm_isspace(*p))
-                    *p++ = '\0';
-            }
-
-            attrs++;
+            p = nasm_skip_spaces(p);
         }
 
         for (seg = seghead, obj_idx = 1; ; seg = seg->next, obj_idx++) {
@@ -1381,9 +1401,16 @@ static int32_t obj_segment(char *name, int *bits)
                 break;
 
             if (!strcmp(seg->name, name)) {
-                if (attrs > 0 && seg->pass_last_seen == pass_count())
-                    nasm_warn(WARN_OTHER, "segment attributes specified on"
-                              " redeclaration of segment: ignoring");
+                if (seg->pass_last_seen == pass_count()) {
+                    if (*p)
+                        nasm_warn(WARN_OTHER, "segment attributes specified on"
+                                  " redeclaration of segment: ignoring");
+                } else {
+                    /* Reissue alignment warning on this pass if necessary */
+                    if (seg->align < SEG_ABS)
+                        check_segment_alignment(seg->origalign);
+                }
+
                 if (seg->use32)
                     *bits = 32;
                 else
@@ -1403,9 +1430,9 @@ static int32_t obj_segment(char *name, int *bits)
         any_segs = true;
         seg->name = nasm_strdup(name);
         seg->currentpos = 0;
-        seg->align = 1;         /* default */
-        seg->use32 = false;     /* default */
-        seg->combine = CMB_PUBLIC;      /* default */
+        seg->align = seg->origalign = 1; /* default */
+        seg->use32 = false;              /* default */
+        seg->combine = CMB_PUBLIC;       /* default */
         seg->segclass = seg->overlay = NULL;
         seg->pubhead = NULL;
         seg->pubtail = &seg->pubhead;
@@ -1420,28 +1447,30 @@ static int32_t obj_segment(char *name, int *bits)
         /*
          * Process the segment attributes.
          */
-        p = name;
-        while (attrs--) {
-            p += strlen(p);
-            while (!*p)
-                p++;
+        while (*p) {
+            const char *q = p;
+            p = nasm_skip_word(p);
+            if (*p) {
+                *p++ = '\0';
+                p = nasm_skip_spaces(p);
+            }
 
             /*
              * `p' contains a segment attribute.
              */
-            if (!nasm_stricmp(p, "private"))
+            if (!nasm_stricmp(q, "private"))
                 seg->combine = CMB_PRIVATE;
-            else if (!nasm_stricmp(p, "public"))
+            else if (!nasm_stricmp(q, "public"))
                 seg->combine = CMB_PUBLIC;
-            else if (!nasm_stricmp(p, "common"))
+            else if (!nasm_stricmp(q, "common"))
                 seg->combine = CMB_COMMON;
-            else if (!nasm_stricmp(p, "stack"))
+            else if (!nasm_stricmp(q, "stack"))
                 seg->combine = CMB_STACK;
-            else if (!nasm_stricmp(p, "use16"))
+            else if (!nasm_stricmp(q, "use16"))
                 seg->use32 = false;
-            else if (!nasm_stricmp(p, "use32"))
+            else if (!nasm_stricmp(q, "use32"))
                 seg->use32 = true;
-            else if (!nasm_stricmp(p, "flat")) {
+            else if (!nasm_stricmp(q, "flat")) {
                 /*
                  * This segment is an OS/2 FLAT segment. That means
                  * that its default group is group FLAT, even if
@@ -1466,54 +1495,30 @@ static int32_t obj_segment(char *name, int *bits)
                         nasm_panic("failure to define FLAT?!");
                 }
                 seg->grp = grp;
-            } else if (!nasm_strnicmp(p, "class=", 6))
-                seg->segclass = nasm_strdup(p + 6);
-            else if (!nasm_strnicmp(p, "overlay=", 8))
-                seg->overlay = nasm_strdup(p + 8);
-            else if (!nasm_strnicmp(p, "align=", 6)) {
-                seg->align = readnum(p + 6, &rn_error);
+            } else if (!nasm_strnicmp(q, "class=", 6))
+                seg->segclass = nasm_strdup(q + 6);
+            else if (!nasm_strnicmp(q, "overlay=", 8))
+                seg->overlay = nasm_strdup(q + 8);
+            else if (!nasm_strnicmp(q, "align=", 6)) {
+                uint64_t n = readnum(q + 6, &rn_error);
                 if (rn_error) {
-                    seg->align = 1;
                     nasm_nonfatal("segment alignment should be numeric");
+                    n = 1;
                 }
-                switch (seg->align) {
-                case 1:        /* BYTE */
-                case 2:        /* WORD */
-                case 4:        /* DWORD */
-                case 16:       /* PARA */
-                case 256:      /* PAGE */
-                case 4096:     /* PharLap extension */
-                    break;
-                case 8:
-                    nasm_warn(WARN_OTHER, "OBJ format does not support alignment"
-                              " of 8: rounding up to 16");
-                    seg->align = 16;
-                    break;
-                case 32:
-                case 64:
-                case 128:
-                    nasm_warn(WARN_OTHER, "OBJ format does not support alignment"
-                              " of %d: rounding up to 256", seg->align);
-                    seg->align = 256;
-                    break;
-                case 512:
-                case 1024:
-                case 2048:
-                    nasm_warn(WARN_OTHER, "OBJ format does not support alignment"
-                              " of %d: rounding up to 4096", seg->align);
-                    seg->align = 4096;
-                    break;
-                default:
-                    nasm_nonfatal("invalid alignment value %d",
-                                  seg->align);
-                    seg->align = 1;
-                    break;
-                }
-            } else if (!nasm_strnicmp(p, "absolute=", 9)) {
-                seg->align = SEG_ABS + readnum(p + 9, &rn_error);
-                if (rn_error)
+                seg->origalign = n;
+                seg->align = check_segment_alignment(n);
+            } else if (!nasm_strnicmp(q, "absolute=", 9)) {
+                uint64_t n = readnum(q + 9, &rn_error);
+                if (rn_error) {
                     nasm_nonfatal("argument to `absolute' segment"
                                   " attribute should be numeric");
+                    n = 0;
+                } else if (n >= SEG_ABS) {
+                    /* Probably could even be max 64K? */
+                    nasm_nonfatal("unsupported `absolute' segment number %#"PRIx64, n);
+                    n = 0;
+                }
+                seg->align = SEG_ABS + n;
             }
         }
 
