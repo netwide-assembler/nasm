@@ -1093,6 +1093,38 @@ this extension:
 Using with static linker will clear the private extern attribute.
 But linker option like \c{-keep_private_externs} can avoid it.
 
+\S{macho-bver} \c{macho} specific directive \i\c{build_version}
+
+The directive \c{build_version} generates a \c{LC_BUILD_VERSION}
+load command in the Mach-O header, which allows specifying a
+target platform, minimum OS version and optionally SDK version.
+Newer Xcode linker versions warn if this is not present in object
+files.
+
+This directive takes the target platform name and minimum OS
+version as arguments, in this form:
+
+\c build_version macos,10,7
+
+Platform names that make sense for x86 code are \c{macos},
+\c{iossimulator}, \c{tvossimulator} and \c{watchossimulator}.
+
+Optionally, a trailing version number and minimum SDK version
+can also be specified with this syntax:
+
+\c build_version macos, 10, 14, 0 sdk_version 10, 14, 0
+
+This is a macro implemented as a \c{%pragma}. It can also be
+specified in its \c{%pragma} form, in which case it will not
+affect non-Mach-O builds of the same source code:
+
+\c      %pragma macho build_version ...
+
+This latter form is also useful on the command line when using
+the \c{--pragma} command-line switch:
+
+\c      nasm -f macho64 --pragma "macho build_version macos,10,9" ...
+
 \H{elffmt} \i\c{elf32}, \i\c{elf64}, \i\c{elfx32}: \I{ELF}\I{linux, elf}\i{Executable and Linkable
 Format} Object Files
 
