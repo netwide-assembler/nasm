@@ -239,9 +239,11 @@ variables
 \IR{align, smart} \c{ALIGN}, smart
 \IA{sectalign}{sectalign}
 \IR{solaris x86} Solaris x86
+\IC{solaris x86}{unix, solaris} Unix, Solaris
 \IA{standard section names}{standardized section names}
 \IR{symbols, exporting from dlls} symbols, exporting from DLLs
 \IR{symbols, importing from dlls} symbols, importing from DLLs
+\IR{tasm} TASM
 \IR{test subdirectory} \c{test} subdirectory
 \IR{thread local storage in elf} thread local storage, in ELF
 \IR{thread local storage in mach-o} thread local storage, in \c{macho}
