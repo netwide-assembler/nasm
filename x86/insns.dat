@@ -121,7 +121,7 @@ $wdq  IMUL	reg#,rm#,sbyte#			[rmi:	evex.nf.zu.l0.m4.o# 6b /r ib,s]		APX,SM
 $wdq  IMUL	reg#,rm#,imm#			[rmi:	evex.nf.zu.l0.m4.o# 69 /r i#]		APX,SM
 
 $bwdq MUL	rm#				[m:	o# f6# /4]				8086
-$dq   MULX	reg#,reg#*,rm#			[rvm:	vex.ndd.lz.f2.0f38.w# f6 /r]		BMI2
+$dq   MULX	reg#,reg#*,rm#			[rvm:	vex+.ndd.lz.f2.0f38.w# f6 /r]		BMI2
 $dq   MUL	reg#,reg#*,rm#			[rvm:	vex.ndd.lz.f2.0f38.w# f6 /r]		BMI2,NF!,OPT,ND
 $bwdq MUL	rm#				[m:	evex.nf.nd0.l0.m4.o# f6# /4]		APX,SM
 ; MUL and IMUL are the same thing when producing single-width output only, so accept MUL to generate IMUL
