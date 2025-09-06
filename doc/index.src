@@ -34,9 +34,8 @@
 \IR{-Z} \c{-Z} option
 \IR{!=} \c{!=} operator
 \IR{$, here} \c{$}, current address
-\IR{$, here} here token
 \IR{$, prefix} \c{$}, prefix
-\IR{$$} \c{$$} token
+\IR{$$} \c{$$}
 \IR{%} \c{%}, operator
 \IR{%db} \c{%}, prefix to \c{DB} lists
 \IR{%%} \c{%%} operator
@@ -46,7 +45,7 @@
 \IR{%?} \c{%?} and \c{%??}
 \IC{%*?}{_sname} macro name, single line
 \IC{%?}{_mname} macro name, multi-line
-\IR{%0} \c{%0}, parameter count
+\IR{%0} \c{%0}
 \IR{&} \c{&} operator
 \IR{&&} \c{&&} operator
 \IR{*} \c{*} operator
@@ -74,14 +73,15 @@
 \IR{||} \c{||} operator
 \IR{%$} \c{%$} and \c{%$$} prefixes
 \IA{%$$}{%$}
-\IR{+ opaddition} \c{+}, operator, binary
-\IR{+ opunary} \c{+}, operator, unary
+\IR{%[} \c{%[}...\c{]}
+\IR{+ opaddition} \c{+}, binary operator
+\IR{+ opunary} \c{+}, unary operator
 \IR{+ modifier} \c{+}, modifier
-\IR{- opsubtraction} \c{-}, operator, binary
-\IR{- opunary} \c{-}, operator, unary
-\IR{! opunary} \c{!}, operator
+\IR{- opsubtraction} \c{-}, binary operator
+\IR{- opunary} \c{-}, unary operator
+\IR{! opunary} \c{!} operator
 \IA{~}{~ opunary}
-\IR{~ opunary} \c{~}, operator
+\IR{~ opunary} \c{~} operator
 \IA{A16}{a16}
 \IA{A32}{a32}
 \IA{A64}{a64}
@@ -91,8 +91,7 @@
 \IR{alignment, in bin sections} alignment, in \c{bin} sections
 \IR{alignment, in elf sections} alignment, in ELF sections
 \IR{alignment, in win32 sections} alignment, in \c{win32} sections
-\IR{alignment, of elf common variables} alignment, of ELF common
-variables
+\IR{alignment, of elf common variables} alignment, of ELF common variables
 \IR{alignment, in obj sections} alignment, in \c{obj} sections
 \IR{a.out, bsd version} \c{a.out}, BSD version
 \IR{a.out, linux version} \c{a.out}, Linux version
@@ -117,7 +116,7 @@ variables
 \IA{character constants}{character constant}
 \IR{codeview debugging format} CodeView debugging format
 \IR{continuation line} continuation line
-\IR{continuation line} preprocessor, continuation line
+\IC{continuation line}{preprocessor, continuation line}
 \IR{common object file format} Common Object File Format
 \IR{common variables, alignment in elf} common variables, alignment in ELF
 \IR{common, elf extensions to} \c{COMMON}, ELF extensions to
@@ -128,18 +127,17 @@ variables
 \IR{djgpp} DJGPP
 \IR{dll symbols, exporting} DLL symbols, exporting
 \IR{dll symbols, importing} DLL symbols, importing
-\IR{dos} DOS
 \IA{effective addresses}{effective address}
 \IA{effective-address}{effective address}
 \IR{elf} ELF
 \IR{elf, 16-bit code} ELF, 16-bit code
 \IR{elf, debug formats} ELF, debug formats
 \IR{elf shared library} ELF, shared libraries
-\IR{elf32} \c{elf32}
-\IR{elf64} \c{elf64}
-\IR{elfx32} \c{elfx32}
+\IR{elf32} ELF, \c{elf32}
+\IR{elf64} ELF, \c{elf64}
+\IR{elfx32} ELF, \c{elfx32}
 \IR{executable and linkable format} Executable and Linkable Format
-\IR{extern, elf extensions to} \c{EXTERN}, \c{elf} extensions to
+\IR{extern, elf extensions to} \c{EXTERN}, ELF extensions to
 \IR{extern, obj extensions to} \c{EXTERN}, \c{obj} extensions to
 \IR{floating-point, constants} floating-point, constants
 \IR{floating-point, packed bcd constants} floating-point, packed BCD constants
@@ -149,11 +147,11 @@ variables
 \IR{functions, pascal calling convention} functions, \c{PASCAL} calling convention
 \IR{global, aoutb extensions to} \c{GLOBAL}, \c{aoutb} extensions to
 \IR{global, elf extensions to} \c{GLOBAL}, ELF extensions to
-\IR{global, rdf extensions to} \c{GLOBAL}, \c{rdf} extensions to
 \IR{got} GOT
-\IR{got relocations} \c{GOT} relocations
-\IR{gotoff relocation} \c{GOTOFF} relocations
-\IR{gotpc relocation} \c{GOTPC} relocations
+\IR{global offset table} GOT, global offset table
+\IR{got relocations} GOT, \c{GOT} relocations
+\IR{gotoff relocation} GOT, \c{GOTOFF} relocations
+\IR{gotpc relocation} GOT, \c{GOTPC} relocations
 \IR{intel number formats} Intel number formats
 \IR{linux, elf} Linux, ELF
 \IR{linux, a.out} Linux, \c{a.out}
@@ -176,7 +174,7 @@ variables
 \IR{mixed-size instruction} mixed-size, instruction
 \IR{ms-dos} MS-DOS
 \IR{ms-dos device drivers} MS-DOS, device drivers
-\IA{ms-dos}{dos}
+\IA{dos}{ms-dos}
 \IA{multi-line macro}{multi-line macros}
 \IR{multi-line macro expansion} multi-line macro, expansion
 \IR{multipush} \c{multipush} macro
@@ -215,8 +213,8 @@ variables
 \IR{preprocessor loops} preprocessor, loops
 \IR{preprocessor variables} preprocessor, variables
 \IC{preprocessor variables}{vpp} variables, preprocessor
-\IR{other preprocessor directives}, preprocessor, other directives
-\IR{stack relative preprocessor directives}, preprocessor, stack relative directives
+\IR{other preprocessor directives} preprocessor, other directives
+\IR{stack relative preprocessor directives} preprocessor, stack relative directives
 \IA{comments}{comment}
 \IR{relocations, pic-specific} relocations, PIC-specific
 \IA{repeating}{repeating code}
@@ -224,8 +222,9 @@ variables
 \IR{section alignment, in bin} section alignment, in \c{bin}
 \IR{section alignment, in obj} section alignment, in \c{obj}
 \IR{section alignment, in win32} section alignment, in \c{win32}
+\IR{section, bin extensions to} \c{SECTION}, \c{bin} extensions to
 \IR{section, elf extensions to} \c{SECTION}, ELF extensions to
-\IR{section, macho extensions to} \c{SECTION}, \c{macho} extensions to
+\IR{section, macho extensions to} \c{SECTION}, Mach-O extensions to
 \IR{section, windows extensions to} \c{SECTION}, Windows extensions to
 \IR{segment alignment, in bin} segment alignment, in \c{bin}
 \IR{segment alignment, in obj} segment alignment, in \c{obj}

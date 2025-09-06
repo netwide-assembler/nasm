@@ -10,7 +10,8 @@ For example,
 
 \c nasm -f elf myfile.asm
 
-will assemble \c{myfile.asm} into an ELF object file \c{myfile.o}. And
+will assemble \c{myfile.asm} into an 32-bit ELF object file
+\c{myfile.o}. And
 
 \c nasm -f bin myfile.asm -o myfile.com
 
@@ -27,25 +28,6 @@ To get further usage instructions from NASM, try typing
 \c nasm -h
 
 The option \c{--help} is an alias for the \c{-h} option.
-
-If you use \i{Linux} but aren't sure whether your system is \c{a.out}
-or ELF, type
-
-\c file nasm
-
-(in the directory in which you put the NASM binary when you
-installed it). If it says something like
-
-\c nasm: ELF 32-bit LSB executable i386 (386 and up) Version 1
-
-then your system is \i\c{ELF}, and you should use the option \c{-f elf}
-when you want NASM to produce Linux object files. If it says
-
-\c nasm: Linux/i386 demand-paged executable (QMAGIC)
-
-or something similar, your system is \i\c{a.out}, and you should use
-\c{-f aout} instead (Linux \c{a.out} systems have long been obsolete,
-and are rare these days.)
 
 Like Unix compilers and assemblers, NASM is silent unless it
 goes wrong: you won't see any output at all, unless it gives error
@@ -779,11 +761,6 @@ NASM uses different names to refer to floating-point registers from
 MASM: where MASM would call them \c{ST(0)}, \c{ST(1)} and so on, and
 \i\c{a86} would call them simply \c{0}, \c{1} and so on, NASM
 chooses to call them \c{st0}, \c{st1} etc.
-
-As of version 0.96, NASM now treats the instructions with
-\i{`nowait'} forms in the same way as MASM-compatible assemblers.
-The idiosyncratic treatment employed by 0.95 and earlier was based
-on a misunderstanding by the authors.
 
 
 \S{qsother} Other Differences

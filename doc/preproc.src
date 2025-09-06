@@ -106,8 +106,8 @@ In this step, the following expansions are performed on each line:
 below), the parameters to that macro are expanded at this time. See
 \k{mlmacro}.
 
-\b \i{Macro indirection}, using the \i\c{%[]} construct, is expanded. See
-\k{indmacro}.
+\b \i{Macro indirection}, using the \i\c{%[}...\c{]} construct, is
+expanded. See \k{indmacro}.
 
 \b Token \i{concatenation} using either the \i\c{%+} operator (see
 \k{concat%+}) or implicitly (see \k{indmacro} and \k{concat}.)
@@ -334,7 +334,7 @@ the time that \c{isFalse} was defined.
 same way that \c{%define} and \c{%idefine} does.
 
 
-\S{indmacro} \i{Macro Indirection}: \I\c{%[}\c{%[...]}
+\S{indmacro} \i{Macro Indirection}: \i\c{%[}...\c{]}
 
 The \c{%[...]} construct can be used to expand macros in contexts
 where macro expansion would otherwise not occur, including in the
