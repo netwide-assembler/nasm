@@ -304,8 +304,7 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 # reasonable, but doesn't update the time stamp if the files aren't
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm\warnings.time.
-.PHONY: warnings
-warnings: dirs
+warnings: dirs .SYMBOLIC
 	$(RM_F) $(WARNFILES) $(WARNTIMES) asm\warnings.time
 	$(MAKE) asm\warnings.time
 
@@ -319,7 +318,7 @@ asm\warnings_c.h.time: asm\warnings.pl asm\warnings.time
 	$(EMPTY) asm\warnings_c.h.time
 
 asm\warnings_c.h: asm\warnings_c.h.time
-	@: Side effect
+	%null Side effect
 
 include\warnings.h.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h &
@@ -327,7 +326,7 @@ include\warnings.h.time: asm\warnings.pl asm\warnings.time
 	$(EMPTY) include\warnings.h.time
 
 include\warnings.h: include\warnings.h.time
-	@: Side effect
+	%null Side effect
 
 doc\warnings.src.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src &
@@ -335,7 +334,7 @@ doc\warnings.src.time: asm\warnings.pl asm\warnings.time
 	$(EMPTY) doc\warnings.src.time
 
 doc\warnings.src : doc\warnings.src.time
-	@: Side effect
+	%null Side effect
 
 # Assembler token hash
 asm\tokhash.c: x86\insns.xda x86\insnsn.c asm\tokens.dat asm\tokhash.pl &
