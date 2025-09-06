@@ -4,7 +4,7 @@
 
 The Netwide Assembler, NASM, is an 80x86 and x86-64 assembler designed
 for portability and modularity. It supports a range of object file
-formats, including Linux and *BSD \c{a.out}, ELF, Mach-O, 16-bit and
+formats, including \i{Linux} and \i{BSD} \c{a.out}, ELF, Mach-O, 16-bit and
 32-bit \c{.obj} (OMF) format, COFF (including its Win32 and Win64
 variants.) It can also output plain binary files, Intel hex and
 Motorola S-Record formats. Its syntax is designed to be simple and
@@ -43,4 +43,3 @@ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-

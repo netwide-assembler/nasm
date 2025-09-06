@@ -396,7 +396,7 @@ Using this feature, we can simplify references to a lot of macros (and,
 in turn, reduce typing errors).
 
 
-\S{selfref%?} The Macro Name Itself: \i\c{%?} and \i\c{%??}
+\S{selfref%?} The Macro Name Itself: \i\c{%?} and \c{%??}
 
 The special symbols \c{%?} and \c{%??} can be used to reference the
 macro name itself inside a macro expansion, this is supported for both
@@ -422,7 +422,7 @@ will expand to:
 These tokens can be used for single-line macros \e{if defined outside
 any multi-line macros.} See below.
 
-\S{selfref%*?} The Single-Line Macro Name: \i\c{%*?} and \i\c{%*??}
+\S{selfref%*?} The Single-Line Macro Name: \i\c{%*?} and \c{%*??}
 
 If the tokens \c{%?} and \c{%??} are used inside a multi-line macro,
 they are expanded before any directives are processed. As a result,

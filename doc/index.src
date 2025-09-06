@@ -37,12 +37,16 @@
 \IR{$, here} here token
 \IR{$, prefix} \c{$}, prefix
 \IR{$$} \c{$$} token
-\IR{%} \c{%} operator
-\IR{%db} \c{%} prefix to \c{DB} lists
+\IR{%} \c{%}, operator
+\IR{%db} \c{%}, prefix to \c{DB} lists
 \IR{%%} \c{%%} operator
 \IR{%+1} \c{%+1} and \c{%-1} syntax
 \IA{%-1}{%+1}
-\IR{%0} \c{%0} parameter count
+\IR{%*?} \c{%*?} and \c{%*??}
+\IR{%?} \c{%?} and \c{%??}
+\IC{%*?}{_sname} macro name, single line
+\IC{%?}{_mname} macro name, multi-line
+\IR{%0} \c{%0}, parameter count
 \IR{&} \c{&} operator
 \IR{&&} \c{&&} operator
 \IR{*} \c{*} operator
@@ -70,14 +74,14 @@
 \IR{||} \c{||} operator
 \IR{%$} \c{%$} and \c{%$$} prefixes
 \IA{%$$}{%$}
-\IR{+ opaddition} \c{+} operator, binary
-\IR{+ opunary} \c{+} operator, unary
-\IR{+ modifier} \c{+} modifier
-\IR{- opsubtraction} \c{-} operator, binary
-\IR{- opunary} \c{-} operator, unary
-\IR{! opunary} \c{!} operator
+\IR{+ opaddition} \c{+}, operator, binary
+\IR{+ opunary} \c{+}, operator, unary
+\IR{+ modifier} \c{+}, modifier
+\IR{- opsubtraction} \c{-}, operator, binary
+\IR{- opunary} \c{-}, operator, unary
+\IR{! opunary} \c{!}, operator
 \IA{~}{~ opunary}
-\IR{~ opunary} \c{~} operator
+\IR{~ opunary} \c{~}, operator
 \IA{A16}{a16}
 \IA{A32}{a32}
 \IA{A64}{a64}
@@ -162,13 +166,19 @@ variables
 \IR{macos x} MacOS X
 \IR{masm} MASM
 \IR{masmdb} MASM, \c{DB} syntax
+\IR{masm compatibility} MASM, compatibility
 \IA{memory reference}{memory references}
 \IR{minix} Minix
 \IA{misc directory}{misc subdirectory}
 \IR{misc subdirectory} \c{misc} subdirectory
 \IR{microsoft omf} Microsoft OMF
+\IR{mixed-size addressing} mixed-size, addressing
+\IR{mixed-size instruction} mixed-size, instruction
 \IR{ms-dos} MS-DOS
-\IR{ms-dos device drivers} MS-DOS device drivers
+\IR{ms-dos device drivers} MS-DOS, device drivers
+\IA{ms-dos}{dos}
+\IA{multi-line macro}{multi-line macros}
+\IR{multi-line macro expansion} multi-line macro, expansion
 \IR{multipush} \c{multipush} macro
 \IR{nan} NaN
 \IR{nasm version} NASM version
@@ -193,15 +203,20 @@ variables
 \IR{pascal calling convention} Pascal calling convention
 \IR{pic} PIC
 \IR{pharlap} PharLap
-\IR{plt} PLT
-\IR{plt} \c{PLT} relocations
+\IR{plt} PLT, procedure linkage table
+\IR{plt relocations} PLT, relocations
+\IC{plt}{procedure linkage table} procedure linkage table
 \IA{pre-defining macros}{pre-define}
 \IR{preprocessor conditionals} preprocessor, conditionals
+\IR{preprocessor directives} preprocessor, directives
 \IR{preprocessor expansions} preprocessor, expansions
 \IR{preprocessor expressions} preprocessor, expressions
+\IR{preprocessor functions} preprocessor, functions
 \IR{preprocessor loops} preprocessor, loops
 \IR{preprocessor variables} preprocessor, variables
-\IR{preprocessor variables} variables, preprocessor
+\IC{preprocessor variables}{vpp} variables, preprocessor
+\IR{other preprocessor directives}, preprocessor, other directives
+\IR{stack relative preprocessor directives}, preprocessor, stack relative directives
 \IA{comments}{comment}
 \IR{relocations, pic-specific} relocations, PIC-specific
 \IA{repeating}{repeating code}
@@ -236,14 +251,17 @@ variables
 \IA{uninitialized storage}{storage, uninitialized}
 \IR{unicode} Unicode
 \IR{unix} Unix
-\IR{utf-8} UTF-8
-\IR{utf-16} UTF-16
-\IR{utf-32} UTF-32
+\IR{utf-8} Unicode, UTF-8
+\IR{utf-16} Unicode, UTF-16
+\IR{utf-32} Unicode, UTF-32
 \IA{sco unix}{unix, sco}
 \IR{unix, sco} Unix, SCO
 \IA{unix system v}{unix, system v}
 \IR{unix, system v} Unix, System V
-\IR{unixware} UnixWare
+\# Having just "UnixWare" is rather silly as it follows immediately
+\IR{unixware} Unix, UnixWare
+\IC{linux}{unix, linux} Unix, Linux
+\IC{bsd}{unix, bsd} Unix, BSD
 \IR{val} VAL
 \IA{version number of nasm}{nasm, version}
 \IR{visual c++} Visual C++

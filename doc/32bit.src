@@ -244,11 +244,11 @@ many function parameters will be of type \c{int} or pointers.
 \H{picdll} Writing NetBSD/FreeBSD/OpenBSD and Linux/ELF \i{Shared
 Libraries}
 
-\c{ELF} replaced the older \c{a.out} object file format under Linux
-because it contains support for \i{position-independent code}
-(\i{PIC}), which makes writing shared libraries much easier. NASM
-supports the \c{ELF} position-independent code features, so you can
-write Linux \c{ELF} shared libraries in NASM.
+\I{Linux}\i{ELF} replaced the older \c{a.out} object file format
+under Linux because it contains support for \i{position-independent
+code} (\i{PIC}), which makes writing shared libraries much
+easier. NASM supports the \c{ELF} position-independent code features,
+so you can write Linux \c{ELF} shared libraries in NASM.
 
 \i{NetBSD}, and its close cousins \i{FreeBSD} and \i{OpenBSD}, take
 a different approach by hacking PIC support into the \c{a.out}
@@ -400,13 +400,12 @@ Common variables must also be accessed in this way.
 
 \S{picglobal} Exporting Symbols to the Library User
 
-If you want to export symbols to the user of the library, you have
-to declare whether they are functions or data, and if they are data,
-you have to give the size of the data item. This is because the
-dynamic linker has to build \I{PLT}\i{procedure linkage table}
-entries for any exported functions, and also moves exported data
-items away from the library's data section in which they were
-declared.
+If you want to export symbols to the user of the library, you have to
+declare whether they are functions or data, and if they are data, you
+have to give the size of the data item. This is because the dynamic
+linker has to build \I{PLT}\e{procedure linkage table} entries for any
+exported functions, and also moves exported data items away from the
+library's data section in which they were declared.
 
 So to export a function to users of the library, you must use
 
@@ -468,7 +467,7 @@ function lives. Either address is a valid way to call the function.
 \S{picproc} Calling Procedures Outside the Library
 
 Calling procedures outside your shared library has to be done by
-means of a \i\e{procedure linkage table}, or \i{PLT}. The PLT is
+means of a \I\e{procedure linkage table}, or \i{PLT}. The PLT is
 placed at a known offset from where the library is loaded, so the
 library code can make calls to the PLT in a position-independent
 way. Within the PLT there is code to jump to offsets contained in
@@ -500,5 +499,3 @@ library file name, with a version number, into the library:
 
 You would then copy \c{library.so.1.2} into the library directory,
 and create \c{library.so.1} as a symbolic link to it.
-
-
