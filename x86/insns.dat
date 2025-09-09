@@ -3007,7 +3007,7 @@ $k $bwdq KNOT%    kreg#,kreg#*                      [rm:  vex+.l0.0f.ko# 44 /r ]
 $k $bwdq KOR%     kreg#,kreg#*,kreg#                [rvm: vex+.nds.l1.0f.ko# 45 /r ]		AVX512(b:DQ/w:F/BW),SM
 $k $bwdq KORTEST% kreg#,kreg#                       [rm:  vex+.l0.0f.ko# 98 /r ]		AVX512(b:DQ/w:F/BW),SM,FL
 $k $bwdq KSHIFTL% kreg#,kreg#,imm8                  [rmi: vex+.l0.66.0f3a.w## 32## /r ib ]	AVX512(b:DQ/w:F/BW),SM0-1
-$k $bwdq KSHIFTR% kreg#,kreg#,imm8                  [rmi: vex+.l0.66.0f3a.w## 32## /r ib ]	AVX512(b:DQ/w:F/BW),SM0-1
+$k $bwdq KSHIFTR% kreg#,kreg#,imm8                  [rmi: vex+.l0.66.0f3a.w## 30## /r ib ]	AVX512(b:DQ/w:F/BW),SM0-1
 $k $bwdq KTEST%   kreg#,kreg#                       [rm:  vex+.l0.0f.ko# 99 /r ]		AVX512(bw:DQ/BW),SM,FL
 $k $wdq  KUNPCK%% kreg#,kreg##*,kreg##              [rvm: vex+.nds.l1.0f.ko# 4b /r ]		AVX512(w:F/BW),SM1-2
 $k $bwdq KXNOR%   kreg#,kreg#*,kreg#                [rvm: vex+.nds.l1.0f.ko# 46 /r ]		AVX512(b:DQ/w:F/BW),SM
