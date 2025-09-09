@@ -807,65 +807,61 @@ operand only:
 
 \S{win64seh} \c{win64}: Structured Exception Handling
 
-Structured exception handing in Win64 is completely different matter
-from Win32. Upon exception program counter value is noted, and
-linker-generated table comprising start and end addresses of all the
-functions [in given executable module] is traversed and compared to the
-saved program counter. Thus so called \c{UNWIND_INFO} structure is
-identified. If it's not found, then offending subroutine is assumed to
-be "leaf" and just mentioned lookup procedure is attempted for its
-caller. In Win64, a leaf function is a function that does not call any
-other functions \e{nor} modifies any Win64 non-volatile registers,
+Structured exception handing in Win64 is completely different compared
+to Win32. When an exception occurs, the program counter is noted, and a
+linker-generated table containing start and end addresses of all the
+functions (in a given executable module) is traversed and compared to
+the saved program counter. This is used to identify the corresponding
+\c{UNWIND_INFO} structure. If missing, then the offending subroutine is
+assumed to be "leaf" and this lookup procedure is instead attempted for
+its caller. In Win64, a leaf function is a function that does not call
+any other functions \e{nor} modifies any Win64 non-volatile registers,
 including the stack pointer. The latter ensures that it's possible to
 identify a leaf function's caller by simply pulling the value from the
 top of the stack.
 
-While majority of subroutines written in assembler are not calling any
-other function, requirement for non-volatile registers' immutability
-leaves developer with not more than 7 registers and no stack frame,
-which is not necessarily what [s]he counted with. Customarily one would
-meet the requirement by saving non-volatile registers on stack and
-restoring them upon return, so what can go wrong? If [and only if] an
-exception is raised at run-time and no \c{UNWIND_INFO} structure is
-associated with such "leaf" function, the stack unwind procedure will
-expect to find caller's return address on the top of stack immediately
-followed by its frame. Given that developer pushed caller's
-non-volatile registers on stack, would the value on top point at some
-code segment or even addressable space? Well, developer can attempt
-copying caller's return address to the top of stack and this would
-actually work in some very specific circumstances. But unless developer
-can guarantee that these circumstances are always met, it's more
-appropriate to assume worst case scenario, i.e. stack unwind procedure
-going berserk. Relevant question is what happens then? Application is
-abruptly terminated without any notification whatsoever. Just like in
-Win32 case, one can argue that system could at least have logged
-"unwind procedure went berserk in x.exe at address n" in event log, but
-no, no trace of failure is left.
+While the majority of subroutines written in assembler are not calling
+any other functions, they may not qualify as "leaf" functions in the
+Win64 sense. The requirement for non-volatile registers to be
+unchanged leaves the developer with not more than 7 registers and no
+stack frame, which is not necessarily what they counted on.
+Customarily one would meet this requirement by saving non-volatile
+registers on stack and restoring them upon return. However, if (and
+only if) an exception is raised at run-time and no \c{UNWIND_INFO}
+structure is associated with such a "leaf" function, the stack unwind
+procedure will expect to find the caller's return address on the top of
+the stack immediately followed by its frame. Given that the developer
+pushed the caller's non-volatile registers onto the stack, the value
+on top will no longer point to the right place. The developer can
+attempt to copy the caller's return address to the top of stack, which
+would work in some very specific circumstances. But unless the
+developer can guarantee that these circumstances are always met, it's
+more appropriate to assume the worst, i.e. the stack unwind procedure
+goes berserk, abruptly terminating without any notification whatsoever
+(just like in the the Win32 case).
 
-Now, when we understand significance of the \c{UNWIND_INFO} structure,
-let's discuss what's in it and/or how it's processed. First of all it
-is checked for presence of reference to custom language-specific
-exception handler. If there is one, then it's invoked. Depending on the
-return value, execution flow is resumed (exception is said to be
-"handled"), \e{or} rest of \c{UNWIND_INFO} structure is processed as
-following. Beside optional reference to custom handler, it carries
-information about current callee's stack frame and where non-volatile
-registers are saved. Information is detailed enough to be able to
-reconstruct contents of caller's non-volatile registers upon call to
-current callee. And so caller's context is reconstructed, and then
-unwind procedure is repeated, i.e. another \c{UNWIND_INFO} structure is
-associated, this time, with caller's instruction pointer, which is then
-checked for presence of reference to language-specific handler, etc.
-The procedure is recursively repeated till exception is handled. As
-last resort system "handles" it by generating memory core dump and
-terminating the application.
+Now that we understand significance of the \c{UNWIND_INFO} structure,
+let us discuss what is in it and how it is processed. First, it is
+checked for the presence of a reference to a custom language-specific
+exception handler. If there is one, then it is invoked. Depending on
+the return value, execution flow is resumed (exception is said to be
+"handled"), \e{or} the rest of the \c{UNWIND_INFO} structure is
+processed as follows. Aside from an optional reference to a custom
+handler, it carries information about the current callee's stack frame
+and where non-volatile registers are saved. The information is detailed
+enough to be able to reconstruct the contents of the caller's
+non-volatile registers on entry to the current callee. And so the
+caller's context is reconstructed, at which point the unwind procedure
+is repeated, using the \c{UNWIND_INFO} structure associated with the
+caller's instruction pointer. The procedure is repeated recursively
+until the exception is handled. As a last resort, the system "handles"
+it by generating a memory dump and terminating the application.
 
-As for the moment of this writing NASM unfortunately does not
-facilitate generation of above mentioned detailed information about
-stack frame layout. But as of version 2.03 it implements building
-blocks for generating structures involved in stack unwinding. As
-simplest example, here is how to deploy custom exception handler for
-leaf function:
+As of this writing, NASM unfortunately does not facilitate generation
+of above mentioned detailed information about stack frame layout. But
+as of version 2.03, it implements building blocks for generating
+structures involved in stack unwinding. Here is a simple example
+showing how to deploy a custom exception handler for a leaf function:
 
 \c default rel
 \c section .text
@@ -900,36 +896,36 @@ leaf function:
 \c section .drectve info
 \c         db      '/defaultlib:user32.lib /defaultlib:msvcrt.lib '
 
-What you see in \c{.pdata} section is element of the "table comprising
-start and end addresses of function" along with reference to associated
-\c{UNWIND_INFO} structure. And what you see in \c{.xdata} section is
-\c{UNWIND_INFO} structure describing function with no frame, but with
-designated exception handler. References are \e{required} to be
-image-relative (which is the real reason for implementing \c{wrt
-..imagebase} operator). It should be noted that \c{rdata align=n}, as
-well as \c{wrt ..imagebase}, are optional in these two segments'
-contexts, i.e. can be omitted. Latter means that \e{all} 32-bit
-references, not only above listed required ones, placed into these two
-segments turn out image-relative. Why is it important to understand?
-Developer is allowed to append handler-specific data to \c{UNWIND_INFO}
-structure, and if [s]he adds a 32-bit reference, then [s]he will have
-to remember to adjust its value to obtain the real pointer.
+What you see is that the \c{.pdata} section contains a single-element
+table, containing function start and end addresses, along with references
+to associated \c{UNWIND_INFO} structures (only one in this case). The
+\c{.xdata} section contains the referenced \c{UNWIND_INFO} structure,
+describing a function with no frame, but with a designated exception handler.
+These references are \e{required} to be image-relative, which is the real
+reason for implementing the \c{wrt ..imagebase} operator). It should be
+noted that \c{rdata align=n}, as well as \c{wrt ..imagebase}, are actually
+optional in the context of these two segments (they apply even when omitted);
+\e{all} 32-bit references placed into these two segments will be image-relative.
+This is important to understand, as the developer is allowed to append
+handler-specific data to the \c{UNWIND_INFO} structure, and any 32-bit
+references that are added may require adjustment to obtain the real pointer.
 
-As already mentioned, in Win64 terms leaf function is one that does not
-call any other function \e{nor} modifies any non-volatile register,
-including stack pointer. But it's not uncommon that assembler
-programmer plans to utilize every single register and sometimes even
-have variable stack frame. Is there anything one can do with bare
-building blocks? I.e. besides manually composing fully-fledged
-\c{UNWIND_INFO} structure, which would surely be considered
-error-prone? Yes, there is. Recall that exception handler is called
-first, before stack layout is analyzed. As it turned out, it's
-perfectly possible to manipulate current callee's context in custom
-handler in manner that permits further stack unwinding. General idea is
-that handler would not actually "handle" the exception, but instead
-restore callee's context, as it was at its entry point and thus mimic
-leaf function. In other words, handler would simply undertake part of
-unwinding procedure. Consider following example:
+As already mentioned, in Win64 terms, a leaf function is one that neither
+calls any other function \e{nor} modifies any non-volatile registers,
+including the stack pointer. But it is not uncommon for the programmer
+to intend to utilize every single register and sometimes even have a
+variable stack frame, requiring a more complicated \c{UNWIND_INFO} structure
+than in the example above. Is there anything one can do with these simpler
+building blocks, and avoid manually composing fully-fledged \c{UNWIND_INFO}
+structures, which would surely be considered error-prone? Yes, there is.
+Recall that an exception handler is called first, before the stack layout
+is analyzed. As it turns out, it is perfectly possible to manipulate
+current callee's context in a custom handler in a manner that permits
+further stack unwinding. The general idea is that handler would not
+actually "handle" the exception, but instead restore the callee's context
+(restore to state at entry point) and thus mimic a Win64 leaf function.
+In other words, the handler would effectively undertake part of the
+unwinding procedure. Consider the following example:
 
 \c function:
 \c         mov     rax,rsp         ; copy rsp to volatile register
@@ -951,11 +947,11 @@ unwinding procedure. Consider following example:
 \c         mov     rsp,r11         ; destroy frame
 \c         ret
 
-The keyword is that up to \c{magic_point} original \c{rsp} value
-remains in chosen volatile register and no non-volatile register,
-except for \c{rsp}, is modified. While past \c{magic_point} \c{rsp}
-remains constant till the very end of the \c{function}. In this case
-custom language-specific exception handler would look like this:
+The key is that until \c{magic_point}, the original \c{rsp} value
+remains in the chosen volatile register, and no non-volatile register
+except for \c{rsp} is modified. After \c{magic_point}, \c{rsp} remains
+constant till the very end of the \c{function}. In this case a custom
+language-specific exception handler would look like this:
 
 \c EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
 \c         CONTEXT *context,DISPATCHER_CONTEXT *disp)
@@ -977,9 +973,9 @@ custom language-specific exception handler would look like this:
 \c     return ExceptionContinueSearch;
 \c }
 
-As custom handler mimics leaf function, corresponding \c{UNWIND_INFO}
-structure does not have to contain any information about stack frame
-and its layout.
+As this custom handler allows the example function to mimic a Win64 leaf
+function, the corresponding \c{UNWIND_INFO} structure does not need to
+contain any information about the stack frame and its layout.
 
 \H{cofffmt} \i\c{coff}: \i{Common Object File Format}
 
