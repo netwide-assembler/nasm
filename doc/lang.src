@@ -452,7 +452,7 @@ Some examples (all producing exactly the same code):
 
 A character string consists of up to eight characters enclosed in
 either single quotes (\c{'...'}), double quotes (\c{"..."}) or
-backquotes (\c{`...`}).  Single or double quotes are equivalent to
+backquotes (\c{`...`}).  Single or double quotes are equivalent in
 NASM (except of course that surrounding the constant with single
 quotes allows double quotes to appear within it and vice versa); the
 contents of those are represented verbatim.  Strings enclosed in
@@ -513,7 +513,7 @@ the sense of character constants understood by the Pentium's
 String constants are character strings used in the context of some
 pseudo-instructions, namely the
 \I\c{DW}\I\c{DD}\I\c{DQ}\I\c{DT}\I\c{DO}\I\c{DY}\i\c{DB} family and
-\i\c{INCBIN} (where it represents a filename.)  They are also used in
+\i\c{INCBIN} (where it represents a filename). They are also used in
 certain preprocessor directives.
 
 A string constant looks like a character constant, only longer. It
@@ -543,7 +543,7 @@ The special operators \i\c{__?utf16?__}, \i\c{__?utf16le?__},
 \i\c{__?utf32be?__} allows definition of Unicode strings.  They take a
 string in UTF-8 format and converts it to UTF-16 or UTF-32,
 respectively.  Unless the \c{be} forms are specified, the output is
-littleendian.
+little endian.
 
 For example:
 

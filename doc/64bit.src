@@ -51,7 +51,7 @@ mode, for 8-, 16-, 32- and 64-bit references, respectively:
 This is consistent with the AMD documentation and most other
 assemblers.  The Intel documentation, however, uses the names
 \c{R8L-R15L} for 8-bit references to the higher registers.  It is
-possible to use those names by definiting them as macros; similarly,
+possible to use those names by defining them as macros; similarly,
 if one wants to use numeric names for the low 8 registers, define them
 as macros.  The standard macro package \c{altreg} (see \k{pkg_altreg})
 can be used for this purpose.
@@ -95,7 +95,7 @@ Note that \c{lea rax,[rel symbol]} is position-independent, whereas
 position-independent code in 64-bit mode.  However, the \c{MOV}
 instruction is able to reference a symbol anywhere in the 64-bit
 address space, whereas \c{LEA} is only able to access a symbol within
-within 2 GB of the instruction itself (see below.)
+within 2 GB of the instruction itself (see below).
 
 The only instructions which take a full \I{64-bit displacement}64-bit
 \e{displacement} is loading or storing, using \c{MOV}, \c{AL}, \c{AX},

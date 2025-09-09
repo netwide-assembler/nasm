@@ -109,8 +109,9 @@ with \i\c{vstart=}.
 start address.
 
 \b Arguments to \c{org}, \c{start}, \c{vstart}, and \c{align=} are
-critical expressions. See \k{crit}. E.g. \c{align=(1 << ALIGN_SHIFT)}
-- \c{ALIGN_SHIFT} must be defined before it is used here.
+critical expressions. See \k{crit}. For example, in the case of
+\c{align=(1 << ALIGN_SHIFT)}, \c{ALIGN_SHIFT} must be defined before
+it is used here.
 
 \b Any code which comes before an explicit \c{SECTION} directive
 is directed by default into the \c{.text} section.
@@ -179,7 +180,7 @@ for historical reasons) is the one produced by \i{MASM} and
 
 \c{obj} provides a default output file-name extension of \c{.obj}.
 
-\c{obj} is not exclusively a 16-bit format, though: NASM has full
+\c{obj} is not exclusively a 16-bit format, though; NASM has full
 support for the 32-bit extensions to the format. In particular,
 32-bit \c{obj} format files are used by \i{Borland's Win32
 compilers}, instead of using Microsoft's newer \i\c{win32} object
@@ -631,42 +632,42 @@ Any other section name is treated by default like \c{.text}.
 
 \S{win32safeseh} \c{win32}: Safe Structured Exception Handling
 
-Among other improvements in Windows XP SP2 and Windows Server 2003
-Microsoft has introduced concept of "safe structured exception
-handling." General idea is to collect handlers' entry points in
-designated read-only table and have alleged entry point verified
-against this table prior exception control is passed to the handler. In
-order for an executable module to be equipped with such "safe exception
-handler table," all object modules on linker command line has to comply
-with certain criteria. If one single module among them does not, then
-the table in question is omitted and above mentioned run-time checks
-will not be performed for application in question. Table omission is by
-default silent and therefore can be easily overlooked. One can instruct
-linker to refuse to produce binary without such table by passing
+Among other improvements in Windows XP SP2 and Windows Server 2003,
+Microsoft has introduced the concept of "safe structured exception
+handling." The general idea is to collect handlers' entry points
+in a designated read-only table and have SEH entry points verified
+against this table before exception control is passed to the
+corresponding handler. In order for an executable module to be
+equipped with this read-only table, all object modules on linker
+command line have to comply with certain criteria. If even a single
+module among them does not, then the table in question is omitted
+and above mentioned run-time checks will not be performed for the
+application in question. Table omission is silent by default and
+therefore can be easily missed. One can instruct the linker to
+refuse to produce binary without such table by passing the
 \c{/safeseh} command line option.
 
-Without regard to this run-time check merits it's natural to expect
+Without regard to this run-time check, it's natural to expect
 NASM to be capable of generating modules suitable for \c{/safeseh}
-linking. From developer's viewpoint the problem is two-fold:
+linking. From the developer's viewpoint the problem is two-fold:
 
 \b how to adapt modules not deploying exception handlers of their own;
 
 \b how to adapt/develop modules utilizing custom exception handling;
 
-Former can be easily achieved with any NASM version by adding following
-line to source code:
+The former can be easily achieved with any NASM version by adding the
+following line to the source code:
 
 \c $@feat.00 equ 1
 
-As of version 2.03 NASM adds this absolute symbol automatically. If
-it's not already present to be precise. I.e. if for whatever reason
-developer would choose to assign another value in source file, it would
-still be perfectly possible.
+As of version 2.03 NASM adds this absolute symbol automatically, if
+it is not already present (in which case the developer can choose to
+assign another value, if desired, for whatever reason).
 
-Registering custom exception handler on the other hand requires certain
-"magic." As of version 2.03 additional directive is implemented,
-\c{safeseh}, which instructs the assembler to produce appropriately
-formatted input data for above mentioned "safe exception handler
+Registering a custom exception handler on the other hand requires
+certain "magic." As of version 2.03, an additional \c{safeseh} directive
+is implemented, which instructs the assembler to produce appropriately
+formatted input data for the above-mentioned "safe exception handler
 table." Its typical use would be:
 
 \c section .text
@@ -699,19 +700,18 @@ table." Its typical use would be:
 \c section .drectve info
 \c         db      '/defaultlib:user32.lib /defaultlib:msvcrt.lib '
 
-As you might imagine, it's perfectly possible to produce .exe binary
-with "safe exception handler table" and yet engage unregistered
-exception handler. Indeed, handler is engaged by simply manipulating
-\c{[fs:0]} location at run-time, something linker has no power over,
-run-time that is. It should be explicitly mentioned that such failure
-to register handler's entry point with \c{safeseh} directive has
-undesired side effect at run-time. If exception is raised and
-unregistered handler is to be executed, the application is abruptly
-terminated without any notification whatsoever. One can argue that
-system could  at least have logged some kind "non-safe exception
-handler in x.exe at address n" message in event log, but no, literally
-no notification is provided and user is left with no clue on what
-caused application failure.
+As you might imagine, it's perfectly possible to produce an .exe binary
+with the "safe exception handler table" and yet invoke an unregistered
+exception handler. A handler is invoked by manipulating \c{[fs:0]}
+at run-time, something the linker has no power over. It is therefore
+important to note that such failure to register a handler's entry point
+with the \c{safeseh} directive will have undesired side effects at
+run-time. If an exception is raised and an unregistered handler is to be
+executed, the application is abruptly terminated without any notification
+whatsoever. One can argue that the system should at least log some kind
+of "non-safe exception handler in x.exe at address n" message in the
+event log, but unfortunately the user is left without any clue as to
+what might have caused the crash.
 
 Finally, all mentions of linker in this paragraph refer to Microsoft
 linker version 7.x and later. Presence of \c{@feat.00} symbol and input
@@ -749,7 +749,7 @@ references. Consider a switch dispatch table:
 \c         ...
 
 Even a novice Win64 assembler programmer will soon realize that the code
-is not 64-bit savvy. Most notably linker will refuse to link it with
+is not 64-bit savvy. Most notably the linker will refuse to link it, showing:
 
 \c 'ADDR32' relocation to '.text' invalid without /LARGEADDRESSAWARE:NO
 
@@ -758,15 +758,15 @@ So [s]he will have to split jmp instruction as following:
 \c         lea     rbx,[rel dsptch]
 \c         jmp     qword [rbx+rax*8]
 
-What happens behind the scene is that effective address in \c{lea} is
-encoded relative to instruction pointer, or in perfectly
+What happens behind the scenes is that the effective address in \c{lea}
+is encoded relative to instruction pointer, in a perfectly
 position-independent manner. But this is only part of the problem!
-Trouble is that in .dll context \c{caseN} relocations will make their
-way to the final module and might have to be adjusted at .dll load
-time. To be specific when it can't be loaded at preferred address. And
-when this occurs, pages with such relocations will be rendered private
-to current process, which kind of undermines the idea of sharing .dll.
-But no worry, it's trivial to fix:
+The issue is that in a .dll context, the \c{caseN} relocations will make
+their way to the final module and might have to be adjusted at .dll load
+time (specifically, when it can't be loaded at the preferred address).
+When this occurs, pages with such relocations will be rendered private
+to current process, which kind of undermines the idea of a shared .dll.
+But not to worry, it's trivial to fix:
 
 \c         lea     rbx,[rel dsptch]
 \c         add     rbx,[rbx+rax*8]
@@ -777,11 +777,11 @@ But no worry, it's trivial to fix:
 \c         ...
 
 NASM version 2.03 and later provides another alternative, \c{wrt
-..imagebase} operator, which returns offset from base address of the
-current image, be it .exe or .dll module, therefore the name. For those
-acquainted with PE-COFF format base address denotes start of
-\c{IMAGE_DOS_HEADER} structure. Here is how to implement switch with
-these image-relative references:
+..imagebase} operator, which returns an offset from base address of the
+current image, be it .exe or .dll module, hence the name. For those
+acquainted with PE-COFF format, this base address denotes the start of
+the \c{IMAGE_DOS_HEADER} structure. Here is how to implement a switch
+statement with these image-relative references:
 
 \c         lea     rbx,[rel dsptch]
 \c         mov     eax,[rbx+rax*4]
@@ -792,10 +792,10 @@ these image-relative references:
 \c dsptch: dd      case0 wrt ..imagebase
 \c         dd      case1 wrt ..imagebase
 
-One can argue that the operator is redundant. Indeed,  snippet before
-last works just fine with any NASM version and is not even Windows
-specific... The real reason for implementing \c{wrt ..imagebase} will
-become apparent in next paragraph.
+That said, the snippet before last works just fine with any NASM version
+and is not even Windows specific, which makes this operator unnecessary
+in this case. The real reason for the \c{wrt ..imagebase} operator will
+become apparent in the next section.
 
 It should be noted that \c{wrt ..imagebase} is defined as 32-bit
 operand only:
@@ -814,10 +814,10 @@ functions [in given executable module] is traversed and compared to the
 saved program counter. Thus so called \c{UNWIND_INFO} structure is
 identified. If it's not found, then offending subroutine is assumed to
 be "leaf" and just mentioned lookup procedure is attempted for its
-caller. In Win64 leaf function is such function that does not call any
-other function \e{nor} modifies any Win64 non-volatile registers,
-including stack pointer. The latter ensures that it's possible to
-identify leaf function's caller by simply pulling the value from the
+caller. In Win64, a leaf function is a function that does not call any
+other functions \e{nor} modifies any Win64 non-volatile registers,
+including the stack pointer. The latter ensures that it's possible to
+identify a leaf function's caller by simply pulling the value from the
 top of the stack.
 
 While majority of subroutines written in assembler are not calling any
@@ -1187,8 +1187,8 @@ override that.
 
 \b \i\c{merge} indicates that duplicate data elements in this section
 should be merged with data elements from other object files. Data
-elements can be either fixed-sized objects or null-terminatedstrings
-(with the \c{strings} attribute.) A size specifier is required unless
+elements can be either fixed-sized objects or null-terminated strings
+(with the \c{strings} attribute). A size specifier is required unless
 \c{strings} is specified, in which case the size defaults to \c{byte}.
 
 \b \i\c{tls} defines the section to be one which contains
