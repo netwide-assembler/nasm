@@ -29,9 +29,9 @@ specific size data type is desired, it is probably best to use the
 types defined in the standard C header \c{<inttypes.h>}.
 
 All known 64-bit platforms except some embedded platforms require that
-the stack is 16-byte aligned at the entry to a function.  In order to
-enforce that, the stack pointer (\c{RSP}) needs to be aligned on an
-\c{odd} multiple of 8 bytes before the \c{CALL} instruction.
+the stack is 16-byte aligned at the entry to a function.  Specifically,
+the stack pointer (\c{RSP}) needs to be 16-byte aligned just before the
+\c{CALL} instruction.
 
 In 64-bit mode, the default instruction size is still 32 bits.  When
 loading a value into a 32-bit register (but not an 8- or 16-bit
@@ -182,3 +182,16 @@ Integer and SSE register arguments are counted together, so for the case of
 \c      void foo(long long a, double b, int c)
 
 \c{a} is passed in \c{RCX}, \c{b} in \c{XMM1}, and \c{c} in \c{R8D}.
+
+There is a requirement for functions to allocate a "shadow space" for callees,
+prior to calling them, that is owned by the callee. This is for the callee to
+(optionally) store the arguments that are passed in via registers (e.g. for
+debugging purposes), or in fact any other desired values. This 32-byte shadow
+space must be allocated just before the stack space used for non-register
+arguments (5th and beyond, if any).
+
+Before a function call, 16-byte stack alignment is required.
+
+Regarding shadow space and stack alignment, an exception is made for leaf
+functions, which in Win64 terms means no modification to \c{RSP} at all
+(not just having no function calls).
