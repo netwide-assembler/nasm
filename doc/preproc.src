@@ -2040,8 +2040,8 @@ existence and inclusion of a specific standard macro package, see
 Having labels that are local to a macro definition is sometimes not
 quite powerful enough: sometimes you want to be able to share labels
 between several macro calls. An example might be a \c{REPEAT} ...
-\c{UNTIL} loop, in which the expansion of the \c{REPEAT} macro
-would need to be able to refer to a label which the \c{UNTIL} macro
+\c{UNTIL} loop, in which the expansion of the \c{UNTIL} macro
+would need to be able to refer to a label which the \c{REPEAT} macro
 had defined. However, for such a macro you would also want to be
 able to nest these loops.
 
@@ -2097,9 +2097,9 @@ above could be implemented by means of:
 
 and invoked by means of, for example,
 
-\c         mov     cx,string
+\c         mov     di,string
 \c         repeat
-\c         add     cx,3
+\c         add     di,3
 \c         scasb
 \c         until   e
 
