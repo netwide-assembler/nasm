@@ -189,8 +189,8 @@ $dq   BLSI      reg#,rm#			[vm:	vex.ndd.lz.0f38.w# f3 /3]		BMI1,SM
 $dq   BLSI	reg#,rm#			[vm:	evex.np.nf.lz.0f38.w# f3 /3]		APX,BMI1,SM
 $dq   BZHI	reg#,rm#*,reg#			[rmv:	vex.nds.lz.0f38.w# f5 /r]		BMI2,SM
 $dq   BZHI	reg#,rm#*,reg#			[rmv:	evex.np.nf.lz.0f38.w# f5 /r]		APX,BMI1,SM
-$dq   PDEP	reg#,reg#*,rm#			[rvm:	vex.nds.lz.f2.0f38.w# f5 /r]		BMI2,SM
-$dq   PEXT	reg#,reg#*,rm#			[rvm:	vex.nds.lz.f3.0f38.w# f5 /r]		BMI2,SM
+$dq   PDEP	reg#,reg#*,rm#			[rvm:	vex+.nds.lz.f2.0f38.w# f5 /r]		BMI2,SM
+$dq   PEXT	reg#,reg#*,rm#			[rvm:	vex+.nds.lz.f3.0f38.w# f5 /r]		BMI2,SM
 
 ;# AMD XOP bit operations
 $dq   BEXTR	reg#,rm#*,imm32			[rmi:	xop.m10.lz.w# 10 /r id]			AMD,OBSOLETE,TBM,SM0-1
