@@ -1458,6 +1458,7 @@ PCMPGTQ		xmmreg,xmmrm128			[rm:	66 0f38 37 /r]				SSE42
 POPCNT		reg16,rm16			[rm:	o16 f3i 0f b8 /r]			NEHALEM,SW
 POPCNT		reg32,rm32			[rm:	o32 f3i 0f b8 /r]			NEHALEM,SD
 POPCNT		reg64,rm64			[rm:	o64 f3i 0f b8 /r]			NEHALEM,SQ,LONG
+$wdq  POPCNT	reg#,rm#			[rm:	evex.nf.nd0.l0.m4.o# 88 /r]		APX,NEHALEM,SM
 
 ;# Intel SMX
 GETSEC		void				[	0f 37]					KATMAI,NOAPX
