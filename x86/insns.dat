@@ -103,6 +103,8 @@ $arith      ADD OR ADC SBB AND SUB XOR
 ;# The basic shift and rotate operations
 $shift !x,xs="0f38 f7" ROL x=f3,xs="0f3a f0",ROR RCL RCR x=66,SHL,SAL x=f2,SHR - x=f3,SAR
 
+$dq   RORX	reg#,rm#,imm8			[rmi:	vex+.lz.f2.0f3a.w# f0 /r ib]		APX,BMI2
+
 ;# Other basic integer arithmetic
 $wd   INC	reg#				[r:	o# 40+r]				8086,NOLONG
 $bwdq INC	rm#				[m:	hle o# fe# /0]				8086,LOCK
