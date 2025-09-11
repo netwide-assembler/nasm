@@ -138,8 +138,10 @@ $bwdq IDIV	rm#				[m:	evex.nf.nd0.l0.m4.o# f6# /7]		APX,8086
 $bwdq DIV	rm#				[m:	o# f6# /6]				8086
 $bwdq DIV	rm#				[m:	evex.nf.nd0.l0.m4.o# f6# /6]		APX,8086
 
-$bwdq NEG	rm#				[m:	hle o# f6 /3]				8086,LOCK
-$bwdq NOT	rm#				[m:	hle o# f6 /2]				8086,LOCK
+$bwdq NEG	rm#				[m:	hle o# f6# /3]				8086,LOCK
+$bwdq NEG	reg#?,rm#			[vm:	evex.nf.ndx.l0.m4.o# f6# /3]		APX,8086,LOCK
+$bwdq NOT	rm#				[m:	hle o# f6# /2]				8086,LOCK
+$bwdq NOT	reg#?,rm#			[vm:	evex.nf0.ndx.l0.m4.o# f6# /2]		APX,8086,LOCK
 
 ;# Interleaved flags arithmetic
 $dq   ADCX	reg#,rm#			[rm:	66 w# 0f38 f6 /r		]	ADX,ZU,FL
