@@ -157,8 +157,12 @@ $dq   ADOX	reg#?,reg#,rm#			[vrm:	evex.ndx.l0.f3.m4.w# 66 /r	]	ADX,APX,ZU,FL
 ;# Double width shift
 $wdq  SHLD	rm#,reg#,imm8			[mri:	o# 0f a4 /r ib,u]			386,SM0-1
 $wdq  SHLD	rm#,reg#,reg_cl			[mr-:	o# 0f a5 /r]				386,SM0-1
+$wdq  SHLD	reg#?,rm#,reg#,imm8		[vmri:	evex.ndx.nf.l0.m4.o# 24 /r ib,u]	APX,386,SM0-1
+$wdq  SHLD	reg#?,rm#,reg#,reg_cl		[vmr-:	evex.ndx.nf.l0.m4.o# a5 /r]		APX,386,SM0-1
 $wdq  SHRD	rm#,reg#,imm8			[mri:	o# 0f ac /r ib,u]			386,SM0-1
 $wdq  SHRD	rm#,reg#,reg_cl			[mr-:	o# 0f ad /r]				386,SM0-1
+$wdq  SHRD	reg#?,rm#,reg#,imm8		[vmri:	evex.ndx.nf.l0.m4.o# 2c /r ib,u]	APX,386,SM0-1
+$wdq  SHRD	reg#?,rm#,reg#,reg_cl		[vmr-:	evex.ndx.nf.l0.m4.o# ad /r]		APX,386,SM0-1
 
 ;# Bit operations
 $wdq  BT	rm#,reg#			[mr:	o# 0f a3 /r]				386,SM
