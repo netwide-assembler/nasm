@@ -5336,11 +5336,14 @@ TDPBSSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5e /r]		AMXINT8,LONG
 TDPBSUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5e /r]		AMXINT8,LONG
 TDPBUSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 5e /r]		AMXINT8,LONG
 TDPBUUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 5e /r]		AMXINT8,LONG
-TILELOADD	tmmreg,mem			[rm:	vex.128.f2.0f38.w0 4b /r]		AMXTILE,MIB,SIB,ANYSIZE,AR1,LONG
-TILELOADDT1	tmmreg,mem			[rm:	vex.128.66.0f38.w0 4b /r]		AMXTILE,MIB,SIB,ANYSIZE,AR1,LONG
+TILELOADD	tmmreg,mem			[rm:	vex+.128.f2.0f38.w0 4b /r]		APX,AMXTILE,MIB,SIB,ANYSIZE,AR1,LONG
+TILELOADDT1	tmmreg,mem			[rm:	vex+.128.66.0f38.w0 4b /r]		APX,AMXTILE,MIB,SIB,ANYSIZE,AR1,LONG
 TILERELEASE	void				[	vex.128.np.0f38.w0 49 c0]		AMXTILE,LONG
-TILESTORED	mem,tmmreg			[mr:	vex.128.f3.0f38.w0 4b /r]		AMXTILE,MIB,SIB,ANYSIZE,AR0,LONG
+TILESTORED	mem,tmmreg			[mr:	vex+.128.f3.0f38.w0 4b /r]		APX,AMXTILE,MIB,SIB,ANYSIZE,AR0,LONG
 TILEZERO	tmmreg				[r:	vex.128.f2.0f38.w0 49 /3r0]		AMXTILE,LONG
+
+TILELOADDRS	tmmreg,mem			[rm:	vex+.128.f2.0f38.w0 4a /r]		APX,AMXTILE,FUTURE,MIB,SIB,ANYSIZE,AR1,LONG
+TILELOADDRST1	tmmreg,mem			[rm:	vex+.128.66.0f38.w0 4a /r]		APX,AMXTILE,FUTURE,MIB,SIB,ANYSIZE,AR1,LONG
 
 ;# Intel AVX512-FP16 instructions
 VADDPH		xmmreg|mask|z,xmmreg*,xmmrm16|b16	[rvm:fv:  evex.nds.128.np.map5.w0 58 /r]    AVX512FP16,AVX512VL
