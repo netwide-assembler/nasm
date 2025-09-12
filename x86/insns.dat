@@ -104,6 +104,9 @@ $arith      ADD OR ADC SBB AND SUB XOR
 $shift !x,xs="0f38 f7" ROL x=f3,xs="0f3a f0",ROR RCL RCR x=66,SHL,SAL x=f2,SHR - x=f3,SAR
 
 $dq   RORX	reg#,rm#,imm8			[rmi:	vex+.lz.f2.0f3a.w# f0 /r ib]		APX,BMI2
+$dq   SHLX	reg#,rm#,reg#			[rmv:	vex+.lz.66.0f38.w# f7 /r]		APX,BMI2
+$dq   SARX	reg#,rm#,reg#			[rmv:	vex+.lz.f3.0f38.w# f7 /r]		APX,BMI2
+$dq   SHRX	reg#,rm#,reg#			[rmv:	vex+.lz.f2.0f38.w# f7 /r]		APX,BMI2
 
 ;# Other basic integer arithmetic
 $wd   INC	reg#				[r:	o# 40+r]				8086,NOLONG
