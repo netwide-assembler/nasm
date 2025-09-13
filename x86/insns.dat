@@ -5329,9 +5329,9 @@ TILESTORED	mem,tmmreg			[mr:	vex.128.f3.0f38.w0 4b /r]		AMXTILE,MIB,SIB,ANYSIZE,
 TILEZERO	tmmreg				[r:	vex.128.f2.0f38.w0 49 /3r0]		AMXTILE,LONG
 
 ;# Intel AVX512-FP16 instructions
-VADDPH		xmmreg|mask|z,xmmreg*,xmmrm16|b16	[rvm:fv:  evex.nds.128.np.map5.w0 58 /r]    AVX512FP16,AVX512VL
-VADDPH		ymmreg|mask|z,ymmreg*,ymmrm16|b16	[rvm:fv:  evex.nds.256.np.map5.w0 58 /r]    AVX512FP16,AVX512VL
-VADDPH		zmmreg|mask|z,zmmreg*,zmmrm16|b16|er	[rvm:fv:  evex.nds.512.np.map5.w0 58 /r]    AVX512FP16
+VADDPH		xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv:  evex.nds.128.np.map5.w0 58 /r]    AVX512FP16,AVX512VL,AVX10_1
+VADDPH		ymmreg|mask|z,ymmreg*,ymmrm256|b16	[rvm:fv:  evex.nds.256.np.map5.w0 58 /r]    AVX512FP16,AVX512VL,AVX10_1
+VADDPH		zmmreg|mask|z,zmmreg*,zmmrm512|b16|er	[rvm:fv:  evex.nds.512.np.map5.w0 58 /r]    AVX512FP16,AVX10_1
 VADDSH		xmmreg|mask|z,xmmreg*,xmmrm16|er	[rvm:t1s: evex.nds.lig.f3.map5.w0 58 /r]    AVX512FP16
 VCMPPH		kreg|mask,xmmreg*,xmmrm16|b16,imm8	[rvmi:fv: evex.nds.128.np.0f3a.w0 C2 /r ib] AVX512FP16,AVX512VL
 VCMPPH		kreg|mask,ymmreg*,ymmrm16|b16,imm8	[rvmi:fv: evex.nds.256.np.0f3a.w0 C2 /r ib] AVX512FP16,AVX512VL
