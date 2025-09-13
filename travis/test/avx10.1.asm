@@ -127,3 +127,25 @@ testcase        {  0x62, 0xb5, 0x7c, 0xcf, 0x58, 0x84, 0x75, 0x08, 0x00, 0x00, 0
 testcase        {  0x62, 0xf5, 0x7c, 0xbf, 0x58, 0xc1                                        }, {        {evex} VADDPH zmm0{k7}{z}, zmm1,{rd-sae}                             }
 testcase        {  0x62, 0xf5, 0x74, 0x18, 0x58, 0x08                                        }, {        {evex} VADDPH xmm1, word [rax]{1to8}                                 }
 testcase        {  0x62, 0xb5, 0x74, 0x18, 0x58, 0x4c, 0x75, 0x02                            }, {        {evex} VADDPH xmm1, word [rbp+r14*2+0x8]{1to8}                       }
+
+testcase        {  0x62, 0xf5, 0x74, 0x08, 0x58, 0xc9                                        }, {        {evex} VADDPH xmm1, xmm1, xmm1                                       }
+testcase        {  0x62, 0xf5, 0x74, 0x0f, 0x58, 0xc9                                        }, {        {evex} VADDPH xmm1{k7}, xmm1, xmm1                                   }
+testcase        {  0x62, 0xf5, 0x74, 0x0f, 0x58, 0x08                                        }, {        {evex} VADDPH xmm1{k7}, xmm1, oword [rax]                            }
+testcase        {  0x62, 0xf5, 0x74, 0x1f, 0x58, 0x08                                        }, {        {evex} VADDPH xmm1{k7}, xmm1, word [rax]{1to8}                       }
+testcase        {  0x62, 0xf5, 0x74, 0x08, 0x58, 0x08                                        }, {        {evex} VADDPH xmm1, xmm1, oword [rax]                                }
+testcase        {  0x62, 0xf5, 0x74, 0x8f, 0x58, 0xc9                                        }, {        {evex} VADDPH xmm1{k7}{z}, xmm1, xmm1                                }
+testcase        {  0x62, 0xf5, 0x74, 0x8f, 0x58, 0x08                                        }, {        {evex} VADDPH xmm1{k7}{z}, xmm1, oword [rax]                         }
+testcase        {  0x62, 0xf5, 0x74, 0x9f, 0x58, 0x08                                        }, {        {evex} VADDPH xmm1{k7}{z}, xmm1, word [rax]{1to8}                    }
+testcase        {  0x62, 0xf5, 0x74, 0x28, 0x58, 0x08                                        }, {        {evex} VADDPH ymm1, ymm1, yword [rax]                                }
+testcase        {  0x62, 0xf5, 0x74, 0x38, 0x58, 0x08                                        }, {        {evex} VADDPH ymm1, ymm1, word [rax]{1to16}                          }
+testcase        {  0x62, 0xf5, 0x74, 0x18, 0x58, 0x08                                        }, {        {evex} VADDPH xmm1, xmm1, word [rax]{1to8}                           }
+testcase        {  0x62, 0xf5, 0x74, 0x2f, 0x58, 0x08                                        }, {        {evex} VADDPH ymm1{k7}, ymm1, yword [rax]                            }
+testcase        {  0x62, 0xf5, 0x74, 0x3f, 0x58, 0x08                                        }, {        {evex} VADDPH ymm1{k7}, ymm1, word [rax]{1to16}                      }
+testcase        {  0x62, 0xf5, 0x74, 0xaf, 0x58, 0x08                                        }, {        {evex} VADDPH ymm1{k7}{z}, ymm1, yword [rax]                         }
+testcase        {  0x62, 0xf5, 0x74, 0xbf, 0x58, 0x08                                        }, {        {evex} VADDPH ymm1{k7}{z}, ymm1, word [rax]{1to16}                   }
+testcase        {  0x62, 0xf5, 0x7c, 0x48, 0x58, 0xc1                                        }, {        {evex} VADDPH zmm0, zmm0, zmm1                                       }
+testcase        {  0x62, 0xf5, 0x7c, 0x48, 0x58, 0x00                                        }, {        {evex} VADDPH zmm0, zmm0, zword [rax]                                }
+testcase        {  0x62, 0xf5, 0x7c, 0x4f, 0x58, 0xc1                                        }, {        {evex} VADDPH zmm0{k7}, zmm0, zmm1                                   }
+testcase        {  0x62, 0xf5, 0x7c, 0x4f, 0x58, 0x00                                        }, {        {evex} VADDPH zmm0{k7}, zmm0, zword [rax]                            }
+testcase        {  0x62, 0xf5, 0x7c, 0xcf, 0x58, 0xc1                                        }, {        {evex} VADDPH zmm0{k7}{z}, zmm0, zmm1                                }
+testcase        {  0x62, 0xf5, 0x7c, 0xcf, 0x58, 0x00                                        }, {        {evex} VADDPH zmm0{k7}{z}, zmm0, zword [rax]                         }
