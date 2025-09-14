@@ -165,7 +165,7 @@ sub startseq($$) {
 # * is used for an optional source operand, duplicating the previous one
 #   in the encoding if it is missing.
 # ? is used for an optional destination operand which is not encoded if
-#   missing; if combined evex.ndx set the nd bit if present.
+#   missing; if combined with evex.ndx set the nd bit if present.
 sub relaxed_forms(@) {
     my @field_list = ();
 

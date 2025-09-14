@@ -41,10 +41,6 @@ $macros{'shift'} = {
 $$bwdq $op	rm#,unity			[m-:	o# d0# /$n]				]	8086
 $$bwdq $op	rm#,reg_cl			[m-:	o# d2# /$n]				]	8086
 $$bwdq $op	rm#,imm8			[mi:	o# c0# /$n ib,u]			]	186
-$$dq   ${op}X	reg#?,rm#,reg#			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL
-$$dq   ${op}X	reg#?,rm#,reg8			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL,ND
-$$dq   $op	reg#?,rm#,reg#			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL
-$$dq   $op	reg#?,rm#,reg8			[rmv:	vex.nds.lz.$x.w#.$xs /r			]	SM0-1,FUTURE,BMI2,!FL,ND
 $$bwdq $op	reg#?,rm#,unity			[vm-:	evex.ndx.nf.l0.m4.o#  d0# /$n		]	$apx,SM0-1
 $$bwdq $op	reg#?,rm#,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o#  d2# /$n		]	$apx,SM0-1
 $$bwdq $op	reg#?,rm#,imm8			[vmi:	evex.ndx.nf.l0.m4.o#  c0# /$n ib,u	]	$apx,SM0-1
