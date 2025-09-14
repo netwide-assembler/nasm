@@ -172,6 +172,7 @@ if_("HSM4",              "SM4 hash instructions");
 if_("APX",               "Advanced Performance Extensions (APX)");
 if_("AVX10_1",           "AVX 10.1 instructions");
 if_("AVX10_2",           "AVX 10.2 instructions");
+if_("AVX10_VNNIINT",     "AVX Vector Neural Network integer instructions");
 if_("ADX",               "ADCX and ADOX instructions");
 if_("PKU",		 "Protection key for user mode");
 if_("MONITOR",		 "MONITOR and MWAIT");

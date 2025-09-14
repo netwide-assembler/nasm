@@ -229,6 +229,816 @@ testcase        {  0x62, 0xf2, 0x6c, 0x48, 0x50, 0xcb                           
 testcase        {  0x62, 0xf2, 0x6c, 0x08, 0x51, 0xcb                                        }, {  VPDPBUUDS xmm1, xmm2, xmm3  }
 testcase        {  0x62, 0xf2, 0x6c, 0x28, 0x51, 0xcb                                        }, {  VPDPBUUDS ymm1, ymm2, ymm3  }
 testcase        {  0x62, 0xf2, 0x6c, 0x48, 0x51, 0xcb                                        }, {  VPDPBUUDS zmm1, zmm2, zmm3  }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD xmm1, xmm1, xmm1                                     }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, xmm1                              }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, oword [rax]                       }
+testcase        {  0x62, 0xb2, 0x76, 0x8f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x76, 0x9f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, dword [rax]{1to4}                 }
+testcase        {  0x62, 0xb2, 0x76, 0x9f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}       }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD ymm1, ymm1, ymm1                                     }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1, ymm1, yword [rax]                              }
+testcase        {  0x62, 0xb2, 0x76, 0x28, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD ymm1, ymm1, yword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x76, 0x38, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1, ymm1, dword [rax]{1to8}                        }
+testcase        {  0x62, 0xb2, 0x76, 0x38, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}              }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1, xmm1, oword [rax]                              }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, ymm1                                 }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, yword [rax]                          }
+testcase        {  0x62, 0xb2, 0x76, 0x2f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x76, 0x3f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, dword [rax]{1to8}                    }
+testcase        {  0x62, 0xb2, 0x76, 0x3f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}          }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, ymm1                              }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, yword [rax]                       }
+testcase        {  0x62, 0xb2, 0x76, 0xaf, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x76, 0xbf, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, dword [rax]{1to8}                 }
+testcase        {  0x62, 0xb2, 0x76, 0xbf, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}       }
+testcase        {  0x62, 0xb2, 0x76, 0x08, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD xmm1, xmm1, oword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd2, 0xc1                                        }, {  {evex} VPDPWSUD zmm0, zmm0, zmm1                                     }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0, zmm0, zword [rax]                              }
+testcase        {  0x62, 0xb2, 0x7e, 0x48, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD zmm0, zmm0, zword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7e, 0x58, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0, zmm0, dword [rax]{1to16}                       }
+testcase        {  0x62, 0xb2, 0x7e, 0x58, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUD zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}             }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd2, 0xc1                                        }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, zmm1                                 }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, zword [rax]                          }
+testcase        {  0x62, 0xb2, 0x7e, 0x4f, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x7e, 0x5f, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, dword [rax]{1to16}                   }
+testcase        {  0x62, 0xb2, 0x7e, 0x5f, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}         }
+testcase        {  0x62, 0xf2, 0x76, 0x18, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1, xmm1, dword [rax]{1to4}                        }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd2, 0xc1                                        }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, zmm1                              }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, zword [rax]                       }
+testcase        {  0x62, 0xb2, 0x7e, 0xcf, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x7e, 0xdf, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, dword [rax]{1to16}                }
+testcase        {  0x62, 0xb2, 0x7e, 0xdf, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}      }
+testcase        {  0x62, 0xb2, 0x76, 0x18, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}              }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, xmm1                                 }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, oword [rax]                          }
+testcase        {  0x62, 0xb2, 0x76, 0x0f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x76, 0x1f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, dword [rax]{1to4}                    }
+testcase        {  0x62, 0xb2, 0x76, 0x1f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}          }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD xmm1, xmm1, xmm1                                     }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, xmm1                              }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, oword [rax]                       }
+testcase        {  0x62, 0xb2, 0x76, 0x8f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x76, 0x9f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, dword [rax]{1to4}                 }
+testcase        {  0x62, 0xb2, 0x76, 0x9f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}       }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD ymm1, ymm1, ymm1                                     }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1, ymm1, yword [rax]                              }
+testcase        {  0x62, 0xb2, 0x76, 0x28, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD ymm1, ymm1, yword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x76, 0x38, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1, ymm1, dword [rax]{1to8}                        }
+testcase        {  0x62, 0xb2, 0x76, 0x38, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}              }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1, xmm1, oword [rax]                              }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, ymm1                                 }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, yword [rax]                          }
+testcase        {  0x62, 0xb2, 0x76, 0x2f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x76, 0x3f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, dword [rax]{1to8}                    }
+testcase        {  0x62, 0xb2, 0x76, 0x3f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}          }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, ymm1                              }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, yword [rax]                       }
+testcase        {  0x62, 0xb2, 0x76, 0xaf, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x76, 0xbf, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, dword [rax]{1to8}                 }
+testcase        {  0x62, 0xb2, 0x76, 0xbf, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}       }
+testcase        {  0x62, 0xb2, 0x76, 0x08, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD xmm1, xmm1, oword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd2, 0xc1                                        }, {  {evex} VPDPWSUD zmm0, zmm0, zmm1                                     }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0, zmm0, zword [rax]                              }
+testcase        {  0x62, 0xb2, 0x7e, 0x48, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD zmm0, zmm0, zword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7e, 0x58, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0, zmm0, dword [rax]{1to16}                       }
+testcase        {  0x62, 0xb2, 0x7e, 0x58, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUD zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}             }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd2, 0xc1                                        }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, zmm1                                 }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, zword [rax]                          }
+testcase        {  0x62, 0xb2, 0x7e, 0x4f, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x7e, 0x5f, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, dword [rax]{1to16}                   }
+testcase        {  0x62, 0xb2, 0x7e, 0x5f, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}         }
+testcase        {  0x62, 0xf2, 0x76, 0x18, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1, xmm1, dword [rax]{1to4}                        }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd2, 0xc1                                        }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, zmm1                              }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, zword [rax]                       }
+testcase        {  0x62, 0xb2, 0x7e, 0xcf, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x7e, 0xdf, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, dword [rax]{1to16}                }
+testcase        {  0x62, 0xb2, 0x7e, 0xdf, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}      }
+testcase        {  0x62, 0xb2, 0x76, 0x18, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}              }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, xmm1                                 }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, oword [rax]                          }
+testcase        {  0x62, 0xb2, 0x76, 0x0f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x76, 0x1f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, dword [rax]{1to4}                    }
+testcase        {  0x62, 0xb2, 0x76, 0x1f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}          }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD xmm1, xmm1, xmm1                                     }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, xmm1                              }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, oword [rax]                       }
+testcase        {  0x62, 0xb2, 0x76, 0x8f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x76, 0x9f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, dword [rax]{1to4}                 }
+testcase        {  0x62, 0xb2, 0x76, 0x9f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}       }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD ymm1, ymm1, ymm1                                     }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1, ymm1, yword [rax]                              }
+testcase        {  0x62, 0xb2, 0x76, 0x28, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD ymm1, ymm1, yword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x76, 0x38, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1, ymm1, dword [rax]{1to8}                        }
+testcase        {  0x62, 0xb2, 0x76, 0x38, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}              }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1, xmm1, oword [rax]                              }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, ymm1                                 }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, yword [rax]                          }
+testcase        {  0x62, 0xb2, 0x76, 0x2f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x76, 0x3f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, dword [rax]{1to8}                    }
+testcase        {  0x62, 0xb2, 0x76, 0x3f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}          }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, ymm1                              }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, yword [rax]                       }
+testcase        {  0x62, 0xb2, 0x76, 0xaf, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x76, 0xbf, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, dword [rax]{1to8}                 }
+testcase        {  0x62, 0xb2, 0x76, 0xbf, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}       }
+testcase        {  0x62, 0xb2, 0x76, 0x08, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD xmm1, xmm1, oword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd2, 0xc1                                        }, {  {evex} VPDPWSUD zmm0, zmm0, zmm1                                     }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0, zmm0, zword [rax]                              }
+testcase        {  0x62, 0xb2, 0x7e, 0x48, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD zmm0, zmm0, zword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7e, 0x58, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0, zmm0, dword [rax]{1to16}                       }
+testcase        {  0x62, 0xb2, 0x7e, 0x58, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUD zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}             }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd2, 0xc1                                        }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, zmm1                                 }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, zword [rax]                          }
+testcase        {  0x62, 0xb2, 0x7e, 0x4f, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x7e, 0x5f, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, dword [rax]{1to16}                   }
+testcase        {  0x62, 0xb2, 0x7e, 0x5f, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUD zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}         }
+testcase        {  0x62, 0xf2, 0x76, 0x18, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1, xmm1, dword [rax]{1to4}                        }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd2, 0xc1                                        }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, zmm1                              }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, zword [rax]                       }
+testcase        {  0x62, 0xb2, 0x7e, 0xcf, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x7e, 0xdf, 0xd2, 0x00                                        }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, dword [rax]{1to16}                }
+testcase        {  0x62, 0xb2, 0x7e, 0xdf, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUD zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}      }
+testcase        {  0x62, 0xb2, 0x76, 0x18, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}              }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd2, 0xc9                                        }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, xmm1                                 }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, oword [rax]                          }
+testcase        {  0x62, 0xb2, 0x76, 0x0f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x76, 0x1f, 0xd2, 0x08                                        }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, dword [rax]{1to4}                    }
+testcase        {  0x62, 0xb2, 0x76, 0x1f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUD xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}          }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS xmm1, xmm1, xmm1                                    }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, xmm1                             }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, oword [rax]                      }
+testcase        {  0x62, 0xb2, 0x76, 0x8f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x76, 0x9f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, dword [rax]{1to4}                }
+testcase        {  0x62, 0xb2, 0x76, 0x9f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}      }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS ymm1, ymm1, ymm1                                    }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1, ymm1, yword [rax]                             }
+testcase        {  0x62, 0xb2, 0x76, 0x28, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS ymm1, ymm1, yword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x76, 0x38, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1, ymm1, dword [rax]{1to8}                       }
+testcase        {  0x62, 0xb2, 0x76, 0x38, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}             }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1, xmm1, oword [rax]                             }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, ymm1                                }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, yword [rax]                         }
+testcase        {  0x62, 0xb2, 0x76, 0x2f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x76, 0x3f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, dword [rax]{1to8}                   }
+testcase        {  0x62, 0xb2, 0x76, 0x3f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}         }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, ymm1                             }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, yword [rax]                      }
+testcase        {  0x62, 0xb2, 0x76, 0xaf, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x76, 0xbf, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, dword [rax]{1to8}                }
+testcase        {  0x62, 0xb2, 0x76, 0xbf, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}      }
+testcase        {  0x62, 0xb2, 0x76, 0x08, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS xmm1, xmm1, oword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd3, 0xc1                                        }, {  {evex} VPDPWSUDS zmm0, zmm0, zmm1                                    }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0, zmm0, zword [rax]                             }
+testcase        {  0x62, 0xb2, 0x7e, 0x48, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS zmm0, zmm0, zword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7e, 0x58, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0, zmm0, dword [rax]{1to16}                      }
+testcase        {  0x62, 0xb2, 0x7e, 0x58, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUDS zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}            }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd3, 0xc1                                        }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, zmm1                                }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, zword [rax]                         }
+testcase        {  0x62, 0xb2, 0x7e, 0x4f, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x7e, 0x5f, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, dword [rax]{1to16}                  }
+testcase        {  0x62, 0xb2, 0x7e, 0x5f, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}        }
+testcase        {  0x62, 0xf2, 0x76, 0x18, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1, xmm1, dword [rax]{1to4}                       }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd3, 0xc1                                        }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, zmm1                             }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, zword [rax]                      }
+testcase        {  0x62, 0xb2, 0x7e, 0xcf, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x7e, 0xdf, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, dword [rax]{1to16}               }
+testcase        {  0x62, 0xb2, 0x7e, 0xdf, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}     }
+testcase        {  0x62, 0xb2, 0x76, 0x18, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}             }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, xmm1                                }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, oword [rax]                         }
+testcase        {  0x62, 0xb2, 0x76, 0x0f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x76, 0x1f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, dword [rax]{1to4}                   }
+testcase        {  0x62, 0xb2, 0x76, 0x1f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}         }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS xmm1, xmm1, xmm1                                    }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, xmm1                             }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, oword [rax]                      }
+testcase        {  0x62, 0xb2, 0x76, 0x8f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x76, 0x9f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, dword [rax]{1to4}                }
+testcase        {  0x62, 0xb2, 0x76, 0x9f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}      }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS ymm1, ymm1, ymm1                                    }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1, ymm1, yword [rax]                             }
+testcase        {  0x62, 0xb2, 0x76, 0x28, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS ymm1, ymm1, yword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x76, 0x38, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1, ymm1, dword [rax]{1to8}                       }
+testcase        {  0x62, 0xb2, 0x76, 0x38, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}             }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1, xmm1, oword [rax]                             }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, ymm1                                }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, yword [rax]                         }
+testcase        {  0x62, 0xb2, 0x76, 0x2f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x76, 0x3f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, dword [rax]{1to8}                   }
+testcase        {  0x62, 0xb2, 0x76, 0x3f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}         }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, ymm1                             }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, yword [rax]                      }
+testcase        {  0x62, 0xb2, 0x76, 0xaf, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x76, 0xbf, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, dword [rax]{1to8}                }
+testcase        {  0x62, 0xb2, 0x76, 0xbf, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}      }
+testcase        {  0x62, 0xb2, 0x76, 0x08, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS xmm1, xmm1, oword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd3, 0xc1                                        }, {  {evex} VPDPWSUDS zmm0, zmm0, zmm1                                    }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0, zmm0, zword [rax]                             }
+testcase        {  0x62, 0xb2, 0x7e, 0x48, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS zmm0, zmm0, zword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7e, 0x58, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0, zmm0, dword [rax]{1to16}                      }
+testcase        {  0x62, 0xb2, 0x7e, 0x58, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUDS zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}            }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd3, 0xc1                                        }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, zmm1                                }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, zword [rax]                         }
+testcase        {  0x62, 0xb2, 0x7e, 0x4f, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x7e, 0x5f, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, dword [rax]{1to16}                  }
+testcase        {  0x62, 0xb2, 0x7e, 0x5f, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}        }
+testcase        {  0x62, 0xf2, 0x76, 0x18, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1, xmm1, dword [rax]{1to4}                       }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd3, 0xc1                                        }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, zmm1                             }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, zword [rax]                      }
+testcase        {  0x62, 0xb2, 0x7e, 0xcf, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x7e, 0xdf, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, dword [rax]{1to16}               }
+testcase        {  0x62, 0xb2, 0x7e, 0xdf, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}     }
+testcase        {  0x62, 0xb2, 0x76, 0x18, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}             }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, xmm1                                }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, oword [rax]                         }
+testcase        {  0x62, 0xb2, 0x76, 0x0f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x76, 0x1f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, dword [rax]{1to4}                   }
+testcase        {  0x62, 0xb2, 0x76, 0x1f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}         }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS xmm1, xmm1, xmm1                                    }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, xmm1                             }
+testcase        {  0x62, 0xf2, 0x76, 0x8f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, oword [rax]                      }
+testcase        {  0x62, 0xb2, 0x76, 0x8f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x76, 0x9f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, dword [rax]{1to4}                }
+testcase        {  0x62, 0xb2, 0x76, 0x9f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}      }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS ymm1, ymm1, ymm1                                    }
+testcase        {  0x62, 0xf2, 0x76, 0x28, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1, ymm1, yword [rax]                             }
+testcase        {  0x62, 0xb2, 0x76, 0x28, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS ymm1, ymm1, yword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x76, 0x38, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1, ymm1, dword [rax]{1to8}                       }
+testcase        {  0x62, 0xb2, 0x76, 0x38, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}             }
+testcase        {  0x62, 0xf2, 0x76, 0x08, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1, xmm1, oword [rax]                             }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, ymm1                                }
+testcase        {  0x62, 0xf2, 0x76, 0x2f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, yword [rax]                         }
+testcase        {  0x62, 0xb2, 0x76, 0x2f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x76, 0x3f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, dword [rax]{1to8}                   }
+testcase        {  0x62, 0xb2, 0x76, 0x3f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}         }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, ymm1                             }
+testcase        {  0x62, 0xf2, 0x76, 0xaf, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, yword [rax]                      }
+testcase        {  0x62, 0xb2, 0x76, 0xaf, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x76, 0xbf, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, dword [rax]{1to8}                }
+testcase        {  0x62, 0xb2, 0x76, 0xbf, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}      }
+testcase        {  0x62, 0xb2, 0x76, 0x08, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS xmm1, xmm1, oword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd3, 0xc1                                        }, {  {evex} VPDPWSUDS zmm0, zmm0, zmm1                                    }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0, zmm0, zword [rax]                             }
+testcase        {  0x62, 0xb2, 0x7e, 0x48, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS zmm0, zmm0, zword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7e, 0x58, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0, zmm0, dword [rax]{1to16}                      }
+testcase        {  0x62, 0xb2, 0x7e, 0x58, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUDS zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}            }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd3, 0xc1                                        }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, zmm1                                }
+testcase        {  0x62, 0xf2, 0x7e, 0x4f, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, zword [rax]                         }
+testcase        {  0x62, 0xb2, 0x7e, 0x4f, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x7e, 0x5f, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, dword [rax]{1to16}                  }
+testcase        {  0x62, 0xb2, 0x7e, 0x5f, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUDS zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}        }
+testcase        {  0x62, 0xf2, 0x76, 0x18, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1, xmm1, dword [rax]{1to4}                       }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd3, 0xc1                                        }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, zmm1                             }
+testcase        {  0x62, 0xf2, 0x7e, 0xcf, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, zword [rax]                      }
+testcase        {  0x62, 0xb2, 0x7e, 0xcf, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x7e, 0xdf, 0xd3, 0x00                                        }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, dword [rax]{1to16}               }
+testcase        {  0x62, 0xb2, 0x7e, 0xdf, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWSUDS zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}     }
+testcase        {  0x62, 0xb2, 0x76, 0x18, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}             }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd3, 0xc9                                        }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, xmm1                                }
+testcase        {  0x62, 0xf2, 0x76, 0x0f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, oword [rax]                         }
+testcase        {  0x62, 0xb2, 0x76, 0x0f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x76, 0x1f, 0xd3, 0x08                                        }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, dword [rax]{1to4}                   }
+testcase        {  0x62, 0xb2, 0x76, 0x1f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWSUDS xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}         }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD xmm1, xmm1, xmm1                                     }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, xmm1                              }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, oword [rax]                       }
+testcase        {  0x62, 0xb2, 0x75, 0x8f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x75, 0x9f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, dword [rax]{1to4}                 }
+testcase        {  0x62, 0xb2, 0x75, 0x9f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}       }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD ymm1, ymm1, ymm1                                     }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1, ymm1, yword [rax]                              }
+testcase        {  0x62, 0xb2, 0x75, 0x28, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD ymm1, ymm1, yword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x75, 0x38, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1, ymm1, dword [rax]{1to8}                        }
+testcase        {  0x62, 0xb2, 0x75, 0x38, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}              }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1, xmm1, oword [rax]                              }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, ymm1                                 }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, yword [rax]                          }
+testcase        {  0x62, 0xb2, 0x75, 0x2f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x75, 0x3f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, dword [rax]{1to8}                    }
+testcase        {  0x62, 0xb2, 0x75, 0x3f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}          }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, ymm1                              }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, yword [rax]                       }
+testcase        {  0x62, 0xb2, 0x75, 0xaf, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x75, 0xbf, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, dword [rax]{1to8}                 }
+testcase        {  0x62, 0xb2, 0x75, 0xbf, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}       }
+testcase        {  0x62, 0xb2, 0x75, 0x08, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD xmm1, xmm1, oword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd2, 0xc1                                        }, {  {evex} VPDPWUSD zmm0, zmm0, zmm1                                     }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0, zmm0, zword [rax]                              }
+testcase        {  0x62, 0xb2, 0x7d, 0x48, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD zmm0, zmm0, zword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7d, 0x58, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0, zmm0, dword [rax]{1to16}                       }
+testcase        {  0x62, 0xb2, 0x7d, 0x58, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSD zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}             }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd2, 0xc1                                        }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, zmm1                                 }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, zword [rax]                          }
+testcase        {  0x62, 0xb2, 0x7d, 0x4f, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x7d, 0x5f, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, dword [rax]{1to16}                   }
+testcase        {  0x62, 0xb2, 0x7d, 0x5f, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}         }
+testcase        {  0x62, 0xf2, 0x75, 0x18, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1, xmm1, dword [rax]{1to4}                        }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd2, 0xc1                                        }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, zmm1                              }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, zword [rax]                       }
+testcase        {  0x62, 0xb2, 0x7d, 0xcf, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x7d, 0xdf, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, dword [rax]{1to16}                }
+testcase        {  0x62, 0xb2, 0x7d, 0xdf, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}      }
+testcase        {  0x62, 0xb2, 0x75, 0x18, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}              }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, xmm1                                 }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, oword [rax]                          }
+testcase        {  0x62, 0xb2, 0x75, 0x0f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x75, 0x1f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, dword [rax]{1to4}                    }
+testcase        {  0x62, 0xb2, 0x75, 0x1f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}          }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD xmm1, xmm1, xmm1                                     }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, xmm1                              }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, oword [rax]                       }
+testcase        {  0x62, 0xb2, 0x75, 0x8f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x75, 0x9f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, dword [rax]{1to4}                 }
+testcase        {  0x62, 0xb2, 0x75, 0x9f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}       }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD ymm1, ymm1, ymm1                                     }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1, ymm1, yword [rax]                              }
+testcase        {  0x62, 0xb2, 0x75, 0x28, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD ymm1, ymm1, yword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x75, 0x38, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1, ymm1, dword [rax]{1to8}                        }
+testcase        {  0x62, 0xb2, 0x75, 0x38, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}              }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1, xmm1, oword [rax]                              }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, ymm1                                 }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, yword [rax]                          }
+testcase        {  0x62, 0xb2, 0x75, 0x2f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x75, 0x3f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, dword [rax]{1to8}                    }
+testcase        {  0x62, 0xb2, 0x75, 0x3f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}          }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, ymm1                              }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, yword [rax]                       }
+testcase        {  0x62, 0xb2, 0x75, 0xaf, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x75, 0xbf, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, dword [rax]{1to8}                 }
+testcase        {  0x62, 0xb2, 0x75, 0xbf, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}       }
+testcase        {  0x62, 0xb2, 0x75, 0x08, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD xmm1, xmm1, oword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd2, 0xc1                                        }, {  {evex} VPDPWUSD zmm0, zmm0, zmm1                                     }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0, zmm0, zword [rax]                              }
+testcase        {  0x62, 0xb2, 0x7d, 0x48, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD zmm0, zmm0, zword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7d, 0x58, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0, zmm0, dword [rax]{1to16}                       }
+testcase        {  0x62, 0xb2, 0x7d, 0x58, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSD zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}             }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd2, 0xc1                                        }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, zmm1                                 }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, zword [rax]                          }
+testcase        {  0x62, 0xb2, 0x7d, 0x4f, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x7d, 0x5f, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, dword [rax]{1to16}                   }
+testcase        {  0x62, 0xb2, 0x7d, 0x5f, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}         }
+testcase        {  0x62, 0xf2, 0x75, 0x18, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1, xmm1, dword [rax]{1to4}                        }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd2, 0xc1                                        }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, zmm1                              }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, zword [rax]                       }
+testcase        {  0x62, 0xb2, 0x7d, 0xcf, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x7d, 0xdf, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, dword [rax]{1to16}                }
+testcase        {  0x62, 0xb2, 0x7d, 0xdf, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}      }
+testcase        {  0x62, 0xb2, 0x75, 0x18, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}              }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, xmm1                                 }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, oword [rax]                          }
+testcase        {  0x62, 0xb2, 0x75, 0x0f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x75, 0x1f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, dword [rax]{1to4}                    }
+testcase        {  0x62, 0xb2, 0x75, 0x1f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}          }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD xmm1, xmm1, xmm1                                     }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, xmm1                              }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, oword [rax]                       }
+testcase        {  0x62, 0xb2, 0x75, 0x8f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x75, 0x9f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, dword [rax]{1to4}                 }
+testcase        {  0x62, 0xb2, 0x75, 0x9f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}       }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD ymm1, ymm1, ymm1                                     }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1, ymm1, yword [rax]                              }
+testcase        {  0x62, 0xb2, 0x75, 0x28, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD ymm1, ymm1, yword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x75, 0x38, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1, ymm1, dword [rax]{1to8}                        }
+testcase        {  0x62, 0xb2, 0x75, 0x38, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}              }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1, xmm1, oword [rax]                              }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, ymm1                                 }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, yword [rax]                          }
+testcase        {  0x62, 0xb2, 0x75, 0x2f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x75, 0x3f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, dword [rax]{1to8}                    }
+testcase        {  0x62, 0xb2, 0x75, 0x3f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}          }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, ymm1                              }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, yword [rax]                       }
+testcase        {  0x62, 0xb2, 0x75, 0xaf, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x75, 0xbf, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, dword [rax]{1to8}                 }
+testcase        {  0x62, 0xb2, 0x75, 0xbf, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}       }
+testcase        {  0x62, 0xb2, 0x75, 0x08, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD xmm1, xmm1, oword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd2, 0xc1                                        }, {  {evex} VPDPWUSD zmm0, zmm0, zmm1                                     }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0, zmm0, zword [rax]                              }
+testcase        {  0x62, 0xb2, 0x7d, 0x48, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD zmm0, zmm0, zword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7d, 0x58, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0, zmm0, dword [rax]{1to16}                       }
+testcase        {  0x62, 0xb2, 0x7d, 0x58, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSD zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}             }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd2, 0xc1                                        }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, zmm1                                 }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, zword [rax]                          }
+testcase        {  0x62, 0xb2, 0x7d, 0x4f, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x7d, 0x5f, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, dword [rax]{1to16}                   }
+testcase        {  0x62, 0xb2, 0x7d, 0x5f, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSD zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}         }
+testcase        {  0x62, 0xf2, 0x75, 0x18, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1, xmm1, dword [rax]{1to4}                        }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd2, 0xc1                                        }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, zmm1                              }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, zword [rax]                       }
+testcase        {  0x62, 0xb2, 0x7d, 0xcf, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x7d, 0xdf, 0xd2, 0x00                                        }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, dword [rax]{1to16}                }
+testcase        {  0x62, 0xb2, 0x7d, 0xdf, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSD zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}      }
+testcase        {  0x62, 0xb2, 0x75, 0x18, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}              }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, xmm1                                 }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, oword [rax]                          }
+testcase        {  0x62, 0xb2, 0x75, 0x0f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x75, 0x1f, 0xd2, 0x08                                        }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, dword [rax]{1to4}                    }
+testcase        {  0x62, 0xb2, 0x75, 0x1f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSD xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}          }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS xmm1, xmm1, xmm1                                    }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, xmm1                             }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, oword [rax]                      }
+testcase        {  0x62, 0xb2, 0x75, 0x8f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x75, 0x9f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, dword [rax]{1to4}                }
+testcase        {  0x62, 0xb2, 0x75, 0x9f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}      }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS ymm1, ymm1, ymm1                                    }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1, ymm1, yword [rax]                             }
+testcase        {  0x62, 0xb2, 0x75, 0x28, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS ymm1, ymm1, yword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x75, 0x38, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1, ymm1, dword [rax]{1to8}                       }
+testcase        {  0x62, 0xb2, 0x75, 0x38, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}             }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1, xmm1, oword [rax]                             }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, ymm1                                }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, yword [rax]                         }
+testcase        {  0x62, 0xb2, 0x75, 0x2f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x75, 0x3f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, dword [rax]{1to8}                   }
+testcase        {  0x62, 0xb2, 0x75, 0x3f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}         }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, ymm1                             }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, yword [rax]                      }
+testcase        {  0x62, 0xb2, 0x75, 0xaf, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x75, 0xbf, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, dword [rax]{1to8}                }
+testcase        {  0x62, 0xb2, 0x75, 0xbf, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}      }
+testcase        {  0x62, 0xb2, 0x75, 0x08, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS xmm1, xmm1, oword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd3, 0xc1                                        }, {  {evex} VPDPWUSDS zmm0, zmm0, zmm1                                    }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0, zmm0, zword [rax]                             }
+testcase        {  0x62, 0xb2, 0x7d, 0x48, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS zmm0, zmm0, zword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7d, 0x58, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0, zmm0, dword [rax]{1to16}                      }
+testcase        {  0x62, 0xb2, 0x7d, 0x58, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSDS zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}            }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd3, 0xc1                                        }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, zmm1                                }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, zword [rax]                         }
+testcase        {  0x62, 0xb2, 0x7d, 0x4f, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x7d, 0x5f, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, dword [rax]{1to16}                  }
+testcase        {  0x62, 0xb2, 0x7d, 0x5f, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}        }
+testcase        {  0x62, 0xf2, 0x75, 0x18, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1, xmm1, dword [rax]{1to4}                       }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd3, 0xc1                                        }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, zmm1                             }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, zword [rax]                      }
+testcase        {  0x62, 0xb2, 0x7d, 0xcf, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x7d, 0xdf, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, dword [rax]{1to16}               }
+testcase        {  0x62, 0xb2, 0x7d, 0xdf, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}     }
+testcase        {  0x62, 0xb2, 0x75, 0x18, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}             }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, xmm1                                }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, oword [rax]                         }
+testcase        {  0x62, 0xb2, 0x75, 0x0f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x75, 0x1f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, dword [rax]{1to4}                   }
+testcase        {  0x62, 0xb2, 0x75, 0x1f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}         }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS xmm1, xmm1, xmm1                                    }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, xmm1                             }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, oword [rax]                      }
+testcase        {  0x62, 0xb2, 0x75, 0x8f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x75, 0x9f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, dword [rax]{1to4}                }
+testcase        {  0x62, 0xb2, 0x75, 0x9f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}      }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS ymm1, ymm1, ymm1                                    }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1, ymm1, yword [rax]                             }
+testcase        {  0x62, 0xb2, 0x75, 0x28, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS ymm1, ymm1, yword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x75, 0x38, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1, ymm1, dword [rax]{1to8}                       }
+testcase        {  0x62, 0xb2, 0x75, 0x38, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}             }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1, xmm1, oword [rax]                             }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, ymm1                                }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, yword [rax]                         }
+testcase        {  0x62, 0xb2, 0x75, 0x2f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x75, 0x3f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, dword [rax]{1to8}                   }
+testcase        {  0x62, 0xb2, 0x75, 0x3f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}         }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, ymm1                             }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, yword [rax]                      }
+testcase        {  0x62, 0xb2, 0x75, 0xaf, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x75, 0xbf, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, dword [rax]{1to8}                }
+testcase        {  0x62, 0xb2, 0x75, 0xbf, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}      }
+testcase        {  0x62, 0xb2, 0x75, 0x08, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS xmm1, xmm1, oword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd3, 0xc1                                        }, {  {evex} VPDPWUSDS zmm0, zmm0, zmm1                                    }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0, zmm0, zword [rax]                             }
+testcase        {  0x62, 0xb2, 0x7d, 0x48, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS zmm0, zmm0, zword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7d, 0x58, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0, zmm0, dword [rax]{1to16}                      }
+testcase        {  0x62, 0xb2, 0x7d, 0x58, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSDS zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}            }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd3, 0xc1                                        }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, zmm1                                }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, zword [rax]                         }
+testcase        {  0x62, 0xb2, 0x7d, 0x4f, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x7d, 0x5f, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, dword [rax]{1to16}                  }
+testcase        {  0x62, 0xb2, 0x7d, 0x5f, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}        }
+testcase        {  0x62, 0xf2, 0x75, 0x18, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1, xmm1, dword [rax]{1to4}                       }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd3, 0xc1                                        }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, zmm1                             }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, zword [rax]                      }
+testcase        {  0x62, 0xb2, 0x7d, 0xcf, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x7d, 0xdf, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, dword [rax]{1to16}               }
+testcase        {  0x62, 0xb2, 0x7d, 0xdf, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}     }
+testcase        {  0x62, 0xb2, 0x75, 0x18, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}             }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, xmm1                                }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, oword [rax]                         }
+testcase        {  0x62, 0xb2, 0x75, 0x0f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x75, 0x1f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, dword [rax]{1to4}                   }
+testcase        {  0x62, 0xb2, 0x75, 0x1f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}         }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS xmm1, xmm1, xmm1                                    }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, xmm1                             }
+testcase        {  0x62, 0xf2, 0x75, 0x8f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, oword [rax]                      }
+testcase        {  0x62, 0xb2, 0x75, 0x8f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x75, 0x9f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, dword [rax]{1to4}                }
+testcase        {  0x62, 0xb2, 0x75, 0x9f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}      }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS ymm1, ymm1, ymm1                                    }
+testcase        {  0x62, 0xf2, 0x75, 0x28, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1, ymm1, yword [rax]                             }
+testcase        {  0x62, 0xb2, 0x75, 0x28, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS ymm1, ymm1, yword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x75, 0x38, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1, ymm1, dword [rax]{1to8}                       }
+testcase        {  0x62, 0xb2, 0x75, 0x38, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}             }
+testcase        {  0x62, 0xf2, 0x75, 0x08, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1, xmm1, oword [rax]                             }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, ymm1                                }
+testcase        {  0x62, 0xf2, 0x75, 0x2f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, yword [rax]                         }
+testcase        {  0x62, 0xb2, 0x75, 0x2f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x75, 0x3f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, dword [rax]{1to8}                   }
+testcase        {  0x62, 0xb2, 0x75, 0x3f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}         }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, ymm1                             }
+testcase        {  0x62, 0xf2, 0x75, 0xaf, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, yword [rax]                      }
+testcase        {  0x62, 0xb2, 0x75, 0xaf, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x75, 0xbf, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, dword [rax]{1to8}                }
+testcase        {  0x62, 0xb2, 0x75, 0xbf, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}      }
+testcase        {  0x62, 0xb2, 0x75, 0x08, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS xmm1, xmm1, oword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd3, 0xc1                                        }, {  {evex} VPDPWUSDS zmm0, zmm0, zmm1                                    }
+testcase        {  0x62, 0xf2, 0x7d, 0x48, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0, zmm0, zword [rax]                             }
+testcase        {  0x62, 0xb2, 0x7d, 0x48, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS zmm0, zmm0, zword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7d, 0x58, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0, zmm0, dword [rax]{1to16}                      }
+testcase        {  0x62, 0xb2, 0x7d, 0x58, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSDS zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}            }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd3, 0xc1                                        }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, zmm1                                }
+testcase        {  0x62, 0xf2, 0x7d, 0x4f, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, zword [rax]                         }
+testcase        {  0x62, 0xb2, 0x7d, 0x4f, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x7d, 0x5f, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, dword [rax]{1to16}                  }
+testcase        {  0x62, 0xb2, 0x7d, 0x5f, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSDS zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}        }
+testcase        {  0x62, 0xf2, 0x75, 0x18, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1, xmm1, dword [rax]{1to4}                       }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd3, 0xc1                                        }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, zmm1                             }
+testcase        {  0x62, 0xf2, 0x7d, 0xcf, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, zword [rax]                      }
+testcase        {  0x62, 0xb2, 0x7d, 0xcf, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x7d, 0xdf, 0xd3, 0x00                                        }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, dword [rax]{1to16}               }
+testcase        {  0x62, 0xb2, 0x7d, 0xdf, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUSDS zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}     }
+testcase        {  0x62, 0xb2, 0x75, 0x18, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}             }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, xmm1                                }
+testcase        {  0x62, 0xf2, 0x75, 0x0f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, oword [rax]                         }
+testcase        {  0x62, 0xb2, 0x75, 0x0f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x75, 0x1f, 0xd3, 0x08                                        }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, dword [rax]{1to4}                   }
+testcase        {  0x62, 0xb2, 0x75, 0x1f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUSDS xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}         }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD xmm1, xmm1, xmm1                                     }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, xmm1                              }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, oword [rax]                       }
+testcase        {  0x62, 0xb2, 0x74, 0x8f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x74, 0x9f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, dword [rax]{1to4}                 }
+testcase        {  0x62, 0xb2, 0x74, 0x9f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}       }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD ymm1, ymm1, ymm1                                     }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1, ymm1, yword [rax]                              }
+testcase        {  0x62, 0xb2, 0x74, 0x28, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD ymm1, ymm1, yword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x74, 0x38, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1, ymm1, dword [rax]{1to8}                        }
+testcase        {  0x62, 0xb2, 0x74, 0x38, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}              }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1, xmm1, oword [rax]                              }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, ymm1                                 }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, yword [rax]                          }
+testcase        {  0x62, 0xb2, 0x74, 0x2f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x74, 0x3f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, dword [rax]{1to8}                    }
+testcase        {  0x62, 0xb2, 0x74, 0x3f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}          }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, ymm1                              }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, yword [rax]                       }
+testcase        {  0x62, 0xb2, 0x74, 0xaf, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x74, 0xbf, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, dword [rax]{1to8}                 }
+testcase        {  0x62, 0xb2, 0x74, 0xbf, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}       }
+testcase        {  0x62, 0xb2, 0x74, 0x08, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD xmm1, xmm1, oword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd2, 0xc1                                        }, {  {evex} VPDPWUUD zmm0, zmm0, zmm1                                     }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0, zmm0, zword [rax]                              }
+testcase        {  0x62, 0xb2, 0x7c, 0x48, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD zmm0, zmm0, zword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7c, 0x58, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0, zmm0, dword [rax]{1to16}                       }
+testcase        {  0x62, 0xb2, 0x7c, 0x58, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUD zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}             }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd2, 0xc1                                        }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, zmm1                                 }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, zword [rax]                          }
+testcase        {  0x62, 0xb2, 0x7c, 0x4f, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x7c, 0x5f, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, dword [rax]{1to16}                   }
+testcase        {  0x62, 0xb2, 0x7c, 0x5f, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}         }
+testcase        {  0x62, 0xf2, 0x74, 0x18, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1, xmm1, dword [rax]{1to4}                        }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd2, 0xc1                                        }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, zmm1                              }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, zword [rax]                       }
+testcase        {  0x62, 0xb2, 0x7c, 0xcf, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x7c, 0xdf, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, dword [rax]{1to16}                }
+testcase        {  0x62, 0xb2, 0x7c, 0xdf, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}      }
+testcase        {  0x62, 0xb2, 0x74, 0x18, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}              }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, xmm1                                 }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, oword [rax]                          }
+testcase        {  0x62, 0xb2, 0x74, 0x0f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x74, 0x1f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, dword [rax]{1to4}                    }
+testcase        {  0x62, 0xb2, 0x74, 0x1f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}          }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD xmm1, xmm1, xmm1                                     }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, xmm1                              }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, oword [rax]                       }
+testcase        {  0x62, 0xb2, 0x74, 0x8f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x74, 0x9f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, dword [rax]{1to4}                 }
+testcase        {  0x62, 0xb2, 0x74, 0x9f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}       }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD ymm1, ymm1, ymm1                                     }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1, ymm1, yword [rax]                              }
+testcase        {  0x62, 0xb2, 0x74, 0x28, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD ymm1, ymm1, yword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x74, 0x38, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1, ymm1, dword [rax]{1to8}                        }
+testcase        {  0x62, 0xb2, 0x74, 0x38, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}              }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1, xmm1, oword [rax]                              }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, ymm1                                 }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, yword [rax]                          }
+testcase        {  0x62, 0xb2, 0x74, 0x2f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x74, 0x3f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, dword [rax]{1to8}                    }
+testcase        {  0x62, 0xb2, 0x74, 0x3f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}          }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, ymm1                              }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, yword [rax]                       }
+testcase        {  0x62, 0xb2, 0x74, 0xaf, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x74, 0xbf, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, dword [rax]{1to8}                 }
+testcase        {  0x62, 0xb2, 0x74, 0xbf, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}       }
+testcase        {  0x62, 0xb2, 0x74, 0x08, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD xmm1, xmm1, oword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd2, 0xc1                                        }, {  {evex} VPDPWUUD zmm0, zmm0, zmm1                                     }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0, zmm0, zword [rax]                              }
+testcase        {  0x62, 0xb2, 0x7c, 0x48, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD zmm0, zmm0, zword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7c, 0x58, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0, zmm0, dword [rax]{1to16}                       }
+testcase        {  0x62, 0xb2, 0x7c, 0x58, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUD zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}             }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd2, 0xc1                                        }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, zmm1                                 }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, zword [rax]                          }
+testcase        {  0x62, 0xb2, 0x7c, 0x4f, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x7c, 0x5f, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, dword [rax]{1to16}                   }
+testcase        {  0x62, 0xb2, 0x7c, 0x5f, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}         }
+testcase        {  0x62, 0xf2, 0x74, 0x18, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1, xmm1, dword [rax]{1to4}                        }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd2, 0xc1                                        }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, zmm1                              }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, zword [rax]                       }
+testcase        {  0x62, 0xb2, 0x7c, 0xcf, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x7c, 0xdf, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, dword [rax]{1to16}                }
+testcase        {  0x62, 0xb2, 0x7c, 0xdf, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}      }
+testcase        {  0x62, 0xb2, 0x74, 0x18, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}              }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, xmm1                                 }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, oword [rax]                          }
+testcase        {  0x62, 0xb2, 0x74, 0x0f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x74, 0x1f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, dword [rax]{1to4}                    }
+testcase        {  0x62, 0xb2, 0x74, 0x1f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}          }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD xmm1, xmm1, xmm1                                     }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, xmm1                              }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, oword [rax]                       }
+testcase        {  0x62, 0xb2, 0x74, 0x8f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x74, 0x9f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, dword [rax]{1to4}                 }
+testcase        {  0x62, 0xb2, 0x74, 0x9f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}       }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD ymm1, ymm1, ymm1                                     }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1, ymm1, yword [rax]                              }
+testcase        {  0x62, 0xb2, 0x74, 0x28, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD ymm1, ymm1, yword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x74, 0x38, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1, ymm1, dword [rax]{1to8}                        }
+testcase        {  0x62, 0xb2, 0x74, 0x38, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}              }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1, xmm1, oword [rax]                              }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, ymm1                                 }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, yword [rax]                          }
+testcase        {  0x62, 0xb2, 0x74, 0x2f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x74, 0x3f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, dword [rax]{1to8}                    }
+testcase        {  0x62, 0xb2, 0x74, 0x3f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}          }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, ymm1                              }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, yword [rax]                       }
+testcase        {  0x62, 0xb2, 0x74, 0xaf, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x74, 0xbf, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, dword [rax]{1to8}                 }
+testcase        {  0x62, 0xb2, 0x74, 0xbf, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}       }
+testcase        {  0x62, 0xb2, 0x74, 0x08, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD xmm1, xmm1, oword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd2, 0xc1                                        }, {  {evex} VPDPWUUD zmm0, zmm0, zmm1                                     }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0, zmm0, zword [rax]                              }
+testcase        {  0x62, 0xb2, 0x7c, 0x48, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD zmm0, zmm0, zword [rbp+r14*2+0x8]                    }
+testcase        {  0x62, 0xf2, 0x7c, 0x58, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0, zmm0, dword [rax]{1to16}                       }
+testcase        {  0x62, 0xb2, 0x7c, 0x58, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUD zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}             }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd2, 0xc1                                        }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, zmm1                                 }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, zword [rax]                          }
+testcase        {  0x62, 0xb2, 0x7c, 0x4f, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x7c, 0x5f, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, dword [rax]{1to16}                   }
+testcase        {  0x62, 0xb2, 0x7c, 0x5f, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUD zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}         }
+testcase        {  0x62, 0xf2, 0x74, 0x18, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1, xmm1, dword [rax]{1to4}                        }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd2, 0xc1                                        }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, zmm1                              }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, zword [rax]                       }
+testcase        {  0x62, 0xb2, 0x7c, 0xcf, 0xd2, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]             }
+testcase        {  0x62, 0xf2, 0x7c, 0xdf, 0xd2, 0x00                                        }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, dword [rax]{1to16}                }
+testcase        {  0x62, 0xb2, 0x7c, 0xdf, 0xd2, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUD zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}      }
+testcase        {  0x62, 0xb2, 0x74, 0x18, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}              }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd2, 0xc9                                        }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, xmm1                                 }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, oword [rax]                          }
+testcase        {  0x62, 0xb2, 0x74, 0x0f, 0xd2, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]                }
+testcase        {  0x62, 0xf2, 0x74, 0x1f, 0xd2, 0x08                                        }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, dword [rax]{1to4}                    }
+testcase        {  0x62, 0xb2, 0x74, 0x1f, 0xd2, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUD xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}          }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS xmm1, xmm1, xmm1                                    }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, xmm1                             }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, oword [rax]                      }
+testcase        {  0x62, 0xb2, 0x74, 0x8f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x74, 0x9f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, dword [rax]{1to4}                }
+testcase        {  0x62, 0xb2, 0x74, 0x9f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}      }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS ymm1, ymm1, ymm1                                    }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1, ymm1, yword [rax]                             }
+testcase        {  0x62, 0xb2, 0x74, 0x28, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS ymm1, ymm1, yword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x74, 0x38, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1, ymm1, dword [rax]{1to8}                       }
+testcase        {  0x62, 0xb2, 0x74, 0x38, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}             }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1, xmm1, oword [rax]                             }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, ymm1                                }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, yword [rax]                         }
+testcase        {  0x62, 0xb2, 0x74, 0x2f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x74, 0x3f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, dword [rax]{1to8}                   }
+testcase        {  0x62, 0xb2, 0x74, 0x3f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}         }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, ymm1                             }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, yword [rax]                      }
+testcase        {  0x62, 0xb2, 0x74, 0xaf, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x74, 0xbf, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, dword [rax]{1to8}                }
+testcase        {  0x62, 0xb2, 0x74, 0xbf, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}      }
+testcase        {  0x62, 0xb2, 0x74, 0x08, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS xmm1, xmm1, oword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd3, 0xc1                                        }, {  {evex} VPDPWUUDS zmm0, zmm0, zmm1                                    }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0, zmm0, zword [rax]                             }
+testcase        {  0x62, 0xb2, 0x7c, 0x48, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS zmm0, zmm0, zword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7c, 0x58, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0, zmm0, dword [rax]{1to16}                      }
+testcase        {  0x62, 0xb2, 0x7c, 0x58, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUDS zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}            }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd3, 0xc1                                        }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, zmm1                                }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, zword [rax]                         }
+testcase        {  0x62, 0xb2, 0x7c, 0x4f, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x7c, 0x5f, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, dword [rax]{1to16}                  }
+testcase        {  0x62, 0xb2, 0x7c, 0x5f, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}        }
+testcase        {  0x62, 0xf2, 0x74, 0x18, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1, xmm1, dword [rax]{1to4}                       }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd3, 0xc1                                        }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, zmm1                             }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, zword [rax]                      }
+testcase        {  0x62, 0xb2, 0x7c, 0xcf, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x7c, 0xdf, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, dword [rax]{1to16}               }
+testcase        {  0x62, 0xb2, 0x7c, 0xdf, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}     }
+testcase        {  0x62, 0xb2, 0x74, 0x18, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}             }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, xmm1                                }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, oword [rax]                         }
+testcase        {  0x62, 0xb2, 0x74, 0x0f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x74, 0x1f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, dword [rax]{1to4}                   }
+testcase        {  0x62, 0xb2, 0x74, 0x1f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}         }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS xmm1, xmm1, xmm1                                    }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, xmm1                             }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, oword [rax]                      }
+testcase        {  0x62, 0xb2, 0x74, 0x8f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x74, 0x9f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, dword [rax]{1to4}                }
+testcase        {  0x62, 0xb2, 0x74, 0x9f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}      }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS ymm1, ymm1, ymm1                                    }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1, ymm1, yword [rax]                             }
+testcase        {  0x62, 0xb2, 0x74, 0x28, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS ymm1, ymm1, yword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x74, 0x38, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1, ymm1, dword [rax]{1to8}                       }
+testcase        {  0x62, 0xb2, 0x74, 0x38, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}             }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1, xmm1, oword [rax]                             }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, ymm1                                }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, yword [rax]                         }
+testcase        {  0x62, 0xb2, 0x74, 0x2f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x74, 0x3f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, dword [rax]{1to8}                   }
+testcase        {  0x62, 0xb2, 0x74, 0x3f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}         }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, ymm1                             }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, yword [rax]                      }
+testcase        {  0x62, 0xb2, 0x74, 0xaf, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x74, 0xbf, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, dword [rax]{1to8}                }
+testcase        {  0x62, 0xb2, 0x74, 0xbf, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}      }
+testcase        {  0x62, 0xb2, 0x74, 0x08, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS xmm1, xmm1, oword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd3, 0xc1                                        }, {  {evex} VPDPWUUDS zmm0, zmm0, zmm1                                    }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0, zmm0, zword [rax]                             }
+testcase        {  0x62, 0xb2, 0x7c, 0x48, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS zmm0, zmm0, zword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7c, 0x58, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0, zmm0, dword [rax]{1to16}                      }
+testcase        {  0x62, 0xb2, 0x7c, 0x58, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUDS zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}            }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd3, 0xc1                                        }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, zmm1                                }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, zword [rax]                         }
+testcase        {  0x62, 0xb2, 0x7c, 0x4f, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x7c, 0x5f, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, dword [rax]{1to16}                  }
+testcase        {  0x62, 0xb2, 0x7c, 0x5f, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}        }
+testcase        {  0x62, 0xf2, 0x74, 0x18, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1, xmm1, dword [rax]{1to4}                       }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd3, 0xc1                                        }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, zmm1                             }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, zword [rax]                      }
+testcase        {  0x62, 0xb2, 0x7c, 0xcf, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x7c, 0xdf, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, dword [rax]{1to16}               }
+testcase        {  0x62, 0xb2, 0x7c, 0xdf, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}     }
+testcase        {  0x62, 0xb2, 0x74, 0x18, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}             }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, xmm1                                }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, oword [rax]                         }
+testcase        {  0x62, 0xb2, 0x74, 0x0f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x74, 0x1f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, dword [rax]{1to4}                   }
+testcase        {  0x62, 0xb2, 0x74, 0x1f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}         }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS xmm1, xmm1, xmm1                                    }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, xmm1                             }
+testcase        {  0x62, 0xf2, 0x74, 0x8f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, oword [rax]                      }
+testcase        {  0x62, 0xb2, 0x74, 0x8f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, oword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x74, 0x9f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, dword [rax]{1to4}                }
+testcase        {  0x62, 0xb2, 0x74, 0x9f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS xmm1{k7}{z}, xmm1, dword [rbp+r14*2+0x8]{1to4}      }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS ymm1, ymm1, ymm1                                    }
+testcase        {  0x62, 0xf2, 0x74, 0x28, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1, ymm1, yword [rax]                             }
+testcase        {  0x62, 0xb2, 0x74, 0x28, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS ymm1, ymm1, yword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x74, 0x38, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1, ymm1, dword [rax]{1to8}                       }
+testcase        {  0x62, 0xb2, 0x74, 0x38, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS ymm1, ymm1, dword [rbp+r14*2+0x8]{1to8}             }
+testcase        {  0x62, 0xf2, 0x74, 0x08, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1, xmm1, oword [rax]                             }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, ymm1                                }
+testcase        {  0x62, 0xf2, 0x74, 0x2f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, yword [rax]                         }
+testcase        {  0x62, 0xb2, 0x74, 0x2f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, yword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x74, 0x3f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, dword [rax]{1to8}                   }
+testcase        {  0x62, 0xb2, 0x74, 0x3f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS ymm1{k7}, ymm1, dword [rbp+r14*2+0x8]{1to8}         }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, ymm1                             }
+testcase        {  0x62, 0xf2, 0x74, 0xaf, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, yword [rax]                      }
+testcase        {  0x62, 0xb2, 0x74, 0xaf, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, yword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x74, 0xbf, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, dword [rax]{1to8}                }
+testcase        {  0x62, 0xb2, 0x74, 0xbf, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS ymm1{k7}{z}, ymm1, dword [rbp+r14*2+0x8]{1to8}      }
+testcase        {  0x62, 0xb2, 0x74, 0x08, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS xmm1, xmm1, oword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd3, 0xc1                                        }, {  {evex} VPDPWUUDS zmm0, zmm0, zmm1                                    }
+testcase        {  0x62, 0xf2, 0x7c, 0x48, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0, zmm0, zword [rax]                             }
+testcase        {  0x62, 0xb2, 0x7c, 0x48, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS zmm0, zmm0, zword [rbp+r14*2+0x8]                   }
+testcase        {  0x62, 0xf2, 0x7c, 0x58, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0, zmm0, dword [rax]{1to16}                      }
+testcase        {  0x62, 0xb2, 0x7c, 0x58, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUDS zmm0, zmm0, dword [rbp+r14*2+0x8]{1to16}            }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd3, 0xc1                                        }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, zmm1                                }
+testcase        {  0x62, 0xf2, 0x7c, 0x4f, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, zword [rax]                         }
+testcase        {  0x62, 0xb2, 0x7c, 0x4f, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, zword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x7c, 0x5f, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, dword [rax]{1to16}                  }
+testcase        {  0x62, 0xb2, 0x7c, 0x5f, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUDS zmm0{k7}, zmm0, dword [rbp+r14*2+0x8]{1to16}        }
+testcase        {  0x62, 0xf2, 0x74, 0x18, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1, xmm1, dword [rax]{1to4}                       }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd3, 0xc1                                        }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, zmm1                             }
+testcase        {  0x62, 0xf2, 0x7c, 0xcf, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, zword [rax]                      }
+testcase        {  0x62, 0xb2, 0x7c, 0xcf, 0xd3, 0x84, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, zword [rbp+r14*2+0x8]            }
+testcase        {  0x62, 0xf2, 0x7c, 0xdf, 0xd3, 0x00                                        }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, dword [rax]{1to16}               }
+testcase        {  0x62, 0xb2, 0x7c, 0xdf, 0xd3, 0x44, 0x75, 0x02                            }, {  {evex} VPDPWUUDS zmm0{k7}{z}, zmm0, dword [rbp+r14*2+0x8]{1to16}     }
+testcase        {  0x62, 0xb2, 0x74, 0x18, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS xmm1, xmm1, dword [rbp+r14*2+0x8]{1to4}             }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd3, 0xc9                                        }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, xmm1                                }
+testcase        {  0x62, 0xf2, 0x74, 0x0f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, oword [rax]                         }
+testcase        {  0x62, 0xb2, 0x74, 0x0f, 0xd3, 0x8c, 0x75, 0x08, 0x00, 0x00, 0x00          }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, oword [rbp+r14*2+0x8]               }
+testcase        {  0x62, 0xf2, 0x74, 0x1f, 0xd3, 0x08                                        }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, dword [rax]{1to4}                   }
+testcase        {  0x62, 0xb2, 0x74, 0x1f, 0xd3, 0x4c, 0x75, 0x02                            }, {  {evex} VPDPWUUDS xmm1{k7}, xmm1, dword [rbp+r14*2+0x8]{1to4}         }
 testcase        {  0x62, 0xf6, 0x7c, 0x08, 0x4c, 0xca                                        }, {  VRCPBF16 xmm1, xmm2  }
 testcase        {  0x62, 0xf6, 0x7c, 0x28, 0x4c, 0xca                                        }, {  VRCPBF16 ymm1, ymm2  }
 testcase        {  0x62, 0xf6, 0x7c, 0x48, 0x4c, 0xca                                        }, {  VRCPBF16 zmm1, zmm2  }
