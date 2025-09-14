@@ -312,17 +312,41 @@ static void mref_set_optype(operand *op)
 
     nasm_assert(i == -1 || s > 0);
 
+    if (!(op->eaflags & (EAF_FS|EAF_GS)))
+        op->eaflags |= EAF_NOTFSGS;
+
     if (b != -1) {
         opflags_t bclass = nasm_reg_flags[b];
         op->type &= bclass | ~RN_L16;
     } else if (i == -1) {
-        int is_rel = globl.bits == 64 &&
-            !(op->eaflags & EAF_ABS) &&
-            ((globl.rel &&
-              !(op->eaflags & EAF_FSGS)) ||
-             (op->eaflags & EAF_REL));
-
-        op->type |= is_rel ? IP_REL : MEM_OFFS;
+        opflags_t flag = MEM_OFFS;
+        if (globl.bits == 64) {
+            if (op->eaflags & EAF_ABS) {
+                /* Do nothing */
+            } else if (op->eaflags & EAF_REL) {
+                flag = IP_REL;
+            } else {
+                if (globl.rel & op->eaflags)
+                    flag = IP_REL;
+                if (!(globl.reldef & op->eaflags)) {
+                    static int64_t pass_last_seen;
+                    /*!
+                     *!implicit-abs-deprecated [on] implicit DEFAULT ABS is deprecated
+                     *!
+                     *!  warns that in a subsequent version of NASM, the 64-bit default
+                     *!  addressing form is likely to change from \c{DEFAULT ABS} to
+                     *!  \c{DEFAULT REL}. If absolute addressing is indeed intended, it is
+                     *!  strongly recommended to specify \c{DEFAULT ABS} explicitly.
+                     */
+                    if (pass_count() != pass_last_seen) {
+                        nasm_warn(WARN_IMPLICIT_ABS_DEPRECATED,
+                                  "implicit DEFAULT ABS is deprecated");
+                        pass_last_seen = pass_count();
+                    }
+                }
+            }
+        }
+        op->type |= flag;
     }
 
     if (i != -1) {
@@ -1130,8 +1154,16 @@ restart_parse:
                     nasm_nonfatal("instruction has conflicting segment overrides");
                 } else {
                     result->prefixes[PPS_SEG] = value->type;
-                    if (IS_FSGS(value->type))
-                        op->eaflags |= EAF_FSGS;
+                    switch (value->type) {
+                    case R_FS:
+                        op->eaflags |= EAF_FS;
+                        break;
+                    case R_GS:
+                        op->eaflags |= EAF_GS;
+                        break;
+                    default:
+                        break;
+                    }
                 }
 
                 i = stdscan(NULL, &tokval); /* then skip the colon */
@@ -1157,7 +1189,6 @@ restart_parse:
             init_operand(&o2, 0);
             if (parse_mref(&o2, value))
                 goto fail;
-
             if (o2.basereg != -1 && o2.indexreg == -1) {
                 o2.indexreg = o2.basereg;
                 o2.scale = 1;

@@ -6,7 +6,8 @@
 		"source": "mpx-64.asm",
 		"option": "-O0",
 		"target": [
-			{ "output": "mpx-64.o" }
+		    { "output": "mpx-64.o" },
+		    { "stderr": "mpx-64.stderr" }
 		]
 	}
 ]

@@ -52,6 +52,14 @@ It is the production version of NASM since 2025.
    individual topics, as the previous output was just too verbose to be
    practical as a quick reference.
 
+\b The implicit \c{DEFAULT ABS} in 64-bit mode is deprecated and may
+   be changed to \c{REL} in the future. See \k{default}. A warning
+   is now emitted for this condition.
+
+\b It is now possible to set the \c{REL}/\c{ABS} default for memory
+   accesses using \c{FS:} or \c{GS:}, see \k{default}.
+
+
 \H{cl-2.xx} NASM 2 Series
 
 The NASM 2 series added support for x86-64, and was the production

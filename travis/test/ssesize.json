@@ -6,7 +6,8 @@
 		"source": "ssesize.asm",
 		"option": "-Ox",
 		"target": [
-			{ "output": "ssesize.o" }
+		    { "output": "ssesize.o" },
+		    { "stderr": "ssesize.stderr" }
 		]
 	}
 ]

@@ -5,7 +5,8 @@
 		"format": "bin",
 		"source": "vmread.asm",
 		"target": [
-			{ "output": "vmread.bin" }
+		    { "output": "vmread.bin" },
+		    { "stderr": "vmread.ok.stderr" }
 		]
 	},
 	{
@@ -13,7 +14,7 @@
 		"ref": "vmread",
 		"option": "-DERROR",
 		"target": [
-			{ "stderr": "vmread.stderr" }
+		    { "stderr": "vmread.err.stderr" }
 		],
 		"error": "expected"
 	}

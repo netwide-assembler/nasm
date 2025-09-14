@@ -224,6 +224,7 @@ enum token_type { /* token types, other than chars */
     TOKEN_EQ         = '=',     /* = or == */
     TOKEN_GT         = '>',
     TOKEN_LT         = '<',
+    TOKEN_COLON      = ':',
 
     /* Multi-character operators */
     TOKEN_SHL = 256,    /* << or <<< */
@@ -695,9 +696,11 @@ enum ea_flags { /* special EA flags */
     EAF_TIMESTWO    =   4,  /* really do EAX*2 not EAX+EAX */
     EAF_REL         =   8,  /* IP-relative addressing */
     EAF_ABS         =  16,  /* non-IP-relative addressing */
-    EAF_FSGS        =  32,  /* fs/gs segment override present */
-    EAF_MIB         =  64,  /* mib operand */
-    EAF_SIB         = 128   /* SIB encoding obligatory */
+    EAF_MIB         =  32,  /* mib operand */
+    EAF_SIB         =  64,   /* SIB encoding obligatory */
+    EAF_NOTFSGS     = 128,  /* no fs: or gs: */
+    EAF_FS          = 256,  /* fs segment override present */
+    EAF_GS          = 512   /* gs segment override present */
 };
 
 enum eval_hint { /* values for `hinttype' */
@@ -1583,7 +1586,8 @@ extern enum optimization optimizing;
 /* Pass-wide state; reset on top of each pass */
 struct globalopt {
     int  bits;                  /* 16, 32 or 64-bit mode */
-    bool rel;                   /* default to relative addressing? */
+    enum ea_flags rel;          /* default to relative addressing? */
+    enum ea_flags reldef;       /* default rel/abs explicitly defined? */
     bool bnd;                   /* default to using bnd prefix? */
     bool dollarhex;             /* $-prefixed hexadecimal numbers? */
 };

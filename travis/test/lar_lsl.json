@@ -5,7 +5,8 @@
 		"format": "bin",
 		"source": "lar_lsl.asm",
 		"target": [
-			{ "output": "lar_lsl.bin" }
+		    { "output": "lar_lsl.bin" },
+		    { "stderr": "lar_lsl.stderr" }
 		]
 	}
 ]

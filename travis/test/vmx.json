@@ -6,7 +6,8 @@
 		"source": "vmx.asm",
 		"option": "-Ox",
 		"target": [
-			{ "output": "vmx.o" }
+		    { "output": "vmx.o" },
+		    { "stderr": "vmx.stderr" }
 		]
 	}
 ]

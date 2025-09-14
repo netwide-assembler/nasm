@@ -1,3 +1,4 @@
+./travis/test/vmread.asm:8: warning: implicit DEFAULT ABS is deprecated [-w+implicit-abs-deprecated]
 ./travis/test/vmread.asm:15: error: invalid operand sizes for instruction
 ./travis/test/vmread.asm:16: error: invalid operand sizes for instruction
 ./travis/test/vmread.asm:19: error: instruction not supported in 64-bit mode

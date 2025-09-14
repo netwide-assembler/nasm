@@ -1660,9 +1660,10 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         if (!pass_final())
             errflags_never |= ERR_PASS2;
 
-        globl.bits = cmd_sb;  /* set 'bits' to command line default */
-        globl.bnd = false;
-        globl.rel = false;
+        globl.bits      = cmd_sb;  /* set 'bits' to command line default */
+        globl.bnd       = false;
+        globl.rel       = 0;
+        globl.reldef    = EAF_FS|EAF_GS; /* For now, don't warn on fs:/gs: absolute */
         globl.dollarhex = true;
 
         cpu = cmd_cpu;

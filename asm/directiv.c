@@ -554,30 +554,71 @@ bool process_directives(char *directive)
         break;
 
     case D_DEFAULT:         /* [DEFAULT] */
+    {
+        enum ea_flags relabs_applies = EAF_NOTFSGS;
+        bool eat_colon = false;
+
         stdscan_reset(value);
         tokval.t_type = TOKEN_INVALID;
-        if (stdscan(NULL, &tokval) != TOKEN_INVALID) {
-            switch (tokval.t_integer) {
-            case S_REL:
-                globl.rel = 1;
+        while (!bad_param) {
+            enum token_type type = stdscan(NULL, &tokval);
+            if (type <= 0)
                 break;
-            case S_ABS:
-                globl.rel = 0;
+
+            switch (tokval.t_type) {
+            case TOKEN_REG:
+            case TOKEN_SPECIAL:
+            case TOKEN_PREFIX:
+                switch (tokval.t_integer) {
+                case R_FS:
+                    relabs_applies = EAF_FS;
+                    eat_colon = true;
+                    goto next_token;
+                case R_GS:
+                    relabs_applies = EAF_GS;
+                    eat_colon = true;
+                    goto next_token;
+                case S_REL:
+                    globl.rel    |= relabs_applies;
+                    globl.reldef |= relabs_applies;
+                    break;
+                case S_ABS:
+                    globl.rel    &= ~relabs_applies;
+                    globl.reldef |= relabs_applies;
+                    break;
+                case P_BND:
+                    globl.bnd = 1;
+                    break;
+                case P_NOBND:
+                    globl.bnd = 0;
+                    break;
+                default:
+                    bad_param = true;
+                    break;
+                }
                 break;
-            case P_BND:
-                globl.bnd = 1;
+
+            case ',':
                 break;
-            case P_NOBND:
-                globl.bnd = 0;
-                break;
+
+            case ':':
+                if (eat_colon) {
+                    eat_colon = false;
+                    goto next_token;
+                }
+            /* else fall through */
             default:
                 bad_param = true;
                 break;
             }
-        } else {
-            bad_param = true;
+
+            eat_colon = false;
+            relabs_applies = EAF_NOTFSGS;
+        next_token:
+            ;
         }
         break;
+    }
 
     case D_FLOAT:
         if (float_option(value)) {

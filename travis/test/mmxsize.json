@@ -6,7 +6,8 @@
 		"source": "mmxsize.asm",
 		"option": "-Ox",
 		"target": [
-			{ "output": "mmxsize.bin" }
+		    { "output": "mmxsize.bin" },
+		    { "stderr": "mmxsize.stderr" }
 		]
 	},
 	{

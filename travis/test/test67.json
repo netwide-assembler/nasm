@@ -6,7 +6,8 @@
 		"source": "test67.asm",
 		"option": "-Ox",
 		"target": [
-			{ "output": "test67.bin" }
+		    { "output": "test67.bin" },
+		    { "stderr": "test67.stderr" }
 		]
 	},
 	{

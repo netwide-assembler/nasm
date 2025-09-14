@@ -6,7 +6,8 @@
 		"source": "br2030823.asm",
 		"option": "-Ox",
 		"target": [
-			{ "output": "br2030823.bin" }
+		    { "output": "br2030823.bin" },
+		    { "stderr": "br2030823.stderr" }
 		]
 	}
 ]
