@@ -18,8 +18,9 @@ It is the production version of NASM since 2025.
    miscellaneous new instructions.
 
 \b Add new preprocessor functions: \c{%depend()}, \c{%pathsearch()},
-   \c{%realpath()}, \c{%null()}, \c{%note()}, \c{%warning()},
-   \c{%error()}, \c{%fatal()}. See \k{ppfunc}.
+   \c{%realpath()}, \c{%find()}, \c{%findi()}, \c{%null()},
+   \c{%note()}, \c{%warning()}, \c{%error()}, \c{%fatal()}. See
+   \k{ppfunc}.
 
 \b New preprocessor directive \c{%note} to insert a note in the list
    file, without issuing an external diagnosic.  Unlike a comment, it
@@ -58,6 +59,9 @@ It is the production version of NASM since 2025.
 
 \b It is now possible to set the \c{REL}/\c{ABS} default for memory
    accesses using \c{FS:} or \c{GS:}, see \k{default}.
+
+\b The \c{__?DEFAULT?__} standard macro now reflects the settings of
+   the \c{DEFAULT} directive. See \k{defaultm}.
 
 
 \H{cl-2.xx} NASM 2 Series

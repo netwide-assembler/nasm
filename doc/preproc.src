@@ -779,6 +779,29 @@ The expressions passed to \c{%eval()} are \i{critical expressions},
 see \k{crit}.
 
 
+\S{f_find} \i\c{%find()} and \i\c{%findi()} Functions
+
+The \c{%find()} and \c{%findi()} functions take an argument followed
+by an optional list. These are turned into quoted strings if
+necessary, and then compared as if by the \i\c{%isidn()} or
+\i\c{%isidni()} functions, respectively (see \k{ifidn}) \- the
+\c{%find()} function compares case sensitively, and \c{%findi()} case
+insensitively.
+
+The functions then expand to \c{0} if none of the strings in the list
+match the first string, or the position in the list where the first
+string was found, where \c{1} is the first argument in the list,
+i.e. not including the first argument to the function.
+
+Once a matching argument has been found, no further arguments are expanded.
+
+For example:
+
+\c      db %find(a,b,c,d)                       ; 0
+\c      db %find(a,b,a,c)                       ; 2
+\c      db %find(a)                             ; 0 (empty list)
+\c      db %find(a,b,a,c,%error("Not found"))   ; 2
+
 \S{f_hex} \i\c{%hex()} Function
 
 Equivalent to \i\c\{%eval()}, except that the results generated are
@@ -1732,11 +1755,6 @@ stack, and allows you to treat \c{IP} as a real register:
 \c   %endif
 \c
 \c %endmacro
-
-\S{ifoneof} \i\c{%ifoneof}, \i\c{%ifoneofi}: Search a List For
-Identity
-
-
 
 \S{iftyp} \i\c{%ifid}, \i\c{%ifnum}, \i\c{%ifstr}: Testing Token
 Types\I{testing, token types}

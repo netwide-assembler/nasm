@@ -4,6 +4,17 @@
 	bits 64
 
 	default rel, fs:abs, gs:rel
+	%note default __?DEFAULT?__
+	%note %findi(fs:abs, %[__?DEFAULT?__])
+	%note %findi(gs:abs, %[__?DEFAULT?__])
+	%note %findi(abs, %[__?DEFAULT?__])
+	%note %findi(fs:abs,fs:abs)
+	%note %find(a)
+	%note %find(a,b)
+	%note %find(a,b,c)
+	%note %find(a,b,a,c)
+	%note %find(a,b,a,%error("Not found"))
+
 	mov dword [foo],12345678h
 	mov qword [foo],12345678h
 	mov [foo],rax

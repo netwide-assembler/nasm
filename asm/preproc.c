@@ -6045,6 +6045,27 @@ static Token *expand_mmac_params(Token * tline)
 static SMacro *expand_one_smacro(Token ***tpp);
 
 /*
+ * Process an smacro argument with SPARM_STR.
+ * This is factored out so that it is usable by preprocessor functions.
+ */
+static Token *
+expand_sparm_str(Token *param, enum sparmflags flags)
+{
+    Token *qs;
+
+    qs = expand_smacro_noreset(param);
+    if ((flags & SPARM_CONDQUOTE) && tok_is(qs, TOKEN_STR) && !qs->next) {
+        /* A single quoted string token - already good */
+    } else {
+        char *arg = detoken(qs, false);
+        delete_tlist(qs);
+        qs = make_tok_qstr(NULL, arg);
+        nasm_free(arg);
+    }
+    return qs;
+}
+
+/*
  * Expand one single-line macro instance given a specific macro and a
  * specific set of parameters. Returns a pointer to the expansion, and
  * the pointer *epp pointing to the next pointer of the last token of
@@ -6125,19 +6146,7 @@ expand_smacro_with_params(SMacro *m, Token *mstart, Token **params,
 
             if (flags & SPARM_STR) {
                 /* Convert expansion to a quoted string */
-                Token *qs;
-
-                qs = expand_smacro_noreset(params[i]);
-                if ((flags & SPARM_CONDQUOTE) &&
-                    tok_is(qs, TOKEN_STR) && !qs->next) {
-                    /* A single quoted string token */
-                    params[i] = qs;
-                } else {
-                    char *arg = detoken(qs, false);
-                    delete_tlist(qs);
-                    params[i] = make_tok_qstr(NULL, arg);
-                    nasm_free(arg);
-                }
+                params[i] = expand_sparm_str(params[i], flags);
             }
         }
     }
@@ -8075,6 +8084,36 @@ stdmac_user_error(const SMacro *s, Token **params, int nparam)
     return NULL;                /* Always expands to empty */
 }
 
+static Token *
+stdmac_find(const SMacro *s, Token **params, int nparam)
+{
+    bool casesense = s->expandpvt.u;
+    int i;
+    int found = 0;
+    const char *ref = unquote_token(params[0]);
+    size_t rlen = params[0]->len;
+
+    for (i = 1; i < nparam; i++) {
+        const char *cmp;
+        size_t clen;
+
+        /*
+         * This is done here rather than by declaring it in the
+         * argument flags, so that we don't expand ignored arguments
+         * (argument short circuiting.)
+         */
+        params[i] = expand_sparm_str(params[i], SPARM_STR|SPARM_CONDQUOTE);
+        cmp  = unquote_token(params[i]);
+        clen = params[i]->len;
+
+        if (rlen == clen && !mmemcmp(ref, cmp, rlen, casesense)) {
+            found = i;
+            break;
+        }
+    }
+    return make_tok_num(NULL, found);
+}
+
 /*
  * Wrapper around define_smacro() which also checks to see if it is
  * a preprocessor directive, so that pp_op_may_be_function[] needs to
@@ -8200,6 +8239,7 @@ static void pp_add_magic_msgfunc(void)
 static void pp_add_magic_miscfunc(void)
 {
     SMacro tmpl;
+    int i;
 
     /* %hex() function */
     nasm_zero(tmpl);
@@ -8252,6 +8292,20 @@ static void pp_add_magic_miscfunc(void)
     tmpl.params[2].flags  = SPARM_EVAL|SPARM_OPTIONAL;
     tmpl.params[2].def    = make_tok_num(NULL, -1);
     define_magic("%substr", false, &tmpl);
+
+    /* %find[i]() functions */
+    for (i = 0; i < 2; i++) {
+        static const char * const names[] = { "%findi", "%find" };
+        nasm_zero(tmpl);
+        tmpl.nparam = 2;
+        tmpl.expand = stdmac_find;
+        tmpl.recursive = true;
+        nasm_newn(tmpl.params, tmpl.nparam);
+        tmpl.params[0].flags  = SPARM_STR|SPARM_CONDQUOTE;
+        tmpl.params[1].flags  = SPARM_VARADIC|SPARM_OPTIONAL;
+        tmpl.expandpvt.u = i;
+        define_magic(names[i], false, &tmpl);
+    }
 }
 
 static void pp_add_magic_stdmac(void)
