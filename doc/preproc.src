@@ -701,7 +701,7 @@ arguments, and can be used in any context where single-line macro
 expansion would be performed. Preprocessor functions were introduced
 in NASM 2.16.
 
-Starting with NASM 3.0, the \i\c{%ifdef} directive or \i\c{%isdef()}
+Starting with NASM 3.00, the \i\c{%ifdef} directive or \i\c{%isdef()}
 function can also test for the availability of preprocessor
 functions. They cannot, however, be undefined, aliased or redefined.
 
@@ -1617,7 +1617,7 @@ Then you could use the command-line option \c{-dDEBUG} to create a
 version of the program which produced debugging messages, and remove
 the option to generate the final release version of the program.
 
-From NASM 3.0 onward, \c{%ifdef} can also test for the availability
+From NASM 3.00 onward, \c{%ifdef} can also test for the availability
 of a preprocessor function, for example:
 
 \c %ifdef %newfunc
@@ -1632,10 +1632,11 @@ or, if the warning is not needed, using the function form:
 \c   db %cond(%isdef(%newfunc),%newfunc(99),-1)
 
 It is strongly recommended to use this test instead of relying on NASM
-version numbers. To make it possible to probe for the existence of
-this test itself, the macro \c{__?NASM_HAS_IFDIRECTIVE?__} is defined
-on versions of NASM that support using \c{%ifdef} for preprocessor
-functions, see \k{has_ifdirective}.
+version numbers. To make it possible to test that this use of
+\c{%ifdef} is valid, the macro \i\c{__?NASM_HAS_IFDIRECTIVE?__} is
+defined on versions of NASM that support \c{%ifdirective},
+\c{%ifusable}, \c{%ifusing} and using \c{%ifdef} to test for
+preprocessor functions. See \k{has_ifdirective}.
 
 
 \S{ifdefalias} \i\c{%ifdefalias}: Testing Single-Line Macro Alias
@@ -1830,12 +1831,13 @@ others, for example, most output formats do not support the \c{ORG}
 directive, therefore the result of \c{%ifdirective} may depend on more
 than just the current version of NASM.
 
-\c{%ifdirective} was introduced in NASM 3.0. It is strongly
+\c{%ifdirective} was introduced in NASM 3.00. It is strongly
 recommended to use this test instead of relying on NASM version
 numbers. To make it possible to probe for the existence of this test
-itself, the macro \i\c{__?NASM_HAS_IFDIRECTIVE?__} is defined versions
-of NASM that support \c{%ifdirective} and using \c{%ifdef} to test for
-preprocessor functions.
+itself, the macro \i\c{__?NASM_HAS_IFDIRECTIVE?__} is defined on
+versions of NASM that support \c{%ifdirective}, \c{%ifusable},
+\c{%ifusing} and using \c{%ifdef} to test for preprocessor
+functions. See \k{has_ifdirective}.
 
 
 \S{ifusing} \i\c{%ifusable} and \i\c{%ifusing}: Test For Standard
@@ -1852,6 +1854,14 @@ subsequent code if and only if the following argument would be valid
 as the argument to \c{%use}. It is more or less equivalent to the
 \c{__?USE_}\e{package}\c{?__} standard macros (see \k{use_def}) but is
 potentially more robust.
+
+\c{%ifusing} and \c{%ifusable} were introduced in NASM 3.00. It is
+strongly recommended to use this test instead of relying on NASM
+version numbers. To make it possible to probe for the existence of
+this test itself, the macro \i\c{__?NASM_HAS_IFDIRECTIVE?__} is
+defined on versions of NASM that support \c{%ifdirective},
+\c{%ifusable}, \c{%ifusing} and using \c{%ifdef} to test for
+preprocessor functions. See \k{has_ifdirective}.
 
 
 \S{iffile} \i\c{%iffile}: Test If a File Exists

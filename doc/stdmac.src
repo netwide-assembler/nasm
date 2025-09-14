@@ -174,9 +174,9 @@ clock:
 Probing Support
 
 The standard macro \c{__?NASM_HAS_IFDIRECTIVE?__} is defined if this
-version of NASM supportes the preprocessor tests \c{%ifdirective},
-\c{%ifusable} and \c{%ifusing} are supported, and that \c{%ifdef} can
-test for the presence of preprocessor functions. See \k{ifdef},
+version of NASM supports the preprocessor tests \c{%ifdirective},
+\c{%ifusable} and \c{%ifusing}, and supports using \c{%ifdef} to test
+for the presence of preprocessor functions. See \k{ifdef},
 \k{ifdirective}, and \k{ifusing}.
 
 It is strongly suggested to test for the presence of this macro and,
