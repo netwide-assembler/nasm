@@ -328,4 +328,4 @@ STD: nasm
 %idefalias __ilog2c__ __?ilog2c?__
 
 ; Declare that %ifdirective is supported
-%define __?NASM_IFDIRECTIVE?__ 1
+%define __?NASM_HAS_IFDIRECTIVE?__ 1
