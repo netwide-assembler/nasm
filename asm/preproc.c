@@ -8076,6 +8076,7 @@ stdmac_null(const SMacro *s, Token **params, int nparam)
     return NULL;                /* Empty expansion */
 }
 
+#if 0    /* Disabled, because they seem to be expanded inappropriately */
 static Token *
 stdmac_user_error(const SMacro *s, Token **params, int nparam)
 {
@@ -8083,6 +8084,7 @@ stdmac_user_error(const SMacro *s, Token **params, int nparam)
     user_error(s->expandpvt.u, &params[0]);
     return NULL;                /* Always expands to empty */
 }
+#endif
 
 static Token *
 stdmac_find(const SMacro *s, Token **params, int nparam)
@@ -8216,6 +8218,7 @@ static void pp_add_magic_isfunc(void)
 /* Message macro functions */
 static void pp_add_magic_msgfunc(void)
 {
+#if 0    /* Disabled, because they seem to be expanded inappropriately */
     static const enum preproc_token msg_macros[] = {
         PP_NOTE,
         PP_WARNING,
@@ -8233,6 +8236,7 @@ static void pp_add_magic_msgfunc(void)
         tmpl.expandpvt.u = *mm;
         define_magic(pp_directives[*mm], false, &tmpl);
     }
+#endif
 }
 
 /* Ad hoc preprocessor function definitions */

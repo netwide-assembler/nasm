@@ -18,8 +18,7 @@ It is the production version of NASM since 2025.
    miscellaneous new instructions.
 
 \b Add new preprocessor functions: \c{%depend()}, \c{%pathsearch()},
-   \c{%realpath()}, \c{%find()}, \c{%findi()}, \c{%null()},
-   \c{%note()}, \c{%warning()}, \c{%error()}, \c{%fatal()}. See
+   \c{%realpath()}, \c{%find()}, \c{%findi()} and \c{%null()}. See
    \k{ppfunc}.
 
 \b New preprocessor directive \c{%note} to insert a note in the list

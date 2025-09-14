@@ -751,17 +751,6 @@ This is the function equivalent of the \c{%depend} directive, see
 
 See also the \c{%pathsearch()} function (\k{f_pathsearch}).
 
-\S{f_error} \i\c{%error()}, \i\c{%warning()}, \i\c{%fatal()},
-\i\c{%note()} Functions
-
-These functions take any arguments and expands them; the expanded
-result is then issued as a message in the same way as the
-corresponding directive, see \k{pperror}. It then expands to nothing.
-
-These functions can be used to mark macros obsolete, or, when used with
-\c{%cond()} or \c{%sel()}, to test for invalid usage and generate
-errors.
-
 \S{f_eval} \i\c{%eval()} Function
 
 The \c{%eval()} function evaluates its argument as a numeric
@@ -800,7 +789,6 @@ For example:
 \c      db %find(a,b,c,d)                       ; 0
 \c      db %find(a,b,a,c)                       ; 2
 \c      db %find(a)                             ; 0 (empty list)
-\c      db %find(a,b,a,c,%error("Not found"))   ; 2
 
 \S{f_hex} \i\c{%hex()} Function
 
