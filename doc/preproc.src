@@ -1550,6 +1550,24 @@ removes the previously defined macro \c{foo}, but
 does \e{not} remove the macro \c{bar}, since the argument
 specification does not match exactly.
 
+\S{exitmacro} \i\c{%exitmacro}: Stop Expanding a Multi-Line Macro
+
+If a \c{%exitmacro} directive is encountered, NASM will immediately
+stop expanding the current multiline macro. This can, for example, be
+used to avoid unnecessarily deep \c{%if} trees in the case of error
+conditions, such as:
+
+\c %macro count_something 2
+\c  %if %1 < 0
+\c    %warning %?: negative count
+\c    %exitmacro
+\c  %endif
+\c  ; ... do the thing, knowing that %1 >= 0 ...
+\c %endmacro
+
+Compare with the \c{%exitrep} directive, \k{rep}.
+
+
 \H{condasm} \i{Conditional Assembly}\I\c{%if}
 
 Similarly to the C preprocessor, NASM allows sections of a source
