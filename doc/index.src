@@ -277,6 +277,12 @@
 \IR{windows} Windows
 \IR{windows debugging formats} Windows, debugging formats
 \IR{__?USE_*?__} \c{__?USE_}\e{package}\c{?__}
+\IR{default, elf} \c{default}, ELF visibility
+\IR{hidden, elf} \c{hidden}, ELF visibility
+\IR{protected, elf} \c{protected}, ELF visibility
+\IR{internal, elf} \c{internal}, ELF visibility
+\IR{elf visibility} ELF visibility
+\IC{elf visibility}{visibility, elf} visibility, ELF
 \# \IC{program entry point}{entry point, program}
 \# \IC{program entry point}{start point, program}
 \# \IC{MS-DOS device drivers}{device drivers, MS-DOS}

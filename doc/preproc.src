@@ -1733,6 +1733,10 @@ stack, and allows you to treat \c{IP} as a real register:
 \c
 \c %endmacro
 
+\S{ifoneof} \i\c{%ifoneof}, \i\c{%ifoneofi}: Search a List For
+Identity
+
+
 
 \S{iftyp} \i\c{%ifid}, \i\c{%ifnum}, \i\c{%ifstr}: Testing Token
 Types\I{testing, token types}

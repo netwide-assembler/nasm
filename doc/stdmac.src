@@ -101,6 +101,20 @@ number of 16, 32 or 64. \c{__?BITS?__} receives the specified mode number and
 makes it globally available. This can be very useful for those who utilize
 mode-dependent macros.
 
+\H{defaultm} \i\c{__?DEFAULT?__}: \c{DEFAULT} directive settings
+
+The \c{__?DEFAULT?__} standard macro contains a comma-separated list
+of all possible settings of the \i\c{DEFAULT} directive (see
+\k{default}), including ones which are set as NASM defaults. For
+example, after:
+
+\c      default rel, fs:rel
+
+... the \c{__?DEFAULT?__} macro might expand to:
+
+\c      rel,fs:rel,gs:abs,nobnd
+
+
 \H{ofmtm} \i\c{__?OUTPUT_FORMAT?__}: Current Output Format
 
 The \c{__?OUTPUT_FORMAT?__} standard macro holds the current output

@@ -1318,9 +1318,12 @@ exports the global symbol \c{hashlookup} as a function and
 \c{hashtable} as a data object.
 
 Optionally, you can control the ELF visibility of the symbol.  Just
-add one of the visibility keywords: \i\c{default}, \i\c{internal},
-\i\c{hidden}, or \i\c{protected}.  The default is \i\c{default} of
-course.  For example, to make \c{hashlookup} hidden:
+add one of the \I{elf visibility}visibility keywords:
+\I{default, elf}\c{default},
+\I{internal, elf}\c{internal},
+\I{hidden, elf}\c{hidden},
+or \I{protected, elf}\c{protected}.  The default is
+\c{default} of course.  For example, to make \c{hashlookup} hidden:
 
 \c global   hashlookup:function hidden
 

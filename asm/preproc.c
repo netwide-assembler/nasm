@@ -7581,6 +7581,30 @@ stdmac_ptr(const SMacro *s, Token **params, int nparams)
     }
 }
 
+static Token *
+stdmac_default(const SMacro *s, Token **params, int nparam)
+{
+    Token *t = NULL;
+
+    (void)s;
+    (void)params;
+    (void)nparam;
+
+    t = new_Token(t, TOKEN_ID, globl.rel & EAF_NOTFSGS ? "rel" : "abs", 3);
+    t = make_tok_char(t, ',');
+    t = new_Token(t, TOKEN_ID, "fs", 2);
+    t = make_tok_char(t, ':');
+    t = new_Token(t, TOKEN_ID, globl.rel & EAF_FS ? "rel" : "abs", 3);
+    t = make_tok_char(t, ',');
+    t = new_Token(t, TOKEN_ID, "gs", 2);
+    t = make_tok_char(t, ':');
+    t = new_Token(t, TOKEN_ID, globl.rel & EAF_GS ? "rel" : "abs", 3);
+    t = make_tok_char(t, ',');
+    t = new_Token(t, TOKEN_ID, globl.bnd ? "bnd" : "nobnd", 0);
+
+    return t;
+}
+
 /* %is...() function macros */
 static Token *
 stdmac_is(const SMacro *s, Token **params, int nparams)
@@ -8088,6 +8112,7 @@ static void pp_add_magic_simple(void)
         { "__?LINE?__",  true, 0, 0, stdmac_line },
         { "__?BITS?__",  true, 0, 0, stdmac_bits },
         { "__?PTR?__",   true, 0, 0, stdmac_ptr },
+        { "__?DEFAULT?__", true, 0, 0, stdmac_default },
         { "%abs",        false, 1, SPARM_EVAL, stdmac_abs },
         { "%count",      false, 1, SPARM_VARADIC, stdmac_count },
         { "%depend",     false, 1, SPARM_PLAIN, stdmac_depend },
