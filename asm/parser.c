@@ -688,11 +688,14 @@ static inline opflags_t set_imm_flags(struct operand *op, enum optimization opt)
             op->type |= UNITY|FOURBITS;
         if (!strict)
             op->type |= SBYTEDWORD|SBYTEWORD|UDWORD|SDWORD;
+        op->type |= IMM_KNOWN;  /* Unknowable in pass 1 */
         return op->type;
     }
 
     if (!(op->opflags & OPFLAG_SIMPLE))
         return op->type;
+
+    op->type |= IMM_KNOWN;
 
     if (!strict || !(op->type & SIZE_MASK)) {
         if (n == 1)

@@ -335,6 +335,7 @@ static inline bool is_reg_class(opflags_t class, int reg)
 #define SDWORD                  (GEN_SUBCLASS(4) | IMMEDIATE)   /* operand is in the range -0x80000000..0x7FFFFFFF */
 #define UDWORD                  (GEN_SUBCLASS(5) | IMMEDIATE)   /* operand is in the range 0..0xFFFFFFFF */
 #define FOURBITS		(GEN_SUBCLASS(6) | IMMEDIATE)   /* operand is in the range 0-15 */
+#define IMM_KNOWN		(GEN_SUBCLASS(7) | IMMEDIATE)   /* operand value is known at compile time */
 
 #define BYTEEXTMASK		(GEN_SUBCLASS(2) | GEN_SUBCLASS(3))
 #define DWORDEXTMASK		(GEN_SUBCLASS(4) | GEN_SUBCLASS(5))

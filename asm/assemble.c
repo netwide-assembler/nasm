@@ -1728,6 +1728,11 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
             length++;
             break;
 
+        case4(0304):
+            length++;
+            codes += 2;
+            break;
+
         case 0310:
         {
             enum prefixes pfx = ins->prefixes[PPS_ASIZE];
@@ -2837,6 +2842,20 @@ static void gencode(struct out_data *data, insn *ins)
             } else {
                 out_imm(data, opx, 1, OUT_UNSIGNED);
             }
+            break;
+        }
+
+        case4(0304):
+        {
+            uint8_t type     = *codes++;
+            uint8_t modifier = *codes++;
+            enum out_flags flags = type & 3; /* signed or unsigned */
+
+            nasm_assert(type <= 2);
+            nasm_assert(absolute_op(opx));
+
+            warn_overflow_out(opx->offset, 1, flags, "byte");
+            out_rawbyte(data, opx->offset ^ modifier);
             break;
         }
 

@@ -1556,6 +1556,20 @@ sub byte_code_compile($$$$) {
             push(@codes, 05) if ($oppos->{$last_imm} & 4);
             push(@codes, $imm_codes{$op} + ($oppos->{$last_imm} & 3));
             $prefix_ok = 0;
+	} elsif ($op =~ /^ib(,[us])?[\^]([0-9a-f]+)$/) {
+	    my $type = $1 eq ',u' ? 2 : $1 eq ',s' ? 1 : 0;
+	    my $mod  = hex $2;
+	    $last_imm++;
+	    if ($last_imm gt 'j') {
+		die "$fname:$line: $opcode: too many immediate operands\n";
+            }
+	    if (!defined($oppos->{$last_imm})) {
+		die "$fname:$line: $opcode: $op without '$last_imm' operand\n";
+            }
+	    push(@codes, 05) if ($oppos->{$last_imm} & 4);
+	    push(@codes, 0304 + ($oppos->{$last_imm} & 3));
+	    push(@codes, $type, $mod);
+	    $flags->{'ND'}++;
         } elsif ($op eq '/is4') {
             if (!defined($oppos->{'s'})) {
                 die "$fname:$line: $opcode: $op without 's' operand\n";
