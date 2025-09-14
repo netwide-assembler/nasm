@@ -283,6 +283,10 @@
 \IR{internal, elf} \c{internal}, ELF visibility
 \IR{elf visibility} ELF visibility
 \IC{elf visibility}{visibility, elf} visibility, ELF
+\IR{unknown %if} \c{%if}, compatibility
+\IC{unknown %if}{unknown %elif} \c{%elif}, compatibility
+\IC{unknown %if}{unknown %ifn} \c{%ifn}, compatibility
+\IC{unknown %if}{unknown %elifn} \c{%elifn}, compatibility
 \# \IC{program entry point}{entry point, program}
 \# \IC{program entry point}{start point, program}
 \# \IC{MS-DOS device drivers}{device drivers, MS-DOS}

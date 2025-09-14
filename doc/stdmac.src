@@ -197,6 +197,9 @@ It is strongly suggested to test for the presence of this macro and,
 if present, relying on the corresponding tests instead of relying on
 NASM version number tests.
 
+However, see \k{if_caveat} for an important caveat.
+
+
 \H{use_def} \I\c{__?USE_*?__}\c{__?USE_}\e{package}\c{?__}: Package
 Include Test
 

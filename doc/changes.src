@@ -65,7 +65,7 @@ It is the production version of NASM since 2025.
 \b The NASM preprocessor now assumes that an unknown directive
    starting with \c{%if} or \c{%elif} is a misspelled or not yet
    implemented conditional directive, and tries to match it with a
-   corresponding \c{%endif}.
+   corresponding \c{%endif}.  See \k{if_caveat}.
 
 
 \H{cl-2.xx} NASM 2 Series

@@ -1613,7 +1613,6 @@ just in \c{%if} expressions.
 The following descriptions of tests all imply the existence of these
 alternate forms.
 
-
 \S{if} \i\c{%if}: Testing Arbitrary Numeric Expressions\I{testing,
 arbitrary numeric expressions}
 
@@ -1917,6 +1916,37 @@ the \c{%!}\e{variable} directive exists.
 Just as for \c{%!}\e{variable} the argument should be written as a
 string if it contains characters that would not be legal in an
 identifier.  See \k{getenv}.
+
+
+\S{if_caveat} Backwards Compatibility Caveat
+
+\I\c{__?NASM_HAS_IFDIRECTIVE?__}\I\c{%ifdirective}\I\c{unknown
+%if}Note that NASM before version 3.00 would not handle an unknown
+\c{%if}-type directive for the purpose of \c{%if}...\c{%endif}
+balancing. Therefore, something like this would not work:
+
+\c %ifdef __?NASM_HAS_IFDIRECTIVE?__        ; NASM 3.00 or later
+\c   %ifdirective %iffile		    ; Test for directive
+\c     %iffile MYFILE
+\c        incbin MYFILE
+\c     %endif
+\c   %endif
+\c %endif
+
+This can be worked around by using the \c{%is()} series functions and
+plain \c{%if} instead:
+
+\c %ifdef __?NASM_HAS_IFDIRECTIVE?__        ; NASM 3.00 or later
+\c   %if %isdef(%isfile)		    ; Test for function
+\c     %if %isfile(MYFILE)
+\c        incbin MYFILE
+\c     %endif
+\c   %endif
+\c %endif
+
+NASM 3.00 and later treats an unknown preprocessor directive beginning
+with \c{%if} or \c{%elif} as if it were a known conditional directive
+for the purpose of \c{%if}...\c{%endif} balancing.
 
 
 \H{rep} \i{Preprocessor Loops}\I{repeating code}: \i\c{%rep}

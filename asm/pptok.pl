@@ -369,7 +369,7 @@ if ($what eq 'src') {
 	    foreach my $ct (@ctails) { # Condition tail
 		my $xt = $ct eq '';
 
-		print OUT "\\IR{\%$cs$cn$ct} \\c{\%$cs}";
+		print OUT "\\IR{\%$cs$cn$ct} \\c{\%$cs$cn}";
 		print OUT ", \\c{\%$cs$cn$ct}" unless ($xn && $xt);
 		print OUT "\n";
 
