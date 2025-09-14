@@ -59,6 +59,7 @@
 *token
 *usable
 *using
+*_BOGUS
 
 # Directives with -i- versions for case insensitive
 %!assign

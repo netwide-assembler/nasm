@@ -4432,6 +4432,13 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
     switch (tline->type) {
     case TOKEN_PREPROC_ID:
         op = pp_get_nasm_directive(dname);
+        if (op == PP_invalid) {
+            /* Look to see if it is a misspelled or future conditional */
+            if (!nasm_strnicmp(dname, "%if", 3))
+                op = PP_IF_BOGUS;
+            else if (!nasm_strnicmp(dname, "%elif", 5))
+                op = PP_ELIF_BOGUS;
+        }
         break;
 
     case TOKEN_ID:
