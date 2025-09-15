@@ -468,6 +468,13 @@ WRMSRNS		void				[	np 0f 01 c6		]		WRMSRNS,PRIV,LONG
 RDMSRLIST	void				[	f2 0f 01 c6		]		MSRLIST,PRIV,LONG
 WRMSRLIST	void				[	f3 0f 01 c6		]		MSRLIST,PRIV,LONG
 
+URDMSR		reg64,reg64			[mr:	f2 0f 38 f8 /r		]		FUTURE,NOAPX
+URDMSR		reg64,reg64			[mr:	evex.nf0.nd0.l0.f2.m4.w0 f8 /r]		APX,FUTURE
+URDMSR		reg64,imm32			[mi:	vex+.128.f2.m7.w0 f8 /0	id]		FUTURE
+UWRMSR		reg64,reg64			[mr:	f3 0f 38 f8 /r		]		FUTURE,NOAPX
+UWRMSR		reg64,reg64			[mr:	evex.nf0.nd0.l0.f3.m4.w0 f8 /r]		APX,FUTURE
+UWRMSR		reg64,imm32			[mi:	vex+.128.f3.m7.w0 f8 /0	id]		FUTURE
+
 $bwd  UMOV	rm#,reg#			[mr:	np o# 0f 10# /r]			386,UNDOC,SM,ND,NOLONG,OBSOLETE
 $bwd  UMOV	reg#,rm#			[rm:	np o# 0f 12# /r]			386,UNDOC,SM,ND,NOLONG,OBSOLETE
 
