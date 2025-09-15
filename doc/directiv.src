@@ -128,7 +128,7 @@ others, including \c{GS}-relative references, \c{RIP}-relative.
 version of NASM. Specify \c{DEFAULT ABS} explicitly if you need your
 code to avoid relative offsets.
 
-\S{default-bnd} \i\c{BND} & \i\c{NOBND}: \c{BND} prefix
+\S{default-bnd} \i\c{BND}, \i\c{NOBND}: \c{BND} prefix
 
 If \c{DEFAULT BND} is set, all bnd-prefix available instructions following
 this directive are prefixed with bnd. To override it, \c{NOBND} prefix can
