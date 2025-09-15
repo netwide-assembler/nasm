@@ -5395,9 +5395,13 @@ RSTORSSP	mem64				[m:	f3 0f 01 /5]				CET
 SAVEPREVSSP	void				[	f3 0f 01 ea]				CET
 SETSSBSY	void				[	f3 0f 01 e8]				CET
 WRUSSD		mem32,reg32			[mr:	o32 66 0f38 f5 /r]			CET
+WRUSSD		mem32,reg32			[mr:	evex.nf0.nd0.l0.66.m4.w0 65 /r]		APX,CET
 WRUSSQ		mem64,reg64			[mr:	o64 66 0f38 f5 /r]			CET,LONG
-WRSSD		mem32,reg32			[mr:	o32 0f38 f6 /r]			CET
-WRSSQ		mem64,reg64			[mr:	o64 0f38 f6 /r]			CET,LONG
+WRUSSQ		mem64,reg64			[mr:	evex.nf0.nd0.l0.66.m4.w1 65 /r]		APX,CET,LONG
+WRSSD		mem32,reg32			[mr:	o32 0f38 f6 /r]				CET
+WRSSD		mem32,reg32			[mr:	evex.nf0.nd0.l0.m4.w0 66 /r]		APX,CET
+WRSSQ		mem64,reg64			[mr:	o64 0f38 f6 /r]				CET,LONG
+WRSSQ		mem64,reg64			[mr:	evex.nf0.nd0.l0.m4.w1 66 /r]		APX,CET,LONG
 
 ;# Instructions from ISE doc 319433-040, June 2020
 ENQCMD		reg16,mem512			[rm:	a16 f2 0f38 f8 /r]			ENQCMD,SZ,NOLONG
