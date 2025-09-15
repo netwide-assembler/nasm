@@ -465,8 +465,16 @@ WRMSR		void				[	0f 30]					PENT,PRIV,NOAPX
 RDMSR		void				[	0f 32]					PENT,PRIV,NOAPX
 RDMSR		rm64,imm32			[mi:	evex.nf0.128.f2.m7 f6 /0]		APX,PENT,PRIV
 WRMSRNS		void				[	np 0f 01 c6		]		WRMSRNS,PRIV,LONG
+WRMSRNS		imm32,reg64			[im:	evex.nf0.128.f3.m7 f6 /0]		APX,WRMSRNS,PRIV,LONG
 RDMSRLIST	void				[	f2 0f 01 c6		]		MSRLIST,PRIV,LONG
 WRMSRLIST	void				[	f3 0f 01 c6		]		MSRLIST,PRIV,LONG
+
+URDMSR		reg64,reg64			[mr:	f2 0f 38 f8 /r		]		FUTURE,NOAPX
+URDMSR		reg64,reg64			[mr:	evex.nf0.nd0.l0.f2.m4.w0 f8 /r]		APX,FUTURE
+URDMSR		reg64,imm32			[mi:	vex+.128.f2.m7.w0 f8 /0	id]		FUTURE
+UWRMSR		reg64,reg64			[mr:	f3 0f 38 f8 /r		]		FUTURE,NOAPX
+UWRMSR		reg64,reg64			[mr:	evex.nf0.nd0.l0.f3.m4.w0 f8 /r]		APX,FUTURE
+UWRMSR		reg64,imm32			[mi:	vex+.128.f3.m7.w0 f8 /0	id]		FUTURE
 
 $bwd  UMOV	rm#,reg#			[mr:	np o# 0f 10# /r]			386,UNDOC,SM,ND,NOLONG,OBSOLETE
 $bwd  UMOV	reg#,rm#			[rm:	np o# 0f 12# /r]			386,UNDOC,SM,ND,NOLONG,OBSOLETE
@@ -5352,9 +5360,13 @@ RSTORSSP	mem64				[m:	f3 0f 01 /5]				CET
 SAVEPREVSSP	void				[	f3 0f 01 ea]				CET
 SETSSBSY	void				[	f3 0f 01 e8]				CET
 WRUSSD		mem32,reg32			[mr:	o32 66 0f38 f5 /r]			CET
+WRUSSD		mem32,reg32			[mr:	evex.nf0.nd0.l0.66.m4.w0 65 /r]		APX,CET
 WRUSSQ		mem64,reg64			[mr:	o64 66 0f38 f5 /r]			CET,LONG
-WRSSD		mem32,reg32			[mr:	o32 0f38 f6 /r]			CET
-WRSSQ		mem64,reg64			[mr:	o64 0f38 f6 /r]			CET,LONG
+WRUSSQ		mem64,reg64			[mr:	evex.nf0.nd0.l0.66.m4.w1 65 /r]		APX,CET,LONG
+WRSSD		mem32,reg32			[mr:	o32 0f38 f6 /r]				CET
+WRSSD		mem32,reg32			[mr:	evex.nf0.nd0.l0.m4.w0 66 /r]		APX,CET
+WRSSQ		mem64,reg64			[mr:	o64 0f38 f6 /r]				CET,LONG
+WRSSQ		mem64,reg64			[mr:	evex.nf0.nd0.l0.m4.w1 66 /r]		APX,CET,LONG
 
 ;# Instructions from ISE doc 319433-040, June 2020
 ENQCMD		reg16,mem512			[rm:	a16 f2 0f38 f8 /r]			ENQCMD,SZ,NOLONG
