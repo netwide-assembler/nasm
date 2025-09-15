@@ -3678,7 +3678,7 @@ static int process_ea(operand *input, int rfield, opflags_t rflags,
                      *!ea-absolute [on] absolute address cannot be RIP-relative
                      *!  warns that an address that is inherently absolute cannot
                      *!  be generated with RIP-relative encoding using \c{REL},
-                     *!  see \k{REL & ABS}.
+                     *!  see \k{default-rel}.
                      */
                     if (input->segment == NO_SEG ||
                         (input->opflags & OPFLAG_RELATIVE)) {

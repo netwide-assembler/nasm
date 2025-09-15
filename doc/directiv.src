@@ -95,9 +95,11 @@ specify most features directly.  However, this is occasionally
 obnoxious, as the explicit form is pretty much the only one one wishes
 to use.
 
-Currently, \c{DEFAULT} can set \c{REL} & \c{ABS} and \c{BND} & \c{NOBND}.
+Currently, \c{DEFAULT} can be used to select \c{RIP}-relative
+(\c{REL}) or absolute (\c{ABS}) addressing in 64-bit mode, and the use
+of MPX \c{BND} prefixes.
 
-\S{REL & ABS} \i\c{REL} & \i\c{ABS}: RIP-relative addressing
+\S{default-rel} \i\c{REL}, \i\c{ABS}: RIP-relative addressing
 
 This sets whether registerless instructions in 64-bit mode are
 \c{RIP}-relative or not. By default, they are absolute unless
@@ -126,7 +128,7 @@ others, including \c{GS}-relative references, \c{RIP}-relative.
 version of NASM. Specify \c{DEFAULT ABS} explicitly if you need your
 code to avoid relative offsets.
 
-S{BND & NOBND} \i\c{BND} & \i\c{NOBND}: \c{BND} prefix
+\S{default-bnd} \i\c{BND} & \i\c{NOBND}: \c{BND} prefix
 
 If \c{DEFAULT BND} is set, all bnd-prefix available instructions following
 this directive are prefixed with bnd. To override it, \c{NOBND} prefix can
