@@ -22,10 +22,6 @@ parser.add_argument('--nasm',
                     dest = 'nasm', default = './nasm',
                     help = 'Nasm executable to use')
 
-parser.add_argument('--hexdump',
-                    dest = 'hexdump', default = '/usr/bin/hexdump',
-                    help = 'Hexdump executable to use')
-
 sp = parser.add_subparsers(dest = 'cmd')
 for cmd in ['run']:
     spp = sp.add_parser(cmd, help = 'Run test cases')
@@ -261,13 +257,31 @@ def test_updated(test):
     print("=== Test %s UPDATED ===" % (test))
     return True
 
-def run_hexdump(path):
-    p = subprocess.Popen([args.hexdump, "-C", path],
-                         stdout = subprocess.PIPE,
-                         close_fds = True)
-    if p.wait() == 0:
-        return p
-    return None
+def hexdump(path):
+    dump = ''
+    addr = 0
+    with open(path, 'rb') as f:
+        while b := f.read(16):
+            dump += "%08x  " % (addr)
+            for i in range(16):
+                if (i == 8):
+                    dump += " -"
+                if (i >= len(b)):
+                    dump += "   "
+                else:
+                    dump += " %02x" % b[i]
+            dump += "  |"
+            for i in range(16):
+                if (i >= len(b)):
+                    c = ord(' ')
+                else:
+                    c = b[i]
+                if (c < 32 or c > 126):
+                    c = ord('.')
+                dump += chr(c)
+            dump += "|\n";
+            addr += 16
+    return dump
 
 def show_std(stdname, data):
     print("\t--- %s" % (stdname))
@@ -293,20 +307,18 @@ def cmp_std(from_name, from_data, match_name, match_data):
     return True
 
 def show_diff(test, patha, pathb):
-    pa = run_hexdump(patha)
-    pb = run_hexdump(pathb)
-    if pa == None or pb == None:
+    try:
+        sa = hexdump(patha)
+        sb = hexdump(pathb)
+    except OSError:
         return test_fail(test, "Can't create dumps")
-    sa = pa.stdout.read().decode("utf-8")
-    sb = pb.stdout.read().decode("utf-8")
+
     print("\t--- hexdump %s" % (patha))
     for i in sa.split("\n"):
         print("\t%s" % i)
     print("\t--- hexdump %s" % (pathb))
     for i in sb.split("\n"):
         print("\t%s" % i)
-    pa.stdout.close()
-    pb.stdout.close()
 
     diff = difflib.unified_diff(sa.split("\n"), sb.split("\n"),
                                 fromfile = patha, tofile = pathb)
