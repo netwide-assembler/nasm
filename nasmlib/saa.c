@@ -307,25 +307,25 @@ void saa_write8(struct SAA *s, uint8_t v)
 
 void saa_write16(struct SAA *s, uint16_t v)
 {
-    v = cpu_to_le16(v);
+    v = htole16(v);
     saa_wbytes(s, &v, 2);
 }
 
 void saa_write32(struct SAA *s, uint32_t v)
 {
-    v = cpu_to_le32(v);
+    v = htole32(v);
     saa_wbytes(s, &v, 4);
 }
 
 void saa_write64(struct SAA *s, uint64_t v)
 {
-    v = cpu_to_le64(v);
+    v = htole64(v);
     saa_wbytes(s, &v, 8);
 }
 
 void saa_writeaddr(struct SAA *s, uint64_t v, size_t len)
 {
-    v = cpu_to_le64(v);
+    v = htole64(v);
     saa_wbytes(s, &v, len);
 }
 

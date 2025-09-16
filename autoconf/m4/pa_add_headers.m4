@@ -8,6 +8,5 @@ AC_DEFUN([_PA_ADD_HEADER],
 #include <$1>"
 ])
 ])
-
 AC_DEFUN([PA_ADD_HEADERS],
 [m4_map_args_w([$1],[_PA_ADD_HEADER(],[)])])

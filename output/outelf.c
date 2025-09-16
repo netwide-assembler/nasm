@@ -1826,7 +1826,7 @@ rel12adr:
  */
 static inline uint16_t elf_shndx(int section, uint16_t overflow)
 {
-    return cpu_to_le16(section < (int)SHN_LORESERVE ? section : overflow);
+    return htole16(section < (int)SHN_LORESERVE ? section : overflow);
 }
 
 struct ehdr_common {
@@ -1911,20 +1911,20 @@ static void elf_write(void)
     ehdr.com.e_ident[EI_VERSION]    = EV_CURRENT;
     ehdr.com.e_ident[EI_OSABI]      = elf_osabi;
     ehdr.com.e_ident[EI_ABIVERSION] = elf_abiver;
-    ehdr.com.e_type                 = cpu_to_le16(ET_REL);
-    ehdr.com.e_machine              = cpu_to_le16(efmt->e_machine);
-    ehdr.com.e_version              = cpu_to_le16(EV_CURRENT);
+    ehdr.com.e_type                 = htole16(ET_REL);
+    ehdr.com.e_machine              = htole16(efmt->e_machine);
+    ehdr.com.e_version              = htole16(EV_CURRENT);
 
     if (!efmt->elf64) {
-        ehdr.ehdr32.e_shoff         = cpu_to_le32(sizeof ehdr);
-        ehdr.ehdr32.e_ehsize        = cpu_to_le16(sizeof(Elf32_Ehdr));
-        ehdr.ehdr32.e_shentsize     = cpu_to_le16(sizeof(Elf32_Shdr));
+        ehdr.ehdr32.e_shoff         = htole32(sizeof ehdr);
+        ehdr.ehdr32.e_ehsize        = htole16(sizeof(Elf32_Ehdr));
+        ehdr.ehdr32.e_shentsize     = htole16(sizeof(Elf32_Shdr));
         ehdr.ehdr32.e_shnum         = elf_shndx(nsections, 0);
         ehdr.ehdr32.e_shstrndx      = elf_shndx(sec_shstrtab, SHN_XINDEX);
     } else {
-        ehdr.ehdr64.e_shoff         = cpu_to_le64(sizeof ehdr);
-        ehdr.ehdr64.e_ehsize        = cpu_to_le16(sizeof(Elf64_Ehdr));
-        ehdr.ehdr64.e_shentsize     = cpu_to_le16(sizeof(Elf64_Shdr));
+        ehdr.ehdr64.e_shoff         = htole64(sizeof ehdr);
+        ehdr.ehdr64.e_ehsize        = htole16(sizeof(Elf64_Ehdr));
+        ehdr.ehdr64.e_shentsize     = htole16(sizeof(Elf64_Shdr));
         ehdr.ehdr64.e_shnum         = elf_shndx(nsections, 0);
         ehdr.ehdr64.e_shstrndx      = elf_shndx(sec_shstrtab, SHN_XINDEX);
     }
@@ -2114,9 +2114,9 @@ static void elf32_sym(const struct elf_symbol *sym)
 {
     Elf32_Sym sym32;
 
-    sym32.st_name     = cpu_to_le32(sym->strpos);
-    sym32.st_value    = cpu_to_le32(sym->symv.key);
-    sym32.st_size     = cpu_to_le32(sym->size);
+    sym32.st_name     = htole32(sym->strpos);
+    sym32.st_value    = htole32(sym->symv.key);
+    sym32.st_size     = htole32(sym->size);
     sym32.st_info     = sym->type;
     sym32.st_other    = sym->other;
     sym32.st_shndx    = elf_shndx(sym->section, SHN_XINDEX);
@@ -2127,9 +2127,9 @@ static void elf64_sym(const struct elf_symbol *sym)
 {
     Elf64_Sym sym64;
 
-    sym64.st_name     = cpu_to_le32(sym->strpos);
-    sym64.st_value    = cpu_to_le64(sym->symv.key);
-    sym64.st_size     = cpu_to_le64(sym->size);
+    sym64.st_name     = htole32(sym->strpos);
+    sym64.st_value    = htole64(sym->symv.key);
+    sym64.st_size     = htole64(sym->size);
     sym64.st_info     = sym->type;
     sym64.st_other    = sym->other;
     sym64.st_shndx    = elf_shndx(sym->section, SHN_XINDEX);
@@ -2240,8 +2240,8 @@ static struct SAA *elf32_build_reltab(const struct elf_reloc *r)
         if (sym >= GLOBAL_TEMP_BASE)
             sym += global_offset;
 
-        rel32.r_offset    = cpu_to_le32(r->address);
-        rel32.r_info      = cpu_to_le32(ELF32_R_INFO(sym, r->type));
+        rel32.r_offset    = htole32(r->address);
+        rel32.r_info      = htole32(ELF32_R_INFO(sym, r->type));
         saa_wbytes(s, &rel32, sizeof rel32);
 
         r = r->next;
@@ -2274,9 +2274,9 @@ static struct SAA *elfx32_build_reltab(const struct elf_reloc *r)
         if (sym >= GLOBAL_TEMP_BASE)
             sym += global_offset;
 
-        rela32.r_offset   = cpu_to_le32(r->address);
-        rela32.r_info     = cpu_to_le32(ELF32_R_INFO(sym, r->type));
-        rela32.r_addend   = cpu_to_le32(r->offset);
+        rela32.r_offset   = htole32(r->address);
+        rela32.r_info     = htole32(ELF32_R_INFO(sym, r->type));
+        rela32.r_addend   = htole32(r->offset);
         saa_wbytes(s, &rela32, sizeof rela32);
 
         r = r->next;
@@ -2309,9 +2309,9 @@ static struct SAA *elf64_build_reltab(const struct elf_reloc *r)
         if (sym >= GLOBAL_TEMP_BASE)
             sym += global_offset;
 
-        rela64.r_offset   = cpu_to_le64(r->address);
-        rela64.r_info     = cpu_to_le64(ELF64_R_INFO(sym, r->type));
-        rela64.r_addend   = cpu_to_le64(r->offset);
+        rela64.r_offset   = htole64(r->address);
+        rela64.r_info     = htole64(ELF64_R_INFO(sym, r->type));
+        rela64.r_addend   = htole64(r->offset);
         saa_wbytes(s, &rela64, sizeof rela64);
 
         r = r->next;
@@ -2333,35 +2333,35 @@ static void elf_section_header(int name, int type, uint64_t flags,
     if (!efmt->elf64) {
         Elf32_Shdr  shdr;
 
-        shdr.sh_name         = cpu_to_le32(name);
-        shdr.sh_type         = cpu_to_le32(type);
-        shdr.sh_flags        = cpu_to_le32(flags);
+        shdr.sh_name         = htole32(name);
+        shdr.sh_type         = htole32(type);
+        shdr.sh_flags        = htole32(flags);
         shdr.sh_addr         = 0;
-        shdr.sh_offset       = cpu_to_le32(type == SHT_NULL ? 0 : elf_foffs);
-        shdr.sh_size         = cpu_to_le32(datalen);
+        shdr.sh_offset       = htole32(type == SHT_NULL ? 0 : elf_foffs);
+        shdr.sh_size         = htole32(datalen);
         if (data)
             elf_foffs += ALIGN(datalen, SEC_FILEALIGN);
-        shdr.sh_link         = cpu_to_le32(link);
-        shdr.sh_info         = cpu_to_le32(info);
-        shdr.sh_addralign    = cpu_to_le32(align);
-        shdr.sh_entsize      = cpu_to_le32(entsize);
+        shdr.sh_link         = htole32(link);
+        shdr.sh_info         = htole32(info);
+        shdr.sh_addralign    = htole32(align);
+        shdr.sh_entsize      = htole32(entsize);
 
         nasm_write(&shdr, sizeof shdr, ofile);
     } else {
         Elf64_Shdr  shdr;
 
-        shdr.sh_name         = cpu_to_le32(name);
-        shdr.sh_type         = cpu_to_le32(type);
-        shdr.sh_flags        = cpu_to_le64(flags);
+        shdr.sh_name         = htole32(name);
+        shdr.sh_type         = htole32(type);
+        shdr.sh_flags        = htole64(flags);
         shdr.sh_addr         = 0;
-        shdr.sh_offset       = cpu_to_le64(type == SHT_NULL ? 0 : elf_foffs);
-        shdr.sh_size         = cpu_to_le64(datalen);
+        shdr.sh_offset       = htole64(type == SHT_NULL ? 0 : elf_foffs);
+        shdr.sh_size         = htole64(datalen);
         if (data)
             elf_foffs += ALIGN(datalen, SEC_FILEALIGN);
-        shdr.sh_link        = cpu_to_le32(link);
-        shdr.sh_info        = cpu_to_le32(info);
-        shdr.sh_addralign   = cpu_to_le64(align);
-        shdr.sh_entsize     = cpu_to_le64(entsize);
+        shdr.sh_link        = htole32(link);
+        shdr.sh_info        = htole32(info);
+        shdr.sh_addralign   = htole64(align);
+        shdr.sh_entsize     = htole64(entsize);
 
         nasm_write(&shdr, sizeof shdr, ofile);
     }

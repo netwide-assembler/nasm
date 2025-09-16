@@ -52,25 +52,25 @@ void nasm_write(const void *ptr, size_t size, FILE *f)
 
 void fwriteint16_t(uint16_t data, FILE * fp)
 {
-    data = cpu_to_le16(data);
+    data = htole16(data);
     nasm_write(&data, 2, fp);
 }
 
 void fwriteint32_t(uint32_t data, FILE * fp)
 {
-    data = cpu_to_le32(data);
+    data = htole32(data);
     nasm_write(&data, 4, fp);
 }
 
 void fwriteint64_t(uint64_t data, FILE * fp)
 {
-    data = cpu_to_le64(data);
+    data = htole64(data);
     nasm_write(&data, 8, fp);
 }
 
 void fwriteaddr(uint64_t data, int size, FILE * fp)
 {
-    data = cpu_to_le64(data);
+    data = htole64(data);
     nasm_write(&data, size, fp);
 }
 

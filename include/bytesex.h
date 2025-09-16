@@ -73,15 +73,15 @@
                                                                         \
     return xx
 
-#ifndef HAVE_CPU_TO_LE16
-static inline uint16_t cpu_to_le16(uint16_t v)
+#ifndef HAVE_HTOLE16
+static inline uint16_t htole16(uint16_t v)
 {
 # ifdef WORDS_LITTLEENDIAN
     return v;
+# elif defined(HAVE_CPU_TO_LE16)
+    return cpu_to_le16(v);
 # elif defined(HAVE___CPU_TO_LE16)
     return __cpu_to_le16(v);
-# elif defined(HAVE_HTOLE16)
-    return htole16(v);
 # elif defined(WORDS_BIGENDIAN)
 #  ifdef HAVE___BSWAP_16
     return __bswap_16(v);
@@ -99,15 +99,15 @@ static inline uint16_t cpu_to_le16(uint16_t v)
 }
 #endif
 
-#ifndef HAVE_CPU_TO_LE32
-static inline uint32_t cpu_to_le32(uint32_t v)
+#ifndef HAVE_HTOLE32
+static inline uint32_t htole32(uint32_t v)
 {
 # ifdef WORDS_LITTLEENDIAN
     return v;
+# elif defined(HAVE_CPU_TO_LE32)
+    return cpu_to_le32(v);
 # elif defined(HAVE___CPU_TO_LE32)
     return __cpu_to_le32(v);
-# elif defined(HAVE_HTOLE32)
-    return htole32(v);
 # elif defined(WORDS_BIGENDIAN)
 #  ifdef HAVE___BSWAP_32
     return __bswap_32(v);
@@ -126,15 +126,15 @@ static inline uint32_t cpu_to_le32(uint32_t v)
 }
 #endif
 
-#ifndef HAVE_CPU_TO_LE64
-static inline uint64_t cpu_to_le64(uint64_t v)
+#ifndef HAVE_HTOLE64
+static inline uint64_t htole64(uint64_t v)
 {
 #ifdef WORDS_LITTLEENDIAN
     return v;
+# elif defined(HAVE_CPU_TO_LE64)
+    return cpu_to_le64(v);
 # elif defined(HAVE___CPU_TO_LE64)
     return __cpu_to_le64(v);
-# elif defined(HAVE_HTOLE64)
-    return htole64(v);
 # elif defined(WORDS_BIGENDIAN)
 #  ifdef HAVE___BSWAP_64
     return __bswap_64(v);
@@ -155,8 +155,8 @@ static inline uint64_t cpu_to_le64(uint64_t v)
 }
 #endif
 
-#ifndef HAVE_LE16_TO_CPU
-static inline uint16_t le16_to_cpu(uint16_t v)
+#ifndef HAVE_HTOLE16
+static inline uint16_t le16toh(uint16_t v)
 {
 #ifdef WORDS_LITTLEENDIAN
     return v;
@@ -165,41 +165,41 @@ static inline uint16_t le16_to_cpu(uint16_t v)
 # elif defined(HAVE_LE16TOH)
     return le64toh(v);
 # elif defined(WORDS_BIGENDIAN)
-    return cpu_to_le16(v);
+    return htole16(v);
 # else
     LE_TO_CPU(16);
 # endif
 }
 #endif
 
-#ifndef HAVE_LE32_TO_CPU
-static inline uint32_t le32_to_cpu(uint32_t v)
+#ifndef HAVE_HTOLE32
+static inline uint32_t le32toh(uint32_t v)
 {
 #ifdef WORDS_LITTLEENDIAN
     return v;
-# elif defined(HAVE___LE32_TO_CPU)
+# elif defined(HAVE_CPU_TO_LE32)
+    return le32_to_cpu(v);
+# elif defined(HAVE___CPU_TO_LE32)
     return __le32_to_cpu(v);
-# elif defined(HAVE_LE32TOH)
-    return le64toh(v);
 # elif defined(WORDS_BIGENDIAN)
-    return cpu_to_le32(v);
+    return htole32(v);
 # else
     LE_TO_CPU(32);
 # endif
 }
 #endif
 
-#ifndef HAVE_LE64_TO_CPU
-static inline uint64_t le64_to_cpu(uint64_t v)
+#ifndef HAVE_HTOLE64
+static inline uint64_t le64toh(uint64_t v)
 {
 #ifdef WORDS_LITTLEENDIAN
     return v;
-# elif defined(HAVE___LE64_TO_CPU)
+# elif defined(HAVE_CPU_TO_LE64)
+    return le64_to_cpu(v);
+# elif defined(HAVE___CPU_TO_LE64)
     return __le64_to_cpu(v);
-# elif defined(HAVE_LE64TOH)
-    return le64toh(v);
 # elif defined(WORDS_BIGENDIAN)
-    return cpu_to_le64(v);
+    return htole64(v);
 # else
     LE_TO_CPU(64);
 # endif
@@ -232,11 +232,11 @@ struct unaligned16 {
 } __attribute__((packed));
 static inline uint16_t getu16(const void *p)
 {
-    return le16_to_cpu(((const struct unaligned16 *)p)->v);
+    return le16toh(((const struct unaligned16 *)p)->v);
 }
 static inline uint16_t setu16(void *p, uint16_t v)
 {
-    ((struct unaligned16 *)p)->v = cpu_to_le16(v);
+    ((struct unaligned16 *)p)->v = htole16(v);
     return v;
 }
 
@@ -245,11 +245,11 @@ struct unaligned32 {
 } __attribute__((packed));
 static inline uint32_t getu32(const void *p)
 {
-    return le32_to_cpu(((const struct unaligned32 *)p)->v);
+    return l32toh(((const struct unaligned32 *)p)->v);
 }
 static inline uint32_t setu32(void *p, uint32_t v)
 {
-    ((struct unaligned32 *)p)->v = cpu_to_le32(v);
+    ((struct unaligned32 *)p)->v = htole32(v);
     return v;
 }
 
@@ -258,11 +258,11 @@ struct unaligned64 {
 } __attribute__((packed));
 static inline uint64_t getu64(const void *p)
 {
-    return le64_to_cpu(((const struct unaligned64 *)p)->v);
+    return le64toh(((const struct unaligned64 *)p)->v);
 }
 static inline uint64_t setu64(void *p, uint64_t v)
 {
-    ((struct unaligned64 *)p)->v = cpu_to_le64(v);
+    ((struct unaligned64 *)p)->v = htole64(v);
     return v;
 }
 
@@ -271,36 +271,36 @@ static inline uint64_t setu64(void *p, uint64_t v)
 static inline uint16_t getu16(const void *p)
 {
     const uint16_t _unaligned *pp = p;
-    return le16_to_cpu(*pp);
+    return le16toh(*pp);
 }
 static inline uint16_t setu16(void *p, uint16_t v)
 {
     uint16_t _unaligned *pp = p;
-    *pp = cpu_to_le16(v);
+    *pp = htole16(v);
     return v;
 }
 
 static inline uint32_t getu32(const void *p)
 {
     const uint32_t _unaligned *pp = p;
-    return le32_to_cpu(*pp);
+    return l32toh(*pp);
 }
 static inline uint32_t setu32(void *p, uint32_t v)
 {
     uint32_t _unaligned *pp = p;
-    *pp = cpu_to_le32(v);
+    *pp = htole32(v);
     return v;
 }
 
 static inline uint64_t getu64(const void *p)
 {
     const uint64_t _unaligned *pp = p;
-    return le64_to_cpu(*pp);
+    return le64toh(*pp);
 }
 static inline uint64_t setu64(void *p, uint64_t v)
 {
     uint32_t _unaligned *pp = p;
-    *pp = cpu_to_le64(v);
+    *pp = htole64(v);
     return v;
 }
 
@@ -396,7 +396,7 @@ static inline uint64_t setu64(void *p, uint64_t v)
 
 #define WRITEADDR(p,v,s)                                        \
     do {                                                        \
-        const uint64_t _wa_v = cpu_to_le64(v);                  \
+        const uint64_t _wa_v = htole64(v);                  \
         (p) = mempcpy((p), &_wa_v, (s));                        \
     } while (0)
 

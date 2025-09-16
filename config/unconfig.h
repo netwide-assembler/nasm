@@ -4,7 +4,7 @@
 #define CONFIG_UNCONFIG_H
 
 #ifndef alloc_size_func2
-# ifdef HAVE_FUNC_ATTRIBUTE2_ALLOC_SIZE
+# ifdef HAVE_FUNC_ATTRIBUTE_2_ALLOC_SIZE
 #  define alloc_size_func2(x1,x2) ATTRIBUTE(alloc_size(x1,x2))
 # else
 #  define alloc_size_func2(x1,x2)
@@ -12,7 +12,7 @@
 #endif
 
 #ifndef alloc_size_func2_ptr
-# ifdef HAVE_FUNC_PTR_ATTRIBUTE2_ALLOC_SIZE
+# ifdef HAVE_FUNC_PTR_ATTRIBUTE_2_ALLOC_SIZE
 #  define alloc_size_func2_ptr(x1,x2) ATTRIBUTE(alloc_size(x1,x2))
 # else
 #  define alloc_size_func2_ptr(x1,x2)
@@ -36,7 +36,7 @@
 #endif
 
 #ifndef format_func3
-# ifdef HAVE_FUNC_ATTRIBUTE3_FORMAT
+# ifdef HAVE_FUNC_ATTRIBUTE_3_FORMAT
 #  define format_func3(x1,x2,x3) ATTRIBUTE(format(x1,x2,x3))
 # else
 #  define format_func3(x1,x2,x3)
@@ -44,7 +44,7 @@
 #endif
 
 #ifndef format_func3_ptr
-# ifdef HAVE_FUNC_PTR_ATTRIBUTE3_FORMAT
+# ifdef HAVE_FUNC_PTR_ATTRIBUTE_3_FORMAT
 #  define format_func3_ptr(x1,x2,x3) ATTRIBUTE(format(x1,x2,x3))
 # else
 #  define format_func3_ptr(x1,x2,x3)
@@ -164,7 +164,7 @@
 #endif
 
 #ifndef alloc_size_func1
-# ifdef HAVE_FUNC_ATTRIBUTE1_ALLOC_SIZE
+# ifdef HAVE_FUNC_ATTRIBUTE_1_ALLOC_SIZE
 #  define alloc_size_func1(x1) ATTRIBUTE(alloc_size(x1))
 # else
 #  define alloc_size_func1(x1)
@@ -172,7 +172,7 @@
 #endif
 
 #ifndef alloc_size_func1_ptr
-# ifdef HAVE_FUNC_PTR_ATTRIBUTE1_ALLOC_SIZE
+# ifdef HAVE_FUNC_PTR_ATTRIBUTE_1_ALLOC_SIZE
 #  define alloc_size_func1_ptr(x1) ATTRIBUTE(alloc_size(x1))
 # else
 #  define alloc_size_func1_ptr(x1)

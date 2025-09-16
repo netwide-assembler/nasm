@@ -424,7 +424,7 @@ static void out(struct out_data *data)
                     data->flags &= ~OUT_SIGNMASK;
                 }
                 warn_overflow_out(addrval, asize, data->flags, data->what);
-                xdata.q = cpu_to_le64(addrval);
+                xdata.q = htole64(addrval);
                 data->data = xdata.b;
                 data->type = OUT_RAWDATA;
                 asize = amax = 0;   /* No longer an address */
@@ -661,7 +661,7 @@ static void out_rawbyte(struct out_data *data, uint8_t byte)
 #if 0                           /* Currently unused */
 static void out_rawword(struct out_data *data, uint16_t value)
 {
-    uint16_t buf = cpu_to_le16(value);
+    uint16_t buf = htole16(value);
     data->type = OUT_RAWDATA;
     data->data = &buf;
     data->size = 2;
@@ -671,7 +671,7 @@ static void out_rawword(struct out_data *data, uint16_t value)
 
 static void out_rawdword(struct out_data *data, uint32_t value)
 {
-    uint32_t buf = cpu_to_le32(value);
+    uint32_t buf = htole32(value);
     data->type = OUT_RAWDATA;
     data->data = &buf;
     data->size = 4;
