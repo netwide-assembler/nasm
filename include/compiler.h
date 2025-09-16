@@ -338,15 +338,6 @@ static inline void *mempset(void *dst, int c, size_t n)
  * Attributes
  */
 
-/* Standard [[...]] attribute testing macros */
-#if !defined(__has_c_attribute)
-# define __has_c_attribute(x) 0
-#endif
-#if !defined(__has_cpp_attribute)
-# define __has_cpp_attribute(x) 0
-#endif
-#define has_attribute(x) (__has_c_attribute(x) || __has_cpp_attribute(x))
-
 #define safe_alloc     never_null     malloc_func
 #define safe_alloc_ptr never_null_ptr malloc_func_ptr
 
@@ -360,9 +351,7 @@ static inline void *mempset(void *dst, int c, size_t n)
 /*
  * How to tell the compiler that a function doesn't return
  */
-#if has_attribute(noreturn)
-# define no_return [[noreturn]]
-#elif defined(HAVE_STDNORETURN_H)
+#ifdef HAVE_STDNORETURN_H
 # include <stdnoreturn.h>
 # define no_return noreturn
 #elif defined(_MSC_VER)
