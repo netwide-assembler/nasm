@@ -980,6 +980,10 @@ $bwdq CCMPscc	spec4,reg#,rm#			[vrm:   evex.scc.dfv.l0.m4.o# 3a# /r	]	APX,SM1-2
 $wdq  CCMPscc	spec4,rm#,sbyte#		[vmi:	evex.scc.dfv.l0.m4.o# 83  /7	ib,s ]	APX,SM1-2
 $bwdq CCMPscc	spec4,rm#,imm#			[vmi:	evex.scc.dfv.l0.m4.o# 80# /7	i#   ]	APX,SM1-2
 
+$bwdq CTESTscc	spec4,rm#,reg#			[vmr:	evex.scc.dfv.l0.m4.o# 84# /r	]	APX,SM1-2
+$bwdq CTESTscc	spec4,rm#,imm#			[vmi:	evex.scc.dfv.l0.m4.o# f6# /0	i#   ]	APX,SM1-2
+$bwdq CTESTscc	spec4,rm#,imm#			[vmi:	evex.scc.dfv.l0.m4.o# f6# /1	i#   ]	APX,SM1-2
+
 ;# Conditional instructions
 $wdq  CMOVcc	reg#,rm#			[rm:	o#  0f 40+c /r]				P6,SM
 $wdq  CMOVcc	reg#,reg#,rm#			[vrm:	evex.nf0.nd1.l0.m4.o# 40+c /r]		APX,P6,SM
