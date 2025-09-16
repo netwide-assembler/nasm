@@ -234,11 +234,9 @@ AC_CHECK_FUNCS([strlcpy])
 AC_CHECK_FUNCS([strrchrnul])
 
 dnl These types are POSIX-specific, and Windows does it differently...
-AC_CHECK_TYPES([struct _stati64])
-AC_CHECK_TYPES([struct stat])
-AC_CHECK_FUNCS([stat _stati64])
-AC_CHECK_FUNCS([fstat _fstati64])
-AC_CHECK_FUNCS([S_ISREG])
+AC_CHECK_TYPES([struct stat], [AC_CHECK_FUNCS([stat fstat])])
+AC_CHECK_TYPES([struct _stati64], [AC_CHECK_FUNCS([_stati64 _fstati64])])
+PA_HAVE_FUNC([S_ISREG],,[unistd.h fcntl.h sys/stat.h io.h])
 
 dnl Check for functions that might not be declared in the headers for
 dnl various idiotic reasons (mostly because of library authors

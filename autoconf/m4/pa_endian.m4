@@ -54,4 +54,3 @@ PA_FIND_FUNC([htobe64,,[endian.h sys/endian.h machine/endian.h]],
 [cpu_to_be64], [__cpu_to_be64])
 ])
 ])
-
