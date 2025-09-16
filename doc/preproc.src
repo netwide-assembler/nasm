@@ -714,6 +714,15 @@ single token containing a decimal number; no minus sign will be
 emitted even if the input value is the maximum negative number.
 
 
+\S{f_b2hs} \i\c{%b2hs()} Function
+
+The \c{%b2hs()} functin takes a quoted string and an optional
+separator string, and expands to a quoted string containing a packed
+hexadecimal form of the bytes of the first string, separated by the
+separator string if applicable. This is the inverse of the \c{%hs2b()}
+function, see \k{f_hs2b}.
+
+
 \S{f_chr} \i\c{%chr()} Function
 
 The \c{%chr()} function evaluates its arguments as integers, then
@@ -759,6 +768,7 @@ This is the function equivalent of the \c{%depend} directive, see
 
 See also the \c{%pathsearch()} function (\k{f_pathsearch}).
 
+
 \S{f_eval} \i\c{%eval()} Function
 
 The \c{%eval()} function evaluates its argument as a numeric
@@ -803,6 +813,23 @@ For example:
 
 Equivalent to \i\c\{%eval()}, except that the results generated are
 given as unsigned hexadecimal, with a \c{0x} prefix.
+
+
+\S{f_hs2b} \i\c\{%hs2b()} Function
+
+The \c{%hs2b()} function takes one or more quoted strings containing
+hexadecimal numbers and optional separators (any character that is not
+a valid hexadecimal digit is considered a separator) and expands to a
+quoted string containing the bytes encoded in the hexadecimal
+string. Every pair of hexadecimal digits encodes a byte, but a
+separator will always terminate the encoding of a byte. Thus, these
+two statements will produce the same output:
+
+\c      db 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09
+\c      db %hs2b("00010203 4 0506 07 8","9")
+
+This can be used to compactly encode long strings of binary data in
+source code.
 
 
 \S{f_is} \i\c{%is()}\I\c{%isn()} Family Functions

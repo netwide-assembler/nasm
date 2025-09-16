@@ -124,4 +124,15 @@ static inline void nasm_ctype_tasm_mode(void)
     /* No differences at the present moment */
 }
 
+/* Returns a value >= 16 if not a valid hex digit */
+static inline unsigned int nasm_hexval(char c)
+{
+    unsigned int v = (unsigned char) c;
+
+    if (v >= '0' && v <= '9')
+        return v - '0';
+    else
+        return (v|0x20) - 'a' + 10;
+}
+
 #endif /* NASM_NCTYPE_H */

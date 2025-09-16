@@ -495,17 +495,6 @@ static bool ieee_round(bool minus, fp_limb *mant, int bits)
     return false;
 }
 
-/* Returns a value >= 16 if not a valid hex digit */
-static unsigned int hexval(char c)
-{
-    unsigned int v = (unsigned char) c;
-
-    if (v >= '0' && v <= '9')
-        return v - '0';
-    else
-        return (v|0x20) - 'a' + 10;
-}
-
 /* Handle floating-point numbers with radix 2^bits and binary exponent */
 static bool ieee_flconvert_bin(const char *string, int bits,
                                fp_limb *mant, int32_t *exponent)
@@ -535,7 +524,7 @@ static bool ieee_flconvert_bin(const char *string, int bits,
                 nasm_nonfatal("too many periods in floating-point constant");
                 return false;
             }
-        } else if ((v = hexval(c)) < (unsigned int)radix) {
+        } else if ((v = nasm_hexval(c)) < (unsigned int)radix) {
             if (!seendigit && v) {
                 int l = log2tbl[v];
 

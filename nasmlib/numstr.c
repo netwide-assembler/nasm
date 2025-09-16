@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 2023 The NASM Authors - All Rights Reserved
+ *   Copyright 2023-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -33,6 +33,20 @@
 
 #include "nasmlib.h"
 
+const char * const nasmlib_digit_chars[2] = {
+    /* Lower case version */
+    "0123456789"
+    "abcdefghijklmnopqrstuvwxyz"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "@_",
+
+    /* Upper case version */
+    "0123456789"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "@_"
+};
+
 /*
  * Produce an unsigned integer string from a number with a specified
  * base, digits and signedness.
@@ -40,21 +54,7 @@
 int numstr(char *buf, size_t buflen, uint64_t n,
            int digits, unsigned int base, bool ucase)
 {
-    static const char digit_chars[2][NUMSTR_MAXBASE+1] =
-    {
-        /* Lower case version */
-        "0123456789"
-        "abcdefghijklmnopqrstuvwxyz"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "@_",
-
-        /* Upper case version */
-        "0123456789"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz"
-        "@_"
-    };
-    const char * const dchars = digit_chars[ucase];
+    const char * const dchars = nasm_digit_chars(ucase);
     bool moredigits = digits <= 0;
     char *p;
     int len;

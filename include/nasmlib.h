@@ -292,6 +292,12 @@ int64_t readstrnum(char *str, int length, bool *warn);
 int numstr(char *buf, size_t buflen, uint64_t n,
            int digits, unsigned int base, bool ucase);
 
+extern const char * const nasmlib_digit_chars[2];
+static inline const char *nasm_digit_chars(bool ucase)
+{
+    return nasmlib_digit_chars[ucase];
+}
+
 /*
  * seg_alloc: allocate a hitherto unused segment number.
  */

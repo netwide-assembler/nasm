@@ -7688,6 +7688,7 @@ stdmac_strcat(const SMacro *s, Token **params, int nparams)
     int i;
     size_t len = 0;
     char *str, *p;
+    Token *t;
 
     (void)s;
 
@@ -7696,14 +7697,112 @@ stdmac_strcat(const SMacro *s, Token **params, int nparams)
         len += params[i]->len;
     }
 
-    nasm_newn(str, len+1);
-    p = str;
+    p = str = nasm_malloc(len+1);
 
     for (i = 0; i < nparams; i++) {
         p = mempcpy(p, tok_text(params[i]), params[i]->len);
     }
+    *p = '\0';
 
-    return make_tok_qstr_len(NULL, str, len);
+    t = make_tok_qstr_len(NULL, str, p - str);
+    nasm_free(str);
+    return t;
+}
+
+/* %hs2b() function */
+static Token *
+stdmac_hs2b(const SMacro *s, Token **params, int nparams)
+{
+    int i;
+    size_t len = 0;
+    char *str, *q;
+    Token *t;
+
+    (void)s;
+
+    for (i = 0; i < nparams; i++) {
+        unquote_token(params[i]);
+        len += (params[i]->len + 1) >> 1; /* Maximum possible */
+    }
+
+    q = str = nasm_malloc(len+1);
+
+    for (i = 0; i < nparams; i++) {
+        const char *p = tok_text(params[i]);
+        unsigned int j;
+        unsigned int len = params[i]->len;
+        int v = -1;
+
+        for (j = 0; j < len; j++) {
+            unsigned int hv = nasm_hexval(*p++);
+            if (hv > 15) {
+                /* Separator character or end of string */
+                if (v >= 0)
+                    *q++ = v;
+                v = -1;
+            } else {
+                if (v >= 0) {
+                    *q++ = (v << 4) + hv;
+                    v = -1;
+                } else {
+                    v = hv;
+                }
+            }
+        }
+        /* Partial byte at the end? */
+        if (v >= 0)
+            *q++ = v;
+    }
+    *q = '\0';
+
+    t = make_tok_qstr_len(NULL, str, q - str);
+    nasm_free(str);
+    return t;
+}
+
+/* %b2hs() function */
+static Token *
+stdmac_b2hs(const SMacro *s, Token **params, int nparams)
+{
+    const char * const dchars = nasm_digit_chars(false);
+    const char *p;
+    const char *sep;
+    uint8_t b;
+    char *str, *q;
+    size_t bytes, len, seplen;
+    size_t i;
+    Token *t;
+
+    (void)s;
+    (void)nparams;
+
+    p = unquote_token(params[0]);
+
+    if (!params[0]->len)
+        return make_tok_qstr_len(NULL, "", 0);
+
+    sep    = unquote_token(params[1]);
+    bytes  = params[0]->len;
+    seplen = params[1]->len;
+    len    = (bytes << 1) + (seplen * (bytes-1));
+
+    q = str = nasm_malloc(len+1);
+
+    b = *p++;
+    *q++ = dchars[b >> 4];
+    *q++ = dchars[b & 15];
+    for (i = 1; i < bytes; i++) {
+        if (seplen)
+            q = mempcpy(q, sep, seplen);
+        b = *p++;
+        *q++ = dchars[b >> 4];
+        *q++ = dchars[b & 15];
+    }
+    *q = '\0';
+
+    t = make_tok_qstr_len(NULL, str, q - str);
+    nasm_free(str);
+    return t;
 }
 
 /* %substr() function */
@@ -8223,12 +8322,11 @@ static void pp_add_magic_simple(void)
         { "__?PTR?__",   true, 0, 0, stdmac_ptr },
         { "__?DEFAULT?__", true, 0, 0, stdmac_default },
         { "%abs",        false, 1, SPARM_EVAL, stdmac_abs },
-//        { "%b2hs",       false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_b2hs },
         { "%chr",        false, 1, SPARM_EVAL|SPARM_OPTIONAL|SPARM_VARADIC, stdmac_chr },
         { "%count",      false, 1, SPARM_VARADIC, stdmac_count },
         { "%depend",     false, 1, SPARM_PLAIN, stdmac_depend },
         { "%eval",       false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
-//        { "%hs2b",       false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_hs2b },
+        { "%hs2b",       false, 1, SPARM_STR|SPARM_CONDQUOTE|SPARM_VARADIC, stdmac_hs2b },
         { "%map",	 false, 1, SPARM_VARADIC, stdmac_map },
         { "%null",       false, 1, SPARM_GREEDY, stdmac_null },
         { "%pathsearch", false, 1, SPARM_PLAIN, stdmac_pathsearch },
@@ -8380,6 +8478,17 @@ static void pp_add_magic_miscfunc(void)
     tmpl.params[2].flags  = SPARM_EVAL|SPARM_OPTIONAL;
     tmpl.params[2].def    = make_tok_num(NULL, 1);
     define_magic("%ord", false, &tmpl);
+
+    /* %b2hs() function */
+    nasm_zero(tmpl);
+    tmpl.nparam = 2;
+    tmpl.expand = stdmac_b2hs;
+    tmpl.recursive = true;
+    nasm_newn(tmpl.params, tmpl.nparam);
+    tmpl.params[0].flags  = SPARM_STR|SPARM_CONDQUOTE;
+    tmpl.params[1].flags  = SPARM_STR|SPARM_CONDQUOTE|SPARM_OPTIONAL;
+    tmpl.params[1].def    = make_tok_qstr_len(NULL, "", 0);
+    define_magic("%b2hs", false, &tmpl);
 
     /* %find[i]() functions */
     for (i = 0; i < 2; i++) {
