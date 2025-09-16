@@ -4218,6 +4218,7 @@ err:
  * and function.
  */
 static Token *pp_substr_common(Token *t, int64_t start, int64_t count);
+static const char *pp_get_substr(Token *t, int64_t start, int64_t *countp);
 
 static Token *pp_substr(Token *tline, const char *dname)
 {
@@ -4276,10 +4277,10 @@ err:
     return res;
 }
 
-static Token *pp_substr_common(Token *t, int64_t start, int64_t count)
+static const char *pp_get_substr(Token *t, int64_t start, int64_t *countp)
 {
     size_t len;
-    const char *txt;
+    int64_t count = *countp;
 
     unquote_token(t);
     len = t->len;
@@ -4293,10 +4294,21 @@ static Token *pp_substr_common(Token *t, int64_t start, int64_t count)
         count = len + count + 1 - start;
     if (start + count > (int64_t)len)
         count = len - start;
-    if (!len || count < 0 || start >=(int64_t)len)
-        start = -1, count = 0; /* empty string */
+    if (!len || count < 0 || start >= (int64_t)len)
+        start = -1; /* empty string */
 
-    txt = (start < 0) ? "" : tok_text(t) + start;
+    if (start < 0) {
+        *countp = 0;
+        return "";
+    } else {
+        *countp = count;
+        return tok_text(t) + start;
+    }
+}
+
+static Token *pp_substr_common(Token *t, int64_t start, int64_t count)
+{
+    const char *txt = pp_get_substr(t, start, &count);
     return make_tok_qstr_len(NULL, txt, count);
 }
 
@@ -7709,6 +7721,55 @@ stdmac_substr(const SMacro *s, Token **params, int nparams)
     return pp_substr_common(params[0], start, count);
 }
 
+/* %ord() function */
+static Token *
+stdmac_ord(const SMacro *s, Token **params, int nparams)
+{
+    int64_t start, count;
+    const uint8_t *txt;
+    Token *t;
+
+    (void)nparams;
+    (void)s;
+
+    start = get_tok_num(params[1], NULL);
+    count = get_tok_num(params[2], NULL);
+
+    txt = (const uint8_t *)pp_get_substr(params[0], start, &count);
+    if (!count)
+        return NULL;
+
+    t = make_tok_num(NULL, *txt++);
+    while (--count) {
+        t = make_tok_char(t, ',');
+        t = make_tok_num(t, *txt++);
+    }
+    return t;
+}
+
+/* %chr() function */
+static Token *
+stdmac_chr(const SMacro *s, Token **params, int nparams)
+{
+    int i;
+    char *buf = nasm_malloc(nparams);
+    char *p = buf;
+    Token *t;
+
+    (void)s;
+
+    for (i = 0; i < nparams; i++) {
+        /* Skip empty parameters! */
+        if (params[i]) {
+            *p++ = get_tok_num(params[i], NULL);
+        }
+    }
+
+    t = make_tok_qstr_len(NULL, buf, p - buf);
+    nasm_free(buf);
+    return t;
+}
+
 /* %strlen() function */
 static Token *
 stdmac_strlen(const SMacro *s, Token **params, int nparams)
@@ -8162,9 +8223,12 @@ static void pp_add_magic_simple(void)
         { "__?PTR?__",   true, 0, 0, stdmac_ptr },
         { "__?DEFAULT?__", true, 0, 0, stdmac_default },
         { "%abs",        false, 1, SPARM_EVAL, stdmac_abs },
+//        { "%b2hs",       false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_b2hs },
+        { "%chr",        false, 1, SPARM_EVAL|SPARM_OPTIONAL|SPARM_VARADIC, stdmac_chr },
         { "%count",      false, 1, SPARM_VARADIC, stdmac_count },
         { "%depend",     false, 1, SPARM_PLAIN, stdmac_depend },
         { "%eval",       false, 1, SPARM_EVAL|SPARM_VARADIC, stdmac_join },
+//        { "%hs2b",       false, 1, SPARM_STR|SPARM_CONDQUOTE, stdmac_hs2b },
         { "%map",	 false, 1, SPARM_VARADIC, stdmac_map },
         { "%null",       false, 1, SPARM_GREEDY, stdmac_null },
         { "%pathsearch", false, 1, SPARM_PLAIN, stdmac_pathsearch },
@@ -8303,6 +8367,19 @@ static void pp_add_magic_miscfunc(void)
     tmpl.params[2].flags  = SPARM_EVAL|SPARM_OPTIONAL;
     tmpl.params[2].def    = make_tok_num(NULL, -1);
     define_magic("%substr", false, &tmpl);
+
+    /* %ord() function */
+    nasm_zero(tmpl);
+    tmpl.nparam = 3;
+    tmpl.expand = stdmac_ord;
+    tmpl.recursive = true;
+    nasm_newn(tmpl.params, tmpl.nparam);
+    tmpl.params[0].flags  = SPARM_STR|SPARM_CONDQUOTE;
+    tmpl.params[1].flags  = SPARM_EVAL|SPARM_OPTIONAL;
+    tmpl.params[1].def    = make_tok_num(NULL, 1);
+    tmpl.params[2].flags  = SPARM_EVAL|SPARM_OPTIONAL;
+    tmpl.params[2].def    = make_tok_num(NULL, 1);
+    define_magic("%ord", false, &tmpl);
 
     /* %find[i]() functions */
     for (i = 0; i < 2; i++) {

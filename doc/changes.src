@@ -17,9 +17,9 @@ It is the production version of NASM since 2025.
 \b Add support for the APX and AVX10 instruction sets, and various
    miscellaneous new instructions.
 
-\b Add new preprocessor functions: \c{%depend()}, \c{%pathsearch()},
-   \c{%realpath()}, \c{%find()}, \c{%findi()} and \c{%null()}. See
-   \k{ppfunc}.
+\b Add new preprocessor functions: \c{%chr()}, \c{%depend()},
+   \c{%find()}, \c{%findi()}, \c{%null()}, \c{%ord()},
+   \c{%pathsearch()}, and \c{%realpath()}. See \k{ppfunc}.
 
 \b New preprocessor directive \c{%note} to insert a note in the list
    file, without issuing an external diagnosic.  Unlike a comment, it

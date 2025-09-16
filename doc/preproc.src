@@ -705,12 +705,20 @@ Starting with NASM 3.00, the \i\c{%ifdef} directive or \i\c{%isdef()}
 function can also test for the availability of preprocessor
 functions. They cannot, however, be undefined, aliased or redefined.
 
+
 \S{f_abs} \i\c{%abs()} Function
 
 The \c{%abs()} function evaluates its first argument as an expression,
 and then emits the absolute value. This will always be emitted as a
 single token containing a decimal number; no minus sign will be
 emitted even if the input value is the maximum negative number.
+
+
+\S{f_chr} \i\c{%chr()} Function
+
+The \c{%chr()} function evaluates its arguments as integers, then
+creates a quoted string out of these integers (mod 256) as bytes.
+
 
 \S{f_cond} \i\c{%cond()} Function
 
@@ -790,6 +798,7 @@ For example:
 \c      db %find(a,b,a,c)                       ; 2
 \c      db %find(a)                             ; 0 (empty list)
 
+
 \S{f_hex} \i\c{%hex()} Function
 
 Equivalent to \i\c\{%eval()}, except that the results generated are
@@ -825,6 +834,7 @@ argument to the conditional using \c{\{\}}:
 
 Unlike the C \c{defined()} preprocessor construct, these functions are
 valid anywhere in the source code, not just in \c{%if} expressions.
+
 
 \S{f_map} \i\c{%map()} Function
 
@@ -920,6 +930,16 @@ The full 64-symbol set used is, in order:
 If a \e{signed} number needs to be converted to a string, use
 \c{%abs()}, \c{%cond()}, and \c{%strcat()} to format the signed number
 string to your specific output requirements.
+
+
+\S{f_ord} \i\c{%ord()} Function
+
+The \c{%ord()} function takes a quoted string, and (like
+\c{%substr()}, see \k{f_substr}) an optional starting index and
+length, and expands to a comma-separated list of integers
+corresponding to the bytes of the quoted string. Note that unlike
+\c{%substr()} the length argument defaults to \c{1}, so if it is not
+given only a single byte value is expanded.
 
 
 \S{f_pathsearch} \i\c\{%pathsearch()} Function
