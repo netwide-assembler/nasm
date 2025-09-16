@@ -1895,7 +1895,7 @@ static const char no_file_name[] = "nasm"; /* What to print if no file name */
 /*
  * For fatal/critical/panic errors, kill this process.
  */
-static fatal_func die_hard(errflags true_type, errflags severity)
+static_fatal_func die_hard(errflags true_type, errflags severity)
 {
     fflush(NULL);
 

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 2007-2024 The NASM Authors - All Rights Reserved
+ *   Copyright 2007-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -187,18 +187,34 @@ size_t strlcpy(char *, const char *, size_t);
 char * pure_func strrchrnul(const char *, int);
 #endif
 
-#ifndef __cplusplus		/* C++ has false, true, bool as keywords */
+#if !defined(__cplusplus) || (__STDC_VERSION >= 202311L)
+/* C++ and C23 have bool, false, and true as proper keywords */
 # ifdef HAVE_STDBOOL_H
+/* If <stdbool.h> exists, include it explicitly to prevent it from
+   begin included later, causing the "bool" macro to be defined. */
 #  include <stdbool.h>
-# elif defined(HAVE__BOOL)
+#  ifdef bool
+/* Force bool to be a typedef instead of a macro. What a "clever" hack
+   this is... */
+    typedef bool                /* The macro definition of bool */
+#  undef bool
+        bool;                   /* No longer the macro definition */
+#  endif
+# elif defined(HAVE___BOOL)
    typedef _Bool bool;
 #  define false 0
 #  define true 1
 # else
-/* This is sort of dangerous, since casts will behave different than
-   casting to the standard boolean type.  Always use !!, not (bool). */
+/* This is a bit dangerous, because casting to this ersatz bool
+   will not produce the same result as the standard (bool) cast.
+   Instead, use the bool() constructor-style macro defined below. */
 typedef enum bool { false, true } bool;
 # endif
+/* This amounts to a C++-style conversion cast to bool.  This works
+   because C ignores an argument-taking macro when used without an
+   argument and because bool was redefined as a typedef if it previously
+   was defined as a macro (see above.) */
+# define bool(x) ((bool)!!(x))
 #endif
 
 /* Create a NULL pointer of the same type as the address of
@@ -311,12 +327,25 @@ static inline void *mempset(void *dst, int c, size_t n)
  * less likely to be taken.
  */
 #if HAVE___BUILTIN_EXPECT
-# define likely(x)	__builtin_expect(!!(x), 1)
-# define unlikely(x)	__builtin_expect(!!(x), 0)
+# define likely(x)	__builtin_expect(bool(x), true)
+# define unlikely(x)	__builtin_expect(bool(x), false)
 #else
-# define likely(x)	(!!(x))
-# define unlikely(x)	(!!(x))
+# define likely(x)	bool(x)
+# define unlikely(x)	bool(x)
 #endif
+
+/*
+ * Attributes
+ */
+
+/* Standard [[...]] attribute testing macros */
+#if !defined(__has_c_attribute)
+# define __has_c_attribute(x) 0
+#endif
+#if !defined(__has_cpp_attribute)
+# define __has_cpp_attribute(x) 0
+#endif
+#define has_attribute(x) (__has_c_attribute(x) || __has_cpp_attribute(x))
 
 #define safe_alloc     never_null     malloc_func
 #define safe_alloc_ptr never_null_ptr malloc_func_ptr
@@ -331,20 +360,45 @@ static inline void *mempset(void *dst, int c, size_t n)
 /*
  * How to tell the compiler that a function doesn't return
  */
-#ifdef HAVE_STDNORETURN_H
+#if has_attribute(noreturn)
+# define no_return [[noreturn]]
+#elif defined(HAVE_STDNORETURN_H)
 # include <stdnoreturn.h>
-# define no_return noreturn void
+# define no_return noreturn
 #elif defined(_MSC_VER)
-# define no_return __declspec(noreturn) void
+# define no_return __declspec(noreturn)
 #else
-# define no_return void noreturn_func
+# define no_return noreturn_func
+#endif
+
+/* Function priority: pure < reproducible < unsequenced < const */
+
+#ifndef HAVE_FUNC_ATTRIBUTE_REPRODUCIBLE
+# undef reproducible_func
+# define reproducible_func pure_func
+# undef reproducible_func_ptr
+# define reproducible_func_ptr pure_func_ptr
+#endif
+
+#ifndef HAVE_FUNC_ATTRIBUTE_UNSEQUENCED
+# undef unsequenced_func
+# define unsequenced_func reproducible_func
+# undef unsequenced_func_ptr
+# define unsequenced_func_ptr reproducible_func_ptr
+#endif
+
+#ifndef HAVE_FUNC_ATTRIBUTE_CONST
+# undef const_func
+# define const_func reproducible_func
+# undef const_func_ptr
+# define const_func_ptr reproducible_func_ptr
 #endif
 
 /*
  * A fatal function is both unlikely and no_return
  */
-#define fatal_func     no_return unlikely_func
-#define fatal_func_ptr no_return unlikely_func_ptr
+#define fatal_func        no_return unlikely_func void
+#define static_fatal_func no_return unlikely_func static void
 
 /*
  * How to tell the compiler that a function takes a printf-like string

@@ -10,12 +10,11 @@ AC_DEFUN([PA_FUNC_VSNPRINTF],
   for pa_try_func_vsnprintf in vsnprintf _vsnprintf
   do
   AS_IF([test $pa_cv_func_vsnprintf = no],
-        [AC_LINK_IFELSE([AC_LANG_SOURCE([
-AC_INCLUDES_DEFAULT
+        [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 const char *vsnprintf_test(const char *fmt, va_list va);
 const char *vsnprintf_test(const char *fmt, va_list va)
 {
-    static char buf[[256]];
+    static char buf[256];
     size_t sz;
     sz = $pa_try_func_vsnprintf(buf, sizeof buf, fmt, va);
     return (sz < sizeof buf) ? buf : NULL;
@@ -30,13 +29,10 @@ const char *vsnprintf_caller(const char *fmt, ...)
     what = vsnprintf_test(fmt, va);
     va_end(va);
     return what;
-}
-
-int main(void) {
+}]], [[
     puts(vsnprintf_caller("Hello = %d", 33));
     return 0;
-}
-])],
+]])],
  [pa_cv_func_vsnprintf=$pa_try_func_vsnprintf])])
  done
  ])

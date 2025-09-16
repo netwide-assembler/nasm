@@ -18,12 +18,11 @@ dnl the best very slow and doesn't buy us a single thing at all.
 PA_CROSS_COMPILE
 
 dnl Enable any available C extensions
-PA_PROG_CC
+PA_PROG_CC([[-std=c23],[-std=c17],[-std=c11],[-std=c99]])
 AC_USE_SYSTEM_EXTENSIONS
-PA_ADD_CPPFLAGS([-std=c23], [], [],
-[PA_ADD_CPPFLAGS([-std=c17], [], [],
- [PA_ADD_CPPFLAGS([-std=c11], [], [],
-  [PA_ADD_CPPFLAGS([-std=c99])])])])
+dnl Some environments abuse __STRICT_ANSI__ to disable some
+dnl function declarations
+PA_ADD_CFLAGS([-U__STRICT_ANSI__])
 
 dnl Options for debugging and profiling
 PA_OPTION_DEBUG
@@ -76,10 +75,6 @@ PA_ADD_CFLAGS([-fwrapv])
 dnl Force clang to behave in a predictable manner, in order to make bugs
 dnl possible to track down. gcc appears to have this behavior by default.
 PA_ADD_CFLAGS([-ftrivial-auto-var-init=zero])
-
-dnl Some environments abuse __STRICT_ANSI__ to disable some
-dnl function declarations
-PA_ADD_CFLAGS([-U__STRICT_ANSI__])
 
 dnl Don't put things in common if we can avoid it.  We don't want to
 dnl assume all compilers support common, and this will help find those

@@ -1,5 +1,5 @@
 dnl --------------------------------------------------------------------------
-dnl PA_ADD_CFLAGS(variable, flag [,actual_flag [,success [,failure]]]])
+dnl PA_ADD_CFLAGS(flag [,actual_flag [,success [,failure]]]])
 dnl
 dnl Attempt to add the given option to xFLAGS, if it doesn't break
 dnl compilation.  If the option to be tested is different than the

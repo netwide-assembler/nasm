@@ -1,10 +1,12 @@
 dnl --------------------------------------------------------------------------
 dnl PA_ADD_HEADERS(headers...)
 dnl
-dnl Call AC_CHECK_HEADERS(), and add to ac_includes_default if found
+dnl Call AC_CHECK_HEADERS_ONCE(), and add to ac_includes_default if found
 dnl --------------------------------------------------------------------------
 AC_DEFUN([_PA_ADD_HEADER],
-[AC_CHECK_HEADERS([$1],[ac_includes_default="$ac_includes_default
+[AC_CHECK_HEADERS_ONCE([$1])
+AS_IF([test x$ac_ac_header_$1 = xyes],
+[ac_includes_default="$ac_includes_default
 #include <$1>"
 ])
 ])

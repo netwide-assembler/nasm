@@ -1,5 +1,5 @@
 dnl --------------------------------------------------------------------------
-dnl PA_ADD_FLAGS(flagvar, flags)
+dnl PA_ADD_FLAGS(variable, flag [,actual_flag [,success [,failure]]]])
 dnl
 dnl  Add [flags] to the variable [flagvar] if and only if it is accepted
 dnl  by all languages affected by [flagvar], if those languages have

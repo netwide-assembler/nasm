@@ -67,6 +67,46 @@
 # endif
 #endif
 
+#ifndef unsequenced_func
+# ifdef HAVE_FUNC_ATTRIBUTE_UNSEQUENCED
+#  define unsequenced_func ATTRIBUTE(unsequenced)
+# else
+#  define unsequenced_func
+# endif
+#endif
+
+#ifndef unsequenced_func_ptr
+# ifdef HAVE_FUNC_PTR_ATTRIBUTE_UNSEQUENCED
+#  define unsequenced_func_ptr ATTRIBUTE(unsequenced)
+# else
+#  define unsequenced_func_ptr
+# endif
+#endif
+
+#ifndef noreturn_func
+# ifdef HAVE_FUNC_ATTRIBUTE_NORETURN
+#  define noreturn_func ATTRIBUTE(noreturn)
+# else
+#  define noreturn_func
+# endif
+#endif
+
+#ifndef reproducible_func
+# ifdef HAVE_FUNC_ATTRIBUTE_REPRODUCIBLE
+#  define reproducible_func ATTRIBUTE(reproducible)
+# else
+#  define reproducible_func
+# endif
+#endif
+
+#ifndef reproducible_func_ptr
+# ifdef HAVE_FUNC_PTR_ATTRIBUTE_REPRODUCIBLE
+#  define reproducible_func_ptr ATTRIBUTE(reproducible)
+# else
+#  define reproducible_func_ptr
+# endif
+#endif
+
 #ifndef pure_func
 # ifdef HAVE_FUNC_ATTRIBUTE_PURE
 #  define pure_func ATTRIBUTE(pure)
@@ -83,14 +123,6 @@
 # endif
 #endif
 
-#ifndef noreturn_func
-# ifdef HAVE_FUNC_ATTRIBUTE_NORETURN
-#  define noreturn_func ATTRIBUTE(noreturn)
-# else
-#  define noreturn_func
-# endif
-#endif
-
 #ifndef unlikely_func
 # ifdef HAVE_FUNC_ATTRIBUTE_COLD
 #  define unlikely_func ATTRIBUTE(cold)
@@ -104,6 +136,22 @@
 #  define unlikely_func_ptr ATTRIBUTE(cold)
 # else
 #  define unlikely_func_ptr
+# endif
+#endif
+
+#ifndef maybe_unused_func
+# ifdef HAVE_FUNC_ATTRIBUTE_MAYBE_UNUSED
+#  define maybe_unused_func ATTRIBUTE(maybe_unused)
+# else
+#  define maybe_unused_func
+# endif
+#endif
+
+#ifndef maybe_unused_func_ptr
+# ifdef HAVE_FUNC_PTR_ATTRIBUTE_MAYBE_UNUSED
+#  define maybe_unused_func_ptr ATTRIBUTE(maybe_unused)
+# else
+#  define maybe_unused_func_ptr
 # endif
 #endif
 
