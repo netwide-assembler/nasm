@@ -463,9 +463,9 @@ $dq   MOV	reg_dreg,reg#			[rm:	nw w# 0f 23 /r]				386,PRIV,NOLONG
 
 WRMSR		void				[	0f 30]					PENT,PRIV,NOAPX
 RDMSR		void				[	0f 32]					PENT,PRIV,NOAPX
-RDMSR		rm64,imm32			[mi:	evex.nf0.128.f2.m7 f6 /0]		APX,PENT,PRIV
+RDMSR		rm64,imm32			[mi:	evex.nf0.128.f2.m7 f6 /0 id]		APX,PENT,PRIV
 WRMSRNS		void				[	np 0f 01 c6		]		WRMSRNS,PRIV,LONG
-WRMSRNS		imm32,reg64			[im:	evex.nf0.128.f3.m7 f6 /0]		APX,WRMSRNS,PRIV,LONG
+WRMSRNS		imm32,reg64			[im:	evex.nf0.128.f3.m7 f6 /0 id]		APX,WRMSRNS,PRIV,LONG
 RDMSRLIST	void				[	f2 0f 01 c6		]		MSRLIST,PRIV,LONG
 WRMSRLIST	void				[	f3 0f 01 c6		]		MSRLIST,PRIV,LONG
 
