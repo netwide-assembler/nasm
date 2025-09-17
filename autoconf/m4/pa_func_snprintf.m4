@@ -10,11 +10,13 @@ AC_DEFUN([PA_FUNC_SNPRINTF],
   for pa_try_func_snprintf in snprintf _snprintf
   do
   AS_IF([test $pa_cv_func_snprintf = no],
-        [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+        [AC_LINK_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT
+[
 const char *snprintf_test(int x);
 const char *snprintf_test(int x)
 {
-    static char buf[[256]];
+    static char buf[256];
     size_t sz;
     sz = $pa_try_func_snprintf(buf, sizeof buf, "Hello = %d", x);
     return (sz < sizeof buf) ? buf : NULL;

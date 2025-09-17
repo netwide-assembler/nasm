@@ -10,7 +10,11 @@ AC_DEFUN([PA_FUNC_VSNPRINTF],
   for pa_try_func_vsnprintf in vsnprintf _vsnprintf
   do
   AS_IF([test $pa_cv_func_vsnprintf = no],
-        [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+        [AC_LINK_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT
+[
+#include <stdarg.h>
+
 const char *vsnprintf_test(const char *fmt, va_list va);
 const char *vsnprintf_test(const char *fmt, va_list va)
 {
