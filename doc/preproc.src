@@ -612,8 +612,8 @@ It's often useful to be able to handle strings in macros. NASM
 supports a few simple string handling macro operators from which
 more complex operations can be constructed.
 
-All the string operators define or redefine a value (either a string
-or a numeric value) to a single-line macro.  When producing a string
+All the string operators define or redefine a single-line macro to some
+value (either a string or a numeric value).  When producing a string
 value, it may change the style of quoting of the input string or
 strings, and possibly use \c{\\}-escapes inside \c{`}-quoted strings.
 
@@ -680,7 +680,7 @@ than the description:
 As with \c{%strlen} (see \k{strlen}), the first parameter is the
 single-line macro to be created and the second is the string. The
 third parameter specifies the first character to be selected, and the
-optional fourth parameter preceded by comma) is the length.  Note
+optional fourth parameter (preceded by comma) is the length.  Note
 that the first index is 1, not 0 and the last index is equal to the
 value that \c{%strlen} would assign given the same string. Index
 values out of range result in an empty string.  A negative length
@@ -1469,7 +1469,7 @@ iterated through in reverse order.
 \S{concat} \i{Concatenating Macro Parameters}
 
 NASM can concatenate macro parameters and macro indirection constructs
-on to other text surrounding them. This allows you to declare a family
+with other surrounding text. This allows you to declare a family
 of symbols, for example, in a macro definition. If, for example, you
 wanted to generate a table of key codes along with offsets into the
 table, you could code something like
@@ -2155,8 +2155,8 @@ existence and inclusion of a specific standard macro package, see
 Having labels that are local to a macro definition is sometimes not
 quite powerful enough: sometimes you want to be able to share labels
 between several macro calls. An example might be a \c{REPEAT} ...
-\c{UNTIL} loop, in which the expansion of the \c{REPEAT} macro
-would need to be able to refer to a label which the \c{UNTIL} macro
+\c{UNTIL} loop, in which the expansion of the \c{UNTIL} macro
+would need to be able to refer to a label which the \c{REPEAT} macro
 had defined. However, for such a macro you would also want to be
 able to nest these loops.
 
@@ -2180,7 +2180,7 @@ This pushes a new context called \c{foobar} on the stack. You can have
 several contexts on the stack with the same name: they can still be
 distinguished.  If no name is given, the context is unnamed (this is
 normally used when both the \c{%push} and the \c{%pop} are inside a
-single macro definition.)
+single macro definition).
 
 The directive \c{%pop}, taking one optional argument, removes the top
 context from the context stack and destroys it, along with any
@@ -2212,9 +2212,9 @@ above could be implemented by means of:
 
 and invoked by means of, for example,
 
-\c         mov     cx,string
+\c         mov     di,string
 \c         repeat
-\c         add     cx,3
+\c         add     di,3
 \c         scasb
 \c         until   e
 
@@ -2352,7 +2352,7 @@ implement a block IF statement as a set of macros.
 This code is more robust than the \c{REPEAT} and \c{UNTIL} macros
 given in \k{ctxlocal}, because it uses conditional assembly to check
 that the macros are issued in the right order (for example, not
-calling \c{endif} before \c{if}) and issues a \c{%error} if they're
+calling \c{endif} before \c{if}) and issues an \c{%error} if they're
 not.
 
 In addition, the \c{endif} macro has to be able to cope with the two
