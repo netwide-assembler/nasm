@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2018 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -391,8 +391,17 @@ static bool declare_label_lptr(union label *lptr,
     if (special && !special[0])
         special = NULL;
 
-    if (oldtype == type || (!pass_stable() && oldtype == LBL_LOCAL) ||
-        (oldtype == LBL_EXTERN && type == LBL_REQUIRED)) {
+    if (!pass_stable() && oldtype == LBL_LOCAL) {
+        /* Type declared after definition */
+        if (is_extern(type))
+            oldtype = LBL_GLOBAL; /* Already defined! */
+        else
+            oldtype = type;
+
+        lptr->defn.type = oldtype;
+    }
+
+    if (oldtype == type || (oldtype == LBL_EXTERN && type == LBL_REQUIRED)) {
         lptr->defn.type = type;
 
         if (special) {
