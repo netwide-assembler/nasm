@@ -2749,10 +2749,15 @@ static void gencode(struct out_data *data, insn *ins)
                 ins->evex |= EVEX_P1W; /* OR is correct here */
             ins->evex ^= (vregbits & 15) << 19;
             ins->evex ^= (vregbits & 16) << (27 - 4);
-            /* Set NF if {nd} and this is applicable */
             if (ins->prefixes[PPS_NF] == P_NF) {
+                /* Set NF if {nd} and this is applicable */
                 if (itemp_has(ins->itemp, IF_NF_E))
                     ins->evex ^= EVEX_P2NF;
+
+                /* Clear NF if the instruction forbids it */
+                if (itemp_has(ins->itemp, IF_NF_N)) {
+                    nasm_warn(WARN_OTHER, "this instruction doesn't allow {nf}");
+                }
             }
             /* Set ND if {zu} and this is applicable */
             if (ins->prefixes[PPS_ZU] == P_ZU) {

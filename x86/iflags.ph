@@ -57,6 +57,7 @@ if_("NOREX",             "Instruction does not support REX encoding");
 if_("NOAPX",             "Instruction does not support APX registers or REX2");
 if_("NF",                "Instruction supports the {nf} prefix");
 if_("NF_R",              "Instruction requires the {nf} prefix");
+if_("NF_N",              "Instruction doesn't allow the {nf} prefix");
 if_("NF_E",              "EVEX.NF set with {nf} prefix");
 if_("ZU",                "Instruction supports the {zu} prefix");
 if_("ZU_R",              "Instruction requires the {zu} prefix");

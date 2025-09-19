@@ -441,6 +441,8 @@ umwait|ver[rw]|vtestp[ps]|xadd|xor|xtest|getsec|rsm|sbb|cmps[bwdq]|hint_.*)$';
 my $nozero = '^(jmp|call|bt|test|cmp|ud[012].*|ptwrite|tpause|u?monitor.*|u?mwait.*|incssp.*|\
 enqcmds?|senduipi|hint_.*|jmpe|nop|inv.*|push2?p?|vmwrite|clzero|clflush|clwb|lkgs)$';
 
+my $nonf = '^(adc|sbb)$';
+
 sub add_flag($@) {
     my $flags = shift(@_);
 
@@ -455,6 +457,15 @@ sub has_flag($@) {
 	return $flags->{$fl} if ($flags->{$fl});
     }
     return undef;
+}
+
+sub adjust_fl_nf(@) {
+    my($opcode, $operands, $encoding, $flags) = @_;
+
+    if ($opcode =~ /$nonf/io) {
+        add_flag($flags, 'NF_N');
+    }
+    return $flags;
 }
 
 sub adjust_fl_zu(@) {
@@ -489,6 +500,7 @@ sub adjust_instruction_flags(@) {
     my @i = @_;
 
     $i[3] = adjust_fl_zu(@i);
+    $i[3] = adjust_fl_nf(@i);
 
     return undef unless (defined($i[3]));
 
