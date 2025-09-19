@@ -1326,7 +1326,7 @@ bin_directive(enum directive directive, char *args)
                     else {          /* Must be a filename. */
                         rf = nasm_open_write(p, NF_TEXT);
                         if (!rf) {
-                            nasm_warn(WARN_OTHER, "unable to open map file `%s'", p);
+                            nasm_nonfatal("unable to open map file `%s'", p);
                             map_control = 0;
                             return DIRR_OK;
                         }
