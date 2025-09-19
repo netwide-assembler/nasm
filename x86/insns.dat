@@ -97,8 +97,13 @@ $bwdq MOVRS	reg#,mem#			[rm:	evex.nf0.nd0.l0.m4.o# 8a# /r]		FUTURE,SM
 $wdq  LEA	reg#,mem			[rm:	o# 8d /r]				8086
 $wdq  LEA	reg#,imm#			[rm:	o# 8d /r]				8086,ND
 
-;# The basic 7 arithmetic operations
-$arith		ADD OR ADC SBB AND SUB XOR
+;# The basic 8 arithmetic operations
+$arith		nf=nf ADD OR nf=,ADC nf=,SBB AND SUB XOR nf=,!evex,CMP
+
+;# Bitwise testing
+$bwdq TEST	rm#,reg#			[mr:	o# 84# /r		]		8086,SM
+$bwdq TEST	ax#,imm#			[-i:	o# a8# i#		]		8086,SM,NOAPX
+$bwdq TEST	rm#,imm#			[mi:	o# f6# /0 i#		]		8086,SM
 
 ;# The basic shift and rotate operations
 $shift		ROL ROR RCL RCR SHL,SAL SHR - SAR
@@ -963,17 +968,6 @@ FWAIT		void				[	wait]					8086
 
 XLATB		void				[	d7]					8086
 XLAT		void				[	d7]					8086,ND
-
-;# Comparing and testing
-$bwdq CMP	rm#,reg#			[mr:	o# 38# /r		]		8086,SM
-$bwdq CMP	reg#,rm#			[rm:	o# 3a# /r		]		8086,SM
-$wdq  CMP	rm#,sbyte#			[mi:	o# 83  /7 ib,s		]		8086,SM
-$bwdq CMP	ax#,imm#			[mi:	o# 3c# i#		]		8086,SM
-$bwdq CMP	rm#,imm#			[mi:	o# 80# /7 i#		]		8086,SM
-
-$bwdq TEST	rm#,reg#			[mr:	o# 84# /r		]		8086,SM
-$bwdq TEST	ax#,imm#			[-i:	o# a8# i#		]		8086,SM,NOAPX
-$bwdq TEST	rm#,imm#			[mi:	o# f6# /0 i#		]		8086,SM
 
 $bwdq CCMPscc	spec4,rm#,reg#			[vmr:	evex.scc.dfv.l0.m4.o# 38# /r	]	APX,SM1-2
 $bwdq CCMPscc	spec4,reg#,rm#			[vrm:   evex.scc.dfv.l0.m4.o# 3a# /r	]	APX,SM1-2

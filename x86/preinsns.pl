@@ -22,15 +22,15 @@ our($macro, $outfile, $infile, $line);	# Public for error messages
 $macros{'arith'} = {
     'def' => *def_eightfold,
     'txt' => <<'EOL'
-$$bwdq $op	rm#,reg#			[mr:	$hle o# $00# /r				]	8086,SM,$lock
-$$bwdq $op	reg#,rm#			[rm:	o# $02# /r				]	8086,SM
-$$wdq  $op	rm#,sbyte#			[mi:	$hle o# 83  /$n ib,s			]	8086,SM,$lock
-$$bwdq $op	ax#,imm#			[-i:	o# $04# i#				]	8086,SM
-$$bwdq $op	rm#,imm#			[mi:	$hle o# 80# /$n i#			]	8086,SM,$lock
-$$bwdq $op	reg#?,reg#,rm#			[vrm:	evex.ndx.nf.l0.m4.o#     $02# /r	]	$apx,SM
-$$bwdq $op	reg#?,rm#,reg#			[vmr:	evex.ndx.nf.l0.m4.o#     $00# /r	]	$apx,SM
-$$wdq  $op	reg#?,rm#,sbyte#		[vmi:	evex.ndx.nf.l0.m4.o#     83 /$n ib,s	]	$apx,SM
-$$bwdq $op	reg#?,rm#,imm#			[vmi:	evex.ndx.nf.l0.m4.o#     80# /$n i#	]	$apx,SM
+$$bwdq $op	rm#,reg#			[mr:	$hle o# $00# /r				]	8086,FL,SM,$lock
+$$bwdq $op	reg#,rm#			[rm:	o# $02# /r				]	8086,FL,SM
+$$wdq  $op	rm#,sbyte#			[mi:	$hle o# 83  /$n ib,s			]	8086,FL,SM,$lock
+$$bwdq $op	ax#,imm#			[-i:	o# $04# i#				]	8086,FL,SM
+$$bwdq $op	rm#,imm#			[mi:	$hle o# 80# /$n i#			]	8086,FL,SM,$lock
+$$bwdq $op	reg#?,reg#,rm#			[vrm:	evex.ndx.$nf.l0.m4.o#     $02# /r	]	$evex,FL,APX,SM
+$$bwdq $op	reg#?,rm#,reg#			[vmr:	evex.ndx.$nf.l0.m4.o#     $00# /r	]	$evex,FL,APX,SM
+$$wdq  $op	reg#?,rm#,sbyte#		[vmi:	evex.ndx.$nf.l0.m4.o#     83 /$n ib,s	]	$evex,FL,APX,SM
+$$bwdq $op	reg#?,rm#,imm#			[vmi:	evex.ndx.$nf.l0.m4.o#     80# /$n i#	]	$evex,FL,APX,SM
 EOL
 };
 
@@ -38,12 +38,12 @@ EOL
 $macros{'shift'} = {
     'def' => *def_eightfold,
 	'txt' => <<'EOL'
-$$bwdq $op	rm#,unity			[m-:	o# d0# /$n]				]	8086
-$$bwdq $op	rm#,reg_cl			[m-:	o# d2# /$n]				]	8086
-$$bwdq $op	rm#,imm8			[mi:	o# c0# /$n ib,u]			]	186
-$$bwdq $op	reg#?,rm#,unity			[vm-:	evex.ndx.nf.l0.m4.o#  d0# /$n		]	$apx,SM0-1
-$$bwdq $op	reg#?,rm#,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o#  d2# /$n		]	$apx,SM0-1
-$$bwdq $op	reg#?,rm#,imm8			[vmi:	evex.ndx.nf.l0.m4.o#  c0# /$n ib,u	]	$apx,SM0-1
+$$bwdq $op	rm#,unity			[m-:	o# d0# /$n]				]	8086,FL
+$$bwdq $op	rm#,reg_cl			[m-:	o# d2# /$n]				]	8086,FL
+$$bwdq $op	rm#,imm8			[mi:	o# c0# /$n ib,u]			]	186,FL
+$$bwdq $op	reg#?,rm#,unity			[vm-:	evex.ndx.nf.l0.m4.o#  d0# /$n		]	$apx,FL,SM0-1
+$$bwdq $op	reg#?,rm#,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o#  d2# /$n		]	$apx,FL,SM0-1
+$$bwdq $op	reg#?,rm#,imm8			[vmi:	evex.ndx.nf.l0.m4.o#  c0# /$n ib,u	]	$apx,FL,SM0-1
 EOL
 };
 
@@ -441,8 +441,6 @@ umwait|ver[rw]|vtestp[ps]|xadd|xor|xtest|getsec|rsm|sbb|cmps[bwdq]|hint_.*)$';
 my $nozero = '^(jmp|call|bt|test|cmp|ud[012].*|ptwrite|tpause|u?monitor.*|u?mwait.*|incssp.*|\
 enqcmds?|senduipi|hint_.*|jmpe|nop|inv.*|push2?p?|vmwrite|clzero|clflush|clwb|lkgs)$';
 
-my $nonf = '^(adc|sbb)$';
-
 sub add_flag($@) {
     my $flags = shift(@_);
 
@@ -457,15 +455,6 @@ sub has_flag($@) {
 	return $flags->{$fl} if ($flags->{$fl});
     }
     return undef;
-}
-
-sub adjust_fl_nf(@) {
-    my($opcode, $operands, $encoding, $flags) = @_;
-
-    if ($opcode =~ /$nonf/io) {
-        add_flag($flags, 'NF_N');
-    }
-    return $flags;
 }
 
 sub adjust_fl_zu(@) {
@@ -500,7 +489,6 @@ sub adjust_instruction_flags(@) {
     my @i = @_;
 
     $i[3] = adjust_fl_zu(@i);
-    $i[3] = adjust_fl_nf(@i);
 
     return undef unless (defined($i[3]));
 
