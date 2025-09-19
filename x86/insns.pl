@@ -1303,15 +1303,15 @@ sub byte_code_compile($$$$) {
 		} elsif ($oq eq 'ko16') {
 		    $p = 0 unless (defined($p)); # np
 		    $w = 0 unless (defined($w)); # w0
-		    $opsize = 0320;
+		    # $opsize = 0320;
 		} elsif ($oq eq 'ko32') {
 		    $p = 1 unless (defined($p)); # 66
 		    $w = 1 unless (defined($w)); # w1
-		    $opsize = 0321;
+		    # $opsize = 0321;
 		} elsif ($oq eq 'ko64') {
 		    $p = 0 unless (defined($p)); # 66
 		    $w = 1 unless (defined($w)); # w1
-		    $opsize = 0323 + $w;
+		    # $opsize = 0323 + $w;
 		} elsif ($oq eq 'np' || $oq eq 'p0') {
 		    $p = 0;
 		} elsif ($oq eq '66' || $oq eq 'p1') {
@@ -1430,15 +1430,15 @@ sub byte_code_compile($$$$) {
 		} elsif ($oq eq 'ko16') {
 		    $p = 0 unless (defined($p)); # np
 		    $w = 0 unless (defined($w)); # w0
-		    $opsize = 0320;
+		    # $opsize = 0320;
 		} elsif ($oq eq 'ko32') {
 		    $p = 1 unless (defined($p)); # 66
 		    $w = 1 unless (defined($w)); # w1
-		    $opsize = 0321;
+		    # $opsize = 0321;
 		} elsif ($oq eq 'ko64') {
 		    $p = 0 unless (defined($p)); # 66
 		    $w = 1 unless (defined($w)); # w1
-		    $opsize = 0323 + $w;
+		    # $opsize = 0323 + $w;
 		} elsif ($oq eq 'ww') {
 		    $flags->{'WW'}++;
 		} elsif ($oq eq '0f') {

@@ -165,17 +165,19 @@ sub func_multisize($$$) {
 	    } elsif ($mw =~ /^(o64)?nw$/) {
 		$long |= 2 if ($i == 32); # nw = 32 bits not encodable in long mode
 		$o .= $mw;
-	    } elsif ($mw =~ /^(k?(?:reg|rm))(\#{1,2}|[0-9]+)$/) {
+	    } elsif ($mw =~ /^((k?)(?:reg|rm))(\#{1,2}|[0-9]+)$/) {
 		# (Possible) GPR reference
-		$o .= $1;
-		my $n = $2;
+		$o     .= $1;
+		my $isk = $2;
+		my $n   = $3;
 		if ($n eq '#') {
 		    $n = $s;
 		} elsif ($n eq '##') {
 		    $n = $s >> 1;
 		}
 		$o .= $n;
-		$long |= 1 if ($n >= 64);
+		# 64-bit K registers OK in 32-bit mode
+		$long |= 1 if ($n >= 64 && !$isk);
 	    } elsif ($mw =~ /^(NO)?LONG(\w+)$/) {
 		my $longflag = $1 ? 2 : 1;
 		$long |= $longflag if ($2 =~ /$sn/i);
