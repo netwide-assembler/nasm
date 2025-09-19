@@ -204,7 +204,9 @@ sub func_multisize($$$) {
 	$o .= ',NOLONG' if ($long & 2);
 	$o .= ',ND'     if ($nd);
 
-	$o .= ',386'    if ($s >= 32 && $o !~ /\B\!386\b/);
+	if ($s >= 32 && $o !~ /\B\!386\b/ && $o =~ /\b(8086|[12]86)\b/) {
+	    $o .= ',386';
+	}
 
 	push(@ol, $o);
     }
@@ -499,10 +501,9 @@ sub adjust_instruction_flags(@) {
 	return undef;
     }
 
-    if ($i[2] =~ /\ba16\b/) {
+    if ($i[2] =~ /\b(a16|rex\.l)\b/) {
 	add_flag($i[3], 'NOLONG');
-    }
-    if ($i[2] =~ /\b(o64(nw)?\b|rex2?|a64\b)/) {
+    } elsif ($i[2] =~ /\b(o64(nw)?\b|rex2?|a64\b)/) {
 	add_flag($i[3], 'LONG');
     }
     if (has_flag($i[3], 'NOLONG') && has_flag($i[3], 'LONG')) {

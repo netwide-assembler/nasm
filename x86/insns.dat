@@ -469,10 +469,14 @@ $dq   RDPID	reg#				[m:	f3 !osp o# 0f c7 /7]			RDPID
       SMSW	reg64				[m:	o64nw 0f 01 /4]				X86_64,LONG,ND
 $wdq  SMSW	reg#				[m:	o# 0f 01 /4]				286
 
-$dq   MOV	reg#,reg_creg			[mr:	nw w# rex.l 0f 20 /r]			386,PRIV
-$dq   MOV	reg_creg,reg#			[rm:	nw w# rex.l 0f 22 /r]			386,PRIV
-$dq   MOV	reg#,reg_dreg			[mr:	nw w# 0f 21 /r]				386,PRIV
-$dq   MOV	reg_dreg,reg#			[rm:	nw w# 0f 23 /r]				386,PRIV,NOLONG
+      MOV	reg32,reg_creg			[mr:	rex.l 0f 20 /r]				386,NOLONG,PRIV
+      MOV	reg_creg,reg32			[rm:	rex.l 0f 22 /r]				386,NOLONG,PRIV
+      MOV	reg64,reg_creg			[mr:	o64nw 0f 20 /r]				X86_64,LONG,PRIV
+      MOV	reg_creg,reg64			[rm:	o64nw 0f 22 /r]				X86_64,LONG,PRIV
+      MOV	reg32,reg_dreg			[mr:	0f 21 /r]				386,NOLONG,PRIV
+      MOV	reg_dreg,reg32			[rm:	0f 23 /r]				386,NOLONG,PRIV
+      MOV	reg64,reg_dreg			[mr:	o64nw 0f 21 /r]				X86_64,LONG,PRIV
+      MOV	reg_dreg,reg64			[rm:	o64nw 0f 23 /r]				X86_64,LONG,PRIV
       MOV	reg32,reg_treg			[mr:	0f 24 /r]				386,NOLONG,ND,OBSOLETE
       MOV	reg_treg,reg32			[rm:	0f 26 /r]				386,NOLONG,ND,OBSOLETE
 

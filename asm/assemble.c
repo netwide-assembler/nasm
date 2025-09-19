@@ -2343,7 +2343,7 @@ static inline void emit_rex(struct out_data *data, insn *ins)
         } else if (rex & REX_P) {
             buf[n++] = rex;
         } else {
-            nasm_assert(!rex);
+            nasm_assert(!(rex & ~REX_L));
         }
 
         if (ins->vex_cm) {
