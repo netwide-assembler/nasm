@@ -4,10 +4,21 @@
 %macro x 2
 	xchg %1,%2
 	xchg %2,%1
+	xchg %2,%2
+	xchg %2,MEM
+	xchg MEM,%2
 %endmacro
 
 	bits 16
-	
+%define MEM [bx]
+	x al,al
+	x al,cl
+	x al,dl
+	x al,bl
+	x al,ah
+	x al,ch
+	x al,dh
+	x al,bh
 	x ax,ax
 	x ax,cx
 	x ax,dx
@@ -16,6 +27,8 @@
 	x ax,bp
 	x ax,si
 	x ax,di
+	x bx,dx
+	x cx,dx
 	x eax,eax
 	x eax,ecx
 	x eax,edx
@@ -24,9 +37,20 @@
 	x eax,ebp
 	x eax,esi
 	x eax,edi
+	x ebx,edx
+	x ecx,edx
 
 	bits 32
-	
+%define MEM [ebx]
+	align 64
+	x al,al
+	x al,cl
+	x al,dl
+	x al,bl
+	x al,ah
+	x al,ch
+	x al,dh
+	x al,bh
 	x ax,ax
 	x ax,cx
 	x ax,dx
@@ -35,6 +59,8 @@
 	x ax,bp
 	x ax,si
 	x ax,di
+	x bx,dx
+	x cx,dx
 	x eax,eax
 	x eax,ecx
 	x eax,edx
@@ -43,9 +69,32 @@
 	x eax,ebp
 	x eax,esi
 	x eax,edi
+	x ebx,edx
+	x ecx,edx
 
 	bits 64
-	
+%define MEM [rbx]
+	align 64
+	x al,al
+	x al,cl
+	x al,dl
+	x al,bl
+	x al,ah
+	x al,ch
+	x al,dh
+	x al,bh
+	x al,spl
+	x al,bpl
+	x al,sil
+	x al,dil
+	x al,r8b
+	x al,r9b
+	x al,r10b
+	x al,r11b
+	x al,r12b
+	x al,r13b
+	x al,r14b
+	x al,r15b
 	x ax,ax
 	x ax,cx
 	x ax,dx
@@ -62,6 +111,8 @@
 	x ax,r13w
 	x ax,r14w
 	x ax,r15w
+	x bx,dx
+	x cx,dx
 	x eax,eax
 	x eax,ecx
 	x eax,edx
@@ -78,6 +129,8 @@
 	x eax,r13d
 	x eax,r14d
 	x eax,r15d
+	x ebx,edx
+	x ecx,edx
 	x rax,rax
 	x rax,rcx
 	x rax,rdx
@@ -94,3 +147,5 @@
 	x rax,r13
 	x rax,r14
 	x rax,r15
+	x rbx,rdx
+	x rcx,rdx

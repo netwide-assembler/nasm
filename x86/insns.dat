@@ -289,8 +289,8 @@ $wq   XCHG	reg#,ax#			[r-:	o# 90+r]				8086,ND
       XCHG	reg_eax,reg32na			[-r:	o32 90+r]				386
       XCHG	reg32na,reg_eax			[r-:	o32 90+r]				386,ND
       XCHG	reg_eax,reg_eax			[--:	o32 90]					386,NOLONG,ND
-$bwdq XCHG	rm#,reg#			[mr:	hlenl o# 86# /r]			8086,SM,LOCK
-$bwdq XCHG	reg#,rm#			[rm:	hlenl o16 87 /r]			8086,SM,LOCK1,ND
+$bwdq XCHG	reg#,rm#			[rm:	hlenl o# 86# /r]			8086,SM,LOCK1
+$bwdq XCHG	rm#,reg#			[mr:	hlenl o# 86# /r]			8086,SM,LOCK,ND
 
 ; 486-only opcode present in some but not all 486 chips
 $bwd  CMPXCHG486 rm#,reg#			[mr:	0f a6# /r]				486,SM,UNDOC,NOLONG,ND,LOCK,OBSOLETE
