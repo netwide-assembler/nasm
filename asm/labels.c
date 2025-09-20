@@ -392,9 +392,8 @@ static bool declare_label_lptr(union label *lptr,
         special = NULL;
 
     if (!pass_stable() && oldtype == LBL_LOCAL) {
-        /* Type declared after definition */
-        if (is_extern(type))
-            oldtype = LBL_GLOBAL; /* Already defined! */
+        if (is_extern(type) && lptr->defn.defined)
+            oldtype = LBL_GLOBAL; /* Already defined, promote to global */
         else
             oldtype = type;
 
