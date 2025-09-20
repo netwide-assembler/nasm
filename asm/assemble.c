@@ -1955,6 +1955,15 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
                 ins->prefixes[PPS_WAIT] = P_WAIT;
             break;
 
+        case 0342:
+            switch (bits) {
+            case 16: goto is_o16;
+            case 32: goto is_o32;
+            case 64: goto is_o64;
+            default: panic();
+            }
+            break;
+
         case 0344:
             ins->rex |= REX_P | REX_B;
             break;
@@ -2879,12 +2888,11 @@ static void gencode(struct out_data *data, insn *ins)
 
         case 0320:
         case 0321:
-            break;
-
         case 0322:
         case 0323:
         case 0324:
         case 0327:
+        case 0342:
             break;
 
         case 0325:

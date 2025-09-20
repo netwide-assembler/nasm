@@ -1098,11 +1098,12 @@ sub byte_code_compile($$$$) {
         'a32'       => 0311,
         'adf'       => 0312,    # Address size is default (disassembly)
         'asz'       => 0312,    # Alias for adf, for macro convenience
+	'asm'       => 0312,	# Alias for adf, for macro convenience
         'a64'       => 0313,
         '!osp'      => 0364,
         '!asp'      => 0365,
 	'osp'       => 0366,
-	'osz'       => 0330,	# 66 or REX.W if operand size != default
+	'osz'       => 0330,	# Operand size depending on default
         'f2i'       => 0332,    # F2 prefix, but 66 for operand size is OK
         'f3i'       => 0333,    # F3 prefix, but 66 for operand size is OK
         'mustrep'   => 0336,
@@ -1118,6 +1119,7 @@ sub byte_code_compile($$$$) {
         'nof3'      => 0326,    # No REP 0xF3 prefix permitted
         'norep'     => 0331,    # No REP prefix permitted
         'wait'      => 0341,    # Needs a wait prefix
+	'osm'	    => 0342,	# Operand size = mode (16/32/64)
 	'rex.b'	    => 0344,
 	'rex.x'	    => 0345,
 	'rex.r'	    => 0346,

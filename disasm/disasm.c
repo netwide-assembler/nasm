@@ -1014,9 +1014,15 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             o_used = true;
             break;
 
+        case 0327:
+            if (bits != 64)
+                break;
+            /* else fall through */
+
         case 0323:
-            /* 64-bit only instruction, no REX.W required */
-            ins->op_size = osize = 64;
+            /* No REX.W required for 64-bit osize */
+            if (osize != 16)
+                ins->op_size = osize = 64;
             ins->rex |= REX_NW;
             break;
 
@@ -1033,13 +1039,6 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
         case 0326:
             if (prefix->rep == 0xF3)
                 return 0;
-            break;
-
-        case 0327:
-            if (bits == 64) {
-                ins->op_size = osize = 64;
-                ins->rex |= REX_NW;
-            }
             break;
 
         case 0330:
@@ -1085,6 +1084,12 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             if (prefix->wait != 0x9B)
                 return 0;
             dwait = 0;
+            break;
+
+        case 0342:
+            if (osize != bits)
+                return 0;
+            o_used = true;
             break;
 
         case 0344:

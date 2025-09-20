@@ -307,9 +307,9 @@ $bwd  CMPXCHG486 rm#,reg#			[mr:	0f a6# /r]				486,SM,UNDOC,NOLONG,ND,LOCK,OBSOL
 
 ; Call/jmp near imm/reg/mem are always 64-bit in long mode.
       JMP	imm8|short			[i:	nw eb rel8]				8086,NOAPX
-      JMP	imm				[i:	jmp8 nw eb rel8]			8086,SX,ND,NOAPX
-$wdq  JMP	imm##|near			[i:	nw o# e9 rel]				8086,OSIZE,BND,NOLONGwd
-$wdq  JMP	rm#|near			[m:	nw o# ff /4]				8086,OSIZE,BND,NOLONGwd
+      JMP	imm				[i:	jmp8 nw eb rel8]			8086,JMP_RELAX,NOAPX,ND
+$wdq  JMP	imm#|near			[i:	nw o# e9 rel]				8086,BND,(wd:NOLONG,OSIZE)
+$wdq  JMP	rm#|near			[m:	nw o# ff /4]				8086,BND,(wd:NOLONG,OSIZE)
 
 $wd   JMP	imm#|far			[i:	o# ea iwd seg]				8086,OSIZE,ND,NOLONG
 ; These are hacks to support the legacy syntax "[d]word seg:offs" to mean "seg:[d]word offs"
@@ -320,13 +320,13 @@ $wd   JMP	imm16:imm#			[ji:	o# ea i# iw]				8086,OSIZE,AR1,NOLONG
 $wd   JMP	imm16:imm#|far			[ji:	o# ea i# iw]				8086,OSIZE,AR1,NOLONG,ND
 ; OSIZE,NWSIZE makes us match 64 bits by default in 64-bit mode, even though a REX.W is required.
 ; This is an intentional "programmer friendliness" quirk.
-$wdq  JMP	mem#|far			[m:	o# ff /5]				8086,OSIZE,NWSIZE
+$wdq  JMP	mem#|far			[m:	o# ff /5]				8086,OSIZE,NWSIZE,(w:NOLONG)
 
       Jcc	imm8|short			[i:	nw 70+c rel8]				8086,ND,BND,SX,JCC_HINT,NOAPX
       Jcc	imm				[i:	jcc8 nw 70+c rel8]			8086,BND,SX,JCC_HINT,NOAPX
-$zwdq Jcc	imm##|near			[i:	o# 0f 80+c rel]				386,BND,NOAPX,JCC_HINT,NOLONGwd
+$wdq  Jcc	imm#|near			[i:	nw o# 0f 80+c rel]			386,BND,NOAPX,JCC_HINT,(wd:NOLONG,OSIZE)
 ; Jump-over emulation of Jcc on < 386
-       Jcc	imm16|near			[i:	nw 71+c jlen e9 rel]			8086,ND,NOAPX,NOLONG
+      Jcc	imm16|near			[i:	nw 71+c jlen e9 rel16]			8086,ND,NOAPX,NOLONG
 
 ; The following only have short forms, hence imm8|near|short
       JCXZ	imm8|near|short			[i:	a16 e3 rel8]				8086,NOLONG
@@ -352,8 +352,8 @@ $wdq  JMPE	rm#|near			[m:	nw o# np 0f 00 /6]			IA64
 $wd   JMPE	rm#|near			[m:	o#       0f 00 /6]			IA64,ND,NOLONG
 
 ;# Call and return
-$wdq  CALL	imm##|near			[i:	nw o# e8 rel]				8086,BND,NOAPX,OSIZE
-$wdq  CALL	rm#|near			[m:	nw o# ff /2]				8086,BND,OSIZE
+$wdq  CALL	imm##|near			[i:	nw o# e8 rel]				8086,BND,NOAPX,(wd:OSIZE,NOLONG)
+$wdq  CALL	rm#|near			[m:	nw o# ff /2]				8086,BND,(wd:OSIZE,NOLONG)
 
 $wd   CALL	imm#|far			[i:	o# 9a iwd seg]				8086,ND,NOLONG,OSIZE
 ; These are hacks to support the legacy syntax "[d]word seg:offs" to mean "seg:[d]word offs"
@@ -364,14 +364,14 @@ $wd   CALL	imm16:imm#			[ji:	o# 9a i# iw]				8086,OSIZE,AR1,NOLONG
 $wd   CALL	imm16:imm#|far			[ji:	o# 9a i# iw]				8086,OSIZE,AR1,NOLONG,ND
 ; OSIZE,NWSIZE makes us match 64 bits by default in 64-bit mode, even though a REX.W is required.
 ; This is an intentional "programmer friendliness" quirk.
-$wdq  CALL	mem#|far			[m:	o# ff /3]				8086,OSIZE,NWSIZE
+$wdq  CALL	mem#|far			[m:	o# ff /3]				8086,OSIZE,NWSIZE,(w:NOLONG)
 
-$zwdq RET%	void				[	nw o# c3]				8086,BND,NOLONGd
-$zwdq RET%	imm16				[i:	nw o# c2 iw]				8086,BND,NOLONGd
-$zwdq RETF%	void				[	   o# cb]				8086
-$zwdq RETF%	imm16				[i:	   o# ca iw]				8086
-$zwdq RETN%	void				[	nw o# c3]				8086,BND,ND,NOLONGd
-$zwdq RETN%	imm16				[i:	nw o# c2 iw]				8086,BND,ND,NOLONGd
+$zwdq RET%	void				[	nw o#  c3]				8086,BND,(d:NOLONG)
+$zwdq RET%	imm16				[i:	nw o#  c2 iw]				8086,BND,(d:NOLONG)
+$zwdq RETF%	void				[	   od# cb]				8086
+$zwdq RETF%	imm16				[i:	   od# ca iw]				8086
+$zwdq RETN%	void				[	nw o#  c3]				8086,BND,ND,(d:NOLONG)
+$zwdq RETN%	imm16				[i:	nw o#  c2 iw]				8086,BND,ND,(d:NOLONG)
 
 ;# Interrupts, system calls, and returns
 INT		imm8				[i:	cd ib,u]				8086
@@ -549,8 +549,8 @@ $bwd  OUT	imm8,ax#			[i-:	o# e6# ib,u]				8086,NOAPX
 $bwd  OUT	reg_dx,ax#			[--:	o# ee#]					8086,NOAPX
 
 ;# Segment handling instructions
-$zwdq MOV	sel#,reg_sreg			[mr:	optd# o# 8c /r]				8086
-$zwdq MOV	reg_sreg,sel#			[rm:	optw# o# 8e /r]				8086
+$zwdq MOV	sel#,reg_sreg			[mr:	optd# 8c /r]				8086
+$zwdq MOV	reg_sreg,sel#			[rm:	optw# 8e /r]				8086
 
 $wd   LDS	reg#,mem#			[rm:	o# c5 /r]				8086,NOLONG
 $wd   LES	reg#,mem#			[rm:	o# c4 /r]				8086,NOLONG

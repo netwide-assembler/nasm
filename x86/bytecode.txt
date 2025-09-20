@@ -134,7 +134,7 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 					     o32 - 66 prefix generated in 16-bit mode; treated as o64 in 64-bit mode.
 					     o64 - only permitted in 64-bit mode, does not set REX.W unless combined
 						 with code rex.w (\347).
-\330		 osz			     treated as o16 or o32 depending on the current mode.
+\330		 osz			     default or user-specified operand size
 \331             norep                       not valid with 0xF2 or 0xF3 REP prefixes.
 \332             f2                          REP prefix (0xF2 byte) used as opcode extension.
 \333             f3                          REP prefix (0xF3 byte) used as opcode extension.
@@ -145,6 +145,8 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \340             resb                        reserve <operand 0> bytes of uninitialized storage.
                                              Operand 0 had better be a segmentless constant.
 \341             wait                        this instruction needs a WAIT "prefix"
+\342		 osm			     o16, o32 or o64 matching bit mode
+\343		 osd			     o16, o32 or o32 matching bit mode
 \344		 rex.b			     REX[2].B used as an opcode extension.
 \345		 rex.x			     REX[2].X used as an opcode extension.
 \346		 rex.r			     REX[2].R used as an opcode extension.

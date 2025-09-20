@@ -49,7 +49,7 @@ EOL
 
 #
 # Common pattern for multiple 32/64, 16/32/64, or 8/16/32/64 instructions.
-# 'z' is used for a null-prefixed default-sized instruction (osz/asz).
+# 'z' is used for a null-prefixed default-sized instruction (osm/osd)
 #
 my @sizename = ('z', 'b', 'w', 'd', 'q');
 
@@ -74,7 +74,7 @@ sub func_multisize($$$) {
 	next unless ($mask & (1 << $i));
 	my $s = ($i > 0) ? 4 << $i : '';
 	my $sn = $sizename[$i];
-	my $sz = $s || 'sz';
+	my $sz = $s || 'sm';
 	my $o;
 	my $ins = join(' ', @$rawargs);
 	my $nd = 0;
@@ -106,7 +106,7 @@ sub func_multisize($$$) {
 	$ins = $o.$ins;
 	$o = '';
 
-	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\bsel|\bopt\w?|\b[ioa]|\b(?:reg_)?[abcd]x|\bk?reg|\bk?rm|\bw)?\#{1,2}|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%{1,2})(.*)$/) {
+	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\bsel|\bopt\w?|\b[ioa]d?|\b(?:reg_)?[abcd]x|\bk?reg|\bk?rm|\bw)?\#{1,2}|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%{1,2})(.*)$/) {
 	    $o .= $1;
 	    my $mw = $2;
 	    $ins = $3;
@@ -126,8 +126,8 @@ sub func_multisize($$$) {
 		$o .= $sbyte[$i];
 	    } elsif ($mw =~ /^imm\#(\#?)$/) {
 		$o .= (($1 eq '' && $s >= 64) ? 'sdword' : 'imm').$s;
-	    } elsif ($mw =~ '^([ao])\#$') {
-		$o .= $1 . $sz;
+	    } elsif ($mw =~ '^([ao])(d?)\#$') {
+		$o .= $1.("$2$sz" eq 'dsm' ? 'df' : $sz);
 	    } elsif ($mw eq 'i#') {
 		$o .= !$i ? 'iwd' : ($s >= 64) ? 'id,s' : "i$sn";
 	    } elsif ($mw eq 'i##') {
