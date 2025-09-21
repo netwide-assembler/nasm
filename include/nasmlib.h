@@ -55,6 +55,59 @@ union intorptr {
 typedef union intorptr intorptr;
 
 /*
+ * Handy macro to use as the base of shifts
+ */
+#define ONE ((uintmax_t)1)
+
+/*
+ * Handy macros for defining and accessing enums of bitfields;
+ * provides a set of standard-named parameters for each field.
+ *
+ * mk_field_mask() is indended to be used for non-contiguous fields.
+ */
+
+#define mk_field_mask(name,pos,width,basemask)              \
+    name ## _POS = (pos),                                   \
+    name ## _WIDTH = (width),                               \
+    name ## _BASEMASK = (basemask),                         \
+    name ## _MASK = name ## _BASEMASK << name ## _POS,      \
+    name = name ## _MASK
+
+#define mk_field(name,pos,width)                            \
+    mk_field_mask(name,pos,width,                           \
+                  (ONE << name ## _WIDTH)-1)
+
+/*
+ * Cast a value to a suitable type to represent the encoded
+ * (post-shift) and extracted (pre-shift) values, respectively.
+ */
+#ifdef HAVE_TYPEOF
+# define fieldenc_cast(x,y) ((typeof(x ## _MASK))(y))
+# define fieldval_cast(x,y) ((typeof(x ## _BASEMASK))(y))
+#else
+# define fieldenc_cast(x,y) ((uintmax_t)(y))
+# define fieldval_cast(x,y) (y)
+#endif
+
+/*
+ * Macros to get/set bitfield values (the set macro returns the
+ * updated value, it does not change the input.)
+ *
+ * The fieldenc() macro produces the masked and shifted value
+ * corresponding to a base value; it is equivalent to
+ * setfield(field,0,val).
+ */
+#define getfield(field,from)                            \
+    fieldval_cast(field,                                \
+                  (((from) >> field ## _POS) &          \
+                   field ## _BASEMASK))
+#define fieldval(field,val)                                \
+    (((val) & fieldenc_cast(field,field ## _BASEMASK))     \
+     << field ## _POS)
+#define setfield(field,from,val)                        \
+    (((from) & ~(field ## _MASK)) + fieldval(field,val))
+
+/*
  * Wrappers around malloc, realloc, free and a few more. nasm_malloc
  * will fatal-error and die rather than return NULL; nasm_realloc will
  * do likewise, and will also guarantee to work right on being passed

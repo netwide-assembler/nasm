@@ -246,6 +246,7 @@ AC_CHECK_DECLS(strnlen)
 AC_CHECK_DECLS(strrchrnul)
 
 dnl Check for missing types
+AC_TYPE_UINTMAX_T
 AC_TYPE_UINTPTR_T
 
 dnl Documentation: should we generate an uncompressed PDF?  It is
