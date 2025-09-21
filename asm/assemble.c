@@ -1473,15 +1473,6 @@ static void bad_hle_warn(const insn * ins, uint8_t hleok)
     }
 }
 
-static int ea_evex_err(decoflags_t deco, unsigned int vlen, const char *why)
-{
-    const char *what = deco & ER
-        ? "embedded rounding" : "suppress all exceptions";
-    nasm_nonfatal("%s not possible for %d-bit vectors%s",
-                  what, 128 << vlen, why);
-    return -1;
-}
-
 /* Handle EVEX flags at the time of EA processing */
 static int ea_evex_flags(insn *ins, const struct operand *opy)
 {
@@ -1492,24 +1483,14 @@ static int ea_evex_flags(insn *ins, const struct operand *opy)
     if (deco & (ER | SAE)) {
         if (!itemp_has(ins->itemp, IF_LIG)) {
             const unsigned int vlen = (ins->evex & EVEX_P2RC) >> 29;
-            const char *why = "";
 
-            switch (vlen) {
-            case 2:
-                /* 512 bits, no special encoding */
-                break;
-            case 1:
-                /* 256 bits, encodable in AVX 10.2 if mod=3 */
-                if (!iflag_test(&cpu, IF_AVX10_2)) {
-                    why = " without AVX 10.2";
-                } else {
-                    ins->evex ^= EVEX_P1U;
-                    break;
-                }
-                /* else fall through */
-            default:
-                /* Not encodable */
-                return ea_evex_err(deco, vlen, why);
+            if (vlen != 2) {
+                const char *what = deco & ER
+                    ? "embedded rounding"
+                    : "suppress all exceptions";
+                nasm_nonfatal("%s not possible for %d-bit vectors",
+                              what, 128 << vlen);
+                return -1;
             }
         }
 
@@ -1522,22 +1503,6 @@ static int ea_evex_flags(insn *ins, const struct operand *opy)
     } else if (opy->decoflags & BRDCAST_MASK) {
         /* set EVEX.b but don't EVEX.L/RC */
         ins->evex ^= EVEX_P2B;
-    }
-
-    return 0;
-}
-
-static int ea_evex_post_check(const insn *ins)
-{
-    const struct operand *op_er_sae = ins->evex_brerop;
-    const decoflags_t deco = op_er_sae ? op_er_sae->decoflags : 0;
-
-    if ((deco & (ER | SAE)) && !itemp_has(ins->itemp, IF_LIG)) {
-        const unsigned int vlen = (ins->evex & EVEX_P2RC) >> 29;
-
-        if (vlen == 1 && (ins->ea.modrm >> 6) != 3) {
-            return ea_evex_err(deco, vlen, " when accessing memory");
-        }
     }
 
     return 0;
@@ -2115,9 +2080,6 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
 
                 ins->rex |= ins->ea.rex;
                 length += ins->ea.size;
-
-                if (ea_evex_post_check(ins))
-                    return -1;
             }
             break;
 
