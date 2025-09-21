@@ -53,9 +53,10 @@ static inline unsigned int get_disp8_shift(const insn *ins)
     if (likely(!tuple))
         return 0;
 
-    evex_b  = !!(ins->evex & EVEX_P2B);
-    vectlen = (ins->evex & EVEX_P2LL) >> 29;
-    evex_w  = !!(ins->evex & EVEX_P1W);
+    evex_b  = !!(ins->evex & EVEX_B);
+    evex_w  = !!(ins->evex & EVEX_W);
+    /* XXX: consider RC/SAE here?! */
+    vectlen = getfield(EVEX_LL, ins->evex);
 
     switch (tuple) {
         /* Full, half vector unless broadcast */

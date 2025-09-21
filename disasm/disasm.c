@@ -789,8 +789,7 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             memop = is_mem_modrm(r, data+1);
 
             /* Now mask out "mismatched" bits that are proper parameters */
-            matchmask = ~(EVEX_P0BP|EVEX_P0RP|EVEX_P0B|EVEX_P0X|EVEX_P0R|
-                          EVEX_P1XP);
+            matchmask = ~(EVEX_B4|EVEX_R4|EVEX_B3|EVEX_X3|EVEX_R3|EVEX_X4);
 
             if (c != 0250 || (memop && !itemp_has(t, IF_SCC))) {
                 /*
@@ -801,7 +800,7 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
                  * otherwise this bit is supposedly ignored if not
                  * used.
                  */
-                matchmask &= ~EVEX_P2VP; /* Either V4 or X4 */
+                matchmask &= ~EVEX_V4; /* Either V4 or X4 */
             }
 
             if (c == 0250) {
@@ -834,27 +833,27 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             if (itemp_has(t, IF_WIG)) {
                 ins->rex &= ~REX_W;
                 ins->rex |=  REX_NW;
-                matchmask &= ~EVEX_P1W;
+                matchmask &= ~EVEX_W;
             }
 
             if (itemp_has(t, IF_LIG) ||
                 (prefix->rex.b && !memop)) /* LL used for rounding control */
-                matchmask &= ~EVEX_P2LL;
+                matchmask &= ~EVEX_LL;
 
             if (decoflags & MASK)
-                mismatch &= ~EVEX_P2AAA;
+                mismatch &= ~EVEX_AAA;
 
             if (decoflags & Z)
-                matchmask &= ~EVEX_P2Z;
+                matchmask &= ~EVEX_Z;
 
             if (itemp_has(t, IF_NF_E)) {
-                matchmask &= ~EVEX_P2NF;
+                matchmask &= ~EVEX_NF;
                 if (prefix->rex.nf)
                     ins->prefixes[PPS_NF] = P_NF;
             }
 
             if (itemp_has(t, IF_ZU_E)) {
-                matchmask &= ~EVEX_P2ZU;
+                matchmask &= ~EVEX_ZU;
                 if (prefix->rex.zu)
                     ins->prefixes[PPS_ZU] = P_ZU;
             }

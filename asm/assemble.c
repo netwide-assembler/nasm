@@ -1481,10 +1481,11 @@ static int ea_evex_flags(insn *ins, const struct operand *opy)
     const decoflags_t deco = op_er_sae ? op_er_sae->decoflags : 0;
 
     if (deco & (ER | SAE)) {
-        if (!itemp_has(ins->itemp, IF_LIG)) {
-            const unsigned int vlen = (ins->evex & EVEX_P2RC) >> 29;
+        /* EVEX_LL overlays EVEX_RC, so LL must = 2 or be ignored */
+        if (!itemp_has(ins-> itemp, IF_LIG)) {
+            const unsigned int vlen = getfield(EVEX_LL, ins->evex);
 
-            if (vlen != 2) {
+            if (unlikely(vlen != 2)) {
                 const char *what = deco & ER
                     ? "embedded rounding"
                     : "suppress all exceptions";
@@ -1494,15 +1495,15 @@ static int ea_evex_flags(insn *ins, const struct operand *opy)
             }
         }
 
-        ins->evex &= ~EVEX_P2RC;
-        ins->evex ^= EVEX_P2B;
+        ins->evex &= ~EVEX_RC;
+        ins->evex ^= EVEX_B;
         if (op_er_sae->decoflags & ER) {
             /* set EVEX.RC (rounding control) */
-            ins->evex ^= ((ins->evex_rm - BRC_RN) << 29) & EVEX_P2RC;
+            ins->evex ^= fieldval(EVEX_RC, ins->evex_rm - BRC_RN);
         }
     } else if (opy->decoflags & BRDCAST_MASK) {
         /* set EVEX.b but don't EVEX.L/RC */
-        ins->evex ^= EVEX_P2B;
+        ins->evex ^= EVEX_B;
     }
 
     return 0;
@@ -2708,22 +2709,22 @@ static void gencode(struct out_data *data, insn *ins)
             uint8_t vregbits = ins->vexreg | ins->veximm;
 
             codes += 4;
-            ins->evex ^= op_evexflags(&ins->oprs[0], EVEX_P2Z|EVEX_P2AAA);
+            ins->evex ^= op_evexflags(&ins->oprs[0], EVEX_Z|EVEX_AAA);
             ins->evex ^= (ins->rex & REX_BXR0) << 13; /* R0 X0 B0 */
             if (ins->rex & REX_B1)
-                ins->evex ^= (ins->rex & REX_BV) ? EVEX_P0X  : EVEX_P0BP;
+                ins->evex ^= (ins->rex & REX_BV) ? EVEX_X3  : EVEX_B4;
             if (ins->rex & REX_X1)
-                ins->evex ^= (ins->rex & REX_XV) ? EVEX_P2VP : EVEX_P1XP;
+                ins->evex ^= (ins->rex & REX_XV) ? EVEX_V4 : EVEX_X4;
             if (ins->rex & REX_R1)
-                ins->evex ^= EVEX_P0RP;
+                ins->evex ^= EVEX_R4;
             if (ins->rex & REX_W)
-                ins->evex |= EVEX_P1W; /* OR is correct here */
+                ins->evex |= EVEX_W; /* OR is correct here */
             ins->evex ^= (vregbits & 15) << 19;
             ins->evex ^= (vregbits & 16) << (27 - 4);
             if (ins->prefixes[PPS_NF] == P_NF) {
                 /* Set NF if {nd} and this is applicable */
                 if (itemp_has(ins->itemp, IF_NF_E))
-                    ins->evex ^= EVEX_P2NF;
+                    ins->evex ^= EVEX_NF;
 
                 /* Clear NF if the instruction forbids it */
                 if (itemp_has(ins->itemp, IF_NF_N)) {
@@ -2733,7 +2734,7 @@ static void gencode(struct out_data *data, insn *ins)
             /* Set ND if {zu} and this is applicable */
             if (ins->prefixes[PPS_ZU] == P_ZU) {
                 if (itemp_has(ins->itemp, IF_ZU_E))
-                    ins->evex ^= EVEX_P2ND;
+                    ins->evex ^= EVEX_ND;
             }
             out_rawdword(data, ins->evex);
             break;
@@ -3061,9 +3062,9 @@ static uint32_t evexflags(decoflags_t deco, uint32_t mask)
     uint32_t evex = 0;
 
     if (deco & Z)
-        evex |= EVEX_P2Z;
+        evex |= EVEX_Z;
     if (deco & OPMASK_MASK)
-        evex |= (deco << 24) & EVEX_P2AAA;
+        evex |= (deco << 24) & EVEX_AAA;
 
     return evex & mask;
 }

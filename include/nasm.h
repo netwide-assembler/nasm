@@ -613,30 +613,37 @@ enum {
 #define REX_rR	    (REX_R | REX_R1 | REX_RV | REX_H | REX_P)
 
 /*
- * EVEX bit field. Note that the P[] numbers in the SDM does not include
- * the leading 0x62 byte.
+ * EVEX bit fields. Note that the P[] numbers in the SDM does not include
+ * the leading 0x62 byte, so add 8 to the position.
+ *
+ * NOTES: B4 is in bit X3 = P[5]  if B is a vector
+ *        X4 is in bit V4 = P[19] if X is a vector
  */
-#define EVEX_P0MM       0x0700      /* EVEX P[2:0] : Opcode map           */
-#define EVEX_P0BP       0x0800      /* EVEX P[3] : High-16 B register     */
-#define EVEX_P0RP       0x1000      /* EVEX P[4] : High-16 R register     */
-#define EVEX_P0B        0x2000      /* EVEX P[5] : High-8 B register      */
-#define EVEX_P0X        0x4000      /* EVEX P[6] : High-8 X register      */
-#define EVEX_P0R        0x8000      /* EVEX P[7] : High-8 R register      */
-#define EVEX_P1PP       0x030000    /* EVEX P[9:8] : Legacy prefix        */
-#define EVEX_P1XP       0x040000    /* EVEX P[10] : High-16 X register    */
-#define EVEX_P1U        EVEX_P1XP   /* EVEX P[10] : 256-bit er/sae        */
-#define EVEX_P1VVVV     0x780000    /* EVEX P[14:11] : V register         */
-#define EVEX_P1W        0x800000    /* EVEX P[15] : Osize extension       */
-#define EVEX_P2AAA      0x07000000  /* EVEX P[18:16] : Embedded opmask    */
-#define EVEX_P2NF       0x04000000  /* EVEX P[18]: No flags bit           */
-#define EVEX_P2VP       0x08000000  /* EVEX P[19] : High-16 NDS reg       */
-#define EVEX_P2SCC	0x0f000000  /* EVEX P[19:16]: Modified condition  */
-#define EVEX_P2B        0x10000000  /* EVEX P[20] : Broadcast / RC / SAE  */
-#define EVEX_P2ND       EVEX_P2B    /* EVEX P[20] : New destination       */
-#define EVEX_P2ZU       EVEX_P2B    /* EVEX P[20] : Zero upper            */
-#define EVEX_P2LL       0x60000000  /* EVEX P[22:21] : Vector length      */
-#define EVEX_P2RC       EVEX_P2LL   /* EVEX P[22:21] : Rounding control   */
-#define EVEX_P2Z        0x80000000  /* EVEX P[23] : Zeroing/Merging       */
+#define evexf(name,pos,width)                   \
+    mk_field(EVEX_ ## name, 8+(pos), width)
+
+enum evex_fields {
+    evexf(MM,    0, 3),    /* EVEX P[2:0] : Opcode map                  */
+    evexf(B4,    3, 1),    /* EVEX P[3] : Bit 4 B register (B4*)        */
+    evexf(R4,    4, 1),    /* EVEX P[4] : Bit 4 R register (R4)         */
+    evexf(B3,    5, 1),    /* EVEX P[5] : Bit 3 B register (B3)         */
+    evexf(X3,    6, 1),    /* EVEX P[5] : Bit 3 X register (X3*)        */
+    evexf(R3,    7, 1),    /* EVEX P[7] : Bit 3 R register (R3)         */
+    evexf(PP,    8, 2),    /* EVEX P[9:8] : Legacy prefix               */
+    evexf(X4,   10, 1),    /* EVEX P[10] : Bit 4 X register (X4)        */
+    evexf(VVVV, 11, 4),    /* EVEX P[14:11] : V register (V3-V0)        */
+    evexf(W,    15, 1),    /* EVEX P[15] : Osize extension (REX.W)      */
+    evexf(AAA,  16, 3),    /* EVEX P[18:16] : Embedded opmask           */
+    evexf(NF,   18, 1),    /* EVEX P[18]: No flags bit                  */
+    evexf(V4,   19, 1),    /* EVEX P[19] : Bit 4 V register (V4*)       */
+    evexf(SCC,  16, 4),    /* EVEX P[19:16]: Modified condition         */
+    evexf(B,    20, 1),    /* EVEX P[20] : Broadcast / RC / SAE         */
+    evexf(ND,   20, 1),    /* EVEX P[20] : New destination              */
+    evexf(ZU,   20, 1),    /* EVEX P[20] : Zero upper                   */
+    evexf(LL,   21, 2),    /* EVEX P[22:21] : Vector length             */
+    evexf(RC,   21, 2),    /* EVEX P[22:21] : Rounding control          */
+    evexf(Z,    23, 1)     /* EVEX P[23] : Zeroing/Merging              */
+};
 
 /*
  * REX_V "classes" (prefixes which behave like VEX)
