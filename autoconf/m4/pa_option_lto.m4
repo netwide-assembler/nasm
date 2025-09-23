@@ -7,15 +7,15 @@ dnl  but that could change in the future -- to force disabled by default,
 dnl  set to "no".
 dnl --------------------------------------------------------------------------
 AC_DEFUN([PA_OPTION_LTO],
-[PA_ARG_BOOL([lto],
+[AC_BEFORE([$0],[AC_PROG_AR])dnl
+ AC_BEFORE([$0],[AC_PROG_RANLIB])dnl
+ PA_ARG_BOOL([lto],
  [Try to enable link-time optimization for this compiler],
- [$1],
- [PA_ADD_LANGFLAGS([-flto=auto -flto])
-PA_ADD_LANGFLAGS([-ffat-lto-objects])
-dnl Note: we use _PROG rather than _TOOL since we are prepending the full
-dnl CC name which ought to already contain the host triplet if needed
-   ccbase=`echo "$CC" | awk '{ print $1; }'`
-   AC_CHECK_PROGS(CC_AR, [${ccbase}-ar], [$ac_cv_prog_AR])
-   AR="$CC_AR"
-   AC_CHECK_PROGS(CC_RANLIB, [${ccbase}-ranlib], [$ac_cv_prog_RANLIB])
-   RANLIB="$CC_RANLIB"])])
+ [m4_default([$1],[no])],
+ [PA_FIND_FLAGS([-flto=auto],[-flto])
+  PA_FIND_FLAGS([-ffat-lto-objects])
+  PA_FIND_FLAGS([-fuse-linker-plugin])
+
+  AS_IF([test x$ac_compiler_gnu = xyes],
+  [AC_CHECK_TOOL(AR, [gcc-ar], [ar], [:])
+   AC_CHECK_TOOL(RANLIB, [gcc-ranlib], [ranlib], [:])])])])

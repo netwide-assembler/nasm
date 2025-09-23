@@ -17,7 +17,7 @@ AC_DEFUN([_PA_FUNC_ATTRIBUTE],
  m4_define([_pa_fam],ifelse([$2],[],[],[(m4_join([,],m4_for(_pa_n,1,m4_count($2),1,[m4_quote([x]_pa_n),])))]))
  m4_define([_pa_suf],ifelse([$2],[],[],[m4_count($2)]))
  m4_define([_pa_mac],ifelse([$6],[],[$1_func]_pa_suf,[$6]))
- AC_MSG_CHECKING([if $CC supports the $1]_pa_faa[ function attribute])
+ AC_MSG_CHECKING([whether $]_AC_CC[ supports the $1]_pa_faa[ function attribute])
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 PA_ATTRIBUTE_SYNTAX
@@ -50,7 +50,7 @@ AC_DEFUN([_PA_FUNC_PTR_ATTRIBUTE],
  m4_define([_pa_fam],ifelse([$2],[],[],[(m4_join([,],m4_for(_pa_n,1,m4_count($2),1,[m4_quote([x]_pa_n),])))]))
  m4_define([_pa_suf],ifelse([$2],[],[],[m4_count($2)]))
  m4_define([_pa_mac],ifelse([$6],[],[$1_func]_pa_suf,[$6])_ptr)
- AC_MSG_CHECKING([if $CC supports the $1]_pa_faa[ function attribute on pointers])
+ AC_MSG_CHECKING([whether $]_AC_CC[ supports the $1]_pa_faa[ function attribute on pointers])
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 PA_ATTRIBUTE_SYNTAX

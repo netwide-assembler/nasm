@@ -11,7 +11,7 @@ dnl This doesn't use a function pointer because there is no need:
 dnl the error function will never be a function pointer.
 dnl --------------------------------------------------------------------------
 AC_DEFUN([PA_FUNC_ATTRIBUTE_ERROR],
-[AC_MSG_CHECKING([if $CC supports the error function attribute])
+[AC_MSG_CHECKING([whether $]_AC_CC[ supports the error function attribute])
  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 AC_INCLUDES_DEFAULT
 PA_ATTRIBUTE_SYNTAX

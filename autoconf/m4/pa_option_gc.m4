@@ -9,6 +9,6 @@ AC_DEFUN([PA_OPTION_GC],
  [do not compile with dead code garbage collection support],
  [],
  [PA_ADD_LDFLAGS([-Wl,--as-needed])
-  PA_ADD_CFLAGS([-ffunction-sections])
-  PA_ADD_CFLAGS([-fdata-sections])
+  PA_ADD_LANGFLAGS([-ffunction-sections])
+  PA_ADD_LANGFLAGS([-fdata-sections])
   PA_ADD_LDFLAGS([-Wl,--gc-sections])])])
