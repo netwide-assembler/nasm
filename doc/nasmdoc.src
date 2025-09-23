@@ -94,12 +94,22 @@ source.}
 
 \& ndisasm.src
 
-\# Keep the changelog as Appendix C if at all possible, otherwise
-\# the website machinery needs to be changed.
+\# --- Begin directly referenced appendices
+
+\# The following three appendices are linked to directly from the
+\# website. Please keep them in their current position as appendices
+\# C, D and E if at all possible. If they are reorganized, the website
+\# will need to be updated.
+
+\# Appendix C: changelog/release notes
 \& changelog.src
 
+\# Appendix D: building from source
 \& source.src
 
+\# Appendix E: contact information
 \& contact.src
+
+\# --- End directly referenced appendices
 
 \& inslist.src
