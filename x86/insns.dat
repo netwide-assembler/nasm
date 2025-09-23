@@ -481,13 +481,13 @@ $wdq  SMSW	reg#				[m:	o# 0f 01 /4]				286
       MOV	reg32,reg_treg			[mr:	0f 24 /r]				386,NOLONG,ND,OBSOLETE
       MOV	reg_treg,reg32			[rm:	0f 26 /r]				386,NOLONG,ND,OBSOLETE
 
-WRMSR		void				[	0f 30]					PENT,PRIV,NOAPX
-RDMSR		void				[	0f 32]					PENT,PRIV,NOAPX
-RDMSR		reg64,imm32			[mi:	vex+.128.f2.m7.w0 f6 /0 id]		APX,FUTURE
-WRMSRNS		void				[	np 0f 01 c6		]		WRMSRNS,PRIV,LONG
-WRMSRNS		imm32,reg64			[im:	vex+.128.f3.m7.w0 f6 /0 id]		APX,FUTURE,WRMSRNS
-RDMSRLIST	void				[	f2 0f 01 c6		]		MSRLIST,PRIV,LONG
-WRMSRLIST	void				[	f3 0f 01 c6		]		MSRLIST,PRIV,LONG
+WRMSR		void				[	0f 30]					PRIV,PENT,NOAPX
+RDMSR		void				[	0f 32]					PRIV,PENT,NOAPX
+RDMSR		reg64,imm32			[mi:	vex+.128.f2.m7.w0 f6 /0 id]		PRIV,LONG,APX,MSR_IMM,FUTURE
+WRMSRNS		void				[	np 0f 01 c6		]		PRIV,WRMSRNS,FUTURE
+WRMSRNS		imm32,reg64			[im:	vex+.128.f3.m7.w0 f6 /0 id]		PRIV,LONG,APX,MSR_IMM,FUTURE
+RDMSRLIST	void				[	f2 0f 01 c6		]		PRIV,MSRLIST,LONG
+WRMSRLIST	void				[	f3 0f 01 c6		]		PRIV,MSRLIST,LONG
 
 URDMSR		reg64,reg64			[mr:	f2 0f 38 f8 /r		]		FUTURE,NOAPX
 URDMSR		reg64,reg64			[mr:	evex.nf0.nd0.l0.f2.m4.w0 f8 /r]		APX,FUTURE
