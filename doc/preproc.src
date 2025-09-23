@@ -17,7 +17,7 @@ and the macro facilities of many other assemblers.
 The input to the preprocessor is expanded in the following ways in the
 order specified here.
 
-\S{pcbackslash} \i{Continuation Line} Collapsing
+\S{pcbackslash} \i{Continuation} Line Collapsing
 
 The preprocessor first collapses all lines which end with a backslash
 (\c{\\}) character into a single line.  Thus:
@@ -38,7 +38,7 @@ After concatenation, comments are removed.
 begin with the character \c{;} unless contained
 inside a quoted string or a handful of other special contexts.
 
-\I{ccomment}Note that this is applied \e{after} \i{continuation lines}
+\I{ccomment}Note that this is applied \e{after} \i{continuation} lines
 are collapsed. This means that
 
 \c       add al,'\\'	 ; Add the ASCII code for \\

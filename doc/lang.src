@@ -93,11 +93,10 @@ Pseudo-instructions are things which, though not real x86 machine
 instructions, are used in the instruction field anyway because that's
 the most convenient place to put them. The current pseudo-instructions
 are \i\c{DB}, \i\c{DW}, \i\c{DD}, \i\c{DQ}, \i\c{DT}, \i\c{DO},
-\i\c{DY} and \i\c\{DZ}; their \I{storage,
-uninitialized}\i{uninitialized} counterparts \i\c{RESB}, \i\c{RESW},
-\i\c{RESD}, \i\c{RESQ}, \i\c{REST}, \i\c{RESO}, \i\c{RESY} and
-\i\c\{RESZ}; the \i\c{INCBIN} command, the \i\c{EQU} command, and the
-\i\c{TIMES} prefix.
+\i\c{DY} and \i\c\{DZ}; their \i{uninitialized} counterparts
+\i\c{RESB}, \i\c{RESW}, \i\c{RESD}, \i\c{RESQ}, \i\c{REST},
+\i\c{RESO}, \i\c{RESY} and \i\c\{RESZ}; the \i\c{INCBIN} command, the
+\i\c{EQU} command, and the \i\c{TIMES} prefix.
 
 In this documentation, the notation "\c{D}\e{x}" and "\c{RES}\e{x}" is
 used to indicate all the \c{DB} and \c{RESB} type directives,
@@ -132,7 +131,7 @@ can be invoked in a wide range of ways:
 \I{masmdb} Starting in NASM 2.15, a the following \i{MASM}-like features
 have been implemented:
 
-\b A \I{?db}\c{?} argument to declare \i{uninitialized storage}:
+\b A \I{?db}\c{?} argument to declare \i{uninitialized} storage:
 
 \c       db    ?                   ; uninitialized
 

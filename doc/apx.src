@@ -1,79 +1,241 @@
-\C{APX} APX syntax
+\C{APX} \I{apx syntax}\i{APX} Instruction Syntax
 
-Intel APX (Advanced Performance Extensions) introduces multiple new ways to
-invoke already available instructions but also implements a few new ones. The
-main additions are more GPRs (General Purpose Registers) - R16-R31, new modes
-that disable modyfing flags by instructions or disable zeroing out the upper
-parts of registers. Another big addition is giving many instructions a
-non-destructive destination operand - allowing saving the operation result to a
-separately specified register without modyfing the source registers. From newly
-added instructions there is a new double-conditional type that allows updating
-the CPU flags to any values if the first condition turns out to be false. Other
-important new instructions are push and pop variants that move two elements at a
-time to or from the stack, and an absolute jump that takes a full 64-bit
-immediate address.
+Intel APX (\i{Advanced Performance Extensions}) introduces multiple
+new features, mostly to existing instructions. APX is only available
+in 64-bit mode.
 
-\H{egprs} Extended General Purpose Registers
+\b There are 16 new general purpose registers, \c{R16} to \c{R31}.
 
-When it comes to register size, the new extended number of registers work the
-same way as registers R8-R15 (see \k{reg64}). So for example \c{r25d} would mean
-the 25th register, with 32 bit size. Using the extended register number
-automatically uses the APX encoding of an instruction. An EVEX prefix is used,
-unless an instruction can utilize the REX2 prefix, which is then preferable due
-to taking up less memory than EVEX. One can find instructions that can use the
-REX2 prefix by looking at the APX documentation, chapter 3.1.5, and finding
-instructions with Legacy-map 0 or 1.
+\b Many instructions now support a non-destructive destination
+operand.
 
-\H{ndd} New Data Destination
+\b The ability to suppress the setting of the arithmetic flags.
 
-Using the New Data Destination register is specified by adding an additional
-register in place of the first operand - for instructions that support it of
-course. So for example an add instruction could look like
+\b The ability to zero the upper parts of a full 64-bit register for
+8- and 16-bit operation size instructions. (This zeroing is always
+performed for 32-bit operations; this has been the case since 64-bit
+mode was first introduced.)
 
-\c	add rax, rbx, rcx
+\b New instructions to conditionally set the arithmetic flags to a
+user-specified value.
 
-which would add numbers stored in the B and C registers and store the result in
-A.
+\b Performance-enhanced versions of the \c{PUSH} and \c{POP}
+instructions.
 
-\H{nfzu} Non-Modyfing and Zero-Upper flags
+\b A 64-bit absolute jump instruction.
 
-The non-modyfing flags mode can be used with supported instructions by adding a
-{nf} suffix to the instruction mnemonic, for example
+\b A new \i{REX2} prefix.
 
-\c	add {nf} rax, rbx.
+See \w{https://www.nasm.us/specs/apx} for a link to the APX technical
+documentation. NASM generally follows the syntax specified in the
+\e{Assembly Syntax Recommendations for Intel APX} document although
+some syntax is relaxed, see below.
 
-In the same way the {zu} can be used meaning - "zero-upper", which disables
-zeroing out upper parts of GPRs when the operand size is 8 or 16 bits. For
-example
+\H{egprs} \i{Extended General Purpose Registers} (\i{EGPRs})
 
-\c	setb {zu} ax
+When it comes to register size, the new registers (\c{R16}-\c{R31})
+work the same way as registers \c{R8}-\c{R15} (see also \k{reg64}):
 
-will not zero out bits 63:16 in the A register.
+\b \c{R31} is the 64-bit form of register 31,
 
-\H{dfv} Default Flags Value
+\b \c{R31D} is the 32-bit form,
 
-New SCC (Source Condition Code) instructions: CCMPSCC and CTESTSCC allow using
-the {dfv=} mnemonic suffix which can contain a list of comma separated CPU
-flags, specifically OF, SF, ZF, CF. Any given SCC instruction has a flag
-condition encoded in the mnemonic (for example CCMPB - compare if below). If the
-condition is true, the instruction does what it's supposed to (compare or test
-operands). If the condition is false the flags are modified to the values
-specified in the {dfv} list.
+\b \c{R31W} is the 16-bit form, and
 
-\H{push2pop2} Push2 and Pop2
+\b \c{R31B} is the 8-bit form. The form \c{R31L} can also be used if
+the \c{altreg} macro package is used (\c{%use altreg}), see
+\k{pkg_altreg}.
 
-The new push and pop instructions allow pushing or popping two values from the
-stack at once. The operands can only be registers, and the order of operation
-for an instruction:
+Extended registers require that either a REX2 prefix (the default, if
+possible) or an EVEX prefix is used.
 
-\c	push2 rax, rbx
+There are some instructions that don't support EGPRs. In that case,
+NASM will generate an error if they are used.
 
-translates into:
 
-\c	push rax
-\c	push rbx
+\H{apx_ndd} \i{New Data Destination} (\i{NDD})
 
-\H{jmpabs} JMPABS
+Using the new data destination register (when supported) is specified
+by adding an additional register in place of the first operand.
+For example an \c{ADD} instruction:
 
-A new near jump instruction takes the absolute address that's subjected to
-canonicality checks.
+\c      add rax, rbx, rcx
+
+... which would add \c{RBX} and \c{RCX} and store the result in
+\c{RAX}, without modifying neither \c{RBX} nor \c{RCX}.
+
+\H{apx_nf} Suppress Modifying Flags (\i{NF})
+
+The \c{\{nf\}} prefix on a supported instruction inhibits the update
+of the flags, for example:
+
+\c      {nf} add rax, rbx
+
+... will add \c{RAX} and \c{RBX} together, storing the result in
+\c{RAX}, while leaving the flags register unchanged.
+
+NASM also allows the \c{\{nf\}} prefix (or any other curly-brace
+prefix) to be specified \e{after} the instruction mnemonic. Spaces
+around curly-brace prefixes are optional:
+
+\c      {nf} add rax, rbx       ; Standard syntax
+\c      {nf}add  rax, rbx       ; Prefix without space
+\c      add {nf} rax, rbx       ; Suffix syntax
+\c      add{nf}  rax, rbx       ; Suffix without space
+
+
+\H{apx_zu} \i{Zero Upper} (\i{ZU})
+
+The \c{\{zu\}} prefix can be used meaning -
+"zero-upper", which disables retaining the upper parts of the
+registers and instead zero-extends the value into the full 64-bit
+register when the operand size is 8 or 16 bits (this is always done
+when the operand size is 32 bits, even without APX). For example:
+
+\c      {zu} setb al
+
+... zeroes out bits [63:8] of the \c{RAX} register. For this specific
+instruction, NASM also eccepts these alternate syntaxes:
+
+\c      {zu} setb ax
+\c      setb {zu} al
+\c      setb {zu} ax
+\c      setb {zu} eax
+\c      setb {zu} rax
+\c      setb eax
+\c      setb rax
+
+\H{apx_dfv} \i{Source Condition Code} (\I{scc}S\e{cc}) and \i{Default Flags
+Value} (\i{DFV})
+
+The source condition code (S\e{cc}) instructions, \c{CCMPS}\e{cc} and
+\c{CTESTS}\c{cc}, perform a test which if successful set the
+arithmetic flags to a user specfied value and otherwise leave them
+unchanged.
+
+NASM allows the resulting \e{default flags value} to be specified
+either using the \I\c{\{dfv=\}}\c{\{dfv=\}}...\c{\}} syntax,
+containing a comma-separated list of zero or more of the CPU flags
+\c{OF}, \c{SF}, \c{ZF} or \c{CF} or simply as a numeric immediate
+(with \c{OF}, \c{SF}, \c{ZF} and \c{CF} being represented by bits 3 to
+0 in that order.)
+
+The \c{PF} flag is always set to the same value as the \c{CF} flag,
+and the \c{AF} flag is always cleared. NASM allows \c{\{dfv=pf\}} as
+an alias for \c{\{dfv=cf\}}, but do note that it still affects both
+flags.
+
+NASM allows, but does not require, a comma after the \c{\{dfv=\}}
+value; when using the immediate syntax a comma is required; these
+examples all produce the same instruction:
+
+\c      ccmpl {dfv=of,cf} rdx, r30
+\c      ccmpl {dfv=of,cf}, rdx, r30
+\c      ccmpl 0x9, rdx, r30                     ; Comma required
+
+The immediate syntax also allows for the \c{\{dfv=\}} values to be
+stored in a symbol, or having arithmetic done on them. Note that when
+used in an expression, or in contexts other than \c{EQU} or one of the
+\c{S}\e{cc} instructions, parenteses are required; this is a safety
+measure (programmer needs to explicitly indicate that use as an
+expression is what is intended):
+
+\c      ccmpl ({dfv=of}|{dfv=cf}), rdx, r30     ; Parens, comma required
+\c ocf1 equ {dfv=of,cf}                         ; Parens not required
+\c      ccmpl ocf1, rdx, r30                    ; Comma required
+\c ofcf equ ({dfv=of,sf,cf} & ~{dfv=sf})        ; Parens required
+\c      ccmpl ofcf2, rdx, r30                   ; Comma required
+
+
+\H{apx_pushpop} \c{PUSH} and \c{POP} Extensions
+
+APX adds variations of the \c{PUSH} and \c{POP} instructions that:
+
+\b informs the CPU that a specific \c{PUSH} and \c{POP} constitute a
+   matched pair, allowing the hardware to optimize for this common use
+   case: \i\c{PPUSH} and \i\c{PPOP};
+
+\b operates on two registers at the same time: \i\c{PUSH2} and
+  \i\c{POP2}, with variants \i\c{PPUSH2} and \i\c{PPOP2}.
+
+These extensions only apply to register forms; they are not supported
+for memory or immediate operands.
+
+The standard syntax for (\c{P})\c{PUSH2} and (\c{P})\c{POP2} specify
+the registers in the order they are to be pushed and popped on the
+stack:
+
+\c      ppush2 rax, rbx
+\c      ; rax in [rsp+8]
+\c      ; rbx is [rsp+0]
+\c      ppop2 rbx, rax
+
+... would be the equivalent of:
+
+\c      push rax
+\c      push rbx
+\c      ; rax in [rsp+8]
+\c      ; rbx is [rsp+0]
+\c      pop rbx
+\c      pop rax
+
+NASM also allows the registers to be specified as a \e{register pair}
+separated by a colon, in which case the order is always specified in
+the order \e{high}\c{:}\e{low} and thus is the same for \c{PUSH2} and
+\c{POP2}. This means the order of the operands in the \c{POP2}
+instruction is different:
+
+\c      ppush2 rax:rbx
+\c      ; rax in [rsp+8]
+\c      ; rbx is [rsp+0]
+\c      ppop2 rax:rbx
+
+\H{apx_jmpabs} 64-bit absolute jump (\i\c{JMPABS})
+
+A new near jump instruction takes a 64-bit \e{absolute} address
+immediate.
+
+NASM allows this instruction to be specified either as:
+
+\c      jmpabs target
+
+... or:
+
+\c      jmp abs target
+
+The generated code is identical. The \c{ABS} is required regardless of
+the \c{DEFAULT} setting.
+
+\H{apx_opt} \I{apx optimizer}APX and the NASM optimizer
+
+When the optimizer is enabled (see \k{opt-O}), NASM may apply a number
+of optimizations, some of which may apply non-APX instructions to what
+otherwise would be APX forms. Some examples are:
+
+\b The \c{\{nf\}} prefix may be ignored on instructions that already
+   don't modify the arithmetic flags.
+
+\b When the \c{\{nf\}} prefix is specified, NASM may generate another
+   instruction which would not modify the flags register. For example,
+   \c{\{nf\} ror rax, rcx, 3} can be translated into
+   \c{rorx rax, rcx, 3}.
+
+\b The \c{\{zu\}} prefix may be ignored on instruction that already
+   zero the upper parts of the destination register.
+
+\b When the \c{\{zu\}} prefix is specified, NASM may generate another
+   instruction which would zero the upper part of the register. For
+   example, \c{\{zu\} mov ax, cs} can be translated into \c{mov eax, cs}.
+
+\b New data destination or nondestructive source operands may be
+   contracted if they are the same (and the semantics are otherwise
+   identical). For example, \c{add eax, eax, edx} could be encoded as
+   \c{add eax, edx} using legacy encoding. \e{NASM does not perform
+   this optimization as of version 3.00, but it probably will in the
+   future.}
+
+
+\H{apx_force} Force APX Encoding
+
+APX encoding, using REX2 and EVEX, respectively, can be forced by
+using the \i\c{\{rex2\}} or \i\c{\{evex\}} instruction prefixes.

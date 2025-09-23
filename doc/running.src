@@ -768,14 +768,10 @@ chooses to call them \c{st0}, \c{st1} etc.
 For historical reasons, NASM uses the keyword \i\c{TWORD} where MASM
 and compatible assemblers use \i\c{TBYTE}.
 
-Historically, NASM does not declare \i{uninitialized storage} in the
+Historically, NASM does not declare \i{uninitialized} storage in the
 same way as MASM: where a MASM programmer might use \c{stack db 64 dup
 (?)}, NASM requires \c{stack resb 64}, intended to be read as `reserve
-64 bytes'. For a limited amount of compatibility, since NASM treats
-\c{?} as a valid character in symbol names, you can code \c{? equ 0}
-and then writing \c{dw ?} will at least do something vaguely useful.
-
-As of NASM 2.15, the MASM syntax is also supported.
+64 bytes'. As of NASM 2.15, the MASM syntax is also supported.
 
 In addition to all of this, macros and directives work completely
 differently to MASM. See \k{preproc} and \k{directive} for further
@@ -783,4 +779,5 @@ details.
 
 \S{masm-compat} MASM compatibility package
 
-See \k{pkg_masm}.
+The MASM compatibility macro package can be used to improve MASM
+compatibility. See \k{pkg_masm}.

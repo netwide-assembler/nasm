@@ -17,9 +17,9 @@ NASM (\c{%ifusable}) or a particular package already loaded (\c{%ifusing}).
 
 The \c{altreg} standard macro package provides alternate register
 names.  It provides numeric register names for all registers (not just
-\c{R8}-\c{R15}), the Intel-defined aliases \c{R8L}-\c{R15L} for the
+\c{R8}-\c{R31}), the Intel-defined aliases \c{R8L}-\c{R31L} for the
 low bytes of register (as opposed to the NASM/AMD standard names
-\c{R8B}-\c{R15B}), and the names \c{R0H}-\c{R3H} (by analogy with
+\c{R8B}-\c{R31B}), and the names \c{R0H}-\c{R3H} (by analogy with
 \c{R0L}-\c{R3L}) for \c{AH}, \c{CH}, \c{DH}, and \c{BH}.
 
 Example use:
@@ -30,7 +30,7 @@ Example use:
 \c       mov r0l,r3h                    ; mov al,bh
 \c       ret
 
-See also \k{reg64}.
+See also \k{reg64} and \k{egprs}.
 
 
 \H{pkg_smartalign} \i\c{smartalign}\I{align, smart}: Smart \c{ALIGN} Macro

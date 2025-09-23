@@ -115,8 +115,7 @@
 \IA{case-insensitive}{case sensitive}
 \IA{character constants}{character constant}
 \IR{codeview debugging format} CodeView debugging format
-\IR{continuation line} continuation line
-\IC{continuation line}{preprocessor, continuation line}
+\IR{continuation} continuation line
 \IR{common object file format} Common Object File Format
 \IR{common variables, alignment in elf} common variables, alignment in ELF
 \IR{common, elf extensions to} \c{COMMON}, ELF extensions to
@@ -253,8 +252,10 @@
 \IR{tlink} \c{TLINK}
 \IR{unconditionally importing symbols} importing symbols, unconditionally
 \IR{underscore, in c symbols} underscore, in C symbols
-\IA{uninitialized}{uninitialized storage}
+\IR{uninitialized} uninitialized storage
 \IC{uninitialized storage}{storage, uninitialized}
+\IC{RESB}{uninitialized, resb} uninitialized storage, \c{RES}\e{x}
+\IC{?db}{uninitialized, db} uninitialized storage, \c{D}\e{x}\e{ ?}
 \IR{unicode} Unicode
 \IR{unix} Unix
 \IR{utf-8} Unicode, UTF-8
@@ -287,8 +288,24 @@
 \IC{unknown %if}{unknown %elif} \c{%elif}, backwards compatibility
 \IC{unknown %if}{unknown %ifn} \c{%ifn}, backwards compatibility
 \IC{unknown %if}{unknown %elifn} \c{%elifn}, backwards compatibility
+\IR{apx} APX
+\IR{advanced programming extensions} Advanced Programming Extensions
+\IA{egprs}{egpr}
+\IR{egpr} EGPR
+\IC{egpr}{extended general purpose register}
+\IA{extended general purpose registers}{egpr}
+\IR{apx syntax} APX, syntax
+\IC{apx syntax}{syntax, apx} syntax, APX
+\IR{scc} S\e{cc}
+\IR{apx optimizer} APX, optimizer
 \# \IC{program entry point}{entry point, program}
 \# \IC{program entry point}{start point, program}
 \# \IC{MS-DOS device drivers}{device drivers, MS-DOS}
 \# \IC{16-bit mode, versus 32-bit mode}{32-bit mode, versus 16-bit mode}
 \# \IC{c symbol names}{symbol names, in C}
+\IR{WRT ..got} \c{WRT}, \c{..got}
+\IR{WRT ..gotoff} \c{WRT}, \c{..gotoff}
+\IR{WRT ..gotpc} \c{WRT}, \c{..gotpc}
+\IR{WRT ..plt} \c{WRT}, \c{..plt}
+\IR{WRT ..sym} \c{WRT}, \c{..sym}
+\IR{rex2} REX2 prefix
