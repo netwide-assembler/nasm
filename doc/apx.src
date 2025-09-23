@@ -1,0 +1,79 @@
+\C{APX} APX syntax
+
+Intel APX (Advanced Performance Extensions) introduces multiple new ways to
+invoke already available instructions but also implements a few new ones. The
+main additions are more GPRs (General Purpose Registers) - R16-R31, new modes
+that disable modyfing flags by instructions or disable zeroing out the upper
+parts of registers. Another big addition is giving many instructions a
+non-destructive destination operand - allowing saving the operation result to a
+separately specified register without modyfing the source registers. From newly
+added instructions there is a new double-conditional type that allows updating
+the CPU flags to any values if the first condition turns out to be false. Other
+important new instructions are push and pop variants that move two elements at a
+time to or from the stack, and an absolute jump that takes a full 64-bit
+immediate address.
+
+\H{egprs} Extended General Purpose Registers
+
+When it comes to register size, the new extended number of registers work the
+same way as registers R8-R15 (see \k{reg64}). So for example \c{r25d} would mean
+the 25th register, with 32 bit size. Using the extended register number
+automatically uses the APX encoding of an instruction. An EVEX prefix is used,
+unless an instruction can utilize the REX2 prefix, which is then preferable due
+to taking up less memory than EVEX. One can find instructions that can use the
+REX2 prefix by looking at the APX documentation, chapter 3.1.5, and finding
+instructions with Legacy-map 0 or 1.
+
+\H{ndd} New Data Destination
+
+Using the New Data Destination register is specified by adding an additional
+register in place of the first operand - for instructions that support it of
+course. So for example an add instruction could look like
+
+\c	add rax, rbx, rcx
+
+which would add numbers stored in the B and C registers and store the result in
+A.
+
+\H{nfzu} Non-Modyfing and Zero-Upper flags
+
+The non-modyfing flags mode can be used with supported instructions by adding a
+{nf} suffix to the instruction mnemonic, for example
+
+\c	add {nf} rax, rbx.
+
+In the same way the {zu} can be used meaning - "zero-upper", which disables
+zeroing out upper parts of GPRs when the operand size is 8 or 16 bits. For
+example
+
+\c	setb {zu} ax
+
+will not zero out bits 63:16 in the A register.
+
+\H{dfv} Default Flags Value
+
+New SCC (Source Condition Code) instructions: CCMPSCC and CTESTSCC allow using
+the {dfv=} mnemonic suffix which can contain a list of comma separated CPU
+flags, specifically OF, SF, ZF, CF. Any given SCC instruction has a flag
+condition encoded in the mnemonic (for example CCMPB - compare if below). If the
+condition is true, the instruction does what it's supposed to (compare or test
+operands). If the condition is false the flags are modified to the values
+specified in the {dfv} list.
+
+\H{push2pop2} Push2 and Pop2
+
+The new push and pop instructions allow pushing or popping two values from the
+stack at once. The operands can only be registers, and the order of operation
+for an instruction:
+
+\c	push2 rax, rbx
+
+translates into:
+
+\c	push rax
+\c	push rbx
+
+\H{jmpabs} JMPABS
+
+A new near jump instruction takes the absolute address that's subjected to
+canonicality checks.
