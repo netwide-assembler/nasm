@@ -153,10 +153,10 @@ APX adds variations of the \c{PUSH} and \c{POP} instructions that:
 
 \b informs the CPU that a specific \c{PUSH} and \c{POP} constitute a
    matched pair, allowing the hardware to optimize for this common use
-   case: \i\c{PPUSH} and \i\c{PPOP};
+   case: \i\c{PUSHP} and \i\c{POPP};
 
 \b operates on two registers at the same time: \i\c{PUSH2} and
-  \i\c{POP2}, with variants \i\c{PPUSH2} and \i\c{PPOP2}.
+  \i\c{POP2}, with paired variants \i\c{PUSH2P} and \i\c{POP2P}.
 
 These extensions only apply to register forms; they are not supported
 for memory or immediate operands.
@@ -165,10 +165,10 @@ The standard syntax for (\c{P})\c{PUSH2} and (\c{P})\c{POP2} specify
 the registers in the order they are to be pushed and popped on the
 stack:
 
-\c      ppush2 rax, rbx
+\c      push2p rax, rbx
 \c      ; rax in [rsp+8]
 \c      ; rbx is [rsp+0]
-\c      ppop2 rbx, rax
+\c      pop2p rbx, rax
 
 ... would be the equivalent of:
 
@@ -185,10 +185,10 @@ the order \e{high}\c{:}\e{low} and thus is the same for \c{PUSH2} and
 \c{POP2}. This means the order of the operands in the \c{POP2}
 instruction is different:
 
-\c      ppush2 rax:rbx
+\c      push2p rax:rbx
 \c      ; rax in [rsp+8]
 \c      ; rbx is [rsp+0]
-\c      ppop2 rax:rbx
+\c      pop2p rax:rbx
 
 \H{apx_jmpabs} 64-bit absolute jump (\i\c{JMPABS})
 
