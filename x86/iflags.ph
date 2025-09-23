@@ -181,10 +181,9 @@ if_("MONITORX",		 "MONITORX and MWAITX");
 if_("WAITPKG",           "User wait instruction package");
 
 # Single-instruction CPUID bits without additional help text
-my @oneins = qw(invpcid prefetchwt1 pconfig wbnoinvd serialize lkgs
-		wrmsrns clflushopt clwb rdrand rdseed rdpid
-		lzcnt ptwrite cldemote movdiri movdir64b clzero
-		movbe movrs);
+my @oneins = qw(invpcid prefetchwt1 pbndkb pconfig wbnoinvd serialize
+		lkgs wrmsrns clflushopt clwb rdrand rdseed rdpid lzcnt
+		ptwrite cldemote movdiri movdir64b clzero movbe movrs);
 foreach my $ins (@oneins) {
     if_($ins, "\U$ins\E instruction");
 }
