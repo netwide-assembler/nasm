@@ -853,7 +853,7 @@ PCMPEQW		mmxreg,mmxrm			[rm:	np 0f 75 /r]			PENT,MMX,SQ
 PCMPGTB		mmxreg,mmxrm			[rm:	np 0f 64 /r]			PENT,MMX,SQ
 PCMPGTD		mmxreg,mmxrm			[rm:	np 0f 66 /r]			PENT,MMX,SQ
 PCMPGTW		mmxreg,mmxrm			[rm:	np 0f 65 /r]			PENT,MMX,SQ
-PDISTIB		mmxreg,mem			[rm:	0f 54 /r]				PENT,MMX,SM,CYRIX
+PDISTIB		mmxreg,mem			[rm:	0f 54 /r]				PENT,MMX,SQ,CYRIX
 PF2ID		mmxreg,mmxrm			[rm:	0f 0f /r 1d]			PENT,3DNOW,SQ
 PFACC		mmxreg,mmxrm			[rm:	0f 0f /r ae]			PENT,3DNOW,SQ
 PFADD		mmxreg,mmxrm			[rm:	0f 0f /r 9e]			PENT,3DNOW,SQ
@@ -871,7 +871,7 @@ PFRSQRT		mmxreg,mmxrm			[rm:	0f 0f /r 97]			PENT,3DNOW,SQ
 PFSUB		mmxreg,mmxrm			[rm:	0f 0f /r 9a]			PENT,3DNOW,SQ
 PFSUBR		mmxreg,mmxrm			[rm:	0f 0f /r aa]			PENT,3DNOW,SQ
 PI2FD		mmxreg,mmxrm			[rm:	0f 0f /r 0d]			PENT,3DNOW,SQ
-PMACHRIW	mmxreg,mem			[rm:	0f 5e /r]				PENT,MMX,SM,CYRIX
+PMACHRIW	mmxreg,mem			[rm:	0f 5e /r]				PENT,MMX,SQ,CYRIX
 PMADDWD		mmxreg,mmxrm			[rm:	np 0f f5 /r]			PENT,MMX,SQ
 PMAGW		mmxreg,mmxrm			[rm:	0f 52 /r]				PENT,MMX,SQ,CYRIX
 PMULHRIW	mmxreg,mmxrm			[rm:	0f 5d /r]				PENT,MMX,SQ,CYRIX
@@ -1122,24 +1122,24 @@ PREFETCHIT1	mem8				[m:	0f 18 /6]				PREFETCHI,SB
 SFENCE		void				[	np 0f ae f8]				KATMAI
 
 ;# New MMX instructions introduced in Katmai
-MASKMOVQ	mmxreg,mmxreg			[rm:	np 0f f7 /r]				KATMAI,MMX
-MOVNTQ		mem,mmxreg			[mr:	np 0f e7 /r]				KATMAI,MMX,SQ
+MASKMOVQ	mmxreg,mmxreg			[rm:	np 0f f7 /r]			KATMAI,MMX
+MOVNTQ		mem,mmxreg			[mr:	np 0f e7 /r]			KATMAI,MMX,SQ
 PAVGB		mmxreg,mmxrm			[rm:	np 0f e0 /r]			KATMAI,MMX,SQ
 PAVGW		mmxreg,mmxrm			[rm:	np 0f e3 /r]			KATMAI,MMX,SQ
-PEXTRW		reg32,mmxreg,imm		[rmi:	np 0f c5 /r ib,u]			KATMAI,MMX,SB,AR2
+PEXTRW		reg32,mmxreg,imm		[rmi:	np 0f c5 /r ib,u]		KATMAI,MMX,SB,AR2
 ; PINSRW is documented as using a reg32, but it's really using only 16 bit
 ; -- accept either, but be truthful in disassembly
-PINSRW		mmxreg,mem,imm			[rmi:	np 0f c4 /r ib,u]			KATMAI,MMX,SB,AR2
-PINSRW		mmxreg,rm16,imm			[rmi:	np 0f c4 /r ib,u]			KATMAI,MMX,SB,AR2
-PINSRW		mmxreg,reg32,imm		[rmi:	np 0f c4 /r ib,u]			KATMAI,MMX,SB,AR2
+PINSRW		mmxreg,mem,imm			[rmi:	np 0f c4 /r ib,u]		KATMAI,MMX,SB,AR2
+PINSRW		mmxreg,rm16,imm			[rmi:	np 0f c4 /r ib,u]		KATMAI,MMX,SB,AR2
+PINSRW		mmxreg,reg32,imm		[rmi:	np 0f c4 /r ib,u]		KATMAI,MMX,SB,AR2
 PMAXSW		mmxreg,mmxrm			[rm:	np 0f ee /r]			KATMAI,MMX,SQ
 PMAXUB		mmxreg,mmxrm			[rm:	np 0f de /r]			KATMAI,MMX,SQ
 PMINSW		mmxreg,mmxrm			[rm:	np 0f ea /r]			KATMAI,MMX,SQ
 PMINUB		mmxreg,mmxrm			[rm:	np 0f da /r]			KATMAI,MMX,SQ
-PMOVMSKB	reg32,mmxreg			[rm:	np 0f d7 /r]				KATMAI,MMX
+PMOVMSKB	reg32,mmxreg			[rm:	np 0f d7 /r]			KATMAI,MMX
 PMULHUW		mmxreg,mmxrm			[rm:	np 0f e4 /r]			KATMAI,MMX,SQ
 PSADBW		mmxreg,mmxrm			[rm:	np 0f f6 /r]			KATMAI,MMX,SQ
-PSHUFW		mmxreg,mmxrm,imm		[rmi:	np 0f 70 /r ib]			KATMAI,MMX,SM0-1,SB,AR2
+PSHUFW		mmxreg,mmxrm,imm		[rmi:	np 0f 70 /r ib]			KATMAI,MMX,SB,AR2
 
 ;# AMD Enhanced 3DNow! (Athlon) instructions
 PF2IW		mmxreg,mmxrm			[rm:	0f 0f /r 1c]			PENT,3DNOW,SQ
@@ -1217,11 +1217,11 @@ PMULUDQ		xmmreg,xmmrm			[rm:	66 0f f4 /r]				WILLAMETTE,SSE2,SO
 POR		xmmreg,xmmrm			[rm:	66 0f eb /r]				WILLAMETTE,SSE2,SO
 PSADBW		xmmreg,xmmrm			[rm:	66 0f f6 /r]				WILLAMETTE,SSE2,SO
 PSHUFD		xmmreg,xmmreg,imm		[rmi:	66 0f 70 /r ib]				WILLAMETTE,SSE2,SB,AR2
-PSHUFD		xmmreg,mem,imm			[rmi:	66 0f 70 /r ib]				WILLAMETTE,SSE2,SM0-1,SB,AR2
+PSHUFD		xmmreg,mem,imm			[rmi:	66 0f 70 /r ib]				WILLAMETTE,SSE2,SB,AR2
 PSHUFHW		xmmreg,xmmreg,imm		[rmi:	f3 0f 70 /r ib]				WILLAMETTE,SSE2,SB,AR2
-PSHUFHW		xmmreg,mem,imm			[rmi:	f3 0f 70 /r ib]				WILLAMETTE,SSE2,SM0-1,SB,AR2
+PSHUFHW		xmmreg,mem,imm			[rmi:	f3 0f 70 /r ib]				WILLAMETTE,SSE2,SB,AR2
 PSHUFLW		xmmreg,xmmreg,imm		[rmi:	f2 0f 70 /r ib]				WILLAMETTE,SSE2,SB,AR2
-PSHUFLW		xmmreg,mem,imm			[rmi:	f2 0f 70 /r ib]				WILLAMETTE,SSE2,SM0-1,SB,AR2
+PSHUFLW		xmmreg,mem,imm			[rmi:	f2 0f 70 /r ib]				WILLAMETTE,SSE2,SB,AR2
 PSLLDQ		xmmreg,imm			[mi:	66 0f 73 /7 ib,u]			WILLAMETTE,SSE2,SB,AR1
 PSLLW		xmmreg,xmmrm			[rm:	66 0f f1 /r]				WILLAMETTE,SSE2,SO
 PSLLW		xmmreg,imm			[mi:	66 0f 71 /6 ib,u]			WILLAMETTE,SSE2,SB,AR1
