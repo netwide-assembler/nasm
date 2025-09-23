@@ -70,6 +70,7 @@ RESZ		imm				[	resb]					PSEUDO
 INCBIN		ignore				ignore						PSEUDO
 EQU		imm				ignore						PSEUDO
 EQU		imm:imm				ignore						PSEUDO
+EQU		spec4				ignore						PSEUDO,DFV
 
 ;# No operation
 ; In 64-bit mode NOP (90) is technically always 64 bits, but allow "o64 nop" to generate 48 90

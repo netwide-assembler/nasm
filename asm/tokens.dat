@@ -190,6 +190,10 @@ dfv=zf
 dfv=sf
 dfv=of
 
+# cf == pf
+% TOKEN_BRCCONST, IF_DFV, TFLAG_BRC | TFLAG_ORBIT, DFV_CF
+dfv=pf
+
 # Multi-character operators. Used in ppscan().
 % TOKEN_SHR, 0, 0, 0
 >>
