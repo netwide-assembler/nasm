@@ -482,9 +482,9 @@ $wdq  SMSW	reg#				[m:	o# 0f 01 /4]				286
 
 WRMSR		void				[	0f 30]					PENT,PRIV,NOAPX
 RDMSR		void				[	0f 32]					PENT,PRIV,NOAPX
-RDMSR		rm64,imm32			[mi:	evex.nf0.128.f2.m7 f6 /0 id]		APX,PENT,PRIV
+RDMSR		reg64,imm32			[mi:	vex+.128.f2.m7.w0 f6 /0 id]		APX,FUTURE
 WRMSRNS		void				[	np 0f 01 c6		]		WRMSRNS,PRIV,LONG
-WRMSRNS		imm32,reg64			[im:	evex.nf0.128.f3.m7 f6 /0 id]		APX,WRMSRNS,PRIV,LONG
+WRMSRNS		imm32,reg64			[im:	vex+.128.f3.m7.w0 f6 /0 id]		APX,FUTURE,WRMSRNS
 RDMSRLIST	void				[	f2 0f 01 c6		]		MSRLIST,PRIV,LONG
 WRMSRLIST	void				[	f3 0f 01 c6		]		MSRLIST,PRIV,LONG
 
@@ -3042,8 +3042,14 @@ VSM3RNDS2       xmmreg,xmmreg,xmmreg,imm8           [rvmi: vex.nds.128.66.0f3a.w
 ;# SM4 hash instructions
 VSM4KEY4        xmmreg,xmmreg,xmmrm128              [rvm: vex.nds.128.f3.0f38.w0 da /r] HSM4,AVX
 VSM4KEY4        ymmreg,ymmreg,ymmrm256              [rvm: vex.nds.256.f3.0f38.w0 da /r] HSM4,AVX
+VSM4KEY4        xmmreg,xmmreg,xmmrm128              [rvm: evex.nds.128.f3.0f38.w0 da /r] AVX,FUTURE,HSM4
+VSM4KEY4        ymmreg,ymmreg,ymmrm256              [rvm: evex.nds.256.f3.0f38.w0 da /r] AVX,FUTURE,HSM4
+VSM4KEY4        zmmreg,zmmreg,zmmrm512              [rvm: evex.nds.512.f3.0f38.w0 da /r] AVX,FUTURE,HSM4
 VSM4RNDS4       xmmreg,xmmreg,xmmrm128              [rvm: vex.nds.128.f2.0f38.w0 da /r] HSM4,AVX
 VSM4RNDS4       ymmreg,ymmreg,ymmrm256              [rvm: vex.nds.256.f2.0f38.w0 da /r] HSM4,AVX
+VSM4RNDS4       xmmreg,xmmreg,xmmrm128              [rvm: evex.nds.128.f2.0f38.w0 da /r] AVX,FUTURE,HSM4
+VSM4RNDS4       ymmreg,ymmreg,ymmrm256              [rvm: evex.nds.256.f2.0f38.w0 da /r] AVX,FUTURE,HSM4
+VSM4RNDS4       zmmreg,zmmreg,zmmrm512              [rvm: evex.nds.512.f2.0f38.w0 da /r] AVX,FUTURE,HSM4
 
 ;# AVX no exception conversions
 ; Must precede AVX-512 versions
@@ -5241,6 +5247,11 @@ $wdq  MOVDIR64B	reg#,mem512			[rm:	a# 66 0f38 f8 /r]			MOVDIR64B
       MOVDIR64B	reg64,mem512			[rm:	evex.nd0.nf0.66.l0.m4.w1 f8 /r]		APX,MOVDIR64B
 PCONFIG		void				[	np 0f 01 c5]				PCONFIG
 
+;# doc 319433-058 June 2025
+PBNDKB		void				[	np 0f 01 c7]				PBNDKB
+PREFETCHRST2	mem8				[m:	0f 18 /4]				FUTURE,MOVRS
+
+
 ;# Galois field operations (GFNI)
 GF2P8AFFINEINVQB	xmmreg,xmmrm128,imm8			[rmi:	  66 0f3a cf /r ib]			GFNI,SSE
 VGF2P8AFFINEINVQB	xmmreg,xmmreg*,xmmrm128,imm8		[rvmi:	  vex.nds.128.66.0f3a.w1 cf /r ib]	GFNI,AVX
@@ -5430,6 +5441,43 @@ TILEZERO	tmmreg				[r:	vex.128.f2.0f38.w0 49 /3r0]		AMXTILE,LONG
 
 TILELOADDRS	tmmreg,mem			[rm:	vex+.128.f2.0f38.w0 4a /r]		APX,AMXTILE,FUTURE,MIB,SIB,ANYSIZE,AR1,LONG
 TILELOADDRST1	tmmreg,mem			[rm:	vex+.128.66.0f38.w0 4a /r]		APX,AMXTILE,FUTURE,MIB,SIB,ANYSIZE,AR1,LONG
+
+T2RPNTLVWZ0	tmmreg,mem			[rm:	vex.128.np.0f38.w0 6e /r]		FUTURE,SIB
+T2RPNTLVWZ0T1	tmmreg,mem			[rm:	vex.128.np.0f38.w0 6f /r]		FUTURE,SIB
+T2RPNTLVWZ1	tmmreg,mem			[rm:	vex.128.66.0f38.w0 6e /r]		FUTURE,SIB
+T2RPNTLVWZ1T1	tmmreg,mem			[rm:	vex.128.66.0f38.w0 6f /r]		FUTURE,SIB
+T2RPNTLVWZ0RS	tmmreg,mem			[rm:	vex.128.np.map5.w0 f8 /r]		FUTURE,SIB
+T2RPNTLVWZ0RST1	tmmreg,mem			[rm:	vex.128.np.map5.w0 f9 /r]		FUTURE,SIB
+T2RPNTLVWZ1RS	tmmreg,mem			[rm:	vex.128.66.map5.w0 f8 /r]		FUTURE,SIB
+T2RPNTLVWZ1RST1	tmmreg,mem			[rm:	vex.128.66.map5.w0 f9 /r]		FUTURE,SIB
+
+TCMMIMFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 6c /r]		FUTURE
+TCMMRLFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 6c /r]		FUTURE
+TCONJTCMMIMFP16PS tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 6b /r]		FUTURE
+TCONJTFP16	tmmreg,tmmreg			[rm:	vex.128.66.0f38.w0 6b /r]		FUTURE
+TCVTROWD2PS	zmmreg,tmmreg,reg32		[rmv:	evex.512.f3.0f38.w0 4a /r]		FUTURE
+TCVTROWD2PS	zmmreg,tmmreg,imm8		[rmi:	evex.512.f3.0f38.w0 07 /r ib]		FUTURE
+TCVTROWPS2BF16H	zmmreg,tmmreg,reg32		[rmv:	evex.512.f2.0f38.w0 6d /r]		FUTURE
+TCVTROWPS2BF16H	zmmreg,tmmreg,imm8		[rmi:	evex.512.f2.0f38.w0 07 /r ib]		FUTURE
+TCVTROWPS2BF16L	zmmreg,tmmreg,reg32		[rmv:	evex.512.f3.0f38.w0 6d /r]		FUTURE
+TCVTROWPS2BF16L	zmmreg,tmmreg,imm8		[rmi:	evex.512.f3.0f38.w0 77 /r ib]		FUTURE
+TCVTROWPS2PHH	zmmreg,tmmreg,reg32		[rmv:	evex.512.np.0f38.w0 6d /r]		FUTURE
+TCVTROWPS2PHH	zmmreg,tmmreg,imm8		[rmi:	evex.512.np.0f38.w0 07 /r ib]		FUTURE
+TCVTROWPS2PHL	zmmreg,tmmreg,reg32		[rmv:	evex.512.66.0f38.w0 6d /r]		FUTURE
+TCVTROWPS2PHL	zmmreg,tmmreg,imm8		[rmi:	evex.512.66.0f38.w0 77 /r ib]		FUTURE
+TDPBF8PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.map5.w0 fd /r]		FUTURE
+TDPBHF8PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.map5.w0 fd /r]		FUTURE
+TDPHBF8PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.map5.w0 fd /r]		FUTURE
+TDPHF8PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.map5.w0 fd /r]		FUTURE
+TILEMOVROW	zmmreg,tmmreg,imm8		[rmi:	evex.512.66.0f3a.w0 07 /r ib]		FUTURE
+TILEMOVROW	zmmreg,tmmreg,reg32		[rmv:	evex.512.66.0f3a.w0 4a /r]		FUTURE
+TMMULTF32PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 48 /r]		FUTURE
+TTCMMIMFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 6b /r]		FUTURE
+TTCMMRLFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 6b /r]		FUTURE
+TTDPBF16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 6c /r]		FUTURE
+TTDPFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 6c /r]		FUTURE
+TTMMULTF32PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 48 /r]		FUTURE
+TTRANSPOSED	tmmreg,tmmreg			[rm:	vex.128.f3.0f38.w0 5f /r]		FUTURE
 
 ;# Intel AVX512-FP16 instructions
 VADDPH		xmmreg|mask|z,xmmreg*,xmmrm128|b16	[rvm:fv:  evex.nds.128.np.map5.w0 58 /r]    AVX512FP16,AVX512VL,AVX10_1
