@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
-;;   
-;;   Copyright 1996-2009 The NASM Authors - All Rights Reserved
+;;
+;;   Copyright 1996-2025 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -14,7 +14,7 @@
 ;;     copyright notice, this list of conditions and the following
 ;;     disclaimer in the documentation and/or other materials provided
 ;;     with the distribution.
-;;     
+;;
 ;;     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ;;     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ;;     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -38,20 +38,6 @@
 ;;
 
 USE: altreg
-
-;;
-;; Intel documents R8L-R15L instead of R8B-R15B
-;; (Warning: this may confuse people with an AT&T-style assembly
-;; background, where "r8l" means R8D, etc.)
-;;
-%idefine r8l  r8b
-%idefine r9l  r9b
-%idefine r10l r10b
-%idefine r11l r11b
-%idefine r12l r12b
-%idefine r13l r13b
-%idefine r14l r14b
-%idefine r15l r15b
 
 ;;
 ;; Numeric register names for the lower 8 registers
@@ -92,6 +78,16 @@ USE: altreg
 %idefine r6b sil
 %idefine r7b dil
 
+%idefine r0h ah
+%idefine r1h ch
+%idefine r2h dh
+%idefine r3h bh
+
+;;
+;; Intel documents R8L-R15L instead of R8B-R15B
+;; (Warning: this may confuse people with an AT&T-style assembly
+;; background, where "r8l" means R8D, etc.)
+;;
 %idefine r0l al
 %idefine r1l cl
 %idefine r2l dl
@@ -100,8 +96,27 @@ USE: altreg
 %idefine r5l bpl
 %idefine r6l sil
 %idefine r7l dil
-
-%idefine r0h ah
-%idefine r1h ch
-%idefine r2h dh
-%idefine r3h bh
+%idefine r8l r8b
+%idefine r9l r9b
+%idefine r10l r10b
+%idefine r11l r11b
+%idefine r12l r12b
+%idefine r13l r13b
+%idefine r14l r14b
+%idefine r15l r15b
+%idefine r16l r16b
+%idefine r17l r17b
+%idefine r18l r18b
+%idefine r19l r19b
+%idefine r20l r20b
+%idefine r21l r21b
+%idefine r22l r22b
+%idefine r23l r23b
+%idefine r24l r24b
+%idefine r25l r25b
+%idefine r26l r26b
+%idefine r27l r27b
+%idefine r28l r28b
+%idefine r29l r29b
+%idefine r30l r30b
+%idefine r31l r31b
