@@ -180,6 +180,8 @@ if_("MONITOR",		 "MONITOR and MWAIT");
 if_("MONITORX",		 "MONITORX and MWAITX");
 if_("WAITPKG",           "User wait instruction package");
 if_("MSR_IMM",		 "Immediate RDMSR/WRMSRNS instructions");
+if_("AESKLE",            "AES key locker");
+if_("AESKLEWIDE_KL",     "AES wide key locker");
 
 # Single-instruction CPUID bits without additional help text
 my @oneins = qw(invpcid prefetchwt1 pbndkb pconfig wbnoinvd serialize

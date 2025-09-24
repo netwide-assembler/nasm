@@ -1530,6 +1530,15 @@ VAESDECLAST	xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38 df /r]		AVX,SANDY
 VAESIMC		xmmreg,xmmrm128			[rm:	vex.128.66.0f38 db /r]			AVX,SANDYBRIDGE
 VAESKEYGENASSIST xmmreg,xmmrm128,imm8		[rmi:	vex.128.66.0f3a df /r ib]		AVX,SANDYBRIDGE
 
+;# Intel AES Key Locker
+AESDEC128KL       xmmreg,mem              [rm: f3 0f38 dd /r ]                      AESKLE
+AESDEC256KL       xmmreg,mem512           [rm: f3 0f38 df /r ]                      AESKLE
+AESENC128KL       xmmreg,mem              [rm: f3 0f38 dc /r ]                      AESKLE
+AESENC256KL       xmmreg,mem512           [rm: f3 0f38 de /r ]                      AESKLE
+ENCODEKEY128      reg32,reg32             [rm: f3 0f38 fa /r ]                      AESKLE
+ENCODEKEY256      reg32,reg32             [rm: f3 0f38 fb /r ]                      AESKLE
+LOADIWKEY         xmmreg,xmmreg           [rm: f3 0f38 dc /r ]                      AESKLE
+
 ;# Intel instruction extension based on pub number 319433-030 dated October 2017
 
 ; Intel VAES instructions
