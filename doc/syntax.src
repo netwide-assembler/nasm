@@ -1,4 +1,6 @@
-\C{APX} \I{apx syntax}\i{APX} Instruction Syntax
+\C{Syntax} Syntax Quirks and Summaries
+
+\H{APX} \I{apx syntax}\i{APX} Instruction Syntax
 
 Intel APX (\i{Advanced Performance Extensions}) introduces multiple
 new features, mostly to existing instructions. APX is only available
@@ -31,7 +33,7 @@ documentation. NASM generally follows the syntax specified in the
 \e{Assembly Syntax Recommendations for Intel APX} document although
 some syntax is relaxed, see below.
 
-\H{egprs} \i{Extended General Purpose Registers} (\i{EGPRs})
+\S{egprs} \i{Extended General Purpose Registers} (\i{EGPRs})
 
 When it comes to register size, the new registers (\c{R16}-\c{R31})
 work the same way as registers \c{R8}-\c{R15} (see also \k{reg64}):
@@ -53,7 +55,7 @@ There are some instructions that don't support EGPRs. In that case,
 NASM will generate an error if they are used.
 
 
-\H{apx_ndd} \i{New Data Destination} (\i{NDD})
+\S{apx_ndd} \i{New Data Destination} (\i{NDD})
 
 Using the new data destination register (when supported) is specified
 by adding an additional register in place of the first operand.
@@ -64,7 +66,7 @@ For example an \c{ADD} instruction:
 ... which would add \c{RBX} and \c{RCX} and store the result in
 \c{RAX}, without modifying neither \c{RBX} nor \c{RCX}.
 
-\H{apx_nf} Suppress Modifying Flags (\i{NF})
+\S{apx_nf} Suppress Modifying Flags (\i{NF})
 
 The \c{\{nf\}} prefix on a supported instruction inhibits the update
 of the flags, for example:
@@ -84,7 +86,7 @@ around curly-brace prefixes are optional:
 \c      add{nf}  rax, rbx       ; Suffix without space
 
 
-\H{apx_zu} \i{Zero Upper} (\i{ZU})
+\S{apx_zu} \i{Zero Upper} (\i{ZU})
 
 The \c{\{zu\}} prefix can be used meaning -
 "zero-upper", which disables retaining the upper parts of the
@@ -105,7 +107,7 @@ instruction, NASM also eccepts these alternate syntaxes:
 \c      setb eax
 \c      setb rax
 
-\H{apx_dfv} \i{Source Condition Code} (\I{scc}S\e{cc}) and \i{Default Flags
+\S{apx_dfv} \i{Source Condition Code} (\I{scc}S\e{cc}) and \i{Default Flags
 Value} (\i{DFV})
 
 The source condition code (S\e{cc}) instructions, \c{CCMPS}\e{cc} and
@@ -147,7 +149,7 @@ expression is what is intended):
 \c      ccmpl ofcf2, rdx, r30                   ; Comma required
 
 
-\H{apx_pushpop} \c{PUSH} and \c{POP} Extensions
+\S{apx_pushpop} \c{PUSH} and \c{POP} Extensions
 
 APX adds variations of the \c{PUSH} and \c{POP} instructions that:
 
@@ -190,7 +192,7 @@ instruction is different:
 \c      ; rbx is [rsp+0]
 \c      pop2p rax:rbx
 
-\H{apx_jmpabs} 64-bit absolute jump (\i\c{JMPABS})
+\S{apx_jmpabs} 64-bit absolute jump (\i\c{JMPABS})
 
 A new near jump instruction takes a 64-bit \e{absolute} address
 immediate.
@@ -206,7 +208,7 @@ NASM allows this instruction to be specified either as:
 The generated code is identical. The \c{ABS} is required regardless of
 the \c{DEFAULT} setting.
 
-\H{apx_opt} \I{apx optimizer}APX and the NASM optimizer
+\S{apx_opt} \I{apx optimizer}APX and the NASM optimizer
 
 When the optimizer is enabled (see \k{opt-O}), NASM may apply a number
 of optimizations, some of which may apply non-APX instructions to what
@@ -235,7 +237,7 @@ otherwise would be APX forms. Some examples are:
    future.}
 
 
-\H{apx_force} Force APX Encoding
+\S{apx_force} Force APX Encoding
 
 APX encoding, using REX2 and EVEX, respectively, can be forced by
 using the \i\c{\{rex2\}} or \i\c{\{evex\}} instruction prefixes.
