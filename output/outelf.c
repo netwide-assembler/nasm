@@ -544,10 +544,13 @@ static void elf_init(void)
         ".shstrtab", ".strtab", ".symtab", ".symtab_shndx", NULL
     };
     const char * const *p;
-    const char * cur_path = nasm_realpath(inname);
+    char *cur_path = nasm_realpath(inname);
+    char *cur_path_dirname = nasm_dirname(cur_path);
 
     strlcpy(elf_module, inname, sizeof(elf_module));
-    strlcpy(elf_dir, nasm_dirname(cur_path), sizeof(elf_dir));
+    strlcpy(elf_dir, cur_path_dirname, sizeof(elf_dir));
+    nasm_free(cur_path);
+    nasm_free(cur_path_dirname);
     sects = NULL;
     nsects = sectlen = 0;
     syms = saa_init((int32_t)sizeof(struct elf_symbol));
