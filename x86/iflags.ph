@@ -155,6 +155,7 @@ if_("AVX512BF16",        "AVX-512 bfloat16");
 if_("AVX512VP2INTERSECT", "AVX-512 VP2INTERSECT instructions");
 if_("AMXTILE",           "AMX tile configuration instructions");
 if_("AMXBF16",           "AMX bfloat16 multiplication");
+if_("AMXFP16",           "AMX FP16 multiplication");
 if_("AMXINT8",           "AMX 8-bit integer multiplication");
 if_("FRED",              "Flexible Return and Exception Delivery (FRED)");
 if_("RAOINT",		 "Remote atomic operations (RAO-INT)");

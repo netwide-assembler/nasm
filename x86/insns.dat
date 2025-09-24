@@ -5443,6 +5443,7 @@ VP2INTERSECTD	kreg|rs2,zmmreg,zmmrm128|b32		[rvm:fv:	evex.nds.512.f2.0f38.w0 68 
 LDTILECFG	mem512				[m:	vex+.128.np.0f38.w0 49 /0]		AMXTILE,SZ,LONG
 STTILECFG	mem512				[m:	vex+.128.66.0f38.w0 49 /0]		AMXTILE,SZ,LONG
 TDPBF16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5c /r]		AMXBF16,LONG
+TDPFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5c /r]		AMXFP16,LONG
 TDPBSSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5e /r]		AMXINT8,LONG
 TDPBSUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5e /r]		AMXINT8,LONG
 TDPBUSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 5e /r]		AMXINT8,LONG
