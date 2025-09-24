@@ -1538,6 +1538,10 @@ AESENC256KL       xmmreg,mem512           [rm: f3 0f38 de /r ]                  
 ENCODEKEY128      reg32,reg32             [rm: f3 0f38 fa /r ]                      AESKLE
 ENCODEKEY256      reg32,reg32             [rm: f3 0f38 fb /r ]                      AESKLE
 LOADIWKEY         xmmreg,xmmreg           [rm: f3 0f38 dc /r ]                      AESKLE
+AESDECWIDE128KL   mem                     [m:  f3 0f38 d8 /1 ]                      AESKLEWIDE_KL
+AESDECWIDE256KL   mem512                  [m:  f3 0f38 d8 /3 ]                      AESKLEWIDE_KL
+AESENCWIDE128KL   mem                     [m:  f3 0f38 d8 /0 ]                      AESKLEWIDE_KL
+AESENCWIDE256KL   mem512                  [m:  f3 0f38 d8 /2 ]                      AESKLEWIDE_KL
 
 ;# Intel instruction extension based on pub number 319433-030 dated October 2017
 
