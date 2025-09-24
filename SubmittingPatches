@@ -6,10 +6,10 @@ Actually the rules are pretty simple
 Obtaining the source code
 -------------------------
 
-The NASM sources are tracked by Git SCM at http://repo.or.cz/w/nasm.git
+The NASM sources are tracked by Git SCM at https://github.com/netwide-assembler/nasm.git
 repository. You either could download packed sources or use git tool itself
 
-        git clone git://repo.or.cz/nasm.git
+        git clone https://github.com/netwide-assembler/nasm.git
 
 Changin the source code
 -----------------------
