@@ -3298,7 +3298,7 @@ static void dwarf_generate(void)
         saa_write32(pinforel, pinfo->datalen + 4);
         saa_write32(pinforel, ((dwarf_fsect->section + 2) << 8) +  R_386_32);
         saa_write32(pinfo,0);       /* DW_AT_low_pc */
-        saa_write32(pinfo,0);       /* DW_AT_frame_base */
+        saa_write8(pinfo,0);        /* DW_AT_frame_base */
         saa_write8(pinfo,0);        /* end of entries */
         saalen = pinfo->datalen;
         infolen = saalen + 4;
@@ -3338,7 +3338,7 @@ static void dwarf_generate(void)
         saa_write32(pinforel, ((dwarf_fsect->section + 2) << 8) +  R_X86_64_32);
         saa_write32(pinforel, 0);
         saa_write32(pinfo,0);			/* DW_AT_low_pc */
-        saa_write32(pinfo,0);			/* DW_AT_frame_base */
+        saa_write8(pinfo,0);			/* DW_AT_frame_base */
         saa_write8(pinfo,0);			/* end of entries */
         saalen = pinfo->datalen;
         infolen = saalen + 4;
@@ -3379,7 +3379,7 @@ static void dwarf_generate(void)
         saa_write64(pinforel, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
         saa_write64(pinforel, 0);
         saa_write64(pinfo,0);			/* DW_AT_low_pc */
-        saa_write64(pinfo,0);			/* DW_AT_frame_base */
+        saa_write8(pinfo,0);			/* DW_AT_frame_base */
         saa_write8(pinfo,0);			/* end of entries */
         saalen = pinfo->datalen;
         infolen = saalen + 4;
@@ -3423,7 +3423,7 @@ static void dwarf_generate(void)
     saa_write8(pabbrev,DW_AT_low_pc);
     saa_write8(pabbrev,DW_FORM_addr);
     saa_write8(pabbrev,DW_AT_frame_base);
-    saa_write8(pabbrev,DW_FORM_data4);
+    saa_write8(pabbrev,DW_FORM_exprloc);
     saa_write16(pabbrev,0);     /* end of entry */
     /* Terminal zero entry */
     saa_write8(pabbrev,0);
