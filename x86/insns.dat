@@ -5437,9 +5437,13 @@ VDPBF16PS	ymmreg|mask|z,ymmreg*,ymmrm128|b32	[rvm:fv:	evex.256.f3.0f38.w0 52 /r]
 VDPBF16PS	zmmreg|mask|z,zmmreg*,zmmrm128|b32	[rvm:fv:	evex.512.f3.0f38.w0 52 /r]	AVX512BF16
 
 ;# AVX512 mask intersect instructions
-VP2INTERSECTD	kreg|rs2,xmmreg,xmmrm128|b32		[rvm:fv:	evex.nds.128.f2.0f38.w0 68 /r]	AVX512BF16
-VP2INTERSECTD	kreg|rs2,ymmreg,ymmrm128|b32		[rvm:fv:	evex.nds.256.f2.0f38.w0 68 /r]	AVX512BF16
-VP2INTERSECTD	kreg|rs2,zmmreg,zmmrm128|b32		[rvm:fv:	evex.nds.512.f2.0f38.w0 68 /r]	AVX512BF16
+VP2INTERSECTD	kreg|rs2,xmmreg,xmmrm128|b32		[rvm:fv:	evex.nds.128.f2.0f38.w0 68 /r]	AVX512VL,AVX512VP2INTERSECT
+VP2INTERSECTD	kreg|rs2,ymmreg,ymmrm256|b32		[rvm:fv:	evex.nds.256.f2.0f38.w0 68 /r]	AVX512VL,AVX512VP2INTERSECT
+VP2INTERSECTD	kreg|rs2,zmmreg,zmmrm512|b32		[rvm:fv:	evex.nds.512.f2.0f38.w0 68 /r]	AVX512F,AVX512VP2INTERSECT
+VP2INTERSECTQ	kreg|rs2,xmmreg,xmmrm128|b64		[rvm:fv:	evex.nds.128.f2.0f38.w1 68 /r]	AVX512VL,AVX512VP2INTERSECT
+VP2INTERSECTQ	kreg|rs2,ymmreg,ymmrm256|b64		[rvm:fv:	evex.nds.256.f2.0f38.w1 68 /r]	AVX512VL,AVX512VP2INTERSECT
+VP2INTERSECTQ	kreg|rs2,zmmreg,zmmrm512|b64		[rvm:fv:	evex.nds.512.f2.0f38.w1 68 /r]	AVX512F,AVX512VP2INTERSECT
+
 
 ;# Intel Advanced Matrix Extensions (AMX)
 LDTILECFG	mem512				[m:	vex+.128.np.0f38.w0 49 /0]		AMXTILE,SZ,LONG
