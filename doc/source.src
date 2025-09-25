@@ -12,7 +12,10 @@ available, if you do not require changing the source code.
 
 The preferred build platforms are development environments which
 support POSIX (Unix)-style tools (a "POSIX environment"). For Windows,
-MSYS2 (\w{https://www.msys2.org/}) is such a development environment.
+MSYS2 (\w{https://www.msys2.org/}) is such a development
+environment. Normally either \c{gcc} or \c{clang} is used as the
+compiler, but it is also possible to use MSVC with a POSIX wrapper
+like \W{https://github.com/swig/cccl}\c{cccl} from the SWIG project.
 
 In a POSIX environment, run:
 
@@ -23,15 +26,16 @@ A number of options can be passed to \c{configure}; see
 \c{sh configure --help}. In particular, the \c{--host} option can be
 used to cross-compile NASM to run on another host system.
 
-For non-POSIX environments, a set of Makefiles for some other
+For non-POSIX environments, a set of makefiles for a handful of other
 environments are also available; please see the file
-\c{Mkfiles/README}.
+\c{Mkfiles/README}. These makefiles are generally considered
+unreliable, as we have very little ability to test them.
 
 The \c{.zip} version of the source archive has DOS/Windows line
-endings (\c{CR LF}), which many POSIX systems will not recognize. To
-extract the \c{.zip} version on such a system, use \c{unzip
--a}. The \c{.tar} versions of the source archive has POSIX line
-endings (\c{LF}).
+endings (\c{CR LF}), which many Unix/POSIX systems will not
+recognize. To extract the \c{.zip} version on such a system, use
+\c{unzip -a}. The \c{.tar} versions of the source archive has POSIX
+line endings (\c{LF}).
 
 
 \H{buildtools} Optional Build Tools
@@ -143,5 +147,3 @@ catalog:
 
 This is not done automatically, as the tools do not have the ability
 to automatically detect when it is necessary to do so.
-
-
