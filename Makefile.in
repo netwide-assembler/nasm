@@ -581,13 +581,12 @@ doc/Makefile: Makefile
 
 config/config.h: config.status
 
-#
-# Dummy rules that changes make behavior
-# (at end to avoid confusing non-GNU makes)
-#
-.SECONDARY:
 
-.DELETE_ON_ERROR:
+#
+# Synchronize auxiliary Makefiles
+#
+syncfiles: $(tools)/syncfiles.pl
+	$(RUNPERL) $(tools)/syncfiles.pl Makefile.in Mkfiles/*.mak
 
 #
 # Does this version of this file have external dependencies?  This definition
@@ -606,15 +605,13 @@ Makefile.dep: $(tools)/mkdep.pl config.status $(PERLREQ)
 		-M $(srcdir)/Makefile.in -- $(DEPDIRS)
 
 dep: Makefile.dep
-
 #
 # This build dependencies in *ALL* makefiles, and forces all
 # dependencies to be inserted inline.  For that reason, it should only
 # be invoked manually or via "make dist".  It should be run before
 # creating release archives.
 #
-alldeps: $(PERLREQ) $(tools)/syncfiles.pl $(tools)/mkdep.pl
-	$(RUNPERL) $(tools)/syncfiles.pl Makefile.in Mkfiles/*.mak
+alldeps: syncfiles $(PERLREQ) $(tools)/mkdep.pl
 	$(RUNPERL) $(tools)/mkdep.pl -i -M Makefile.in Mkfiles/*.mak -- \
 		$(DEPDIRS)
 	$(RM_F) *.dep
@@ -624,14 +621,21 @@ alldeps: $(PERLREQ) $(tools)/syncfiles.pl $(tools)/mkdep.pl
 
 # Strip internal dependency information from all Makefiles; this makes
 # the output good for git checkin
-cleandeps: $(PERLREQ) $(tools)/syncfiles.pl $(tools)/mkdep.pl
-	$(RUNPERL) $(tools)/syncfiles.pl Makefile.in Mkfiles/*.mak
+cleandeps: syncfiles $(PERLREQ) $(tools)/mkdep.pl
 	$(RUNPERL) $(tools)/mkdep.pl -e -M Makefile.in Mkfiles/*.mak -- \
 		$(DEPDIRS)
 	$(RM_F) *.dep
 	if [ -f config.status ]; then \
 		sh config.status; \
 	fi
+
+#
+# Dummy rules that changes make behavior
+# (at end to avoid confusing non-GNU makes)
+#
+.SECONDARY:
+
+.DELETE_ON_ERROR:
 
 #-- Magic hints to mkdep.pl --#
 # @object-ending: ".$(O)"

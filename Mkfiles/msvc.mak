@@ -99,6 +99,7 @@ LIBOBJ_W = \
 	asm\preproc.obj asm\quote.obj \
 	asm\listing.obj asm\eval.obj asm\exprlib.obj asm\exprdump.obj \
 	asm\stdscan.obj \
+	asm\getbool.obj \
 	asm\strfunc.obj \
 	asm\segalloc.obj \
 	asm\rdstrnum.obj \
@@ -120,7 +121,7 @@ LIBOBJ_NW = \
 	macros\macros.obj \
 	\
 	nasmlib\ver.obj \
-	nasmlib\alloc.obj nasmlib\asprintf.obj nasmlib\errfile.obj \
+	nasmlib\alloc.obj nasmlib\asprintf.obj \
 	nasmlib\crc32.obj nasmlib\crc64.obj nasmlib\md5c.obj \
 	nasmlib\string.obj nasmlib\nctype.obj \
 	nasmlib\file.obj nasmlib\mmap.obj nasmlib\ilog2.obj \
@@ -164,7 +165,7 @@ LIBOBJ    = $(LIBOBJ_W) $(LIBOBJ_NW) $(ZLIB)
 ALLOBJ_W  = $(NASM) $(LIBOBJ_W)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 SUBDIRS  = stdlib nasmlib include config output asm disasm x86 \
-	   common zlib macros
+	   common zlib macros misc
 XSUBDIRS = test doc nsis win
 DEPDIRS  = . $(SUBDIRS)
 #-- End File Lists --#
@@ -302,7 +303,7 @@ asm\warnings.time: $(WARNSRCS) asm\warnings.pl
 
 asm\warnings_c.h.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings_c.h \
-		'$(srcdir)' $(WARNSRCS)
+		$(srcdir) $(WARNSRCS)
 	$(EMPTY) asm\warnings_c.h.time
 
 asm\warnings_c.h: asm\warnings_c.h.time
@@ -310,7 +311,7 @@ asm\warnings_c.h: asm\warnings_c.h.time
 
 include\warnings.h.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h \
-		'$(srcdir)' $(WARNSRCS)
+		$(srcdir) $(WARNSRCS)
 	$(EMPTY) include\warnings.h.time
 
 include\warnings.h: include\warnings.h.time
@@ -318,7 +319,7 @@ include\warnings.h: include\warnings.h.time
 
 doc\warnings.src.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src \
-		'$(srcdir)' $(WARNSRCS)
+		$(srcdir) $(WARNSRCS)
 	$(EMPTY) doc\warnings.src.time
 
 doc\warnings.src : doc\warnings.src.time
@@ -348,6 +349,9 @@ asm\pptok.c: asm\pptok.dat asm\pptok.pl perllib\phash.ph
 asm\pptok.ph: asm\pptok.dat asm\pptok.pl perllib\phash.ph
 	$(RUNPERL) $(srcdir)\asm\pptok.pl ph \
 		$(srcdir)\asm\pptok.dat asm\pptok.ph
+doc\pptok.src: asm\pptok.dat asm\pptok.pl perllib\phash.ph
+	$(RUNPERL) $(srcdir)\asm\pptok.pl src \
+		$(srcdir)\asm\pptok.dat doc\pptok.src
 
 # Directives hash
 asm\directiv.h: asm\directiv.dat nasmlib\perfhash.pl perllib\phash.ph
@@ -376,7 +380,7 @@ nsis\arch.nsh: nsis\getpearch.pl nasm$(X)
 # The use of redirection here keeps makensis from moving the cwd to the
 # source directory.
 nsis: nsis\nasm.nsi nsis\arch.nsh nsis\version.nsh
-	$(MAKENSIS) -Dsrcdir="$(srcdir)" -Dobjdir="$(objdir)" - < nsis\nasm.nsi
+	$(MAKENSIS) -Dsrcdir=$(srcdir) -Dobjdir=$(objdir) - < nsis\nasm.nsi
 
 #-- End NSIS Rules --#
 
