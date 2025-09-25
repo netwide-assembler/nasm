@@ -271,11 +271,11 @@ PERLREQ = config/unconfig.h $(PERLREQ_CLEANABLE)
 INSDEP = x86/insns.xda x86/insns.pl x86/insns-iflags.ph x86/iflags.ph
 
 x86/insns.xda: x86/insns.dat x86/preinsns.pl
-	$(RUNPERL) '$(srcdir)'/x86/preinsns.pl $< $@
+	$(RUNPERL) $(srcdir)/x86/preinsns.pl $< $@
 
 config/unconfig.h: config/config.h.in autoconf/unconfig.pl
-	$(RUNPERL) '$(srcdir)'/autoconf/unconfig.pl \
-		'$(srcdir)' config/config.h.in config/unconfig.h
+	$(RUNPERL) $(srcdir)/autoconf/unconfig.pl \
+		$(srcdir) config/config.h.in config/unconfig.h
 
 x86/iflag.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)/x86/insns.pl -fc \
@@ -418,7 +418,7 @@ asm/directbl.c: asm/directiv.dat nasmlib/perfhash.pl perllib/phash.ph
 # Emacs token files
 misc/nasmtok.el: misc/emacstbl.pl asm/tokhash.c asm/pptok.c \
 		 asm/directiv.dat version
-	$(RUNPERL) $< $@ "$(srcdir)" "$(objdir)"
+	$(RUNPERL) $< $@ $(srcdir) $(objdir)
 
 #-- End Generated File Rules --#
 
@@ -434,7 +434,8 @@ nsis/arch.nsh: nsis/getpearch.pl nasm$(X)
 # The use of redirection here keeps makensis from moving the cwd to the
 # source directory.
 nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
-	$(MAKENSIS) -Dsrcdir=$(srcdir) -Dobjdir=$(objdir) - < $<
+	$(MAKENSIS) -Dsrcdir=$(srcdir) -Dobjdir=$(objdir) - \
+		< $(srcdir)/nsis/nasm.nsi
 
 #-- End NSIS Rules --#
 
@@ -470,7 +471,7 @@ distclean: clean
 	done
 	$(RM_F) test/*.$(O)
 	$(RM_F) *.dep
-	-$(SHELL) autoconf/clean.sh || $(SHELL) '$(srcdir)'/autoconf/clean.sh
+	-$(SHELL) autoconf/clean.sh || $(SHELL) $(srcdir)/autoconf/clean.sh
 
 cleaner:
 	$(RM_F) $(PERLREQ_CL) *.1 nasm.spec
@@ -601,7 +602,7 @@ EXTERNAL_DEPENDENCIES = 1
 # pollute the git logs.
 #
 Makefile.dep: $(tools)/mkdep.pl config.status $(PERLREQ)
-	$(RUNPERL) $(tools)/mkdep.pl -s '$(top_srcdir)' \
+	$(RUNPERL) $(tools)/mkdep.pl -s $(top_srcdir) \
 		-M $(srcdir)/Makefile.in -- $(DEPDIRS)
 
 dep: Makefile.dep
