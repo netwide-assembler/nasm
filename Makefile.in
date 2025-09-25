@@ -357,7 +357,7 @@ asm/warnings.time: $(WARNSRCS) asm/warnings.pl
 
 asm/warnings_c.h.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl c asm/warnings_c.h \
-		'$(srcdir)' $(WARNSRCS)
+		$(srcdir) $(WARNSRCS)
 	$(EMPTY) asm/warnings_c.h.time
 
 asm/warnings_c.h: asm/warnings_c.h.time
@@ -365,7 +365,7 @@ asm/warnings_c.h: asm/warnings_c.h.time
 
 include/warnings.h.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl h include/warnings.h \
-		'$(srcdir)' $(WARNSRCS)
+		$(srcdir) $(WARNSRCS)
 	$(EMPTY) include/warnings.h.time
 
 include/warnings.h: include/warnings.h.time
@@ -373,7 +373,7 @@ include/warnings.h: include/warnings.h.time
 
 doc/warnings.src.time: asm/warnings.pl asm/warnings.time
 	$(RUNPERL) $(srcdir)/asm/warnings.pl doc doc/warnings.src \
-		'$(srcdir)' $(WARNSRCS)
+		$(srcdir) $(WARNSRCS)
 	$(EMPTY) doc/warnings.src.time
 
 doc/warnings.src : doc/warnings.src.time
@@ -434,7 +434,7 @@ nsis/arch.nsh: nsis/getpearch.pl nasm$(X)
 # The use of redirection here keeps makensis from moving the cwd to the
 # source directory.
 nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
-	$(MAKENSIS) -Dsrcdir="$(srcdir)" -Dobjdir="$(objdir)" - < nsis/nasm.nsi
+	$(MAKENSIS) -Dsrcdir=$(srcdir) -Dobjdir=$(objdir) - < nsis/nasm.nsi
 
 #-- End NSIS Rules --#
 
@@ -553,10 +553,10 @@ splint:
 	splint -weak *.c
 
 test: $(PROGS)
-	cd test && $(RUNPERL) performtest.pl --nasm=../nasm *.asm
+	cd test && $(RUNPERL) performtest.pl --nasm=../nasm$(X) *.asm
 
 golden: $(PROGS)
-	cd test && $(RUNPERL) performtest.pl --golden --nasm=../nasm *.asm
+	cd test && $(RUNPERL) performtest.pl --golden --nasm=../nasm$(X) *.asm
 
 travis: $(PROGS)
 	$(PYTHON3) travis/nasm-t.py run
