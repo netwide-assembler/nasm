@@ -150,7 +150,9 @@ LIBOBJ_W = \
 	asm/strfunc.$(O) \
 	asm/segalloc.$(O) \
 	asm/rdstrnum.$(O) \
-	asm/srcfile.$(O)
+	asm/srcfile.$(O) \
+	\
+	$(OUTPUTOBJ)
 
 # The source files for these objects are NOT scanned for warnings;
 # normally this will include all generated files.
@@ -187,8 +189,6 @@ LIBOBJ_NW = \
 	x86/regs.$(O) x86/regvals.$(O) x86/regflags.$(O) \
 	x86/iflag.$(O) \
 	\
-	$(OUTPUTOBJ) \
-	\
 	$(WARNOBJ)
 
 # Objects which are only used for the disassembler
@@ -213,18 +213,17 @@ ALLOBJ_W  = $(NASM) $(LIBOBJ_W)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 SUBDIRS  = stdlib nasmlib include config output asm disasm x86 \
 	   common zlib macros misc
-XSUBDIRS = test doc nsis win
+XSUBDIRS = nsis win test doc
 DEPDIRS  = . $(SUBDIRS)
 #-- End File Lists --#
 
-all: dirs
-	$(MAKE) $(PROGS)
-
-NASMLIB = libnasm.$(A)
-DISLIB  = libndis.$(A)
+all: $(PROGS)
 
 dirs:
 	$(MKDIR_P) $(SUBDIRS) $(XSUBDIRS)
+
+NASMLIB = libnasm.$(A)
+DISLIB  = libndis.$(A)
 
 $(NASMLIB): $(LIBOBJ)
 	$(RM_F) $(NASMLIB)
@@ -237,14 +236,19 @@ $(DISLIB): $(LIBOBJ_DIS)
 	$(RANLIB) $(DISLIB)
 
 nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
-	$(CC) $(ALL_LDFLAGS) -o nasm$(X) $^ $(LIBS)
+	$(CC) $(ALL_LDFLAGS) -o $@ $(NASM) $(MANIFEST) \
+		$(NASMLIB) $(LIBS)
 
 ndisasm$(X): $(NDISASM) $(MANIFEST) $(DISLIB) $(NASMLIB)
-	$(CC) $(ALL_LDFLAGS) -o ndisasm$(X) $^ $(LIBS)
+	$(CC) $(ALL_LDFLAGS) -o $@ $(NDISASM) $(MANIFEST) \
+		$(DISLIB) $(NASMLIB) $(LIBS)
 
 # These are specific to certain Makefile syntaxes...
 WARNTIMES = $(WARNFILES:=.time)
 WARNSRCS  = $(ALLOBJ_W:.$(O)=.c)
+
+# Make sure we have subdirectories set up...
+$(LIBOBJ) $(LIBOBJ_DIS) $(WARNTIMES) $(WARNSRCS): dirs
 
 #-- Begin Generated File Rules --#
 
@@ -264,18 +268,14 @@ PERLREQ_CLEANABLE = \
 	  misc/nasmtok.el \
 	  version.h version.mac version.mak nsis/version.nsh
 
-# Special hack to keep config/unconfig.h from getting deleted
-# by "make spotless"...
-PERLREQ = config/unconfig.h $(PERLREQ_CLEANABLE)
+PERLREQ = $(PERLREQ_CLEANABLE)
+
+$(PERLREQ): dirs
 
 INSDEP = x86/insns.xda x86/insns.pl x86/insns-iflags.ph x86/iflags.ph
 
-x86/insns.xda: x86/insns.dat x86/preinsns.pl
+x86/insns.xda: x86/insns.dat x86/preinsns.pl dirs
 	$(RUNPERL) $(srcdir)/x86/preinsns.pl $(srcdir)/x86/insns.dat $@
-
-config/unconfig.h: config/config.h.in autoconf/unconfig.pl
-	$(RUNPERL) $(srcdir)/autoconf/unconfig.pl \
-		$(srcdir) config/config.h.in config/unconfig.h
 
 x86/iflag.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)/x86/insns.pl -fc \
@@ -309,7 +309,7 @@ version.sed: version version.pl
 	$(RUNPERL) $(srcdir)/version.pl sed < $(srcdir)/version > version.sed
 version.mak: version version.pl
 	$(RUNPERL) $(srcdir)/version.pl make < $(srcdir)/version > version.mak
-nsis/version.nsh: version version.pl
+nsis/version.nsh: version version.pl dirs
 	$(RUNPERL) $(srcdir)/version.pl nsis < $(srcdir)/version > nsis/version.nsh
 
 # This source file is generated from the standard macros file
@@ -347,7 +347,7 @@ x86/regs.h: x86/regs.dat x86/regs.pl
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm/warnings.time.
 .PHONY: warnings
-warnings: dirs
+warnings:
 	$(RM_F) $(WARNFILES) $(WARNTIMES) asm/warnings.time
 	$(MAKE) asm/warnings.time
 
@@ -422,12 +422,13 @@ misc/nasmtok.el: misc/emacstbl.pl asm/tokhash.c asm/pptok.c \
 
 #-- End Generated File Rules --#
 
-perlreq: dirs
-	$(MAKE) $(PERLREQ)
+$(PERLREQ): dirs
+
+perlreq: $(PERLREQ)
 
 #-- Begin NSIS Rules --#
 
-nsis/arch.nsh: nsis/getpearch.pl nasm$(X)
+nsis/arch.nsh: nsis/getpearch.pl nasm$(X) dirs
 	$(PERL) $(srcdir)/nsis/getpearch.pl nasm$(X) > nsis/arch.nsh
 
 # Should only be done after "make everything".
@@ -441,7 +442,7 @@ nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
 
 # Windows embedded manifest
 MANIFEST_RC = win/manifest.rc
-win/manifest.$(O): win/manifest.xml $(MANIFEST_RC)
+win/manifest.$(O): win/manifest.xml $(MANIFEST_RC) dirs
 	$(WINDRES) -I. -Iwin -DMANIFEST_FILE='\"$(srcdir)/manifest.xml\"' \
 		-i $(MANIFEST_RC) -o $@
 
@@ -506,7 +507,9 @@ doc: doc/warnings.src doc/perlbreq.src doc/pptok.src
 doc_install install_doc install-doc:
 	$(MAKE) -C doc install
 
+.PHONY: misc
 misc:
+	$(MKDIR_P) misc
 	$(MAKE) -C misc all
 
 misc_install install_misc install-misc:
@@ -542,7 +545,7 @@ perlbreq.si: $(ALLPERLSRC)
 	sed -r -e '/perl\((Win32.*)\)/d' | \
 	sort | uniq > perlbreq.si
 
-doc/perlbreq.src: perlbreq.si
+doc/perlbreq.src: perlbreq.si dirs
 	sed -n -r -e 's/^BuildRequires: perl\((.*)\)$$/\\c      \1/p' \
 		< perlbreq.si > doc/perlbreq.src
 	echo '\c      Win32 (if building on Windows only)' >> doc/perlbreq.src
@@ -554,11 +557,14 @@ nasm.spec: nasm.spec.in nasm.spec.sed version.sed perlbreq.si
 splint:
 	splint -weak *.c
 
+.PHONY: test
 test: $(PROGS)
-	cd test && $(RUNPERL) performtest.pl --nasm=../nasm$(X) *.asm
+	cd $(srcdir)/test && \
+		$(RUNPERL) performtest.pl --nasm=../nasm$(X) *.asm
 
 golden: $(PROGS)
-	cd test && $(RUNPERL) performtest.pl --golden --nasm=../nasm$(X) *.asm
+	cd $(srcdir)/test && \
+		$(RUNPERL) performtest.pl --golden --nasm=../nasm$(X) *.asm
 
 travis: $(PROGS)
 	$(PYTHON3) travis/nasm-t.py run
