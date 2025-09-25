@@ -219,8 +219,9 @@ DEPDIRS  = . $(SUBDIRS)
 
 all: $(PROGS)
 
-dirs:
-	$(MKDIR_P) $(SUBDIRS) $(XSUBDIRS)
+DIRS = dirs
+$(DIRS):
+	@$(MKDIR_P) $(SUBDIRS) $(XSUBDIRS)
 
 NASMLIB = libnasm.$(A)
 DISLIB  = libndis.$(A)
@@ -248,7 +249,7 @@ WARNTIMES = $(WARNFILES:=.time)
 WARNSRCS  = $(ALLOBJ_W:.$(O)=.c)
 
 # Make sure we have subdirectories set up...
-$(LIBOBJ) $(LIBOBJ_DIS) $(WARNTIMES) $(WARNSRCS): dirs
+$(LIBOBJ) $(LIBOBJ_DIS) $(WARNTIMES) $(WARNSRCS): $(DIRS)
 
 #-- Begin Generated File Rules --#
 
@@ -270,11 +271,9 @@ PERLREQ_CLEANABLE = \
 
 PERLREQ = $(PERLREQ_CLEANABLE)
 
-$(PERLREQ): dirs
-
 INSDEP = x86/insns.xda x86/insns.pl x86/insns-iflags.ph x86/iflags.ph
 
-x86/insns.xda: x86/insns.dat x86/preinsns.pl dirs
+x86/insns.xda: x86/insns.dat x86/preinsns.pl $(DIRS)
 	$(RUNPERL) $(srcdir)/x86/preinsns.pl $(srcdir)/x86/insns.dat $@
 
 x86/iflag.c: $(INSDEP)
@@ -309,7 +308,7 @@ version.sed: version version.pl
 	$(RUNPERL) $(srcdir)/version.pl sed < $(srcdir)/version > version.sed
 version.mak: version version.pl
 	$(RUNPERL) $(srcdir)/version.pl make < $(srcdir)/version > version.mak
-nsis/version.nsh: version version.pl dirs
+nsis/version.nsh: version version.pl $(DIRS)
 	$(RUNPERL) $(srcdir)/version.pl nsis < $(srcdir)/version > nsis/version.nsh
 
 # This source file is generated from the standard macros file
@@ -422,13 +421,13 @@ misc/nasmtok.el: misc/emacstbl.pl asm/tokhash.c asm/pptok.c \
 
 #-- End Generated File Rules --#
 
-$(PERLREQ): dirs
+$(PERLREQ): $(DIRS)
 
 perlreq: $(PERLREQ)
 
 #-- Begin NSIS Rules --#
 
-nsis/arch.nsh: nsis/getpearch.pl nasm$(X) dirs
+nsis/arch.nsh: nsis/getpearch.pl nasm$(X) $(DIRS)
 	$(PERL) $(srcdir)/nsis/getpearch.pl nasm$(X) > nsis/arch.nsh
 
 # Should only be done after "make everything".
@@ -442,7 +441,7 @@ nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
 
 # Windows embedded manifest
 MANIFEST_RC = win/manifest.rc
-win/manifest.$(O): win/manifest.xml $(MANIFEST_RC) dirs
+win/manifest.$(O): win/manifest.xml $(MANIFEST_RC) $(DIRS)
 	$(WINDRES) -I. -Iwin -DMANIFEST_FILE='\"$(srcdir)/manifest.xml\"' \
 		-i $(MANIFEST_RC) -o $@
 
@@ -518,7 +517,7 @@ misc_install install_misc install-misc:
 # Dummy target to prevent accidental invocation of the default "all" target
 nothing:
 
-always_everything: dirs
+always_everything: $(DIRS)
 	$(MAKE) all doc
 
 everything: always_everything
@@ -545,7 +544,7 @@ perlbreq.si: $(ALLPERLSRC)
 	sed -r -e '/perl\((Win32.*)\)/d' | \
 	sort | uniq > perlbreq.si
 
-doc/perlbreq.src: perlbreq.si dirs
+doc/perlbreq.src: perlbreq.si $(DIRS)
 	sed -n -r -e 's/^BuildRequires: perl\((.*)\)$$/\\c      \1/p' \
 		< perlbreq.si > doc/perlbreq.src
 	echo '\c      Win32 (if building on Windows only)' >> doc/perlbreq.src

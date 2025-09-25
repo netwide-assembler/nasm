@@ -64,6 +64,8 @@ X               = .exe
 
 MANIFEST = win/manifest.xml
 
+DIRS =
+
 ZLIB    = $(ZLIBOBJ)
 
 #-- Begin File Lists --#
@@ -103,7 +105,9 @@ LIBOBJ_W = \
 	asm\strfunc.obj \
 	asm\segalloc.obj \
 	asm\rdstrnum.obj \
-	asm\srcfile.obj
+	asm\srcfile.obj \
+	\
+	$(OUTPUTOBJ)
 
 # The source files for these objects are NOT scanned for warnings;
 # normally this will include all generated files.
@@ -140,8 +144,6 @@ LIBOBJ_NW = \
 	x86\regs.obj x86\regvals.obj x86\regflags.obj \
 	x86\iflag.obj \
 	\
-	$(OUTPUTOBJ) \
-	\
 	$(WARNOBJ)
 
 # Objects which are only used for the disassembler
@@ -166,7 +168,7 @@ ALLOBJ_W  = $(NASM) $(LIBOBJ_W)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 SUBDIRS  = stdlib nasmlib include config output asm disasm x86 \
 	   common zlib macros misc
-XSUBDIRS = test doc nsis win
+XSUBDIRS = nsis win test doc
 DEPDIRS  = . $(SUBDIRS)
 #-- End File Lists --#
 
@@ -210,18 +212,12 @@ PERLREQ_CLEANABLE = \
 	  misc\nasmtok.el \
 	  version.h version.mac version.mak nsis\version.nsh
 
-# Special hack to keep config\unconfig.h from getting deleted
-# by "make spotless"...
-PERLREQ = config\unconfig.h $(PERLREQ_CLEANABLE)
+PERLREQ = $(PERLREQ_CLEANABLE)
 
 INSDEP = x86\insns.xda x86\insns.pl x86\insns-iflags.ph x86\iflags.ph
 
-x86\insns.xda: x86\insns.dat x86\preinsns.pl
+x86\insns.xda: x86\insns.dat x86\preinsns.pl $(DIRS)
 	$(RUNPERL) $(srcdir)\x86\preinsns.pl $(srcdir)\x86\insns.dat $@
-
-config\unconfig.h: config\config.h.in autoconf\unconfig.pl
-	$(RUNPERL) $(srcdir)\autoconf\unconfig.pl \
-		$(srcdir) config\config.h.in config\unconfig.h
 
 x86\iflag.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)\x86\insns.pl -fc \
@@ -255,7 +251,7 @@ version.sed: version version.pl
 	$(RUNPERL) $(srcdir)\version.pl sed < $(srcdir)\version > version.sed
 version.mak: version version.pl
 	$(RUNPERL) $(srcdir)\version.pl make < $(srcdir)\version > version.mak
-nsis\version.nsh: version version.pl
+nsis\version.nsh: version version.pl $(DIRS)
 	$(RUNPERL) $(srcdir)\version.pl nsis < $(srcdir)\version > nsis\version.nsh
 
 # This source file is generated from the standard macros file
@@ -293,7 +289,7 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 # changed, to avoid rebuilding everything every time. Track the actual
 # dependency by the empty file asm\warnings.time.
 .PHONY: warnings
-warnings: dirs
+warnings:
 	$(RM_F) $(WARNFILES) $(WARNTIMES) asm\warnings.time
 	$(MAKE) asm\warnings.time
 
@@ -373,7 +369,7 @@ perlreq: $(PERLREQ)
 #-- Begin NSIS Rules --#
 # Edit in Makefile.in, not here!
 
-nsis\arch.nsh: nsis\getpearch.pl nasm$(X)
+nsis\arch.nsh: nsis\getpearch.pl nasm$(X) $(DIRS)
 	$(PERL) $(srcdir)\nsis\getpearch.pl nasm$(X) > nsis\arch.nsh
 
 # Should only be done after "make everything".
