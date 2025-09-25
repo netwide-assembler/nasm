@@ -85,7 +85,15 @@ typedef union intorptr intorptr;
 # define fieldenc_cast(x,y) ((typeof(x ## _MASK))(y))
 # define fieldval_cast(x,y) ((typeof(x ## _BASEMASK))(y))
 #else
-# define fieldenc_cast(x,y) ((uintmax_t)(y))
+/*
+ * Using int here matches the strict ISO C before C23 which only allows
+ * an enum to be in the range of "int". This also means that these macros
+ * are only usable for bitfields up to 32 bits wide, which is extremely
+ * unfortunate, but covers most of all the NASM use cases.
+ *
+ * The (int) should at least give a warning on overflow.
+ */
+# define fieldenc_cast(x,y) ((int)(y))
 # define fieldval_cast(x,y) (y)
 #endif
 
