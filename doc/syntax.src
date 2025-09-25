@@ -1,5 +1,56 @@
 \C{Syntax} Syntax Quirks and Summaries
 
+\H{ternarylogic} No Syntax for Ternary Logic Instruction
+
+\i{VPTERNLOG}D or VPTERNLOGQ are instructions that implement an arbitrary logic
+function for three inputs. They take three register operands and one immediate
+value that determines what logic function the instruction shall implement on
+execution. Specifically the output of the desired logic function is encoded in
+the immediate 8-bit operand. 3 binary inputs can be configured in 8 possible
+ways giving 8 output bits that could implement any one of 256 possible logic
+functions. Therefore it's not practical to have any syntax around different
+possible logic functions.
+
+However there are some macro solutions that can help avoid writing out truth
+tables in order to use the ternary logic instructions. The simple, more manual
+way is to calculate the logic operation encoding on the fly with a few lines of
+arithmetic directives:
+
+\c	a equ 0xaa
+\c	b equ 0xcc
+\c	c equ 0xf0
+\c	imm equ a | b & c
+
+Here, values for "a", "b" and "c" together are all possible bit configurations
+that a 3 input function can take ("a" being the least significant bit and "c"
+being the most significant one). Then the "imm" variable is calculated by
+evaluating the desired logic function, in this case "a or b and c", thereby
+getting the function's output column that one would get when writing out the
+truth tables.
+
+Another, easier to use solution is to define a macro that will calculate all of
+that when the ternary logic instruction is used. Such a macro can look like this
+for the 32-bit variant of the VPTERNLOG instruction:
+
+\c	%imacro VPTERNLOGD 4
+\c	%define %%imm(a,b,c) %4
+\c	%? %1,%2,%3,%%imm(0xaa,0xcc,0xf0)
+\c	%endmacro
+
+What the macro does, is it outputs the ternary logic instruction with the
+desired logic expression already encoded into the immediate 8-bit value. The
+first three arguments are register operands that VPTERNLOG uses. The fourth
+argument is a string logical expression that needs to use "a", "b" and "c" as
+the input variables. Then the expression is defined as %%imm(a,b,c) which treats
+"a", "b" and "c" as variables in the logical expression string. Then in the next
+line values 0xaa, 0xcc and 0xf0 are substituted in place of "a", "b" and "c".
+Finally the logical expression is evaluated and encoded at the same time.
+
+Then one can invoke the instruction simply like this and use it without doing
+any manual calculations or additional inline code:
+
+\c	vpternlogd xmm1, xmm2, xmm3, a | b & c
+
 \H{APX} \I{apx syntax}\i{APX} Instruction Syntax
 
 Intel APX (\i{Advanced Performance Extensions}) introduces multiple
