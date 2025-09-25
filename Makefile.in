@@ -434,7 +434,7 @@ nsis/arch.nsh: nsis/getpearch.pl nasm$(X)
 # The use of redirection here keeps makensis from moving the cwd to the
 # source directory.
 nsis: nsis/nasm.nsi nsis/arch.nsh nsis/version.nsh
-	$(MAKENSIS) -Dsrcdir=$(srcdir) -Dobjdir=$(objdir) - < nsis/nasm.nsi
+	$(MAKENSIS) -Dsrcdir=$(srcdir) -Dobjdir=$(objdir) - < $<
 
 #-- End NSIS Rules --#
 
