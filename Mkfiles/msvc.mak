@@ -217,33 +217,33 @@ PERLREQ = config\unconfig.h $(PERLREQ_CLEANABLE)
 INSDEP = x86\insns.xda x86\insns.pl x86\insns-iflags.ph x86\iflags.ph
 
 x86\insns.xda: x86\insns.dat x86\preinsns.pl
-	$(RUNPERL) '$(srcdir)'\x86\preinsns.pl $< $@
+	$(RUNPERL) $(srcdir)\x86\preinsns.pl $(srcdir)\x86\insns.dat $@
 
 config\unconfig.h: config\config.h.in autoconf\unconfig.pl
-	$(RUNPERL) '$(srcdir)'\autoconf\unconfig.pl \
-		'$(srcdir)' config\config.h.in config\unconfig.h
+	$(RUNPERL) $(srcdir)\autoconf\unconfig.pl \
+		$(srcdir) config\config.h.in config\unconfig.h
 
 x86\iflag.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)\x86\insns.pl -fc \
-		$(srcdir)\x86\insns.xda x86\iflag.c
+		x86\insns.xda x86\iflag.c
 x86\iflaggen.h: $(INSDEP)
 	$(RUNPERL) $(srcdir)\x86\insns.pl -fh \
-		$(srcdir)\x86\insns.xda x86\iflaggen.h
+		x86\insns.xda x86\iflaggen.h
 x86\insnsb.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)\x86\insns.pl -b \
-		$(srcdir)\x86\insns.xda x86\insnsb.c
+		x86\insns.xda x86\insnsb.c
 x86\insnsa.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)\x86\insns.pl -a \
-		$(srcdir)\x86\insns.xda x86\insnsa.c
+		x86\insns.xda x86\insnsa.c
 x86\insnsd.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)\x86\insns.pl -d \
-		$(srcdir)\x86\insns.xda x86\insnsd.c
+		x86\insns.xda x86\insnsd.c
 x86\insnsi.h: $(INSDEP)
 	$(RUNPERL) $(srcdir)\x86\insns.pl -i \
-		$(srcdir)\x86\insns.xda x86\insnsi.h
+		x86\insns.xda x86\insnsi.h
 x86\insnsn.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)\x86\insns.pl -n \
-		$(srcdir)\x86\insns.xda x86\insnsn.c
+		x86\insns.xda x86\insnsn.c
 
 # These files contains all the standard macros that are derived from
 # the version number.
@@ -364,7 +364,7 @@ asm\directbl.c: asm\directiv.dat nasmlib\perfhash.pl perllib\phash.ph
 # Emacs token files
 misc\nasmtok.el: misc\emacstbl.pl asm\tokhash.c asm\pptok.c \
 		 asm\directiv.dat version
-	$(RUNPERL) $< $@ "$(srcdir)" "$(objdir)"
+	$(RUNPERL) $(srcdir)\misc\emacstbl.pl $@ $(srcdir) $(objdir)
 
 #-- End Generated File Rules --#
 
@@ -380,7 +380,8 @@ nsis\arch.nsh: nsis\getpearch.pl nasm$(X)
 # The use of redirection here keeps makensis from moving the cwd to the
 # source directory.
 nsis: nsis\nasm.nsi nsis\arch.nsh nsis\version.nsh
-	$(MAKENSIS) -Dsrcdir=$(srcdir) -Dobjdir=$(objdir) - < nsis\nasm.nsi
+	$(MAKENSIS) -Dsrcdir=$(srcdir) -Dobjdir=$(objdir) - \
+		< $(srcdir)\nsis\nasm.nsi
 
 #-- End NSIS Rules --#
 
