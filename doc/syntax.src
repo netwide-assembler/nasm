@@ -1,5 +1,27 @@
 \C{Syntax} Syntax Quirks and Summaries
 
+\H{spliteas} \i{Split EA} Addressing Syntax
+
+Instructions that use the mib operand, (that is memory addressed with a base
+register, with some offset, with an added index register that's multiplied by
+some scale factor) can also utilize the split EA (\I{effective
+addresses}effective addressing). The new form is mainly intended for MPX
+instructions that use the \i{mib} operands, but can be used for any memory
+reference. The basic concept of this form is splitting base and index:
+
+\c      mov eax,[ebx+8,ecx*4]   ; ebx=base, ecx=index, 4=scale, 8=disp
+
+NASM supports all currently possible forms of the mib syntax:
+
+\c      ; bndstx
+\c      ; next 5 lines are parsed same
+\c      ; base=rax, index=rbx, scale=1, displacement=3
+\c      bndstx [rax+0x3,rbx], bnd0      ; NASM - split EA
+\c      bndstx [rbx*1+rax+0x3], bnd0    ; GAS - '*1' indecates an index reg
+\c      bndstx [rax+rbx+3], bnd0        ; GAS - without hints
+\c      bndstx [rax+0x3], bnd0, rbx     ; ICC-1
+\c      bndstx [rax+0x3], rbx, bnd0     ; ICC-2
+
 \H{ternarylogic} No Syntax for Ternary Logic Instruction
 
 \i{VPTERNLOG}D or VPTERNLOGQ are instructions that implement an arbitrary logic
