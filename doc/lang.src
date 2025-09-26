@@ -845,30 +845,12 @@ preferred one. NASM lets you do this, by the use of the \c{WRT}
 to load \c{ES:BX} with a different, but functionally equivalent,
 pointer to the symbol \c{symbol}.
 
-NASM supports far (inter-segment) calls and jumps by means of the
-syntax \c{call segment:offset}, where \c{segment} and \c{offset}
-both represent immediate values. So to call a far procedure, you
-could code either of
+The \c{WRT} keyword is also used in far (inter-segment) calls and jumps. It's
+synonymous to the
 
-\c         call    (seg procedure):procedure
-\c         call    weird_seg:(procedure wrt weird_seg)
+\c	call far procedure
 
-(The parentheses are included for clarity, to show the intended
-parsing of the above instructions. They are not necessary in
-practice.)
-
-NASM supports the syntax \I\c{CALL FAR}\c{call far procedure} as a
-synonym for the first of the above usages. \c{JMP} works identically
-to \c{CALL} in these examples.
-
-To declare a \i{far pointer} to a data item in a data segment, you
-must code
-
-\c         dw      symbol, seg symbol
-
-NASM supports no convenient synonym for this, though you can always
-invent one using the macro processor.
-
+syntax which is documented in \k{farcall}.
 
 \H{strict} \i\c{STRICT}: Inhibiting Optimization
 

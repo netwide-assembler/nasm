@@ -1,5 +1,74 @@
 \C{Syntax} Syntax Quirks and Summaries
 
+\H{jumpcall} Summary of the \c{JMP} and \c{CALL} Syntax
+
+The \i\c{JMP} and \i\c{CALL} instructions support a variety of syntaxes to
+simplify their specific use cases. Some of the following chapters explain how
+these two instructions interact with various special symbols that NASM uses and
+some document non-obvious scenarios regarding differently sized modes of
+operation.
+
+\S{labeljmps} \i{Near Jump}s
+
+Near jumps are jumps within a single segment. Probably the most common way to
+use them is through labels, as explained in \k{locallab}. \i\c{APX} added a near
+jump instruction - \I\c{JMPABS}, that allows jumps to any \I{64-bit
+immediate}64-bit address specified with an immediate operand. The instruction
+works with absolute addresses and the syntax options are shown in
+\k{apx_jmpabs}.
+
+\S{jumploop} \i{Infinite Loop} Trick
+
+One of the ways to quickly implement an infinite loop is using the \I{$,
+here}\c{$} token which evaluates to the current position in the code. So a one
+line infinite loop can simply look like:
+
+\c	jmp $
+
+\S{mixsizejmpsum} Jumps and Mixed Sizes
+
+\I{jumps, mixed-size}In some special circumstances one might need to jump
+between 16-bit mode and 32-bit mode. \I{addressing, mixed-size}\I{mixed-size
+addressing}A similar issue is addressing between 16 and 32 bit segments. The
+possible cases and the relevant syntax for both problems are explained in
+\k{mixjump} and \k{mixaddr} respectively.
+
+\S{callprocoutlib} Calling Procedures Outside of a Shared Library
+
+When writing shared libraries it's often necessary to call external code. In the
+ELF format the \I\c{WRT} keyword takes on a different meaning than normally when
+it helps reference a segment - it's used to refer to some special symbols (more
+about it can be found in \k{win64pic}). In the case described here, "\c{wrt}
+\i\c{..plt}" references a \i{PLT} (\i{procedure linkage table}) entry. It can be
+used to call external routines in a way explained in \k{picproc}.
+
+\S{farcall} \i{Far Call}s
+
+NASM supports far (inter-segment) calls and jumps by means of the
+syntax \c{call segment:offset}, where \c{segment} and \c{offset}
+both represent immediate values. So to call a far procedure, you
+could code either of
+
+\c         call    (seg procedure):procedure
+\c         call    weird_seg:(procedure wrt weird_seg)
+
+(The parentheses are included for clarity, to show the intended
+parsing of the above instructions. They are not necessary in
+practice.)
+
+NASM supports the syntax \I\c{CALL FAR}\c{call far procedure} as a
+synonym for the first of the above usages. \c{JMP} works identically
+to \c{CALL} in these examples.
+
+To declare a \i{far pointer} to a data item in a data segment, you
+must code
+
+\c         dw      symbol, seg symbol
+
+NASM supports no convenient synonym for this, though you can always
+invent one using the macro processor.
+
+
 \H{shortnddnds} Compact \i\c{NDS}/\i\c{NDD} Operands
 
 Some instructions that use the \i\c{VEX} prefix, mainly AVX ones, use \c{NDS}
