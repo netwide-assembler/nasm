@@ -1,5 +1,24 @@
 \C{Syntax} Syntax Quirks and Summaries
 
+\H{shortnddnds} Compact \i\c{NDS}/\i\c{NDD} Operands
+
+Some instructions that use the \i\c{VEX} prefix, mainly AVX ones, use \c{NDS}
+(\i\c{Non-Destructive Source}) or \c{NDD} (\i\c{Non-Destructive Destination}) operands.
+Semantically it works by passing another register to the instruction which is
+then used in a non-destructive manner - it's not overwritten with the result of
+the operation.
+
+Syntatically NASM allows both the obvious format mentioned above and a
+\i{compact format} - compact meaning that if a user passes two operands instead
+of three, one of them is simply copied to be used as the source or destination.
+Thereby these instructions have the exact same effect:
+
+\c	vaddpd xmm0, xmm0, xmm1
+\c	vaddpd xmm0, xmm1
+
+Here the xmm0 register is used as the "non-destructive destination" even though
+in this case it will of course be modified.
+
 \H{64moff} 64-bit \i{MOFFS}
 
 The moffs operand can be used with the \c{MOV} instruction, only using the A
