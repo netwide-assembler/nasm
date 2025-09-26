@@ -409,7 +409,7 @@ numbers in a variety of number bases, in a variety of ways: you can
 suffix \c{H} or \c{X}, \c{D} or \c{T}, \c{Q} or \c{O}, and \c{B} or
 \c{Y} for \i{hexadecimal}, \i{decimal}, \i{octal} and \i{binary}
 respectively, or you can prefix \c{0h} or \c{0x}, \c{0d} or \c{0t},
-\c{0q} or \c{0o}, and \c{0b} or \c{0y) in the style of C.  Please note
+\c{0q} or \c{0o}, and \c{0b} or \c{0y}) in the style of C.  Please note
 that unlike C, a \c{0} prefix by itself does \e{not} imply an octal
 constant (this is deprecated in C23.)
 
@@ -535,7 +535,7 @@ effect as \c{db 'a'}, which would be silly. Similarly, three-character
 or four-character constants are treated as strings when they are
 operands to \c{DW}, and so forth.
 
-\S{unicode} \I{UTF-8}I{UTF-16}\I{UTF-32}\i{Unicode} Strings
+\S{unicode} \I{UTF-8}\I{UTF-16}\I{UTF-32}\i{Unicode} Strings
 
 The special operators \i\c{__?utf16?__}, \i\c{__?utf16le?__},
 \i\c{__?utf16be?__}, \i\c{__?utf32?__}, \i\c{__?utf32le?__} and
