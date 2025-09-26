@@ -1201,7 +1201,7 @@ static int32_t ieee_putld(int32_t start, int32_t end, uint8_t *buf)
         start++;
     }
     ieee_putascii(".\n");
-    return (start);
+    return start;
 }
 static int32_t ieee_putlr(struct ieeeFixupp *p)
 {
@@ -1267,7 +1267,7 @@ static int32_t ieee_putlr(struct ieeeFixupp *p)
     }
     ieee_putascii("LR(%s,%"PRIX32").\n", buf, size);
 
-    return (size);
+    return size;
 }
 
 /* Dump all segment data (text and fixups )*/
