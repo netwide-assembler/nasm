@@ -86,59 +86,72 @@ ol.toc2 li {
 div.toc span.node {
     display: none;
 }
-.index li {
+div.index li {
     list-style-type: none;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
-.index .term {
+div.index .term {
     display: inline-block;
     text-align: left;
     vertical-align: top;
     flex: 3 3 0;
 }
-.index .ref {
+div.index .ref {
     width: 30%;
     display: inline-block;
     text-align: right;
     vertical-align: top;
     flex: 1 1 0;
 }
-div.contents {
-    column-width: 35em;
+div.toc, div.chapter, div.appendix {
+    column-width: 32em;
+}
+div.index {
+    column-width: 16em;
+    margin-right: 3em;
+}
+div.index li {
+    padding-left: 1em;
+    padding-right: 1em;
+}
+div.index > ul {
+    padding-left: 0;
 }
 /* This is overridden for @media screen */
-ul.navbar {
+nav {
     display: none;
 }
 @media print {
     a {
 	color: inherit;
     }
-    ul.navbar div.title {
+    nav {
 	display: none !important;
     }
     div.index {
-	-webkit-column-gap: 2em;
-	-moz-column-gap: 2em;
 	column-gap: 2em;
-	-webkit-column-count: 2;
-	-moz-column-count: 2;
 	column-count: 2;
     }
 }
 @media screen {
     div.contents {
-	-webkit-column-gap: 4em;
 	-webkit-column-rule: 1px dotted black;
-	-moz-column-gap: 4em;
 	-moz-column-rule: 1px dotted black;
-	column-gap: 4em;
 	column-rule: 1px dotted black;
     }
-}
-@media screen {
+    div.toc, div.chapter, div.appendix {
+	-webkit-column-gap: 4em;
+	-moz-column-gap: 4em;
+	column-gap: 4em;
+    }
+    div.index {
+	-webkit-column-gap: 1em;
+	-moz-column-gap: 1em;
+	column-gap: 1em;
+    }
+
     /* Setting an explicit margin to keep the navbar from moving */
     body {
 	padding: 0;
@@ -168,39 +181,53 @@ ul.navbar {
 	background-clip: content-box;
     }
 
-    ul.navbar {
+    nav {
 	display: block;
 	position: sticky;
 	top: 8px;
 	width: 100%;
 	margin: 0;
-	padding: 0;
 	overflow: hidden;
-	white-space: nowrap;
-	list-style-type: none;
-	background: #336 url("nasmlogw.png") no-repeat right center;
+        background: #336 url("nasmlogw.png") no-repeat right center;
 	background-size: contain;
-    }
-
-    ul.navbar li {
 	float: left;
+	white-space: collapse;
     }
-    ul.navbar li.last {
-	border-right: none;
+    nav ul {
+	margin: 0;
+	padding: 0;
+	display: inline-block;
+	list-style-type: none;
     }
-    ul.navbar a {
+    nav li {
+	margin: 0;
+	padding: 0;
+	display: inline-block;
+    }
+    nav li a {
+	margin: 0;
 	border-right: 1px solid #bbb;
 	display: block;
-	color: white;
 	text-align: center;
-	padding: 1em 1.5em;
+	padding: 0.75em 0.75em;
 	text-decoration: none;
+	color: white;
+	white-space: nowrap;
+	background-color: #336;
     }
-    ul.navbar a:hover {
+    nav li.navthis a {
+	background-color: #55c;
+    }
+    nav li a:hover {
 	background-color: #448;
     }
-
-    .index li:hover {
+    nav li.navthis a:hover {
+	background-color: #55c;
+    }
+    nav li a:link, nav li a:visited, nav li a:hover {
+	color: white;
+    }
+    div.index li:hover {
 	background: #eef;
     }
 }

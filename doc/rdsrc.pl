@@ -867,25 +867,119 @@ sub word_txt {
 sub html_filename($) {
     my($node) = @_;
 
-    (my $number = lc($xrefnodes{$node})) =~ s/.*-//;
-    my $fname="nasmdocx.html";
-    substr($fname,8 - length $number, length $number) = $number;
-    return $fname;
+    $node = lc($node);
+    if ($node eq 'contents') {
+	return 'nasm00.html';
+    } elsif ($node eq 'index') {
+	return 'nasmix.html';
+    } else {
+	$node =~ /^(\w+)(?:[ -](\w+))?/;
+	my $type = $1;
+	my $number = $2;
+	if ($type eq 'chapter') {
+	    return sprintf 'nasm%02d.html', $number;
+	} else {
+	    # Appendix
+	    return "nasma${number}.html";
+	}
+    }
+}
+
+my $html_fh;
+sub html_openfile($) {
+    my($node) = @_;
+    die if (defined($html_fh));
+    my $filename = html_filename($node);
+    my $pathname = File::Spec->catfile($out_path, $filename);
+    open($html_fh, '>', $pathname)
+	or die "$0: $pathname: $!\n";
+    select $html_fh;
+    return $filename;
+}
+sub html_closefile() {
+    if (defined($html_fh)) {
+        select STDOUT;
+        close($html_fh);
+	undef $html_fh;
+    }
+}
+
+my @html_navbar;
+
+sub html_navbar_generate() {
+    @html_navbar = (['Contents', html_filename('contents'), 'toc']);
+    my $ctype;
+    for ($node = $tstruct_next{'Top'}; $node; $node = $tstruct_next{$node}) {
+	my $plevel = $tstruct_level{$node};
+
+	next unless ($plevel == 1);
+	next unless ($node =~ /^(\w+) ([\w\.]+)?/);
+	my $nctype = $1;
+	my $nname  = $2;
+
+	if ($nctype ne $ctype) {
+	    $nname = "$nctype\&ensp;$nname";
+	    $ctype = $nctype;
+	}
+	push(@html_navbar, [$nname, html_filename($node), lc($ctype)]);
+    }
+    push(@html_navbar, ['Index', html_filename('Index'), 'index']);
+}
+
+# Open an HTML file and write common preamble code
+sub html_preamble($) {
+    my($node) = @_;
+    my $filename = html_openfile($node);
+    $node =~ /^(\w+)(?:[ -](\w+))?/;
+    my $nodetype = lc($1);
+    my $nodenum  = $2;
+    $nodetype = 'toc' if ($nodetype eq 'contents');
+
+    print "<!DOCTYPE html>\n";
+    print "<head>\n";
+    print "<meta charset=\"UTF-8\" />\n";
+    print "<title>", $metadata{'title'}, "</title>\n";
+    print "<link href=\"nasmdoc.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
+    print "<link href=\"local.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
+    print "</head>\n";
+    print "<body>\n";
+
+    # Navigation bar
+    print "<div class=\"header\">\n";
+    # Stray whitespace inside the <nav> tag cause problems; handle by
+    # putting line breaks inside HTML comments. HACK!
+    print "<nav class=\"navbar\" role=\"navigation\"><ul><!--\n";
+    foreach my $nv (@html_navbar) {
+	my $is_this = '';
+	$is_this = ' navthis' if ($nv->[1] eq $filename);
+	printf "--><li class=\"nav%s%s\"><a href=\"%s\">%s</a></li><!--\n",
+	    $nv->[2], $is_this, $nv->[1], $nv->[0];
+    }
+    print "--></ul></nav>\n";
+
+    print "<div class=\"title\">\n";
+    print "<h1>", $metadata{'title'}, "</h1>\n";
+    print '<h2>', $metadata{'subtitle'}, "</h2>\n";
+    print "</div>\n";
+    print "</div>\n";
+    print "<div class=\"contents $nodetype\">\n";
+}
+
+# Write common postable code and close an HTML file
+sub html_postamble {
+    return unless (defined($html_fh));
+    print "</div>\n</body>\n</html>\n";
+    html_closefile();
 }
 
 sub write_html {
-  # This is called from the top level, so I won't bother using
-  # my or local.
+    # Create the navbar list
+    html_navbar_generate();
 
-  # Write contents file. Just the preamble, then a menu of links to the
+    # Write contents file. Just the preamble, then a menu of links to the
   # separate chapter files and the nodes therein.
   print "writing contents file...";
-  open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoc0.html');
-  select TEXT;
-  undef $html_nav_last;
-  $html_nav_next = $tstruct_next{'Top'};
-  &html_preamble(0);
-  print "<div class=\"toc\">\n";
+  html_preamble('contents');
   print "<h2>Table of Contents</h2>\n";
   $level = 0;
   $ollevel = 0;
@@ -943,16 +1037,13 @@ sub write_html {
 	  $link, $node, $title;
   }
   toc_close_tags(0);
-  print "</div>\n";
-  &html_postamble; select STDOUT; close TEXT;
+  html_postamble();
 
   # Open a null file, to ensure output (eg random &html_jumppoints calls)
   # goes _somewhere_.
   print "writing chapter files...";
-  open TEXT, '>', File::Spec->devnull();
-  select TEXT;
-  undef $html_nav_last;
-  undef $html_nav_next;
+  # open TEXT, '>', File::Spec->devnull();
+  # select TEXT;
 
   $in_list = 0;
   $in_bquo = 0;
@@ -969,41 +1060,20 @@ sub write_html {
 
     $endtag = '';
 
-    if ($ptype eq "chap") {
-      # Chapter heading. Begin a new file.
-      $pflags =~ /chap (.*) :(.*)/;
-      $title = "Chapter $1: ";
+    if ($ptype eq 'chap' || $ptype eq 'appn') {
+      # Chapter/appendix heading. Begin a new file.
+      $pflags =~ /^\w+ (.*) :(.*)/;
+      $title = $1 . ' ';
       $xref = $2;
-      &html_postamble; select STDOUT; close TEXT;
-      $html_nav_last = $chapternode;
+      html_postamble();
       $chapternode = $nodexrefs{$xref};
-      $html_nav_next = $tstruct_mnext{$chapternode};
-      open(TEXT, '>', File::Spec->catfile($out_path, html_filename($chapternode)));
-      select TEXT;
-      &html_preamble(1);
+      html_preamble($chapternode);
       foreach $i (@$pname) {
-        $ww = &word_html($i);
-        $title .= $ww unless $ww eq "\001";
+	$ww = &word_html($i);
+	$title .= $ww unless $ww eq "\001";
       }
       $h = "<h2 id=\"$xref\">$title</h2>\n";
-      print $h; print FULL $h;
-    } elsif ($ptype eq "appn") {
-      # Appendix heading. Begin a new file.
-      $pflags =~ /appn (.*) :(.*)/;
-      $title = "Appendix $1: ";
-      $xref = $2;
-      &html_postamble; select STDOUT; close TEXT;
-      $html_nav_last = $chapternode;
-      $chapternode = $nodexrefs{$xref};
-      $html_nav_next = $tstruct_mnext{$chapternode};
-      open(TEXT, '>', File::Spec->catfile($out_path, html_filename($chapternode)));
-      select TEXT;
-      &html_preamble(1);
-      foreach $i (@$pname) {
-        $ww = &word_html($i);
-        $title .= $ww unless $ww eq "\001";
-      }
-      print "<h2 id=\"$xref\">$title</h2>\n";
+      print $h;
     } elsif ($ptype eq "head" || $ptype eq "subh") {
       # Heading or subheading.
       $pflags =~ /.... (.*) :(.*)/;
@@ -1083,59 +1153,14 @@ sub write_html {
   print "</pre>\n" if ($in_code);
   print "</li>\n</ul>\n" if ($in_list);
   print "</blockquote>\n" if ($in_bquo);
-  &html_postamble; select STDOUT; close TEXT;
+  html_postamble();
 
   print "\n   writing index file...";
-  open TEXT, '>', File::Spec->catfile($out_path, 'nasmdoci.html');
-  select TEXT;
-  &html_preamble(0);
-  print "<h2 class=\"index\">Index</h2>\n";
-  print "<div class=\"index\">\n";
+  html_preamble('index');
+  print "<h2>Index</h2>\n";
   &html_index;
-  print "</div>\n\n</body>\n</html>\n";
-  select STDOUT;
-  close TEXT;
-}
+  html_postamble();
 
-sub html_preamble {
-    print "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n";
-    print "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" ";
-    print "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n";
-    print "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n";
-    print "<head>\n";
-    print "<meta charset=\"UTF-8\" />\n";
-    print "<title>", $metadata{'title'}, "</title>\n";
-    print "<link href=\"nasmdoc.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
-    print "<link href=\"local.css\" rel=\"stylesheet\" type=\"text/css\" />\n";
-    print "</head>\n";
-    print "<body>\n";
-
-    # Navigation bar
-    print "<div class=\"header\">\n";
-    print "<ul class=\"navbar\">\n";
-    if (defined($html_nav_last)) {
-	my $lastf = html_filename($html_nav_last);
-	print "<li class=\"first\"><a class=\"prev\" href=\"$lastf\">$html_nav_last</a></li>\n";
-    }
-    if (defined($html_nav_next)) {
-	my $nextf = html_filename($html_nav_next);
-	print "<li><a class=\"next\" href=\"$nextf\">$html_nav_next</a></li>\n";
-    }
-    print "<li><a class=\"toc\" href=\"nasmdoc0.html\">Contents</a></li>\n";
-    print "<li class=\"last\"><a class=\"index\" href=\"nasmdoci.html\">Index</a></li>\n";
-    print "</ul>\n";
-
-    print "<div class=\"title\">\n";
-    print "<h1>", $metadata{'title'}, "</h1>\n";
-    print '<span class="subtitle">', $metadata{'subtitle'}, "</span>\n";
-    print "</div>\n";
-    print "</div>\n";
-    print "<div class=\"contents\">\n";
-}
-
-sub html_postamble {
-    # Common closing tags
-    print "</div>\n</body>\n</html>\n";
 }
 
 sub html_index {
