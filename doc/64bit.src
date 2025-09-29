@@ -62,6 +62,8 @@ In 64-bit mode, immediates and displacements are generally only 32
 bits wide.  NASM will therefore truncate most displacements and
 immediates to 32 bits.
 
+\S{id64imm} Immediate 64-bit Operands
+
 The only instruction which takes a full \i{64-bit immediate} is:
 
 \c      MOV reg64,imm64
@@ -96,6 +98,8 @@ position-independent code in 64-bit mode.  However, the \c{MOV}
 instruction is able to reference a symbol anywhere in the 64-bit
 address space, whereas \c{LEA} is only able to access a symbol within
 within 2 GB of the instruction itself (see below.)
+
+\S{id64disp} 64-bit Displacements
 
 The only instructions which take a full \I{64-bit displacement}64-bit
 \e{displacement} is loading or storing, using \c{MOV}, \c{AL}, \c{AX},

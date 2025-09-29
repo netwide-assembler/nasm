@@ -1,5 +1,14 @@
 \C{Syntax} Syntax Quirks and Summaries
 
+\H{64moff} 64-bit \i{MOFFS}
+
+The moffs operand can be used with the \c{MOV} instruction, only using the A
+register (AL/AH, AX, EAX, RAX), and for non-64-bit operand size means to address
+memory at an offset from a segment. For \I{64-bit immediate} 64-bit operands it
+simply accesses memory at a specified offset (since segment based addressing is
+mostly unavailable in 64-bit mode). Syntax to use 64-bit offsets to address
+memory is showcased in \k{id64disp}.
+
 \H{spliteas} \i{Split EA} Addressing Syntax
 
 Instructions that use the mib operand, (that is memory addressed with a base
