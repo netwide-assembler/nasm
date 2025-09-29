@@ -66,6 +66,8 @@ source.}
 
 \& lang.src
 
+\& syntax.src
+
 \& preproc.src
 
 \& stdmac.src
@@ -83,8 +85,6 @@ source.}
 \& mixsize.src
 
 \& 64bit.src
-
-\& apx.src
 
 \& trouble.src
 
