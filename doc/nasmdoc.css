@@ -9,8 +9,28 @@ div.title {
     margin: 0.67em 0;
 }
 h1 {
-    font-size: 2em;
+    font-size: 250%;
     margin: 0;
+}
+h2 {
+    font-size: 200%;
+    font-weight: bold;
+}
+h3 {
+    font-size: 160%;
+    font-weight: bold;
+}
+h4 {
+    font-size: 128%;
+    font-weight: bold;
+}
+h5 {
+    font-size: 100%;
+    font-weight: bold;
+}
+h6 {
+    font-size: 100%;
+    text-decoration: underline;
 }
 span.subtitle {
     font-size: 1.25em;
@@ -23,31 +43,48 @@ code, pre {
 pre, blockquote {
     margin-left: 4em;
     margin-right: 4em;
+    padding: 0.25em 0.4em;
+}
+pre {
+    background: #f0f0f0;
 }
 code {
     display: inline;
     white-space: nowrap;
+    /* Extra padding due to monospaced font */
+    padding-left: 0.2em;
+    padding-right: 0.2em;
 }
 a {
     text-decoration: none;
 }
-div.toc {
-    padding-left: 0;
-    font-size: 195%;
-}
-div.toc li {
-    list-style-type: none;
-    padding-left: 0;
-}
 div.toc ol {
     padding-left: 2em;
     font-size: 80%;
+    list-style-type: none;
 }
-li.toc1 {
+div.toc ol.toc1 {
+    /* Compensate for the size reduction for each level */
+    font-size: 150%;
+}
+/* -- TOC numbering using data-name attribute -- */
+ol li[data-name]::marker {
+    content: attr(data-name) '.';
+}
+ol.toc1 > li {
+    padding-left: 1em;
     padding-top: 0.7em;
+    font-weight: bold;
 }
-li.toc2 {
+ol.toc2 > li {
     padding-top: 0.3em;
+}
+ol.toc2 li {
+    padding-left: 0.4em;
+    font-weight: normal;
+}
+div.toc span.node {
+    display: none;
 }
 .index li {
     list-style-type: none;
@@ -67,6 +104,9 @@ li.toc2 {
     text-align: right;
     vertical-align: top;
     flex: 1 1 0;
+}
+div.contents {
+    column-width: 35em;
 }
 /* This is overridden for @media screen */
 ul.navbar {
@@ -96,21 +136,6 @@ ul.navbar {
 	-moz-column-rule: 1px dotted black;
 	column-gap: 4em;
 	column-rule: 1px dotted black;
-    }
-}
-@media only screen and (min-width: 90em) {
-    /* For a very wide screen, go to a columnar layout */
-    div.contents {
-	-webkit-column-count: 2;
-	-moz-column-count: 2;
-	column-count: 2;
-    }
-}
-@media only screen and (min-width: 135em) {
-    div.contents {
-	-webkit-column-count: 3;
-	-moz-column-count: 3;
-	column-count: 3;
     }
 }
 @media screen {

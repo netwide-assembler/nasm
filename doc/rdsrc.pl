@@ -885,42 +885,66 @@ sub write_html {
   undef $html_nav_last;
   $html_nav_next = $tstruct_next{'Top'};
   &html_preamble(0);
-  print "<p>This manual documents NASM, the Netwide Assembler: an assembler\n";
-  print "targeting the Intel x86 series of processors, with portable source.\n</p>";
   print "<div class=\"toc\">\n";
+  print "<h2>Table of Contents</h2>\n";
   $level = 0;
-  for ($node = $tstruct_next{'Top'}; $node; $node = $tstruct_next{$node}) {
-      my $lastlevel = $level;
-      while ($tstruct_level{$node} < $level) {
-	  print "</li>\n</ol>\n";
-	  $level--;
-      }
-      while ($tstruct_level{$node} > $level) {
-	  print "<ol class=\"toc", ++$level, "\">\n";
-      }
-      if ($lastlevel >= $level) {
+  $ollevel = 0;
+
+  sub toc_close_tags($) {
+      my($plevel) = @_;
+      while ($plevel < $level) {
 	  print "</li>\n";
+	  if ($level-- <= $ollevel) {
+	      print "</ol>\n";
+	      $ollevel--;
+	  }
       }
-      $level = $tstruct_level{$node};
+  }
+
+  undef $ctype;			# Chapter or Appendix
+  for ($node = $tstruct_next{'Top'}; $node; $node = $tstruct_next{$node}) {
+      my $plevel = $tstruct_level{$node};
+      my @pnn = split(/[ \.]/, $node);
+      (my $nname = $node) =~ s/^.*?\s+//;
+      my $nnum = $pnn[-1] + 0 || ord($pnn[-1]) - ord('A') + 1;
+      my $nctype = lc($pnn[0]);
+
+      toc_close_tags($plevel);
+      if ($plevel < 2 && $nctype ne $ctype) {
+	  toc_close_tags(0);
+	  my $plural = $nctype;
+	  $plural =~ s/^(.)/\U$1/;
+	  $plural =~ s/ix$/ice/; # ix -> ice + s -> ices
+	  $plural .= 's';
+	  print "<h3 class=\"tocheading $nctype\">$plural</h3>\n";
+	  $ctype = $nctype;
+      }
+
+      while ($plevel > $level) {
+	  $level++;
+	  my $cclass = ($level == 1) ? " $ctype" : '';
+	  print "<ol class=\"toc${level}${cclass}\"", ">\n";
+	  $ollevel = $level;
+      }
+
       if ($level == 1) {
 	  $link = $fname = html_filename($node);
       } else {
 	  # Use the preceding filename plus a marker point.
 	  $link = $fname . "#$xrefnodes{$node}";
       }
-      $pname = $tstruct_pname{$node};
-      $title = plist_to_html(@$pname);
-      print "<li class=\"toc${level}\">\n";
-      print "<span class=\"node\">$node: </span><a href=\"$link\">$title</a>\n";
+
+      my $pname = $tstruct_pname{$node};
+      my $title = plist_to_html(@$pname);
+      printf "<li value=\"%d\" data-name=\"%s\">\n", $nnum, $nname;
+      # The $node span is obsolete and is only included for now to avoid
+      # breaking any existing local.css files.
+      printf "<a href=\"%s\"><span class=\"node\">%s: </span>%s</a>\n",
+	  $link, $node, $title;
   }
-  while ($level--) {
-      print "</li>\n</ol>\n";
-  }
+  toc_close_tags(0);
   print "</div>\n";
-  print "</body>\n";
-  print "</html>\n";
-  select STDOUT;
-  close TEXT;
+  &html_postamble; select STDOUT; close TEXT;
 
   # Open a null file, to ensure output (eg random &html_jumppoints calls)
   # goes _somewhere_.
