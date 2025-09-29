@@ -755,6 +755,7 @@ insn *parse_line(char *buffer, insn *result, const int bits)
     int opnum;
     bool critical;
     bool first;
+    bool colonless_label;
     bool recover;
     bool far_jmp_ok;
     bool have_prefixes;
@@ -764,6 +765,7 @@ insn *parse_line(char *buffer, insn *result, const int bits)
 
 restart_parse:
     first               = true;
+    colonless_label     = false;
 
     stdscan_reset(buffer);
     i = stdscan(NULL, &tokval);
@@ -785,6 +787,7 @@ restart_parse:
         first = false;
         result->label = tokval.t_charptr;
         i = stdscan(NULL, &tokval);
+        colonless_label = i != ':';
         if (i == ':') {         /* skip over the optional colon */
             i = stdscan(NULL, &tokval);
         } else if (i == 0) {
@@ -864,7 +867,14 @@ restart_parse:
                 set_imm_flags(&result->oprs[0], result->opt);
             }
         } else if (!first) {
-            nasm_nonfatal("instruction expected, found `%.*s'",
+            /*
+             * What was meant to be an instruction may very well have
+             * been mistaken for a label here, so print out both, unless
+             * it is unambiguous.
+             */
+            nasm_nonfatal("instruction expected, found `%s%s%.*s'",
+                          colonless_label ? result->label : "",
+                          colonless_label ? " " : "",
                           tokval.t_len, tokval.t_start);
         } else if (!result->label) {
             nasm_nonfatal("label, instruction or prefix expected at start of line, found `%.*s'",
