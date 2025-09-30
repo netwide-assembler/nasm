@@ -200,10 +200,24 @@ testcase        {  0x62, 0xf3, 0x6d, 0x48, 0x52, 0xcb, 0x10                     
 testcase        {  0x62, 0xf3, 0xed, 0x08, 0x53, 0xcb, 0x10                                  }, {  VMINMAXSD xmm1, xmm2, xmm3, 0x10  }
 testcase        {  0x62, 0xf3, 0x6c, 0x08, 0x53, 0xcb, 0x10                                  }, {  VMINMAXSH xmm1, xmm2, xmm3, 0x10  }
 testcase        {  0x62, 0xf3, 0x6d, 0x08, 0x53, 0xcb, 0x10                                  }, {  VMINMAXSS xmm1, xmm2, xmm3, 0x10  }
-testcase        {  0x62, 0xf1, 0x7e, 0x08, 0x7e, 0xca                                        }, {  VMOVD xmm1, xmm2  }
+
 testcase        {  0x62, 0xf1, 0x7e, 0x08, 0x7e, 0xca                                        }, {  VMOVD xmm1, xmm2  }
 testcase        {  0x62, 0xf5, 0x7e, 0x08, 0x6e, 0xca                                        }, {  VMOVW xmm1, xmm2  }
-testcase        {  0x62, 0xf5, 0x7e, 0x08, 0x6e, 0xca                                        }, {  VMOVW xmm1, xmm2  }
+testcase        { 0xc5, 0xf9, 0x6e, 0xc8                                                     }, { {vex} VMOVD  xmm1, eax                                                       }
+testcase        { 0x67, 0xc5, 0xf9, 0x6e, 0x08                                               }, { {vex} VMOVD  xmm1, dword [eax]                                               }
+testcase        { 0xc5, 0xf9, 0x7e, 0xc8                                                     }, { {vex} VMOVD  eax, xmm1                                                       }
+testcase        { 0x67, 0xc5, 0xf9, 0x7e, 0x08                                               }, { {vex} VMOVD  dword [eax], xmm1                                               }
+testcase        { 0x62, 0xf1, 0x7d, 0x08, 0x6e, 0xc8                                         }, { {evex} VMOVD  xmm1, eax                                                      }
+testcase        { 0x67, 0x62, 0xf1, 0x7d, 0x08, 0x6e, 0x08                                   }, { {evex} VMOVD  xmm1, dword [eax]                                              }
+testcase        { 0x62, 0xf1, 0x7d, 0x08, 0x7e, 0xc8                                         }, { {evex} VMOVD  eax, xmm1                                                      }
+testcase        { 0x67, 0x62, 0xf1, 0x7d, 0x08, 0x7e, 0x08                                   }, { {evex} VMOVD  dword [eax], xmm1                                              }
+testcase        { 0x67, 0x62, 0xf1, 0x7d, 0x08, 0x6e, 0x08                                   }, { {evex} VMOVD  xmm1, dword [eax]                                              }
+testcase        { 0x67, 0x62, 0xf1, 0x7d, 0x08, 0x7e, 0x08                                   }, { {evex} VMOVD  dword [eax], xmm1                                              }
+testcase        { 0x67, 0x62, 0xf5, 0x7d, 0x08, 0x6e, 0x00                                   }, { {evex} VMOVW  xmm0, word [eax]                                               }
+testcase        { 0x67, 0x62, 0xf5, 0x7d, 0x08, 0x7e, 0x08                                   }, { {evex} VMOVW  word [eax], xmm1                                               }
+testcase        { 0x62, 0xf5, 0x7d, 0x08, 0x6e, 0x08                                         }, { {evex} VMOVW  xmm1, word [rax]                                               }
+testcase        { 0x62, 0xf5, 0x7d, 0x08, 0x7e, 0x08                                         }, { {evex} VMOVW  word [rax], xmm1                                               }
+
 testcase        {  0xc4, 0xe3, 0x69, 0x42, 0xcb, 0x10                                        }, {  VMPSADBW xmm1, xmm2, xmm3, 0x10  }
 testcase        {  0xc4, 0xe3, 0x6d, 0x42, 0xcb, 0x10                                        }, {  VMPSADBW ymm1, ymm2, ymm3, 0x10  }
 testcase        {  0x62, 0xf3, 0x6e, 0x48, 0x42, 0xcb, 0x10                                  }, {  VMPSADBW zmm1, zmm2, zmm3, 0x10  }
