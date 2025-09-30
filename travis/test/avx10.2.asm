@@ -59,6 +59,156 @@ testcase        {  0x62, 0xf5, 0x7e, 0x48, 0x18, 0xca                           
 testcase        {  0x62, 0xf5, 0x7e, 0x08, 0x1b, 0xca                                        }, {  VCVTPH2HF8S xmm1, xmm2  }
 testcase        {  0x62, 0xf5, 0x7e, 0x28, 0x1b, 0xca                                        }, {  VCVTPH2HF8S ymm1, ymm2  }
 testcase        {  0x62, 0xf5, 0x7e, 0x48, 0x1b, 0xca                                        }, {  VCVTPH2HF8S zmm1, zmm2  }
+testcase    { 0x62, 0xf2, 0x75, 0x08, 0x67, 0xc7                                           }, { {evex} VCVT2PS2PHX  xmm0, xmm1, xmm7                                         }
+testcase    { 0x62, 0xf2, 0x75, 0x08, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  xmm0, xmm1, oword [rax]                                  }
+testcase    { 0x62, 0xf2, 0x75, 0x18, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  xmm0, xmm1, dword [rax]{1to4}                            }
+testcase    { 0x62, 0xf2, 0x75, 0x0f, 0x67, 0xc7                                           }, { {evex} VCVT2PS2PHX  xmm0{k7}, xmm1, xmm7                                     }
+testcase    { 0x62, 0xf2, 0x75, 0x0f, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  xmm0{k7}, xmm1, oword [rax]                              }
+testcase    { 0x62, 0xf2, 0x75, 0x1f, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  xmm0{k7}, xmm1, dword [rax]{1to4}                        }
+testcase    { 0x62, 0xf2, 0x75, 0x8f, 0x67, 0xc7                                           }, { {evex} VCVT2PS2PHX  xmm0{k7}{z}, xmm1, xmm7                                  }
+testcase    { 0x62, 0xf2, 0x75, 0x8f, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  xmm0{k7}{z}, xmm1, oword [rax]                           }
+testcase    { 0x62, 0xf2, 0x75, 0x9f, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  xmm0{k7}{z}, xmm1, dword [rax]{1to4}                     }
+testcase    { 0x62, 0xd2, 0x75, 0x28, 0x67, 0xc7                                           }, { {evex} VCVT2PS2PHX  ymm0, ymm1, ymm15                                        }
+testcase    { 0x62, 0xf2, 0x75, 0x28, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  ymm0, ymm1, yword [rax]                                  }
+testcase    { 0x62, 0xf2, 0x75, 0x38, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  ymm0, ymm1, dword [rax]{1to8}                            }
+testcase    { 0x62, 0xd2, 0x75, 0x2f, 0x67, 0xc7                                           }, { {evex} VCVT2PS2PHX  ymm0{k7}, ymm1, ymm15                                    }
+testcase    { 0x62, 0xf2, 0x75, 0x2f, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  ymm0{k7}, ymm1, yword [rax]                              }
+testcase    { 0x62, 0xf2, 0x75, 0x3f, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  ymm0{k7}, ymm1, dword [rax]{1to8}                        }
+testcase    { 0x62, 0xd2, 0x75, 0xaf, 0x67, 0xc7                                           }, { {evex} VCVT2PS2PHX  ymm0{k7}{z}, ymm1, ymm15                                 }
+testcase    { 0x62, 0xf2, 0x75, 0xaf, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  ymm0{k7}{z}, ymm1, yword [rax]                           }
+testcase    { 0x62, 0xf2, 0x75, 0xbf, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  ymm0{k7}{z}, ymm1, dword [rax]{1to8}                     }
+testcase    { 0x62, 0xd2, 0x65, 0x48, 0x67, 0xc7                                           }, { {evex} VCVT2PS2PHX  zmm0, zmm3, zmm15                                        }
+testcase    { 0x62, 0xf2, 0x65, 0x48, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  zmm0, zmm3, zword [rax]                                  }
+testcase    { 0x62, 0xf2, 0x65, 0x58, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  zmm0, zmm3, dword [rax]{1to16}                           }
+testcase    { 0x62, 0xd2, 0x65, 0x4f, 0x67, 0xc7                                           }, { {evex} VCVT2PS2PHX  zmm0{k7}, zmm3, zmm15                                    }
+testcase    { 0x62, 0xf2, 0x65, 0x4f, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  zmm0{k7}, zmm3, zword [rax]                              }
+testcase    { 0x62, 0xf2, 0x65, 0x5f, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  zmm0{k7}, zmm3, dword [rax]{1to16}                       }
+testcase    { 0x62, 0xd2, 0x65, 0xcf, 0x67, 0xc7                                           }, { {evex} VCVT2PS2PHX  zmm0{k7}{z}, zmm3, zmm15                                 }
+testcase    { 0x62, 0xf2, 0x65, 0xcf, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  zmm0{k7}{z}, zmm3, zword [rax]                           }
+testcase    { 0x62, 0xf2, 0x65, 0xdf, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  zmm0{k7}{z}, zmm3, dword [rax]{1to16}                    }
+testcase    { 0x62, 0xf2, 0x74, 0x08, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8  xmm0, xmm1, xmm7                                      }
+testcase    { 0x62, 0xf2, 0x74, 0x08, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0, xmm1, oword [rax]                               }
+testcase    { 0x62, 0xf2, 0x74, 0x18, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0, xmm1, word [rax]{1to8}                          }
+testcase    { 0x62, 0xf2, 0x74, 0x0f, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}, xmm1, xmm7                                  }
+testcase    { 0x62, 0xf2, 0x74, 0x0f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}, xmm1, oword [rax]                           }
+testcase    { 0x62, 0xf2, 0x74, 0x1f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}, xmm1, word [rax]{1to8}                      }
+testcase    { 0x62, 0xf2, 0x74, 0x8f, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}{z}, xmm1, xmm7                               }
+testcase    { 0x62, 0xf2, 0x74, 0x8f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}{z}, xmm1, oword [rax]                        }
+testcase    { 0x62, 0xf2, 0x74, 0x9f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}{z}, xmm1, word [rax]{1to8}                   }
+testcase    { 0x62, 0xd2, 0x74, 0x28, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8  xmm0, ymm1, ymm15                                     }
+testcase    { 0x62, 0xf2, 0x74, 0x28, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0, ymm1, yword [rax]                               }
+testcase    { 0x62, 0xf2, 0x74, 0x38, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0, ymm1, word [rax]{1to16}                         }
+testcase    { 0x62, 0xd2, 0x74, 0x2f, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}, ymm1, ymm15                                 }
+testcase    { 0x62, 0xf2, 0x74, 0x2f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}, ymm1, yword [rax]                           }
+testcase    { 0x62, 0xf2, 0x74, 0x3f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}, ymm1, word [rax]{1to16}                     }
+testcase    { 0x62, 0xd2, 0x74, 0xaf, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}{z}, ymm1, ymm15                              }
+testcase    { 0x62, 0xf2, 0x74, 0xaf, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}{z}, ymm1, yword [rax]                        }
+testcase    { 0x62, 0xf2, 0x74, 0xbf, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  xmm0{k7}{z}, ymm1, word [rax]{1to16}                  }
+testcase    { 0x62, 0xd2, 0x64, 0x48, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8  ymm0, zmm3, zmm15                                     }
+testcase    { 0x62, 0xf2, 0x64, 0x48, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  ymm0, zmm3, zword [rax]                               }
+testcase    { 0x62, 0xf2, 0x64, 0x58, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  ymm0, zmm3, word [rax]{1to32}                         }
+testcase    { 0x62, 0xd2, 0x64, 0x4f, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8  ymm0{k7}, zmm3, zmm15                                 }
+testcase    { 0x62, 0xf2, 0x64, 0x4f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  ymm0{k7}, zmm3, zword [rax]                           }
+testcase    { 0x62, 0xf2, 0x64, 0x5f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  ymm0{k7}, zmm3, word [rax]{1to32}                     }
+testcase    { 0x62, 0xd2, 0x64, 0xcf, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8  ymm0{k7}{z}, zmm3, zmm15                              }
+testcase    { 0x62, 0xf2, 0x64, 0xcf, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  ymm0{k7}{z}, zmm3, zword [rax]                        }
+testcase    { 0x62, 0xf2, 0x64, 0xdf, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8  ymm0{k7}{z}, zmm3, word [rax]{1to32}                  }
+testcase    { 0x62, 0xf5, 0x74, 0x08, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8S  xmm0, xmm1, xmm7                                     }
+testcase    { 0x62, 0xf5, 0x74, 0x08, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0, xmm1, oword [rax]                              }
+testcase    { 0x62, 0xf5, 0x74, 0x18, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0, xmm1, word [rax]{1to8}                         }
+testcase    { 0x62, 0xf5, 0x74, 0x0f, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}, xmm1, xmm7                                 }
+testcase    { 0x62, 0xf5, 0x74, 0x0f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}, xmm1, oword [rax]                          }
+testcase    { 0x62, 0xf5, 0x74, 0x1f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}, xmm1, word [rax]{1to8}                     }
+testcase    { 0x62, 0xf5, 0x74, 0x8f, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}{z}, xmm1, xmm7                              }
+testcase    { 0x62, 0xf5, 0x74, 0x8f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}{z}, xmm1, oword [rax]                       }
+testcase    { 0x62, 0xf5, 0x74, 0x9f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}{z}, xmm1, word [rax]{1to8}                  }
+testcase    { 0x62, 0xd5, 0x74, 0x28, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8S  xmm0, ymm1, ymm15                                    }
+testcase    { 0x62, 0xf5, 0x74, 0x28, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0, ymm1, yword [rax]                              }
+testcase    { 0x62, 0xf5, 0x74, 0x38, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0, ymm1, word [rax]{1to16}                        }
+testcase    { 0x62, 0xd5, 0x74, 0x2f, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}, ymm1, ymm15                                }
+testcase    { 0x62, 0xf5, 0x74, 0x2f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}, ymm1, yword [rax]                          }
+testcase    { 0x62, 0xf5, 0x74, 0x3f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}, ymm1, word [rax]{1to16}                    }
+testcase    { 0x62, 0xd5, 0x74, 0xaf, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}{z}, ymm1, ymm15                             }
+testcase    { 0x62, 0xf5, 0x74, 0xaf, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}{z}, ymm1, yword [rax]                       }
+testcase    { 0x62, 0xf5, 0x74, 0xbf, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  xmm0{k7}{z}, ymm1, word [rax]{1to16}                 }
+testcase    { 0x62, 0xd5, 0x64, 0x48, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8S  ymm0, zmm3, zmm15                                    }
+testcase    { 0x62, 0xf5, 0x64, 0x48, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  ymm0, zmm3, zword [rax]                              }
+testcase    { 0x62, 0xf5, 0x64, 0x58, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  ymm0, zmm3, word [rax]{1to32}                        }
+testcase    { 0x62, 0xd5, 0x64, 0x4f, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8S  ymm0{k7}, zmm3, zmm15                                }
+testcase    { 0x62, 0xf5, 0x64, 0x4f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  ymm0{k7}, zmm3, zword [rax]                          }
+testcase    { 0x62, 0xf5, 0x64, 0x5f, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  ymm0{k7}, zmm3, word [rax]{1to32}                    }
+testcase    { 0x62, 0xd5, 0x64, 0xcf, 0x74, 0xc7                                           }, { {evex} VCVTBIASPH2BF8S  ymm0{k7}{z}, zmm3, zmm15                             }
+testcase    { 0x62, 0xf5, 0x64, 0xcf, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  ymm0{k7}{z}, zmm3, zword [rax]                       }
+testcase    { 0x62, 0xf5, 0x64, 0xdf, 0x74, 0x00                                           }, { {evex} VCVTBIASPH2BF8S  ymm0{k7}{z}, zmm3, word [rax]{1to32}                 }
+testcase    { 0x62, 0xf5, 0x74, 0x08, 0x18, 0xc7                                           }, { {evex} VCVTBIASPH2HF8  xmm0, xmm1, xmm7                                      }
+testcase    { 0x62, 0xf5, 0x74, 0x08, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0, xmm1, oword [rax]                               }
+testcase    { 0x62, 0xf5, 0x74, 0x18, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0, xmm1, word [rax]{1to8}                          }
+testcase    { 0x62, 0xf5, 0x74, 0x0f, 0x18, 0xc7                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}, xmm1, xmm7                                  }
+testcase    { 0x62, 0xf5, 0x74, 0x0f, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}, xmm1, oword [rax]                           }
+testcase    { 0x62, 0xf5, 0x74, 0x1f, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}, xmm1, word [rax]{1to8}                      }
+testcase    { 0x62, 0xf5, 0x74, 0x8f, 0x18, 0xc7                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}{z}, xmm1, xmm7                               }
+testcase    { 0x62, 0xf5, 0x74, 0x8f, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}{z}, xmm1, oword [rax]                        }
+testcase    { 0x62, 0xf5, 0x74, 0x9f, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}{z}, xmm1, word [rax]{1to8}                   }
+testcase    { 0x62, 0xd5, 0x74, 0x28, 0x18, 0xc7                                           }, { {evex} VCVTBIASPH2HF8  xmm0, ymm1, ymm15                                     }
+testcase    { 0x62, 0xf5, 0x74, 0x28, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0, ymm1, yword [rax]                               }
+testcase    { 0x62, 0xf5, 0x74, 0x38, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0, ymm1, word [rax]{1to16}                         }
+testcase    { 0x62, 0xd5, 0x74, 0x2f, 0x18, 0xc7                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}, ymm1, ymm15                                 }
+testcase    { 0x62, 0xf5, 0x74, 0x2f, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}, ymm1, yword [rax]                           }
+testcase    { 0x62, 0xf5, 0x74, 0x3f, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}, ymm1, word [rax]{1to16}                     }
+testcase    { 0x62, 0xd5, 0x74, 0xaf, 0x18, 0xc7                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}{z}, ymm1, ymm15                              }
+testcase    { 0x62, 0xf5, 0x74, 0xaf, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}{z}, ymm1, yword [rax]                        }
+testcase    { 0x62, 0xf5, 0x74, 0xbf, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  xmm0{k7}{z}, ymm1, word [rax]{1to16}                  }
+testcase    { 0x62, 0xd5, 0x64, 0x48, 0x18, 0xc7                                           }, { {evex} VCVTBIASPH2HF8  ymm0, zmm3, zmm15                                     }
+testcase    { 0x62, 0xf5, 0x64, 0x48, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  ymm0, zmm3, zword [rax]                               }
+testcase    { 0x62, 0xf5, 0x64, 0x58, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  ymm0, zmm3, word [rax]{1to32}                         }
+testcase    { 0x62, 0xd5, 0x64, 0x4f, 0x18, 0xc7                                           }, { {evex} VCVTBIASPH2HF8  ymm0{k7}, zmm3, zmm15                                 }
+testcase    { 0x62, 0xf5, 0x64, 0x4f, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  ymm0{k7}, zmm3, zword [rax]                           }
+testcase    { 0x62, 0xf5, 0x64, 0x5f, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  ymm0{k7}, zmm3, word [rax]{1to32}                     }
+testcase    { 0x62, 0xd5, 0x64, 0xcf, 0x18, 0xc7                                           }, { {evex} VCVTBIASPH2HF8  ymm0{k7}{z}, zmm3, zmm15                              }
+testcase    { 0x62, 0xf5, 0x64, 0xcf, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  ymm0{k7}{z}, zmm3, zword [rax]                        }
+testcase    { 0x62, 0xf5, 0x64, 0xdf, 0x18, 0x00                                           }, { {evex} VCVTBIASPH2HF8  ymm0{k7}{z}, zmm3, word [rax]{1to32}                  }
+testcase    { 0x62, 0xf5, 0x74, 0x08, 0x1b, 0xc7                                           }, { {evex} VCVTBIASPH2HF8S  xmm0, xmm1, xmm7                                     }
+testcase    { 0x62, 0xf5, 0x74, 0x08, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0, xmm1, oword [rax]                              }
+testcase    { 0x62, 0xf5, 0x74, 0x18, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0, xmm1, word [rax]{1to8}                         }
+testcase    { 0x62, 0xf5, 0x74, 0x0f, 0x1b, 0xc7                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}, xmm1, xmm7                                 }
+testcase    { 0x62, 0xf5, 0x74, 0x0f, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}, xmm1, oword [rax]                          }
+testcase    { 0x62, 0xf5, 0x74, 0x1f, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}, xmm1, word [rax]{1to8}                     }
+testcase    { 0x62, 0xf5, 0x74, 0x8f, 0x1b, 0xc7                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}{z}, xmm1, xmm7                              }
+testcase    { 0x62, 0xf5, 0x74, 0x8f, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}{z}, xmm1, oword [rax]                       }
+testcase    { 0x62, 0xf5, 0x74, 0x9f, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}{z}, xmm1, word [rax]{1to8}                  }
+testcase    { 0x62, 0xd5, 0x74, 0x28, 0x1b, 0xc7                                           }, { {evex} VCVTBIASPH2HF8S  xmm0, ymm1, ymm15                                    }
+testcase    { 0x62, 0xf5, 0x74, 0x28, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0, ymm1, yword [rax]                              }
+testcase    { 0x62, 0xf5, 0x74, 0x38, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0, ymm1, word [rax]{1to16}                        }
+testcase    { 0x62, 0xd5, 0x74, 0x2f, 0x1b, 0xc7                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}, ymm1, ymm15                                }
+testcase    { 0x62, 0xf5, 0x74, 0x2f, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}, ymm1, yword [rax]                          }
+testcase    { 0x62, 0xf5, 0x74, 0x3f, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}, ymm1, word [rax]{1to16}                    }
+testcase    { 0x62, 0xd5, 0x74, 0xaf, 0x1b, 0xc7                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}{z}, ymm1, ymm15                             }
+testcase    { 0x62, 0xf5, 0x74, 0xaf, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}{z}, ymm1, yword [rax]                       }
+testcase    { 0x62, 0xf5, 0x74, 0xbf, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  xmm0{k7}{z}, ymm1, word [rax]{1to16}                 }
+testcase    { 0x62, 0xd5, 0x64, 0x48, 0x1b, 0xc7                                           }, { {evex} VCVTBIASPH2HF8S  ymm0, zmm3, zmm15                                    }
+testcase    { 0x62, 0xf5, 0x64, 0x48, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  ymm0, zmm3, zword [rax]                              }
+testcase    { 0x62, 0xf5, 0x64, 0x58, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  ymm0, zmm3, word [rax]{1to32}                        }
+testcase    { 0x62, 0xd5, 0x64, 0x4f, 0x1b, 0xc7                                           }, { {evex} VCVTBIASPH2HF8S  ymm0{k7}, zmm3, zmm15                                }
+testcase    { 0x62, 0xf5, 0x64, 0x4f, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  ymm0{k7}, zmm3, zword [rax]                          }
+testcase    { 0x62, 0xf5, 0x64, 0x5f, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  ymm0{k7}, zmm3, word [rax]{1to32}                    }
+testcase    { 0x62, 0xd5, 0x64, 0xcf, 0x1b, 0xc7                                           }, { {evex} VCVTBIASPH2HF8S  ymm0{k7}{z}, zmm3, zmm15                             }
+testcase    { 0x62, 0xf5, 0x64, 0xcf, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  ymm0{k7}{z}, zmm3, zword [rax]                       }
+testcase    { 0x62, 0xf5, 0x64, 0xdf, 0x1b, 0x00                                           }, { {evex} VCVTBIASPH2HF8S  ymm0{k7}{z}, zmm3, word [rax]{1to32}                 }
+testcase    { 0x62, 0xf5, 0x7f, 0x08, 0x1e, 0xc4                                           }, { {evex} VCVTHF82PH  xmm0, xmm4                                                }
+testcase    { 0x62, 0xf5, 0x7f, 0x08, 0x1e, 0x00                                           }, { {evex} VCVTHF82PH  xmm0, qword [rax]                                         }
+testcase    { 0x62, 0xf5, 0x7f, 0x0f, 0x1e, 0xc4                                           }, { {evex} VCVTHF82PH  xmm0{k7}, xmm4                                            }
+testcase    { 0x62, 0xf5, 0x7f, 0x0f, 0x1e, 0x00                                           }, { {evex} VCVTHF82PH  xmm0{k7}, qword [rax]                                     }
+testcase    { 0x62, 0xf5, 0x7f, 0x8f, 0x1e, 0xc4                                           }, { {evex} VCVTHF82PH  xmm0{k7}{z}, xmm4                                         }
+testcase    { 0x62, 0xf5, 0x7f, 0x8f, 0x1e, 0x00                                           }, { {evex} VCVTHF82PH  xmm0{k7}{z}, qword [rax]                                  }
+testcase    { 0x62, 0xf5, 0x7f, 0x28, 0x1e, 0xc5                                           }, { {evex} VCVTHF82PH  ymm0, xmm5                                                }
+testcase    { 0x62, 0xb5, 0x7f, 0x28, 0x1e, 0x04, 0xf0                                     }, { {evex} VCVTHF82PH  ymm0, oword [rax+r14*8]                                   }
+testcase    { 0x62, 0xf5, 0x7f, 0x2f, 0x1e, 0xc5                                           }, { {evex} VCVTHF82PH  ymm0{k7}, xmm5                                            }
+testcase    { 0x62, 0xb5, 0x7f, 0x2f, 0x1e, 0x04, 0xf0                                     }, { {evex} VCVTHF82PH  ymm0{k7}, oword [rax+r14*8]                               }
+testcase    { 0x62, 0xf5, 0x7f, 0xaf, 0x1e, 0xc5                                           }, { {evex} VCVTHF82PH  ymm0{k7}{z}, xmm5                                         }
+testcase    { 0x62, 0xb5, 0x7f, 0xaf, 0x1e, 0x04, 0xf0                                     }, { {evex} VCVTHF82PH  ymm0{k7}{z}, oword [rax+r14*8]                            }
+testcase    { 0x62, 0xd5, 0x7f, 0x48, 0x1e, 0xc7                                           }, { {evex} VCVTHF82PH  zmm0, ymm15                                               }
+testcase    { 0x62, 0xd5, 0x7f, 0x4f, 0x1e, 0xc7                                           }, { {evex} VCVTHF82PH  zmm0{k7}, ymm15                                           }
+testcase    { 0x62, 0xd5, 0x7f, 0xcf, 0x1e, 0xc7                                           }, { {evex} VCVTHF82PH  zmm0{k7}{z}, ymm15                                        }
 testcase        {  0x62, 0xf5, 0x7c, 0x08, 0x69, 0xca                                        }, {  VCVTPH2IBS xmm1, xmm2  }
 testcase        {  0x62, 0xf5, 0x7c, 0x28, 0x69, 0xca                                        }, {  VCVTPH2IBS ymm1, ymm2  }
 testcase        {  0x62, 0xf5, 0x7c, 0x48, 0x69, 0xca                                        }, {  VCVTPH2IBS zmm1, zmm2  }
@@ -200,10 +350,24 @@ testcase        {  0x62, 0xf3, 0x6d, 0x48, 0x52, 0xcb, 0x10                     
 testcase        {  0x62, 0xf3, 0xed, 0x08, 0x53, 0xcb, 0x10                                  }, {  VMINMAXSD xmm1, xmm2, xmm3, 0x10  }
 testcase        {  0x62, 0xf3, 0x6c, 0x08, 0x53, 0xcb, 0x10                                  }, {  VMINMAXSH xmm1, xmm2, xmm3, 0x10  }
 testcase        {  0x62, 0xf3, 0x6d, 0x08, 0x53, 0xcb, 0x10                                  }, {  VMINMAXSS xmm1, xmm2, xmm3, 0x10  }
-testcase        {  0x62, 0xf1, 0x7e, 0x08, 0x7e, 0xca                                        }, {  VMOVD xmm1, xmm2  }
+
 testcase        {  0x62, 0xf1, 0x7e, 0x08, 0x7e, 0xca                                        }, {  VMOVD xmm1, xmm2  }
 testcase        {  0x62, 0xf5, 0x7e, 0x08, 0x6e, 0xca                                        }, {  VMOVW xmm1, xmm2  }
-testcase        {  0x62, 0xf5, 0x7e, 0x08, 0x6e, 0xca                                        }, {  VMOVW xmm1, xmm2  }
+testcase        { 0xc5, 0xf9, 0x6e, 0xc8                                                     }, { {vex} VMOVD  xmm1, eax                                                       }
+testcase        { 0x67, 0xc5, 0xf9, 0x6e, 0x08                                               }, { {vex} VMOVD  xmm1, dword [eax]                                               }
+testcase        { 0xc5, 0xf9, 0x7e, 0xc8                                                     }, { {vex} VMOVD  eax, xmm1                                                       }
+testcase        { 0x67, 0xc5, 0xf9, 0x7e, 0x08                                               }, { {vex} VMOVD  dword [eax], xmm1                                               }
+testcase        { 0x62, 0xf1, 0x7d, 0x08, 0x6e, 0xc8                                         }, { {evex} VMOVD  xmm1, eax                                                      }
+testcase        { 0x67, 0x62, 0xf1, 0x7d, 0x08, 0x6e, 0x08                                   }, { {evex} VMOVD  xmm1, dword [eax]                                              }
+testcase        { 0x62, 0xf1, 0x7d, 0x08, 0x7e, 0xc8                                         }, { {evex} VMOVD  eax, xmm1                                                      }
+testcase        { 0x67, 0x62, 0xf1, 0x7d, 0x08, 0x7e, 0x08                                   }, { {evex} VMOVD  dword [eax], xmm1                                              }
+testcase        { 0x67, 0x62, 0xf1, 0x7d, 0x08, 0x6e, 0x08                                   }, { {evex} VMOVD  xmm1, dword [eax]                                              }
+testcase        { 0x67, 0x62, 0xf1, 0x7d, 0x08, 0x7e, 0x08                                   }, { {evex} VMOVD  dword [eax], xmm1                                              }
+testcase        { 0x67, 0x62, 0xf5, 0x7d, 0x08, 0x6e, 0x00                                   }, { {evex} VMOVW  xmm0, word [eax]                                               }
+testcase        { 0x67, 0x62, 0xf5, 0x7d, 0x08, 0x7e, 0x08                                   }, { {evex} VMOVW  word [eax], xmm1                                               }
+testcase        { 0x62, 0xf5, 0x7d, 0x08, 0x6e, 0x08                                         }, { {evex} VMOVW  xmm1, word [rax]                                               }
+testcase        { 0x62, 0xf5, 0x7d, 0x08, 0x7e, 0x08                                         }, { {evex} VMOVW  word [rax], xmm1                                               }
+
 testcase        {  0xc4, 0xe3, 0x69, 0x42, 0xcb, 0x10                                        }, {  VMPSADBW xmm1, xmm2, xmm3, 0x10  }
 testcase        {  0xc4, 0xe3, 0x6d, 0x42, 0xcb, 0x10                                        }, {  VMPSADBW ymm1, ymm2, ymm3, 0x10  }
 testcase        {  0x62, 0xf3, 0x6e, 0x48, 0x42, 0xcb, 0x10                                  }, {  VMPSADBW zmm1, zmm2, zmm3, 0x10  }

@@ -150,114 +150,119 @@ testcase        {  0x62, 0xf5, 0x7c, 0x4f, 0x58, 0x00                           
 testcase        {  0x62, 0xf5, 0x7c, 0xcf, 0x58, 0xc1                                        }, {        {evex} VADDPH zmm0{k7}{z}, zmm0, zmm1                                }
 testcase        {  0x62, 0xf5, 0x7c, 0xcf, 0x58, 0x00                                        }, {        {evex} VADDPH zmm0{k7}{z}, zmm0, zword [rax]                         }
 
-testcase        {  0x62, 0xf3, 0x7d, 0x28, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0, ymm1, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x19, 0xcb, 0x55                                  }, {        {evex} VEXTRACTF32X4 [rcx]{k7}, zmm3, 0x55                           }
-testcase        {  0x62, 0xf3, 0x7d, 0x28, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0, ymm1, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x2f, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0{k7}, ymm1, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xaf, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0{k7}{z}, ymm1, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xcf, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x29, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF32X4 oword [rax+r14*8]{k1}, ymm1, 0x55               }
-testcase        {  0x62, 0xf3, 0x7d, 0x49, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X4 oword [rax+r14*8]{k1}, zmm3, 0x55               }
-testcase        {  0x62, 0xf3, 0x7d, 0x2f, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0{k7}, ymm1, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xaf, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0{k7}{z}, ymm1, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x28, 0x19, 0xc9, 0x55                                  }, {        {evex} VEXTRACTF32X4 [rcx], ymm1, 0x55                               }
-testcase        {  0x62, 0xf3, 0x7d, 0x2f, 0x19, 0xc9, 0x55                                  }, {        {evex} VEXTRACTF32X4 [rcx]{k7}, ymm1, 0x55                           }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xcf, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X4 xmm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x19, 0xcb, 0x55                                  }, {        {evex} VEXTRACTF32X4 [rcx], zmm3, 0x55                               }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X8 ymm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X8 ymm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xcf, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X8 ymm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x1b, 0xcb, 0x55                                  }, {        {evex} VEXTRACTF32X8 [rcx], zmm3, 0x55                               }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x1b, 0xcb, 0x55                                  }, {        {evex} VEXTRACTF32X8 [rcx]{k7}, zmm3, 0x55                           }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X8 ymm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X8 ymm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xcf, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X8 ymm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x49, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF32X8 yword [rax+r14*8]{k1}, zmm3, 0x55               }
-testcase        {  0x62, 0xf3, 0xfd, 0x28, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0, ymm1, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x19, 0xcb, 0x55                                  }, {        {evex} VEXTRACTF64X2 [rcx]{k7}, zmm3, 0x55                           }
-testcase        {  0x62, 0xf3, 0xfd, 0x28, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0, ymm1, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x2f, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0{k7}, ymm1, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xaf, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0{k7}{z}, ymm1, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xcf, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x29, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF64X2 oword [rax+r14*8]{k1}, ymm1, 0x55               }
-testcase        {  0x62, 0xf3, 0xfd, 0x49, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X2 oword [rax+r14*8]{k1}, zmm3, 0x55               }
-testcase        {  0x62, 0xf3, 0xfd, 0x2f, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0{k7}, ymm1, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xaf, 0x19, 0xc1, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0{k7}{z}, ymm1, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x28, 0x19, 0xc9, 0x55                                  }, {        {evex} VEXTRACTF64X2 [rcx], ymm1, 0x55                               }
-testcase        {  0x62, 0xf3, 0xfd, 0x2f, 0x19, 0xc9, 0x55                                  }, {        {evex} VEXTRACTF64X2 [rcx]{k7}, ymm1, 0x55                           }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xcf, 0x19, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X2 xmm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x19, 0xcb, 0x55                                  }, {        {evex} VEXTRACTF64X2 [rcx], zmm3, 0x55                               }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X4 ymm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X4 ymm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xcf, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X4 ymm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x1b, 0xcb, 0x55                                  }, {        {evex} VEXTRACTF64X4 [rcx], zmm3, 0x55                               }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x1b, 0xcb, 0x55                                  }, {        {evex} VEXTRACTF64X4 [rcx]{k7}, zmm3, 0x55                           }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X4 ymm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X4 ymm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xcf, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X4 ymm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x49, 0x1b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTF64X4 yword [rax+r14*8]{k1}, zmm3, 0x55               }
-testcase        {  0x62, 0xf3, 0x7d, 0x28, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0, ymm1, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x39, 0xcb, 0x55                                  }, {        {evex} VEXTRACTI32X4 [rcx]{k7}, zmm3, 0x55                           }
-testcase        {  0x62, 0xf3, 0x7d, 0x28, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0, ymm1, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x2f, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0{k7}, ymm1, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xaf, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0{k7}{z}, ymm1, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xcf, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x29, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI32X4 oword [rax+r14*8]{k1}, ymm1, 0x55               }
-testcase        {  0x62, 0xf3, 0x7d, 0x49, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X4 oword [rax+r14*8]{k1}, zmm3, 0x55               }
-testcase        {  0x62, 0xf3, 0x7d, 0x2f, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0{k7}, ymm1, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xaf, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0{k7}{z}, ymm1, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x28, 0x39, 0xc9, 0x55                                  }, {        {evex} VEXTRACTI32X4 [rcx], ymm1, 0x55                               }
-testcase        {  0x62, 0xf3, 0x7d, 0x2f, 0x39, 0xc9, 0x55                                  }, {        {evex} VEXTRACTI32X4 [rcx]{k7}, ymm1, 0x55                           }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xcf, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X4 xmm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x39, 0xcb, 0x55                                  }, {        {evex} VEXTRACTI32X4 [rcx], zmm3, 0x55                               }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X8 ymm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X8 ymm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xcf, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X8 ymm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x3b, 0xcb, 0x55                                  }, {        {evex} VEXTRACTI32X8 [rcx], zmm3, 0x55                               }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x3b, 0xcb, 0x55                                  }, {        {evex} VEXTRACTI32X8 [rcx]{k7}, zmm3, 0x55                           }
-testcase        {  0x62, 0xf3, 0x7d, 0x48, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X8 ymm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0x7d, 0x4f, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X8 ymm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0x7d, 0xcf, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X8 ymm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0x7d, 0x49, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI32X8 yword [rax+r14*8]{k1}, zmm3, 0x55               }
-testcase        {  0x62, 0xf3, 0xfd, 0x28, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0, ymm1, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x39, 0xcb, 0x55                                  }, {        {evex} VEXTRACTI64X2 [rcx]{k7}, zmm3, 0x55                           }
-testcase        {  0x62, 0xf3, 0xfd, 0x28, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0, ymm1, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x2f, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0{k7}, ymm1, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xaf, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0{k7}{z}, ymm1, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xcf, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x29, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI64X2 oword [rax+r14*8]{k1}, ymm1, 0x55               }
-testcase        {  0x62, 0xf3, 0xfd, 0x49, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X2 oword [rax+r14*8]{k1}, zmm3, 0x55               }
-testcase        {  0x62, 0xf3, 0xfd, 0x2f, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0{k7}, ymm1, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xaf, 0x39, 0xc1, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0{k7}{z}, ymm1, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x28, 0x39, 0xc9, 0x55                                  }, {        {evex} VEXTRACTI64X2 [rcx], ymm1, 0x55                               }
-testcase        {  0x62, 0xf3, 0xfd, 0x2f, 0x39, 0xc9, 0x55                                  }, {        {evex} VEXTRACTI64X2 [rcx]{k7}, ymm1, 0x55                           }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xcf, 0x39, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X2 xmm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x39, 0xcb, 0x55                                  }, {        {evex} VEXTRACTI64X2 [rcx], zmm3, 0x55                               }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X4 ymm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X4 ymm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xcf, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X4 ymm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x3b, 0xcb, 0x55                                  }, {        {evex} VEXTRACTI64X4 [rcx], zmm3, 0x55                               }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x3b, 0xcb, 0x55                                  }, {        {evex} VEXTRACTI64X4 [rcx]{k7}, zmm3, 0x55                           }
-testcase        {  0x62, 0xf3, 0xfd, 0x48, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X4 ymm0, zmm3, 0x55                                }
-testcase        {  0x62, 0xf3, 0xfd, 0x4f, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X4 ymm0{k7}, zmm3, 0x55                            }
-testcase        {  0x62, 0xf3, 0xfd, 0xcf, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X4 ymm0{k7}{z}, zmm3, 0x55                         }
-testcase        {  0x62, 0xf3, 0xfd, 0x49, 0x3b, 0xc3, 0x55                                  }, {        {evex} VEXTRACTI64X4 yword [rax+r14*8]{k1}, zmm3, 0x55               }
+testcase    { 0xc4, 0xe3, 0x7d, 0x19, 0xcd, 0x55                                           }, { {vex} VEXTRACTF128  xmm5, ymm1, 0x55                                         }
+testcase    { 0xc4, 0xa3, 0x7d, 0x19, 0x0c, 0xf0, 0x55                                     }, { {vex} VEXTRACTF128  oword [rax+r14*8], ymm1, 0x55                            }
+testcase    { 0x62, 0xf3, 0x7d, 0x28, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0, ymm1, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x2f, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0{k7}, ymm1, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xaf, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0{k7}{z}, ymm1, 0x55                                }
+testcase    { 0x62, 0xf3, 0x7d, 0x28, 0x19, 0x09, 0x55                                     }, { {evex} VEXTRACTF32X4  [rcx], ymm1, 0x55                                      }
+testcase    { 0x62, 0xf3, 0x7d, 0x2f, 0x19, 0x09, 0x55                                     }, { {evex} VEXTRACTF32X4  [rcx]{k7}, ymm1, 0x55                                  }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xcf, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x19, 0x19, 0x55                                     }, { {evex} VEXTRACTF32X4  [rcx], zmm3, 0x55                                      }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x19, 0x19, 0x55                                     }, { {evex} VEXTRACTF32X4  [rcx]{k7}, zmm3, 0x55                                  }
+testcase    { 0x62, 0xf3, 0x7d, 0x28, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0, ymm1, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x2f, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0{k7}, ymm1, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xaf, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0{k7}{z}, ymm1, 0x55                                }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xcf, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X4  xmm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xb3, 0x7d, 0x29, 0x19, 0x0c, 0xf0, 0x55                               }, { {evex} VEXTRACTF32X4  oword [rax+r14*8]{k1}, ymm1, 0x55                      }
+testcase    { 0x62, 0xb3, 0x7d, 0x49, 0x19, 0x1c, 0xf0, 0x55                               }, { {evex} VEXTRACTF32X4  oword [rax+r14*8]{k1}, zmm3, 0x55                      }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X8  ymm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X8  ymm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xcf, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X8  ymm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x1b, 0x19, 0x55                                     }, { {evex} VEXTRACTF32X8  [rcx], zmm3, 0x55                                      }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x1b, 0x19, 0x55                                     }, { {evex} VEXTRACTF32X8  [rcx]{k7}, zmm3, 0x55                                  }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X8  ymm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X8  ymm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xcf, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF32X8  ymm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xb3, 0x7d, 0x49, 0x1b, 0x1c, 0xf0, 0x55                               }, { {evex} VEXTRACTF32X8  yword [rax+r14*8]{k1}, zmm3, 0x55                      }
+testcase    { 0x62, 0xf3, 0xfd, 0x28, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0, ymm1, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x2f, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0{k7}, ymm1, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xaf, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0{k7}{z}, ymm1, 0x55                                }
+testcase    { 0x62, 0xf3, 0xfd, 0x28, 0x19, 0x09, 0x55                                     }, { {evex} VEXTRACTF64X2  [rcx], ymm1, 0x55                                      }
+testcase    { 0x62, 0xf3, 0xfd, 0x2f, 0x19, 0x09, 0x55                                     }, { {evex} VEXTRACTF64X2  [rcx]{k7}, ymm1, 0x55                                  }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xcf, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x19, 0x19, 0x55                                     }, { {evex} VEXTRACTF64X2  [rcx], zmm3, 0x55                                      }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x19, 0x19, 0x55                                     }, { {evex} VEXTRACTF64X2  [rcx]{k7}, zmm3, 0x55                                  }
+testcase    { 0x62, 0xf3, 0xfd, 0x28, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0, ymm1, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x2f, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0{k7}, ymm1, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xaf, 0x19, 0xc8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0{k7}{z}, ymm1, 0x55                                }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xcf, 0x19, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X2  xmm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xb3, 0xfd, 0x29, 0x19, 0x0c, 0xf0, 0x55                               }, { {evex} VEXTRACTF64X2  oword [rax+r14*8]{k1}, ymm1, 0x55                      }
+testcase    { 0x62, 0xb3, 0xfd, 0x49, 0x19, 0x1c, 0xf0, 0x55                               }, { {evex} VEXTRACTF64X2  oword [rax+r14*8]{k1}, zmm3, 0x55                      }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X4  ymm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X4  ymm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xcf, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X4  ymm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x1b, 0x19, 0x55                                     }, { {evex} VEXTRACTF64X4  [rcx], zmm3, 0x55                                      }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x1b, 0x19, 0x55                                     }, { {evex} VEXTRACTF64X4  [rcx]{k7}, zmm3, 0x55                                  }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X4  ymm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X4  ymm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xcf, 0x1b, 0xd8, 0x55                                     }, { {evex} VEXTRACTF64X4  ymm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xb3, 0xfd, 0x49, 0x1b, 0x1c, 0xf0, 0x55                               }, { {evex} VEXTRACTF64X4  yword [rax+r14*8]{k1}, zmm3, 0x55                      }
+testcase    { 0xc4, 0xe3, 0x7d, 0x39, 0xcd, 0x55                                           }, { {vex} VEXTRACTI128  xmm5, ymm1, 0x55                                         }
+testcase    { 0xc4, 0xa3, 0x7d, 0x39, 0x0c, 0xf0, 0x55                                     }, { {vex} VEXTRACTI128  oword [rax+r14*8], ymm1, 0x55                            }
+testcase    { 0x62, 0xf3, 0x7d, 0x28, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0, ymm1, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x2f, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0{k7}, ymm1, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xaf, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0{k7}{z}, ymm1, 0x55                                }
+testcase    { 0x62, 0xf3, 0x7d, 0x28, 0x39, 0x09, 0x55                                     }, { {evex} VEXTRACTI32X4  [rcx], ymm1, 0x55                                      }
+testcase    { 0x62, 0xf3, 0x7d, 0x2f, 0x39, 0x09, 0x55                                     }, { {evex} VEXTRACTI32X4  [rcx]{k7}, ymm1, 0x55                                  }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xcf, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x39, 0x19, 0x55                                     }, { {evex} VEXTRACTI32X4  [rcx], zmm3, 0x55                                      }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x39, 0x19, 0x55                                     }, { {evex} VEXTRACTI32X4  [rcx]{k7}, zmm3, 0x55                                  }
+testcase    { 0x62, 0xf3, 0x7d, 0x28, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0, ymm1, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x2f, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0{k7}, ymm1, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xaf, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0{k7}{z}, ymm1, 0x55                                }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xcf, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X4  xmm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xb3, 0x7d, 0x29, 0x39, 0x0c, 0xf0, 0x55                               }, { {evex} VEXTRACTI32X4  oword [rax+r14*8]{k1}, ymm1, 0x55                      }
+testcase    { 0x62, 0xb3, 0x7d, 0x49, 0x39, 0x1c, 0xf0, 0x55                               }, { {evex} VEXTRACTI32X4  oword [rax+r14*8]{k1}, zmm3, 0x55                      }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X8  ymm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X8  ymm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xcf, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X8  ymm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x3b, 0x19, 0x55                                     }, { {evex} VEXTRACTI32X8  [rcx], zmm3, 0x55                                      }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x3b, 0x19, 0x55                                     }, { {evex} VEXTRACTI32X8  [rcx]{k7}, zmm3, 0x55                                  }
+testcase    { 0x62, 0xf3, 0x7d, 0x48, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X8  ymm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0x7d, 0x4f, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X8  ymm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0x7d, 0xcf, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI32X8  ymm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xb3, 0x7d, 0x49, 0x3b, 0x1c, 0xf0, 0x55                               }, { {evex} VEXTRACTI32X8  yword [rax+r14*8]{k1}, zmm3, 0x55                      }
+testcase    { 0x62, 0xf3, 0xfd, 0x28, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0, ymm1, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x2f, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0{k7}, ymm1, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xaf, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0{k7}{z}, ymm1, 0x55                                }
+testcase    { 0x62, 0xf3, 0xfd, 0x28, 0x39, 0x09, 0x55                                     }, { {evex} VEXTRACTI64X2  [rcx], ymm1, 0x55                                      }
+testcase    { 0x62, 0xf3, 0xfd, 0x2f, 0x39, 0x09, 0x55                                     }, { {evex} VEXTRACTI64X2  [rcx]{k7}, ymm1, 0x55                                  }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xcf, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x39, 0x19, 0x55                                     }, { {evex} VEXTRACTI64X2  [rcx], zmm3, 0x55                                      }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x39, 0x19, 0x55                                     }, { {evex} VEXTRACTI64X2  [rcx]{k7}, zmm3, 0x55                                  }
+testcase    { 0x62, 0xf3, 0xfd, 0x28, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0, ymm1, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x2f, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0{k7}, ymm1, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xaf, 0x39, 0xc8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0{k7}{z}, ymm1, 0x55                                }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xcf, 0x39, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X2  xmm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xb3, 0xfd, 0x29, 0x39, 0x0c, 0xf0, 0x55                               }, { {evex} VEXTRACTI64X2  oword [rax+r14*8]{k1}, ymm1, 0x55                      }
+testcase    { 0x62, 0xb3, 0xfd, 0x49, 0x39, 0x1c, 0xf0, 0x55                               }, { {evex} VEXTRACTI64X2  oword [rax+r14*8]{k1}, zmm3, 0x55                      }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X4  ymm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X4  ymm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xcf, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X4  ymm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x3b, 0x19, 0x55                                     }, { {evex} VEXTRACTI64X4  [rcx], zmm3, 0x55                                      }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x3b, 0x19, 0x55                                     }, { {evex} VEXTRACTI64X4  [rcx]{k7}, zmm3, 0x55                                  }
+testcase    { 0x62, 0xf3, 0xfd, 0x48, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X4  ymm0, zmm3, 0x55                                       }
+testcase    { 0x62, 0xf3, 0xfd, 0x4f, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X4  ymm0{k7}, zmm3, 0x55                                   }
+testcase    { 0x62, 0xf3, 0xfd, 0xcf, 0x3b, 0xd8, 0x55                                     }, { {evex} VEXTRACTI64X4  ymm0{k7}{z}, zmm3, 0x55                                }
+testcase    { 0x62, 0xb3, 0xfd, 0x49, 0x3b, 0x1c, 0xf0, 0x55                               }, { {evex} VEXTRACTI64X4  yword [rax+r14*8]{k1}, zmm3, 0x55                      }
+
 testcase        {  0x62, 0xf6, 0x77, 0x08, 0xd6, 0xc7                                        }, {        {evex} VFCMULCPH xmm0, xmm1, xmm7                                    }
 testcase        {  0x62, 0xf6, 0x77, 0x8f, 0xd6, 0xc7                                        }, {        {evex} VFCMULCPH xmm0{k7}{z}, xmm1, xmm7                             }
 testcase        {  0x62, 0xf6, 0x77, 0x8f, 0xd6, 0x00                                        }, {        {evex} VFCMULCPH xmm0{k7}{z}, xmm1, oword [rax]                      }
