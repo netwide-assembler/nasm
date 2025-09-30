@@ -6045,9 +6045,9 @@ $dq VCVTTSS2USIS  reg#,xmmrm32|sae                    [rm:t1s: evex.lig.f3.map5.
 
 ;# AVX10.2 Zero-extending partial vector copy instructions
 VMOVD             xmmreg,xmmrm32                      [rm:t1s: evex.128.f3.0f.w0 7e /r ]        AVX10_2
-VMOVD             xmmrm32,xmmreg                      [rm:t1s: evex.128.66.0f.w0 d6 /r ]        AVX10_2
+VMOVD             xmmrm32,xmmreg                      [mr:t1s: evex.128.66.0f.w0 d6 /r ]        AVX10_2
 VMOVW             xmmreg,xmmrm16                      [rm:t1s: evex.128.f3.map5.w0 6e /r ]      AVX10_2
-VMOVW             xmmrm16,xmmreg                      [rm:t1s: evex.128.f3.map5.w0 7e /r ]      AVX10_2
+VMOVW             xmmrm16,xmmreg                      [mr:t1s: evex.128.f3.map5.w0 7e /r ]      AVX10_2
 
 
 ;# Systematic names for the hinting nop instructions
