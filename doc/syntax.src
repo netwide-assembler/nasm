@@ -15,7 +15,7 @@ use them is through labels, as explained in \k{locallab}. \i\c{APX} added a near
 jump instruction - \I\c{JMPABS}, that allows jumps to any \I{64-bit
 immediate}64-bit address specified with an immediate operand. The instruction
 works with absolute addresses and the syntax options are shown in
-\k{apx_jmpabs}.
+\k{jmpabs}.
 
 \S{jumploop} \i{Infinite Loop} Trick
 
@@ -42,9 +42,9 @@ about it can be found in \k{win64pic}). In the case described here, "\c{wrt}
 \i\c{..plt}" references a \i{PLT} (\i{procedure linkage table}) entry. It can be
 used to call external routines in a way explained in \k{picproc}.
 
-\S{farcall} \i{Far Call}s
+\S{farcall} \I{far call}\I{far jmp}\c{FAR} Calls and Jumps
 
-NASM supports far (inter-segment) calls and jumps by means of the
+NASM supports \c{FAR} (inter-segment) calls and jumps by means of the
 syntax \c{call segment:offset}, where \c{segment} and \c{offset}
 both represent immediate values. So to call a far procedure, you
 could code either of
@@ -56,45 +56,67 @@ could code either of
 parsing of the above instructions. They are not necessary in
 practice.)
 
-NASM supports the syntax \I\c{CALL FAR}\c{call far procedure} as a
-synonym for the first of the above usages. \c{JMP} works identically
+NASM also supports the syntax \I\c{CALL FAR}\c{call far procedure} as
+a synonym for the first of the above usages. \c{JMP} works identically
 to \c{CALL} in these examples.
 
 To declare a \i{far pointer} to a data item in a data segment, you
 must code
 
-\c         dw      symbol, seg symbol
+\c         dw symbol, seg symbol		; 16 bit
+\c         dd symbol, word seg symbol           ; 32 bit
 
 NASM supports no convenient synonym for this, though you can always
 invent one using the macro processor.
 
 
-\H{shortnddnds} Compact \i\c{NDS}/\i\c{NDD} Operands
+\S{jmpabs} 64-bit absolute jump (\i\c{JMPABS})
 
-Some instructions that use the \i\c{VEX} prefix, mainly AVX ones, use \c{NDS}
-(\i\c{Non-Destructive Source}) or \c{NDD} (\i\c{Non-Destructive Destination}) operands.
-Semantically it works by passing another register to the instruction which is
-then used in a non-destructive manner - it's not overwritten with the result of
-the operation.
+Defined as part of the APX specification, \c{JMPABS} is a new near
+jump instruction takes a 64-bit \e{absolute} address immediate. It is
+the only \e{direct} jump instruction that can jump anywhere in the
+address space in 64-bit mode.
+
+NASM allows this instruction to be specified either as:
+
+\c      jmpabs target
+
+... or:
+
+\c      jmp abs target
+
+The generated code is identical. The \c{ABS} is required regardless of
+the \c{DEFAULT} setting.
+
+
+\H{shortnddnds} Compact \i{NDS}/\i{NDD} Operands
+
+Some instructions that use the \i\c{VEX} prefix, mainly AVX ones, use
+NDS (\i{Non-Destructive Source}) or NDD (\i{New Data Destination})
+operands.  Semantically it works by passing another operand to the
+instruction so that none of the source operands are modified as a
+result of the operation.
 
 Syntatically NASM allows both the obvious format mentioned above and a
-\i{compact format} - compact meaning that if a user passes two operands instead
-of three, one of them is simply copied to be used as the source or destination.
-Thereby these instructions have the exact same effect:
+\i{compact format} - compact meaning that if a user passes two
+operands instead of three, one of them is simply copied to be used as
+the source or destination.  Thereby these instructions have exactly
+the same encoding:
 
 \c	vaddpd xmm0, xmm0, xmm1
 \c	vaddpd xmm0, xmm1
 
-Here the xmm0 register is used as the "non-destructive destination" even though
-in this case it will of course be modified.
+Here the \c{XMM0} register is used as the "non-destructive
+source" even though in this case it will of course be modified.
 
-\H{64moff} 64-bit \i{MOFFS}
+\H{64moff} 64-bit \I{moffs}\e{moffs}
 
-The moffs operand can be used with the \c{MOV} instruction, only using the A
-register (AL/AH, AX, EAX, RAX), and for non-64-bit operand size means to address
-memory at an offset from a segment. For \I{64-bit immediate} 64-bit operands it
-simply accesses memory at a specified offset (since segment based addressing is
-mostly unavailable in 64-bit mode). Syntax to use 64-bit offsets to address
+The \e{moffs} operand can be used with the \c{MOV} instruction, only
+using the "\c{A}" register (\c{AL}, \c{AX}, \c{EAX}, or \c{RAX}), and
+for non-64-bit operand size means to address memory at an offset from
+a segment. For \I{64-bit immediate}64-bit operands it simply accesses
+memory at a specified offset (since segment based addressing is mostly
+unavailable in 64-bit mode). Syntax to use 64-bit offsets to address
 memory is showcased in \k{id64disp}.
 
 \H{spliteas} \i{Split EA} Addressing Syntax
@@ -121,14 +143,15 @@ NASM supports all currently possible forms of the mib syntax:
 
 \H{ternarylogic} No Syntax for Ternary Logic Instruction
 
-\i{VPTERNLOG}D or VPTERNLOGQ are instructions that implement an arbitrary logic
-function for three inputs. They take three register operands and one immediate
-value that determines what logic function the instruction shall implement on
-execution. Specifically the output of the desired logic function is encoded in
-the immediate 8-bit operand. 3 binary inputs can be configured in 8 possible
-ways giving 8 output bits that could implement any one of 256 possible logic
-functions. Therefore it's not practical to have any syntax around different
-possible logic functions.
+\i\c{VPTERNLOGD} and \i\c{VPTERNLOGQ} are instructions that implement
+an arbitrary logic function for three inputs. They take three register
+operands and one immediate value that determines what logic function
+the instruction shall implement on execution. Specifically the output
+of the desired logic function is encoded in the immediate 8-bit
+operand. 3 binary inputs can be configured in 8 possible ways giving 8
+output bits that could implement any one of 256 possible logic
+functions. Therefore it's not practical to have any syntax around
+different possible logic functions.
 
 However there are some macro solutions that can help avoid writing out truth
 tables in order to use the ternary logic instructions. The simple, more manual
@@ -147,28 +170,19 @@ evaluating the desired logic function, in this case "a or b and c", thereby
 getting the function's output column that one would get when writing out the
 truth tables.
 
-Another, easier to use solution is to define a macro that will calculate all of
-that when the ternary logic instruction is used. Such a macro can look like this
-for the 32-bit variant of the VPTERNLOG instruction:
+Note that only the expression must be written using the bitwise
+operators \c{&}, \c{|}, \c{^}, and \c{~}. Using the boolean operators
+\c{&&}, \c{||}, \c{^^}, \c{!} and \c{? :} will not work correctly.
 
-\c	%imacro VPTERNLOGD 4
-\c	%define %%imm(a,b,c) %4
-\c	%? %1,%2,%3,%%imm(0xaa,0xcc,0xf0)
-\c	%endmacro
+The \i\c{vtern} standard macro package, \k{pkg_vtern}, allows for
+these kinds of expressions without introducing the symbols \c{a},
+\c{b} and \c{c} into the global namespace:
 
-What the macro does, is it outputs the ternary logic instruction with the
-desired logic expression already encoded into the immediate 8-bit value. The
-first three arguments are register operands that VPTERNLOG uses. The fourth
-argument is a string logical expression that needs to use "a", "b" and "c" as
-the input variables. Then the expression is defined as %%imm(a,b,c) which treats
-"a", "b" and "c" as variables in the logical expression string. Then in the next
-line values 0xaa, 0xcc and 0xf0 are substituted in place of "a", "b" and "c".
-Finally the logical expression is evaluated and encoded at the same time.
-
-Then one can invoke the instruction simply like this and use it without doing
-any manual calculations or additional inline code:
-
+\c %use vtern
 \c	vpternlogd xmm1, xmm2, xmm3, a | b & c
+\c	vpternlogq ymm4, ymm5, xmm6, (b ^ c) & ~a
+\c      ; a, b, and c are not defined as symbols elsewhere
+
 
 \H{APX} \I{apx syntax}\i{APX} Instruction Syntax
 
@@ -361,22 +375,6 @@ instruction is different:
 \c      ; rax in [rsp+8]
 \c      ; rbx is [rsp+0]
 \c      pop2p rax:rbx
-
-\S{apx_jmpabs} 64-bit absolute jump (\i\c{JMPABS})
-
-A new near jump instruction takes a 64-bit \e{absolute} address
-immediate.
-
-NASM allows this instruction to be specified either as:
-
-\c      jmpabs target
-
-... or:
-
-\c      jmp abs target
-
-The generated code is identical. The \c{ABS} is required regardless of
-the \c{DEFAULT} setting.
 
 \S{apx_opt} \I{apx optimizer}APX and the NASM optimizer
 
