@@ -112,6 +112,8 @@ Supported options are:
 
 \b \c{-Lf} ignore \c{.nolist} and force listing output
 
+\b \c{-LF} ignore \c{[LIST]} directives (see \k{LIST})
+
 \b \c{-Lm} show multi-line macro calls with expanded parameters
 
 \b \c{-Lp} output a list file in every pass, in case of errors

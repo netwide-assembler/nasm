@@ -251,6 +251,8 @@
 \IR{thread local storage in mach-o} thread local storage, in Mach-O
 \IR{macho} Mach-O
 \IR{tlink} \c{TLINK}
+\IR{tls} \c{TLS}
+\IA{tls}{thread local storage}
 \IR{unconditionally importing symbols} importing symbols, unconditionally
 \IR{underscore, in c symbols} underscore, in C symbols
 \IR{uninitialized} uninitialized storage

@@ -549,6 +549,8 @@ it completely:
 When disabled, symbols beginning with digits can be escaped as well,
 e.g. \c{$3} would define a symbol \c{3}.
 
+No "user form" (without the brackets) currently exists.
+
 
 \H{FLOAT} \i\c{FLOAT}: Handling of \I{floating-point, constants}floating-point constants
 
@@ -602,3 +604,15 @@ The \c{[WARNING]} directive also accepts the \c{all}, \c{error} and
 \c{error=}\e{warning-class} specifiers, see \k{opt-w}.
 
 No "user form" (without the brackets) currently exists.
+
+
+\H{LIST} \i\c{[LIST]}: Locally disable list file output
+
+The \c{[LIST]} directive disables or re-enables list file output.
+
+\b \c{[list -]} disables list file output.
+
+\b \c{[list +]} re-enables list file output.
+
+The \c{[LIST]} directive can be overridden with the \c{-LF}
+command-line option, see \k{opt-L}.

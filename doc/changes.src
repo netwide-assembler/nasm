@@ -74,6 +74,8 @@ It is the production version of NASM since 2025.
    control immediates for the \c{VPTERNLOGD} and \c{VPTERNLOGQ}
    instructions.  See \k{pkg_vtern}.
 
+\b A new command line option \c{-LF} allows overriding \c{[LIST -]}
+   directives.
 
 \H{cl-2.xx} NASM 2 Series
 
