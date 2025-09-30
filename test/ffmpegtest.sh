@@ -53,6 +53,9 @@ if [ "$?" -ne "0" ]; then
 	exit $rev
 fi
 
+set +x
+
+{
 for x in $(grep -o -P "\-o .*\.o" $logfile | sed -e 's/-o //' | grep -v "/ffconf")
 do
 	if ! [ -f ${x}.1 ]; then
@@ -76,5 +79,6 @@ do
 	fi
 	rm -f /tmp/1.dump /tmp/2.dump
 done
+} | tee "$here/results"
 
 exit $rev
