@@ -1,5 +1,5 @@
 body {
-    font-family: "source sans pro", "clear sans", "liberation sans",
+    font-family: "roboto", "source sans pro", "clear sans", "liberation sans",
     "arial", "sans-serif";
     background: white;
 }
@@ -47,11 +47,11 @@ span.subtitle {
     font-style: italic;
 }
 code, pre {
-    font-family: "source code pro", "liberation mono", "monospace";
+    font-family: "roboto mono", "source code pro", "liberation mono", "monospace";
     font-size: 90%;
 }
 code {
-    font-weight: bold;
+    font-weight: bolder;
 }
 pre, blockquote {
     margin-left: 4em;

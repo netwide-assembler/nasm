@@ -178,8 +178,8 @@ after \c{PROC} other than \c{FAR} is ignored.
 \b In 64-bit mode relative addressing is the default (\c{DEFAULT REL},
 see \k{default-rel}).
 
-\b A macro is defined to allow the syntax \c{st(0)} instead of
-\c{st0}, and so on.
+\b A macro is defined to allow using the syntax \c{ST(0)} instead of
+\c{ST0} (and so on) for the x87 stack registers.
 
 In addition, NASM now natively supports, regardless of whether this
 package is used or not:
@@ -196,3 +196,9 @@ of \c{[base+index+displacement]}.
 
 \c      lea rax,[foo]               ; standard syntax
 \c      lea rax,foo                 ; also accepted
+
+\H{pkg_vtern} \i\c{vtern}: Ternary Logic Assist
+
+The \c{vtern} macro package allows for a simple and clear way of
+defining the immediate operand to the \i\c{VPTERNLOGD} and
+\i\c{VPTERNLOGQ} instructions. See \k{ternarylogic} for a description.

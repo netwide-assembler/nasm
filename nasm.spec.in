@@ -26,8 +26,8 @@ Summary: Detailed manual for the Netwide Assembler
 BuildArch: noarch
 BuildRequires: ghostscript
 BuildRequires: fontconfig
-BuildRequires: adobe-source-sans-pro-fonts
-BuildRequires: adobe-source-code-pro-fonts
+BuildRequires: google-roboto-fonts
+BuildRequires: google-roboto-mono-fonts
 Obsoletes: %{name}-doc < %{version}-%{release}
 
 %description

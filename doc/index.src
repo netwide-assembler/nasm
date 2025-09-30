@@ -123,6 +123,7 @@
 \IR{declaring structure} declaring structures
 \IR{default-wrt mechanism} default-\c{WRT} mechanism
 \IR{devpac} DevPac
+\IR{dfv} DFV
 \IR{djgpp} DJGPP
 \IR{dll symbols, exporting} DLL symbols, exporting
 \IR{dll symbols, importing} DLL symbols, importing
