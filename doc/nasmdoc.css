@@ -6,15 +6,25 @@ body {
 div.title {
     text-align: center;
     font-weight: bold;
-    margin: 0.67em 0;
 }
 h1 {
     font-size: 250%;
-    margin: 0;
+    font-weight: bold;
 }
 h2 {
     font-size: 200%;
     font-weight: bold;
+}
+div.contents h2 {
+    text-decoration: underline;
+}
+.title h1 {
+    margin-bottom: 0;
+}
+.title h2 {
+    font-size: 128%;
+    font-style: italic;
+    margin-top: 0;
 }
 h3 {
     font-size: 160%;

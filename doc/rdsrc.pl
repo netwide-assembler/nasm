@@ -1063,8 +1063,10 @@ sub write_html {
     if ($ptype eq 'chap' || $ptype eq 'appn') {
       # Chapter/appendix heading. Begin a new file.
       $pflags =~ /^\w+ (.*) :(.*)/;
-      $title = $1 . ' ';
       $xref = $2;
+      $title = "$2 $1:&ensp;";
+      $title =~ s/-\S+//;
+      $title =~ s/^(.)/\U$1/;
       html_postamble();
       $chapternode = $nodexrefs{$xref};
       html_preamble($chapternode);
