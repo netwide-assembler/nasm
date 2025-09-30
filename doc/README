@@ -15,6 +15,5 @@ To build the entire documentation, the following tools are needed:
 
 	Of these, Ghostscript is the most tested, although Acrobat has
 	been claimed to generate smaller files.
-6. For best results, the Adobe fonts Source Sans Pro and Source Code
-   Pro, available for free at:
-   https://github.com/adobe-fonts
+6. For best results, the Google Roboto and Roboto Mono fonts,
+   available for free at: https://github.com/googlefonts/

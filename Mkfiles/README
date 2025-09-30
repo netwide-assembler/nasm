@@ -19,8 +19,8 @@ The Makefiles are:
 		   http://nsis.sourceforge.net/Download
 		3. Ghostscript (ps2pdf) or Acrobat Distriller (acrodist)
 		   https://downloads.ghostscript.com/
-		4. The Adobe Source Sans Pro and Source Code Pro fonts
-		   https://github.com/adobe-fonts
+		4. The Google Roboto and Roboto Mono fonts
+		   https://github.com/googlefonts/
 		5. The Perl module Font::TTF (can usually be installed
 		   via the "CPAN Client" in your Perl distribution)
 		   http://search.cpan.org/~bhallissy/Font-TTF/

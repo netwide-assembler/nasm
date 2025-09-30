@@ -23,13 +23,14 @@ sub font {
     return map { /^(.*?)-*$/; $1 } @f;
 }
 
-my $text    = ['SourceSans', 'SourceSans3',
+my $text    = ['Roboto', 'SourceSans', 'SourceSans3',
 	       'SourceSansPro', 'SourceSansPro3',
 	       'LiberationSans', 'Arial', 'Helvetica'];
-my $code    = ['SourceCodePro', 'LiberationMono', 'Courier'];
+my $code    = ['RobotoMono', 'SourceCodePro', 'LiberationMono', 'Courier'];
 my $regular = ['Regular', ''];
 my $italic  = ['Italic', 'It'];
 my $bold    = ['Bold'];
+my $medium  = ['Medium', 'Semibold', 'Regular'];
 my $semi    = ['Semibold', 'Bold'];
 
 my @TText = font($text, $bold);
@@ -37,10 +38,10 @@ my @TItal = font($text, $bold, $italic);
 my @TCode = font($code, $bold);
 my @HText = font($text, $semi);
 my @HItal = font($text, $semi, $italic);
-my @HCode = font($code, $semi);
+my @HCode = font($code, $bold);
 my @BText = font($text, $regular);
 my @BItal = font($text, $italic);
-my @BCode = font($code, $regular);
+my @BCode = font($code, $medium);
 my @QText = font($text, $italic);
 my @QBold = font($text, $bold, $italic);
 my @QCode = font($code, $regular);

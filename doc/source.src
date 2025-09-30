@@ -68,9 +68,9 @@ To build the documentation:
 \b Either Ghostscript (\w{https://www.ghostscript.com/}) or Adobe
 Acrobat Distiller (untested.)
 
-\b The Adobe \e{Source Sans} (or \e{Source Sans 3}) and \e{Source
-Code} fonts, which are freely available under the SIL Open Font
-License (\w{https://fonts.adobe.com/}).
+\b The Google \e{Roboto} and \e{Roboto Mono} fonts, which are freely
+available under the SIL Open Font License
+(\w{https://github.com/google/roboto}).
 
 To build the Unix man pages:
 
