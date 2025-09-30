@@ -29,7 +29,7 @@ $(NASM) $(NDISASM):
 	$(MAKE) -C .. $(@F)
 
 ffmpegtest:
-	@sh ffmpegtest.sh
+	bash ffmpegtest.sh '$(NASM)'
 
 %.bin: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f bin -o $@ -MD $@.dep -l $@.lst $<
@@ -108,7 +108,7 @@ clean:
 	$(RM_F) *.aoutb
 	$(RM_RF) testresults
 	$(RM_F) elftest elftest64
-	$(RM_RF) sandbox
+	$(RM_RF) ffmpegtest
 
 spotless: clean
 	$(RM_RF) golden

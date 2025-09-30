@@ -1,37 +1,52 @@
-#!/bin/bash
+#!/bin/bash -
 
-if ! which nasm 2>&1 >/dev/null; then
-	echo Please install nasm ...
+there="$(realpath "$(dirname "$0")")"
+
+[ -z "$NASM1" ] && NASM1=nasm
+NASM1=$(which "$NASM1" 2>/dev/null)
+if [ -z "$NASM1" ]; then
+	echo 'Please install a reference nasm ...' 1>&2
 	exit 1
 fi
+NASM2="$1"
+[ -z "$NASM2" ] && NASM2=../nasm
+NASM2=$(which "$NASM2" 2>/dev/null)
 
-NASM1=$(which nasm)
-NASM2=${PWD}/../nasm
+if [ -z "$NASM2" ]; then
+    echo 'Test nasm not found' 1>&2
+    exit 1
+fi
 
-rm -rf sandbox
-mkdir sandbox
-cd sandbox
+set -x
 
-export PATH=${PWD}:$PATH
+mkdir -p "${there}/ffmpegtest"
+cd "${there}/ffmpegtest"
+here="$(pwd)"
 
-logfile=$(mktemp /tmp/nasmXXXXXXXX.log)
+logfile="$here/test.log"
+filelist="$here/file.list"
+rm -f "$logfile"
+export ffmpegnasm_logfile="$logfile"
+export ffmpegnasm_filelist="$filelist"
+export ffmpegnasm_nasm1="$NASM1"
+export ffmpegnasm_nasm2="$NASM2"
 
-cat >nasm <<EOF
-#!/bin/bash
+ffmpegnasm="$(realpath "$there/ffmpegnasm.sh")"
 
-PARAM_MOD1=\$(echo \$@ | sed 's/\.o /.o.1 /')
-PARAM_MOD2=\$(echo \$@ | sed 's/\.o /.o.2 /')
-echo "\$@" >> $logfile
-${NASM1} \${PARAM_MOD1}
-${NASM2} \${PARAM_MOD2}
-${NASM1} \$@
-EOF
-chmod a+x nasm
+: >> "$filelist"
 
-git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg
-cd ffmpeg
-./configure
-make -j
+if [ -d ffmpeg/.git ]; then
+    cd ffmpeg
+    git reset --hard
+    xargs -r rm -f < "$filelist"
+else
+    git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg
+    cd ffmpeg
+fi
+: > "$filelist"
+./configure --disable-stripping --x86asmexe="$ffmpegnasm"
+ncpus=$(ls -1 /sys/bus/cpu/devices | wc -l)
+make -j${ncpus}
 rev=$?
 if [ "$?" -ne "0" ]; then
 	echo ffmpeg compiling failed ...
@@ -61,7 +76,5 @@ do
 	fi
 	rm -f /tmp/1.dump /tmp/2.dump
 done
-
-rm $logfile
 
 exit $rev

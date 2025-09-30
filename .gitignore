@@ -93,6 +93,7 @@ TAGS
 /test/golden
 /test/perf/*.asm
 /test/testresults
+/test/ffmpegtest
 /version.h
 /version.mac
 /version.mak
