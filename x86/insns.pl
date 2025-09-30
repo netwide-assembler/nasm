@@ -118,7 +118,7 @@ sub startseq($$) {
     my $enc = 0;		# Legacy
     my $map = 0;		# Map 0
 
-    @codes = decodify(undef, $codestr, {});
+    @codes = decodify(undef, $codestr, {}, undef);
 
     while (defined($c0 = shift(@codes))) {
         $c1 = $codes[0];	# The immediate following code
@@ -740,7 +740,7 @@ sub format_insn($$$$) {
     my ($num, $flagsindex);
     my @bytecode;
     my ($op, @ops, @opsize, $opp, @opx, @oppx, @decos, @opevex);
-    my %oppos;
+    my $opinfo;
 
     return (undef, undef) if $operands eq 'ignore';
 
@@ -751,7 +751,8 @@ sub format_insn($$$$) {
     set_implied_flags(\%flags);
 
     # Generate byte code. This may modify the flags.
-    @bytecode = (decodify($opcode, $codes, \%flags, \%oppos), 0);
+    @bytecode = (decodify($opcode, $codes, \%flags, \$opinfo), 0);
+    my($oppos, $openc) = @$opinfo;
     push(@bytecode_list, [@bytecode]);
     $codes = hexstr(@bytecode);
     count_bytecodes(@bytecode);
@@ -766,8 +767,13 @@ sub format_insn($$$$) {
     @opsize = ();
     @decos = ();
     if ($operands ne 'void') {
-	my $opnum = scalar(@ops);
         foreach $op (split(/,/, $operands)) {
+	    my $opnum = scalar(@ops);
+	    my $isreg = 0;
+	    my $ismem = 0;
+	    my $ismoffs = 0;
+	    my $isimm = 0;
+	    my $isrm  = 0;
 	    my $iszero = 0;
 	    my $opsz = 0;
             @opx = ();
@@ -777,6 +783,8 @@ sub format_insn($$$$) {
                 if ($opp =~ s/^(b(16|32|64)|mask|z|er|sae)$//) {
                     push(@opevex, $1);
                 }
+
+		$opp =~ s/^reg([0-9]*)na$/reg_na$1/;
 
                 if ($opp =~ s/([^0-9]0?)(8|16|32|64|80|128|256|512|1024|1k)$/$1/) {
                     push(@oppx, "bits$2");
@@ -789,35 +797,68 @@ sub format_insn($$$$) {
 			$opp .= 'reg';
 		    }
 		}
-                $opp =~ s/^mem$/memory/;
+
                 $opp =~ s/^memory_offs$/mem_offs/;
+		$opp =~ s/^mem$/memory/;
+
 		if ($opp =~ s/^(spec|imm)4$/$1/) {
 		    push(@oppx, 'fourbits');
+		    $isimm = 1;
 		}
-		$opp =~ s/^spec$/immediate/; # Immediate or special immediate
-                $opp =~ s/^imm$/imm_normal/; # Normal immediates only
+		$opp =~ s/^spec$/immediate/; # Special or normal immediate
+		$opp =~ s/^imm$/imm_normal/; # Normal immediate only
 		if ($opp =~ /^(unity|sbyted?word|[su]dword)$/) {
 		    push(@oppx, 'imm_normal');
+		    $isimm = 1;
+		}
+		if ($opp =~ /^imm/) {
+		    $isimm = 1;
 		}
                 $opp =~ s/^([a-z]+)rm$/rm_$1/;
                 $opp =~ s/^(rm|reg)$/$1_gpr/;
 		$opp =~ s/^rm_k$/rm_opmask/;
 		$opp =~ s/^kreg$/opmaskreg/;
-		my $isreg = ($opp =~ /(\brm_|\breg_|reg\b)/);
-		my $isrm  = $isreg || ($opp =~ /\bmem/);
-		my $isvec = ($opp =~ /\b[xyzt]mm/);
-		if ($isrm &&
+		if ($opp =~ /\brm_/) {
+		    $isrm = 1;
+		} elsif ($opp =~ /(\breg_|reg\b)/) {
+		    $isreg = 1;
+		} elsif ($opp =~ /\b[xyzt]?mem/) {
+		    $ismem = 1;
+		}
+		if ($opp =~ /\bmem_offs/) {
+		    $ismoffs = 1;
+		}
+		if ($opp =~ /\b[xyzt]mm/) {
+		    $isvec = 1;
+		}
+		if (($isrm || ($ismem && !$ismoffs) || $isreg) &&
 		    !(($flags{'EVEX'} && $isvec) || !$flags{'NOAPX'})) {
 		    # Register numbers >= 16 disallowed
 		    push(@oppx, 'rn_l16');
 		}
-		if ($isreg && $isvec &&
-		    defined($oppos->{'b'}) && $opnum == $oppos->{'b'}) {
+		if ($isreg && $isvec && $openc->[$opnum] =~ /b/) {
 		    $flags{'MOPVEC'}++;
 		}
                 push(@opx, $opp, @oppx) if $opp;
             }
-            $op = join('|', @opx);
+
+	    # Sanity-check the encoding of this operand
+	    my $opvalid = '-';
+	    if ($isreg) {
+		$opvalid .= 'rvmsbx';
+	    } elsif ($isimm || $ismoffs) {
+		$opvalid .= 'ijnw';
+	    } elsif ($ismem || $isrm) {
+		$opvalid .= 'm';
+	    }
+
+	    foreach my $c (split(//, $openc->[$opnum])) {
+		if (index($opvalid, $c) < 0) {
+		    die "$fname:$line: $opcode: operand $opnum \"$op\": '$c' must be one of '$opvalid'\n";
+		}
+	    }
+
+            $op = join('|',@opx);
             push(@ops, $op);
 	    push(@opsize, $opsz);
             push(@decos, (@opevex ? join('|', @opevex) : '0'));
@@ -954,17 +995,17 @@ sub show_iflags($) {
 #
 # Turn a code string into a sequence of bytes
 #
-sub decodify($$$) {
+sub decodify($$$$) {
   # Although these are C-syntax strings, by convention they should have
   # only octal escapes (for directives) and hexadecimal escapes
   # (for verbatim bytes)
-    my($opcode, $codestr, $flags) = @_;
+    my($opcode, $codestr, $flags, $opinfo) = @_;
     my @codes;
 
     if ($codestr eq 'ignore') {
 	@codes = ();
     } elsif ($codestr =~ /^\s*\[([^\]]*)\]\s*$/) {
-        @codes = byte_code_compile($opcode, $1, $flags);
+        @codes = byte_code_compile($opcode, $1, $flags, $opinfo);
     } else {
 	# This really shouldn't happen anymore...
 	warn "$fname:$line: raw bytecodes?!\n";
@@ -1056,7 +1097,7 @@ sub tupletype($) {
 # enter it as e.g. "r+v".
 #
 sub byte_code_compile($$$$) {
-    my($opcode, $str, $flags, $oppos) = @_;
+    my($opcode, $str, $flags, $opinfo) = @_;
     my $opr;
     my $opc;
     my @codes = ();
@@ -1158,14 +1199,49 @@ sub byte_code_compile($$$$) {
     $opc = lc($4);
 
     $op = 0;
-    $oppos = {};
+    my $oppos = {};
+    my $openc = [];
+    if (defined($opinfo)) {
+	$$opinfo = [$oppos, $openc];
+    }
     for ($i = 0; $i < length($opr); $i++) {
         my $c = substr($opr,$i,1);
         if ($c eq '+') {
+	    die "$fname:$line: $opcode: invalid use of '+' in '$opr'\n"
+		if ($op < 1);
             $op--;
+        } elsif ($c =~ /^[rmnvwsijbx-]$/) {
+	    # n means an immediate which is encoded as a memory address,
+	    # but unlike a mem_offs it supports rel encoding on 64 bits.
+	    # w means an immediate to be encoded into the v register
+	    # position.
+	    (my $realc = $c) =~ tr/nw/mv/;
+	    $openc->[$op] = '' unless (defined($openc->[$op]));
+	    $openc->[$op] .= $c;
+	    if (defined($oppos->{$realc})) {
+		my $what = ($c eq $realc) ? "'$c'" : "[${realc}${c}]";
+		die "$fname:$line: $opcode: More than one $what operand in '$opr'\n";
+	    }
+	    $oppos->{$realc} = $op unless ($realc eq '-');
+	    $op++;
         } else {
-            $oppos->{$c} = $op++;
-        }
+	    die "$fname:$line: $opcode: Unknown operand encoding '$c'\n";
+	}
+    }
+
+    if (defined($oppos->{'m'})) {
+	if (defined($oppos->{'b'})) {
+	    die "$fname:$line: $opcode: [mn] operand mutually exclusive with 'b'\n";
+	} elsif (defined($oppos->{'x'})) {
+	    # memory operand + x register operand requires MIB
+	    $flags->{'MIB'}++;
+	}
+    }
+    if (defined($oppos->{'s'}) && defined($oppos->{'i'})) {
+	die "$fname:$line: $opcode: 's' operand mutually exclusive with 'i'\n";
+    }
+    if (defined($oppos->{'j'}) && !defined($oppos->{'i'})) {
+	die "$fname:$line: $opcode 'j' without 'i' operand\n";
     }
     $tup = tupletype($tuple);
 
@@ -1223,7 +1299,7 @@ sub byte_code_compile($$$$) {
             $prefix_ok = 0;
         } elsif ($op eq '/r') {
             if (!defined($oppos->{'r'}) || !defined($oppos->{'m'})) {
-                die "$fname:$line: $opcode: $op requires r and m operands\n";
+                die "$fname:$line: $opcode: $op requires 'r' and [mn] operands\n";
             }
             $opex = (($oppos->{'m'} & 4) ? 06 : 0) |
                 (($oppos->{'r'} & 4) ? 05 : 0);
@@ -1234,14 +1310,14 @@ sub byte_code_compile($$$$) {
             $prefix_ok = 0;
         } elsif ($op =~ m:^/([0-7])$:) {
             if (!defined($oppos->{'m'})) {
-                die "$fname:$line: $opcode: $op requires an m operand\n";
+                die "$fname:$line: $opcode: $op requires an [mn] operand\n";
             }
             push(@codes, 06) if ($oppos->{'m'} & 4);
             push(@codes, 0200 + (($oppos->{'m'} & 3) << 3) + $1);
             $prefix_ok = 0;
 	} elsif ($op =~ m:^/([0-3]?)r([0-7])$:) {
 	    if (!defined($oppos->{'r'})) {
-                die "$fname:$line: $opcode: $op requires an r operand\n";
+                die "$fname:$line: $opcode: $op requires an 'r' operand\n";
 	    }
 	    push(@codes, 05) if ($oppos->{'r'} & 4);
 	    push(@codes, 0171);
@@ -1332,7 +1408,7 @@ sub byte_code_compile($$$$) {
 		    $m = $2+0;
 		} elsif ($oq eq 'nds' || $oq eq 'ndd' || $oq eq 'dds') {
 		    if (!defined($oppos->{'v'})) {
-			die "$fname:$line: $opcode: $vexname.$oq without 'v' operand\n";
+			die "$fname:$line: $opcode: $vexname.$oq without [vw] operand\n";
 		    }
 		    $has_nds = 1;
 		} else {
@@ -1476,7 +1552,7 @@ sub byte_code_compile($$$$) {
 		    $flags->{'ZU_E'}++;
 		} elsif ($oq =~ /^(nds|ndd|nd|dds)$/) {
 		    if (!defined($oppos->{'v'})) {
-			die "$fname:$line: $opcode: evex.$oq without 'v' operand\n";
+			die "$fname:$line: $opcode: evex.$oq without [vw] operand\n";
 		    }
 		    $nds = 1;
 		    $nd  = $oq eq 'nd';
@@ -1544,7 +1620,7 @@ sub byte_code_compile($$$$) {
         } elsif (defined $imm_codes{$op}) {
             if ($op eq 'seg') {
                 if ($last_imm lt 'i') {
-                    die "$fname:$line: $opcode: seg without an immediate operand\n";
+                    die "$fname:$line: $opcode: seg without an [ij] operand\n";
                 }
             } else {
                 $last_imm++;

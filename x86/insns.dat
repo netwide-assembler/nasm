@@ -96,7 +96,7 @@ $bwdq MOVRS	reg#,mem#			[rm:	evex.nf0.nd0.l0.m4.o# 8a# /r]		FUTURE,SM
 
 ;# Load effective address
 $wdq  LEA	reg#,mem			[rm:	o# 8d /r]				8086
-$wdq  LEA	reg#,imm#			[rm:	o# 8d /r]				8086,ND
+$wdq  LEA	reg#,imm#			[rn:	o# 8d /r]				8086,ND
 
 ;# The basic 8 arithmetic operations
 $arith		nf=nf ADD OR nf=,ADC nf=,SBB AND SUB XOR nf=,!evex,CMP
@@ -448,7 +448,7 @@ WBNOINVD	void				[	f3 0f 09]				WBNOINVD,PRIV
 
 INVPCID		reg32,mem128			[rm:	66 0f38 82 /r]				INVPCID,PRIV,NOLONG
 INVPCID		reg64,mem128			[rm:	66 0f38 82 /r]				INVPCID,PRIV,LONG
-INVPCID		reg64,mem128			[rm: 	evex.nf0.nd0.l0.f3.m4.w1 f2 /r]		APX,INVPCID,PRIV,LONG
+INVPCID		reg64,mem128			[rm:	evex.nf0.nd0.l0.f3.m4.w1 f2 /r]		APX,INVPCID,PRIV,LONG
 INVLPG		mem				[m:	0f 01 /7]				486,PRIV
 $wdq  INVLPGA	ax#,reg_ecx			[--:	a#  0f 01 df]				X86_64,AMD
       INVLPGA	void				[	adf 0f 01 df]				X86_64,AMD,ND
@@ -578,7 +578,7 @@ $dq   RDGSBASE	reg#				[m:	w# f3 0f ae /1]				LONG
 $dq   WRFSBASE	reg#				[m:	w# f3 0f ae /2]				LONG
 $dq   WRGSBASE	reg#				[m:	w# f3 0f ae /3]				LONG
 
-$zwd  ARPL	rm16,sel#			[mr:	optw# 63 /r]				286,PROT,SM,NOLONG
+$wd   ARPL	rm16,reg#			[mr:	optw# 63 /r]				286,PROT,SM,NOLONG
 $wdq  LAR	reg#,rm_sel			[rm:	optd# 0f 02 /r]				286,PROT
 $wdq  LSL	reg#,rm_sel			[rm:	optd# 0f 03 /r]				286,PROT
 
@@ -984,14 +984,14 @@ FWAIT		void				[	wait]					8086
 XLATB		void				[	d7]					8086
 XLAT		void				[	d7]					8086,ND
 
-$bwdq CCMPscc	spec4,rm#,reg#			[vmr:	evex.scc.dfv.l0.m4.o# 38# /r	]	APX,SM1-2
-$bwdq CCMPscc	spec4,reg#,rm#			[vrm:   evex.scc.dfv.l0.m4.o# 3a# /r	]	APX,SM1-2
-$wdq  CCMPscc	spec4,rm#,sbyte#		[vmi:	evex.scc.dfv.l0.m4.o# 83  /7	ib,s ]	APX,SM1-2
-$bwdq CCMPscc	spec4,rm#,imm#			[vmi:	evex.scc.dfv.l0.m4.o# 80# /7	i#   ]	APX,SM1-2
+$bwdq CCMPscc	spec4,rm#,reg#			[wmr:	evex.scc.dfv.l0.m4.o# 38# /r	]	APX,SM1-2
+$bwdq CCMPscc	spec4,reg#,rm#			[wrm:   evex.scc.dfv.l0.m4.o# 3a# /r	]	APX,SM1-2
+$wdq  CCMPscc	spec4,rm#,sbyte#		[wmi:	evex.scc.dfv.l0.m4.o# 83  /7	ib,s ]	APX,SM1-2
+$bwdq CCMPscc	spec4,rm#,imm#			[wmi:	evex.scc.dfv.l0.m4.o# 80# /7	i#   ]	APX,SM1-2
 
-$bwdq CTESTscc	spec4,rm#,reg#			[vmr:	evex.scc.dfv.l0.m4.o# 84# /r	]	APX,SM1-2
-$bwdq CTESTscc	spec4,rm#,imm#			[vmi:	evex.scc.dfv.l0.m4.o# f6# /0	i#   ]	APX,SM1-2
-$bwdq CTESTscc	spec4,rm#,imm#			[vmi:	evex.scc.dfv.l0.m4.o# f6# /1	i#   ]	APX,SM1-2
+$bwdq CTESTscc	spec4,rm#,reg#			[wmr:	evex.scc.dfv.l0.m4.o# 84# /r	]	APX,SM1-2
+$bwdq CTESTscc	spec4,rm#,imm#			[wmi:	evex.scc.dfv.l0.m4.o# f6# /0	i#   ]	APX,SM1-2
+$bwdq CTESTscc	spec4,rm#,imm#			[wmi:	evex.scc.dfv.l0.m4.o# f6# /1	i#   ]	APX,SM1-2
 
 ;# Conditional instructions
 $wdq  CMOVcc	reg#,rm#			[rm:	o#  0f 40+c /r]				P6,SM
@@ -2957,10 +2957,10 @@ VPMASKMOVD	ymmreg,ymmreg*,mem256		[rvm:	vex.nds.256.66.0f38.w0 8c /r]		AVX2
 VPMASKMOVQ	xmmreg,xmmreg*,mem128		[rvm:	vex.nds.128.66.0f38.w1 8c /r]		AVX2
 VPMASKMOVQ	ymmreg,ymmreg*,mem256		[rvm:	vex.nds.256.66.0f38.w1 8c /r]		AVX2
 
-VPMASKMOVD	mem128,xmmreg*,xmmreg		[mvr:	vex.nds.128.66.0f38.w0 8e /r]		AVX2
-VPMASKMOVD	mem256,ymmreg*,ymmreg		[mvr:	vex.nds.256.66.0f38.w0 8e /r]		AVX2
-VPMASKMOVQ	mem128,xmmreg*,xmmreg		[mvr:	vex.nds.128.66.0f38.w1 8e /r]		AVX2
-VPMASKMOVQ	mem256,ymmreg*,ymmreg		[mvr:	vex.nds.256.66.0f38.w1 8e /r]		AVX2
+VPMASKMOVD	mem128,xmmreg,xmmreg		[mvr:	vex.nds.128.66.0f38.w0 8e /r]		AVX2
+VPMASKMOVD	mem256,ymmreg,ymmreg		[mvr:	vex.nds.256.66.0f38.w0 8e /r]		AVX2
+VPMASKMOVQ	mem128,xmmreg,xmmreg		[mvr:	vex.nds.128.66.0f38.w1 8e /r]		AVX2
+VPMASKMOVQ	mem256,ymmreg,ymmreg		[mvr:	vex.nds.256.66.0f38.w1 8e /r]		AVX2
 
 VPSLLVD		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38.w0 47 /r]		AVX2
 VPSLLVQ		xmmreg,xmmreg*,xmmrm128		[rvm:	vex.nds.128.66.0f38.w1 47 /r]		AVX2
@@ -5749,7 +5749,7 @@ VRCPSH		xmmreg|mask|z,xmmreg*,xmmrm16|sae	[rvm:t1s: evex.nds.lig.66.map6.w0 4d /
 VREDUCEPH	xmmreg|mask|z,xmmrm128|b16,imm8		[rmi:fv: evex.128.np.0f3a.w0 56 /r ib]	AVX512FP16,AVX512VL
 VREDUCEPH	ymmreg|mask|z,ymmrm256|b16,imm8		[rmi:fv: evex.256.np.0f3a.w0 56 /r ib]	AVX512FP16,AVX512VL
 VREDUCEPH	zmmreg|mask|z,zmmrm512|b16|sae,imm8	[rmi:fv: evex.512.np.0f3a.w0 56 /r ib]	AVX512FP16
-VREDUCESH	xmmreg|mask|z,xmmreg*,xmmrm16|sae,imm8	[rmvi:t1s: evex.nds.lig.np.0f3a.w0 57 /r ib]	AVX512FP16
+VREDUCESH	xmmreg|mask|z,xmmreg*,xmmrm16|sae,imm8	[rvmi:t1s: evex.nds.lig.np.0f3a.w0 57 /r ib]	AVX512FP16
 VENDSCALEPH	xmmreg|mask|z,xmmrm128|b16,imm8		[rmi:fv: evex.128.np.0f3a.w0 08 /r ib]	AVX512FP16,AVX512VL
 VENDSCALEPH	ymmreg|mask|z,ymmrm256|b16,imm8		[rmi:fv: evex.256.np.0f3a.w0 08 /r ib]	AVX512FP16,AVX512VL
 VENDSCALEPH	zmmreg|mask|z,zmmrm512|b16|sae,imm8	[rmi:fv: evex.512.np.0f3a.w0 08 /r ib]	AVX512FP16

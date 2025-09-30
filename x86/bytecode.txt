@@ -7,8 +7,22 @@ and consumed by asm/assemble.c and disasm/disasm.c.
 Values prefixed with \ are in octal, values prefixed with \x are in
 hexadecimal.
 
-The mnemonics are the ones used in x86/insns.txt, where applicable.
+The mnemonics are the ones used in x86/insns.dat, where applicable.
 
+In x86/insns.dat, the encoding slot of each operand is encoded as:
+
+	-	implicit operand (no encoding)
+	x+y	multiple encoding slots for one operand
+	r	"r" position in modr/m, or base register with "+r"
+	m	"m" position in modr/m
+	n	immediate encoded in the "m" position in modr/m
+	b	register encoded in the "m" position in modr/m
+	x	register encoded in the "x" position in modr/m + sib (MIB)
+	v	"v" register position in vex/evex
+	s	"s" registe rposition in /is4
+	w	immediate encoded in the "v" position in vex/evex
+	i	first immediate or mem_offs
+	j	second immediate or mem_offs
 
 Codes            Mnemonic        Explanation
 
