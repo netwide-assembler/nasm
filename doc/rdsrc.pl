@@ -1080,7 +1080,7 @@ sub write_html {
       # Heading or subheading.
       $pflags =~ /.... (.*) :(.*)/;
       $hdr = ($ptype eq "subh" ? "h4" : "h3");
-      $title = $1 . " ";
+      $title = $1 . ".&ensp;";
       $xref = $2;
       foreach $i (@$pname) {
         $ww = &word_html($i);
