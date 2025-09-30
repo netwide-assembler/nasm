@@ -1,7 +1,7 @@
 \C{16bit} Writing 16-bit Code (DOS, Windows 3/3.1)
 
 This chapter attempts to cover some of the common issues encountered
-when writing 16-bit code to run under \c{MS-DOS} or \c{Windows 3.x}. It
+when writing 16-bit code to run under \i{MS-DOS} or \i{Windows 3.x}. It
 covers how to link programs to produce \c{.EXE} or \c{.COM} files,
 how to write \c{.SYS} device drivers, and how to interface assembly
 language code with 16-bit C compilers and with Borland Pascal.
@@ -835,5 +835,3 @@ and the contents of the pointer. The only difference between this
 code and the large-model C version is that \c{PASCAL} is defined
 instead of \c{FARCODE}, and that the arguments are declared in
 reverse order.
-
-

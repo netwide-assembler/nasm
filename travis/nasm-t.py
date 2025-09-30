@@ -113,7 +113,7 @@ if args.cmd == None:
 
 def read_stdfile(path):
     with open(path, "rb") as f:
-        data = f.read().decode("utf-8")
+        data = f.read().decode("utf-8","replace")
         f.close()
         return data
 
@@ -178,7 +178,7 @@ def read_json(path):
     try:
         with open(path, "rb") as f:
             try:
-                desc = json.loads(f.read().decode("utf-8"))
+                desc = json.loads(f.read().decode("utf-8","replace"))
             except:
                 desc = None
             finally:
@@ -376,8 +376,8 @@ def exec_nasm(desc):
     #
     # FIXME: For now 4M buffer is enough but
     # better provide reading in a cycle.
-    stderr = pnasm.stderr.read(4194304).decode("utf-8")
-    stdout = pnasm.stdout.read(4194304).decode("utf-8")
+    stderr = pnasm.stderr.read(4194304).decode("utf-8","replace")
+    stdout = pnasm.stdout.read(4194304).decode("utf-8","replace")
 
     pnasm.stdout.close()
     pnasm.stderr.close()

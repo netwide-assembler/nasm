@@ -270,7 +270,7 @@ See also the \c{Visual C++} output format, \k{win32fmt}.
 
 \S{opt-Z} The \i\c{-Z} Option: Send Errors to a File
 
-Under \I{DOS}\c{MS-DOS} it can be difficult (though there are ways) to
+Under \i{MS-DOS} it can be difficult (though there are ways) to
 redirect the standard-error output of a program to a file. Since
 NASM usually produces its warning and \i{error messages} on
 \i\c{stderr}, this can make it hard to capture the errors if (for
@@ -290,7 +290,7 @@ preprocessing only, with disastrous results.  See \k{opt-E}.
 \S{opt-s} The \i\c{-s} Option: Send Errors to \i\c{stdout}
 
 The \c{-s} option redirects \i{error messages} to \c{stdout} rather
-than \c{stderr}, so it can be redirected under \I{DOS}\c{MS-DOS}. To
+than \c{stderr}, so it can be redirected under \i{MS-DOS}. To
 assemble the file \c{myfile.asm} and pipe its output to the \c{more}
 program, you can type:
 

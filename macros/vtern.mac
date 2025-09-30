@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 2019-2025 The NASM Authors - All Rights Reserved
+;;   Copyright 2025 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -32,55 +32,19 @@
 ;; --------------------------------------------------------------------------
 
 ;;
-;; masm.mac
+;; vtern.mac
 ;;
-;; Very limited MASM compatibility package; intended to be used
-;; primarily with machine-generated code. It does not include any
-;; "programmer friendly" shortcuts, nor does it in any way support
-;; ASSUME, symbol typing, or MASM-style structures.
+;; A couple of macros to simplify the syntax of the ternary logic
+;; instructions.
 ;;
 
-USE: masm
+USE: vtern
 
-%unimacro segment 1+
-
-%imacro segment 0-1+.nolist
-  %define __?SECT?__ [segment %00 %1]
-	__?SECT?__
+%imacro vpternlogd 4.nolist
+  %define %%imm(a,A,b,B,c,C) (%4)
+  %? %1,%2,%3,%%imm(0xaa,0xaa,0xcc,0xcc,0xf0,0xf0)
 %endmacro
-
-%imacro ends 0+.nolist
-  %null ends %00
+%imacro vpternlogq 4.nolist
+  %define %%imm(a,A,b,B,c,C) (%4)
+  %? %1,%2,%3,%%imm(0xaa,0xaa,0xcc,0xcc,0xf0,0xf0)
 %endmacro
-
-%imacro proc 0-*.nolist
-  %rep %0
-    %ifidni %1,far
-      %idefine ret retf
-    %else
-      %idefine ret retn
-    %endif
-    %rotate 1
-  %endrep
-%endmacro
-
-%imacro endp 0.nolist
-  %null endp %00
-  %undef ret
-%endmacro
-
-%ifndef st
-  %idefine st(x) st %+ x
-%endif
-
-%idefine ptr __?masm_ptr?__
-%idefine flat __?masm_flat?__	; is %idefine really correct here?
-%idefine offset
-
-%imacro end 0+.nolist
-	; Nothing
-%endmacro
-
-%idefine tbyte tword
-
-	default rel

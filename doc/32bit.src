@@ -466,13 +466,13 @@ function lives. Either address is a valid way to call the function.
 
 \S{picproc} Calling Procedures Outside the Library
 
-Calling procedures outside your shared library has to be done by
-means of a \I\e{procedure linkage table}, or \i{PLT}. The PLT is
-placed at a known offset from where the library is loaded, so the
-library code can make calls to the PLT in a position-independent
-way. Within the PLT there is code to jump to offsets contained in
-the GOT, so function calls to other shared libraries or to routines
-in the main program can be transparently passed off to their real
+Calling procedures outside your shared library has to be done by means
+of a \I{PLT relocations}\e{procedure linkage table}, or \i{PLT}. The
+PLT is placed at a known offset from where the library is loaded, so
+the library code can make calls to the PLT in a position-independent
+way. Within the PLT there is code to jump to offsets contained in the
+GOT, so function calls to other shared libraries or to routines in the
+main program can be transparently passed off to their real
 destinations.
 
 To call an external routine, you must use another special PIC

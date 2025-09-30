@@ -6,11 +6,41 @@ body {
 div.title {
     text-align: center;
     font-weight: bold;
-    margin: 0.67em 0;
 }
 h1 {
-    font-size: 2em;
-    margin: 0;
+    font-size: 250%;
+    font-weight: bold;
+}
+h2 {
+    font-size: 200%;
+    font-weight: bold;
+}
+div.contents h2 {
+    text-decoration: underline;
+}
+.title h1 {
+    margin-bottom: 0;
+}
+.title h2 {
+    font-size: 128%;
+    font-style: italic;
+    margin-top: 0;
+}
+h3 {
+    font-size: 160%;
+    font-weight: bold;
+}
+h4 {
+    font-size: 128%;
+    font-weight: bold;
+}
+h5 {
+    font-size: 100%;
+    font-weight: bold;
+}
+h6 {
+    font-size: 100%;
+    text-decoration: underline;
 }
 span.subtitle {
     font-size: 1.25em;
@@ -18,102 +48,123 @@ span.subtitle {
 }
 code, pre {
     font-family: "source code pro", "liberation mono", "monospace";
-    font-size: 80%;
+    font-size: 90%;
+}
+code {
+    font-weight: bold;
 }
 pre, blockquote {
     margin-left: 4em;
     margin-right: 4em;
+    padding: 0.25em 0.4em;
+}
+pre {
+    background: #f0f0f0;
 }
 code {
     display: inline;
     white-space: nowrap;
+    /* Extra padding due to monospaced font */
+    padding-left: 0.2em;
+    padding-right: 0.2em;
 }
 a {
     text-decoration: none;
 }
-div.toc {
-    padding-left: 0;
-    font-size: 195%;
-}
-div.toc li {
-    list-style-type: none;
-    padding-left: 0;
-}
 div.toc ol {
     padding-left: 2em;
     font-size: 80%;
+    list-style-type: none;
 }
-li.toc1 {
+div.toc ol.toc1 {
+    /* Compensate for the size reduction for each level */
+    font-size: 150%;
+}
+/* -- TOC numbering using data-name attribute -- */
+ol li[data-name]::marker {
+    content: attr(data-name) '.';
+}
+ol.toc1 > li {
+    padding-left: 1em;
     padding-top: 0.7em;
+    font-weight: bold;
 }
-li.toc2 {
+ol.toc2 > li {
     padding-top: 0.3em;
 }
-.index li {
+ol.toc2 li {
+    padding-left: 0.4em;
+    font-weight: normal;
+}
+div.toc span.node {
+    display: none;
+}
+div.index li {
     list-style-type: none;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
 }
-.index .term {
+div.index .term {
     display: inline-block;
     text-align: left;
     vertical-align: top;
     flex: 3 3 0;
 }
-.index .ref {
+div.index .ref {
     width: 30%;
     display: inline-block;
     text-align: right;
     vertical-align: top;
     flex: 1 1 0;
 }
+div.toc, div.chapter, div.appendix {
+    column-width: 32em;
+}
+div.index {
+    column-width: 16em;
+    margin-right: 3em;
+}
+div.index li {
+    padding-left: 1em;
+    padding-right: 1em;
+}
+div.index > ul {
+    padding-left: 0;
+}
 /* This is overridden for @media screen */
-ul.navbar {
+nav {
     display: none;
 }
 @media print {
     a {
 	color: inherit;
     }
-    ul.navbar div.title {
+    nav {
 	display: none !important;
     }
     div.index {
-	-webkit-column-gap: 2em;
-	-moz-column-gap: 2em;
 	column-gap: 2em;
-	-webkit-column-count: 2;
-	-moz-column-count: 2;
 	column-count: 2;
     }
 }
 @media screen {
     div.contents {
-	-webkit-column-gap: 4em;
 	-webkit-column-rule: 1px dotted black;
-	-moz-column-gap: 4em;
 	-moz-column-rule: 1px dotted black;
-	column-gap: 4em;
 	column-rule: 1px dotted black;
     }
-}
-@media only screen and (min-width: 90em) {
-    /* For a very wide screen, go to a columnar layout */
-    div.contents {
-	-webkit-column-count: 2;
-	-moz-column-count: 2;
-	column-count: 2;
+    div.toc, div.chapter, div.appendix {
+	-webkit-column-gap: 4em;
+	-moz-column-gap: 4em;
+	column-gap: 4em;
     }
-}
-@media only screen and (min-width: 135em) {
-    div.contents {
-	-webkit-column-count: 3;
-	-moz-column-count: 3;
-	column-count: 3;
+    div.index {
+	-webkit-column-gap: 1em;
+	-moz-column-gap: 1em;
+	column-gap: 1em;
     }
-}
-@media screen {
+
     /* Setting an explicit margin to keep the navbar from moving */
     body {
 	padding: 0;
@@ -143,39 +194,53 @@ ul.navbar {
 	background-clip: content-box;
     }
 
-    ul.navbar {
+    nav {
 	display: block;
 	position: sticky;
 	top: 8px;
 	width: 100%;
 	margin: 0;
-	padding: 0;
 	overflow: hidden;
-	white-space: nowrap;
-	list-style-type: none;
-	background: #336 url("nasmlogw.png") no-repeat right center;
+        background: #336 url("nasmlogw.png") no-repeat right center;
 	background-size: contain;
-    }
-
-    ul.navbar li {
 	float: left;
+	white-space: collapse;
     }
-    ul.navbar li.last {
-	border-right: none;
+    nav ul {
+	margin: 0;
+	padding: 0;
+	display: inline-block;
+	list-style-type: none;
     }
-    ul.navbar a {
+    nav li {
+	margin: 0;
+	padding: 0;
+	display: inline-block;
+    }
+    nav li a {
+	margin: 0;
 	border-right: 1px solid #bbb;
 	display: block;
-	color: white;
 	text-align: center;
-	padding: 1em 1.5em;
+	padding: 0.75em 0.75em;
 	text-decoration: none;
+	color: white;
+	white-space: nowrap;
+	background-color: #336;
     }
-    ul.navbar a:hover {
+    nav li.navthis a {
+	background-color: #55c;
+    }
+    nav li a:hover {
 	background-color: #448;
     }
-
-    .index li:hover {
+    nav li.navthis a:hover {
+	background-color: #55c;
+    }
+    nav li a:link, nav li a:visited, nav li a:hover {
+	color: white;
+    }
+    div.index li:hover {
 	background: #eef;
     }
 }

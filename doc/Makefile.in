@@ -118,9 +118,9 @@ nasmdoc.pdf.xz: nasmdoc-raw.pdf
 	$(XZ) -9e < $< > $@
 
 clean:
-	-$(RM_F) *.rtf *.hpj *.texi *.gid *.ipf *.dip
+	-$(RM_F) *.rtf *.hpj *.texi *.gid *.ipf *.dip *.dep
 	-$(RM_F) *.aux *.cp *.fn *.ky *.pg *.log *.toc *.tp *.vr
-	-$(RM_F) $(GENSRC)fontpath Fontmap
+	-$(RM_F) $(GENSRC) fontpath Fontmap
 	-$(RM_F) nasmdoc*.ps nasmdoc-raw.pdf
 
 spotless: clean

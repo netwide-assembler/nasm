@@ -5795,13 +5795,6 @@ UIRET		void					[	f3 0f 01 ec		]	UINTR,LONG
 HRESET		imm,reg_eax				[i-:	f3 0f3a f0 c0 ib	]	HRESET,PRIV,SB
 HRESET		imm					[i:	f3 0f3a f0 c0 ib	]	HRESET,PRIV,SB,ND
 
-
-;# Systematic names for the hinting nop instructions
-; These should be last in the file
-$wdq  NOP       imm,reg#,rm#			[irm:	o#  0f ibn /r]				P6,UNDOC,SM1-2
-$wdq  HINT_NOP  imm,reg#,rm#			[irm:	o#  0f ibn /r]				P6,UNDOC,SM1-2,ND
-$hint_nops
-
 ;# AVX10.2 BF16 instructions
 VADDBF16          xmmreg|mask|z,xmmreg,xmmrm128|b16   [rvm:fv: evex.128.66.map5.w0 58 /r ]      AVX10_2
 VADDBF16          ymmreg|mask|z,ymmreg,ymmrm256|b16   [rvm:fv: evex.256.66.map5.w0 58 /r ]      AVX10_2
@@ -6055,3 +6048,10 @@ VMOVD             xmmreg,xmmrm32                      [rm:t1s: evex.128.f3.0f.w0
 VMOVD             xmmrm32,xmmreg                      [rm:t1s: evex.128.66.0f.w0 d6 /r ]        AVX10_2
 VMOVW             xmmreg,xmmrm16                      [rm:t1s: evex.128.f3.map5.w0 6e /r ]      AVX10_2
 VMOVW             xmmrm16,xmmreg                      [rm:t1s: evex.128.f3.map5.w0 7e /r ]      AVX10_2
+
+
+;# Systematic names for the hinting nop instructions
+; These should be last in the file
+$wdq  NOP       imm,reg#,rm#			[irm:	o#  0f ibn /r]				P6,UNDOC,SM1-2
+$wdq  HINT_NOP  imm,reg#,rm#			[irm:	o#  0f ibn /r]				P6,UNDOC,SM1-2,ND
+$hint_nops

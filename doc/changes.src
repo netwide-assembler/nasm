@@ -67,6 +67,8 @@ It is the production version of NASM since 2025.
    implemented conditional directive, and tries to match it with a
    corresponding \c{%endif}.  See \k{if_caveat}.
 
+\b The \c{masm} macro package now defines a macro for x87 register syntax.
+
 
 \H{cl-2.xx} NASM 2 Series
 
@@ -2717,7 +2719,7 @@ an error.
 specification warning when sizes agree).
 
 
-\H{cl-0.9x} NASM 0.9 Series
+\H{cl-0.9x} NASM 0.90-0.97
 
 Revisions before 0.98.
 

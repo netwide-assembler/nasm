@@ -370,24 +370,9 @@ In 64-bit mode, NASM will by default generate absolute addresses.  The
 this is frequently the normally desired behaviour, see the \c{DEFAULT}
 directive (\k{default}). The keyword \i\c{ABS} overrides \i\c{REL}.
 
-A new form of split effective address syntax is also supported. This is
-mainly intended for mib operands as used by MPX instructions, but can
-be used for any memory reference. The basic concept of this form is
-splitting base and index.
-
-\c      mov eax,[ebx+8,ecx*4]   ; ebx=base, ecx=index, 4=scale, 8=disp
-
-For mib operands, there are several ways of writing effective address depending
-on the tools. NASM supports all currently possible ways of mib syntax:
-
-\c      ; bndstx
-\c      ; next 5 lines are parsed same
-\c      ; base=rax, index=rbx, scale=1, displacement=3
-\c      bndstx [rax+0x3,rbx], bnd0      ; NASM - split EA
-\c      bndstx [rbx*1+rax+0x3], bnd0    ; GAS - '*1' indecates an index reg
-\c      bndstx [rax+rbx+3], bnd0        ; GAS - without hints
-\c      bndstx [rax+0x3], bnd0, rbx     ; ICC-1
-\c      bndstx [rax+0x3], rbx, bnd0     ; ICC-2
+A new syntax for split EA (effective addressing) is also supported in NASM. It's
+mainly intended for MPX instructions that use the MIB operands, but it can be
+used for any memory reference. It's described in more detail in \k{spliteas}.
 
 When broadcasting decorator is used, the opsize keyword should match
 the size of each element.
@@ -409,7 +394,7 @@ numbers in a variety of number bases, in a variety of ways: you can
 suffix \c{H} or \c{X}, \c{D} or \c{T}, \c{Q} or \c{O}, and \c{B} or
 \c{Y} for \i{hexadecimal}, \i{decimal}, \i{octal} and \i{binary}
 respectively, or you can prefix \c{0h} or \c{0x}, \c{0d} or \c{0t},
-\c{0q} or \c{0o}, and \c{0b} or \c{0y) in the style of C.  Please note
+\c{0q} or \c{0o}, and \c{0b} or \c{0y}) in the style of C.  Please note
 that unlike C, a \c{0} prefix by itself does \e{not} imply an octal
 constant (this is deprecated in C23.)
 
@@ -535,7 +520,7 @@ effect as \c{db 'a'}, which would be silly. Similarly, three-character
 or four-character constants are treated as strings when they are
 operands to \c{DW}, and so forth.
 
-\S{unicode} \I{UTF-8}I{UTF-16}\I{UTF-32}\i{Unicode} Strings
+\S{unicode} \I{UTF-8}\I{UTF-16}\I{UTF-32}\i{Unicode} Strings
 
 The special operators \i\c{__?utf16?__}, \i\c{__?utf16le?__},
 \i\c{__?utf16be?__}, \i\c{__?utf32?__}, \i\c{__?utf32le?__} and
@@ -860,30 +845,12 @@ preferred one. NASM lets you do this, by the use of the \c{WRT}
 to load \c{ES:BX} with a different, but functionally equivalent,
 pointer to the symbol \c{symbol}.
 
-NASM supports far (inter-segment) calls and jumps by means of the
-syntax \c{call segment:offset}, where \c{segment} and \c{offset}
-both represent immediate values. So to call a far procedure, you
-could code either of
+The \c{WRT} keyword is also used in far (inter-segment) calls and jumps. It's
+synonymous to the
 
-\c         call    (seg procedure):procedure
-\c         call    weird_seg:(procedure wrt weird_seg)
+\c	call far procedure
 
-(The parentheses are included for clarity, to show the intended
-parsing of the above instructions. They are not necessary in
-practice.)
-
-NASM supports the syntax \I\c{CALL FAR}\c{call far procedure} as a
-synonym for the first of the above usages. \c{JMP} works identically
-to \c{CALL} in these examples.
-
-To declare a \i{far pointer} to a data item in a data segment, you
-must code
-
-\c         dw      symbol, seg symbol
-
-NASM supports no convenient synonym for this, though you can always
-invent one using the macro processor.
-
+syntax which is documented in \k{farcall}.
 
 \H{strict} \i\c{STRICT}: Inhibiting Optimization
 
