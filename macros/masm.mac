@@ -1,6 +1,6 @@
 ;; --------------------------------------------------------------------------
 ;;
-;;   Copyright 2019 The NASM Authors - All Rights Reserved
+;;   Copyright 2019-2025 The NASM Authors - All Rights Reserved
 ;;   See the file AUTHORS included with the NASM distribution for
 ;;   the specific copyright holders.
 ;;
@@ -68,6 +68,10 @@ USE: masm
   %null endp %00
   %undef ret
 %endmacro
+
+%ifndef st
+  %idefine st(x) st %+ x
+%endif
 
 %idefine ptr __?masm_ptr?__
 %idefine flat __?masm_flat?__	; is %idefine really correct here?

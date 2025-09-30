@@ -178,6 +178,9 @@ after \c{PROC} other than \c{FAR} is ignored.
 \b In 64-bit mode relative addressing is the default (\c{DEFAULT REL},
 see \k{default-rel}).
 
+\b A macro is defined to allow the syntax \c{st(0)} instead of
+\c{st0}, and so on.
+
 In addition, NASM now natively supports, regardless of whether this
 package is used or not:
 
