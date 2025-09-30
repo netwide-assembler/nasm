@@ -556,7 +556,7 @@ static void macho_output(const struct out_data *out)
     s = get_section_by_index(secto);
     if (!s) {
         nasm_warn(WARN_OTHER, "attempt to assemble code in"
-              " section %d: defaulting to `.text'", secto);
+                  " unknown section: defaulting to `.text'");
         s = get_section_by_name("__TEXT", "__text");
 
         /* should never happen */
@@ -1082,7 +1082,8 @@ static void macho_symdef(char *name, int32_t section, int64_t offset,
                 /* give an error on unfound section if it's not an
                  ** external or common symbol (assemble_file() does a
                  ** seg_alloc() on every call for them) */
-                nasm_panic("in-file index for section %d not found, is_global = %d", section, is_global);
+                nasm_panic("in-file index for section %"PRId32" not found, "
+                           "is_global = %d", section, is_global);
 		break;
             }
 	}

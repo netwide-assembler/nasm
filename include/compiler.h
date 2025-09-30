@@ -99,6 +99,30 @@
 # include <sys/types.h>
 #endif
 
+/*
+ * This is impossible to do 100% accurately, because the actual type
+ * of size_t may differ from its range.
+ */
+#ifdef _WIN32
+# define PRIz "I"               /* Needed for msvcrt, not ucrt */
+#elif defined(PRINTF_SUPPORTS_Z) || \
+    (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+# define PRIz "z"
+#elif SIZE_MAX == UINT_MAX
+# define PRIz ""
+#elif SIZE_MAX == ULONG_MAX
+# define PRIz "l"
+#elif SIZE_MAX == ULONGLONG_MAX
+# define PRIz "ll"
+#else
+# error "Unable to determine printf format for size_t"
+#endif
+#define PRIzd PRIz "u"          /* size_t is always unsigned */
+#define PRIzu PRIz "u"
+#define PRIzu PRIz "u"
+#define PRIzx PRIz "x"
+#define PRIzX PRIz "X"
+
 #ifdef HAVE_STDBIT_H
 
 # include <stdbit.h>

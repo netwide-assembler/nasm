@@ -61,9 +61,9 @@ static const char *expr_type(int32_t type)
     if (type >= EXPR_REG_START && type <= EXPR_REG_END) {
         return nasm_reg_names[type - EXPR_REG_START];
     } else if (type >= EXPR_SEGBASE) {
-        snprintf(seg_str, sizeof seg_str, "%sseg %d",
+        snprintf(seg_str, sizeof seg_str, "%sseg %lu",
                  (type - EXPR_SEGBASE) == location.segment ? "this " : "",
-                 type - EXPR_SEGBASE);
+                 (unsigned long)(type - EXPR_SEGBASE));
         return seg_str;
     } else {
         return "ERR";
@@ -74,6 +74,7 @@ void dump_expr(const expr *e)
 {
     printf("[");
     for (; e->type; e++)
-        printf("<%s(%d),%"PRId64">", expr_type(e->type), e->type, e->value);
+        printf("<%s(%"PRId32"),%"PRId64">",
+               expr_type(e->type), e->type, e->value);
     printf("]\n");
 }

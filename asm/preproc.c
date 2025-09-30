@@ -5105,7 +5105,7 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
         pop_mstk(&defining->dstk, defining->dstk.mstk);
 
         if (defining->refcnt != 1)
-            nasm_panic("defining->refcnt == %zu", defining->refcnt);
+            nasm_panic("defining->refcnt == %"PRIzu, defining->refcnt);
 
         mmhead = (MMacro **) hash_findi_add(&mmacros, defining->name);
         defining->next = *mmhead;
@@ -6803,7 +6803,8 @@ static MMacro *use_mmacro(MMacro *m, int *nparamp, Token ***paramsp)
     if (m->in_progress > m->max_depth) {
         if (m->max_depth > 0) {
             /* Document this properly when recursive mmacros re-implemented */
-            nasm_warn(WARN_OTHER, "reached maximum recursion depth of %i",
+            nasm_warn(WARN_OTHER,
+                      "reached maximum recursion depth of %"PRId32,
                       m->max_depth);
         }
         nasm_free(params);

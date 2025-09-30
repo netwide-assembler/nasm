@@ -1517,7 +1517,7 @@ static void write_srecord(unsigned int len,  unsigned int alen,
 	csum += dptr[i];
     csum = 0xff-csum;
 
-    p += sprintf(p, "S%c%02X%0*X", type, len+alen+1, alen*2, addr);
+    p += sprintf(p, "S%c%02X%0*"PRIX32, type, len+alen+1, alen*2, addr);
     for (i = 0; i < len; i++)
 	p += sprintf(p, "%02X", dptr[i]);
     p += sprintf(p, "%02X\n", csum);

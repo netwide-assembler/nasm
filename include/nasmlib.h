@@ -75,7 +75,7 @@ typedef union intorptr intorptr;
 
 #define mk_field(name,pos,width)                            \
     mk_field_mask(name,pos,width,                           \
-                  (ONE << name ## _WIDTH)-1)
+                  (1 << name ## _WIDTH)-1)
 
 /*
  * Cast a value to a suitable type to represent the encoded

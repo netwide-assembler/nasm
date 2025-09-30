@@ -298,7 +298,7 @@ static void as86_out(const struct out_data *out)
         s = NULL;
     else {
         nasm_warn(WARN_OTHER, "attempt to assemble code in"
-                  " segment %d: defaulting to `.text'", segto);
+                  " unknown section: defaulting to `.text'");
         s = &stext;
     }
 
