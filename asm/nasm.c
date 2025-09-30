@@ -156,7 +156,6 @@ struct strlist *depend_list;
 
 static bool want_usage;
 static bool terminate_after_phase;
-bool user_nolist = false;
 
 static char *quote_for_pmake(const char *str);
 static char *quote_for_wmake(const char *str);
@@ -2415,6 +2414,7 @@ static void help(FILE *out, const char *what)
             "       -Ld         show byte and repeat counts in decimal, not hex\n"
             "       -Le         show the preprocessed output\n"
             "       -Lf         ignore .nolist (force output)\n"
+            "       -LF         ignore [LIST -] directives (force output)\n"
             "       -Lm         show multi-line macro calls with expanded parameters\n"
             "       -Lp         output a list file every pass, in case of errors\n"
             "       -Ls         show all single-line macro definitions\n"

@@ -54,6 +54,7 @@ static const char xdigit[] = "0123456789ABCDEF";
 #define HEX(a,b) (*(a)=xdigit[((b)>>4)&15],(a)[1]=xdigit[(b)&15]);
 
 uint64_t list_options, active_list_options;
+bool user_nolist;
 
 static char listline[LIST_MAX_LEN];
 static bool listlinep;
@@ -174,6 +175,7 @@ static void list_init(const char *fname)
     list_errors = NULL;
     listlevel = 0;
     suppress = 0;
+    user_nolist = false;
 }
 
 static void list_out(int64_t offset, char *str)

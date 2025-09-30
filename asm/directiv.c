@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------- *
  *
- *   Copyright 1996-2024 The NASM Authors - All Rights Reserved
+ *   Copyright 1996-2025 The NASM Authors - All Rights Reserved
  *   See the file AUTHORS included with the NASM distribution for
  *   the specific copyright holders.
  *
@@ -546,7 +546,7 @@ bool process_directives(char *directive)
             user_nolist = false;
         } else {
             if (*value == '-') {
-                user_nolist = true;
+                user_nolist = !list_option('F');
             } else {
                 bad_param = true;
             }

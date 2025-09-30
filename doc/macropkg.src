@@ -144,9 +144,9 @@ To enable the package, use the directive:
 
 Currently, the MASM compatibility package emulates:
 
-\b The \c{FLAT} and \c{OFFSET} keywords are recognized and ignored.
+\b The \i\c{FLAT} and \i\c{OFFSET} keywords are recognized and ignored.
 
-\b The \c{PTR} keyword signifies a memory reference, as if the
+\b The \i\c{PTR} keyword signifies a memory reference, as if the
 argument had been put in square brackets:
 
 \c      mov eax,[foo]               ; memory reference
@@ -155,13 +155,13 @@ argument had been put in square brackets:
 \c      mov eax,offset foo          ; address
 \c      mov eax,foo                 ; address (ambiguous syntax in MASM)
 
-\b The \c{SEGMENT} ... \c{ENDS} syntax:
+\b The \i\c{SEGMENT} ... \i\c{ENDS} syntax:
 
 \c    segname SEGMENT
 \c        ...
 \c    segname ENDS
 
-\b The \c{PROC} ... \c{ENDP} syntax:
+\b The \i\c{PROC} ... \i\c{ENDP} syntax:
 
 \c    procname PROC [FAR]
 \c         ...
@@ -171,9 +171,9 @@ argument had been put in square brackets:
 \c{RETF} if \c{FAR} is specified and \c{RETN} otherwise. Any keyword
 after \c{PROC} other than \c{FAR} is ignored.
 
-\b The \c{TBYTE} keyword as an alias for \c{TWORD} (see \k{qsother}).
+\b The \i\c{TBYTE} keyword as an alias for \c{TWORD} (see \k{qsother}).
 
-\b The \c{END} directive is ignored.
+\b The \i\c{END} directive is ignored.
 
 \b In 64-bit mode relative addressing is the default (\c{DEFAULT REL},
 see \k{default-rel}).
