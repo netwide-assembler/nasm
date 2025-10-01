@@ -65,8 +65,11 @@ PROGOBJ = $(NASM) $(NDISASM)
 PROGS   = nasm$(X) ndisasm$(X)
 
 # Files dependent on extracted warnings
+# WARNTIMES is explicit to avoid breaking some apparently problematic make
+# versions, e.g. Microsoft NMAKE
 WARNOBJ   = asm\warnings.obj
 WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
+WARNTIMES = asm\warnings_c.h.time include\warnings.h.time doc\warnings.src.time
 
 OUTPUTOBJ = &
 	output\outform.obj output\outlib.obj &

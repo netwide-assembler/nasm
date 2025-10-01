@@ -18,29 +18,32 @@ exec_prefix	= $(prefix)
 bindir		= $(prefix)/bin
 mandir		= $(prefix)/man
 
-MANIFEST_FLAGS  = /MANIFEST:EMBED /MANIFESTFILE:$(MANIFEST)
+MANIFEST_FLAGS  = /manifest:embed /manifestfile:$(MANIFEST)
 
 !IF "$(DEBUG)" == "1"
-CFLAGS		= /Od /Zi
-LDFLAGS		= /DEBUG
+OPTFLAGS	= /Od /Zi
+LDFLAGS		= /debug
 !ELSE
 CFLAGS		= /O2 /Zi
  # /OPT:REF and /OPT:ICF two undo /DEBUG harm
-LDFLAGS		= /DEBUG /OPT:REF /OPT:ICF
+LDFLAGS		= /debug /opt:ref /opt:icf
 !ENDIF
 
 CC		= cl
 AR		= lib
+ARFLAGS		= /nologo
+
 BUILD_CFLAGS	= $(CFLAGS) /W2
 INTERNAL_CFLAGS = /I$(srcdir) /I. \
 		  /I$(srcdir)/include /I./include \
 		  /I$(srcdir)/x86 /I./x86 \
 		  /I$(srcdir)/asm /I./asm \
 		  /I$(srcdir)/disasm /I./disasm \
-		  /I$(srcdir)/output /I./output
+		  /I$(srcdir)/output /I./output \
+		  /I$(srcdir)/zlib
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
-MANIFEST_FLAGS  = /MANIFEST:EMBED /MANIFESTINPUT:$(MANIFEST)
-ALL_LDFLAGS	= /link $(LDFLAGS) $(MANIFEST_FLAGS) /SUBSYSTEM:CONSOLE /RELEASE
+MANIFEST_FLAGS  = /manifest:embed /manifestinput:$(MANIFEST)
+ALL_LDFLAGS	= /link $(LDFLAGS) $(MANIFEST_FLAGS) /subsystem:console /release
 LIBS		=
 
 PERL		= perl
@@ -60,7 +63,7 @@ X               = .exe
 .SUFFIXES: $(X) .$(A) .obj .c .i .s .1 .man
 
 .c.obj:
-	$(CC) /c $(ALL_CFLAGS) /Fo$@ $<
+	$(CC) /c $(ALL_CFLAGS) /Fo:$@ $<
 
 MANIFEST = win/manifest.xml
 
@@ -77,8 +80,11 @@ PROGOBJ = $(NASM) $(NDISASM)
 PROGS   = nasm$(X) ndisasm$(X)
 
 # Files dependent on extracted warnings
+# WARNTIMES is explicit to avoid breaking some apparently problematic make
+# versions, e.g. Microsoft NMAKE
 WARNOBJ   = asm\warnings.obj
 WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
+WARNTIMES = asm\warnings_c.h.time include\warnings.h.time doc\warnings.src.time
 
 OUTPUTOBJ = \
 	output\outform.obj output\outlib.obj \
@@ -178,20 +184,19 @@ NDISLIB = libndis.$(A)
 all: nasm$(X) ndisasm$(X)
 
 nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
-	$(CC) /Fe$@ $(NASM) $(ALL_LDFLAGS) $(NASMLIB) $(LIBS)
+	$(CC) /Fe:$@ $(NASM) $(NASMLIB) $(LIBS) $(ALL_LDFLAGS)
 
 ndisasm$(X): $(NDISASM) $(MANIFEST) $(NDISLIB) $(NASMLIB)
-	$(CC) /Fe$@ $(NDISASM) $(ALL_LDFLAGS) $(NDISLIB) $(NASMLIB) $(LIBS)
+	$(CC) /Fe:$@ $(NDISASM) $(NDISLIB) $(NASMLIB) $(LIBS) $(ALL_LDFLAGS)
 
 $(NASMLIB): $(LIBOBJ)
-	$(AR) $(ARFLAGS) /OUT:$@ $**
+	$(AR) $(ARFLAGS) /out:$@ $**
 
 $(NDISLIB): $(LIBOBJ_DIS)
-	$(AR) $(ARFLAGS) /OUT:$@ $**
+	$(AR) $(ARFLAGS) /out:$@ $**
 
 # These are specific to certain Makefile syntaxes...
-WARNTIMES = $(patsubst %,%.time,$(WARNFILES))
-WARNSRCS  = $(patsubst %.obj,%.c,$(LIBOBJ_NW))
+WARNSRCS  = $(LIBOBJ_NW:.c=.obj)
 
 #-- Begin Generated File Rules --#
 # Edit in Makefile.in, not here!
