@@ -194,26 +194,27 @@ sub write_output($) {
 
     my($vol,$dir,$file) = File::Spec->splitpath($outfile);
 
-    print $out ";;; ${file} --- lists of NASM assembler tokens\n";
-    print $out ";;;\n";
-    print $out ";;; This file contains list of tokens from the NASM x86\n";
-    print $out ";;; assembler, automatically extracted from NASM ${version}.\n";
-    print $out ";;;\n";
-    print $out ";;; This file is intended to be (require)d from a `nasm-mode\'\n";
-    print $out ";;; major mode definition.\n";
-    print $out ";;;\n";
+    print $out ";;; ${file} --- lists of NASM assembler tokens\n\n";
+    print $out ";;; Commentary:\n\n";
+    print $out ";; This file contains list of tokens from the NASM x86\n";
+    print $out ";; assembler, automatically extracted from NASM ${version}.\n";
+    print $out ";;\n";
+    print $out ";; This file is intended to be (require)d from a `nasm-mode\'\n";
+    print $out ";; major mode definition.\n\n";
+    print $out ";;\n";
     print $out ";;; Tokens that are only recognized inside curly braces are\n";
-    print $out ";;; noted as such. Tokens of the form {xxx=} are parametric\n";
-    print $out ";;; tokens, where the token may contain additional text on\n";
-    print $out ";;; the right side of the = sign. For example,\n";
-    print $out ";;; {dfv=} should be matched by {dfv=cf,zf}.\n";
-    print $out ";;;\n";
+    print $out ";; noted as such. Tokens of the form {xxx=} are parametric\n";
+    print $out ";; tokens, where the token may contain additional text on\n";
+    print $out ";; the right side of the = sign. For example,\n";
+    print $out ";; {dfv=} should be matched by {dfv=cf,zf}.\n";
+    print $out "\n";
+    print $out ";;; Code:\n";
 
     my @types = sort keys(%tokens);
 
     # Write the individual token type lists
     foreach my $type (sort keys(%tokens)) {
-	print $out "\n(defconst nasm-token-${type}\n";
+	print $out "\n(defconst nasm-${type}\n";
 	print $out "  \'(";
 
 	print $out make_lines(78, 4, quote_for_emacs(sort @{$tokens{$type}}));
@@ -224,9 +225,14 @@ sub write_output($) {
     # Generate a list of all the token type lists.
     print $out "\n(defconst nasm-token-lists\n";
     print $out "  \'(";
-    print $out make_lines(78, 4, map { "'nasm-token-$_" } sort keys(%tokens));
+    print $out make_lines(78, 4, map { "'nasm-$_" } sort keys(%tokens));
     print $out ")\n";
     print $out "  \"List of all NASM token type lists.\")\n";
+
+
+    # Footer
+    print $out "\n(provide 'nasmtok)\n";
+    print $out ";;; nasmtok.el ends here\n";
 
     close($out);
 }
