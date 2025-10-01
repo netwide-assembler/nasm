@@ -186,8 +186,8 @@ $wdq  BTC	rm#,reg#			[mr:	o# 0f bb /r]				386,SM,LOCK
 $wdq  BTC	rm#,imm8			[mi:	o# 0f ba /7 ib,u]			386,LOCK
 $wdq  BTR	rm#,reg#			[mr:	o# 0f b3 /r]				386,SM,LOCK
 $wdq  BTR	rm#,imm8			[mi:	o# 0f ba /6 ib,u]			386,LOCK
-$wdq  BTC	rm#,reg#			[mr:	o# 0f ab /r]				386,SM,LOCK
-$wdq  BTC	rm#,imm8			[mi:	o# 0f ba /5 ib,u]			386,LOCK
+$wdq  BTS	rm#,reg#			[mr:	o# 0f ab /r]				386,SM,LOCK
+$wdq  BTS	rm#,imm8			[mi:	o# 0f ba /5 ib,u]			386,LOCK
 
 $wdq  BSF	reg#,rm#			[rm:	o# nof3 0f bc /r]			386,SM
 $wdq  BSR	reg#,rm#			[rm:	o# nof3 0f bd /r]			386,SM
