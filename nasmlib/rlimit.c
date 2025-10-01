@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /* Copyright 2020 The NASM Authors - All Rights Reserved */
- /* ----------------------------------------------------------------------- *
 
 #include "compiler.h"
 #include "nasmlib.h"
