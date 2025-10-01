@@ -6,6 +6,7 @@
 use integer;
 use strict;
 use File::Spec;
+use File::Find;
 
 my($outfile, $srcdir, $objdir) = @ARGV;
 
@@ -16,7 +17,8 @@ if (!defined($outfile)) {
 $srcdir = File::Spec->curdir() unless (defined($srcdir));
 $objdir = $srcdir unless (defined($objdir));
 
-my %tokens = ();
+my %tokens = ();		# Token lists per category
+my %token_category = ();	# Tokens to category map
 
 sub xpush($@) {
     my $ref = shift @_;
@@ -26,16 +28,28 @@ sub xpush($@) {
 }
 
 # Combine some specific token types
-my %override = ( 'id' => 'special',
-		 'float' => 'function',
-		 'floatize' => 'function',
-		 'strfunc' => 'function',
-		 'ifunc' => 'function',
-		 'insn' => 'instruction',
-		 'reg' => 'register',
-		 'seg' => 'special',
-		 'wrt' => 'special',
-		 'times' => 'special');
+my %override = (
+    'brcconst' => 'special-constant',
+    'id' => 'special',
+    'float' => 'function',
+    'floatize' => 'function',
+    'strfunc' => 'function',
+    'ifunc' => 'function',
+    'insn' => 'instruction',
+    'reg' => 'register',
+    'seg' => 'special',
+    'wrt' => 'special',
+    'times' => 'special');
+
+sub addtoken($$) {
+    my($type, $token) = @_;
+
+    unless (defined($token_category{$token})) {
+	$type = $override{$type} if (defined($override{$type}));
+	xpush(\$tokens{$type}, $token);
+	$token_category{$token} = $type;
+    }
+}
 
 sub read_tokhash_c($) {
     my($tokhash_c) = @_;
@@ -62,20 +76,18 @@ sub read_tokhash_c($) {
 
 	    $token = "{${token}}" if ($flags =~ /\bTFLAG_BRC\b/);
 
-	    # Parametric token: omit the actual parameter versions
-	    next if ($token =~ /^\{\w+=.+\}$/);
+	    # Parametric token: omit the actual parameter(s)
+	    $token =~ s/^(\{[\w-]+=).+(\})$/$1$2/;
 
-	    if ($override{$type}) {
-		$type = $override{$type};
-	    } elsif ($token !~ /^(\{\w+=?\}|\w+)$/) {
+	    if ($token !~ /^(\{[\w-]+=?\}|\w+)$/) {
 		$type = 'operator';
 	    } elsif ($token =~ /^__\?masm_.*\?__$/) {
 		next;
 	    }
-	    xpush(\$tokens{$type}, $token);
+	    addtoken($type, $token);
 	    if ($token =~ /^__\?(.*)\?__$/) {
 		# Also encode the "user" (macro) form without __?...?__
-		xpush(\$tokens{$type}, $1);
+		addtoken($type, $1);
 	    }
 	}
     }
@@ -102,7 +114,7 @@ sub read_pptok_c($) {
 	last if ($l =~ /\}\;/);
 
 	if ($l =~ /^\s*\"(.*?)\"/) {
-	    xpush(\$tokens{'pp-directive'}, $1);
+	    addtoken('pp-directive', $1);
 	}
     }
     close($pt);
@@ -126,7 +138,7 @@ sub read_directiv_dat($) {
 	}
 
 	if ($l =~ /^\s*(\w+)/) {
-	    xpush(\$tokens{'directive'}, $1);
+	    addtoken('directive', $1);
 	}
     }
 
@@ -143,6 +155,36 @@ sub read_version($) {
     chomp $version;
 
     close($v);
+}
+
+sub read_macros($$) {
+    my($srcdir, $objdir) = @_;
+    my @dirs;
+    push(@dirs, $objdir);
+    push(@dirs, File::Spec->catdir($srcdir, 'macros'));
+    push(@dirs, File::Spec->catdir($srcdir, 'output'));
+    foreach my $dir (@dirs) {
+	opendir(my $dh, $dir) or die;
+	while (defined(my $fn = readdir($dh))) {
+	    next unless ($fn =~ /\.mac$/);
+
+	    open(my $fh, '<', File::Spec->catfile($dir, $fn)) or die;
+	    while (defined(my $l = <$fh>)) {
+		next unless ($l =~ /^\s*\%/);
+		my @f = split(/\s+/, $l);
+		next unless (scalar(@f) >= 2);
+		$f[1] =~ s/\(.*$//;	# Strip argument list if any
+		next if ($f[1] =~ /^[\%\$]/); # Internal use only
+		$f[1] = lc($f[1]) if ($f[0] =~ /^\%i/);
+		if ($f[0] =~ /^\%(i)?(assign|defalias|define|defstr|substr|xdefine)\b/) {
+		    addtoken('smacro', $f[1]);
+		} elsif ($f[0] =~ /^\%i?macro$/) {
+		    addtoken('mmacro', $f[1]);
+		}
+	    }
+	    close($fh);
+	}
+    }
 }
 
 sub make_lines($$@) {
@@ -200,9 +242,9 @@ sub write_output($) {
     print $out ";; assembler, automatically extracted from NASM ${version}.\n";
     print $out ";;\n";
     print $out ";; This file is intended to be (require)d from a `nasm-mode\'\n";
-    print $out ";; major mode definition.\n\n";
+    print $out ";; major mode definition.\n";
     print $out ";;\n";
-    print $out ";;; Tokens that are only recognized inside curly braces are\n";
+    print $out ";; Tokens that are only recognized inside curly braces are\n";
     print $out ";; noted as such. Tokens of the form {xxx=} are parametric\n";
     print $out ";; tokens, where the token may contain additional text on\n";
     print $out ";; the right side of the = sign. For example,\n";
@@ -241,5 +283,6 @@ read_tokhash_c(File::Spec->catfile($objdir, 'asm', 'tokhash.c'));
 read_pptok_c(File::Spec->catfile($objdir, 'asm', 'pptok.c'));
 read_directiv_dat(File::Spec->catfile($srcdir, 'asm', 'directiv.dat'));
 read_version(File::Spec->catfile($srcdir, 'version'));
+read_macros($srcdir, $objdir);
 
 write_output($outfile);
