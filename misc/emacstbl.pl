@@ -157,6 +157,26 @@ sub read_version($) {
     close($v);
 }
 
+sub read_macro_file($) {
+    my($file) = @_;
+
+    open(my $fh, '<', $file) or die;
+    while (defined(my $l = <$fh>)) {
+	next unless ($l =~ /^\s*\%/);
+	my @f = split(/\s+/, $l);
+	next unless (scalar(@f) >= 2);
+	next if ($f[1] =~ /^[\%\$][^\(]+$/); # Internal use only
+	$f[1] =~ s/\(.*$//;	# Strip argument list if any
+	$f[1] = lc($f[1]) if ($f[0] =~ /^\%i/);
+	if ($f[0] =~ /^\%(i)?(assign|defalias|define|defstr|substr|xdefine)\b/) {
+	    addtoken('smacro', $f[1]);
+	} elsif ($f[0] =~ /^\%i?macro$/) {
+	    addtoken('mmacro', $f[1]);
+	}
+    }
+    close($fh);
+}
+
 sub read_macros($$) {
     my($srcdir, $objdir) = @_;
     my @dirs;
@@ -167,24 +187,11 @@ sub read_macros($$) {
 	opendir(my $dh, $dir) or die;
 	while (defined(my $fn = readdir($dh))) {
 	    next unless ($fn =~ /\.mac$/);
-
-	    open(my $fh, '<', File::Spec->catfile($dir, $fn)) or die;
-	    while (defined(my $l = <$fh>)) {
-		next unless ($l =~ /^\s*\%/);
-		my @f = split(/\s+/, $l);
-		next unless (scalar(@f) >= 2);
-		$f[1] =~ s/\(.*$//;	# Strip argument list if any
-		next if ($f[1] =~ /^[\%\$]/); # Internal use only
-		$f[1] = lc($f[1]) if ($f[0] =~ /^\%i/);
-		if ($f[0] =~ /^\%(i)?(assign|defalias|define|defstr|substr|xdefine)\b/) {
-		    addtoken('smacro', $f[1]);
-		} elsif ($f[0] =~ /^\%i?macro$/) {
-		    addtoken('mmacro', $f[1]);
-		}
-	    }
-	    close($fh);
+	    read_macro_file(File::Spec->catdir($dir, $fn));
 	}
     }
+    # Don't read the whole misc directory!
+    read_macro_file(File::Spec->catdir($srcdir, 'misc/builtin.mac'));
 }
 
 sub make_lines($$@) {
