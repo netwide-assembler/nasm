@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 ## --------------------------------------------------------------------------
-##   
+##
 ##   Copyright 1996-2016 The NASM Authors - All Rights Reserved
 ##   See the file AUTHORS included with the NASM distribution for
 ##   the specific copyright holders.
@@ -15,7 +15,7 @@
 ##     copyright notice, this list of conditions and the following
 ##     disclaimer in the documentation and/or other materials provided
 ##     with the distribution.
-##     
+##
 ##     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 ##     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 ##     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -68,7 +68,7 @@
 ($what) = @ARGV;
 
 $line = <STDIN>;
-chomp $line;
+$line =~ s/\s+//g;
 
 undef $maj;
 undef $min;
