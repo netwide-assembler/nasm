@@ -34,7 +34,8 @@ my %override = ( 'id' => 'special',
 		 'insn' => 'instruction',
 		 'reg' => 'register',
 		 'seg' => 'special',
-		 'wrt' => 'special' );
+		 'wrt' => 'special',
+		 'times' => 'special');
 
 sub read_tokhash_c($) {
     my($tokhash_c) = @_;
@@ -54,13 +55,19 @@ sub read_tokhash_c($) {
 
 	last if ($l =~ /\}\;/);
 
-	if ($l =~ /^\s*\{\s*\"(.*?)\",.*?,\s*TOKEN_(\w+),.*\}/) {
+	if ($l =~ /^\s*\{\s*\"(.*?)\",.*?,\s*TOKEN_(\w+),(.*)\}/) {
 	    my $token = $1;
 	    my $type  = lc($2);
+	    my $flags = $3;
+
+	    $token = "{${token}}" if ($flags =~ /\bTFLAG_BRC\b/);
+
+	    # Parametric token: omit the actual parameter versions
+	    next if ($token =~ /^\{\w+=.+\}$/);
 
 	    if ($override{$type}) {
 		$type = $override{$type};
-	    } elsif ($token !~ /^\w/) {
+	    } elsif ($token !~ /^(\{\w+=?\}|\w+)$/) {
 		$type = 'operator';
 	    } elsif ($token =~ /^__\?masm_.*\?__$/) {
 		next;
@@ -194,15 +201,32 @@ sub write_output($) {
     print $out ";;;\n";
     print $out ";;; This file is intended to be (require)d from a `nasm-mode\'\n";
     print $out ";;; major mode definition.\n";
+    print $out ";;;\n";
+    print $out ";;; Tokens that are only recognized inside curly braces are\n";
+    print $out ";;; noted as such. Tokens of the form {xxx=} are parametric\n";
+    print $out ";;; tokens, where the token may contain additional text on\n";
+    print $out ";;; the right side of the = sign. For example,\n";
+    print $out ";;; {dfv=} should be matched by {dfv=cf,zf}.\n";
+    print $out ";;;\n";
 
+    my @types = sort keys(%tokens);
+
+    # Write the individual token type lists
     foreach my $type (sort keys(%tokens)) {
-	print $out "\n(defconst nasm-${type}\n";
+	print $out "\n(defconst nasm-token-${type}\n";
 	print $out "  \'(";
 
 	print $out make_lines(78, 4, quote_for_emacs(sort @{$tokens{$type}}));
 	print $out ")\n";
 	print $out "  \"NASM ${version} ${type} tokens for `nasm-mode\'.\")\n";
     }
+
+    # Generate a list of all the token type lists.
+    print $out "\n(defconst nasm-token-lists\n";
+    print $out "  \'(";
+    print $out make_lines(78, 4, map { "'nasm-token-$_" } sort keys(%tokens));
+    print $out ")\n";
+    print $out "  \"List of all NASM token type lists.\")\n";
 
     close($out);
 }
