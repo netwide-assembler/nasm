@@ -83,11 +83,8 @@ PROGOBJ = $(NASM) $(NDISASM)
 PROGS   = nasm$(X) ndisasm$(X)
 
 # Files dependent on extracted warnings
-# WARNTIMES is explicit to avoid breaking some apparently problematic make
-# versions, e.g. Microsoft NMAKE
 WARNOBJ   = asm\warnings.obj
 WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
-WARNTIMES = asm\warnings_c.h.time include\warnings.h.time doc\warnings.src.time
 
 OUTPUTOBJ = \
 	output\outform.obj output\outlib.obj \
@@ -291,43 +288,6 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 	$(RUNPERL) $(srcdir)\x86\regs.pl h \
 		$(srcdir)\x86\regs.dat > x86\regs.h
 
-# Extract warnings from source code. This is done automatically if any
-# C files have changed; the script is fast enough that that is
-# reasonable, but doesn't update the time stamp if the files aren't
-# changed, to avoid rebuilding everything every time. Track the actual
-# dependency by the empty file asm\warnings.time.
-.PHONY: warnings
-warnings:
-	$(RM_F) $(WARNFILES) $(WARNTIMES) asm\warnings.time
-	$(MAKE) asm\warnings.time
-
-asm\warnings.time: $(WARNSRCS) asm\warnings.pl
-	$(EMPTY) asm\warnings.time
-	$(MAKE) $(WARNTIMES)
-
-asm\warnings_c.h.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings_c.h \
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) asm\warnings_c.h.time
-
-asm\warnings_c.h: asm\warnings_c.h.time
-	$(SIDE)
-
-include\warnings.h.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h \
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) include\warnings.h.time
-
-include\warnings.h: include\warnings.h.time
-	$(SIDE)
-
-doc\warnings.src.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src \
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) doc\warnings.src.time
-
-doc\warnings.src : doc\warnings.src.time
-	$(SIDE)
 
 # Assembler token hash
 asm\tokhash.c: x86\insns.xda x86\insnsn.c asm\tokens.dat asm\tokhash.pl \
