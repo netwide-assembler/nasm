@@ -57,7 +57,8 @@ foreach my $file (@ARGV) {
 		$nsuf = ' */';
 	    }
 	    my @hdr = ();
-	    if (scalar(@lines) && $lines[0] =~ /^\#\!/) {
+	    # Shebang and emacs mode lines should be left at the top
+	    while (scalar(@lines) && $lines[0] =~ /^(?:\#\!|.*\-\*\-)/) {
 		push(@hdr, shift(@lines));
 	    }
 	    push(@hdr, $npfx.'SPDX-License-Identifier: BSD-2-Clause'.$nsuf);

@@ -1,11 +1,11 @@
 # -*- makefile -*-
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright 1996-2025 The NASM Authors - All Rights Reserved
 #
 # Makefile for building NASM using Microsoft Visual C++ and NMAKE.
-# Tested on Microsoft Visual C++ 2005 Express Edition.
+# Last tested on Visual Studio 2022 Community Edition.
 #
-# Make sure to put the appropriate directories in your PATH, in
-# the case of MSVC++ 2005, they are ...\VC\bin and ...\Common7\IDE.
-#
+# Make sure to have the proper directories in your path.
 # This is typically done by opening the Visual Studio Command Prompt.
 #
 

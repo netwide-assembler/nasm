@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright 1996-2025 The NASM Authors - All Rights Reserved
+
 %define nasm_version @@NASM_VER@@
 Summary: The Netwide Assembler, a portable x86 assembler with Intel-like syntax
 Name: nasm
