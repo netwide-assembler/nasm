@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-## Copyright 2025 The NASM Authors - All Rights Reserved
-## SPDX-License-Identifier: BSD-2-Clause
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright 2025 The NASM Authors - All Rights Reserved
 
 #
 # Convert ultra-verbose in-file copyright statements to SPDX tags;
