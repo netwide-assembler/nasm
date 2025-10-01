@@ -21,10 +21,10 @@ mandir		= $(prefix)/man
 MANIFEST_FLAGS  = /manifest:embed /manifestfile:$(MANIFEST)
 
 !IF "$(DEBUG)" == "1"
-OPTFLAGS	= /Od /Zi
+OPTFLAGS	= /Od
 LDFLAGS		= /debug
 !ELSE
-CFLAGS		= /O2 /Zi
+OPTFLAGS	= /O2
  # /OPT:REF and /OPT:ICF two undo /DEBUG harm
 LDFLAGS		= /debug /opt:ref /opt:icf
 !ENDIF
@@ -33,6 +33,7 @@ CC		= cl
 AR		= lib
 ARFLAGS		= /nologo
 
+CFLAGS		= $(OPTFLAGS) /Zi /nologo /std:c11 /bigobj
 BUILD_CFLAGS	= $(CFLAGS) /W2
 INTERNAL_CFLAGS = /I$(srcdir) /I. \
 		  /I$(srcdir)/include /I./include \
@@ -52,8 +53,10 @@ RUNPERL         = $(PERL) $(PERLFLAGS)
 
 MAKENSIS        = makensis
 
-RM_F		= -del /f
-LN_S		= copy
+RM_F		= -del /s /f /q
+LN_S		= copy /y
+EMPTY		= copy /y nul:
+SIDE		= @rem Created by side effect
 
 # Binary suffixes
 O               = obj
@@ -308,7 +311,7 @@ asm\warnings_c.h.time: asm\warnings.pl asm\warnings.time
 	$(EMPTY) asm\warnings_c.h.time
 
 asm\warnings_c.h: asm\warnings_c.h.time
-	@: Side effect
+	$(SIDE)
 
 include\warnings.h.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h \
@@ -316,7 +319,7 @@ include\warnings.h.time: asm\warnings.pl asm\warnings.time
 	$(EMPTY) include\warnings.h.time
 
 include\warnings.h: include\warnings.h.time
-	@: Side effect
+	$(SIDE)
 
 doc\warnings.src.time: asm\warnings.pl asm\warnings.time
 	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src \
@@ -324,7 +327,7 @@ doc\warnings.src.time: asm\warnings.pl asm\warnings.time
 	$(EMPTY) doc\warnings.src.time
 
 doc\warnings.src : doc\warnings.src.time
-	@: Side effect
+	$(SIDE)
 
 # Assembler token hash
 asm\tokhash.c: x86\insns.xda x86\insnsn.c asm\tokens.dat asm\tokhash.pl \
