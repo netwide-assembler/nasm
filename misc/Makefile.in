@@ -51,7 +51,7 @@ CP_F		= cp -f
 CP_UF		= cp -uf
 
 PROGS		= omfdump$(X)
-GENDATA		= nasmtok.el
+GENDATA		=
 SRCDATA		= README \
 		  c16.mac c32.mac exebin.mac exebin2.mac \
 		  myC32.mac scitech.mac \
@@ -84,9 +84,6 @@ all: $(PROGS) $(GENDATA)
 
 omfdump$(X): omfdump.$(O)
 	$(CC) $(ALL_LDFLAGS) -o $@ $< $(LIBS)
-
-nasmtok.el:
-	$(MAKE) -C ..
 
 install-prog: $(PROGS)
 	$(MKDIR_P) $(DESTDIR)$(bindir)

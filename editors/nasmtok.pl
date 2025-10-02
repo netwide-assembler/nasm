@@ -8,14 +8,25 @@ use strict;
 use File::Spec;
 use File::Find;
 
+my $format = 'el';
+
+if ($ARGV[0] =~ /^-(\S+)$/) {
+    $format = $1;
+    shift @ARGV;
+}
+
 my($outfile, $srcdir, $objdir) = @ARGV;
 
 if (!defined($outfile)) {
-    die "Usage: $0 outfile srcdir objdir\n";
+    die "Usage: $0 [-format] outfile srcdir objdir\n";
 }
 
-$srcdir = File::Spec->curdir() unless (defined($srcdir));
-$objdir = $srcdir unless (defined($objdir));
+my @vpath;
+
+$srcdir = $srcdir || File::Spec->curdir();
+$objdir = $objdir || $srcdir;
+push(@vpath, $objdir) if ($objdir ne $srcdir);
+push(@vpath, $srcdir);
 
 my %tokens = ();		# Token lists per category
 my %token_category = ();	# Tokens to category map
@@ -25,6 +36,32 @@ sub xpush($@) {
 
     $$ref = [] unless (defined($$ref));
     return push(@$$ref, @_);
+}
+
+# Search for a file, and return a file handle if successfully opened
+sub open_vpath($$) {
+    my($mode, $file) = @_;
+    my %tried;
+
+    # For simplicity, allow filenames to be specified
+    # with Unix / syntax internally
+    $file = File::Spec->catfile(split(/\//, $file));
+
+    foreach my $d (@vpath) {
+	my $fn = File::Spec->catfile($d, $file);
+	next if ($tried{$fn});
+	$tried{$fn}++;
+	my $fh;
+	return $fh if (open($fh, $mode, $fn));
+    }
+    return undef;
+}
+
+sub must_open($) {
+    my($file) = @_;
+    my $fh = open_vpath('<', $file);
+    return $fh if (defined($fh));
+    die "$0:$file: $!\n";
 }
 
 # Combine some specific token types
@@ -54,8 +91,7 @@ sub addtoken($$) {
 sub read_tokhash_c($) {
     my($tokhash_c) = @_;
 
-    open(my $th, '<', $tokhash_c)
-	or die "$0:$tokhash_c: $!\n";
+    my $th = must_open($tokhash_c);
 
     my $l;
     my $tokendata = 0;
@@ -97,8 +133,7 @@ sub read_tokhash_c($) {
 sub read_pptok_c($) {
     my($pptok_c) = @_;
 
-    open(my $pt, '<', $pptok_c)
-	or die "$0:$pptok_c: $!\n";
+    my $pt = must_open($pptok_c);
 
     my $l;
     my $pp_dir = 0;
@@ -123,8 +158,7 @@ sub read_pptok_c($) {
 sub read_directiv_dat($) {
     my($directiv_dat) = @_;
 
-    open(my $dd, '<', $directiv_dat)
-	or die "$0:$directiv_dat: $!\n";
+    my $dd = must_open($directiv_dat);
 
     my $l;
     my $directiv = 0;
@@ -145,22 +179,25 @@ sub read_directiv_dat($) {
     close($dd);
 }
 
-my $version;
+my %version;
 sub read_version($) {
     my($vfile) = @_;
-    open(my $v, '<', $vfile)
-	or die "$0:$vfile: $!\n";
+    my $v = must_open($vfile);
 
-    $version = <$v>;
-    chomp $version;
-
+    while (defined(my $vl = <$v>)) {
+	if ($vl =~ /^NASM_(\w+)=(\S+)\s*$/) {
+	    $version{lc($1)} = $2;
+	}
+    }
     close($v);
 }
 
+# This is called from the directory search in read_macros(), so
+# don't use must_open() here.
 sub read_macro_file($) {
     my($file) = @_;
 
-    open(my $fh, '<', $file) or die;
+    open(my $fh, '<', $file) or die "$0:$file: $!\n";
     while (defined(my $l = <$fh>)) {
 	next unless ($l =~ /^\s*\%/);
 	my @f = split(/\s+/, $l);
@@ -177,21 +214,20 @@ sub read_macro_file($) {
     close($fh);
 }
 
-sub read_macros($$) {
-    my($srcdir, $objdir) = @_;
-    my @dirs;
-    push(@dirs, $objdir);
-    push(@dirs, File::Spec->catdir($srcdir, 'macros'));
-    push(@dirs, File::Spec->catdir($srcdir, 'output'));
+sub read_macros(@) {
+    my %visited;
+    my @dirs = (File::Spec->curdir(), qw(macros output editors));
+    @dirs = map { my $od = $_; map { File::Spec->catdir($od, $_) } @dirs } @_;
     foreach my $dir (@dirs) {
-	opendir(my $dh, $dir) or die;
+	next if ($visited{$dir});
+	$visited{$dir}++;
+	next unless opendir(my $dh, $dir);
 	while (defined(my $fn = readdir($dh))) {
-	    next unless ($fn =~ /\.mac$/);
-	    read_macro_file(File::Spec->catdir($dir, $fn));
+	    next unless ($fn =~ /\.mac$/i);
+	    read_macro_file(File::Spec->catfile($dir, $fn));
 	}
+	closedir($dh);
     }
-    # Don't read the whole misc directory!
-    read_macro_file(File::Spec->catdir($srcdir, 'misc/builtin.mac'));
 }
 
 sub make_lines($$@) {
@@ -235,18 +271,15 @@ sub quote_for_emacs(@) {
     return map { s/[\\\"\']/\\$1/g; '"'.$_.'"' } @_;
 }
 
-sub write_output($) {
-    my($outfile) = @_;
-
-    open(my $out, '>', $outfile)
-	or die "$0:$outfile: $!\n";
-
-    my($vol,$dir,$file) = File::Spec->splitpath($outfile);
+# Emacs LISP
+sub write_output_el {
+    my($out, $outfile, $file) = @_;
+    my $whoami = 'NASM '.$version{'ver'};
 
     print $out ";;; ${file} --- lists of NASM assembler tokens\n\n";
     print $out ";;; Commentary:\n\n";
     print $out ";; This file contains list of tokens from the NASM x86\n";
-    print $out ";; assembler, automatically extracted from NASM ${version}.\n";
+    print $out ";; assembler, automatically extracted from ${whoami}.\n";
     print $out ";;\n";
     print $out ";; This file is intended to be (require)d from a `nasm-mode\'\n";
     print $out ";; major mode definition.\n";
@@ -268,7 +301,7 @@ sub write_output($) {
 
 	print $out make_lines(78, 4, quote_for_emacs(sort @{$tokens{$type}}));
 	print $out ")\n";
-	print $out "  \"NASM ${version} ${type} tokens for `nasm-mode\'.\")\n";
+	print $out "  \"${whoami} ${type} tokens for `nasm-mode\'.\")\n";
     }
 
     # Generate a list of all the token type lists.
@@ -276,20 +309,61 @@ sub write_output($) {
     print $out "  \'(";
     print $out make_lines(78, 4, map { "'nasm-$_" } sort keys(%tokens));
     print $out ")\n";
-    print $out "  \"List of all NASM token type lists.\")\n";
+    print $out "  \"List of all ${whoami} token type lists.\")\n";
 
+    # The NASM token extracted version
+    printf $out "\n(defconst nasm-token-version %s\n",
+	quote_for_emacs($version{'ver'});
+    print $out "  \"Version of NASM from which tokens were extracted,\n";
+    print $out "as a human-readable string.\")\n";
+
+    printf $out "\n(defconst nasm-token-version-id #x%08x\n",
+	$version{'version_id'};
+    print $out "  \"Version of NASM from which tokens were extracted,\n";
+    print $out "as numeric identifier, for comparisons. Equivalent to the\n";
+    print $out "__?NASM_VERSION_ID?__ NASM macro value.\")\n";
+
+    printf $out "\n(defconst nasm-token-version-snapshot %s\n",
+	$version{'snapshot'} || 'nil';
+    print $out "  \"Daily NASM snapshot build from which tokens were extracted,\n";
+    print $out "as a decimal number in YYYYMMDD format, or nil if not a\n";
+    print $out "daily snapshot build.\")\n";
 
     # Footer
     print $out "\n(provide 'nasmtok)\n";
     print $out ";;; nasmtok.el ends here\n";
 
-    close($out);
+    return 0;
 }
 
-read_tokhash_c(File::Spec->catfile($objdir, 'asm', 'tokhash.c'));
-read_pptok_c(File::Spec->catfile($objdir, 'asm', 'pptok.c'));
-read_directiv_dat(File::Spec->catfile($srcdir, 'asm', 'directiv.dat'));
-read_version(File::Spec->catfile($srcdir, 'version'));
-read_macros($srcdir, $objdir);
+sub write_output($$) {
+    my($format, $outfile) = @_;
+    my %formats = (
+	'el' => \&write_output_el
+    );
 
-write_output($outfile);
+    my $outfunc = $formats{$format};
+    if (!defined($outfunc)) {
+	die "$0: unknown output format: $format\n";
+    }
+
+    open(my $out, '>', $outfile)
+	or die "$0:$outfile: $!\n";
+
+    my($vol,$dir,$file) = File::Spec->splitpath($outfile);
+
+    my $err = $outfunc->($out, $outfile, $file);
+    close($out);
+
+    if ($err) {
+	unlink($outfile);
+	die "$0:$outfile: error writing output\n";
+    }
+}
+
+read_tokhash_c('asm/tokhash.c');
+read_pptok_c('asm/pptok.c');
+read_directiv_dat('asm/directiv.dat');
+read_version('version.mak');
+read_macros(@vpath);
+write_output($format, $outfile);

@@ -134,7 +134,7 @@ if ( $what eq 'h' ) {
     printf "s/\@\@NASM_PATCHLEVEL\@\@/%d/g\n", $nplvl;
     printf "s/\@\@NASM_SNAPSHOT\@\@/%d/g\n", $snapshot;	# Possibly empty
     printf "s/\@\@NASM_VERSION_ID\@\@/%d/g\n", $nasm_id;
-    printf "s/\@\@NASM_VERSION_XID\@\@/0x%08x/g\n", $nasm_id;
+    printf "s/\@\@NASM_VERSION_XID\@\@/%08x/g\n", $nasm_id;
     printf "s/\@\@NASM_VER\@\@/%s/g\n", $line;
     printf "s/\@\@NASM_MANGLED_VER\@\@/%s/g\n", $mangled_ver;
 } elsif ( $what eq 'make' ) {
@@ -143,12 +143,20 @@ if ( $what eq 'h' ) {
     printf "NASM_MINOR_VER=%d\n", $nmin;
     printf "NASM_SUBMINOR_VER=%d\n", $nsmin;
     printf "NASM_PATCHLEVEL_VER=%d\n", $nplvl;
+    printf "NASM_VERSION_ID=%d\n", $nasm_id;
+    printf "NASM_VERSION_XID=%08x\n", $nasm_id;
+    if (defined($snapshot)) {
+	printf "NASM_SNAPSHOT=%d\n", $snapshot;
+    }
 } elsif ( $what eq 'nsis' ) {
     printf "!define VERSION \"%s\"\n", $line;
     printf "!define MAJOR_VER %d\n", $nmin;
     printf "!define MINOR_VER %d\n", $nmin;
     printf "!define SUBMINOR_VER %d\n", $nsmin;
     printf "!define PATCHLEVEL_VER %d\n", $nplvl;
+    if (defined($snapshot)) {
+	printf "!define SNAPSHOT_VER=%d\n", $snapshot;
+    }
 } elsif ( $what eq 'id' ) {
     print $nasm_id, "\n";	 # Print ID in decimal
 } elsif ( $what eq 'xid' ) {
