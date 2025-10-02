@@ -49,7 +49,11 @@ LIBS		=
 
 PERL		= perl
 PERLFLAGS	= -I$(srcdir)/perllib -I$(srcdir)
+!IF [$(PERL) $(PERLFLAGS) -e "exit 0;"] == 0
 RUNPERL         = $(PERL) $(PERLFLAGS)
+!ELSE
+RUNPERL         = :
+!ENDIF
 
 MAKENSIS        = makensis
 
@@ -184,10 +188,12 @@ NDISLIB = libndis.$(A)
 all: nasm$(X) ndisasm$(X)
 
 nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
-	$(CC) /Fe:$@ $(NASM) $(NASMLIB) $(LIBS) $(ALL_LDFLAGS)
+	$(CC) /Fe:$@ $(ALL_CFLAGS) $(NASM) $(NASMLIB) $(LIBS) \
+		$(ALL_LDFLAGS)
 
 ndisasm$(X): $(NDISASM) $(MANIFEST) $(NDISLIB) $(NASMLIB)
-	$(CC) /Fe:$@ $(NDISASM) $(NDISLIB) $(NASMLIB) $(LIBS) $(ALL_LDFLAGS)
+	$(CC) /Fe:$@ $(ALL_CFLAGS) $(NDISASM) $(NDISLIB) $(NASMLIB) $(LIBS) \
+		$(ALL_LDFLAGS)
 
 $(NASMLIB): $(LIBOBJ)
 	$(AR) $(ARFLAGS) /out:$@ $**
