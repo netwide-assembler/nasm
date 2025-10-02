@@ -27,7 +27,7 @@ static void nasm_z_free(void *opaque, void *ptr)
     nasm_free(ptr);
 }
 
-char *uncompress_stdmac(const macros_t *sm)
+char *uncompress_stdmac(macros_t *sm)
 {
     z_stream zs;
     void *buf = nasm_malloc(sm->dsize);

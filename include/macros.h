@@ -17,7 +17,7 @@ struct builtin_macros {
 };
 typedef const struct builtin_macros macros_t;
 
-char *uncompress_stdmac(const macros_t *sm);
+char *uncompress_stdmac(macros_t *sm);
 
 /* --- From standard.mac via macros.pl -> macros.c --- */
 

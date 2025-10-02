@@ -18,39 +18,49 @@ exec_prefix	= $(prefix)
 bindir		= $(prefix)/bin
 mandir		= $(prefix)/man
 
-MANIFEST_FLAGS  = /MANIFEST:EMBED /MANIFESTFILE:$(MANIFEST)
+MANIFEST_FLAGS  = /manifest:embed /manifestfile:$(MANIFEST)
 
 !IF "$(DEBUG)" == "1"
-CFLAGS		= /Od /Zi
-LDFLAGS		= /DEBUG
+OPTFLAGS	= /Od
+LDFLAGS		= /debug
 !ELSE
-CFLAGS		= /O2 /Zi
+OPTFLAGS	= /O2
  # /OPT:REF and /OPT:ICF two undo /DEBUG harm
-LDFLAGS		= /DEBUG /OPT:REF /OPT:ICF
+LDFLAGS		= /debug /opt:ref /opt:icf
 !ENDIF
 
 CC		= cl
 AR		= lib
+ARFLAGS		= /nologo
+
+CFLAGS		= $(OPTFLAGS) /Zi /nologo /std:c11 /bigobj
 BUILD_CFLAGS	= $(CFLAGS) /W2
 INTERNAL_CFLAGS = /I$(srcdir) /I. \
 		  /I$(srcdir)/include /I./include \
 		  /I$(srcdir)/x86 /I./x86 \
 		  /I$(srcdir)/asm /I./asm \
 		  /I$(srcdir)/disasm /I./disasm \
-		  /I$(srcdir)/output /I./output
+		  /I$(srcdir)/output /I./output \
+		  /I$(srcdir)/zlib
 ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
-MANIFEST_FLAGS  = /MANIFEST:EMBED /MANIFESTINPUT:$(MANIFEST)
-ALL_LDFLAGS	= /link $(LDFLAGS) $(MANIFEST_FLAGS) /SUBSYSTEM:CONSOLE /RELEASE
+MANIFEST_FLAGS  = /manifest:embed /manifestinput:$(MANIFEST)
+ALL_LDFLAGS	= /link $(LDFLAGS) $(MANIFEST_FLAGS) /subsystem:console /release
 LIBS		=
 
 PERL		= perl
 PERLFLAGS	= -I$(srcdir)/perllib -I$(srcdir)
+!IF [$(PERL) $(PERLFLAGS) -e "exit 0;"] == 0
 RUNPERL         = $(PERL) $(PERLFLAGS)
+!ELSE
+RUNPERL         = :
+!ENDIF
 
 MAKENSIS        = makensis
 
-RM_F		= -del /f
-LN_S		= copy
+RM_F		= -del /s /f /q
+LN_S		= copy /y
+EMPTY		= copy /y nul:
+SIDE		= @rem Created by side effect
 
 # Binary suffixes
 O               = obj
@@ -60,7 +70,7 @@ X               = .exe
 .SUFFIXES: $(X) .$(A) .obj .c .i .s .1 .man
 
 .c.obj:
-	$(CC) /c $(ALL_CFLAGS) /Fo$@ $<
+	$(CC) /c $(ALL_CFLAGS) /Fo:$@ $<
 
 MANIFEST = win/manifest.xml
 
@@ -178,20 +188,21 @@ NDISLIB = libndis.$(A)
 all: nasm$(X) ndisasm$(X)
 
 nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
-	$(CC) /Fe$@ $(NASM) $(ALL_LDFLAGS) $(NASMLIB) $(LIBS)
+	$(CC) /Fe:$@ $(ALL_CFLAGS) $(NASM) $(NASMLIB) $(LIBS) \
+		$(ALL_LDFLAGS)
 
 ndisasm$(X): $(NDISASM) $(MANIFEST) $(NDISLIB) $(NASMLIB)
-	$(CC) /Fe$@ $(NDISASM) $(ALL_LDFLAGS) $(NDISLIB) $(NASMLIB) $(LIBS)
+	$(CC) /Fe:$@ $(ALL_CFLAGS) $(NDISASM) $(NDISLIB) $(NASMLIB) $(LIBS) \
+		$(ALL_LDFLAGS)
 
 $(NASMLIB): $(LIBOBJ)
-	$(AR) $(ARFLAGS) /OUT:$@ $**
+	$(AR) $(ARFLAGS) /out:$@ $**
 
 $(NDISLIB): $(LIBOBJ_DIS)
-	$(AR) $(ARFLAGS) /OUT:$@ $**
+	$(AR) $(ARFLAGS) /out:$@ $**
 
 # These are specific to certain Makefile syntaxes...
-WARNTIMES = $(patsubst %,%.time,$(WARNFILES))
-WARNSRCS  = $(patsubst %.obj,%.c,$(LIBOBJ_NW))
+WARNSRCS  = $(LIBOBJ_NW:.c=.obj)
 
 #-- Begin Generated File Rules --#
 # Edit in Makefile.in, not here!
@@ -283,43 +294,6 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 	$(RUNPERL) $(srcdir)\x86\regs.pl h \
 		$(srcdir)\x86\regs.dat > x86\regs.h
 
-# Extract warnings from source code. This is done automatically if any
-# C files have changed; the script is fast enough that that is
-# reasonable, but doesn't update the time stamp if the files aren't
-# changed, to avoid rebuilding everything every time. Track the actual
-# dependency by the empty file asm\warnings.time.
-.PHONY: warnings
-warnings:
-	$(RM_F) $(WARNFILES) $(WARNTIMES) asm\warnings.time
-	$(MAKE) asm\warnings.time
-
-asm\warnings.time: $(WARNSRCS) asm\warnings.pl
-	$(EMPTY) asm\warnings.time
-	$(MAKE) $(WARNTIMES)
-
-asm\warnings_c.h.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings_c.h \
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) asm\warnings_c.h.time
-
-asm\warnings_c.h: asm\warnings_c.h.time
-	@: Side effect
-
-include\warnings.h.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h \
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) include\warnings.h.time
-
-include\warnings.h: include\warnings.h.time
-	@: Side effect
-
-doc\warnings.src.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src \
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) doc\warnings.src.time
-
-doc\warnings.src : doc\warnings.src.time
-	@: Side effect
 
 # Assembler token hash
 asm\tokhash.c: x86\insns.xda x86\insnsn.c asm\tokens.dat asm\tokhash.pl \

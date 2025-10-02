@@ -28,12 +28,19 @@ PERL		= perl
 PERLFLAGS	= -I$(srcdir)\perllib -I$(srcdir)
 RUNPERL         = $(PERL) $(PERLFLAGS)
 
-EMPTY		= $(RUNPERL) -e ""
+.BEFORE
+	set COPYCMD=/y
+
+RM_F		= -del /f
+LN_S		= copy
+EMPTY		= copy nul:
+SIDE		= @rem Created by side effect
 
 MAKENSIS        = makensis
 
 # Binary suffixes
 O               = obj
+A		= lib
 X               = .exe
 
 # WMAKE errors out if a suffix is declared more than once, including
@@ -41,7 +48,7 @@ X               = .exe
 # first.  Also, WMAKE only allows implicit rules that point "to the left"
 # in this list!
 .SUFFIXES:
-.SUFFIXES: .man .1 .obj .i .c
+.SUFFIXES: .man .1 .obj .i .c .lib .exe
 
 # Needed to find C files anywhere but in the current directory
 .c : $(VPATH)
@@ -296,43 +303,6 @@ x86\regs.h: x86\regs.dat x86\regs.pl
 	$(RUNPERL) $(srcdir)\x86\regs.pl h &
 		$(srcdir)\x86\regs.dat > x86\regs.h
 
-# Extract warnings from source code. This is done automatically if any
-# C files have changed; the script is fast enough that that is
-# reasonable, but doesn't update the time stamp if the files aren't
-# changed, to avoid rebuilding everything every time. Track the actual
-# dependency by the empty file asm\warnings.time.
-.PHONY: warnings
-warnings:
-	$(RM_F) $(WARNFILES) $(WARNTIMES) asm\warnings.time
-	$(MAKE) asm\warnings.time
-
-asm\warnings.time: $(WARNSRCS) asm\warnings.pl
-	$(EMPTY) asm\warnings.time
-	$(MAKE) $(WARNTIMES)
-
-asm\warnings_c.h.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings_c.h &
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) asm\warnings_c.h.time
-
-asm\warnings_c.h: asm\warnings_c.h.time
-	@: Side effect
-
-include\warnings.h.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h &
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) include\warnings.h.time
-
-include\warnings.h: include\warnings.h.time
-	@: Side effect
-
-doc\warnings.src.time: asm\warnings.pl asm\warnings.time
-	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src &
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) doc\warnings.src.time
-
-doc\warnings.src : doc\warnings.src.time
-	@: Side effect
 
 # Assembler token hash
 asm\tokhash.c: x86\insns.xda x86\insnsn.c asm\tokens.dat asm\tokhash.pl &

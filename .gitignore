@@ -78,9 +78,9 @@ TAGS
 /doc/pptok.src
 /doc/fontpath
 /doc/Fontmap
+/editors/nasmtok.el
 /include/warnings.h
 /macros/macros.c
-/misc/nasmtok.el
 /misc/omfdump
 /misc/Makefile
 /nasm

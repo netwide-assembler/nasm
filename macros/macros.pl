@@ -116,7 +116,7 @@ sub flush_mac($$)
     printf $out "static const unsigned char %s_blob[%d] = {\n", $name, $zlen;
     print_data($out, $zblob);
 
-    printf $out "\n%sconst macros_t %s = {\n    %d, %d, %s_blob\n};\n",
+    printf $out "\n%smacros_t %s = {\n    %d, %d, %s_blob\n};\n",
 	$mac->{'static'} ? 'static ' : '',
 	$name, $dlen, $zlen, $name;
 
