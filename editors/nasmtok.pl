@@ -346,10 +346,39 @@ sub write_output_el {
     return 0;
 }
 
+# JSON
+sub write_output_json {
+    use JSON;
+
+    my($out, $outfile, $file) = @_;
+    my $whoami = 'NASM '.$version{'ver'};
+
+
+    my $json = JSON->new;
+    $json = $json->ascii(1)->canonical(1);
+
+    my %ver;
+    foreach my $vn (keys(%version)) {
+	my $vv = $version{$vn};
+	next if ($vn eq 'version_xid');
+	$vn =~ s/_ver$//;
+	$vn =~ s/^version_//;
+	$vv = $vv + 0 if ($vn ne 'ver');
+	$ver{$vn} = $vv;
+    }
+
+    print $out $json->encode({
+	'$comment' => "NASM syntax information extracted from ${whoami}",
+	    'tokens' => \%tokens, 'version' => \%ver});
+    print $out "\n";
+    return 0;
+}
+
 sub write_output($$) {
     my($format, $outfile) = @_;
     my %formats = (
-	'el' => \&write_output_el
+	'el' => \&write_output_el,
+	'json' => \&write_output_json
     );
 
     my $outfunc = $formats{$format};
