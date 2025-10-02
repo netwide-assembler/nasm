@@ -331,7 +331,7 @@ sub write_output_el {
 
     # Footer
     print $out "\n(provide 'nasmtok)\n";
-    print $out ";;; nasmtok.el ends here\n";
+    print $out ";;; ${file} ends here\n";
 
     return 0;
 }
