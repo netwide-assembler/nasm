@@ -178,8 +178,11 @@ ALLOBJ_W  = $(NASM) $(LIBOBJ_W)
 ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 SUBDIRS  = stdlib nasmlib include config output asm disasm x86 \
 	   common zlib macros misc
-XSUBDIRS = nsis win test doc
+XSUBDIRS = nsis win test doc editors
 DEPDIRS  = . $(SUBDIRS)
+
+EDITORS  = editors\nasmtok.el editors\nasmtok.json
+
 #-- End File Lists --#
 
 NASMLIB = libnasm.$(A)
@@ -220,7 +223,6 @@ PERLREQ_CLEANABLE = \
 	  macros\macros.c \
 	  asm\pptok.ph asm\directbl.c asm\directiv.h \
 	  $(WARNFILES) \
-	  misc\nasmtok.el \
 	  version.h version.mac version.mak nsis\version.nsh
 
 PERLREQ = $(PERLREQ_CLEANABLE)
@@ -331,10 +333,18 @@ asm\directbl.c: asm\directiv.dat nasmlib\perfhash.pl perllib\phash.ph
 	$(RUNPERL) $(srcdir)\nasmlib\perfhash.pl c \
 		$(srcdir)\asm\directiv.dat asm\directbl.c
 
-# Emacs token files
-misc\nasmtok.el: misc\emacstbl.pl asm\tokhash.c asm\pptok.c \
-		 asm\directiv.dat version
-	$(RUNPERL) $(srcdir)\misc\emacstbl.pl $@ $(srcdir) $(objdir)
+# Editor token files
+editors\nasmtok.el: editors\nasmtok.pl asm\tokhash.c asm\pptok.c \
+		 asm\directiv.dat macros\macros.c editors\builtin.mac \
+		 version.mak
+	$(RUNPERL) $(srcdir)\editors\nasmtok.pl -el $@ $(srcdir) $(objdir)
+
+editors\nasmtok.json: editors\nasmtok.pl asm\tokhash.c asm\pptok.c \
+		 asm\directiv.dat macros\macros.c editors\builtin.mac \
+		 version.mak
+	$(RUNPERL) $(srcdir)\editors\nasmtok.pl -json $@ $(srcdir) $(objdir)
+
+editors: $(EDITORS)
 
 #-- End Generated File Rules --#
 

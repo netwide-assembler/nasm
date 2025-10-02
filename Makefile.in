@@ -6,6 +6,9 @@
 
 @SET_MAKE@
 
+PACKAGE_NAME    = @PACKAGE_NAME@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
+
 top_srcdir	= @top_srcdir@
 srcdir		= @srcdir@
 objdir		= @builddir@
@@ -16,6 +19,11 @@ bindir		= @bindir@
 mandir		= @mandir@
 datarootdir	= @datarootdir@
 datadir		= @datadir@
+pkgdatadir      = $(datadir)/$(PACKAGE_TARNAME)
+docdir          = @docdir@
+htmldir         = @htmldir@
+pdfdir          = @pdfdir@
+psdir           = @psdir@
 
 CC		= @CC@
 CFLAGS		= @CFLAGS@
@@ -473,8 +481,8 @@ install: $(PROGS)
 	$(INSTALL_DATA) $(srcdir)/ndisasm.1 $(DESTDIR)$(mandir)/man1/ndisasm.1
 
 install_editors: $(EDITORS)
-	$(MKDIR_P) $(DESTDIR)$(datadir)
-	$(INSTALL_DATA) $(EDITORS) $(DESTDIR)$(datadir)
+	$(MKDIR_P) $(DESTDIR)$(pkgdatadir)
+	$(INSTALL_DATA) $(EDITORS) $(DESTDIR)$(pkgdatadir)
 
 clean:
 	for d in . $(SUBDIRS) $(XSUBDIRS); do \
@@ -488,11 +496,10 @@ clean:
 
 distclean: clean
 	for d in . $(SUBDIRS) $(XSUBDIRS); do \
-		$(RM_F) "$$d"/.\# "$$d"/\# "$$d"/*~ "$$d"/*.bak \
-			"$$d"/*.lst "$$d"/*.bin ; \
+		$(RM_F) "$$d"/.\#* "$$d"/\#* "$$d"/*~ "$$d"/*.bak \
+			"$$d"/*.lst "$$d"/*.bin "$$d"/*.dep ; \
 	done
 	$(RM_F) test/*.$(O)
-	$(RM_F) *.dep
 	-$(SHELL) autoconf/clean.sh || $(SHELL) $(srcdir)/autoconf/clean.sh
 
 cleaner:
@@ -546,11 +553,16 @@ everything: always_everything
 
 install_everything: everything install install_doc install_editors
 
+editor_builtin: nasm$(X)
+	$(SHELL) editors/dumpbuiltin.sh ./nasm$(X) > editors/builtin.mac
+
 dist:
 	$(MAKE) alldeps
-	$(MAKE) perlreq warnings spec $(MANPAGES)
+	$(MAKE) perlreq warnings spec
+	$(MAKE) editor_builtin
+	$(MAKE) editors $(MANPAGES)
 	$(MAKE) distclean
-	./autogen.sh
+	$(SHELL) autogen.sh --clearenv
 
 tar: dist
 	tar -cv --exclude CVS --exclude .git -C .. -f - `basename \`pwd\`` | \

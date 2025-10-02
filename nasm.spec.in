@@ -20,6 +20,7 @@ BuildRequires: xmlto
 BuildRequires: perl
 BuildRequires: gcc
 BuildRequires: make
+BuildRequires: gzip
 BuildRequires: xz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Obsoletes: %{name}-rdoff
@@ -31,7 +32,9 @@ BuildRequires: ghostscript
 BuildRequires: fontconfig
 BuildRequires: google-roboto-fonts
 BuildRequires: google-roboto-mono-fonts
-Obsoletes: %{name}-doc < %{version}-%{release}
+
+%define _pkgdatadir %{_datadir}/%{name}
+%define  pkgdatadir %{?buildroot:%{buildroot}}%{_datadir}/%{name}
 
 %description
 NASM is the Netwide Assembler, a free portable assembler for the Intel
@@ -52,18 +55,22 @@ make %{?_smp_mflags} everything
 
 %install
 rm -rf "%{buildroot}"
-mkdir -p "%{buildroot}"/%{_bindir}
-mkdir -p "%{buildroot}"/%{_mandir}/man1
-make DESTDIR="%{buildroot}" install
+make DESTDIR="%{buildroot}" install install_editors
+gzip -9 "%{pkgdatadir}"/nasmtok.*
 
 %files
+%defattr(-,root,root)
 %doc AUTHORS
+%doc LICENSE
 %{_bindir}/nasm
 %{_bindir}/ndisasm
 %{_mandir}/man1/nasm.1*
 %{_mandir}/man1/ndisasm.1*
+%dir %{_pkgdatadir}
+%{_pkgdatadir}/nasmtok.*.gz
 
 %files doc
+%defattr(-,root,root)
 %doc doc/html doc/nasmdoc.pdf.xz
 
 # This is the upstream spec file; the change log is in git

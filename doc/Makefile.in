@@ -8,17 +8,26 @@
 
 @SET_MAKE@
 
+PACKAGE_NAME    = @PACKAGE_NAME@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
+
 top_srcdir	= @top_srcdir@
 srcdir		= @srcdir@
+objdir		= @builddir@
 VPATH		= @srcdir@
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
 mandir		= @mandir@
-docdir		= @docdir@
-htmldir		= @htmldir@
-infodir		= @infodir@
 datarootdir	= @datarootdir@
+datadir		= @datadir@
+mydatadir       = $(datadir)/$(PACKAGE_TARNAME)
+docdir          = @docdir@
+htmldir         = @htmldir@
+pdfdir          = @pdfdir@
+psdir           = @psdir@
+emacsdir        = $(datarootdir)/emacs/site-lisp
+jsondir         = $(mydatadir)
 
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
@@ -132,10 +141,9 @@ spotless: clean
 	-$(RM_F) *.hlp nasmdoc.txt *.inf *.pdf *.pdf.xz *.dvi
 
 install: all
-	$(MKDIR_P) $(DESTDIR)$(htmldir)
+	$(MKDIR_P) $(DESTDIR)$(htmldir) $(DESTDIR)$(pdfdir)
 	$(INSTALL_DATA) html/* $(DESTDIR)$(htmldir)
-	$(MKDIR_P) $(DESTDIR)$(docdir)
-	$(INSTALL_DATA) nasmdoc.pdf nasmdoc.txt $(DESTDIR)$(docdir)
+	$(INSTALL_DATA) nasmdoc.pdf $(DESTDIR)$(pdfdir)
 
 #
 # Dummy rules that changes make behavior

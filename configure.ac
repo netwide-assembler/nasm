@@ -1,7 +1,8 @@
 dnl Process this file with autoconf 2.71 or later to produce
 dnl a configure script.
 AC_PREREQ([2.71])
-AC_INIT
+m4_define([VERSION],m4_normalize(m4_include([version])))
+AC_INIT([nasm],VERSION,[https://bugs.nasm.us/],[nasm],[https://www.nasm.us/])
 AC_CONFIG_SRCDIR([config/config.h.in])
 AC_CONFIG_HEADERS([config/config.h])
 AC_PREFIX_PROGRAM(nasm)

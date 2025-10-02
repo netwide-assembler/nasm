@@ -79,6 +79,7 @@ TAGS
 /doc/fontpath
 /doc/Fontmap
 /editors/nasmtok.el
+/editors/nasmtok.json
 /include/warnings.h
 /macros/macros.c
 /misc/omfdump
