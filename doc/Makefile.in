@@ -65,6 +65,9 @@ ALLSRCS		= $(SRCS) $(GENSRC)
 OUT		= html nasmdoc.txt nasmdoc.pdf $(XZFILES)
 XZOUT           = nasmdoc.pdf.xz
 
+# Use "make install PDFZ=.xz" to install pdf.xz
+PDF             =
+
 # Don't delete intermediate files
 .SECONDARY:
 
@@ -83,14 +86,17 @@ xzfiles: $(XZOUT)
 insns.src: inslist.pl ../x86/insns.xda
 	$(RUNPERL) $^ $@
 
+# A representative HTML file
+htmltarget=html/nasm00.html
+
 html: $(HTMLAUX)
 	$(MKDIR_P) html
 	for f in $(HTMLAUX); do $(CP_UF) "$(srcdir)/$$f" html/; done
-	$(MAKE) html/nasmdoc0.html
+	$(MAKE) $(htmltarget)
 
 RDSRC = $(RUNPERL) $(srcdir)/rdsrc.pl -I$(srcdir) -M$(@F).dep
 
-html/nasmdoc0.html: $(ALLSRCS) rdsrc.pl
+$(htmltarget): $(ALLSRCS) rdsrc.pl
 	$(RM_F) html/*.html
 	$(RDSRC) -ohtml html $<
 
@@ -140,10 +146,15 @@ spotless: clean
 	-$(RM_RF) html info
 	-$(RM_F) *.hlp nasmdoc.txt *.inf *.pdf *.pdf.xz *.dvi
 
-install: all
-	$(MKDIR_P) $(DESTDIR)$(htmldir) $(DESTDIR)$(pdfdir)
+install_html: html
+	$(MKDIR_P) $(DESTDIR)$(htmldir)
 	$(INSTALL_DATA) html/* $(DESTDIR)$(htmldir)
-	$(INSTALL_DATA) nasmdoc.pdf $(DESTDIR)$(pdfdir)
+
+install_pdf: nasmdoc.pdf$(Z)
+	$(MKDIR_P) $(DESTDIR)$(pdfdir)
+	$(INSTALL_DATA) nasmdoc.pdf$(Z) $(DESTDIR)$(pdfdir)
+
+install: install_html install_pdf
 
 #
 # Dummy rules that changes make behavior

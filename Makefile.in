@@ -37,9 +37,11 @@ INTERNAL_CFLAGS = -I$(srcdir) -I$(objdir) \
 		  -I$(srcdir)/disasm -I$(objdir)/disasm \
 		  -I$(srcdir)/output -I$(objdir)/output \
 		  $(ZLIBINC)
-ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
+EXTRA_CFLAGS    =
+ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS) $(EXTRA_CFLAGS)
 LDFLAGS		= @LDFLAGS@
-ALL_LDFLAGS     = $(ALL_CFLAGS) $(LDFLAGS)
+EXTRA_LDFLAGS   =
+ALL_LDFLAGS     = $(ALL_CFLAGS) $(LDFLAGS) $(EXTRA_LDFLAGS)
 LIBS		= @LIBS@
 
 ZLIB		= @ZLIB@
