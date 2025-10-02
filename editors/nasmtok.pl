@@ -78,13 +78,15 @@ my %override = (
     'wrt' => 'special',
     'times' => 'special');
 
-sub addtoken($$) {
-    my($type, $token) = @_;
+sub addtoken($@) {
+    my $type = shift @_;
 
-    unless (defined($token_category{$token})) {
-	$type = $override{$type} if (defined($override{$type}));
-	xpush(\$tokens{$type}, $token);
-	$token_category{$token} = $type;
+    foreach my $token (@_) {
+	unless (defined($token_category{$token})) {
+	    $type = $override{$type} if (defined($override{$type}));
+	    xpush(\$tokens{$type}, $token);
+	    $token_category{$token} = $type;
+	}
     }
 }
 
@@ -230,6 +232,14 @@ sub read_macros(@) {
     }
 }
 
+# Handle special tokens which may not have been picked up by the automatic
+# process, because they depend on the build parameters, or are buried
+# deep in C code...
+sub add_special_cases() {
+    # Not defined in non-snapshot builds
+    addtoken('smacro', '__NASM_SNAPSHOT__', '__?NASM_SNAPSHOT?__');
+}
+
 sub make_lines($$@) {
     my $maxline = shift @_;
     my $indent  = shift @_;
@@ -361,6 +371,7 @@ sub write_output($$) {
     }
 }
 
+add_special_cases();
 read_tokhash_c('asm/tokhash.c');
 read_pptok_c('asm/pptok.c');
 read_directiv_dat('asm/directiv.dat');
