@@ -22,6 +22,8 @@ else
     HERE=`pwd`
 fi
 
+unset ACLOCAL_PATH
+
 if [ x`cat version` != x"${version}" ]; then
     echo "${version}" > version
     git update-index version
