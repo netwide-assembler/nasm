@@ -33,6 +33,8 @@ BuildRequires: ghostscript
 BuildRequires: fontconfig
 BuildRequires: google-roboto-fonts
 BuildRequires: google-roboto-mono-fonts
+Requires: google-roboto-fonts
+Requires: google-roboto-mono-fonts
 Requires: %{name} = %{version}-%{release}
 
 %define _pkgdatadir %{_datadir}/%{name}
