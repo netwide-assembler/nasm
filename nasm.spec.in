@@ -52,7 +52,7 @@ PDF formats.
 %setup -q -n nasm-%{nasm_version}
 
 %build
-sh autogen.sh
+sh autogen.sh --clearenv
 %configure --enable-gc $([ -z "%{_lto_cflags}" ] || echo --enable-lto)
 make %{?_smp_mflags} everything
 

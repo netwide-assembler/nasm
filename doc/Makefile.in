@@ -147,12 +147,16 @@ spotless: clean
 	-$(RM_F) *.hlp nasmdoc.txt *.inf *.pdf *.pdf.xz *.dvi
 
 install_html: html
-	$(MKDIR_P) $(DESTDIR)$(htmldir)
-	$(INSTALL_DATA) html/* $(DESTDIR)$(htmldir)
+	html='$(htmldir)' ; \
+	if [ x"$$html" = x'$(docdir)' ]; then \
+	    html="$$html/html" ; \
+	fi ; \
+	$(MKDIR_P) $(DESTDIR)"$$html" ; \
+	$(INSTALL_DATA) html/* $(DESTDIR)"$$html"
 
-install_pdf: nasmdoc.pdf$(Z)
+install_pdf: nasmdoc.pdf$(PDFZ)
 	$(MKDIR_P) $(DESTDIR)$(pdfdir)
-	$(INSTALL_DATA) nasmdoc.pdf$(Z) $(DESTDIR)$(pdfdir)
+	$(INSTALL_DATA) nasmdoc.pdf$(PDFZ) $(DESTDIR)$(pdfdir)
 
 install: install_html install_pdf
 
