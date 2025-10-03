@@ -177,7 +177,7 @@ if ($out_format eq 'txt') {
     print "$outfile: producing text output...\n";
     &write_txt;
 } elsif ($out_format eq 'html') {
-    $outfile = 'nasmdoc0.html';
+    $outfile = 'nasm00.html';
     print "$outfile: producing HTML output...\n";
     &write_html;
 } elsif ($out_format eq 'dip') {
