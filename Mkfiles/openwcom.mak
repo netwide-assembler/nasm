@@ -34,7 +34,7 @@ RUNPERL         = $(PERL) $(PERLFLAGS)
 RM_F		= -del /f
 LN_S		= copy
 EMPTY		= copy nul:
-SIDE		= @rem Created by side effect
+SIDE		= %null Created by side effect
 
 MAKENSIS        = makensis
 
