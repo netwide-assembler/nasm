@@ -80,6 +80,16 @@ It is the production version of NASM since 2025.
 \b In the \c{obj} output format, allow a segment in the \c{FLAT}
    pseudo-group to also belong to another (real) group. Used on OS/2.
 
+\b Add a new \c{build_version} directive to the Mach-O backend. See
+   \k{macho-bver}.
+
+\b Fix a spec violation in the generation of DWARF debugging
+   information on ELF.
+
+\b Response files can now be nested.
+
+\b Many documentation improvements.
+
 \H{cl-2.xx} NASM 2 Series
 
 The NASM 2 series added support for x86-64, and was the production
