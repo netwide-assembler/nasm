@@ -10,6 +10,8 @@ The Makefiles are:
 	For building on a Win32 host using Microsoft Visual C++.
 
 	Usage:	nmake /f Mkfiles\msvc.mak
+	(Note: make sure you have a MSVC Developer Command Prompt console before
+	       running the nmake command)
 
 	If the following tools are installed, the full installer package can
 	be built:
