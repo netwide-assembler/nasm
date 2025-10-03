@@ -528,17 +528,17 @@ accepted for this option starting in NASM version 2.11.05.
 
 \S{opt-pfix} The \i\c{--(g|l)prefix}, \i\c{--(g|l)postfix} Options.
 
-The \c{--(g)prefix} options prepend the given argument
+The \c{--gprefix} option prepends the given argument
 to all \c{extern}, \c{common}, \c{static}, and \c{global} symbols, and the
 \c{--lprefix} option prepends to all other symbols. Similarly,
-\c{--(g)postfix} and \c{--lpostfix} options append
-the argument in the exactly same way as the \c{--xxprefix} options does.
+\c{--gpostfix} and \c{--lpostfix} options append
+the argument, in a manner similar to the \c{--(g|l)prefix} options.
 
 Running this:
 
 \c nasm -f macho --gprefix _
 
-is equivalent to place the directive with \c{%pragma macho gprefix _}
+is equivalent to placing the directive \c{%pragma macho gprefix _}
 at the start of the file (\k{mangling}). It will prepend the underscore
 to all global and external variables, as C requires it in some, but not all,
 system calling conventions.
@@ -587,7 +587,7 @@ before returning to the top-level input. Default is 100000.
 \b\c{--limit-rep}: Maximum number of allowed preprocessor loop, defined
 under \c{%rep}. Default is 1000000.
 
-\b\c{--limit-eval}: This number sets the boundary condition of allowed
+\b\c{--limit-eval}: This number sets the maximum allowed
 expression length. Default is 8192 on most systems.
 
 \b\c{--limit-lines}: Total number of source lines allowed to be

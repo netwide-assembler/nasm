@@ -71,7 +71,7 @@ necessary.
 
 When the \c{REX} prefix is used, the processor does not know how to
 address the AH, BH, CH or DH (high 8-bit legacy) registers. Instead,
-it is possible to access the the low 8-bits of the SP, BP SI and DI
+it is possible to access the the low 8-bits of the SP, BP, SI and DI
 registers as SPL, BPL, SIL and DIL, respectively; but only when the
 REX prefix is used.
 
@@ -574,7 +574,7 @@ this behaviour:
 
 The standard macros \i\c{__?FLOAT_DAZ?__}, \i\c{__?FLOAT_ROUND?__}, and
 \i\c{__?FLOAT?__} contain the current state, as long as the programmer
-has avoided the use of the brackeded primitive form, (\c{[FLOAT]}).
+has avoided the use of the bracketed primitive form, (\c{[FLOAT]}).
 
 \c{__?FLOAT?__} contains the full set of floating-point settings; this
 value can be saved away and invoked later to restore the setting.

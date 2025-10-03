@@ -18,7 +18,7 @@ NASM (\c{%ifusable}) or a particular package already loaded (\c{%ifusing}).
 The \c{altreg} standard macro package provides alternate register
 names.  It provides numeric register names for all registers (not just
 \c{R8}-\c{R31}), the Intel-defined aliases \c{R8L}-\c{R31L} for the
-low bytes of register (as opposed to the NASM/AMD standard names
+low bytes of registers (as opposed to the NASM/AMD standard names
 \c{R8B}-\c{R31B}), and the names \c{R0H}-\c{R3H} (by analogy with
 \c{R0L}-\c{R3L}) for \c{AH}, \c{CH}, \c{DH}, and \c{BH}.
 
@@ -35,7 +35,7 @@ See also \k{reg64} and \k{egprs}.
 
 \H{pkg_smartalign} \i\c{smartalign}\I{align, smart}: Smart \c{ALIGN} Macro
 
-The \c{smartalign} standard macro package provides for an \i\c{ALIGN}
+The \c{smartalign} standard macro package provides an \i\c{ALIGN}
 macro which is more powerful than the default (and
 backwards-compatible) one (see \k{align}).  When the \c{smartalign}
 package is enabled, when \c{ALIGN} is used without a second argument,
@@ -151,7 +151,7 @@ argument had been put in square brackets:
 
 \c      mov eax,[foo]               ; memory reference
 \c      mov eax,dword ptr foo       ; memory reference
-\c      mov eax,dowrd ptr flat:foo  ; memory reference
+\c      mov eax,dword ptr flat:foo  ; memory reference
 \c      mov eax,offset foo          ; address
 \c      mov eax,foo                 ; address (ambiguous syntax in MASM)
 
