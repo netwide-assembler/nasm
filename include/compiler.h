@@ -320,12 +320,18 @@ static inline void *mempset(void *dst, int c, size_t n)
  * Hints to the compiler that a particular branch of code is more or
  * less likely to be taken.
  */
-#if HAVE___BUILTIN_EXPECT
+#ifdef HAVE___BUILTIN_EXPECT
 # define likely(x)	__builtin_expect(bool(x), true)
 # define unlikely(x)	__builtin_expect(bool(x), false)
 #else
 # define likely(x)	bool(x)
 # define unlikely(x)	bool(x)
+#endif
+
+#ifdef HAVE___BUILTIN_PREFETCH
+# define prefetch(x) __builtin_prefetch(x)
+#else
+# define prefetch(x) ((void)(x))
 #endif
 
 /*

@@ -48,7 +48,7 @@ strlist_add(struct strlist *list, const char *str)
 	struct hash_insert hi;
 	size_t size;
 
-	__builtin_prefetch(str);
+	prefetch(str);
 
 	if (!list)
 		return NULL;

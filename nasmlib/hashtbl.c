@@ -80,7 +80,7 @@ void **hash_findb(struct hash_table *head, const void *key,
 void **hash_find(struct hash_table *head, const char *key,
                  struct hash_insert *insert)
 {
-    __builtin_prefetch(key);
+    prefetch(key);
 
     return hash_findb(head, key, strlen(key)+1, insert);
 }
@@ -126,7 +126,7 @@ void **hash_findib(struct hash_table *head, const void *key, size_t keylen,
 void **hash_findi(struct hash_table *head, const char *key,
                   struct hash_insert *insert)
 {
-    __builtin_prefetch(key);
+    prefetch(key);
 
     return hash_findib(head, key, strlen(key)+1, insert);
 }

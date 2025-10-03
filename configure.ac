@@ -278,6 +278,7 @@ dnl Some rather useful gcc extensions...
 dnl
 PA_HAVE_FUNC(__builtin_constant_p, (0))
 PA_HAVE_FUNC(__builtin_choose_expr, (0,1,2))
+PA_HAVE_FUNC(__builtin_prefetch, (NULL))
 
 dnl
 dnl Check for supported gcc attributes; some compilers (e.g. Sun CC)
