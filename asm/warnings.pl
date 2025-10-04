@@ -288,19 +288,6 @@ if ($what eq 'c') {
 
 close($out);
 
-# Write data to file if and only if it has changed
-# For some systems, even if we don't write, opening for append
-# apparently touches the timestamp, so we need to read and write
-# as separate operations.
-if (open(my $out, '<', $outfile)) {
-    my $datalen = length($outdata);
-    my $oldlen = read($out, my $oldoutdata, $datalen+1);
-    close($out);
-    exit 0 if (defined($oldlen) && $oldlen == $datalen &&
-	       ($oldoutdata eq $outdata));
-}
-
-# Data changed, must rewrite
 open(my $out, '>', $outfile)
     or die "$0: cannot open output file $outfile: $!\n";
 

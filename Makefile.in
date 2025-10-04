@@ -134,7 +134,7 @@ NDISASM = disasm/ndisasm.$(O)
 PROGOBJ = $(NASM) $(NDISASM)
 PROGS   = nasm$(X) ndisasm$(X)
 
-# Files dependent on extracted warnings
+# Files dependent on warnings.dat
 WARNOBJ   = asm/warnings.$(O)
 WARNFILES = asm/warnings_c.h include/warnings.h doc/warnings.src
 
@@ -259,9 +259,6 @@ nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
 ndisasm$(X): $(NDISASM) $(MANIFEST) $(DISLIB) $(NASMLIB)
 	$(CC) $(ALL_LDFLAGS) -o $@ $(NDISASM) $(MANIFEST) \
 		$(DISLIB) $(NASMLIB) $(LIBS)
-
-# These are specific to certain Makefile syntaxes...
-WARNSRCS  = $(ALLOBJ_W:.$(O)=.c)
 
 # Make sure we have subdirectories set up...
 $(LIBOBJ) $(LIBOBJ_DIS): $(DIRS)
@@ -532,7 +529,7 @@ editor_builtin: nasm$(X)
 
 dist:
 	$(MAKE) alldeps
-	$(MAKE) perlreq warnings spec
+	$(MAKE) perlreq spec
 	$(MAKE) editor_builtin
 	$(MAKE) editors $(MANPAGES)
 	$(MAKE) distclean
