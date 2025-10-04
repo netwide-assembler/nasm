@@ -318,7 +318,7 @@ static int stdscan_token(struct tokenval *tv)
             int token_type = nasm_token_hash(tv->t_charptr, tv);
 
             if (unlikely(tv->t_flag & TFLAG_WARN)) {
-                /*! ptr [on] non-NASM keyword used in other assemblers
+                /*!ptr [on] non-NASM keyword used in other assemblers
                  *!  warns about keywords used in other assemblers that
                  *!  might indicate a mistake in the source code.
                  *!  Currently only the MASM \c{PTR} keyword is

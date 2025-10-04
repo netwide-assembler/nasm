@@ -1723,7 +1723,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
         case 0320:
         is_o16:
         {
-            /*! prefix-opsize [on] invalid operand size prefix
+            /*!prefix-opsize [on] invalid operand size prefix
              *!   warns that an operand prefix (\c{o16}, \c{o32}, \c{o64},
              *!   \c{osp}) invalid for the specified instruction has been specified.
              *!   The operand prefix will be ignored by the assembler.
