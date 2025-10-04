@@ -511,6 +511,41 @@ information.  To suppress the generation of dependencies, use
 \c %pragma obj nodepend
 
 
+\H{obj2fmt} \i\c{obj2}: \i{OS/2 32-bit OMF}\I{OMF} Object Files
+
+The \c{obj2} output format is the same as \c{obj} except:
+
+\b Default attributes for a segment are \c{ALIGN=16} and \c{USE32}.
+
+\b All 32-bit segment is added to \c{FLAT} group implicitly.
+
+\b Support Unix sections such as \c{.text}, \c{.rodata}, \c{.data}
+and \c{.bss} for compatibility with other Unix platforms. And they are
+aliased to \c{TEXT32}, \c{CONST32}, \c{DATA32}, \c{BSS32}, respectively.
+
+\b Set default classes implicitly for known segments such as TEXT32,
+CONST32, DATA32, BSS32 and so on.
+
+The defaults assumed by NASM if you do not specify the qualifiers are:
+
+\c SECTION .text    ALIGN=16 USE32 CLASS=CODE  FLAT
+\c SECTION .rodata  ALIGN=16 USE32 CLASS=CONST FLAT
+\c SECTION .data    ALIGN=16 USE32 CLASS=DATA  FLAT
+\c SECTION .bss     ALIGN=16 USE32 CLASS=BSS   FLAT
+\c SECTION CODE     ALIGN=16 USE32 CLASS=CODE  FLAT
+\c SECTION TEXT     ALIGN=16 USE32 CLASS=CODE  FLAT
+\c SECTION CONST    ALIGN=16 USE32 CLASS=CONST FLAT
+\c SECTION DATA     ALIGN=16 USE32 CLASS=DATA  FLAT
+\c SECTION BSS      ALIGN=16 USE32 CLASS=BSS   FLAT
+\c SECTION STACK    ALIGN=16 USE32 CLASS=STACK FLAT
+\c SECTION CODE32   ALIGN=16 USE32 CLASS=CODE  FLAT
+\c SECTION TEXT32   ALIGN=16 USE32 CLASS=CODE  FLAT
+\c SECTION CONST32  ALIGN=16 USE32 CLASS=CONST FLAT
+\c SECTION DATA32   ALIGN=16 USE32 CLASS=DATA  FLAT
+\c SECTION BSS32    ALIGN=16 USE32 CLASS=BSS   FLAT
+\c SECTION STACK32  ALIGN=16 USE32 CLASS=STACK FLAT
+
+
 \H{win32fmt} \i\c{win32}: Microsoft Win32 Object Files
 
 The \c{win32} output format generates Microsoft Win32 object files,
