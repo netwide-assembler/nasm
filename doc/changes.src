@@ -12,7 +12,8 @@ It is the production version of NASM since 2025.
 
 \S{cl-3.00.01} Version 3.00.01
 
-Put the updates for NASM 3.00.01 here...
+\b A new \c{obj2} version of the \c{obj} output format, intended for
+   use on OS/2. See \k{obj2fmt}.
 
 \S{cl-3.00} Version 3.00
 
