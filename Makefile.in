@@ -103,9 +103,12 @@ endif
 .SUFFIXES:
 .SUFFIXES: $(X) .$(O) .$(A) .xml .1 .c .i .s .txt .time
 
+# Use to mark phony targets in global lists
+PHONY =
+
 .PHONY: all doc misc install clean distclean cleaner spotless test
-.PHONY: install_doc everything install_everything strip perlreq dist tags TAGS
-.PHONY: nothing manpages nsis editors
+.PHONY: install_doc everything install_everything strip perlreq warnings
+.PHONY: dist tags TAGS nothing manpages nsis editors
 
 .c.$(O):
 	$(CC) -c $(ALL_CFLAGS) -o $@ $<
@@ -261,7 +264,7 @@ ndisasm$(X): $(NDISASM) $(MANIFEST) $(DISLIB) $(NASMLIB)
 WARNSRCS  = $(ALLOBJ_W:.$(O)=.c)
 
 # Make sure we have subdirectories set up...
-$(LIBOBJ) $(LIBOBJ_DIS) $(WARNTIMES) $(WARNSRCS): $(DIRS)
+$(LIBOBJ) $(LIBOBJ_DIS): $(DIRS)
 
 #-- Begin Generated File Rules --#
 
@@ -399,24 +402,7 @@ editors/nasmtok.json: editors/nasmtok.pl asm/tokhash.c asm/pptok.c \
 		 version.mak
 	$(RUNPERL) $(srcdir)/editors/nasmtok.pl -json $@ $(srcdir) $(objdir)
 
-editors: $(EDITORS)
-
-#-- End Generated File Rules --#
-
-# Extract warnings from source code. This is done automatically if any
-# C files have changed; the script is fast enough that that is
-# reasonable, but doesn't update the time stamp if the files aren't
-# changed, to avoid rebuilding everything every time. Track the actual
-# dependency by the empty file asm/warnings.time.
-#
-# This doesn't seem to work for non-Unix Makefile variants, so don't
-# export those rules here (non-Unix Makefiles only guaranteed to build
-# a distribution ball anyway.)
-
-WARNTIMES = $(WARNFILES:=.time)
-
-.PHONY: warnings
-warnings: $(WARNFILES)
+editors: $(EDITORS) $(PHONY)
 
 asm/warnings_c.h: asm/warnings.pl asm/warnings.dat
 	$(RUNPERL) $(srcdir)/asm/warnings.pl c asm/warnings_c.h \
@@ -432,7 +418,11 @@ doc/warnings.src: asm/warnings.pl asm/warnings.dat
 
 $(PERLREQ): $(DIRS)
 
-perlreq: $(PERLREQ)
+perlreq: $(PERLREQ) $(PHONY)
+
+warnings: $(WARNFILES) $(PHONY)
+
+#-- End Generated File Rules --#
 
 #-- Begin NSIS Rules --#
 
