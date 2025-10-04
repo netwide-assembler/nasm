@@ -1730,12 +1730,6 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                 break;
 
             case PASS_STAB:
-                /*!
-                 *!phase [off] phase error during stabilization
-                 *!  warns about symbols having changed values during
-                 *!  the second-to-last assembly pass. This is not
-                 *!  inherently fatal, but may be a source of bugs.
-                 */
                 nasm_warn(WARN_PHASE|ERR_UNDEAD,
                           "phase error during stabilization "
                           "pass, hoping for the best");

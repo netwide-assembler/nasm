@@ -416,37 +416,19 @@ editors: $(EDITORS)
 WARNTIMES = $(WARNFILES:=.time)
 
 .PHONY: warnings
-warnings:
-	$(RM_F) $(WARNFILES) $(WARNTIMES) asm/warnings.time
-	$(MAKE) asm/warnings.time
+warnings: $(WARNFILES)
 
-asm/warnings.time: $(WARNSRCS) asm/warnings.pl
-	$(EMPTY) asm/warnings.time
-	$(MAKE) $(WARNTIMES)
-
-asm/warnings_c.h.time: asm/warnings.pl asm/warnings.time
+asm/warnings_c.h: asm/warnings.pl asm/warnings.dat
 	$(RUNPERL) $(srcdir)/asm/warnings.pl c asm/warnings_c.h \
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) asm/warnings_c.h.time
+		$(srcdir)/asm/warnings.dat
 
-asm/warnings_c.h: asm/warnings_c.h.time
-	$(SIDE)
-
-include/warnings.h.time: asm/warnings.pl asm/warnings.time
+include/warnings.h: asm/warnings.pl asm/warnings.dat
 	$(RUNPERL) $(srcdir)/asm/warnings.pl h include/warnings.h \
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) include/warnings.h.time
+		$(srcdir)/asm/warnings.dat
 
-include/warnings.h: include/warnings.h.time
-	$(SIDE)
-
-doc/warnings.src.time: asm/warnings.pl asm/warnings.time
+doc/warnings.src: asm/warnings.pl asm/warnings.dat
 	$(RUNPERL) $(srcdir)/asm/warnings.pl doc doc/warnings.src \
-		$(srcdir) $(WARNSRCS)
-	$(EMPTY) doc/warnings.src.time
-
-doc/warnings.src : doc/warnings.src.time
-	$(SIDE)
+		$(srcdir)/asm/warnings.dat
 
 $(PERLREQ): $(DIRS)
 

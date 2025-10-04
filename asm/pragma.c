@@ -162,22 +162,10 @@ found_it:
     case DIRR_UNKNOWN:
         switch (pragma.opcode) {
         case D_none:
-            /*!
-             *!pragma-bad [off] malformed \c{%pragma}
-             *!=bad-pragma
-             *!  warns about a malformed or otherwise unparsable
-             *!  \c{%pragma} directive.
-             */
             nasm_warn(ERR_PASS2|WARN_PRAGMA_BAD,
                        "empty %%pragma %s", pragma.facility_name);
             break;
         default:
-            /*!
-             *!pragma-unknown [off] unknown \c{%pragma} facility or directive
-             *!=unknown-pragma
-             *!  warns about an unknown \c{%pragma} directive.
-             *!  This is not yet implemented for most cases.
-             */
             nasm_warn(ERR_PASS2|WARN_PRAGMA_UNKNOWN,
                        "unknown %%pragma %s %s",
                        pragma.facility_name, pragma.opname);
@@ -205,21 +193,7 @@ found_it:
     return rv;
 }
 
-/* This warning message is intended for future use */
-/*!
- *!pragma-na [off] \c{%pragma} not applicable to this compilation
- *!=not-my-pragma
- *!  warns about a \c{%pragma} directive which is not applicable to
- *!  this particular assembly session.  This is not yet implemented.
- */
-
 /* Naked %pragma */
-/*!
- *!pragma-empty [off] empty \c{%pragma} directive
- *!  warns about a \c{%pragma} directive containing nothing.
- *!  This is treated identically to \c{%pragma ignore} except
- *!  for this optional warning.
- */
 void process_pragma(char *str)
 {
     const struct pragma_facility *pf;

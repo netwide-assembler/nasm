@@ -1319,12 +1319,6 @@ static uint32_t check_segment_alignment(const uint64_t origalign)
     while (!(align & alignments))
         align <<= 1;
 
-    /*!
-     *!section-alignment-rounded [on] section alignment rounded up
-     *!  warn if a section alignment is specified which is
-     *!  not supported by the underlying object format, but
-     *!  can be rounded up to a supported value.
-     */
     nasm_warn(WARN_SECTION_ALIGNMENT_ROUNDED,
               "alignment of %"PRIu64" not supported, using %"PRIu32,
               origalign, align);

@@ -935,17 +935,6 @@ static const char *pp_getenv(const Token *t, bool warn)
 
     v = getenv(txt);
     if (warn && !v) {
-	/*!
-	 *!pp-environment [on] nonexistent environment variable
-         *!=environment
-	 *!  warns if a nonexistent environment variable
-	 *!  is accessed using the \c{%!} preprocessor
-	 *!  construct (see \k{getenv}.)  Such environment
-	 *!  variables are treated as empty (with this
-	 *!  warning issued) starting in NASM 2.15;
-	 *!  earlier versions of NASM would treat this as
-	 *!  an error.
-	 */
 	nasm_warn(WARN_PP_ENVIRONMENT,
                   "nonexistent environment variable `%s'", txt);
 	v = "";
@@ -1560,17 +1549,6 @@ static Token *tokenize(const char *line)
                      * nasm_skip_string()
                      */
                     if (!*p) {
-                        /*!
-                         *!pp-open-brackets [on] unterminated \c{%[...]}
-                         *!  warns that a preprocessor \c{%[...]} construct
-                         *!  lacks the terminating \c{]} character.
-                         */
-                        /*!
-                         *!pp-open-braces [on] unterminated \c{%\{...\}}
-                         *!  warns that a preprocessor parameter
-                         *!  enclosed in braces \c{%\{...\}} lacks the
-                         *!  terminating \c{\}} character.
-                         */
                         nasm_warn(firstchar == '}' ?
                                   WARN_PP_OPEN_BRACES : WARN_PP_OPEN_BRACKETS,
                                   "unterminated %%%c...%c construct (missing `%c')",
@@ -1630,12 +1608,6 @@ static Token *tokenize(const char *line)
             if (toklen < 2) {
                 type = '%';     /* % operator */
                 if (unlikely(*line == '{')) {
-                    /*!
-                     *!pp-empty-braces [on] empty \c{%\{\}} construct
-                     *!  warns that an empty \c{%\{\}} was encountered.
-                     *!  This expands to a single \c{%} character, which
-                     *!  is normally the \c{%} arithmetic operator.
-                     */
                     nasm_warn(WARN_PP_EMPTY_BRACES,
                               "empty %%{} construct expands to the %% operator");
                 }
@@ -1741,11 +1713,6 @@ static Token *tokenize(const char *line)
             if (*p) {
                 p++;
             } else {
-                /*!
-                 *!pp-open-string [on] unterminated string
-                 *!  warns that a quoted string without a closing quotation
-                 *!  mark was encountered during preprocessing.
-                 */
                 nasm_warn(WARN_PP_OPEN_STRING,
                           "unterminated string (missing `%c')", quote);
                 type = TOKEN_ERRSTR;
@@ -2372,13 +2339,6 @@ static bool pp_get_boolean_option(Token *tline, bool defval)
         return true;
 
     if (tokval.t_type) {
-        /*!
-         *!pp-trailing [on] trailing garbage ignored
-         *!  warns that the preprocessor encountered additional text
-         *!  where no such text was expected. This can
-         *!  sometimes be the result of an incorrectly written expression,
-         *!  or arguments that are inadvertently separated.
-         */
         nasm_warn(WARN_PP_TRAILING,
                   "trailing garbage after expression ignored");
     }
@@ -3609,17 +3569,6 @@ static SMacro *define_smacro(const char *mname, bool casesense,
 
         if (casesense ^ smac->casesense) {
             /*
-             *!pp-macro-def-case-single [on] single-line macro defined both case sensitive and insensitive
-             *!=macro-def-case-single
-             *!  warns when a single-line macro is defined both case
-             *!  sensitive and case insensitive.
-             *!  The new macro
-             *!  definition will override (shadow) the original one,
-             *!  although the original macro is not deleted, and will
-             *!  be re-exposed if the new macro is deleted with
-             *!  \c{%undef}, or, if the original macro is the case
-             *!  insensitive one, the macro call is done with a
-             *!  different case.
              */
             nasm_warn(WARN_PP_MACRO_DEF_CASE_SINGLE, "case %ssensitive definition of macro `%s' will shadow %ssensitive macro `%s'",
                       casesense ? "" : "in",
@@ -3629,36 +3578,15 @@ static SMacro *define_smacro(const char *mname, bool casesense,
             defined = false;
         } else if ((!!nparam) ^ (!!smac->nparam)) {
             /*
-             * Most recent versions of NASM considered this an error,
-             * so promote this warning to error by default.
-             *
-             *!pp-macro-def-param-single [err] single-line macro defined with and without parameters
-             *!=macro-def-param-single
-             *!  warns if the same single-line macro is defined with and
-             *!  without parameters.
-             *!  The new macro
-             *!  definition will override (shadow) the original one,
-             *!  although the original macro is not deleted, and will
-             *!  be re-exposed if the new macro is deleted with
-             *!  \c{%undef}.
+             * The immediately previous versions of NASM considered
+             * this an error, so promote this warning is promoted to
+             * to error by default.
              */
             nasm_warn(WARN_PP_MACRO_DEF_PARAM_SINGLE,
                       "macro `%s' defined both with and without parameters",
                       mname);
             defined = false;
         } else if (smac->nparam < nparam) {
-            /*
-             *!pp-macro-def-greedy-single [on] single-line macro
-             *!=macro-def-greedy-single
-             *!  definition shadows greedy macro warns when a
-             *!  single-line macro is defined which would match a
-             *!  previously existing greedy definition.  The new macro
-             *!  definition will override (shadow) the original one,
-             *!  although the original macro is not deleted, and will
-             *!  be re-exposed if the new macro is deleted with
-             *!  \c{%undef}, and will be invoked if called with a
-             *!  parameter count that does not match the new definition.
-             */
             nasm_warn(WARN_PP_MACRO_DEF_GREEDY_SINGLE,
                       "defining macro `%s' shadows previous greedy definition",
                       mname);
@@ -3847,12 +3775,6 @@ static bool parse_mmacro_spec(Token *tline, MMacro *def, const char *directive)
 
     if (def->defaults && def->ndefs > def->nparam_max - def->nparam_min &&
         !def->plus) {
-        /*
-         *!pp-macro-defaults [on] macros with more default than optional parameters
-         *!=macro-defaults
-         *!  warns when a macro has more default parameters than optional parameters.
-         *!  See \k{mlmacdef} for why might want to disable this warning.
-         */
         nasm_warn(WARN_PP_MACRO_DEFAULTS,
                    "too many default macro parameters in macro `%s'", def->name);
     }
@@ -4326,10 +4248,6 @@ static void user_error(enum preproc_token op, Token **tlinep)
         severity = ERR_NOTE;
         break;
     case PP_WARNING:
-        /*!
-         *!user [on] \c{%warning} directives
-         *!  controls output of \c{%warning} directives (see \k{pperror}).
-         */
         severity = ERR_WARNING|WARN_USER|ERR_PASS2;
         break;
     case PP_ERROR:
@@ -4933,12 +4851,6 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
 
         case COND_ELSE_TRUE:
         case COND_ELSE_FALSE:
-            /*!
-             *!pp-else-elif [on] \c{%elif} after \c{%else}
-             *!  warns that an \c{%elif}-type directive was encountered
-             *!  after \c{%else} has already been encounted. As a result, the
-             *!  content of the \c{%elif} will never be expanded.
-             */
             nasm_warn(WARN_PP_ELSE_ELIF|ERR_PP_PRECOND,
                        "`%s' after `%%else', ignoring content", dname);
             istk->conds->state = COND_NEVER;
@@ -4983,12 +4895,6 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
 
         case COND_ELSE_TRUE:
         case COND_ELSE_FALSE:
-            /*!
-             *!pp-else-else [on] \c{%else} after \c{%else}
-             *!  warns that a second \c{%else} clause was found for
-             *!  the same \c{%if} statement. The content of this \c{%else}
-             *!  clause will never be expanded.
-             */
             nasm_warn(WARN_PP_ELSE_ELSE|ERR_PP_PRECOND,
                       "`%s' after `%%else', ignoring content", dname);
             istk->conds->state = COND_NEVER;
@@ -5046,12 +4952,6 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
                  || defining->plus)
                 && (defining->nparam_min <= mmac->nparam_max
                     || mmac->plus)) {
-                /*!
-                 *!pp-macro-redef-multi [on] redefining multi-line macro
-                 *!  warns that a multi-line macro is being redefined,
-                 *!  without first removing the old definition with
-                 *!  \c{%unmacro}.
-                 */
                 nasm_warn(WARN_PP_MACRO_REDEF_MULTI,
                           "redefining multi-line macro `%s'",
                            defining->name);
@@ -5199,12 +5099,6 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
                               dname, count, nasm_limit[LIMIT_REP]);
                 count = 0;
             } else if (count < 0) {
-                /*!
-                 *!pp-rep-negative [on] regative \c{%rep} count
-                 *!=negative-rep
-                 *!  warns about a negative count given to the \c{%rep}
-                 *!  preprocessor directive.
-                 */
                 nasm_warn(ERR_PASS2|WARN_PP_REP_NEGATIVE,
                           "negative `%s' count: %"PRId64, dname, count);
                 count = 0;
@@ -6546,12 +6440,6 @@ static SMacro *expand_one_smacro(Token ***tpp)
          */
         while (1) {
             if (!m) {
-                /*!
-                 *!pp-macro-params-single [on] single-line macro calls with wrong parameter count
-                 *!=macro-params-single
-                 *!  warns about \i{single-line macros} being invoked
-                 *!  with the wrong number of parameters.
-                 */
                 nasm_warn(WARN_PP_MACRO_PARAMS_SINGLE|ERR_HOLD,
                     "single-line macro `%s' exists, "
                     "but not taking %d parameter%s",
@@ -6942,22 +6830,6 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
      * To disable these insane legacy behaviors, use:
      *
      * %pragma preproc sane_empty_expansion yes
-     *
-     *!pp-macro-params-legacy [on] improperly calling multi-line macro for legacy support
-     *!=macro-params-legacy
-     *!  warns about \i{multi-line macros} being invoked
-     *!  with the wrong number of parameters, but for bug-compatibility
-     *!  with NASM versions older than 2.15, NASM tried to fix up the
-     *!  parameters to match the legacy behavior and call the macro anyway.
-     *!  This can happen in certain cases where there are empty arguments
-     *!  without braces, sometimes as a result of macro expansion.
-     *!-
-     *!  The legacy behavior is quite strange and highly context-dependent,
-     *!  and can be disabled with:
-     *!-
-     *!  \c      %pragma preproc sane_empty_expansion true
-     *!-
-     *!  It is highly recommended to use this option in new code.
      */
     if (!ppconf.sane_empty_expansion) {
         if (!found) {
@@ -7022,12 +6894,6 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
     /*
      * After all that, we didn't find one with the right number of
      * parameters. Issue a warning, and fail to expand the macro.
-     *!
-     *!pp-macro-params-multi [on] multi-line macro calls with wrong parameter count
-     *!=macro-params-multi
-     *!  warns about \i{multi-line macros} being invoked
-     *!  with the wrong number of parameters. See \k{mlmacover} for an
-     *!  example of why you might want to disable this warning.
      */
     if (found)
         return found;
@@ -7880,12 +7746,6 @@ stdmac_cond_sel(const SMacro *s, Token **params, int nparams)
             return NULL;
         }
     } else {
-            /*!
-             *!pp-sel-range [on] \c{%sel()} argument out of range
-             *!  warns that the \c{%sel()} preprocessor function was passed
-             *!  a value less than 1 or larger than the number of available
-             *!  arguments.
-             */
         if (unlikely(which < 1)) {
             nasm_warn(WARN_PP_SEL_RANGE,
                       "%s(%"PRId64") is not a valid selector", s->name, which);

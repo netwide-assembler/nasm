@@ -300,14 +300,6 @@ static void mref_set_optype(operand *op)
                     flag = IP_REL;
                 if (!(globl.reldef & op->eaflags)) {
                     static int64_t pass_last_seen;
-                    /*!
-                     *!implicit-abs-deprecated [on] implicit DEFAULT ABS is deprecated
-                     *!
-                     *!  warns that in a subsequent version of NASM, the 64-bit default
-                     *!  addressing form is likely to change from \c{DEFAULT ABS} to
-                     *!  \c{DEFAULT REL}. If absolute addressing is indeed intended, it is
-                     *!  strongly recommended to specify \c{DEFAULT ABS} explicitly.
-                     */
                     if (pass_count() != pass_last_seen) {
                         nasm_warn(WARN_IMPLICIT_ABS_DEPRECATED,
                                   "implicit DEFAULT ABS is deprecated");
@@ -761,13 +753,6 @@ restart_parse:
         if (i == ':') {         /* skip over the optional colon */
             i = stdscan(NULL, &tokval);
         } else if (i == 0) {
-            /*!
-             *!label-orphan [on] labels alone on lines without trailing \c{:}
-             *!=orphan-labels
-             *!  warns about source lines which contain no instruction but define
-             *!  a label without a trailing colon. This is most likely indicative
-             *!  of a typo, but is technically correct NASM syntax (see \k{syntax}.)
-             */
             nasm_warn(WARN_LABEL_ORPHAN ,
                       "label alone on a line without a colon might be in error");
         }
@@ -909,13 +894,6 @@ restart_parse:
             /* DB et al */
             result->operands = oper_num;
             if (oper_num == 0)
-                /*!
-                 *!db-empty [on] no operand for data declaration
-                 *!  warns about a \c{D}\e{x} declaration
-                 *!  with no operands, producing no output.
-                 *!  This is permitted, but often indicative of an error.
-                 *!  See \k{db}.
-                 */
                 nasm_warn(WARN_DB_EMPTY, "no operand for data declaration");
         }
         return result;
@@ -1397,21 +1375,6 @@ restart_parse:
                     if (!opsize) {
                         op->type |= rs; /* For non-size-specific registers, permit size override */
                     } else if (opsize != rs) {
-                        /*!
-                         *!regsize [on] register size specification ignored
-                         *!
-                         *!  warns about a register with implicit size (such as \c{EAX}, which is always 32 bits)
-                         *!  been given an explicit size specification which is inconsistent with the size
-                         *!  of the named register, e.g. \c{WORD EAX}. \c{DWORD EAX} or \c{WORD AX} are
-                         *!  permitted, and do not trigger this warning. Some registers which \e{do not} imply
-                         *!  a specific size, such as \c{K0}, may need this specification unless the instruction
-                         *!  itself implies the instruction size:
-                         *!-
-                         *!  \c      KMOVW K0,[foo]          ; Permitted, KMOVW implies 16 bits
-                         *!  \c      KMOV  WORD K0,[foo]     ; Permitted, WORD K0 specifies instruction size
-                         *!  \c      KMOV  K0,WORD [foo]     ; Permitted, WORD [foo] specifies instruction size
-                         *!  \c      KMOV  K0,[foo]          ; Not permitted, instruction size ambiguous
-                         */
                         nasm_warn(WARN_REGSIZE, "invalid register size specification ignored");
                     }
                 }
