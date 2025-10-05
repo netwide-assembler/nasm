@@ -5455,7 +5455,7 @@ TCVTROWPS2BF16L	zmmreg,tmmreg,imm8		[rmi:	evex.512.f3.0f38.w0 77 /r ib]		FUTURE
 TCVTROWPS2PHH	zmmreg,tmmreg,reg32		[rmv:	evex.512.np.0f38.w0 6d /r]		FUTURE
 TCVTROWPS2PHH	zmmreg,tmmreg,imm8		[rmi:	evex.512.np.0f38.w0 07 /r ib]		FUTURE
 TCVTROWPS2PHL	zmmreg,tmmreg,reg32		[rmv:	evex.512.66.0f38.w0 6d /r]		FUTURE
-TCVTROWPS2PHL	zmmreg,tmmreg,imm8		[rmi:	evex.512.66.0f38.w0 77 /r ib]		FUTURE
+TCVTROWPS2PHL	zmmreg,tmmreg,imm8		[rmi:	evex.512.f2.0f38.w0 77 /r ib]		FUTURE
 TDPBF8PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.map5.w0 fd /r]		FUTURE
 TDPBHF8PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.map5.w0 fd /r]		FUTURE
 TDPHBF8PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.map5.w0 fd /r]		FUTURE
