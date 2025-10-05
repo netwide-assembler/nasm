@@ -292,18 +292,18 @@ static inline unsigned int radix_letter(char c)
     switch (c) {
     case 'b': case 'B':
     case 'y': case 'Y':
-	return 2;		/* Binary */
+        return 2;               /* Binary */
     case 'o': case 'O':
     case 'q': case 'Q':
-	return 8;		/* Octal */
+        return 8;               /* Octal */
     case 'h': case 'H':
     case 'x': case 'X':
-	return 16;		/* Hexadecimal */
+        return 16;              /* Hexadecimal */
     case 'd': case 'D':
     case 't': case 'T':
-	return 10;		/* Decimal */
+        return 10;              /* Decimal */
     default:
-	return 0;		/* Not a known radix letter */
+        return 0;               /* Not a known radix letter */
     }
 }
 
@@ -326,7 +326,7 @@ int numstr(char *buf, size_t buflen, uint64_t n,
 extern const char * const nasmlib_digit_chars[2];
 static inline const char *nasm_digit_chars(bool ucase)
 {
-    return nasmlib_digit_chars[ucase];
+    return nasmlib_digit_chars[(unsigned char)ucase];
 }
 
 /*

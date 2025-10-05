@@ -89,6 +89,7 @@ PROGS   = nasm$(X) ndisasm$(X)
 # Files dependent on extracted warnings
 WARNOBJ   = asm\warnings.obj
 WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
+WARNTIMES = asm\warnings_c.h.time include\warnings.h.time doc\warnings.src.time
 
 OUTPUTOBJ = \
 	output\outform.obj output\outlib.obj \
@@ -205,7 +206,7 @@ $(NDISLIB): $(LIBOBJ_DIS)
 	$(AR) $(ARFLAGS) /out:$@ $**
 
 # These are specific to certain Makefile syntaxes...
-WARNSRCS  = $(LIBOBJ_NW:.c=.obj)
+WARNSRCS  = $(ALLOBJ_W:.obj=.c)
 
 #-- Begin Generated File Rules --#
 # Edit in Makefile.in, not here!
@@ -332,6 +333,34 @@ asm\directiv.h: asm\directiv.dat nasmlib\perfhash.pl perllib\phash.ph
 asm\directbl.c: asm\directiv.dat nasmlib\perfhash.pl perllib\phash.ph
 	$(RUNPERL) $(srcdir)\nasmlib\perfhash.pl c \
 		$(srcdir)\asm\directiv.dat asm\directbl.c
+
+warnings: .SYMBOLIC
+    $(RM_F) $(WARNFILES) $(WARNTIMES) asm\warnings.time
+    %make asm\warnings.time
+
+asm\warnings.time: $(WARNTIMES) asm\warnings.pl $(WARNSRCS)
+    $(EMPTY) asm\warnings.time
+
+asm\warnings_c.h.time: asm\warnings_c.h
+    $(EMPTY) asm\warnings_c.h.time
+
+asm\warnings_c.h: asm\warnings.pl $(WARNSRCS)
+    $(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings_c.h \
+                $(srcdir) $(WARNSRCS)
+
+include\warnings.h.time: include\warnings.h
+    $(EMPTY) include\warnings.h.time
+
+include\warnings.h: asm\warnings.pl $(WARNSRCS)
+    $(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h \
+        $(srcdir) $(WARNSRCS)
+
+doc\warnings.src.time: doc\warnings.src
+    $(EMPTY) doc\warnings.src.time
+
+doc\warnings.src : asm\warnings.pl $(WARNSRCS)
+    $(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src \
+        $(srcdir) $(WARNSRCS)
 
 # Editor token files
 editors\nasmtok.el: editors\nasmtok.pl asm\tokhash.c asm\pptok.c \

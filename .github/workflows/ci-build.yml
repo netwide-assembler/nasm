@@ -1,0 +1,106 @@
+name: CI-Build
+run-name: CI build
+
+on:
+  pull_request:
+    branches: '*'
+    paths:
+      - '**'
+      - '!.github/**'
+      - '!README.md'
+  push:
+    branches:
+      - master
+    paths:
+      - '**'
+      - '!.github/**'
+      - '!README.md'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+  Linux-1:
+    strategy:
+      matrix:
+        ver: 
+          - id: 'gcc'
+            title: GCC (Linux)
+    runs-on: ubuntu-latest
+    name: ${{matrix.ver.title}}
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: install perl module
+      run: sudo cpan -i Font::TTF::Font Sort::Versions
+      shell: bash
+    - name: autogen
+      run: |
+        ./autogen.sh
+      shell: bash
+    - name: configure
+      run: |
+        ./configure
+      shell: bash
+    - name: build
+      run: |
+        make all
+      shell: bash
+  Windows-1:
+    strategy:
+      matrix:
+        ver: 
+          #- id: '1.9'
+          - id: '2.0'
+        os:
+          - id: 'dos'
+            title: 'DOS'
+          - id: 'os2'
+            title: 'OS/2'
+          - id: 'win32'
+            title: 'WIN32'
+          - id: 'linux386'
+            title: 'Linux'
+    runs-on: 'windows-latest'
+    name: Open Watcom ${{matrix.ver.id}} (${{matrix.os.title}})
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: Open Watcom setup
+      uses: open-watcom/setup-watcom@v0
+      with:
+        version: ${{matrix.ver.id}}
+    - name: build
+      run: |
+        wmake -sn -d -f Mkfiles/openwcom.mak ${{matrix.os.id}}
+      shell: cmd
+  Windows-2:
+    strategy:
+      matrix:
+        image:
+          - version: 2022
+            osname: windows-2022
+            vs: 2022
+          - version: 2025
+            osname: windows-2025
+            vs: 2022
+    runs-on: ${{matrix.image.osname}}
+    name: Visual Studio ${{matrix.image.vs}} (WIN64)
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: Enable Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        vsversion: ${{matrix.image.vs}}
+        arch: amd64
+    - name: build
+      run: |
+        nmake /f Mkfiles\msvc.mak all
+      shell: cmd
