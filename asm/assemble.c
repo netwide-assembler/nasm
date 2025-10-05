@@ -561,24 +561,24 @@ static void out(struct out_data *data)
         if (debug_current_macro)
             debug_macro_out(data);
 
-	if (unlikely(data->type == OUT_ZERODATA) &&
+        if (unlikely(data->type == OUT_ZERODATA) &&
             !(ofmt->flags & OFMT_ZERODATA)) {
-	    /*
-	     * Break OFMT_ZERODATA up into ZERO_BUF_SIZE chunks unless the
-	     * backend has indicated it can handle arbitrary sizes
-	     * by setting the OFMT_ZERODATA flag.
-	     */
-	    uint64_t size = data->size;
-	    while (size > ZERO_BUF_SIZE) {
-		data->type        = OUT_ZERODATA; /* Help the compiler? */
-		data->size        = ZERO_BUF_SIZE;
-		nasm_ofmt_output(data);
-		size             -= ZERO_BUF_SIZE;
-		data->loc.offset += ZERO_BUF_SIZE;
-		data->insoffs    += ZERO_BUF_SIZE;
-	    }
-	    data->size = size;
-	}
+            /*
+             * Break OFMT_ZERODATA up into ZERO_BUF_SIZE chunks unless the
+             * backend has indicated it can handle arbitrary sizes
+             * by setting the OFMT_ZERODATA flag.
+             */
+            uint64_t size = data->size;
+            while (size > ZERO_BUF_SIZE) {
+                data->type        = OUT_ZERODATA; /* Help the compiler? */
+                data->size        = ZERO_BUF_SIZE;
+                nasm_ofmt_output(data);
+                size             -= ZERO_BUF_SIZE;
+                data->loc.offset += ZERO_BUF_SIZE;
+                data->insoffs    += ZERO_BUF_SIZE;
+            }
+            data->size = size;
+        }
         nasm_ofmt_output(data);
     } else {
         /* Outputting to ABSOLUTE section - only reserve is permitted */
@@ -1501,7 +1501,7 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
     int opt_opsize = 0;
 
     ins->rex     = 0;           /* Ensure REX is reset */
-    ins->evex    = 0;		/* Ensure EVEX is reset */
+    ins->evex    = 0;           /* Ensure EVEX is reset */
     ins->vexreg  = 0;           /* No V register */
     ins->vex_cm  = 0;           /* No implicit map */
     ins->bits    = bits;        /* Execution mode (default asize) */
@@ -2443,7 +2443,7 @@ static int emit_prefixes(struct out_data *data, const insn *ins)
             }
         }
 
-	/* Various warnings and error conditions */
+        /* Various warnings and error conditions */
         switch ((int)pfx) {
         case R_CS:
         case R_DS:
@@ -2475,13 +2475,13 @@ static int emit_prefixes(struct out_data *data, const insn *ins)
         case P_A64:
             if (bits != 64)
                 nasm_nonfatal("64-bit addressing is only supported "
-			      "in 64-bit mode");
+                              "in 64-bit mode");
             break;
 
         case P_O64:
             if (bits != 64)
                 nasm_nonfatal("64-bit operand size is only supported "
-			      "in 64-bit mode");
+                              "in 64-bit mode");
             break;
 
         default:
@@ -3274,19 +3274,15 @@ static enum match_result matches(const struct itemplate * const itemp,
              * If this is an *explicitly* sized immediate,
              * allow it to match an extending pattern.
              */
-            switch (isize[i]) {
-            case BITS8:
+            if( isize[i] == BITS8 ) {
                 if (ttype & BYTEEXTMASK) {
                     isize[i]  = tsize[i];
                     itype[i] |= BYTEEXTMASK;
                 }
-                break;
-            case BITS32:
-                if (ttype & DWORDEXTMASK)
+            } else if( isize[i] == BITS32 ) {
+                if (ttype & DWORDEXTMASK) {
                     isize[i]  = tsize[i];
-                break;
-            default:
-                break;
+                }
             }
 
             /*

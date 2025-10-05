@@ -13,13 +13,13 @@ unsigned int debug_nasm;        /* Debugging messages? */
 unsigned int opt_verbose_info;  /* Informational messages? */
 
 /* Common function body */
-#define nasm_do_error(_sev,_flags)				\
+#define nasm_do_error(_sev,_flags)                              \
     do {                                                        \
         va_list ap;                                             \
         va_start(ap, fmt);                                      \
         if ((_sev) >= ERR_CRITICAL)                             \
             nasm_verror_critical((_sev)|(_flags), fmt, ap);     \
-        else							\
+        else                                                    \
             nasm_verror((_sev)|(_flags), fmt, ap);              \
         va_end(ap);                                             \
         if ((_sev) >= ERR_FATAL)                                \
@@ -36,14 +36,14 @@ void nasm_error(errflags flags, const char *fmt, ...)
     nasm_do_error(flags & ERR_MASK, flags);
 }
 
-#define nasm_err_helpers(_type, _name, _sev)				\
-_type nasm_ ## _name ## f (errflags flags, const char *fmt, ...)	\
-{									\
-	nasm_do_error(_sev, flags);					\
-}									\
-_type nasm_ ## _name (const char *fmt, ...)				\
-{									\
-	nasm_do_error(_sev, 0);						\
+#define nasm_err_helpers(_type, _name, _sev)                            \
+_type nasm_ ## _name ## f (errflags flags, const char *fmt, ...)        \
+{                                                                       \
+        nasm_do_error(_sev, flags);                                     \
+}                                                                       \
+_type nasm_ ## _name (const char *fmt, ...)                             \
+{                                                                       \
+        nasm_do_error(_sev, 0);                                         \
 }
 
 nasm_err_helpers(void,       listmsg,  ERR_LISTMSG)
@@ -105,63 +105,63 @@ fatal_func nasm_assert_failed(const char *msg, const char *func,
  * cannot be popped.
  */
 struct warning_stack {
-	struct warning_stack *next;
-	uint8_t state[sizeof warning_state];
+        struct warning_stack *next;
+        uint8_t state[sizeof warning_state];
 };
 static struct warning_stack *warning_stack, *warning_state_init;
 
 /* Push the warning status onto the warning stack */
 void push_warnings(void)
 {
-	struct warning_stack *ws;
+        struct warning_stack *ws;
 
-	ws = nasm_malloc(sizeof *ws);
-	memcpy(ws->state, warning_state, sizeof warning_state);
-	ws->next = warning_stack;
-	warning_stack = ws;
+        ws = nasm_malloc(sizeof *ws);
+        memcpy(ws->state, warning_state, sizeof warning_state);
+        ws->next = warning_stack;
+        warning_stack = ws;
 }
 
 /* Pop the warning status off the warning stack */
 void pop_warnings(void)
 {
-	struct warning_stack *ws = warning_stack;
+        struct warning_stack *ws = warning_stack;
 
-	memcpy(warning_state, ws->state, sizeof warning_state);
-	if (!ws->next) {
-		/*!
-		 *!warn-stack-empty [on] warning stack empty
-		 *!  a \c{[WARNING POP]} directive was executed when
-		 *!  the warning stack is empty. This is treated
-		 *!  as a \c{[WARNING *all]} directive.
-		 */
-		nasm_warn(WARN_WARN_STACK_EMPTY, "warning stack empty");
-	} else {
-		warning_stack = ws->next;
-		nasm_free(ws);
-	}
+        memcpy(warning_state, ws->state, sizeof warning_state);
+        if (!ws->next) {
+                /*!
+                 *!warn-stack-empty [on] warning stack empty
+                 *!  a \c{[WARNING POP]} directive was executed when
+                 *!  the warning stack is empty. This is treated
+                 *!  as a \c{[WARNING *all]} directive.
+                 */
+                nasm_warn(WARN_WARN_STACK_EMPTY, "warning stack empty");
+        } else {
+                warning_stack = ws->next;
+                nasm_free(ws);
+        }
 }
 
 /* Call after the command line is parsed, but before the first pass */
 void init_warnings(void)
 {
-	push_warnings();
-	warning_state_init = warning_stack;
+        push_warnings();
+        warning_state_init = warning_stack;
 }
 
 
 /* Call after each pass */
 void reset_warnings(void)
 {
-	struct warning_stack *ws = warning_stack;
+        struct warning_stack *ws = warning_stack;
 
-	/* Unwind the warning stack. We do NOT delete the last entry! */
-	while (ws->next) {
-		struct warning_stack *wst = ws;
-		ws = ws->next;
-		nasm_free(wst);
-	}
-	warning_stack = ws;
-	memcpy(warning_state, ws->state, sizeof warning_state);
+        /* Unwind the warning stack. We do NOT delete the last entry! */
+        while (ws->next) {
+                struct warning_stack *wst = ws;
+                ws = ws->next;
+                nasm_free(wst);
+        }
+        warning_stack = ws;
+        memcpy(warning_state, ws->state, sizeof warning_state);
 }
 
 /*
@@ -180,73 +180,73 @@ void reset_warnings(void)
  */
 bool set_warning_status(const char *value)
 {
-	enum warn_action { WID_OFF, WID_ON, WID_RESET };
-	enum warn_action action;
+        enum warn_action { WID_OFF, WID_ON, WID_RESET };
+        enum warn_action action;
         const struct warning_alias *wa;
         size_t vlen;
-	bool ok = false;
-	uint8_t mask;
+        bool ok = false;
+        uint8_t mask;
 
-	value = nasm_skip_spaces(value);
+        value = nasm_skip_spaces(value);
 
-	switch (*value) {
-	case '-':
-		action = WID_OFF;
-		value++;
-		break;
-	case '+':
-		action = WID_ON;
-		value++;
-		break;
-	case '*':
-		action = WID_RESET;
-		value++;
-		break;
-	case 'N':
-	case 'n':
-		if (!nasm_strnicmp(value, "no-", 3)) {
-			action = WID_OFF;
-			value += 3;
-			break;
-		} else if (!nasm_stricmp(value, "none")) {
-			action = WID_OFF;
-			value = NULL;
-			break;
-		}
-		/* else fall through */
-	default:
-		action = WID_ON;
-		break;
-	}
+        switch (*value) {
+        case '-':
+                action = WID_OFF;
+                value++;
+                break;
+        case '+':
+                action = WID_ON;
+                value++;
+                break;
+        case '*':
+                action = WID_RESET;
+                value++;
+                break;
+        case 'N':
+        case 'n':
+                if (!nasm_strnicmp(value, "no-", 3)) {
+                        action = WID_OFF;
+                        value += 3;
+                        break;
+                } else if (!nasm_stricmp(value, "none")) {
+                        action = WID_OFF;
+                        value = NULL;
+                        break;
+                }
+                /* else fall through */
+        default:
+                action = WID_ON;
+                break;
+        }
 
-	mask = WARN_ST_ENABLED;
+        mask = WARN_ST_ENABLED;
 
-	if (value && !nasm_strnicmp(value, "error", 5)) {
-		switch (value[5]) {
-		case '=':
-			mask = WARN_ST_ERROR;
-			value += 6;
-			break;
-		case '\0':
-			mask = WARN_ST_ERROR;
-			value = NULL;
-			break;
-		default:
-			/* Just an accidental prefix? */
-			break;
-		}
-	}
+        if (value && !nasm_strnicmp(value, "error", 5)) {
+                switch (value[5]) {
+                case '=':
+                        mask = WARN_ST_ERROR;
+                        value += 6;
+                        break;
+                case '\0':
+                        mask = WARN_ST_ERROR;
+                        value = NULL;
+                        break;
+                default:
+                        /* Just an accidental prefix? */
+                        break;
+                }
+        }
 
-	if (value && !nasm_stricmp(value, "all"))
-		value = NULL;
+        if (value && !nasm_stricmp(value, "all"))
+                value = NULL;
 
         vlen = value ? strlen(value) : 0;
 
-	/*
+        /*
          * This is inefficient, but it shouldn't matter.
          * Note: warning_alias[0] is "all".
          */
-	for (wa = warning_alias+1;
+        for (wa = warning_alias+1;
              wa < &warning_alias[NUM_WARNING_ALIAS]; wa++) {
             enum warn_index i = wa->warning;
 
@@ -283,9 +283,9 @@ bool set_warning_status(const char *value)
              *!  that contains an unknown warning name or is otherwise not possible to process.
              */
             nasm_warn(WARN_UNKNOWN_WARNING, "unknown warning name: %s", value);
-	}
+        }
 
-	return ok;
+        return ok;
 }
 
 /*
