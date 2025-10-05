@@ -14,6 +14,8 @@ It is the production version of NASM since 2025.
 
 Put the updates for NASM 3.01 here...
 
+\b Now \c{GROUP} directive cumulates sections for the same group.
+
 \S{cl-3.00.01} Version 3.00.01
 
 Put the updates for NASM 3.00.01 here...

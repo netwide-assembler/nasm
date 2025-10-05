@@ -327,6 +327,10 @@ A group does not have to contain any segments; you can still make
 you are referring to. OS/2, for example, defines the special group
 \c{FLAT} with no segments in it.
 
+\c{GROUP} is cumulative. The above example can be done like this:
+
+\c group dgroup data
+\c group dgroup bss
 
 \S{uppercase} \i\c{UPPERCASE}: Disabling Case Sensitivity in Output
 
