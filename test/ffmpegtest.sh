@@ -60,12 +60,10 @@ for x in $(grep -o -P "\-o .*\.o" $logfile | sed -e 's/-o //' | grep -v "/ffconf
 do
 	if ! [ -f ${x}.1 ]; then
 		echo file ${x}.1 does not exist
-		rev=1
 	fi
 
 	if ! [ -f ${x}.2 ]; then
 		echo file ${x}.2 does not exist
-		rev=1
 	fi
 
 	objdump -d ${x}.1 | tail -n +4 >/tmp/1.dump
@@ -73,12 +71,13 @@ do
 	if ! diff /tmp/1.dump /tmp/2.dump >/dev/null; then
 		echo [differs] $x
 		#diff /tmp/1.dump /tmp/2.dump
-		rev=1
 	else
 		echo [matches] $x
 	fi
 	rm -f /tmp/1.dump /tmp/2.dump
 done
 } | tee "$here/results"
+
+rev=$(grep -e " does not exist" -e "\[differs\]" $here/results >/dev/null)
 
 exit $rev
