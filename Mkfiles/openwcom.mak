@@ -4,9 +4,11 @@
 # cross-compile on a DOS/Win32/OS2 platform host
 #
 
+.DEFAULT : what
+
 top_srcdir  = .
 srcdir      = .
-VPATH       = $(srcdir)\asm;$(srcdir)\x86;asm;x86;$(srcdir)\macros;macros;$(srcdir)\output;$(srcdir)\lib;$(srcdir)\common;$(srcdir)\stdlib;$(srcdir)\nasmlib;$(srcdir)\disasm
+VPATH       = $(srcdir)\asm;$(srcdir)\x86;asm;x86;$(srcdir)\macros;macros;$(srcdir)\output;$(srcdir)\lib;$(srcdir)\common;$(srcdir)\stdlib;$(srcdir)\nasmlib;$(srcdir)\disasm;$(srcdir)\zlib
 prefix      = C:\Program Files\NASM
 exec_prefix = $(prefix)
 bindir      = $(prefix)\bin
@@ -16,7 +18,7 @@ CC      = *wcl386
 DEBUG       =
 CFLAGS      = -zq -6 -ox -wx -wcd=124 -ze -fpi $(DEBUG)
 BUILD_CFLAGS    = $(CFLAGS) $(%TARGET_CFLAGS)
-INTERNAL_CFLAGS = -I$(srcdir) -I. -I$(srcdir)\include -I$(srcdir)\x86 -Ix86 -I$(srcdir)\asm -Iasm -I$(srcdir)\disasm -I$(srcdir)\output
+INTERNAL_CFLAGS = -I$(srcdir) -I. -I$(srcdir)\include -I$(srcdir)\x86 -Ix86 -I$(srcdir)\asm -Iasm -I$(srcdir)\disasm -I$(srcdir)\output -I$(srcdir)\zlib
 ALL_CFLAGS  = $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
 LD      = *wlink
 LDEBUG      =
@@ -149,14 +151,22 @@ LIBOBJ_DIS = &
 
 # Objects for the local copy of zlib. The variable ZLIB is set to
 # $(ZLIBOBJ) if the internal version of zlib should be used.
+# zlib\crc32.obj is renamed to zlib\z_crc32.obj to avoid conflicts with
+# nasmlib\crc32.obj.
 ZLIBOBJ = &
 	zlib\adler32.obj &
-	zlib\crc32.obj &
+	zlib\z_crc32.obj &
 	zlib\infback.obj &
 	zlib\inffast.obj &
 	zlib\inflate.obj &
 	zlib\inftrees.obj &
 	zlib\zutil.obj
+
+# Special rule to avoid conflicts with nasmlib\crc32.obj because of stupid
+# behavior of implicit rules and VPATH of Open Watcom Make.
+zlib\z_crc32.obj : zlib\crc32.c
+    @set INCLUDE=
+    $(CC) -c $(ALL_CFLAGS) -fo=$^@ $[@
 
 LIBOBJ    = $(LIBOBJ_W) $(LIBOBJ_NW) $(ZLIB)
 ALLOBJ_W  = $(NASM) $(LIBOBJ_W)
