@@ -113,6 +113,7 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, uint32_t rex)
  */
 static enum reg_enum implicit_reg(opflags_t regflags)
 {
+#ifndef __WATCOMC__
     switch (regflags) {
     case REG_AL:  return R_AL;
     case REG_AX:  return R_AX;
@@ -139,6 +140,56 @@ static enum reg_enum implicit_reg(opflags_t regflags)
     case OPMASK0: return R_K0;
     default:      return 0;
     }
+#else
+    /* Open Watcom does not support 64-bit constants at *case*. */
+    if (regflags == REG_AL)
+        return R_AL;
+    if (regflags == REG_AX)
+        return R_AX;
+    if (regflags == REG_EAX)
+        return R_EAX;
+    if (regflags == REG_RAX)
+        return R_RAX;
+    if (regflags == REG_DL)
+        return R_DL;
+    if (regflags == REG_DX)
+        return R_DX;
+    if (regflags == REG_EDX)
+        return R_EDX;
+    if (regflags == REG_RDX)
+        return R_RDX;
+    if (regflags == REG_CL)
+        return R_CL;
+    if (regflags == REG_CX)
+        return R_CX;
+    if (regflags == REG_ECX)
+        return R_ECX;
+    if (regflags == REG_RCX)
+        return R_RCX;
+    if (regflags == FPU0)
+        return R_ST0;
+    if (regflags == XMM0)
+        return R_XMM0;
+    if (regflags == YMM0)
+        return R_YMM0;
+    if (regflags == ZMM0)
+        return R_ZMM0;
+    if (regflags == REG_ES)
+        return R_ES;
+    if (regflags == REG_CS)
+        return R_CS;
+    if (regflags == REG_SS)
+        return R_SS;
+    if (regflags == REG_DS)
+        return R_DS;
+    if (regflags == REG_FS)
+        return R_FS;
+    if (regflags == REG_GS)
+        return R_GS;
+    if (regflags == OPMASK0)
+        return R_K0;
+    return 0;
+#endif
 }
 
 /*
