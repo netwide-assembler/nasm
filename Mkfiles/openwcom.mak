@@ -33,9 +33,9 @@ RUNPERL         = $(PERL) $(PERLFLAGS)
 .BEFORE
 	set COPYCMD=/y
 
-RM_F		= -del /f
+RM_F		= -rm -f
 LN_S		= copy
-EMPTY		= copy nul:
+EMPTY		= %create
 SIDE		= %null Created by side effect
 
 MAKENSIS        = makensis
