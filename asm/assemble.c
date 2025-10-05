@@ -3103,6 +3103,7 @@ static enum match_result matches(const struct itemplate * const itemp,
              * If this is an *explicitly* sized immediate,
              * allow it to match an extending pattern.
              */
+#ifndef __WATCOMC__
             switch (isize[i]) {
             case BITS8:
                 if (ttype & BYTEEXTMASK) {
@@ -3117,6 +3118,18 @@ static enum match_result matches(const struct itemplate * const itemp,
             default:
                 break;
             }
+#else
+            /* Open Watcom does not support 64-bit constants at *case*. */
+            if (isize[i] == BITS8) {
+                if (ttype & BYTEEXTMASK) {
+                    isize[i]  = tsize[i];
+                    itype[i] |= BYTEEXTMASK;
+                }
+            } else if (isize[i] == BITS32) {
+                if (ttype & DWORDEXTMASK)
+                    isize[i]  = tsize[i];
+            }
+#endif
 
             /*
              * MOST instructions which take an sdword64 are the only form;
