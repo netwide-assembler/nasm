@@ -215,7 +215,7 @@ struct unaligned32 {
 } __attribute__((packed));
 static inline uint32_t getu32(const void *p)
 {
-    return l32toh(((const struct unaligned32 *)p)->v);
+    return le32toh(((const struct unaligned32 *)p)->v);
 }
 static inline uint32_t setu32(void *p, uint32_t v)
 {
@@ -253,7 +253,7 @@ static inline uint16_t setu16(void *p, uint16_t v)
 static inline uint32_t getu32(const void *p)
 {
     const uint32_t _unaligned *pp = p;
-    return l32toh(*pp);
+    return le32toh(*pp);
 }
 static inline uint32_t setu32(void *p, uint32_t v)
 {

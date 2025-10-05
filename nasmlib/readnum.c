@@ -17,14 +17,6 @@
 
 void warn_dollar_hex(void)
 {
-    /*!
-     *!number-deprecated-hex [on] $ prefix for hexadecimal is deprecated
-     *!    warns that the \c{$} prefix for hexadecimal numbers is
-     *!    deprecated, due to the syntactic conflict with \c{$} used
-     *!    as a symbol escape prefix. This syntax may be disabled by
-     *!    default in a future version of NASM. Replace \c{$} with \c{0x}
-     *!    to ensure compatibility with future versions.
-     */
     nasm_warn(WARN_NUMBER_DEPRECATED_HEX,
               "$ prefix for hexadecimal is deprecated");
 }
@@ -129,11 +121,6 @@ int64_t readnum(const char *str, bool *error)
     }
 
     if (warn) {
-        /*!
-         *!number-overflow [on] numeric constant does not fit
-         *!    covers warnings about numeric constants which
-         *!    don't fit in 64 bits.
-         */
         nasm_warn(WARN_NUMBER_OVERFLOW,
 		   "numeric constant %s does not fit in 64 bits",
 		   str);
