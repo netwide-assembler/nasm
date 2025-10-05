@@ -3103,19 +3103,20 @@ static enum match_result matches(const struct itemplate * const itemp,
              * If this is an *explicitly* sized immediate,
              * allow it to match an extending pattern.
              */
-            switch (isize[i]) {
-            case BITS8:
+            /*
+             * The if() is a hack to deal with compilers which
+             * don't handle switch() statements with 64-bit
+             * expressions.
+             */
+            if (isize[i] == BITS8) {
                 if (ttype & BYTEEXTMASK) {
                     isize[i]  = tsize[i];
                     itype[i] |= BYTEEXTMASK;
                 }
-                break;
-            case BITS32:
-                if (ttype & DWORDEXTMASK)
+            } else if (isize[i] == BITS32) {
+                if (ttype & DWORDEXTMASK) {
                     isize[i]  = tsize[i];
-                break;
-            default:
-                break;
+                }
             }
 
             /*

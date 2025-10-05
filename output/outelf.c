@@ -1131,12 +1131,12 @@ static void elf32_out(const struct out_data *out)
                 nasm_nonfatal("ELF format does not support"
                               " segment base references");
             } else {
+                /*
+                 * The if() is a hack to deal with compilers which
+                 * don't handle switch() statements with 64-bit
+                 * expressions.
+                 */
                 if (wrt == NO_SEG) {
-                    /*
-                     * The if() is a hack to deal with compilers which
-                     * don't handle switch() statements with 64-bit
-                     * expressions.
-                     */
                     switch (asize) {
                     case 1:
                         elf_add_reloc(s, segment, 0, R_386_8);

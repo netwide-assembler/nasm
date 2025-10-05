@@ -113,32 +113,35 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, uint32_t rex)
  */
 static enum reg_enum implicit_reg(opflags_t regflags)
 {
-    switch (regflags) {
-    case REG_AL:  return R_AL;
-    case REG_AX:  return R_AX;
-    case REG_EAX: return R_EAX;
-    case REG_RAX: return R_RAX;
-    case REG_DL:  return R_DL;
-    case REG_DX:  return R_DX;
-    case REG_EDX: return R_EDX;
-    case REG_RDX: return R_RDX;
-    case REG_CL:  return R_CL;
-    case REG_CX:  return R_CX;
-    case REG_ECX: return R_ECX;
-    case REG_RCX: return R_RCX;
-    case FPU0:    return R_ST0;
-    case XMM0:    return R_XMM0;
-    case YMM0:    return R_YMM0;
-    case ZMM0:    return R_ZMM0;
-    case REG_ES:  return R_ES;
-    case REG_CS:  return R_CS;
-    case REG_SS:  return R_SS;
-    case REG_DS:  return R_DS;
-    case REG_FS:  return R_FS;
-    case REG_GS:  return R_GS;
-    case OPMASK0: return R_K0;
-    default:      return 0;
-    }
+    /*
+     * The if() is a hack to deal with compilers which
+     * don't handle switch() statements with 64-bit
+     * expressions.
+     */
+    if (regflags == REG_AL)        return R_AL;
+    else if (regflags == REG_AX)   return R_AX;
+    else if (regflags == REG_EAX)  return R_EAX;
+    else if (regflags == REG_RAX)  return R_RAX;
+    else if (regflags == REG_DL)   return R_DL;
+    else if (regflags == REG_DX)   return R_DX;
+    else if (regflags == REG_EDX)  return R_EDX;
+    else if (regflags == REG_RDX)  return R_RDX;
+    else if (regflags == REG_CL)   return R_CL;
+    else if (regflags == REG_CX)   return R_CX;
+    else if (regflags == REG_ECX)  return R_ECX;
+    else if (regflags == REG_RCX)  return R_RCX;
+    else if (regflags == FPU0)     return R_ST0;
+    else if (regflags == XMM0)     return R_XMM0;
+    else if (regflags == YMM0)     return R_YMM0;
+    else if (regflags == ZMM0)     return R_ZMM0;
+    else if (regflags == REG_ES)   return R_ES;
+    else if (regflags == REG_CS)   return R_CS;
+    else if (regflags == REG_SS)   return R_SS;
+    else if (regflags == REG_DS)   return R_DS;
+    else if (regflags == REG_FS)   return R_FS;
+    else if (regflags == REG_GS)   return R_GS;
+    else if (regflags == OPMASK0)  return R_K0;
+    else                           return 0;
 }
 
 /*
