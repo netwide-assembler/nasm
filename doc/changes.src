@@ -27,6 +27,10 @@ It is the production version of NASM since 2025.
 \b The unofficial but obvious alternate form \c{TEST reg,mem} was not
    accepted by NASM 3.00; corrected.
 
+\b For the \c{obj} output format, multiple \c{GROUP} directives can
+   now be specified for the same group; the resulting group includes
+   all sections specified in all \c{GROUP} directives for the group.
+
 
 \S{cl-3.00} Version 3.00
 
