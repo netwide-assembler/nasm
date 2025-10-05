@@ -199,10 +199,6 @@ static bool ieee_flconvert(const char *string, fp_limb *mant,
                     *p++ = *string - '0';
                 } else {
                     if (!warned) {
-                        /*!
-                         *!float-toolong [on] too many digits in floating-point number
-                         *!  warns about too many digits in floating-point numbers.
-                         */
                         nasm_warn(WARN_FLOAT_TOOLONG|ERR_PASS2,
                                    "floating-point constant significand contains "
                                    "more than %i digits", MANT_DIGITS);
@@ -803,19 +799,10 @@ int float_const(const char *str, int s, uint8_t *result, enum floatize ffmt)
             mant[0] |= exponent << (LIMB_BITS-1 - fmt->exponent);
         } else {
             if (daz || is_zero(mant)) {
-                /*!
-                 *!float-underflow [off] floating point underflow
-                 *!  warns about floating point underflow (a nonzero
-                 *!  constant rounded to zero.)
-                 */
                 nasm_warn(WARN_FLOAT_UNDERFLOW|ERR_PASS2,
                            "underflow in floating-point constant");
                 goto zero;
             } else {
-                /*!
-                 *!float-denorm [off] floating point denormal
-                 *!  warns about denormal floating point constants.
-                 */
                 nasm_warn(WARN_FLOAT_DENORM|ERR_PASS2,
                            "denormal floating-point constant");
             }
@@ -832,10 +819,6 @@ int float_const(const char *str, int s, uint8_t *result, enum floatize ffmt)
             ieee_shr(mant, 1);
             exponent++;
             if (exponent >= (expmax << 1)-1) {
-                /*!
-                 *!float-overflow [on] floating point overflow
-                 *!  warns about floating point underflow.
-                 */
                 nasm_warn(WARN_FLOAT_OVERFLOW|ERR_PASS2,
                            "overflow in floating-point constant");
                 type = FL_INFINITY;

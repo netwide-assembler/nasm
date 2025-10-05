@@ -128,12 +128,6 @@ void pop_warnings(void)
 
 	memcpy(warning_state, ws->state, sizeof warning_state);
 	if (!ws->next) {
-		/*!
-		 *!warn-stack-empty [on] warning stack empty
-		 *!  a \c{[WARNING POP]} directive was executed when
-		 *!  the warning stack is empty. This is treated
-		 *!  as a \c{[WARNING *all]} directive.
-		 */
 		nasm_warn(WARN_WARN_STACK_EMPTY, "warning stack empty");
 	} else {
 		warning_stack = ws->next;
@@ -168,15 +162,9 @@ void reset_warnings(void)
  * This is called when processing a -w or -W option, or a warning directive.
  * Returns ok if the action was successful.
  *
- * Special pseudo-warnings:
- *
- *!other [on] any warning not specifically mentioned above
- *!  specifies any warning not included in any specific warning class.
- *
- *!all [all] all possible warnings
- *!  is an group alias for \e{all} warning classes.  Thus, \c{-w+all}
- *!  enables all available warnings, and \c{-w-all} disables warnings
- *!  entirely (since NASM 2.13).
+ * Special pseudo-warnings (see warnings.dat):
+ * all   - all possible warnings
+ * other - any warning not specifically assigned a class
  */
 bool set_warning_status(const char *value)
 {
@@ -277,11 +265,6 @@ bool set_warning_status(const char *value)
         }
 
         if (!ok && value) {
-            /*!
-             *!unknown-warning [off] unknown warning in \c{-W}/\c{-w} or warning directive
-             *!  warns about a \c{-w} or \c{-W} option or a \c{[WARNING]} directive
-             *!  that contains an unknown warning name or is otherwise not possible to process.
-             */
             nasm_warn(WARN_UNKNOWN_WARNING, "unknown warning name: %s", value);
 	}
 

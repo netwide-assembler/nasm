@@ -22,7 +22,7 @@
 #include "outform.h"
 #include "outlib.h"
 
-#ifdef OF_OBJ
+#if defined(OF_OBJ) || defined(OF_OBJ2)
 
 /*
  * outobj.c is divided into two sections.  The first section is low level
@@ -602,6 +602,11 @@ static struct ExpDef {
 #define EXPDEF_FLAG_NODATA   0x20
 #define EXPDEF_MASK_PARMCNT  0x1F
 
+struct SegmentToClass {
+    const char *segment;        /* segment  */
+    const char *segclass;       /* class    */
+};
+
 static int32_t obj_entry_seg, obj_entry_ofs;
 
 const struct ofmt of_obj;
@@ -613,9 +618,41 @@ static struct Segment *current_seg;
 /* Name for segment to use if no segment directive is defined */
 static char DEFAULT_SEG[] = "__NASMDEFSEG";
 
+/* Conversion table from known segments to default classes */
+static const struct SegmentToClass conv_table[] = {
+    /* known segments,  default class */
+    { "CODE",           "CODE"  },
+    { "TEXT",           "CODE"  },
+    { "CONST",          "CONST" },
+    { "DATA",           "DATA"  },
+    { "BSS",            "BSS"   },
+    { "STACK",          "STACK" },
+    { "CODE32",         "CODE"  },
+    { "TEXT32",         "CODE"  },
+    { "CONST32",        "CONST" },
+    { "DATA32",         "DATA"  },
+    { "BSS32",          "BSS"   },
+    { "STACK32",        "STACK" },
+    { NULL,             NULL    },
+};
+
 static int32_t obj_segment(char *, int *);
 static void obj_write_file(void);
 static enum directive_result obj_directive(enum directive, char *);
+
+static const char *get_default_class(const char *segment)
+{
+    const struct SegmentToClass *conv;
+
+    if (segment && segment[0]) {
+        for (conv = conv_table; conv->segment; conv++) {
+            if (!strcmp(segment, conv->segment))
+                return conv->segclass;
+        }
+    }
+
+    return NULL;
+}
 
 static void obj_init(void)
 {
@@ -643,6 +680,21 @@ static void obj_init(void)
     obj_use32 = false;
     passtwo = 0;
     current_seg = NULL;
+
+    /*
+     * Convert known Unix sections to OMF segments via macros.
+     */
+    if (ofmt == &of_obj2) {
+        char section_text[]   = ".text=TEXT32";
+        char section_rodata[] = ".rodata=CONST32";
+        char section_data[]   = ".data=DATA32";
+        char section_bss[]    = ".bss=BSS32";
+
+        pp_pre_define(section_text);
+        pp_pre_define(section_rodata);
+        pp_pre_define(section_data);
+        pp_pre_define(section_bss);
+    }
 }
 
 static void obj_cleanup(void)
@@ -1319,12 +1371,6 @@ static uint32_t check_segment_alignment(const uint64_t origalign)
     while (!(align & alignments))
         align <<= 1;
 
-    /*!
-     *!section-alignment-rounded [on] section alignment rounded up
-     *!  warn if a section alignment is specified which is
-     *!  not supported by the underlying object format, but
-     *!  can be rounded up to a supported value.
-     */
     nasm_warn(WARN_SECTION_ALIGNMENT_ROUNDED,
               "alignment of %"PRIu64" not supported, using %"PRIu32,
               origalign, align);
@@ -1400,9 +1446,16 @@ static int32_t obj_segment(char *name, int *bits)
         any_segs = true;
         seg->name = nasm_strdup(name);
         seg->currentpos = 0;
-        seg->align = seg->origalign = 1; /* default */
-        seg->use32 = false;              /* default */
-        seg->combine = CMB_PUBLIC;       /* default */
+        if (ofmt == &of_obj) {
+            seg->align = 1;         /* default for obj */
+            seg->origalign = 1;     /* default for obj */
+            seg->use32 = false;     /* default for obj */
+        } else {
+            seg->align = 16;        /* default for obj2 */
+            seg->origalign = 16;    /* default for obj2 */
+            seg->use32 = true;      /* default for obj2 */
+        }
+        seg->combine = CMB_PUBLIC;      /* default */
         seg->segclass = seg->overlay = NULL;
         seg->pubhead = NULL;
         seg->pubtail = &seg->pubhead;
@@ -1494,6 +1547,31 @@ static int32_t obj_segment(char *name, int *bits)
 
         if (!seg->use32 && seg->grp && !strcmp(seg->grp->name, "FLAT"))
            nasm_panic("wrong combination of USE16(16-bit segment) and FLAT");
+
+        if (ofmt == &of_obj2) {
+            if (seg->use32 && !seg->grp) {
+                struct Group *grp;
+                for (grp = grphead; grp; grp = grp->next)
+                    if (!strcmp(grp->name, "FLAT"))
+                        break;
+                if (!grp) {
+                    obj_directive(D_GROUP, "FLAT");
+                    for (grp = grphead; grp; grp = grp->next)
+                        if (!strcmp(grp->name, "FLAT"))
+                            break;
+                    if (!grp)
+                        nasm_panic("failure to define FLAT?!");
+                }
+                seg->grp = grp;
+            }
+
+            if (!seg->segclass) {
+                const char *segclass = get_default_class(seg->name);
+
+                if (segclass)
+                    seg->segclass = nasm_strdup(segclass);
+            }
+        }
 
         /* We need to know whenever we have at least one 32-bit segment */
         obj_use32 |= seg->use32;
@@ -2691,4 +2769,26 @@ const struct ofmt of_obj = {
     obj_cleanup,
     obj_pragma_list
 };
-#endif                          /* OF_OBJ */
+
+const struct ofmt of_obj2 = {
+    "Intel/Microsoft OMF (i386) (OS/2)",
+    "obj2",
+    ".obj",
+    0,
+    32,
+    borland_debug_arr,
+    &borland_debug_form,
+    obj_stdmac,
+    obj_init,
+    null_reset,
+    obj_out,
+    obj_deflabel,
+    obj_segment,
+    NULL,
+    obj_sectalign,
+    obj_segbase,
+    obj_directive,
+    obj_cleanup,
+    obj_pragma_list
+};
+#endif                          /* OF_OBJ || OF_OBJ2 */

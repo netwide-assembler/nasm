@@ -344,7 +344,25 @@ editors\nasmtok.json: editors\nasmtok.pl asm\tokhash.c asm\pptok.c \
 		 version.mak
 	$(RUNPERL) $(srcdir)\editors\nasmtok.pl -json $@ $(srcdir) $(objdir)
 
-editors: $(EDITORS)
+editors: $(EDITORS) $(PHONY)
+
+asm\warnings_c.h: asm\warnings.pl asm\warnings.dat
+	$(RUNPERL) $(srcdir)\asm\warnings.pl c asm\warnings_c.h \
+		$(srcdir)\asm\warnings.dat
+
+include\warnings.h: asm\warnings.pl asm\warnings.dat
+	$(RUNPERL) $(srcdir)\asm\warnings.pl h include\warnings.h \
+		$(srcdir)\asm\warnings.dat
+
+doc\warnings.src: asm\warnings.pl asm\warnings.dat
+	$(RUNPERL) $(srcdir)\asm\warnings.pl doc doc\warnings.src \
+		$(srcdir)\asm\warnings.dat
+
+$(PERLREQ): $(DIRS)
+
+perlreq: $(PERLREQ) $(PHONY)
+
+warnings: $(WARNFILES) $(PHONY)
 
 #-- End Generated File Rules --#
 

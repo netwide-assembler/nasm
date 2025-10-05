@@ -1,7 +1,7 @@
 ;; SPDX-License-Identifier: BSD-2-Clause
 ;; Copyright 1996-2009 The NASM Authors - All Rights Reserved
 
-OUT: obj
+OUT: obj obj2
 %define __?SECT?__ [section .text]
 %imacro group 1+.nolist
 [group %1]

@@ -43,96 +43,72 @@ sub add_alias($$) {
     }
 }
 
-sub find_warnings($$) {
-    my($srcdir, $infile) = @_;
+sub read_warnings($) {
+    my($infile) = @_;
 
-    return unless ($infile =~ /.[ch]$/i);
+    open(my $in, '<', $infile) or die "$0:$infile: $!\n";
 
-    my $in;
-    open($in, '<', $infile)
-	or open($in, '<', File::Spec->catfile($srcdir, $infile))
-	or die "$0: cannot open input file $infile: $!\n";
-    my $in_comment = 0;
     my $nline = 0;
     my $this;
     my @doc;
 
     while (defined(my $l = <$in>)) {
 	$nline++;
-	chomp $l;
-
-	if (!$in_comment) {
-	    $l =~ s/^.*?\/\*.*?\*\///g; # Remove single-line comments
-
-	    if ($l =~ /^.*?(\/\*.*)$/) {
-		# Begin block comment
-		$l = $1;
-		$in_comment = 1;
-	    }
+	$l =~ s/\s+$//;
+	if ($l ne '') {
+	    $l =~ s/^\s*\#(\s.*)?$//;
+	    $l =~ s/\s+\\\#(\s.*)?$//;
+	    next if ($l eq '');
 	}
 
-	if ($in_comment) {
-	    if ($l =~ /\*\//) {
-		# End block comment
-		$in_comment = 0;
-		undef $this;
-	    } elsif ($l =~ /^\s*\/?\*\!(\-|\=|\s*)(.*?)\s*$/) {
-		my $opr = $1;
-		my $str = $2;
+	if ($l =~ /^([\w\-]+)\s+\[(\w+)\]\s+(.*)$/) {
+	    my $name = $1;
+	    my $def = $2;
+	    my $help = $3;
 
-		if ($opr eq '' && $str eq '') {
-		    next;
-		} elsif ((!defined($this) || ($opr eq '')) &&
-			 ($str =~ /^([\w\-]+)\s+\[(\w+)\]\s(.*\S)\s*$/)) {
-		    my $name = $1;
-		    my $def = $2;
-		    my $help = $3;
+	    my $cname = uc($name);
+	    $cname =~ s/[^A-Z0-9_]+/_/g;
 
-		    my $cname = uc($name);
-		    $cname =~ s/[^A-Z0-9_]+/_/g;
+	    $this = {name => $name, cname => $cname,
+		     def => $def, help => $help,
+		     doc => [], file => $infile, line => $nline};
 
-		    $this = {name => $name, cname => $cname,
-			     def => $def, help => $help,
-			     doc => [], file => $infile, line => $nline};
-
-		    if (defined(my $that = $aliases{$name})) {
-			# Duplicate definition?!
-			printf STDERR "%s:%s: warning %s previously defined at %s:%s\n",
-			    $infile, $nline, $name, $that->{file}, $that->{line};
-		    } else {
-			push(@warnings, $this);
-			# Every warning name is also a valid warning alias
-			add_alias($name, $this);
-			$nwarn++;
-		    }
-		} elsif ($opr eq '=') {
-		    # Alias names for warnings
-		    for my $a (split(/,+/, $str)) {
-			add_alias($a, $this);
-		    }
-		} elsif ($opr =~ /^[\-\s]/) {
-		    push(@{$this->{doc}}, "$str\n");
-		} else {
-		    print STDERR "$infile:$nline: malformed warning definition\n";
-		    print STDERR "    $l\n";
-		    $err++;
-		}
+	    if (defined(my $that = $aliases{$name})) {
+		# Duplicate definition?!
+		printf STDERR "%s:%s: warning %s previously defined at %s:%s\n",
+		    $infile, $nline, $name, $that->{file}, $that->{line};
 	    } else {
-		undef $this;
+		push(@warnings, $this);
+		# Every warning name is also a valid warning alias
+		add_alias($name, $this);
+		$nwarn++;
 	    }
+	} elsif ($l =~ /^\=([\w\-,]+)$/) {
+	    # Alias names for warnings
+	    die unless (defined($this));
+	    map { add_alias($_,$this) } split(/,+/, $1);
+	} elsif ($l =~ /^(\s+(.*))?$/) {
+	    my $str = $2;
+	    die unless (defined($this));
+	    next if ($str eq '' && !scalar(@{$this->{doc}}));
+	    push(@{$this->{doc}}, "$str\n");
+	} else {
+	    print STDERR "$infile:$nline: malformed warning definition\n";
+	    print STDERR "    $l\n";
+	    $err++;
 	}
     }
     close($in);
 }
 
-my($what, $outfile, $srcdir, @infiles) = @ARGV;
+my($what, $outfile, @infiles) = @ARGV;
 
 if (!defined($outfile)) {
-    die "$0: usage: [c|h|doc] outfile srcdir infiles...\n";
+    die "$0: usage: [c|h|doc] outfile infiles...\n";
 }
 
 foreach my $file (@infiles) {
-    find_warnings($srcdir, $file);
+    read_warnings($file);
 }
 
 exit(1) if ($err);
@@ -145,8 +121,7 @@ sub sort_warnings {
 }
 
 @warnings = sort sort_warnings @warnings;
-my @warn_noall = @warnings;
-pop @warn_noall if ($warn_noall[$#warn_noall]->{name} eq 'all');
+my @warn_noall = grep { !($_->{name} eq 'all') } @warnings;
 
 my $outdata;
 open(my $out, '>', \$outdata)
@@ -237,40 +212,32 @@ if ($what eq 'c') {
 	$#warn_noall + 2;
     print $out "\n#endif /* $guard */\n";
 } elsif ($what eq 'doc') {
-    my %whatdef = ( 'on' => 'Enabled',
-		    'off' => 'Disabled',
-		    'err' => 'Enabled and promoted to error' );
+    my %wsec = ('on' => [], 'off' => [], 'err' => [],
+		'group' => [], 'legacy' => []);
 
     my @indexinfo = ();
-    my @outtxt    = ();
 
     foreach my $pfx (sort { $a cmp $b } keys(%prefixes)) {
 	my $warn = $aliases{$pfx};
 	my @doc;
+	my $wtxt;
 
 	if (!defined($warn)) {
 	    my @plist = sort { $a cmp $b } @{$prefixes{$pfx}};
 	    next if ( $#plist < 1 );
 
-	    @doc = ("all \\c{$pfx-} warnings\n\n",
-		    "\\> \\c{$pfx} is a group alias for all warning classes\n",
-		    "prefixed by \\c{$pfx-}; currently\n");
-	    # Just commas is bad grammar to be sure, but it is more
-	    # legible than the alternative.
-	    push(@doc, join(scalar(@plist) < 3 ? ' and ' : ', ',
-			    map { "\\c{$_}" } @plist).".\n");
+	    @doc = ("group alias for:\n\n");
+	    push(@doc, map { "\\c      $_\n" } @plist);
+	    $wtxt = $wsec{'group'};
 	} elsif ($pfx ne $warn->{name}) {
 	    my $awarn = $aliases{$warn->{name}};
 	    @doc = ($awarn->{help}."\n\n",
-		    "\\> \\c{$pfx} is a backwards compatibility alias for \\c{".
-		    $warn->{name}."}.\n");
+		    "\\> Alias for \\c{".$warn->{name}."}.\n");
+	    $wtxt = $wsec{'legacy'};
 	} else {
-	    my $docdef = $whatdef{$warn->{def}};
+	    @doc = ($warn->{help}."\n\n");
 
-	    @doc = ($warn->{help}."\n\n",
-		    "\\> \\c{".$warn->{name}."} ");
-
-	    my $newpara = 0;
+	    my $newpara = 1;
 	    foreach my $l (@{$warn->{doc}}) {
 		if ($l =~ /^\s*$/) {
 		    $newpara = 1;
@@ -282,33 +249,45 @@ if ($what eq 'c') {
 		}
 		push(@doc, $l);
 	    }
-	    if (defined($docdef)) {
-		push(@doc, "\n", "\\> $docdef by default.\n");
-	    }
+
+	    $wtxt = $wsec{$warn->{def}};
 	}
 
 	push(@indexinfo, "\\IR{w-$pfx} warning class, \\c{$pfx}\n");
-	push(@outtxt, "\\b \\I{w-$pfx} \\c{$pfx}: ", @doc, "\n");
+	push(@$wtxt, "\\b \\I{w-$pfx} \\c{$pfx}: ", @doc, "\n");
     }
 
-    print $out "\n", @indexinfo, "\n", @outtxt;
+    print $out "\n", @indexinfo, "\n";
+    print $out "\n\\H{warning-classes} Warning Classes\n\n";
+    print $out "This list shows each warning class that can be\n";
+    print $out "enabled or disabled individually. Each warning containing\n";
+    print $out "a \\c{-} character in the name can also be enabled or\n";
+    print $out "disabled as part of a group, named by removing one or more\n";
+    print $out "\\c{-}-delimited suffixes.\n";
+
+    print $out "\n\\S{warnings-classes-on} Enabled by default\n\n";
+    print $out @{$wsec{'on'}};
+
+    print $out "\n\\S{warnings-classes-err} Enabled and promoted to error by default\n\n";
+    print $out @{$wsec{'err'}};
+
+    print $out "\n\\S{warnings-classes-off} Disabled by default\n\n";
+    print $out @{$wsec{'off'}};
+
+    print $out "\n\\H{warning-groups} Warning Class Groups\n\n";
+    print $out "Warning class groups are aliases for all warning classes with a common\n";
+    print $out "prefix. This list shows the warnings that are currently\n";
+    print $out "included in specific warning groups.\n\n";
+    print $out @{$wsec{'group'}};
+
+    print $out "\n\\H{warning-legacy} Warning Class Aliases for Backward Compatiblity\n\n";
+    print $out "These aliases are defined for compatibility with earlier\n";
+    print $out "versions of NASM.\n\n";
+    print $out @{$wsec{'legacy'}};
 }
 
 close($out);
 
-# Write data to file if and only if it has changed
-# For some systems, even if we don't write, opening for append
-# apparently touches the timestamp, so we need to read and write
-# as separate operations.
-if (open(my $out, '<', $outfile)) {
-    my $datalen = length($outdata);
-    my $oldlen = read($out, my $oldoutdata, $datalen+1);
-    close($out);
-    exit 0 if (defined($oldlen) && $oldlen == $datalen &&
-	       ($oldoutdata eq $outdata));
-}
-
-# Data changed, must rewrite
 open(my $out, '>', $outfile)
     or die "$0: cannot open output file $outfile: $!\n";
 

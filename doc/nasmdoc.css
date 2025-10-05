@@ -50,6 +50,13 @@ code, pre {
     font-family: "roboto mono", "source code pro", "liberation mono", "monospace";
     font-size: 90%;
 }
+pre {
+    background: #f0f0f0;
+}
+#appendix-F ~ pre {
+    font-size: 75%;
+    background: white;
+}
 code {
     font-weight: bolder;
 }
@@ -57,9 +64,6 @@ pre, blockquote {
     margin-left: 4em;
     margin-right: 4em;
     padding: 0.25em 0.4em;
-}
-pre {
-    background: #f0f0f0;
 }
 code {
     display: inline;
@@ -119,10 +123,10 @@ div.index .ref {
     flex: 1 1 0;
 }
 div.toc, div.chapter, div.appendix {
-    column-width: 32em;
+    column-width: 42em;
 }
 div.index {
-    column-width: 16em;
+    column-width: 20em;
     margin-right: 3em;
 }
 div.index li {
