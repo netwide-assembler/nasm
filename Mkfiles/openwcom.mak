@@ -31,9 +31,10 @@ RUNPERL         = $(PERL) $(PERLFLAGS)
 .BEFORE
 	set COPYCMD=/y
 
-RM_F		= -del /f
+# rm is handled internally by WMAKE, so it does work even on non-Unix systems
+RM_F		= -rm -f
 LN_S		= copy
-EMPTY		= copy nul:
+EMPTY		= %create
 SIDE		= %null Created by side effect
 
 MAKENSIS        = makensis
