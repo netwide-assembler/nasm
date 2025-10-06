@@ -5496,9 +5496,6 @@ VCVTPS2PH	xmmreg|mask|z,ymmreg,imm8	[mri:hvm: evex.256.66.0f3a.w0 1d /r ib]	AVX5
 VCVTPS2PH	mem128|mask,ymmreg,imm8		[mri:hvm: evex.256.66.0f3a.w0 1d /r ib] AVX512,AVX512VL
 VCVTPS2PH	ymmreg|mask|z,zmmreg|sae,imm8	[mri:hvm: evex.512.66.0f3a.w0 1d /r ib]	AVX512
 VCVTPS2PH	mem256|mask,zmmreg|sae,imm8	[mri:hvm: evex.512.66.0f3a.w0 1d /r ib] AVX512
-VCVTPS2PH	xmmreg|mask|z,xmmrm128|b32	[rm:fv: evex.128.66.map5.w0 1d /r]	AVX512FP16,AVX512VL
-VCVTPS2PH	ymmreg|mask|z,ymmrm256|b32	[rm:fv: evex.256.66.map5.w0 1d /r]	AVX512FP16,AVX512VL
-VCVTPS2PH	zmmreg|mask|z,zmmrm512|b32|er	[rm:fv: evex.512.66.map5.w0 1d /r]	AVX512FP16
 VCVTPS2PHX	xmmreg|mask|z,xmmrm128|b32	[rm:fv: evex.128.66.map5.w0 1d /r]	AVX512FP16,AVX512VL
 VCVTPS2PHX	xmmreg|mask|z,ymmrm256|b32	[rm:fv: evex.256.66.map5.w0 1d /r]	AVX512FP16,AVX512VL
 VCVTPS2PHX	ymmreg|mask|z,zmmrm512|b32|er	[rm:fv: evex.512.66.map5.w0 1d /r]	AVX512FP16
