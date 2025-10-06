@@ -73,6 +73,7 @@ $arith		nf=nf ADD OR nf=,ADC nf=,SBB AND SUB XOR nf=,!evex,CMP
 
 ;# Bitwise testing
 $bwdq TEST	rm#,reg#			[mr:	o# 84# /r		]		8086,SM
+$bwdq TEST	reg#,mem#			[rm:	o# 84# /r		]		8086,SM,ND
 $bwdq TEST	ax#,imm#			[-i:	o# a8# i#		]		8086,SM,NOAPX
 $bwdq TEST	rm#,imm#			[mi:	o# f6# /0 i#		]		8086,SM
 
