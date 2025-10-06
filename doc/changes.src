@@ -21,7 +21,7 @@ It is the production version of NASM since 2025.
    no output would be generated in either case, assembly would fail if
    evaluating the expression triggered an error.
 
-\b Fix encoding of TCVTROWPS2PHL, correct multiple AVX512-BF16
+\b Fix encoding of \c{TCVTROWPS2PHL}, correct multiple AVX512-BF16
    instructions' operand formats and typoed mnemonics.
 
 
