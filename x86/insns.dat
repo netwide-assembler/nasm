@@ -5420,6 +5420,8 @@ LDTILECFG	mem512				[m:	vex+.128.np.0f38.w0 49 /0]		AMXTILE,SZ,LONG
 STTILECFG	mem512				[m:	vex+.128.66.0f38.w0 49 /0]		AMXTILE,SZ,LONG
 TDPBF16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5c /r]		AMXBF16,LONG
 TDPFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5c /r]		AMXFP16,LONG
+TCMMIMFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 6c /r]		AMXCOMPLEX,LONG
+TCMMRLFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 6c /r]		AMXCOMPLEX,LONG
 TDPBSSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 5e /r]		AMXINT8,LONG
 TDPBSUD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 5e /r]		AMXINT8,LONG
 TDPBUSD		tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 5e /r]		AMXINT8,LONG
@@ -5442,8 +5444,6 @@ T2RPNTLVWZ0RST1	tmmreg,mem			[rm:	vex.128.np.map5.w0 f9 /r]		FUTURE,SIB
 T2RPNTLVWZ1RS	tmmreg,mem			[rm:	vex.128.66.map5.w0 f8 /r]		FUTURE,SIB
 T2RPNTLVWZ1RST1	tmmreg,mem			[rm:	vex.128.66.map5.w0 f9 /r]		FUTURE,SIB
 
-TCMMIMFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 6c /r]		FUTURE
-TCMMRLFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 6c /r]		FUTURE
 TCONJTCMMIMFP16PS tmmreg,tmmreg,tmmreg		[rmv:	vex.128.np.0f38.w0 6b /r]		FUTURE
 TCONJTFP16	tmmreg,tmmreg			[rm:	vex.128.66.0f38.w0 6b /r]		FUTURE
 TCVTROWD2PS	zmmreg,tmmreg,reg32		[rmv:	evex.512.f3.0f38.w0 4a /r]		FUTURE
