@@ -4821,9 +4821,17 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
         break;
 
     CASE_PP_IF:
-        if (istk->conds && !emitting(istk->conds->state))
+        if (suppressed || (istk->conds && !emitting(istk->conds->state))) {
+            /*
+             * Don't evaluate the actual condition inside of a dead
+             * expansion, because it is entirely valid for it to be
+             * syntactically broken at this point. There is no point,
+             * anyway: the output from all branches of this conditionals
+             * will be suppressed, and the only reason this is being
+             * processed at all is to look for nested conditionals.
+             */
             j = COND_NEVER;
-        else {
+        } else {
             j = if_condition(tline->next, op, dname);
             tline->next = NULL; /* it got freed */
         }
