@@ -131,16 +131,16 @@ if ($what eq 'c') {
     print $out "#include \"error.h\"\n\n";
     printf $out "const char * const warning_name[%d] = {\n",
 	$#warnings + 2;
-    print $out "\tNULL";
+    print $out "    NULL";
     foreach my $warn (@warnings) {
-	print $out ",\n\t\"", $warn->{name}, "\"";
+	print $out ",\n    \"", $warn->{name}, "\"";
     }
     print $out "\n};\n\n";
     printf $out "const struct warning_alias warning_alias[%d] = {",
 	scalar(keys %aliases);
     my $sep = '';
     foreach my $alias (sort { $a cmp $b } keys(%aliases)) {
-	printf $out "%s\n\t{ %-27s WARN_IDX_%s }",
+	printf $out "%s\n    { %-39s WARN_IDX_%-31s }",
 	    $sep, "\"$alias\",", $aliases{$alias}->{cname};
 	$sep = ',';
     }
@@ -148,20 +148,20 @@ if ($what eq 'c') {
 
     printf $out "const char * const warning_help[%d] = {\n",
 	$#warnings + 2;
-    print $out "\tNULL";
+    print $out "    NULL";
     foreach my $warn (@warnings) {
 	my $help = quote_for_c(remove_markup($warn->{help}));
-	print $out ",\n\t\"", $help, "\"";
+	print $out ",\n    \"", $help, "\"";
     }
     print $out "\n};\n\n";
     printf $out "const uint8_t warning_default[%d] = {\n",
 	$#warn_noall + 2;
-    print $out "\tWARN_INIT_ON"; # for entry 0
+    print $out "    WARN_INIT_ON"; # for entry 0
     foreach my $warn (@warn_noall) {
-	print $out ",\n\tWARN_INIT_", uc($warn->{def});
+	print $out ",\n    WARN_INIT_", uc($warn->{def});
     }
     print $out "\n};\n\n";
-    printf $out "uint8_t warning_state[%d];\t/* Current state */\n",
+    printf $out "uint8_t warning_state[%d];    /* Current state */\n",
 	$#warn_noall + 2;
 } elsif ($what eq 'h') {
     my $filename = basename($outfile);
@@ -176,28 +176,28 @@ if ($what eq 'c') {
     print $out "# error \"$filename should only be included from within error.h\"\n";
     print $out "#endif\n\n";
     print $out "enum warn_index {\n";
-    printf $out "\tWARN_IDX_%-23s = %3d, /* not suppressible */\n", 'NONE', 0;
+    printf $out "    WARN_IDX_%-31s = %3d, /* not suppressible */\n", 'NONE', 0;
     my $n = 1;
     foreach my $warn (@warnings) {
-	printf $out "\tWARN_IDX_%-23s = %3d%s /* %s */\n",
+	printf $out "    WARN_IDX_%-31s = %3d%s /* %s */\n",
 	    $warn->{cname}, $n,
 	    ($n == $#warnings + 1) ? " " : ",",
-	    $warn->{help};
+	    remove_markup($warn->{help});
 	$n++;
     }
     print $out "};\n\n";
 
     print $out "enum warn_const {\n";
-    printf $out "\tWARN_%-27s = %3d << WARN_SHR", 'NONE', 0;
+    printf $out "    WARN_%-35s = %3d << WARN_SHR", 'NONE', 0;
     $n = 1;
     foreach my $warn (@warn_noall) {
-	printf $out ",\n\tWARN_%-27s = %3d << WARN_SHR", $warn->{cname}, $n++;
+	printf $out ",\n    WARN_%-35s = %3d << WARN_SHR", $warn->{cname}, $n++;
     }
     print $out "\n};\n\n";
 
     print $out "struct warning_alias {\n";
-    print $out "\tconst char *name;\n";
-    print $out "\tenum warn_index warning;\n";
+    print $out "    const char *name;\n";
+    print $out "    enum warn_index warning;\n";
     print $out "};\n\n";
     printf $out "#define NUM_WARNING_ALIAS %d\n", scalar(keys %aliases);
 
