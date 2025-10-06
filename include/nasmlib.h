@@ -367,9 +367,11 @@ const char *filename_set_extension(const char *inname, const char *extension);
 #define list_for_each_safe(pos, _n, head)                \
     for (pos = head, _n = (pos ? pos->next : NULL); pos; \
         pos = _n, _n = (_n ? _n->next : NULL))
-#define list_last(pos, head)                            \
-    for (pos = head; pos && pos->next; pos = pos->next) \
-        ;
+#define list_last(pos, head)                                    \
+    do {                                                        \
+        for (pos = head; pos && pos->next; pos = pos->next)     \
+            ;                                                   \
+    } while (0)
 #define list_reverse(head)                              \
     do {                                                \
         void *_p, *_n;                                  \
