@@ -24,6 +24,9 @@ It is the production version of NASM since 2025.
 \b Fix encoding of \c{TCVTROWPS2PHL}, correct multiple AVX512-BF16
    instructions' operand formats and typoed mnemonics.
 
+\b The unofficial but obvious alternate form \c{TEST reg,mem} was not
+   accepted by NASM 3.00; corrected.
+
 
 \S{cl-3.00} Version 3.00
 
