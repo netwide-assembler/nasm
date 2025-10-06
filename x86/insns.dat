@@ -5396,15 +5396,15 @@ XRESLDTRK	void				[	f2 0f 01 e9]				TSXLDTRK
 XSUSLDTRK	void				[	f2 0f 01 e8]				TSXLDTRK
 
 ;# AVX512 Bfloat16 instructions
-VCVTNE2PS2BF16	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f2.0f38.w0 72 /r]	AVX512BF16
-VCVTNE2PS2BF16	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:fv:	evex.256.f2.0f38.w0 72 /r]	AVX512BF16
+VCVTNE2PS2BF16	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f2.0f38.w0 72 /r]	AVX512BF16,AVX512VL
+VCVTNE2PS2BF16	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:fv:	evex.256.f2.0f38.w0 72 /r]	AVX512BF16,AVX512VL
 VCVTNE2PS2BF16	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:fv:	evex.512.f2.0f38.w0 72 /r]	AVX512BF16
-VCVTNEPS2BF16	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f3.0f38.w0 72 /r]	AVX512BF16
-VCVTNEPS2BF16	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:fv:	evex.256.f3.0f38.w0 72 /r]	AVX512BF16
-VCVTNEPS2BF16	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:fv:	evex.512.f3.0f38.w0 72 /r]	AVX512BF16
-VDPBF16PS	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f3.0f38.w0 52 /r]	AVX512BF16
-VDPBF16PS	ymmreg|mask|z,ymmreg*,ymmrm128|b32	[rvm:fv:	evex.256.f3.0f38.w0 52 /r]	AVX512BF16
-VDPBF16PS	zmmreg|mask|z,zmmreg*,zmmrm128|b32	[rvm:fv:	evex.512.f3.0f38.w0 52 /r]	AVX512BF16
+VCVTNEPS2BF16   xmmreg|mask|z,xmmrm128|b32              [rm:fv:         evex.128.f3.0f38.w0 72 /r]      AVX512BF16,AVX512VL
+VCVTNEPS2BF16   xmmreg|mask|z,ymmrm256|b32              [rm:fv:         evex.256.f3.0f38.w0 72 /r]      AVX512BF16,AVX512VL
+VCVTNEPS2BF16   ymmreg|mask|z,zmmrm512|b32              [rm:fv:         evex.512.f3.0f38.w0 72 /r]      AVX512BF16
+VDPBF16PS	xmmreg|mask|z,xmmreg*,xmmrm128|b32	[rvm:fv:	evex.128.f3.0f38.w0 52 /r]	AVX512BF16,AVX512VL
+VDPBF16PS	ymmreg|mask|z,ymmreg*,ymmrm256|b32	[rvm:fv:	evex.256.f3.0f38.w0 52 /r]	AVX512BF16,AVX512VL
+VDPBF16PS	zmmreg|mask|z,zmmreg*,zmmrm512|b32	[rvm:fv:	evex.512.f3.0f38.w0 52 /r]	AVX512BF16
 
 ;# AVX512 mask intersect instructions
 VP2INTERSECTD	kreg|rs2,xmmreg,xmmrm128|b32		[rvm:fv:	evex.nds.128.f2.0f38.w0 68 /r]	AVX512VL,AVX512VP2INTERSECT
