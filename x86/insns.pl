@@ -80,7 +80,6 @@ sub genseqs($$$@) {
 
 sub startseq($$) {
     my ($codestr,$flags) = @_;
-    my $word;
     my @codes = ();
     my $c = $codestr;
     my($c0, $c1, $i);
