@@ -10,10 +10,17 @@ evolving code simpler.
 
 It is the production version of NASM since 2025.
 
+
 \S{cl-3.01} Version 3.01
 
 \b A new \c{obj2} version of the \c{obj} output format, intended for
    use on OS/2. See \k{obj2fmt}.
+
+\b The condition after \c{%if} or \c{%elif} would be evaluated while
+   output is suppressed after \c{%exitrep} or \c{%exitmacro}. Although
+   no output would be generated in either case, assembly would fail if
+   evaluating the expression triggered an error.
+
 
 \S{cl-3.00} Version 3.00
 
