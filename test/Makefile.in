@@ -18,7 +18,7 @@ TESTS	= $(wildcard *.asm)
 RM_F	= rm -f
 RM_RF	= rm -rf
 
-.PHONY: tools nasm ndisasm ffmpegtest
+.PHONY: tools nasm ndisasm ffmpegtest x264test
 tools:
 	$(MAKE) -C .. all
 
@@ -29,7 +29,10 @@ $(NASM) $(NDISASM):
 	$(MAKE) -C .. $(@F)
 
 ffmpegtest:
-	bash ffmpegtest.sh '$(NASM)'
+	bash projtest.sh '$(NASM)' $@
+
+x264test:
+	bash projtest.sh '$(NASM)' $@
 
 %.bin: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f bin -o $@ -MD $@.dep -l $@.lst $<
@@ -108,7 +111,7 @@ clean:
 	$(RM_F) *.aoutb
 	$(RM_RF) testresults
 	$(RM_F) elftest elftest64
-	$(RM_RF) ffmpegtest
+	$(RM_RF) ffmpegtest x264test
 
 spotless: clean
 	$(RM_RF) golden

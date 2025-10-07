@@ -95,6 +95,7 @@ TAGS
 /test/perf/*.asm
 /test/testresults
 /test/ffmpegtest
+/test/x264test
 /version.h
 /version.mac
 /version.mak
