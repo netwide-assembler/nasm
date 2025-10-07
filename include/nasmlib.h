@@ -335,6 +335,11 @@ static inline const char *nasm_digit_chars(bool ucase)
 int32_t seg_alloc(void);
 
 /*
+ * Return the lowest unused segment index, suitable for array sizing.
+ */
+int32_t seg_maxindex(void);
+
+/*
  * Add/replace or remove an extension to the end of a filename
  */
 const char *filename_set_extension(const char *inname, const char *extension);

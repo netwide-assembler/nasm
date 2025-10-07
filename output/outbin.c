@@ -51,6 +51,7 @@
 #include "nasmlib.h"
 #include "error.h"
 #include "saa.h"
+#include "raa.h"
 #include "stdscan.h"
 #include "labels.h"
 #include "eval.h"
@@ -108,7 +109,7 @@ static struct Section {
  * any other good way for us to handle that label.
  */
 
-} *sections, *last_section;
+} *sections, **last_section, *default_section;
 
 static struct Reloc {
     struct Reloc *next;
@@ -117,6 +118,7 @@ static struct Reloc {
     int32_t secref;
     int32_t secrel;
     struct Section *target;
+    int64_t addend;
 } *relocs, **reloctail;
 
 static uint64_t origin;
@@ -127,9 +129,13 @@ static int origin_defined;
 #define MAP_SUMMARY      2
 #define MAP_SECTIONS     4
 #define MAP_SYMBOLS      8
-static int map_control = 0;
+#define MAP_RELOCS	16
+static unsigned int map_control = 0;
 
 extern macros_t bin_stdmac[];
+
+static struct RAA *section_by_index;
+static struct hash_table section_by_name;
 
 static void add_reloc(struct Section *s, int32_t bytes, int32_t secref,
                       int32_t secrel)
@@ -146,44 +152,42 @@ static void add_reloc(struct Section *s, int32_t bytes, int32_t secref,
     r->target = s;
 }
 
-static struct Section *find_section_by_name(const char *name)
+static struct Section *find_section_by_index(uint32_t index)
 {
-    struct Section *s;
-
-    list_for_each(s, sections)
-        if (!strcmp(s->name, name))
-            break;
-    return s;
+    return (struct Section *)raa_read_ptr(section_by_index, index >> 1);
 }
 
-static struct Section *find_section_by_index(int32_t index)
+static bool find_or_create_section(char *name, struct Section **secp)
 {
+    struct hash_insert hi;
+    size_t nsize = strlen(name) + 1;
+    void **sp;
     struct Section *s;
 
-    list_for_each(s, sections)
-        if ((index == s->vstart_index) || (index == s->start_index))
-            break;
-    return s;
-}
+    sp = hash_findb(&section_by_name, name, nsize, &hi);
+    if (sp) {
+        *secp = (struct Section *)*sp;
+        return false;
+    }
 
-static struct Section *create_section(char *name)
-{
-    struct Section *s = nasm_zalloc(sizeof(*s));
+    nasm_new(s);
+    s->prev         = *last_section;
+    *last_section   = *secp = s;
+    last_section    = &s->next;
 
-    s->prev         = last_section;
     s->name         = nasm_strdup(name);
     s->labels_end   = &(s->labels);
     s->contents     = saa_init(1L);
 
-    /* Register our sections with NASM. */
+    /* Register our sections with NASM and the hash tables */
     s->vstart_index = seg_alloc();
-    s->start_index  = seg_alloc();
+    section_by_index = raa_write_ptr(section_by_index, s->vstart_index >> 1, s);
+    s->start_index = seg_alloc();
+    section_by_index = raa_write_ptr(section_by_index, s->start_index >> 1, s);
 
-    /* FIXME: Append to a tail, we need some helper */
-    last_section->next = s;
-    last_section = s;
+    hash_add(&hi, s->name, s);
 
-    return last_section;
+    return true;
 }
 
 static void bin_cleanup(void)
@@ -195,7 +199,9 @@ static void bin_cleanup(void)
     struct Section *last_progbits;
     struct bin_label *l;
     struct Reloc *r;
+    uint64_t *segorg;
     uint64_t pend;
+    uint32_t maxsegix;
     int h;
 
     if (debug_level(2)) {
@@ -493,8 +499,13 @@ static void bin_cleanup(void)
     /* Step 5: Apply relocations. */
 
     /* Prepare the sections for relocating. */
-    list_for_each(s, sections)
+    maxsegix = seg_maxindex();
+    nasm_newn(segorg, maxsegix >> 1);
+    list_for_each(s, sections) {
         saa_rewind(s->contents);
+        segorg[s->start_index >> 1]  = s->start;
+        segorg[s->vstart_index >> 1] = s->vstart;
+    }
     /* Apply relocations. */
     list_for_each(r, relocs) {
         uint8_t *p, mydata[8];
@@ -511,20 +522,12 @@ static void bin_cleanup(void)
         for (b = r->bytes - 1; b >= 0; b--)
             l = (l << 8) + mydata[b];
 
-        s = find_section_by_index(r->secref);
-        if (s) {
-            if (r->secref == s->start_index)
-                l += s->start;
-            else
-                l += s->vstart;
-        }
-        s = find_section_by_index(r->secrel);
-        if (s) {
-            if (r->secrel == s->start_index)
-                l -= s->start;
-            else
-                l -= s->vstart;
-        }
+        r->addend = l;
+
+        if ((uint32_t)r->secref < maxsegix)
+            l += segorg[r->secref >> 1];
+        if ((uint32_t)r->secrel < maxsegix)
+            l -= segorg[r->secrel >> 1];
 
         WRITEADDR(p, l, r->bytes);
         saa_fwrite(r->target->contents, r->posn, mydata, r->bytes);
@@ -649,15 +652,44 @@ static void bin_cleanup(void)
                 }
             }
         }
-    }
+        /* Display relocations */
+        if (map_control & MAP_RELOCS) {
+            fprintf(rf, "-- Relocations ");
+            for (h = 68; h; h--)
+                fputc('-', rf);
+            fprintf(rf, "\n\n%-8s%-32s%-32s\n", "Type", "Location", "Target");
 
-    /* Close the report file. */
-    if (map_control && (rf != stdout) && (rf != stderr))
-        fclose(rf);
+            list_for_each(r, relocs) {
+                const struct Section *ts;
+
+                if (r->secrel == r->secref)
+                    continue;   /* Dummy relocation */
+                fprintf(rf, "%3s%-2d   %14s:%016"PRIX64" ",
+                        ((uint32_t)r->secrel < maxsegix) ? "REL" : "ABS",
+                        r->bytes << 3,
+                        r->target->name, (uint64_t)r->posn);
+
+                ts = find_section_by_index(r->secref);
+                if (ts) {
+                    fprintf(rf, "(%c) %14s",
+                            r->secref == ts->start_index ? 'S' : 'V',
+                            ts->name);
+                } else {
+                    fprintf(rf, "%18s", "ABS");
+                }
+                fprintf(rf, ":%016"PRIX64"\n", r->addend);
+            }
+        }
+
+        /* Close the report file. */
+        if (rf != stdout && rf != stderr)
+            fclose(rf);
+    }
 
     /* Step 8: Release all allocated memory. */
 
     /* Free sections, label pointer structs, etc.. */
+    nasm_free(segorg);
     while (sections) {
         s = sections;
         sections = s->next;
@@ -674,6 +706,8 @@ static void bin_cleanup(void)
         }
         nasm_free(s);
     }
+    hash_free(&section_by_name);
+    raa_free(section_by_index);
 
     /* Free no-section labels. */
     while (no_seg_labels) {
@@ -1192,7 +1226,7 @@ static int32_t bin_secname(char *name, int *bits)
 
         /* Establish the default (.text) section. */
         *bits = 16;
-        sec = find_section_by_name(".text");
+        sec = default_section;
         sec->flags |= TYPE_DEFINED | TYPE_PROGBITS;
         return sec->vstart_index;
     }
@@ -1204,9 +1238,7 @@ static int32_t bin_secname(char *name, int *bits)
         p++;
     if (*p)
         *p++ = '\0';
-    sec = find_section_by_name(name);
-    if (!sec) {
-        sec = create_section(name);
+    if (find_or_create_section(name, &sec)) {
         if (!strcmp(name, ".data"))
             sec->flags |= TYPE_DEFINED | TYPE_PROGBITS;
         else if (!strcmp(name, ".bss")) {
@@ -1279,7 +1311,8 @@ bin_directive(enum directive directive, char *args)
                     *(args++) = '\0';
                 if (!nasm_stricmp(p, "all"))
                     map_control |=
-                        MAP_ORIGIN | MAP_SUMMARY | MAP_SECTIONS | MAP_SYMBOLS;
+                        MAP_ORIGIN | MAP_SUMMARY | MAP_SECTIONS | \
+                        MAP_SYMBOLS | MAP_RELOCS;
                 else if (!nasm_stricmp(p, "brief"))
                     map_control |= MAP_ORIGIN | MAP_SUMMARY;
                 else if (!nasm_stricmp(p, "sections"))
@@ -1288,6 +1321,8 @@ bin_directive(enum directive directive, char *args)
                     map_control |= MAP_ORIGIN | MAP_SUMMARY | MAP_SECTIONS;
                 else if (!nasm_stricmp(p, "symbols"))
                     map_control |= MAP_SYMBOLS;
+                else if (!nasm_stricmp(p, "relocs"))
+                    map_control |= MAP_RELOCS;
                 else if (!rf) {
                     if (!nasm_stricmp(p, "stdout"))
                         rf = stdout;
@@ -1350,13 +1385,10 @@ static void binfmt_init(void)
     nsl_tail = &no_seg_labels;
 
     /* Create default section (.text). */
-    sections = last_section = nasm_zalloc(sizeof(struct Section));
-    last_section->name          = nasm_strdup(".text");
-    last_section->contents      = saa_init(1L);
-    last_section->flags         = TYPE_DEFINED | TYPE_PROGBITS;
-    last_section->labels_end    = &(last_section->labels);
-    last_section->start_index   = seg_alloc();
-    last_section->vstart_index  = seg_alloc();
+    last_section = &sections;
+    find_or_create_section(".text", &sections);
+    default_section = sections;
+    sections->flags = TYPE_DEFINED | TYPE_PROGBITS;
 }
 
 /* Generate binary file output */

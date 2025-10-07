@@ -20,6 +20,8 @@
 
 ; let's see which of these sections can be placed in the specified order.
 
+	[map multisection.map all]
+
 section .appspecific
 section .data
 section .stringdata
@@ -32,7 +34,7 @@ section .stringdata
 mystr1: db "Hello, this is string 1", 13, 10, '$'
 
 section .extra_code
-org 0x200
+;org 0x200
 bits 16
 more:
    mov si, asciz1

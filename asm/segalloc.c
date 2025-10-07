@@ -19,3 +19,8 @@ int32_t seg_alloc(void)
     next_seg += 2;
     return this_seg;
 }
+
+int32_t seg_maxindex(void)
+{
+    return next_seg;
+}
