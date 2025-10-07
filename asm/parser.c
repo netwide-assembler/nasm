@@ -746,6 +746,7 @@ restart_parse:
 
     if (i == TOKEN_ID || (insn_is_label && i == TOKEN_INSN)) {
         /* there's a label here */
+        struct tokenval label = tokval;
         first = false;
         result->label = tokval.t_charptr;
         i = stdscan(NULL, &tokval);
@@ -753,8 +754,9 @@ restart_parse:
         if (i == ':') {         /* skip over the optional colon */
             i = stdscan(NULL, &tokval);
         } else if (i == 0) {
-            nasm_warn(WARN_LABEL_ORPHAN ,
-                      "label alone on a line without a colon might be in error");
+            nasm_warn(WARN_LABEL_ORPHAN,
+                      "label `%*s' alone on a line without a colon might be in error",
+                      (int)label.t_len, label.t_start);
         }
         if (i != TOKEN_INSN || tokval.t_integer != I_EQU) {
             /*
