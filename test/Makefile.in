@@ -1,7 +1,8 @@
 @SET_MAKE@
 
-.SUFFIXES: .bin .bin32 .bin64 .o .o64 .aout .aoutb .obj .obj64 \
-	   .exe .asm .lst .pl
+.SUFFIXES: .bin .bin16 .bin32 .bin64 .o .o64 .aout .aoutb .obj .obj64 \
+	   .mo32 .mo64 .dbg .i .od .ox .ith .srec .exe .lst \
+	   .asm .pl
 
 # Binary suffixes
 O		= @OBJEXT@
@@ -37,8 +38,14 @@ x264test:
 %.bin: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f bin -o $@ -MD $@.dep -l $@.lst $<
 
-%.bin32: %.asm $(NASM)
+%.bin16: %.asm $(NASM)
+	$(NASM) --bits 16 $(NASMOPT) -f bin -o $@ -MD $@.dep -l $@.lst $<
 
+%.bin32: %.asm $(NASM)
+	$(NASM) --bits 32 $(NASMOPT) -f bin -o $@ -MD $@.dep -l $@.lst $<
+
+%.bin64: %.asm $(NASM)
+	$(NASM) --bits 64 $(NASMOPT) -f bin -o $@ -MD $@.dep -l $@.lst $<
 
 %.ith: %.asm $(NASM)
 	$(NASM) $(NASMOPT) -f ith -o $@ -MD $@.dep -l $@.lst $<
@@ -107,6 +114,7 @@ diff:	performtest.pl $(NASM) $(TESTS)
 
 clean:
 	$(RM_F) *.com *.o *.o64 *.aout *.obj *.win32 *.win64 *.exe *.lst *.bin
+	$(RM_F) *.bin *.bin16 *.bin32 *.bin64
 	$(RM_F) *.dbg *.coff *.ith *.srec *.mo32 *.mo64 *.i *.dep *.rdf
 	$(RM_F) *.aoutb
 	$(RM_RF) testresults
