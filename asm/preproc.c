@@ -1101,6 +1101,19 @@ static Token *cut_tlist(Token *t)
 }
 
 /*
+ * Find the pointer to the end of a tlist. If the tlist is empty,
+ * return the incoming pointer.
+ */
+static Token **tlist_endptr(Token **tptr)
+{
+    Token *t;
+    while ((t = *tptr))
+        tptr = &t->next;
+
+    return tptr;
+}
+
+/*
  * Allocate a new MMacro. This does not claim a refcount; the appropriate
  * get_mmacro() calls need to be added.
  */
@@ -8920,13 +8933,17 @@ void pp_pre_undefine(char *definition)
 /* Insert an early preprocessor command that doesn't need special handling */
 void pp_pre_command(const char *what, char *string)
 {
-    Token *def, *space;
+    Token *def;
     Line *l;
 
     def = tokenize(string);
+
     if (what) {
-        space = new_White(def);
-        def = new_Token(space, TOKEN_PREPROC_ID, what, 0);
+        Token *wt = tokenize(what);
+        Token **tailp = tlist_endptr(&wt);
+
+        *tailp = new_White(def);
+        def = wt;
     }
 
     nasm_new(l);
