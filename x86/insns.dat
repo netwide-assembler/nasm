@@ -880,12 +880,16 @@ MOVSB		void				[	a4]					8086
 MOVSD		void				[	o32 a5]					386
 MOVSQ		void				[	o64 a5]					X86_64,LONG
 MOVSW		void				[	o16 a5]					8086
+MOVSX		reg_ax,reg_al			[--:	o16 98]					8086,ND
+MOVSX		reg_eax,reg_ax			[--:	o32 98]					386,ND
+MOVSX		reg_rax,reg_eax			[--:	o64 98]					X86_64,LONG,ND
 MOVSX		reg16,mem			[rm:	o16 0f be /r]				386,SB
 MOVSX		reg16,reg8			[rm:	o16 0f be /r]				386
 MOVSX		reg32,rm8			[rm:	o32 0f be /r]				386
 MOVSX		reg32,rm16			[rm:	o32 0f bf /r]				386
 MOVSX		reg64,rm8			[rm:	o64 0f be /r]				X86_64,LONG
 MOVSX		reg64,rm16			[rm:	o64 0f bf /r]				X86_64,LONG
+MOVSXD		reg_rax,reg_eax			[rm:	o64 98]					X86_64,LONG,ND
 MOVSXD		reg64,rm32			[rm:	o64 63 /r]				X86_64,LONG
 MOVSX		reg64,rm32			[rm:	o64 63 /r]				X86_64,LONG,ND
 MOVZX		reg16,mem			[rm:	o16 0f b6 /r]				386,SB
@@ -1456,10 +1460,10 @@ XCHG		reg64,reg_rax			[r-:	o64 90+r]				X86_64,LONG
 ; This must be NOLONG since opcode 90 is NOP, and in 64-bit mode
 ; "xchg eax,eax" is *not* a NOP.
 XCHG		reg_eax,reg_eax			[--:	o32 90]					386,NOLONG
-XCHG		reg8,reg8			[mr:	86 /r]					8086
-XCHG		reg16,reg16			[mr:	o16 87 /r]				8086
-XCHG		reg32,reg32			[mr:	o32 87 /r]				386
-XCHG		reg64,reg64			[mr:	o64 87 /r]				X86_64,LONG
+XCHG		reg8,reg8			[rm:	86 /r]					8086
+XCHG		reg16,reg16			[rm:	o16 87 /r]				8086
+XCHG		reg32,reg32			[rm:	o32 87 /r]				386
+XCHG		reg64,reg64			[rm:	o64 87 /r]				X86_64,LONG
 XCHG		mem,reg8			[mr:	hlenl 86 /r]				8086,SM,LOCK
 XCHG		mem,reg16			[mr:	hlenl o16 87 /r]			8086,SM,LOCK
 XCHG		mem,reg32			[mr:	hlenl o32 87 /r]			386,SM,LOCK
