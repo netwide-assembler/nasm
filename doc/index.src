@@ -26,8 +26,9 @@
 \IR{-p} \c{-p} option
 \IR{-s} \c{-s} option
 \IR{-u} \c{-u} option
-\IR{-v} \c{-v} option
 \IR{-W} \c{-W} option
+\IR{-t} \c{-t} option
+\IR{-soname} \c{-soname}, linker option
 \IR{-Werror} \c{-Werror} option
 \IR{-Wno-error} \c{-Wno-error} option
 \IR{-w} \c{-w} option

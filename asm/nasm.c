@@ -934,10 +934,13 @@ static const struct textargs textopts[] = {
     {"abort-on-panic", OPT_ABORT_ON_PANIC, ARG_NO, 0},
     {"prefix",   OPT_MANGLE, ARG_YES, LM_GPREFIX},
     {"postfix",  OPT_MANGLE, ARG_YES, LM_GSUFFIX},
+    {"suffix",   OPT_MANGLE, ARG_YES, LM_GSUFFIX},
     {"gprefix",  OPT_MANGLE, ARG_YES, LM_GPREFIX},
     {"gpostfix", OPT_MANGLE, ARG_YES, LM_GSUFFIX},
+    {"gsuffix",  OPT_MANGLE, ARG_YES, LM_GSUFFIX},
     {"lprefix",  OPT_MANGLE, ARG_YES, LM_LPREFIX},
     {"lpostfix", OPT_MANGLE, ARG_YES, LM_LSUFFIX},
+    {"lsuffix",  OPT_MANGLE, ARG_YES, LM_LSUFFIX},
     {"include",  OPT_INCLUDE, ARG_YES, 0},
     {"pragma",   OPT_PRAGMA,  ARG_YES, 0},
     {"before",   OPT_BEFORE,  ARG_YES, 0},
@@ -2477,10 +2480,10 @@ static void help(FILE *out, const char *what)
             "    --before str   add line (usually a preprocessor statement) before the input\n"
             "    --bits nn      set bits to nn (equivalent to --before \"BITS nn\")\n"
             "    --no-line      ignore %line directives in input\n"
-            "    --prefix str   prepend the given string to the names of all extern,\n"
-            "                   common and global symbols (also --gprefix)\n"
-            "    --suffix str   append the given string to the names of all extern,\n"
-            "                   common and global symbols (also --gprefix)\n"
+            "    --gprefix str  prepend the given string to the names of all extern,\n"
+            "                   common and global symbols (also --prefix)\n"
+            "    --gpostfix str append the given string to the names of all extern,\n"
+            "                   common and global symbols (also --postfix)\n"
             "    --lprefix str  prepend the given string to local symbols\n"
             "    --lpostfix str append the given string to local symbols\n"
             "    --reproducible attempt to produce run-to-run identical output\n"

@@ -515,6 +515,9 @@ the \i\c{[WARNING]} directive.  See \k{asmdir-warning}.
 
 See \k{warnings} for the complete list of warning classes.
 
+\IR{-v} \c{-v} option
+\IR{--v} \c{--v} option
+
 \S{opt-v} The \i\c{-v} Option: Display \i{Version} Info
 
 Typing \c{NASM -v} will display the version of NASM which you are using,
@@ -526,13 +529,22 @@ For command-line compatibility with Yasm, the form \i\c{--v} is also
 accepted for this option starting in NASM version 2.11.05.
 
 
-\S{opt-pfix} The \i\c{--(g|l)prefix}, \i\c{--(g|l)postfix} Options.
+\IR{--prefix} \c{--prefix} option
+\IC{--prefix}{--gprefix} \c{--gprefix} option
+\IC{--prefix}{--lprefix} \c{--lprefix} option
+\IC{--prefix}{--gpostfix} \c{--gpostfix} option
+\IC{--prefix}{--lpostfix} \c{--lpostfix} option
+\IC{--prefix}{--suffix} \c{--suffix} option
+\IC{--prefix}{--gsuffix} \c{--gsuffix} option
+\IC{--prefix}{--lsuffix} \c{--lsuffix} option
+
+\S{opt-pfix} The \I{--prefix}\c{--[gl]prefix} and \c{--[gl]postfix} Options
 
 The \c{--gprefix} option prepends the given argument
 to all \c{extern}, \c{common}, \c{static}, and \c{global} symbols, and the
 \c{--lprefix} option prepends to all other symbols. Similarly,
 \c{--gpostfix} and \c{--lpostfix} options append
-the argument, in a manner similar to the \c{--(g|l)prefix} options.
+the argument, in a manner similar to the \c{--[gl]prefix} options.
 
 Running this:
 
@@ -542,6 +554,15 @@ is equivalent to placing the directive \c{%pragma macho gprefix _}
 at the start of the file (\k{mangling}). It will prepend the underscore
 to all global and external variables, as C requires it in some, but not all,
 system calling conventions.
+
+\c{--prefix} is an alias for \c{--gprefix}.
+
+Starting with NASM 3.01, \c{--suffix}, \c{--gsuffix}, and
+\c{--lsuffix} are accepted as aliases for the corresponding
+\c{postfix} options.
+
+
+\IR{--pragma} \c{--pragma} option
 
 \S{opt-pragma} The \i\c{--pragma} Option
 
@@ -554,6 +575,8 @@ Running this:
 is equivalent to the example in \k{opt-pfix}. See \k{pragma}.
 
 
+\IR{--before} \c{--before} option
+
 \S{opt-before} The \i\c{--before} Option
 
 Insert a statement (usually, but not necessarily) a preprocess
@@ -562,6 +585,8 @@ is the same as running this:
 
 \c nasm -f macho --before "%pragma macho gprefix _"
 
+
+\IR{--bits} \c{--bits} option
 
 \S{opt-bits} The \i\c{--bits} Option
 
@@ -575,10 +600,11 @@ exactly equivalent:
 The \c{--bits} option was introduced in NASM 3.01; the \c{--before}
 form can be used for compatibility with older versions of NASM.
 
+\IR{--limit-} \c{--limit-} options
 
-\S{opt-limit} The \i\c{--limit-X} Option
+\S{opt-limit} The \i\c{--limit-} Options
 
-This option allows user to setup various maximum values after which
+These options allows user to setup various maximum values after which
 NASM will terminate with a fatal error rather than consume arbitrary
 amount of compute time. Each limit can be set to a positive number or
 \c{unlimited}.
@@ -616,17 +642,22 @@ example:
 
 \c %pragma limit lines 1000
 
+\IR{--keep-all} \c{--keep-all} option
 
 \S{opt-keep-all} The \i\c{--keep-all} Option
 
 This option prevents NASM from deleting any output files even if an
 error happens.
 
+\IR{--no-line} \c{--no-line} option
+
 \S{opt-no-line} The \i\c{--no-line} Option
 
 If this option is given, all \i\c{%line} directives in the source code
 are ignored. This can be useful for debugging already preprocessed
 code. See \k{line}.
+
+\IR{--reproducible} \c{--reproducible} option
 
 \S{opt-reproducible} The \i\c{--reproducible} Option
 

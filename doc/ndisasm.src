@@ -14,11 +14,11 @@ instruction table (and some other bits of code) with NASM.
 The Netwide Disassembler does nothing except to produce
 disassemblies of \e{binary} source files. NDISASM does not have any
 understanding of object file formats, like \c{objdump}, and it will
-not understand \c{DOS .EXE} files like \c{debug} will. It just
+not understand DOS \c{.EXE} files like \c{debug} will. It just
 disassembles.
 
 
-\H{ndisrun} Running NDISASM
+\H{ndisrun} \I{options, disassembler}Running NDISASM
 
 To disassemble a file, you will typically use a command of the form
 
@@ -26,11 +26,11 @@ To disassemble a file, you will typically use a command of the form
 
 NDISASM can disassemble 16-, 32- or 64-bit code equally easily,
 provided of course that you remember to specify which it is to work
-with. If no \i\c{-b} switch is present, NDISASM works in 16-bit mode
-by default. The \i\c{-u} switch (for USE32) also invokes 32-bit mode.
+with. If no \c{-b} switch is present, NDISASM works in 16-bit mode
+by default. The \c{-u} switch (for USE32) also invokes 32-bit mode.
 
-Two more command line options are \i\c{-r} which reports the version
-number of NDISASM you are running, and \i\c{-h} which gives a short
+Two more command line options are \c{-r} which reports the version
+number of NDISASM you are running, and \c{-h} which gives a short
 summary of command line options.
 
 
@@ -42,7 +42,7 @@ rather than at zero. NDISASM, which assumes by default that any file
 you give it is loaded at zero, will therefore need to be informed of
 this.
 
-The \i\c{-o} option allows you to declare a different origin for the
+The \c{-o} option allows you to declare a different origin for the
 file you are disassembling. Its argument may be expressed in any of
 the NASM numeric formats: decimal by default, if it begins with `\c{$}'
 or `\c{0x}' or ends in `\c{H}' it's \c{hex}, if it ends in `\c{Q}' it's
@@ -84,7 +84,7 @@ instruction and output a `\c{db}' instead. So it \e{will} start
 disassembly exactly from the sync point, and so you \e{will} see all
 the instructions in your code section.
 
-Sync points are specified using the \i\c{-s} option: they are measured
+Sync points are specified using the \c{-s} option: they are measured
 in terms of the program origin, not the file position. So if you
 want to synchronize after 32 bytes of a \c{.COM} file, you would have to
 do
@@ -116,7 +116,7 @@ be, surely, would be to read the \c{JMP} instruction, and then to use
 its target address as a sync point. So can NDISASM do that for you?
 
 The answer, of course, is yes: using either of the synonymous
-switches \i\c{-a} (for automatic sync) or \i\c{-i} (for intelligent
+switches \c{-a} (for automatic sync) or \c{-i} (for intelligent
 sync) will enable \c{auto-sync} mode. Auto-sync mode automatically
 generates a sync point for any forward-referring PC-relative jump or
 call instruction that NDISASM encounters. (Since NDISASM is one-pass,
@@ -153,16 +153,14 @@ suppress disassembly of the data area.
 
 \S{ndisother} Other Options
 
-The \i\c{-e} option skips a header on the file, by ignoring the first N
+The \c{-e} option skips a header on the file, by ignoring the first N
 bytes. This means that the header is \e{not} counted towards the
 disassembly offset: if you give \c{-e10 -o10}, disassembly will start
 at byte 10 in the file, and this will be given offset 10, not 20.
 
-The \i\c{-k} option is provided with two comma-separated numeric
+The \c{-k} option is provided with two comma-separated numeric
 arguments, the first of which is an assembly offset and the second
 is a number of bytes to skip. This \e{will} count the skipped bytes
 towards the assembly offset: its use is to suppress disassembly of a
 data section which wouldn't contain anything you wanted to see
 anyway.
-
-
