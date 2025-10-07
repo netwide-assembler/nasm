@@ -35,16 +35,62 @@ EOL
 };
 
 # Common pattern for the basic shift and rotate instructions
+# Separate legacy and EVEX versions because additional patterns are
+# needed to handle the -X VEX versions
 $macros{'shift'} = {
     'def' => *def_eightfold,
 	'txt' => <<'EOL'
 $$bwdq $op	rm#,unity			[m-:	o# d0# /$n]				]	8086,FL
 $$bwdq $op	rm#,reg_cl			[m-:	o# d2# /$n]				]	8086,FL
+$$bwdq $op	rm#,reg_cx			[m-:	o# d2# /$n]				]	8086,FL,ND
+$$bwdq $op	rm#,reg_ecx			[m-:	o# d2# /$n]				]	8086,FL,ND
+$$bwdq $op	rm#,reg_rcx			[m-:	o# d2# /$n]				]	8086,FL,ND
 $$bwdq $op	rm#,imm8			[mi:	o# c0# /$n ib,u]			]	186,FL
+EOL
+};
+
+# APX EVEX versions
+$macros{'eshift'} = {
+    'def' => *def_eightfold,
+	'txt' => <<'EOL'
 $$bwdq $op	reg#?,rm#,unity			[vm-:	evex.ndx.nf.l0.m4.o#  d0# /$n		]	$apx,FL,SM0-1
 $$bwdq $op	reg#?,rm#,reg_cl		[vm-:	evex.ndx.nf.l0.m4.o#  d2# /$n		]	$apx,FL,SM0-1
+$$bwdq $op	reg#?,rm#,reg_cx		[vm-:	evex.ndx.nf.l0.m4.o#  d2# /$n		]	$apx,FL,SM0-1,ND
+$$bwdq $op	reg#?,rm#,reg_ecx		[vm-:	evex.ndx.nf.l0.m4.o#  d2# /$n		]	$apx,FL,SM0-1,ND
+$$bwdq $op	reg#?,rm#,reg_rcx		[vm-:	evex.ndx.nf.l0.m4.o#  d2# /$n		]	$apx,FL,SM0-1,ND
 $$bwdq $op	reg#?,rm#,imm8			[vmi:	evex.ndx.nf.l0.m4.o#  c0# /$n ib,u	]	$apx,FL,SM0-1
 EOL
+};
+
+# -X shifts
+$macros{'xshift'} = {
+    'func' => sub {
+	my($mac, $args, $rawargs) = @_;
+	my @ol;
+	my $vex = 'vex';
+	my $vfl = '';
+	if (grep { /^evex=1$/ } @$rawargs) {
+	    $vex = 'evex';
+	    $vfl = 'APX';
+	}
+	foreach my $xf (['X',"$vfl"], ['', "$vfl,ND,NF!,OPT"]) {
+	    my($x,$fl) = @$xf;
+	    foreach my $os (32, 64) {
+		my $w = ($os eq 32) ? 'w0' : 'w1';
+		my $ixor = sprintf('%02x', $os-1);
+		push(@ol, "ROR$x reg$os,rm$os,imm8       [rmi: $vex.lz.f2.0f3a.$w f0 /r ib] BMI2,SM0-1,!FL,$fl");
+		push(@ol, "ROL$x reg$os,rm$os,imm_known8 [rmi: $vex.lz.f2.0f3a.$w f0 /r ib^$ixor] BMI2,SM0-1,!FL,$fl");
+		foreach my $ss (8, 16, 32, 64) {
+		    foreach my $opp (['SHL','66'], ['SAL','66'], ['SAR','f3'], ['SHR','f2']) {
+			my($op,$pp) = @$opp;
+			my $ndss = ',ND' unless ($ss == $os && $op ne 'SAR');
+			push(@ol, "$op$x reg$os,rm${os}*,reg$ss [rmv: $vex.lz.$pp.0f38.$w f7 /r] BMI2,SM0-1,!FL,$fl,$ndss");
+		    }
+		}
+	    }
+	}
+	return @ol;
+    }
 };
 
 #
@@ -433,7 +479,8 @@ $line = 0;
 ## XXX: check: CMPSS, CMPSD
 ## XXX: check VEX encoded instructions that do not write
 
-# Instructions which (possibly) change the flags
+# Instructions which (possibly) change the flags without annotations
+# The FL or !FL flags will override this
 my $flaggy = '^(aa[adms]|ad[dc]|ad[co]x|aes\w*kl|and|andn|arpl|bextr|bl[sc]ic?|bl[sc]msk|bl[sc]r|\
 bs[rf]|bt|bt[crs]|bzhi|clac|clc|cld|cli|clrssbsy|cmc|cmp|cmpxchg.*|da[as]|dec|div|\
 encodekey.*|enqcmd.*|fu?comip?|idiv|imul|inc|iret.*|kortest.*|ktest.*|lar|loadiwkey|\

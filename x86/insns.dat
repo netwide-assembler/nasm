@@ -80,19 +80,12 @@ $bwdq TEST	rm#,imm#			[mi:	o# f6# /0 i#		]		8086,SM
 ;# The basic shift and rotate operations
 $shift		ROL ROR RCL RCR SHL,SAL SHR - SAR
 
-$dq   RORX	reg#,rm#*,imm8			[rmi:	vex+.lz.f2.0f3a.w# f0 /r ib]		BMI2,SM0-1
-$dq   ROLX	reg#,rm#*,imm_known8		[rmi:	vex+.lz.f2.0f3a.w# f0 /r ib^(d:1f/3f)]	BMI2,SM0-1
-$dq   SHLX	reg#,rm#*,reg#			[rmv:	vex+.lz.66.0f38.w# f7 /r]		BMI2,SM
-$dq   SALX	reg#,rm#*,reg#			[rmv:	vex+.lz.66.0f38.w# f7 /r]		BMI2,SM,ND
-$dq   SARX	reg#,rm#*,reg#			[rmv:	vex+.lz.f3.0f38.w# f7 /r]		BMI2,SM
-$dq   SHRX	reg#,rm#*,reg#			[rmv:	vex+.lz.f2.0f38.w# f7 /r]		BMI2,SM
+; RORX, SHLX, SARX
+$xshift evex=0
 
-$dq   ROR	reg#,rm#,imm8			[rmi:	vex+.lz.f2.0f3a.w# f0 /r ib]		BMI2,SM0-1,ND,NF!,OPT
-$dq   ROL	reg#,rm#*,imm_known8		[rmi:	vex+.lz.f2.0f3a.w# f0 /r ib^(d:1f/3f)]	BMI2,SM0-1,ND,NF!,OPT
-$dq   SHL	reg#,rm#*,reg#			[rmv:	vex+.lz.66.0f38.w# f7 /r]		BMI2,ND,NF!,OPT
-$dq   SAL	reg#,rm#*,reg#			[rmv:	vex+.lz.66.0f38.w# f7 /r]		BMI2,ND,NF!,OPT
-$dq   SAR	reg#,rm#*,reg#			[rmv:	vex+.lz.f3.0f38.w# f7 /r]		BMI2,ND,NF!,OPT
-$dq   SHR	reg#,rm#*,reg#			[rmv:	vex+.lz.f2.0f38.w# f7 /r]		BMI2,ND,NF!,OPT
+;# APX EVEX versions
+$eshift		ROL ROR RCL RCR SHL,SAL SHR - SAR
+$xshift evex=1
 
 ;# Other basic integer arithmetic
 $wd   INC	reg#				[r:	o# 40+r]				8086,NOLONG
