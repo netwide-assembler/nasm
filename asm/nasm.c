@@ -912,7 +912,8 @@ enum text_options {
     OPT_NO_LINE,
     OPT_DEBUG,
     OPT_INFO,
-    OPT_REPRODUCIBLE
+    OPT_REPRODUCIBLE,
+    OPT_BITS
 };
 enum need_arg {
     ARG_NO,
@@ -947,6 +948,7 @@ static const struct textargs textopts[] = {
     {"verbose",  OPT_INFO , ARG_MAYBE, 0},
     {"debug",    OPT_DEBUG, ARG_MAYBE, 0},
     {"reproducible", OPT_REPRODUCIBLE, ARG_NO, 0},
+    {"bits",     OPT_BITS, ARG_YES, 0},
     {NULL, OPT_BOGUS, ARG_NO, 0}
 };
 
@@ -1300,6 +1302,10 @@ static bool process_arg(char *p, char *q, int pass)
                 case OPT_PRAGMA:
                     if (pass == 2)
                         pp_pre_command("%pragma", param);
+                    break;
+                case OPT_BITS:
+                    if (pass == 2)
+                        pp_pre_command("BITS", param);
                     break;
                 case OPT_BEFORE:
                     if (pass == 2)
@@ -2469,6 +2475,7 @@ static void help(FILE *out, const char *what)
         fputs(
             "    --pragma str   pre-executes a specific %pragma\n"
             "    --before str   add line (usually a preprocessor statement) before the input\n"
+            "    --bits nn      set bits to nn (equivalent to --before \"BITS nn\")\n"
             "    --no-line      ignore %line directives in input\n"
             "    --prefix str   prepend the given string to the names of all extern,\n"
             "                   common and global symbols (also --gprefix)\n"

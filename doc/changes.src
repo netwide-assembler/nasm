@@ -33,6 +33,9 @@ It is the production version of NASM since 2025.
 
 \b A new \c{%selbits()} preprocessor function.  See \k{f_selbits}.
 
+\b A new \c{--bits} option as convenience shorthand for \c{--before
+"BITS ..."}.  See \k{opt-bits}.
+
 
 \S{cl-3.00} Version 3.00
 

@@ -556,10 +556,24 @@ is equivalent to the example in \k{opt-pfix}. See \k{pragma}.
 
 \S{opt-before} The \i\c{--before} Option
 
-A preprocess statement can be accepted with this option. The example
-shown in \k{opt-pragma} is the same as running this:
+Insert a statement (usually, but not necessarily) a preprocess
+statement before the input file. The example shown in \k{opt-pragma}
+is the same as running this:
 
 \c nasm -f macho --before "%pragma macho gprefix _"
+
+
+\S{opt-bits} The \i\c{--bits} Option
+
+Set the processor mode by inserting a \c{BITS} directive (kee
+\k{bits}) before the input file. The following two statements are
+exactly equivalent:
+
+\c nasm -f bin --bits 16 file.asm
+\c nasm -f bin --before "BITS 16" file.asm
+
+The \c{--bits} option was introduced in NASM 3.01; the \c{--before}
+form can be used for compatibility with older versions of NASM.
 
 
 \S{opt-limit} The \i\c{--limit-X} Option
