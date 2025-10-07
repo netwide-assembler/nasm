@@ -31,6 +31,8 @@ It is the production version of NASM since 2025.
    now be specified for the same group; the resulting group includes
    all sections specified in all \c{GROUP} directives for the group.
 
+\b A new \c{%selbits()} preprocessor function.  See \k{f_selbits}.
+
 
 \S{cl-3.00} Version 3.00
 

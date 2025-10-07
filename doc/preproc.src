@@ -1011,6 +1011,24 @@ expands to nothing.
 The arguments not selected are never expanded.
 
 
+\S{f_selbits} \i\c{%selbits()} Function
+
+The \c{%selbits()} function returns its first, second, or third
+argument depending on if the current mode is 16, 32 or 64 bits. If
+less than three arguments are given, the last argument is considered
+repeated.  Like \c{%cond()}, this is a specialized version of the
+\c{%sel()} function.
+
+For example:
+
+\c      BITS 64
+\c
+\c %define breg %selbits(bx,ebx,rbx)
+\c %define vreg %selbits(ax,eax)
+\c
+\c      mov vreg,[breg]		; mov eax,[rbx]
+
+
 \S{f_str} \i\c\{%str()} Function
 
 The \c{%str()} function converts its argument, including any commas,
