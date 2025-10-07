@@ -39,6 +39,8 @@ It is the production version of NASM since 2025.
 \b Add aliases \c{--suffix}, \c{--gsuffix} and \c{--lsuffix} for the
    corresponding \c{postfix} options.  See \k{opt-pfix}.
 
+\b Define additional permissive patterns and fix some opcode bugs.
+
 
 \S{cl-3.00} Version 3.00
 
