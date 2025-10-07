@@ -983,7 +983,11 @@ static int64_t assemble(insn *instruction)
             }
 
             data.inslen = calcsize(instruction, temp);
-            nasm_assert(data.inslen >= 0);
+
+            /* This can happen if the instruction generated an error */
+            if (data.inslen <= 0)
+                return 0;
+
             data.inslen = merge_resb(instruction, data.inslen);
 
             data.insoffs = 0;
