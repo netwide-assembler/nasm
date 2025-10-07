@@ -73,7 +73,7 @@ static inline unsigned int get_disp8_shift(const insn *ins)
 
         /* MOVDDUP */
     case DUP:
-        return vectlen + 3;
+        return vectlen + 4;
 
     default:
         return 0;
