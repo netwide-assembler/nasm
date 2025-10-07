@@ -560,13 +560,13 @@ $wdq  LSL	reg#,rm_sel			[rm:	optd# 0f 03 /r]				286,PROT
       SWAPGS	void				[	0f 01 f8]				X86_64,LONG
       LKGS	rm_sel				[m:	f2 0f 00 /6		]		LKGS,PRIV,LONG
 
-$dq   LGDT	mem#				[m:	0f 01 /2]				286,PRIV,NOLONG32
-$dq   LIDT	mem#				[m:	0f 01 /3]				286,PRIV,NOLONG32
+$wdq  LGDT	mem#				[m:	nw o# 0f 01 /2]				286,PRIV,OSIZE
+$wdq  LIDT	mem#				[m:	nw o# 0f 01 /3]				286,PRIV,OSIZE
 $zwdq LLDT	sel#				[m:	optw# 0f 00 /2]				286,PROT,PRIV
 $zwdq LTR	sel#				[m:	optw# 0f 00 /3]				286,PROT,PRIV
 
-$dq   SGDT	mem#				[m:	nw o# 0f 01 /0]				286
-$dq   SIDT	mem#				[m:	nw o# 0f 01 /1]				286
+$wdq  SGDT	mem#				[m:	nw o# 0f 01 /0]				286,OSIZE
+$wdq  SIDT	mem#				[m:	nw o# 0f 01 /1]				286,OSIZE
 $zwdq SLDT	sel#				[m:	optd# 0f 00 /0]				286,PROT
 $zwdq STR	sel#				[m:	optd# 0f 00 /1]				286,PROT
 
