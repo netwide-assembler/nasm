@@ -83,7 +83,7 @@ $macros{'xshift'} = {
 		foreach my $ss (8, 16, 32, 64) {
 		    foreach my $opp (['SHL','66'], ['SAL','66'], ['SAR','f3'], ['SHR','f2']) {
 			my($op,$pp) = @$opp;
-			my $ndss = ',ND' unless ($ss == $os && $op ne 'SAR');
+			my $ndss = ',ND' unless ($ss == $os && $op ne 'SAL');
 			push(@ol, "$op$x reg$os,rm${os}*,reg$ss [rmv: $vex.lz.$pp.0f38.$w f7 /r] BMI2,SM0-1,!FL,$fl,$ndss");
 		    }
 		}
