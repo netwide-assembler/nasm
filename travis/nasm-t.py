@@ -405,6 +405,12 @@ def test_run(desc):
         return False
 
     for t in desc['target']:
+        f = None
+        if 'filter' in t:
+            f = t['filter']
+            f_pat = re.compile(f['match'], re.M)
+            f_sub = f['subst']
+
         if 'output' in t:
             output = desc['_base-dir'] + os.sep + t['output']
             match = desc['_base-dir'] + os.sep + t['match']
@@ -420,7 +426,10 @@ def test_run(desc):
             match_data = read_stdfile(match)
             if match_data == None:
                 return test_fail(test, "Can't read " + match)
-            if cmp_std(match, match_data, 'stdout', stdout) == False:
+            out_data = stdout
+            if f:
+                out_data = f_pat.sub(f_sub, out_data, 0)
+            if cmp_std(match, match_data, 'stdout', out_data) == False:
                 return test_fail(desc['_test-name'], "Stdout mismatch")
             else:
                 stdout = ""
@@ -430,7 +439,10 @@ def test_run(desc):
             match_data = read_stdfile(match)
             if match_data == None:
                 return test_fail(test, "Can't read " + match)
-            if cmp_std(match, match_data, 'stderr', stderr) == False:
+            out_data = stderr
+            if f:
+                out_data = f_pat.sub(f_sub, out_data, 0)
+            if cmp_std(match, match_data, 'stderr', out_data) == False:
                 return test_fail(desc['_test-name'], "Stderr mismatch")
             else:
                 stderr = ""

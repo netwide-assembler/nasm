@@ -95,6 +95,7 @@ AC_CHECK_PROGS([NROFF],    nroff,    false)
 AC_CHECK_PROGS([ASCIIDOC], asciidoc, false)
 AC_CHECK_PROGS([XMLTO],    xmlto,    false)
 AC_CHECK_PROGS([XZ],       xz,       false)
+AC_CHECK_PROGS([PYTHON3],  [python3 python], false)
 
 dnl Check for progs needed for manpage generation
 MANPAGES=manpages
