@@ -262,14 +262,45 @@ static inline bool is_global(enum label_type type)
     return type == LBL_GLOBAL || type == LBL_COMMON;
 }
 
+enum mangle_index {
+    LM_LPREFIX,                 /* Local variable prefix */
+    LM_LSUFFIX,                 /* Local variable suffix */
+    LM_GPREFIX,                 /* Global variable prefix */
+    LM_GSUFFIX                  /* GLobal variable suffix */
+};
+
 static const char *mangle_strings[] = {"", "", "", ""};
 static bool mangle_string_set[ARRAY_SIZE(mangle_strings)];
 
 /*
  * Set a prefix or suffix
  */
-void set_label_mangle(enum mangle_index which, const char *what)
+void set_label_mangle(enum directive how, const char *what)
 {
+    enum mangle_index which;
+
+    switch (how) {
+    case D_PREFIX:
+    case D_GPREFIX:
+        which = LM_GPREFIX;
+        break;
+    case D_SUFFIX:
+    case D_GSUFFIX:
+    case D_POSTFIX:
+    case D_GPOSTFIX:
+        which = LM_GSUFFIX;
+        break;
+    case D_LPREFIX:
+        which = LM_LPREFIX;
+        break;
+    case D_LSUFFIX:
+    case D_LPOSTFIX:
+        which = LM_LSUFFIX;
+        break;
+    default:
+        return;
+    }
+
     if (mangle_string_set[which])
         return;                 /* Once set, do not change */
 

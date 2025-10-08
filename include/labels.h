@@ -10,13 +10,6 @@
 
 #include "compiler.h"
 
-enum mangle_index {
-    LM_LPREFIX,                 /* Local variable prefix */
-    LM_LSUFFIX,                 /* Local variable suffix */
-    LM_GPREFIX,                 /* Global variable prefix */
-    LM_GSUFFIX                  /* GLobal variable suffix */
-};
-
 enum label_type {
     LBL_none = -1,              /* No label */
     LBL_LOCAL = 0,              /* Must be zero */
@@ -39,7 +32,7 @@ void define_label(const char *label, int32_t segment, int64_t offset,
 void backend_label(const char *label, int32_t segment, int64_t offset);
 bool declare_label(const char *label, enum label_type type,
                    const char *special);
-void set_label_mangle(enum mangle_index which, const char *what);
+void set_label_mangle(enum directive which, const char *what);
 int init_labels(void);
 void cleanup_labels(void);
 const char *local_scope(const char *label);

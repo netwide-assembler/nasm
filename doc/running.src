@@ -557,9 +557,13 @@ system calling conventions.
 
 \c{--prefix} is an alias for \c{--gprefix}.
 
-Starting with NASM 3.01, \c{--suffix}, \c{--gsuffix}, and
-\c{--lsuffix} are accepted as aliases for the corresponding
-\c{postfix} options.
+See \k{mangling} for the equivalent directives and pragmas.
+
+Earlier versions of NASM called the pragmas \i\c{suffix} and the
+options \i\c{--postfix}, and did not implement directives at all
+despite being so documented. Since NASM 3.01, the directive forms are
+implemented, and directives, pragmas and options all support all
+spellings.
 
 
 \IR{--pragma} \c{--pragma} option

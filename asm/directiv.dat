@@ -87,18 +87,23 @@ uppercase			; outieee, outobj
 #special pragma_tokens
 
 ; --- Assembler pragmas
-prefix
-suffix
-gprefix
-gsuffix
-lprefix
-lsuffix
 limit
 
 ; --- Listing pragmas
 options
 
-; --- Backend pragmas
+; --- Common output pragmas
+prefix
+suffix
+postfix
+gprefix
+gsuffix
+gpostfix
+lprefix
+lsuffix
+lpostfix
+
+; --- Backend-specific pragmas
 subsections_via_symbols		; macho
 no_dead_strip			; macho
 maxdump				; dbg

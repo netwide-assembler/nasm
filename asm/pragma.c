@@ -287,17 +287,14 @@ static enum directive_result output_pragma_common(const struct pragma *pragma)
     switch (pragma->opcode) {
     case D_PREFIX:
     case D_GPREFIX:
-        set_label_mangle(LM_GPREFIX, pragma->tail);
-        return DIRR_OK;
     case D_SUFFIX:
     case D_GSUFFIX:
-        set_label_mangle(LM_GSUFFIX, pragma->tail);
-        return DIRR_OK;
+    case D_POSTFIX:
+    case D_GPOSTFIX:
     case D_LPREFIX:
-        set_label_mangle(LM_LPREFIX, pragma->tail);
-        return DIRR_OK;
     case D_LSUFFIX:
-        set_label_mangle(LM_LSUFFIX, pragma->tail);
+    case D_LPOSTFIX:
+        set_label_mangle(pragma->opcode, pragma->tail);
         return DIRR_OK;
     default:
         return DIRR_UNKNOWN;

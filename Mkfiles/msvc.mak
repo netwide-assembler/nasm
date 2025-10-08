@@ -86,7 +86,7 @@ NDISASM = disasm\ndisasm.obj
 PROGOBJ = $(NASM) $(NDISASM)
 PROGS   = nasm$(X) ndisasm$(X)
 
-# Files dependent on extracted warnings
+# Files dependent on warnings.dat
 WARNOBJ   = asm\warnings.obj
 WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
 

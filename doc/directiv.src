@@ -402,26 +402,38 @@ global variables).
 Unlike \c{GLOBAL}, \c{STATIC} does not allow object formats to accept
 private extensions mentioned in \k{global}.
 
-\H{mangling} \i\c{(G|L)PREFIX}, \i\c{(G|L)POSTFIX}: Mangling Symbols
+\IR{PREFIX} \c{[PREFIX]}
+\IC{PREFIX}{GPREFIX} \c{[GPREFIX]}
+\IC{PREFIX}{LPREFIX} \c{[LPREFIX]}
+\IC{PREFIX}{SUFFIX} \c{[SUFFIX]}
+\IC{PREFIX}{GSUFFIX} \c{[GSUFFIX]}
+\IC{PREFIX}{LSUFFIX} \c{[LSUFFIX]}
+\IC{PREFIX}{POSTFIX} \c{[POSTFIX]}
+\IC{PREFIX}{GPOSTFIX} \c{[GPOSTFIX]}
+\IC{PREFIX}{LPOSTFIX} \c{[LPOSTFIX]}
 
-\c{PREFIX}, \c{GPREFIX}, \c{LPREFIX}, \c{POSTFIX}, \c{GPOSTFIX}, and
-\c{LPOSTFIX} directives can prepend or append a string to a certain
+\H{mangling} \I{PREFIX}\c{[GL]PREFIX}, \c{[GL]SUFFIX}: Mangling Symbols
+
+\c{[PREFIX}, \c{[GPREFIX}, \c{[LPREFIX}, \c{[SUFFIX}, \c{[GSUFFIX}, and
+\c{[LSUFFIX} directives can prepend or append a string to a certain
 type of symbols, normally to fit specific ABI conventions
 
-\b\c{PREFIX}|\c{GPREFIX}: Prepend the argument to all \c{EXTERN},
+\b\c{[PREFIX}, \c{[GPREFIX}: Prepend the argument to all \c{EXTERN},
 \c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols.
 
-\b\c{LPREFIX}: Prepend the argument to all other symbols
+\b\c{[LPREFIX}: Prepend the argument to all other symbols
 such as local labels and backend defined symbols.
 
-\b\c{POSTFIX}|\c{GPOSTFIX}: Append the argument to all \c{EXTERN},
-\c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols.
+\b\c{[SUFFIX]}, \c{[GSUFFIX]}, \c{[POSTFIX]}, \c{[GPOSTFIX]}: Append
+the argument to all \c{EXTERN}, \c{COMMON}, \c{STATIC}, and
+\c{GLOBAL} symbols.
 
-\b\c{LPOSTFIX}: Append the argument to all other symbols
+\b\c{[LSUFFIX]}, \c{[LPOSTFIX]}: Append the argument to all other symbols
 such as local labels and backend defined symbols.
 
-These are macros implemented as pragmas, and using \c{%pragma} syntax
-can be restricted to specific backends (see \k{pragma}):
+These directives are also implemented as pragmas, and using
+\c{%pragma} syntax can be restricted to specific backends (see
+\k{pragma}):
 
 \c %pragma macho lprefix L_
 
@@ -443,12 +455,18 @@ naming scheme to chunk up sections into smaller subsections, each of
 which may be eliminated. When the \c{subsections_via_symbols}
 directive (\k{macho-ssvs}) is declared, each symbol is the start of a
 separate block. The subsection is, then, defined to include sections
-before the one that starts with a 'L'. \c{LPREFIX} is useful here to
+before the one that starts with a 'L'. \c{[LPREFIX]} is useful here to
 mark all local symbols with the 'L' prefix to be excluded to the meta
 section.  It converts local symbols compatible with the particular
 toolchain.  Note that local symbols declared with \c{STATIC}
 (\k{static}) are excluded from the symbol mangling and also not marked
 as global.
+
+Earlier versions of NASM called the pragmas \i\c{suffix} and the
+options \i\c{--postfix}, and did not implement directives at all
+despite being so documented. Since NASM 3.01, the directive forms are
+implemented, and directives, pragmas and options all support all
+spellings.
 
 
 \H{CPU} \i\c{CPU}: Defining CPU Dependencies

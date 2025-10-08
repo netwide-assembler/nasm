@@ -603,6 +603,18 @@ bool process_directives(char *directive)
     case D_PRAGMA:
         process_pragma(value);
         break;
+
+    case D_PREFIX:
+    case D_GPREFIX:
+    case D_SUFFIX:
+    case D_GSUFFIX:
+    case D_POSTFIX:
+    case D_GPOSTFIX:
+    case D_LPREFIX:
+    case D_LSUFFIX:
+    case D_LPOSTFIX:
+        set_label_mangle(d, value);
+        break;
     }
 
 
