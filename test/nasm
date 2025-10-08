@@ -34,4 +34,6 @@ printf '%s\n' "$*" >> "$projnasm_logfile"
 rm -f "$ofile"
 "$projnasm_nasm1" "${param1[@]}" || exit $?
 "$projnasm_nasm2" "${param2[@]}" || exit $?
-cp -f "$ofile.1" "$ofile"
+if [ -f $ofile.1 ]; then
+	cp -f "$ofile.1" "$ofile"
+fi
