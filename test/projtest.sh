@@ -50,7 +50,9 @@ fi
 set +x
 
 {
-for x in $(grep -o -P "\-o .*\.o" $logfile | sed -e 's/-o //')
+for y in "o" "obj"
+do
+for x in $(grep -o -P "\-o .*\.${y}" $logfile | sed -e 's/-o //')
 do
 	if ! [ -f $x ]; then
 		# probably it's a temporary assembly being tested
@@ -73,6 +75,7 @@ do
 		echo [matches] $x
 	fi
 	rm -f /tmp/1.dump /tmp/2.dump
+done
 done
 } | tee "$here/results"
 
