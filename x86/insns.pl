@@ -760,7 +760,7 @@ sub format_insn($$$$) {
 		    $opsz = $1 + 0;
                 }
 		if ($opp =~ s/0$//) {
-		    push(@oppx, 'rm_zero');
+		    push(@oppx, 'rn_zero');
 		    $iszero = 1;
 		    if ($opp !~ /reg/) {
 			$opp .= 'reg';
