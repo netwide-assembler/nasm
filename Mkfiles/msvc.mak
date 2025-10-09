@@ -136,7 +136,7 @@ LIBOBJ_NW = \
 	\
 	nasmlib\ver.obj \
 	nasmlib\alloc.obj nasmlib\asprintf.obj \
-	nasmlib\crc32.obj nasmlib\crc64.obj nasmlib\md5c.obj \
+	nasmlib\crc32b.obj nasmlib\crc64.obj nasmlib\md5c.obj \
 	nasmlib\string.obj nasmlib\nctype.obj \
 	nasmlib\file.obj nasmlib\mmap.obj nasmlib\ilog2.obj \
 	nasmlib\realpath.obj nasmlib\path.obj \
