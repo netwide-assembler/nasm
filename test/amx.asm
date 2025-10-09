@@ -56,48 +56,56 @@
 	tilemovrow			zreg, treg, eax				;AMX-AVX512
 	tilemovrow			zreg, treg, %1				;AMX-AVX512
 
+	; All the 16 AMX-TRANSPOSE instructions were removed from the 59th edition of
+	; "Intel Architecture Instruction Set Extensions and Future Features Programming Reference"
+	; September 2025, 319433-059
+	; Similar to PCOMMIT, they are tagged as 'NEVER'
+
+	[warning -obsolete-removed]
 	t2rpntlvwz0			treg, [rax]					;AMX-TRANSPOSE
 	t2rpntlvwz0			treg, [rax+rdx]				;AMX-TRANSPOSE
 	t2rpntlvwz0			treg, [rax+rdx*2]			;AMX-TRANSPOSE
 
-	t2rpntlvwz0t1		treg, [rax]					;AMX-TRANSPOSE
-	t2rpntlvwz0t1		treg, [rax+rdx]				;AMX-TRANSPOSE
-	t2rpntlvwz0t1		treg, [rax+rdx*2]			;AMX-TRANSPOSE
+	t2rpntlvwz0t1			treg, [rax]					;AMX-TRANSPOSE
+	t2rpntlvwz0t1			treg, [rax+rdx]				;AMX-TRANSPOSE
+	t2rpntlvwz0t1			treg, [rax+rdx*2]			;AMX-TRANSPOSE
 
 	t2rpntlvwz1			treg, [rax]					;AMX-TRANSPOSE
 	t2rpntlvwz1			treg, [rax+rdx]				;AMX-TRANSPOSE
 	t2rpntlvwz1			treg, [rax+rdx*2]			;AMX-TRANSPOSE
 
-	t2rpntlvwz1t1		treg, [rax]					;AMX-TRANSPOSE
-	t2rpntlvwz1t1		treg, [rax+rdx]				;AMX-TRANSPOSE
-	t2rpntlvwz1t1		treg, [rax+rdx*2]			;AMX-TRANSPOSE
+	t2rpntlvwz1t1			treg, [rax]					;AMX-TRANSPOSE
+	t2rpntlvwz1t1			treg, [rax+rdx]				;AMX-TRANSPOSE
+	t2rpntlvwz1t1			treg, [rax+rdx*2]			;AMX-TRANSPOSE
 
 	ttransposed			treg, treg					;AMX-TRANSPOSE
 
-	t2rpntlvwz0rs		treg, [rax]					;AMX-TRANSPOSE + AMX-MOVRS
-	t2rpntlvwz0rs		treg, [rax+rdx]				;AMX-TRANSPOSE + AMX-MOVRS
-	t2rpntlvwz0rs		treg, [rax+rdx*2]			;AMX-TRANSPOSE + AMX-MOVRS
+	t2rpntlvwz0rs			treg, [rax]					;AMX-TRANSPOSE + AMX-MOVRS
+	t2rpntlvwz0rs			treg, [rax+rdx]				;AMX-TRANSPOSE + AMX-MOVRS
+	t2rpntlvwz0rs			treg, [rax+rdx*2]			;AMX-TRANSPOSE + AMX-MOVRS
 
 	t2rpntlvwz0rst1		treg, [rax]					;AMX-TRANSPOSE + AMX-MOVRS
 	t2rpntlvwz0rst1		treg, [rax+rdx]				;AMX-TRANSPOSE + AMX-MOVRS
 	t2rpntlvwz0rst1		treg, [rax+rdx*2]			;AMX-TRANSPOSE + AMX-MOVRS
 
-	t2rpntlvwz1rs		treg, [rax]					;AMX-TRANSPOSE + AMX-MOVRS
-	t2rpntlvwz1rs		treg, [rax+rdx]				;AMX-TRANSPOSE + AMX-MOVRS
-	t2rpntlvwz1rs		treg, [rax+rdx*2]			;AMX-TRANSPOSE + AMX-MOVRS
+	t2rpntlvwz1rs			treg, [rax]					;AMX-TRANSPOSE + AMX-MOVRS
+	t2rpntlvwz1rs			treg, [rax+rdx]				;AMX-TRANSPOSE + AMX-MOVRS
+	t2rpntlvwz1rs			treg, [rax+rdx*2]			;AMX-TRANSPOSE + AMX-MOVRS
 
 	t2rpntlvwz1rst1		treg, [rax]					;AMX-TRANSPOSE + AMX-MOVRS
 	t2rpntlvwz1rst1		treg, [rax+rdx]				;AMX-TRANSPOSE + AMX-MOVRS
 	t2rpntlvwz1rst1		treg, [rax+rdx*2]			;AMX-TRANSPOSE + AMX-MOVRS
 
-	ttdpbf16ps			treg, treg2, treg3			;AMX-TRANSPOSE + AMX-BF16
-	ttdpfp16ps			treg, treg2, treg3			;AMX-TRANSPOSE + AMX-FP16
-	ttcmmimfp16ps treg, treg2, treg3				;AMX-TRANSPOSE + AMX-COMPLEX
-	ttcmmrlfp16ps treg, treg2, treg3				;AMX-TRANSPOSE + AMX-COMPLEX
-	tconjtcmmimfp16ps	treg, treg2, treg3			;AMX-TRANSPOSE + AMX-COMPLEX
-	tconjtfp16			treg, treg					;AMX-TRANSPOSE + AMX-COMPLEX
+	ttdpbf16ps				treg, treg2, treg3			;AMX-TRANSPOSE + AMX-BF16
+	ttdpfp16ps				treg, treg2, treg3			;AMX-TRANSPOSE + AMX-FP16
+	ttcmmimfp16ps treg, 	treg2, treg3				;AMX-TRANSPOSE + AMX-COMPLEX
+	ttcmmrlfp16ps treg, 	treg2, treg3				;AMX-TRANSPOSE + AMX-COMPLEX
+	tconjtcmmimfp16ps		treg, treg2, treg3			;AMX-TRANSPOSE + AMX-COMPLEX
+	tconjtfp16				treg, treg					;AMX-TRANSPOSE + AMX-COMPLEX
 
-	ttmmultf32ps		treg, treg2, treg3			;AMX-TRANSPOSE + AMX_TF32
+	ttmmultf32ps			treg, treg2, treg3			;AMX-TRANSPOSE + AMX_TF32
+
+	[warning *obsolete-removed]
 
 	tilestored			[rax], treg					;AMX_TILE
 	tilestored			[rax,rdx], treg				;AMX_TILE
