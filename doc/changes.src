@@ -45,7 +45,13 @@ It is the production version of NASM since 2025.
 
    See \k{opt-pfix} and \k{mangling}.
 
-\b Define additional permissive patterns and fix some opcode bugs.
+\b Define additional permissive patterns and fix several opcode bugs.
+
+\b Fix parsing of two-operand forms of x87 instructions.
+
+\b Fix bogus "absolute address can not be RIP-relative" warning.
+
+\b Hopefully fix building with OpenWatcom.
 
 
 \S{cl-3.00} Version 3.00
