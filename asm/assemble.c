@@ -3462,8 +3462,7 @@ static int process_ea(operand *input, int rfield, opflags_t rflags,
                         input->type |= IP_REL;
                 }
                 if ((input->type & IP_REL) == IP_REL) {
-                    if (input->segment == NO_SEG ||
-                        (input->opflags & OPFLAG_RELATIVE)) {
+                    if (!pass_first() && absolute_op(input)) {
                         nasm_warn(WARN_EA_ABSOLUTE,
                                   "absolute address can not be RIP-relative");
                         input->type &= ~IP_REL;
