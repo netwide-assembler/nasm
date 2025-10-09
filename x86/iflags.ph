@@ -162,7 +162,6 @@ if_("AMXINT8",           "AMX 8-bit integer multiplication");
 if_("AMXCOMPLEX",        "AMX float16 complex multiplication");
 if_("AMXAVX512",         "EVEX zmm<-tmm conversion instructions");
 if_("AMXMOVRS",          "AMX loads with MOVRS hint");
-if_("AMXTRANSPOSE",      "AMX transpose instructions");
 if_("FRED",              "Flexible Return and Exception Delivery (FRED)");
 if_("RAOINT",		 "Remote atomic operations (RAO-INT)");
 if_("UINTR",		 "User interrupts");
