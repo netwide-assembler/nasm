@@ -2463,10 +2463,10 @@ VFNMSUB321SD	xmmreg,xmmreg,xmmrm64		[rvm:	vex.dds.128.66.0f38.w1 bf /r]		FMA
 ;# Intel post-32 nm processor instructions
 ;
 ; Per AVX spec revision 7, document 319433-007
-VCVTPH2PS	ymmreg,xmmrm128			[rm:	vex.256.66.0f38.w0 13 /r]		AVX
-VCVTPH2PS	xmmreg,xmmrm64			[rm:	vex.128.66.0f38.w0 13 /r]		AVX
-VCVTPS2PH	xmmrm128,ymmreg,imm8		[mri:	vex.256.66.0f3a.w0 1d /r ib]		AVX
-VCVTPS2PH	xmmrm64,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 1d /r ib]		AVX
+VCVTPH2PS	ymmreg,xmmrm128			[rm:	vex.256.66.0f38.w0 13 /r]		F16C
+VCVTPH2PS	xmmreg,xmmrm64			[rm:	vex.128.66.0f38.w0 13 /r]		F16C
+VCVTPS2PH	xmmrm128,ymmreg,imm8		[mri:	vex.256.66.0f3a.w0 1d /r ib]		F16C
+VCVTPS2PH	xmmrm64,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 1d /r ib]		F16C
 
 ;# Supervisor Mode Access Prevention (SMAP)
 
@@ -5458,8 +5458,6 @@ VCVTPH2DQ	zmmreg|mask|z,ymmrm256|b16|er		[rm:hv:	  evex.512.66.map5.w0 5B /r]	  
 VCVTPH2PD	xmmreg|mask|z,xmmrm32|b16		[rm:qvm:  evex.128.np.map5.w0 5A /r]	    AVX512FP16,AVX512VL
 VCVTPH2PD	ymmreg|mask|z,xmmrm64|b16		[rm:qvm:  evex.256.np.map5.w0 5A /r]	    AVX512FP16,AVX512VL
 VCVTPH2PD	zmmreg|mask|z,xmmrm128|b16|sae		[rm:qvm:  evex.512.np.map5.w0 5A /r]	    AVX512FP16
-VCVTPH2PS	xmmreg,xmmrm64			[rm:	vex.128.66.0f38.w0 13 /r]	AVX512FC16
-VCVTPH2PS	ymmreg,xmmrm128			[rm:	vex.256.66.0f38.w0 13 /r]	AVX512FC16
 VCVTPH2PS	xmmreg|mask|z,xmmrm64		[rm:hvm:evex.128.66.0f38.w0 13 /r]	AVX512,AVX512VL
 VCVTPH2PS	ymmreg|mask|z,xmmrm128		[rm:hvm:evex.256.66.0f38.w0 13 /r]	AVX512,AVX512VL
 VCVTPH2PS	zmmreg|mask|z,ymmrm256|sae	[rm:hvm:evex.512.66.0f38.w0 13 /r]	AVX512
@@ -5481,8 +5479,6 @@ VCVTPH2UW	zmmreg|mask|z,zmmrm512|b16|er	[rm:fv: evex.512.np.map5.w0 7d /r]	AVX51
 VCVTPH2W	xmmreg|mask|z,xmmrm128|b16	[rm:fv: evex.128.66.map5.w0 7d /r]	AVX512FP16,AVX512VL
 VCVTPH2W	ymmreg|mask|z,ymmrm256|b16	[rm:fv: evex.256.66.map5.w0 7d /r]	AVX512FP16,AVX512VL
 VCVTPH2W	zmmreg|mask|z,zmmrm512|b16|er	[rm:fv: evex.512.66.map5.w0 7d /r]	AVX512FP16
-VCVTPS2PH	xmmrm64,xmmreg,imm8		[mri:	vex.128.66.0f3a.w0 1d /r ib]	AVX512FC16,AVX512VL
-VCVTPS2PH	xmmrm128,ymmreg,imm8		[mri:	vex.256.66.0f3a.w0 1d /r ib]	AVX512FC16,AVX512VL
 VCVTPS2PH	xmmreg|mask|z,xmmreg,imm8	[mri:hvm: evex.128.66.0f3a.w0 1d /r ib]	AVX512,AVX512VL
 VCVTPS2PH	mem64|mask,xmmreg,imm8		[mri:hvm: evex.128.66.0f3a.w0 1d /r ib] AVX512,AVX512VL
 VCVTPS2PH	xmmreg|mask|z,ymmreg,imm8	[mri:hvm: evex.256.66.0f3a.w0 1d /r ib]	AVX512,AVX512VL
