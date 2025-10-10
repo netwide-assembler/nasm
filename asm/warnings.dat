@@ -254,6 +254,21 @@ pragma-unknown [off] unknown \c{%pragma} facility or directive
     Warns about an unknown \c{%pragma} directive.
     This is not yet implemented for most cases.
 
+prefix-badmode-a64 [err] a64 prefix invalid in 16/32-bit mode
+    Warns that an \c{a64} prefix was specified in 16- or 32-bit
+    mode. If the error is demoted to a warning or suppressed, the
+    prefix is ignored by the assembler.
+
+prefix-badmode-o64 [err] o64 prefix invalid in 16/32-bit mode
+    Warns that an \c{a64} prefix was specified in 16- or 32-bit
+    mode. If the error is demoted to a warning or suppressed, the
+    prefix is ignored by the assembler.
+
+prefix-badmode-a16 [err] a16 prefix invalid in 64-bit mode
+    Warns that an \c{a16} prefix was specified in 64-bit mode.
+    If the error is demoted to a warning or suppressed, the
+    prefix is ignored by the assembler.
+
 prefix-bnd [on] invalid \c{BND} prefix
 =bnd
     Warns about ineffective use of the \c{BND} prefix when the

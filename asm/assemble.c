@@ -1403,6 +1403,25 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
     /* Default operand size */
     ins->op_size = bits != 16 ? 32 : 16;
 
+    if (bits == 64) {
+        if (ins->prefixes[PPS_ASIZE] == P_A16) {
+            nasm_warn(WARN_PREFIX_BADMODE_A16,
+                      "a64 prefix invalid in 64-bit mode");
+            ins->prefixes[PPS_ASIZE] = 0;
+        }
+    } else {
+        if (ins->prefixes[PPS_OSIZE] == P_O64) {
+            nasm_warn(WARN_PREFIX_BADMODE_O64,
+                      "o64 prefix invalid in %d-bit mode", bits);
+            ins->prefixes[PPS_OSIZE] = P_none;
+        }
+        if (ins->prefixes[PPS_ASIZE] == P_A64) {
+            nasm_warn(WARN_PREFIX_BADMODE_A64,
+                      "a64 prefix invalid in %d-bit mode", bits);
+            ins->prefixes[PPS_ASIZE] = P_none;
+        }
+    }
+
     nasm_zero(need_pfx);
 
     while (*codes) {

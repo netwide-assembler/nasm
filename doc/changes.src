@@ -53,6 +53,12 @@ It is the production version of NASM since 2025.
 
 \b Hopefully fix building with OpenWatcom.
 
+\b Generate a warning, promoted to error by default, on the use of
+   \c{a64} or \c{o64} prefixes in 16- or 32-bit mode or \c{a16}
+   prefixes in 64-bit mode. Those prefixes are not encodable; if
+   demoted to a warning or suppressed the prefix is ignored, but
+   likely will generate additional, harder to debug, error messages.
+
 
 \S{cl-3.00} Version 3.00
 
