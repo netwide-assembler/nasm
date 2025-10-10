@@ -365,10 +365,13 @@ static void list_update_options(const char *str)
             break;
         default:
             mask = list_option_mask(c);
-            if (state)
+            if (state) {
                 list_options |= mask;
-            else
+                active_list_options |= mask;
+            } else {
                 list_options &= ~mask;
+                active_list_options &= ~mask;
+            }
             break;
         }
     }
