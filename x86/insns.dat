@@ -262,19 +262,15 @@ $bwd  CMPXCHG486 rm#,reg#			[mr:	0f a6# /r]				486,SM,UNDOC,NOLONG,ND,LOCK,OBSOL
 
 ;# Jumps
 ; APX absolute 64-bit jmp
-      JMPABS	imm64				[i:	a64 np rex2 a1 iq		]	APX
-      JMP	imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,ND
-      JMPABS	imm64|abs			[i:	a64 np rex2 a1 iq		]	APX,ND
-; Jump-over emulation of JMPABS on !APX
-      JMPABS	imm64				[i:	a64 ff 25 00 00 00 00 iq	]	NOAPX,LONG,ND
-      JMP	imm64|abs			[i:	a64 ff 25 00 00 00 00 iq	]	NOAPX,LONG,ND
-      JMPABS	imm64|abs			[i:	a64 ff 25 00 00 00 00 iq	]	NOAPX,LONG,ND
+      JMPABS	imm64|near			[i:	a64 np rex2 a1 iq		]	APX
+      JMP	imm64|abs|near			[i:	a64 np rex2 a1 iq		]	APX,ND
+      JMPABS	imm64|abs|near			[i:	a64 np rex2 a1 iq		]	APX,ND
 
 ; Call/jmp near imm/reg/mem are always 64-bit in long mode.
-      JMP	imm8|short			[i:	nw eb rel8]				8086,NOAPX
-      JMP	imm				[i:	jmp8 nw eb rel8]			8086,JMP_RELAX,NOAPX,ND
-$wdq  JMP	imm#|near			[i:	nw o# e9 rel]				8086,BND,(wd:NOLONG,OSIZE)
-$wdq  JMP	rm#|near			[m:	nw o# ff /4]				8086,BND,(wd:NOLONG,OSIZE)
+$br   JMP	short				[i:	os eb rel8]				8086,NOAPX,ND
+$br   JMP	near				[i:	jmp8 os eb rel8]			8086,NOAPX,JMP_RELAX
+$br   JMP	near				[i:	os e9 rel]				8086,BND
+$wdq  JMP	rm#|near			[m:	nw o# ff /4]				8086,BND,OSIZE
 
 $wd   JMP	imm#|far			[i:	o# ea iwd seg]				8086,OSIZE,ND,NOLONG
 ; These are hacks to support the legacy syntax "[d]word seg:offs" to mean "seg:[d]word offs"
@@ -287,37 +283,37 @@ $wd   JMP	imm16:imm#|far			[ji:	o# ea i# iw]				8086,OSIZE,AR1,NOLONG,ND
 ; This is an intentional "programmer friendliness" quirk.
 $wdq  JMP	mem#|far			[m:	o# ff /5]				8086,OSIZE,NWSIZE,(w:NOLONG)
 
-      Jcc	imm8|short			[i:	nw 70+c rel8]				8086,ND,BND,SX,JCC_HINT,NOAPX
-      Jcc	imm				[i:	jcc8 nw 70+c rel8]			8086,BND,SX,JCC_HINT,NOAPX
-$wdq  Jcc	imm#|near			[i:	nw o# 0f 80+c rel]			386,BND,NOAPX,JCC_HINT,(wd:NOLONG,OSIZE)
+$br   Jcc	short				[i:	os 70+c rel8]				8086,ND,BND,JCC_HINT,NOAPX
+$br   Jcc	near				[i:	jcc8 os 70+c rel8]			8086,BND,JCC_HINT,JMP_RELAX,NOAPX
+$br   Jcc	near				[i:	os 0f 80+c rel]				386,BND,NOAPX,JCC_HINT
 ; Jump-over emulation of Jcc on < 386
-      Jcc	imm16|near			[i:	nw 71+c jlen e9 rel16]			8086,ND,NOAPX,NOLONG
+; This could/should be improved to handle osp properly
+      Jcc	imm				[i:	71+c jlen e9 rel]			8086,ND,NOAPX,OSIZE
 
-; The following only have short forms, hence imm8|near|short
-      JCXZ	imm8|near|short			[i:	a16 e3 rel8]				8086,NOLONG
-      JECXZ	imm8|near|short			[i:	a32 e3 rel8]				386,NOAPX
-      JRCXZ	imm8|near|short			[i:	a64 e3 rel8]				X86_64,LONG,NOAPX
-$wdq  JCXZ	imm8|near|short,cx#		[i-:	a# e3 rel8]				8086,ND
+; The following only have short forms, but use the *address* size to encode
+; the size of the counter register.
+$br $wdq  JCX#Z		near|short		[i:	a# os e3 rel8]				8086,NOAPX
+$br $wdq  JCXZ		near|short,cx#		[i:	a# os e3 rel8]				8086,NOAPX,ND
 
-$zwdq LOOP%	imm8|near|short			[i:	a#  nw e2 rel8]				8086,NOAPX,(wdq:ND)
-$zwdq LOOPE%	imm8|near|short			[i:	a#  nw e1 rel8]				8086,NOAPX,(wdq:ND)
-$zwdq LOOPNE%	imm8|near|short			[i:	a#  nw e0 rel8]				8086,NOAPX,(wdq:ND)
-$zwdq LOOPZ%	imm8|near|short			[i:	a#  nw e1 rel8]				8086,NOAPX,ND
-$zwdq LOOPNZ%	imm8|near|short			[i:	a#  nw e0 rel8]				8086,NOAPX,ND
-$wdq  LOOP	imm8|near|short,cx#		[i-:	a#  nw e2 rel8]				8086,NOAPX
-$wdq  LOOPE	imm8|near|short,cx#		[i-:	a#  nw e1 rel8]				8086,NOAPX
-$wdq  LOOPNE	imm8|near|short,cx#		[i-:	a#  nw e0 rel8]				8086,NOAPX
-$wdq  LOOPZ	imm8|near|short,cx#		[i-:	a#  nw e1 rel8]				8086,NOAPX,ND
-$wdq  LOOPNZ	imm8|near|short,cx#		[i-:	a#  nw e0 rel8]				8086,NOAPX,ND
+$br $zwdq LOOP%		near|short		[i:	a# os e2 rel8]				8086,NOAPX,(wdq:ND)
+$br $zwdq LOOPE%	near|short		[i:	a# os e1 rel8]				8086,NOAPX,(wdq:ND)
+$br $zwdq LOOPNE%	near|short		[i:	a# os e0 rel8]				8086,NOAPX,(wdq:ND)
+$br $zwdq LOOPZ%	near|short		[i:	a# os e1 rel8]				8086,NOAPX,ND
+$br $zwdq LOOPNZ%	near|short		[i:	a# os e0 rel8]				8086,NOAPX,ND
+$br $wdq  LOOP		near|short,cx#		[i-:	a# os e2 rel8]				8086,NOAPX
+$br $wdq  LOOPE		near|short,cx#		[i-:	a# os e1 rel8]				8086,NOAPX
+$br $wdq  LOOPNE	near|short,cx#		[i-:	a# os e0 rel8]				8086,NOAPX
+$br $wdq  LOOPZ		near|short,cx#		[i-:	a# os e1 rel8]				8086,NOAPX
+$br $wdq  LOOPNZ	near|short,cx#		[i-:	a# os e0 rel8]				8086,NOAPX
 
 ; JMPE is obsolete, but seems to be used by a fair number of virtual environments?
-$zwdq JMPE	imm##|near			[i:	nw o# 0f b8 rel]			IA64
+$br   JMPE	near				[i:	os 0f b8 rel]				IA64
 ; 0f 00 /6 with a prefix has been repurposed in long mode
-$wdq  JMPE	rm#|near			[m:	nw o# np 0f 00 /6]			IA64
-$wd   JMPE	rm#|near			[m:	o#       0f 00 /6]			IA64,ND,NOLONG
+$wdq  JMPE	rm#|near			[m:	nw o# np 0f 00 /6]			IA64,OSIZE
+$wd   JMPE	rm#|near			[m:	o#       0f 00 /6]			IA64,OSIZE,NOLONG
 
 ;# Call and return
-$wdq  CALL	imm##|near			[i:	nw o# e8 rel]				8086,BND,NOAPX,(wd:OSIZE,NOLONG)
+$br   CALL	near				[i:	os e8 rel]				8086,BND,NOAPX
 $wdq  CALL	rm#|near			[m:	nw o# ff /2]				8086,BND,(wd:OSIZE,NOLONG)
 
 $wd   CALL	imm#|far			[i:	o# 9a iwd seg]				8086,ND,NOLONG,OSIZE
@@ -2913,17 +2909,9 @@ VPGATHERQQ	ymmreg,ymem64,ymmreg		[rmv:	vm64y vex.dds.256.66.0f38.w1 91 /r]	AVX2
 
 ;# Intel Transactional Synchronization Extensions (TSX)
 XABORT		imm8				[i:	c6 f8 ib]				RTM
-XBEGIN		imm				[i:	nw odf c7 f8 rel]			RTM
-XBEGIN		imm|near			[i:	nw odf c7 f8 rel]			RTM,SX,ND
-XBEGIN		imm16				[i:	   o16 c7 f8 rel]			RTM,NOLONG,SX
-XBEGIN		imm16|near			[i:	   o16 c7 f8 rel]			RTM,NOLONG,SX,ND
-XBEGIN		imm32				[i:	   o32 c7 f8 rel]			RTM,NOLONG,SX
-XBEGIN		imm32|near			[i:	   o32 c7 f8 rel]			RTM,NOLONG,SX,ND
-XBEGIN		imm64				[i:	 o64nw c7 f8 rel]			RTM,LONG,SX
-XBEGIN		imm64|near			[i:	 o64nw c7 f8 rel]			RTM,LONG,SX,ND
+$br XBEGIN	near				[i:	os c7 f8 rel]				RTM
 XEND		void				[	0f 01 d5]				RTM
 XTEST		void				[	0f 01 d6]				HLE,RTM
-
 
 PREFETCHWT1     mem8         [m:                               0f 0d /2 ]  PREFETCHWT1
 

@@ -964,8 +964,10 @@ restart_parse:
         while (i == TOKEN_SPECIAL || i == TOKEN_SIZE) {
             switch (tokval.t_integer) {
             case S_BYTE:
-                if (!setsize)   /* we want to use only the first */
+                if (!setsize) {   /* we want to use only the first */
+                    result->opt |= OPTIM_NO_Jcc_RELAX | OPTIM_NO_JMP_RELAX;
                     op->type |= BITS8;
+                }
                 setsize = 1;
                 break;
             case S_WORD:
@@ -1014,9 +1016,12 @@ restart_parse:
                 op->type |= FAR;
                 break;
             case S_NEAR:
+                /* This is not legacy behavior, even if it perhaps should be */
+                /* result->opt |= OPTIM_NO_Jcc_RELAX | OPTIM_NO_JMP_RELAX; */
                 op->type |= NEAR;
                 break;
             case S_SHORT:
+                result->opt |= OPTIM_NO_Jcc_RELAX | OPTIM_NO_JMP_RELAX;
                 op->type |= SHORT;
                 break;
             case S_ABS:

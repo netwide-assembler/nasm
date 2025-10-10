@@ -487,7 +487,7 @@ if ( $output eq 'b') {
         print B " *";
         for ($j = 0; $j < 256; $j += 32) {
             print B " |" if ($j);
-            printf B " %3o:%4d", $i+$j, $bytecode_count[$i+$j];
+            printf B " %3o:%5d", $i+$j, $bytecode_count[$i+$j];
         }
         print B "\n";
     }
@@ -691,12 +691,14 @@ sub count_bytecodes(@) {
             $skip = 1;
         } elsif (($bc & ~013) == 0144) {
             $skip = 1;
-        } elsif ($bc == 0172 || $bc == 0173) {
+        } elsif ($bc >= 0171 && $bc <= 0173) {
             $skip = 1;
         } elsif (($bc & ~3) == 0260 || $bc == 0270) {   # VEX
             $skip = 2;
         } elsif (($bc & ~3) == 0240 || $bc == 0250) {   # EVEX
             $skip = 4;
+	} elsif (($bc & ~3) == 0304) {
+	    $skip = 2;
         } elsif ($bc == 0330) {
             $skip = 1;
         }

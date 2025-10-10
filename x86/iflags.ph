@@ -30,7 +30,6 @@ if_("AR2",               "SB, SW, SD applies to operand 2");
 if_("AR3",               "SB, SW, SD applies to operand 3");
 if_("AR4",               "SB, SW, SD applies to operand 4");
 # These must match the order of the BITSx flags in opflags.h
-# Are these obsolete?
 if_("SB",                "Unsized operands can't be non-byte");
 if_("SW",                "Unsized operands can't be non-word");
 if_("SD",                "Unsized operands can't be non-dword");
@@ -41,7 +40,8 @@ if_("SY",                "Unsized operands can't be non-yword");
 if_("SZ",                "Unsized operands can't be non-zword");
 # End BITSx order match requirement
 if_("NWSIZE",            "Operand size defaults to 64 in 64-bit mode");
-if_("OSIZE",             "Unsized operands must match the default operand size");
+# OSIZE can be modified by osp prefixes, but not by other operands
+if_("OSIZE",             "Unsized operands must match the operand size");
 if_("ASIZE",             "Unsized operands must match the address size");
 if_("ANYSIZE",           "Ignore operand size even if explicit");
 if_("SX",                "Unsized operands not allowed");

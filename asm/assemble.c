@@ -1400,27 +1400,8 @@ static int64_t calcsize(insn *ins, const struct itemplate * const temp)
     ins->itemp   = temp;        /* Instruction template */
     eat = EA_SCALAR;            /* Expect a scalar EA */
 
-    /* Default operand size */
+    /* Default operand size (prefixes are handled in the byte code) */
     ins->op_size = bits != 16 ? 32 : 16;
-
-    if (bits == 64) {
-        if (ins->prefixes[PPS_ASIZE] == P_A16) {
-            nasm_warn(WARN_PREFIX_BADMODE_A16,
-                      "a64 prefix invalid in 64-bit mode");
-            ins->prefixes[PPS_ASIZE] = 0;
-        }
-    } else {
-        if (ins->prefixes[PPS_OSIZE] == P_O64) {
-            nasm_warn(WARN_PREFIX_BADMODE_O64,
-                      "o64 prefix invalid in %d-bit mode", bits);
-            ins->prefixes[PPS_OSIZE] = P_none;
-        }
-        if (ins->prefixes[PPS_ASIZE] == P_A64) {
-            nasm_warn(WARN_PREFIX_BADMODE_A64,
-                      "a64 prefix invalid in %d-bit mode", bits);
-            ins->prefixes[PPS_ASIZE] = P_none;
-        }
-    }
 
     nasm_zero(need_pfx);
 
@@ -3061,7 +3042,7 @@ static enum match_result matches(const struct itemplate * const itemp,
 
     /* "Default" operand size (from mode and prefixes only) */
     op_size = ins->op_size;
-    if (itemp_has(itemp, IF_NWSIZE) && op_size == 32) {
+    if (bits == 64 && itemp_has(itemp, IF_NWSIZE) && op_size == 32) {
         /* If this is an nw instruction, default to 64 bits in 64-bit mode */
         op_size = bits;
     }
@@ -3101,18 +3082,23 @@ static enum match_result matches(const struct itemplate * const itemp,
 
         /* Handle implied SHORT or NEAR */
         if (unlikely(ttype & (NEAR|SHORT))) {
+            /* Treat BYTE as an alias for SHORT, ignoring size */
+            if (isize[i] == BITS8) {
+                itype[i] |= SHORT;
+                isize[i] = 0;
+            }
+            /* An explicit SHORT or BITS8 cancels NEAR; are synonyms */
+            if (itype[i] & SHORT) {
+                itype[i] &= ~NEAR;
+            }
+            /* NEAR is implicit unless otherwise specified */
+           if (!(itype[i] & (FAR|SHORT))) {
+                itype[i] |= ttype & NEAR;
+            }
             if ((ttype & (NEAR|SHORT)) == (NEAR|SHORT)) {
-                /* Only a short form exists; allow both NEAR and SHORT */
+                /* Only a short form exists; this is specially coded */
                 if (!(itype[i] & (FAR|ABS)))
                     itype[i] |= NEAR|SHORT;
-            } else if ((itype[i] & SHORT) || isize[i] == BITS8) {
-                /* An explicit SHORT or BITS8 cancel NEAR; are synonyms */
-                itype[i] &= ~NEAR;
-                if (!isize[i])
-                    isize[i] = BITS8;
-            } else if (!(itype[i] & (FAR|ABS|SHORT))) {
-                /* NEAR is implicit unless otherwise specified */
-                itype[i] |= ttype & NEAR;
             }
         }
 

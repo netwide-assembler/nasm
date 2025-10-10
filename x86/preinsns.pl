@@ -152,7 +152,7 @@ sub func_multisize($$$) {
 	$ins = $o.$ins;
 	$o = '';
 
-	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\bsel|\bopt\w?|\b[ioa]d?|\b(?:reg_)?[abcd]x|\bk?reg|\bk?rm|\bw)?\#{1,2}|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%{1,2})(.*)$/) {
+	while ($ins =~ /^(.*?)((?:\b[0-9a-f]{2}(?:\+r)?|\bsbyte|\bimm|\bsel|\bopt\w?|\b[ioa]d?|\b(?:reg_)?[abcd]x|\bk?reg|\bk?rm|\bw|\bS\b)?\#{1,2}|\b(?:reg|rm)64\b|\b(?:o64)?nw\b|\b(?:NO)?LONG\w+\b|\%{1,2}|[ABCD]X\#)(.*)$/) {
 	    $o .= $1;
 	    my $mw = $2;
 	    $ins = $3;
@@ -178,15 +178,17 @@ sub func_multisize($$$) {
 		$o .= !$i ? 'iwd' : ($s >= 64) ? 'id,s' : "i$sn";
 	    } elsif ($mw eq 'i##') {
 		$o .= !$i ? 'iwdq' : "i$sn";
-	    } elsif ($mw =~ /^(?:reg_)?([abcd])x\#$/) {
+	    } elsif ($mw =~ /^(?:reg_)?([abcd])x\#$/i) {
+		my $rl = $1;
+		my $upr = ($rl =~ /^[A-Z]/);
 		if ($i == 1) {
-		    $o .= "reg_${1}l";
+		    $o .= $upr ? "${rl}L" : "reg_${rl}l";
 		} elsif ($i == 2) {
-		    $o .= "reg_${1}x";
+		    $o .= $upr ? "${rl}X" : "reg_${rl}x";
 		} elsif ($i == 3) {
-		    $o .= "reg_e${1}x";
+		    $o .= $upr ? "E${rl}X" : "reg_e${rl}x";
 		} elsif ($i == 4) {
-		    $o .= "reg_r${1}x";
+		    $o .= $upr ? "R${rl}X" : "reg_r${rl}x";
 		    $long |= 1;
 		} else {
 		    die "$0:$infile:$line: register cannot be used with z\n";
@@ -237,6 +239,8 @@ sub func_multisize($$$) {
 		}
 	    } elsif ($mw eq 'w##') {
 		$o .= 'w'.(($i-1) & 1);
+	    } elsif ($mw eq 'S#') {
+		$o .= 'S'
 	    } elsif ($mw eq '#') {
 		$o .= $s;
 	    } else {
@@ -259,6 +263,39 @@ sub func_multisize($$$) {
 
     return @ol;
 }
+
+# Near branch operand size patterns
+# This allows the "normal" size patterns to be used for
+# address size features, as used by JCXZ and LOOP.
+# This also allows the syntax "jmp dword foo" in 64-bit
+# mode, even though it is really bogus.
+$macros{'br'} = {
+    'func' =>
+	sub {
+	    my($mac, $args, $rawargs) = @_;
+	    my @ol;
+	    my $ins = join(' ', @$rawargs);
+
+	    foreach my $wx ([16,16], [32,32], [64,64], [64,32]) {
+		my($w,$iw,$sz) = @$wx;
+		my $i = $ins;
+		my $argn;
+		if ($i =~ /^(.*)\b(near|short)\b/) {
+		    my $what = $2;
+		    next if ($what eq 'short' && $iw != $w);
+		    (my $argn = $1) =~ s/[^,:]+//g;
+		    $argn = 'AR'.length($argn);
+		}
+		$i =~ s/\b(near|short)\b/imm$iw|$1/;
+		$i =~ s/\bos\b/nw o$w/;
+		$i .= ",$argn";
+		$i .= ($iw != $w) ? ',SX,ND' : ',OSIZE';
+		$i .= ($w == 64) ? ',LONG' : ',NOLONG';
+		push(@ol, $i);
+	    }
+	    return(@ol);
+    }
+};
 
 # Common pattern for K-register instructions
 $macros{'k'} = {
