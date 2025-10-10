@@ -857,8 +857,8 @@ MOV		reg64,reg64			[rm:	o64 8b /r]				X86_64,LONG
 MOV		reg8,imm			[ri:	b0+r ib]				8086,SM
 MOV		reg16,imm			[ri:	o16 b8+r iw]				8086,SM
 MOV		reg32,imm			[ri:	o32 b8+r id]				386,SM
-MOV		reg64,udword			[ri:	o64nw b8+r id]				X86_64,LONG,SM,OPT,ND
-MOV		reg64,sdword			[mi:	o64 c7 /0 id,s]				X86_64,LONG,SM,OPT,ND
+MOV		reg64,udword			[ri:	o64nw b8+r id]				X86_64,LONG,OPT,ND
+MOV		reg64,sdword			[mi:	o64 c7 /0 id,s]				X86_64,LONG,OPT,ND
 MOV		reg64,imm			[ri:	o64 b8+r iq]				X86_64,LONG,SM
 MOV		rm8,imm				[mi:	hlexr c6 /0 ib]				8086,SM
 MOV		rm16,imm			[mi:	hlexr o16 c7 /0 iw]			8086,SM
