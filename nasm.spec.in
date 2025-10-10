@@ -8,8 +8,8 @@ Name: nasm
 Version: @@NASM_MANGLED_VER@@
 Release: 0%{?dist}
 License: BSD-2-Clause
-Source: http://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_version}.tar.xz
-URL: http://www.nasm.us/
+Source: https://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_version}.tar.xz
+URL: https://www.nasm.us/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: %{_prefix}
 BuildRequires: autoconf
