@@ -58,6 +58,11 @@ It is the production version of NASM since 2025.
    suppressed the prefix is ignored, but likely will trigger
    subsequent, harder to debug, error messages.
 
+\b More consistent handling of jump and call instructions with
+   specified operand sizes.
+
+\b Fix an operand size handling bug in the \c{CMPXCHG} instruction.
+
 
 \S{cl-3.00} Version 3.00
 
