@@ -404,6 +404,7 @@ clean: .SYMBOLIC
     rm -f stdlib\*.obj stdlib\*.s stdlib\*.i
     rm -f nasmlib\*.obj nasmlib\*.s nasmlib\*.i
     rm -f disasm\*.obj disasm\*.s disasm\*.i
+    rm -f zlib\*.obj zlib\*.s zlib\*.i
     rm -f config.h config.log config.status
     rm -f nasm$(X) ndisasm$(X) $(NASMLIB) $(NDISLIB)
 
