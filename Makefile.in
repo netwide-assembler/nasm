@@ -579,7 +579,7 @@ $(travis_version): version
 	printf 'NASM version %s compiled on ?\n' `cat version` > $@
 
 travis: $(PROGS) $(travis_version)
-	-$(PYTHON3) travis/nasm-t.py run > travis.log
+	-$(PYTHON3) travis/nasm-t.py run --stop=n > travis.log
 	@if $(GREP) FAIL travis.log; then exit 1; else \
 		echo '=== All tests PASS ==='; fi
 

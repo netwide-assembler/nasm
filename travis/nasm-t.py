@@ -29,6 +29,10 @@ for cmd in ['run']:
                      dest = 'test',
                      help = 'Run the selected test only',
                      required = False)
+    spp.add_argument('--stop',
+                     dest = 'stop', default = 'y',
+                     help = 'Stop immediately on failure (default "y")',
+                     required = False)
 
 for cmd in ['new']:
     spp = sp.add_parser(cmd, help = 'Add a new test case')
@@ -109,7 +113,7 @@ args = parser.parse_args()
 
 if args.cmd == None:
     parser.print_help()
-    sys.exit(1)
+    sys.exit(64)
 
 def read_stdfile(path):
     with open(path, "rb") as f:
@@ -232,7 +236,7 @@ if args.cmd == 'list':
 def test_abort(test, message):
     print("\t%s: %s" % (test, message))
     print("=== Test %s ABORT ===" % (test))
-    sys.exit(1)
+    sys.exit(2)
     return False
 
 def test_fail(test, message):
@@ -556,6 +560,7 @@ if args.cmd == 'new':
         f.close()
 
 if args.cmd == 'run':
+    errors = 0
     desc_array = []
     if args.test == None:
         desc_array = collect_test_desc_from_dir(args.dir)
@@ -566,10 +571,14 @@ if args.cmd == 'run':
 
     for desc in desc_array:
         if test_run(desc) == False:
+            errors = 1;
             if 'error' in desc and desc['error'] == 'over':
                 test_over(desc['_test-name'])
             else:
-                test_abort(desc['_test-name'], "Error detected")
+                errors = 1
+                if args.stop == 'y':
+                    test_abort(desc['_test-name'], "Error detected")
+    sys.exit(errors)
 
 if args.cmd == 'update':
     desc_array = []
