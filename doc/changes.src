@@ -43,7 +43,7 @@ It is the production version of NASM since 2025.
    documented directives (bracketed forms only) and allow both
    \c{postfix} and \c{suffix} in all cases.
 
-   See \k{opt-pfix} and \k{mangling}.
+\> See \k{opt-pfix} and \k{mangling}.
 
 \b Define additional permissive patterns and fix several opcode bugs.
 
