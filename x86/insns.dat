@@ -242,7 +242,7 @@ $wdq  MOVZX	reg#,rm32			[rm:	nw o# 8b /r]				8086,OPT,SX,ND
 $wdq  MOVZXD	reg#,rm32			[rm:	nw o# 8b /r]				8086,OPT,ND
 
 ;# Atomic operations
-$bwdq CMPXCHG	 rm#,reg#			[mr:	hle 0f b0# /r]				PENT,SM,LOCK
+$bwdq CMPXCHG	 rm#,reg#			[mr:	hle o# 0f b0# /r]			PENT,SM,LOCK
       CMPXCHG8B	 mem64				[m:	hle norexw 0f c7 /1]			PENT,LOCK
       CMPXCHG16B mem128				[m:	o64 0f c7 /1]				X86_64,LONG,LOCK
 
@@ -258,7 +258,7 @@ $bwdq XCHG	reg#,rm#			[rm:	hlenl o# 86# /r]			8086,SM,LOCK1
 $bwdq XCHG	rm#,reg#			[mr:	hlenl o# 86# /r]			8086,SM,LOCK,ND
 
 ; 486-only opcode present in some but not all 486 chips
-$bwd  CMPXCHG486 rm#,reg#			[mr:	0f a6# /r]				486,SM,UNDOC,NOLONG,ND,LOCK,OBSOLETE
+$bwd  CMPXCHG486 rm#,reg#			[mr:	o# 0f a6# /r]				486,SM,UNDOC,NOLONG,ND,LOCK,OBSOLETE
 
 ;# Jumps
 ; APX absolute 64-bit jmp
