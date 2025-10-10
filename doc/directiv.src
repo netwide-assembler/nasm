@@ -412,13 +412,13 @@ private extensions mentioned in \k{global}.
 \IC{PREFIX}{GPOSTFIX} \c{[GPOSTFIX]}
 \IC{PREFIX}{LPOSTFIX} \c{[LPOSTFIX]}
 
-\H{mangling} \I{PREFIX}\c{[GL]PREFIX}, \c{[GL]SUFFIX}: Mangling Symbols
+\H{mangling} \I{PREFIX}\c{[[GL]PREFIX]}, \c{[[GL]SUFFIX]}: Mangling Symbols
 
-\c{[PREFIX}, \c{[GPREFIX}, \c{[LPREFIX}, \c{[SUFFIX}, \c{[GSUFFIX}, and
-\c{[LSUFFIX} directives can prepend or append a string to a certain
+\c{[PREFIX]}, \c{[GPREFIX]}, \c{[LPREFIX]}, \c{[SUFFIX]}, \c{[GSUFFIX]}, and
+\c{[LSUFFIX]} directives can prepend or append a string to a certain
 type of symbols, normally to fit specific ABI conventions
 
-\b\c{[PREFIX}, \c{[GPREFIX}: Prepend the argument to all \c{EXTERN},
+\b\c{[PREFIX]}, \c{[GPREFIX]}: Prepend the argument to all \c{EXTERN},
 \c{COMMON}, \c{STATIC}, and \c{GLOBAL} symbols.
 
 \b\c{[LPREFIX}: Prepend the argument to all other symbols
