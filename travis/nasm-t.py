@@ -337,9 +337,11 @@ def prepare_run_opts(desc):
     for t in desc['target']:
         if 'output' in t:
             if 'option' in t:
-                opts += t['option'].split(" ") + [desc['_base-dir'] + os.sep + t['output']]
+                opts += t['option'].split(" ")
             else:
-                opts += ['-o', desc['_base-dir'] + os.sep + t['output']]
+                opts += ['-o']
+            outfile = desc['_base-dir'] + os.sep + t['output']
+            opts += [outfile, '-L+', '-l', outfile + '.lst']
         if 'stdout' in t or 'stderr' in t:
             if 'option' in t:
                 opts += t['option'].split(" ")
