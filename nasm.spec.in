@@ -12,7 +12,6 @@ Source: http://www.nasm.us/pub/nasm/releasebuilds/%{nasm_version}/nasm-%{nasm_ve
 URL: http://www.nasm.us/
 BuildRoot: /tmp/rpm-build-nasm
 Prefix: %{_prefix}
-@@PERLBUILDREQS@@
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: asciidoc
@@ -23,6 +22,10 @@ BuildRequires: make
 BuildRequires: gzip
 BuildRequires: xz
 BuildRequires: zlib-devel
+BuildRequires: sed
+BuildRequires: findutils
+BuildRequires: coreutils
+@@PERLBUILDREQS@@
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Obsoletes: %{name}-rdoff < 2.16
 
