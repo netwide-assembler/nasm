@@ -17,6 +17,12 @@
 ;; In the future, this will be turned into a general list of keywords
 ;; to be parsed in special contexts.
 ;;
+;; #special tokens are used to separate different classes of tokens.
+;; Make sure to add new tokens to the correct place. If a token is used
+;; in both a directive and in pragmas, they should be in the directive
+;; part of the list. Tokens used in pragmas *only* go at the end of the
+;; list.
+;;
 
 ; --- General configuration
 #name directive
@@ -25,9 +31,14 @@
 #header directiv.h
 
 ; --- Special enum values
+;     These must be first in the list.
 #special none = 0			; Must be zero
 #special unknown
 #special corrupt
+
+; --- True directives
+;     These tokens are accepted as directives by the global code or
+;     ignored if not implemented.
 
 ; --- Global directives
 absolute
@@ -40,16 +51,29 @@ dollarhex
 extern
 float
 global
-static
 list
-section
-segment
-warning
-sectalign
 pragma
 required
+sectalign
+section
+segment
+static
+warning
+
+; --- Common output directives/pragmas
+prefix
+suffix
+postfix
+gprefix
+gsuffix
+gpostfix
+lprefix
+lsuffix
+lpostfix
 
 ; --- Pseudo-op list, for the benefit of %isdirective
+;     Tokens put in this part will be rejected as either directives or
+;     pragmas
 #special pseudo_ops
 db
 dw
@@ -71,6 +95,8 @@ incbin
 equ
 
 ; --- Format-specific directives
+;     Tokens put in this part of the list will be forwarded to the
+;     backend ofmt->directive() method.
 #special ofmt
 export				; outcoff, outobj
 group				; outobj
@@ -83,7 +109,8 @@ osabi				; outelf
 safeseh				; outcoff
 uppercase			; outieee, outobj
 
-; --- The following are tokens used in pragmas, not actual directives
+; --- The following are tokens used in pragmas, not actual directives.
+;     They will not be accepted as directives.
 #special pragma_tokens
 
 ; --- Assembler pragmas
@@ -91,17 +118,6 @@ limit
 
 ; --- Listing pragmas
 options
-
-; --- Common output pragmas
-prefix
-suffix
-postfix
-gprefix
-gsuffix
-gpostfix
-lprefix
-lsuffix
-lpostfix
 
 ; --- Backend-specific pragmas
 subsections_via_symbols		; macho

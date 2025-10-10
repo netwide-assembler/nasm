@@ -9,6 +9,11 @@ db-empty [on] no operand for data declaration
     This is permitted, but often indicative of an error.
     See \k{db}.
 
+directive-garbage-eol [err] garbage after directive
+    Text was found after a directive. This is a warning so it can be
+    suppressed, because previous versions of NASM did not check for
+    this condition.
+
 ea-absolute [on] absolute address cannot be RIP-relative
     Warns that an address that is inherently absolute cannot
     be generated with RIP-relative encoding using \c{REL},

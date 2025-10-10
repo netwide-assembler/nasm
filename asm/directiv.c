@@ -22,6 +22,7 @@
 #include "listing.h"
 #include "labels.h"
 #include "iflag.h"
+#include "quote.h"
 
 struct cpunames {
     const char *name;
@@ -178,34 +179,51 @@ static int get_bits(const char *value)
 
 static enum directive parse_directive_line(char **directive, char **value)
 {
-    char *p, *q, *buf;
+    char *p, *q, *eol, *buf;
+    char c;
 
     buf = nasm_skip_spaces(*directive);
 
     /*
      * It should be enclosed in [ ].
-     * XXX: we don't check there is nothing else on the remainder of the
-     * line, except a possible comment.
+     *
+     * Strip off the comments.  We should really strip the comments in
+     * generic code, not here.  While we're at it, it would be better
+     * to pass the backend a series of tokens instead of a raw string,
+     * and actually process quoted strings for it, like of like argv
+     * is handled in C.
      */
     if (*buf != '[')
         return D_none;
-    q = strchr(buf, ']');
-    if (!q)
-        return D_corrupt;
+
+    q = buf;
+    while ((c = *q) != ']') {
+        switch (c) {
+        case '\0':
+        case ';':
+            return D_corrupt;   /* No ] in directive */
+        case '\'':
+        case '\"':
+        case '`':
+            q = nasm_skip_string(q);
+            if (!*q++)
+                return D_corrupt;
+            break;
+        default:
+            q++;
+            break;
+        }
+    }
 
     /*
-     * Strip off the comments.  XXX: this doesn't account for quoted
-     * strings inside a directive.  We should really strip the
-     * comments in generic code, not here.  While we're at it, it
-     * would be better to pass the backend a series of tokens instead
-     * of a raw string, and actually process quoted strings for it,
-     * like of like argv is handled in C.
+     * Found the ] at the end of the directive. Make sure there isn't
+     * anything else at the end of the line, except a possible
+     * comment.
      */
-    p = strchr(buf, ';');
-    if (p) {
-        if (p < q) /* ouch! somewhere inside */
-            return D_corrupt;
-        *p = '\0';
+    eol = nasm_skip_spaces(q+1);
+    if (*eol != '\0' && *eol != ';') {
+        nasm_warn(WARN_DIRECTIVE_GARBAGE_EOL,
+                  "garbage found on line after directive");
     }
 
     /* no brace, no trailing spaces */
@@ -264,7 +282,7 @@ bool process_directives(char *directive)
 
     switch (d) {
     case D_none:
-        return D_none;      /* Not a directive */
+        return false;
 
     case D_corrupt:
 	nasm_nonfatal("invalid directive line");
@@ -285,6 +303,12 @@ bool process_directives(char *directive)
             default:
                 panic();
             }
+        } else if (d < D_pseudo_ops) {
+            nasm_nonfatal("internal error: unimplemented directive [%s]",
+                          directive);
+            break;
+        } else {
+            goto unknown;
         }
         break;
 
@@ -617,11 +641,10 @@ bool process_directives(char *directive)
         break;
     }
 
-
     /* A common error message */
     if (bad_param) {
         nasm_nonfatal("invalid parameter to [%s] directive", directive);
     }
 
-    return d != D_none;
+    return true;
 }
