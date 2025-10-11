@@ -19,7 +19,7 @@ TESTS	= $(wildcard *.asm)
 RM_F	= rm -f
 RM_RF	= rm -rf
 
-.PHONY: tools nasm ndisasm ffmpegtest x264test dav1dtest
+.PHONY: tools nasm ndisasm ffmpegtest x264test dav1dtest intel-ipsec-mbtest isa-ltest isa-l_cryptotest
 tools:
 	$(MAKE) -C .. all
 
@@ -36,6 +36,15 @@ x264test:
 	bash projtest.sh '$(NASM)' $@
 
 dav1dtest:
+	bash projtest.sh '$(NASM)' $@
+
+intel-ipsec-mbtest:
+	bash projtest.sh '$(NASM)' $@
+
+isa-ltest:
+	bash projtest.sh '$(NASM)' $@
+
+isa-l_cryptotest:
 	bash projtest.sh '$(NASM)' $@
 
 %.bin: %.asm $(NASM)
@@ -123,6 +132,7 @@ clean:
 	$(RM_RF) testresults
 	$(RM_F) elftest elftest64
 	$(RM_RF) ffmpegtest x264test dav1dtest
+	$(RM_RF) intel-ipsec-mbtest isa-ltest isa-l_cryptotest
 
 spotless: clean
 	$(RM_RF) golden

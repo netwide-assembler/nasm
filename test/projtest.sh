@@ -48,37 +48,51 @@ if [ "$rev" -ne "0" ]; then
 fi
 
 set +x
+tmpf=$(mktemp)
 
 {
 for y in "o" "obj"
 do
 for x in $(grep -o -P "\-o .*\.${y}" $logfile | sed -e 's/-o //')
 do
+	f=$x
 	if ! [ -f $x ]; then
+		b=$(basename $x)
+		if find -name $b >/dev/null; then
+			find -name $b >$tmpf
+			while read -r line; do
+				if [[ "$line" == *"$x" ]]; then
+					f=$line
+				fi
+			done < "$tmpf"
+		fi
+	fi
+	if ! [ -f $f ]; then
 		# probably it's a temporary assembly being tested
 		continue
 	fi
-	if ! [ -f ${x}.1 ]; then
-		echo file ${x}.1 does not exist
+	if ! [ -f ${f}.1 ]; then
+		echo file ${f}.1 does not exist
 	fi
 
-	if ! [ -f ${x}.2 ]; then
-		echo file ${x}.2 does not exist
+	if ! [ -f ${f}.2 ]; then
+		echo file ${f}.2 does not exist
 	fi
 
-	objdump -d ${x}.1 | tail -n +4 >/tmp/1.dump
-	objdump -d ${x}.2 | tail -n +4 >/tmp/2.dump
+	objdump -d ${f}.1 | tail -n +4 >/tmp/1.dump
+	objdump -d ${f}.2 | tail -n +4 >/tmp/2.dump
 	if ! diff /tmp/1.dump /tmp/2.dump >/dev/null; then
-		echo [differs] $x
-		#diff /tmp/1.dump /tmp/2.dump
+		echo [differs] $f
+		#diff -u /tmp/1.dump /tmp/2.dump
 	else
-		echo [matches] $x
+		echo [matches] $f
 	fi
 	rm -f /tmp/1.dump /tmp/2.dump
 done
 done
 } | tee "$here/results"
 
+rm -f $tmpf
 rev=$(! grep -e " does not exist" -e "\[differs\]" $here/results >/dev/null)
 
 exit $rev
