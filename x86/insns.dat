@@ -307,7 +307,7 @@ $br $wdq  LOOPZ		near|short,cx#		[i-:	a# os e1 rel8]				8086,NOAPX
 $br $wdq  LOOPNZ	near|short,cx#		[i-:	a# os e0 rel8]				8086,NOAPX
 
 ; JMPE is obsolete, but seems to be used by a fair number of virtual environments?
-$br   JMPE	near				[i:	os 0f b8 rel]				IA64
+$br   JMPE	near				[i:	os nof3 0f b8 rel]			IA64
 ; 0f 00 /6 with a prefix has been repurposed in long mode
 $wdq  JMPE	rm#|near			[m:	nw o# np 0f 00 /6]			IA64,OSIZE
 $wd   JMPE	rm#|near			[m:	o#       0f 00 /6]			IA64,OSIZE,NOLONG
