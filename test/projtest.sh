@@ -11,7 +11,9 @@ fi
 
 NASM2="$1"
 [ -z "$NASM2" ] && NASM2=../nasm
-NASM2=$(which "$NASM2" 2>/dev/null)
+# which does not work for Ubuntu on a relative path executable
+# NASM2=$(which "$NASM2" 2>/dev/null)
+NASM2=${PWD}/${NASM2}
 if [ -z "$NASM2" ]; then
     echo 'Test nasm not found' 1>&2
     exit 1
@@ -79,11 +81,11 @@ do
 		echo file ${f}.2 does not exist
 	fi
 
-	objdump -d ${f}.1 | tail -n +4 >/tmp/1.dump
-	objdump -d ${f}.2 | tail -n +4 >/tmp/2.dump
+	objdump -d --no-show-raw-insn --no-addresses ${f}.1 | tail -n +4 >/tmp/1.dump
+	objdump -d --no-show-raw-insn --no-addresses ${f}.2 | tail -n +4 >/tmp/2.dump
 	if ! diff /tmp/1.dump /tmp/2.dump >/dev/null; then
 		echo [differs] $f
-		#diff -u /tmp/1.dump /tmp/2.dump
+		diff -u /tmp/1.dump /tmp/2.dump
 	else
 		echo [matches] $f
 	fi
