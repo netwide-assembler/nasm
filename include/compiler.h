@@ -182,7 +182,7 @@ char * pure_func strrchrnul(const char *, int);
 #endif
 
 /* C++ and C23 have bool, false, and true as proper keywords */
-#if !defined(__cplusplus) || (__STDC_VERSION__ >= 202311L)
+#if !defined(__cplusplus) && (__STDC_VERSION__ < 202311L)
 # ifdef HAVE_STDBOOL_H
 #  include <stdbool.h>
 # elif defined(HAVE___BOOL)
