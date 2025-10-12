@@ -181,19 +181,10 @@ size_t strlcpy(char *, const char *, size_t);
 char * pure_func strrchrnul(const char *, int);
 #endif
 
-#if !defined(__cplusplus) || (__STDC_VERSION >= 202311L)
 /* C++ and C23 have bool, false, and true as proper keywords */
+#if !defined(__cplusplus) || (__STDC_VERSION__ >= 202311L)
 # ifdef HAVE_STDBOOL_H
-/* If <stdbool.h> exists, include it explicitly to prevent it from
-   begin included later, causing the "bool" macro to be defined. */
 #  include <stdbool.h>
-#  ifdef bool
-/* Force bool to be a typedef instead of a macro. What a "clever" hack
-   this is... */
-    typedef bool                /* The macro definition of bool */
-#  undef bool
-        bool;                   /* No longer the macro definition */
-#  endif
 # elif defined(HAVE___BOOL)
    typedef _Bool bool;
 #  define false 0
@@ -201,14 +192,10 @@ char * pure_func strrchrnul(const char *, int);
 # else
 /* This is a bit dangerous, because casting to this ersatz bool
    will not produce the same result as the standard (bool) cast.
-   Instead, use the bool() constructor-style macro defined below. */
+   Instead, use the explicit construct !!x instead of relying on
+   implicit conversions or casts. */
 typedef enum bool { false, true } bool;
 # endif
-/* This amounts to a C++-style conversion cast to bool.  This works
-   because C ignores an argument-taking macro when used without an
-   argument and because bool was redefined as a typedef if it previously
-   was defined as a macro (see above.) */
-# define bool(x) ((bool)!!(x))
 #endif
 
 /* Create a NULL pointer of the same type as the address of
@@ -321,11 +308,11 @@ static inline void *mempset(void *dst, int c, size_t n)
  * less likely to be taken.
  */
 #ifdef HAVE___BUILTIN_EXPECT
-# define likely(x)	__builtin_expect(bool(x), true)
-# define unlikely(x)	__builtin_expect(bool(x), false)
+# define likely(x)	__builtin_expect(!!(x), true)
+# define unlikely(x)	__builtin_expect(!!(x), false)
 #else
-# define likely(x)	bool(x)
-# define unlikely(x)	bool(x)
+# define likely(x)	(!!(x))
+# define unlikely(x)	(!!(x))
 #endif
 
 #ifdef HAVE___BUILTIN_PREFETCH
