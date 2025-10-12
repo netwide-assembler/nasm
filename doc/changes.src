@@ -11,6 +11,30 @@ evolving code simpler.
 It is the production version of NASM since 2025.
 
 
+\S{cl-3.02} Version 3.02
+
+\b Fix build problems on C23 compilers using a pre-C23 version of
+   \c{<stdbool.h>} which defines \c{bool} as a macro in violation of the
+   C23 specification.
+
+\b The immediate form of the \c{JMPE} instruction (opcode \c{0F B8})
+   has been changed to an absolute address, as in
+   the Itanium Architecture Software Developer's Manual, version 2.3,
+   Volume 4, page 4:249. Hopefully this won't break whatever virtual
+   environments use \c{JMPE}, but it is the closest thing there is to
+   an official specification for this opcode.
+
+\> Being an \e{absolute} address, treat it equivalent to a \c{FAR}
+   jump and do not default to 64 bits in 64-bit mode.
+
+\> That \c{JMPE} has apparently been wrong all these years is probably
+   as good of a hint as any how much it has been actually used, but it
+   \e{does} have the possibility of breaking virtual environments. In
+   that case, please file a bug report to \W{https://bugs.nasm.us/}
+   with details about the virtual environment, and we will figure out
+   a suitable solution.
+
+
 \S{cl-3.01} Version 3.01
 
 \b A new \c{obj2} version of the \c{obj} output format, intended for
