@@ -2,6 +2,9 @@
 *.aout
 *.aoutb
 *.bin
+*.bin16
+*.bin32
+*.bin64
 *.coff
 *.com
 *.dbg
