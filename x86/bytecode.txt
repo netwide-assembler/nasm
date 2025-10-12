@@ -1,3 +1,5 @@
+-*- text -*-
+
 Bytecode specification
 ----------------------
 
@@ -9,31 +11,72 @@ hexadecimal.
 
 The mnemonics are the ones used in x86/insns.dat, where applicable.
 
+The byte code is not stable. Byte codes can be moved around and
+recycled at any time. x86/insnsb.c contains a generated table of
+byte code use frequencies as a comment near the end that can be
+used to identify candidates for recycling, if necessary.
+
+Several byte codes are equivalent to sequences of other byte codes; if
+those have low usage counts they can be good candidates for
+recycling.
+
+Operands are numbered starting with 0.
+
+Operand numbers encoded in byte codes only encode two bits of the
+operand number, with the opcodes \5, \6 and \7 used as a prefixes to
+escape to operands 4+. This saves a lot of byte coding space, as these
+operands are extremely rare.
+
+When byte codes are changed, the following files MUST be updated
+accordingly:
+
+	this file
+	x86/insns.pl	- many locations
+	disasm/disasm.c	- matches()
+	asm/assemble.c	- calcsize(), gencode(), find_match(), jmp_match()
+
 In x86/insns.dat, the encoding slot of each operand is encoded as:
 
 	-	implicit operand (no encoding)
 	x+y	multiple encoding slots for one operand
-	r	"r" position in modr/m, or base register with "+r"
+	r	"r" position in modr/m[1], or base register with "+r"[2]
 	m	"m" position in modr/m
-	n	immediate encoded in the "m" position in modr/m
-	b	register encoded in the "m" position in modr/m
+	n	immediate encoded in the "m" position in modr/m[3]
+	b	register encoded in the "m" position in modr/m[4]
 	x	register encoded in the "x" position in modr/m + sib (MIB)
 	v	"v" register position in vex/evex
-	s	"s" registe rposition in /is4
-	w	immediate encoded in the "v" position in vex/evex
-	i	first immediate or mem_offs
-	j	second immediate or mem_offs
+	s	"s" register position in /is4
+	w	immediate encoded in the "v" position in vex/evex[3]
+	i	first immediate or mem_offs[5]
+	j	second immediate or mem_offs[6]
 
-Codes            Mnemonic        Explanation
+[1] currently used even for register operands, even though "b" is an
+    alias in that case.
+[2] this is technically incorrect and should be "b", but that is the
+    way it is currently encoded.
+[3] separate letter code for the benefit of the insns.pl sanity checker.
+[4] currently used mainly when "x" is also used.
+[5] when the modr/m displacement is used as an immediate, it is byte
+    coded as an *address-sized* immediate and uses "i". A seg:offs
+    pair uses "i" for the offset (thus "ji").
+[6] when the modr/m displacement is used as an immediate and
+    another ("true") immediate is present, the "true" immediate uses "j".
+    A seg:offs pair uses "j" for the segment (thus "ji").
 
-\0                                       terminates the code. (Unless it's a literal of course.)
-\1..\4                                   that many literal bytes follow in the code stream
-\5                                       add 4 to the primary operand number (b, low octdigit)
-\6                                       add 4 to the secondary operand number (a, middle octdigit)
-\7                                       add 4 to both the primary and the secondary operand number
-\10..\13                                 a literal byte follows in the code stream, to be added
+
+XX below indicates a hexadecimal byte; NN a decimal number.
+
+Codes            Mnemonic		 Definition
+
+\0               (auto-generated)        end of code sequence (but 0 can be part of a multi-byte
+                                         sequence, so byte codes are NOT null-terminated strings.)
+\1..\4           XX XX...                that many literal bytes follow in the code stream
+\5               (auto-generated)        add 4 to the primary operand number (b, low octdigit)
+\6               (auto-generated)        add 4 to the secondary operand number (a, middle octdigit)
+\7               (auto-generated)        add 4 to both the primary and the secondary operand number
+\10..\13         +r                      a literal byte follows in the code stream, to be added
                                          to the register value of operand 0..3
-\14..\17                                 the position of index register operand in MIB (BND insns)
+\14..\17         (auto-generated)        the position of index register operand in MIB (BND insns)
 \20..\23         ib                      a byte immediate operand, from operand 0..3
 \24..\27         ib,u                    a zero-extended byte immediate operand, from operand 0..3
 \30..\33         iw                      a word immediate operand, from operand 0..3
@@ -54,17 +97,20 @@ Codes            Mnemonic        Explanation
 \171\mab         /mrb (e.g /3r0)         a ModRM, with the reg field taken from operand a, and the m
                                          and b fields set to the specified values.
 \172\ab          /is4                    the register number from operand a in bits 7..4, with
-                                         the 4-bit immediate from operand b in bits 3..0.
-\173\xab                                 the register number from operand a in bits 7..4, with
+                                         the 4-bit immediate from operand b in bits 2..0.
+					 For EVEX- or REX2-encodable instructions, the operand is encoded in
+                                         bits [3:7..4] and the immediate is restricted to 3 bits
+					 unless the register operand is given the rn_l16 operand flag.
+\173\xab         /is4=NN                 the register number from operand a in bits 7..4, with
                                          the value b in bits 3..0.
-\174..\177                               the register number from operand 0..3 in bits 7..4, and
+\174..\177       /is4                    the register number from operand 0..3 in bits 7..4, and
                                          an arbitrary value in bits 3..0 (assembled as zero.)
 \2ab             /b                      a ModRM, calculated on EA in operand a, with the reg
                                          field equal to digit b.
-\240..\243                               this instruction uses EVEX rather than REX or VEX/XOP, with the
+\240..\243       evex.*                  this instruction uses EVEX rather than REX or VEX/XOP, with the
                                          V register number taken from operand "b" (0..3) (which may
 					 be an immediate, as is used for DFV.)
-\250                                     this instruction uses EVEX rather than REX or VEX/XOP, with the
+\250             evex.*                  this instruction uses EVEX rather than REX or VEX/XOP, with the
                                          V register number set to 0 (subject to the XOR as defined
 					 below)
 
@@ -88,10 +134,10 @@ EVEX prefixes are followed by the sequence:
                    (compressed displacement encoding)
 
 \254..\257      id,s                     a signed 32-bit operand to be extended to 64 bits.
-\260..\263                               this instruction uses VEX/XOP rather than REX, with the
+\260..\263      vex.*                    this instruction uses VEX/XOP rather than REX, with the
                                          V register taken from operand "b" 0..3.
 \264..\267	id,u			 an unsigned 32-bit operand to be extended to 64 bits.
-\270                                     this instruction uses VEX/XOP rather than REX, with the
+\270            vex.*                    this instruction uses VEX/XOP rather than REX, with the
                                          V register set to 0.
 VEX/XOP prefixes are followed by the sequence:
 \tmm\wlp	tmm format:	tt 0mm mmm
@@ -112,16 +158,20 @@ VEX/XOP prefixes are followed by the sequence:
 
 t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 
-\271             hlex                       instruction takes XRELEASE (F3) with or without lock
+		 vex+.*			     instruction is encodable either with VEX or EVEX,
+                                             depending on the operands. Generates multiple
+                                             instruction patterns with different operand encoding
+                                             and byte codes.
+\271             hlex                        instruction takes XRELEASE (F3) with or without lock
 \272             hlenl                       instruction takes XACQUIRE/XRELEASE with or without lock
 \273             hle                         instruction takes XACQUIRE/XRELEASE with lock only
 \274..\277       ib,s                        a byte immediate operand, from operand 0..3, sign-extended
                                              to the operand size (if o16/o32/o64 present) or the bit size
 \300..\303	 ibn			     a valid 0F NOP opcode.
-\304..\307
-	\0\xNN	 ib^NN			     intermediate byte XOR 0xNN
-	\1\xNN	 ib,s^NN		     signed intermediate byte XOR 0xNN
-	\2\xNN	 ib,u^NN		     unsigned intermediate byte XOR 0xNN
+\304..\307				     a byte immediate from operand 0..3, XOR a specific constant.
+	\0\xXX	 ib^XX			     intermediate byte XOR 0xXX
+	\1\xXX	 ib,s^XX		     signed intermediate byte XOR 0xXX
+	\2\xXX	 ib,u^XX		     unsigned intermediate byte XOR 0xXX
 \310             a16                         indicates fixed 16-bit address size, i.e. optional 0x67.
 \311             a32                         indicates fixed 32-bit address size, i.e. optional 0x67.
 \312             adf, asz                    (disassembler only) invalid with non-default address size.
@@ -185,3 +235,7 @@ t = 0 for VEX (C4/C5), t = 1 for XOP (8F).
 \376             vsibz|vm32z|vm64z           this instruction takes an ZMM VSIB memory EA
 
 * No 66 prefix is emitted if combined with VEX/EVEX, np, 66, osp or !osp.
+
+## Local variables:
+## fill-column: 99
+## End
