@@ -109,87 +109,49 @@ static enum reg_enum whichreg(opflags_t regflags, int regval, uint32_t rex)
 }
 
 /*
- * An implicit register operand
+ * An implicit register operand.
  */
+
+/* Deal with OpenWatcom 64-bit switch() braindamage */
+#ifdef __WATCOMC__
+# define imp(op,rn) if (regflags == op) return rn
+# define impdef(rn) return rn
+#else
+# define imp(op,rn) case op: return rn
+# define impdef(rn) default: return rn
+#endif
+
 static enum reg_enum implicit_reg(opflags_t regflags)
 {
 #ifndef __WATCOMC__
-    switch (regflags) {
-    case REG_AL:  return R_AL;
-    case REG_AX:  return R_AX;
-    case REG_EAX: return R_EAX;
-    case REG_RAX: return R_RAX;
-    case REG_DL:  return R_DL;
-    case REG_DX:  return R_DX;
-    case REG_EDX: return R_EDX;
-    case REG_RDX: return R_RDX;
-    case REG_CL:  return R_CL;
-    case REG_CX:  return R_CX;
-    case REG_ECX: return R_ECX;
-    case REG_RCX: return R_RCX;
-    case FPU0:    return R_ST0;
-    case XMM0:    return R_XMM0;
-    case YMM0:    return R_YMM0;
-    case ZMM0:    return R_ZMM0;
-    case REG_ES:  return R_ES;
-    case REG_CS:  return R_CS;
-    case REG_SS:  return R_SS;
-    case REG_DS:  return R_DS;
-    case REG_FS:  return R_FS;
-    case REG_GS:  return R_GS;
-    case OPMASK0: return R_K0;
-    default:      return 0;
-    }
-#else
-    /* Open Watcom does not support 64-bit constants at *case*. */
-    if (regflags == REG_AL)
-        return R_AL;
-    if (regflags == REG_AX)
-        return R_AX;
-    if (regflags == REG_EAX)
-        return R_EAX;
-    if (regflags == REG_RAX)
-        return R_RAX;
-    if (regflags == REG_DL)
-        return R_DL;
-    if (regflags == REG_DX)
-        return R_DX;
-    if (regflags == REG_EDX)
-        return R_EDX;
-    if (regflags == REG_RDX)
-        return R_RDX;
-    if (regflags == REG_CL)
-        return R_CL;
-    if (regflags == REG_CX)
-        return R_CX;
-    if (regflags == REG_ECX)
-        return R_ECX;
-    if (regflags == REG_RCX)
-        return R_RCX;
-    if (regflags == FPU0)
-        return R_ST0;
-    if (regflags == XMM0)
-        return R_XMM0;
-    if (regflags == YMM0)
-        return R_YMM0;
-    if (regflags == ZMM0)
-        return R_ZMM0;
-    if (regflags == REG_ES)
-        return R_ES;
-    if (regflags == REG_CS)
-        return R_CS;
-    if (regflags == REG_SS)
-        return R_SS;
-    if (regflags == REG_DS)
-        return R_DS;
-    if (regflags == REG_FS)
-        return R_FS;
-    if (regflags == REG_GS)
-        return R_GS;
-    if (regflags == OPMASK0)
-        return R_K0;
-    return 0;
+    switch (regflags)
 #endif
+    {
+        imp(REG_AL,R_AL);
+        imp(REG_AX,R_AX);
+        imp(REG_EAX,R_EAX);
+        imp(REG_RAX,R_RAX);
+        imp(REG_DL,R_DL);
+        imp(REG_DX,R_DX);
+        imp(REG_EDX,R_EDX);
+        imp(REG_RDX,R_RDX);
+        imp(REG_CL,R_CL);
+        imp(REG_CX,R_CX);
+        imp(REG_ECX,R_ECX);
+        imp(REG_RCX,R_RCX);
+        imp(FPU0,R_ST0);
+        imp(XMM0,R_XMM0);
+        imp(YMM0,R_YMM0);
+        imp(ZMM0,R_ZMM0);
+        imp(REG_ES,R_ES);
+        imp(REG_CS,R_CS);
+        imp(REG_SS,R_SS);
+        imp(REG_DS,R_DS);
+        imp(REG_FS,R_FS);
+        imp(REG_GS,R_GS);
+        imp(OPMASK0,R_K0);
+        impdef(0);
+    }
 }
 
 /*
