@@ -1874,23 +1874,25 @@ static const char no_file_name[] = "nasm"; /* What to print if no file name */
  */
 static_fatal_func die_hard(errflags true_type, errflags severity)
 {
-    fflush(NULL);
+    if (true_type < ERR_PANIC || !abort_on_panic) {
+        fflush(NULL);
 
-    if (true_type == ERR_PANIC && abort_on_panic)
-        abort();
+        if (ofile) {
+            fclose(ofile);
+            if (!keep_all)
+                remove(outname);
+            ofile = NULL;
+        }
 
-    if (ofile) {
-        fclose(ofile);
-        if (!keep_all)
-            remove(outname);
-        ofile = NULL;
+        if (severity & ERR_USAGE)
+            usage();
+
+        /* Terminate immediately */
+        exit(true_type - ERR_FATAL + 1);
     }
 
-    if (severity & ERR_USAGE)
-        usage();
-
-    /* Terminate immediately */
-    exit(true_type - ERR_FATAL + 1);
+    while (1)
+        abort();
 }
 
 /*
@@ -1950,6 +1952,7 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args
     fputc('\n', error_file);
 
     die_hard(true_type, severity);
+    unreachable();
 }
 
 /**

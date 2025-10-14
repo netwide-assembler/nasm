@@ -13,17 +13,21 @@ unsigned int debug_nasm;        /* Debugging messages? */
 unsigned int opt_verbose_info;  /* Informational messages? */
 
 /* Common function body */
-#define nasm_do_error(_sev,_flags)				\
+#define nasm_do_error(_sev,_flags)                              \
     do {                                                        \
+        const errflags nde_severity = (_sev);                   \
+        const errflags nde_flags = nde_severity | (_flags);     \
         va_list ap;                                             \
         va_start(ap, fmt);                                      \
-        if ((_sev) >= ERR_CRITICAL)                             \
-            nasm_verror_critical((_sev)|(_flags), fmt, ap);     \
-        else							\
-            nasm_verror((_sev)|(_flags), fmt, ap);              \
+        if (nde_severity >= ERR_CRITICAL) {                     \
+            nasm_verror_critical(nde_flags, fmt, ap);           \
+            unreachable();                                      \
+        } else {						\
+            nasm_verror(nde_flags, fmt, ap);                    \
+            if (nde_severity >= ERR_FATAL)                      \
+                unreachable();                                  \
+        }                                                       \
         va_end(ap);                                             \
-        if ((_sev) >= ERR_FATAL)                                \
-            abort();                                            \
     } while (0)
 
 /*

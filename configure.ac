@@ -224,6 +224,7 @@ AC_CHECK_FUNCS(sysconf)
 AC_CHECK_FUNCS([access _access faccessat])
 
 PA_HAVE_FUNC(__builtin_expect,(1,1))
+PA_HAVE_FUNC(__builtin_unreachable,())
 
 PA_FUNC_SNPRINTF
 PA_FUNC_VSNPRINTF

@@ -469,4 +469,12 @@ static inline unsigned int watcom_switch_hack(uint64_t x)
 # define default case BOGUS_CASE: default
 #endif
 
+#ifndef unreachable              /* C23 defines as a macro in <stddef.h> */
+# ifdef HAVE___BUILTIN_UNREACHABLE
+#  define unreachable() __builtin_unreachable()
+# else
+#  define unreachable() do { abort(); } while(1)
+# endif
+#endif
+
 #endif	/* NASM_COMPILER_H */
