@@ -1579,6 +1579,21 @@ static void forward_refs(insn *instruction)
     }
 }
 
+static void print_pass_report(bool failure)
+{
+    /* This test is here to reduce the likelihood of a recursive failure */
+    if (unlikely(opt_verbose_info >= 1)) {
+        enum pass_type t = pass_type();
+
+        if (t >= PASS_FIRST) {
+            unsigned int end_passes = t > PASS_OPT ? t - PASS_OPT : 0;
+            nasm_info(1, "assembly %s after 1+%"PRId64"+%u passes",
+                      failure ? "failed" : "completed",
+                      pass_count()-1-end_passes, end_passes);
+        }
+    }
+}
+
 static void assemble_file(const char *fname, struct strlist *depend_list)
 {
     char *line;
@@ -1758,10 +1773,8 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         reset_warnings();
     }
 
-    if (pass_final()) {
-        /*  -On and -Ov switches */
-        nasm_info(1, "assembly required 1+%"PRId64"+2 passes\n", pass_count()-3);
-    }
+    if (terminate_after_phase || pass_final())
+        print_pass_report(terminate_after_phase);
 
     lfmt->cleanup();
     strlist_free(&warn_list);
@@ -1871,10 +1884,24 @@ static const char no_file_name[] = "nasm"; /* What to print if no file name */
 
 /*
  * For fatal/critical/panic errors, kill this process.
+ *
+ * For FATAL errors doing cleanups, tidying up the list process,
+ * and so in is acceptable.
+ *
+ * For CRITICAL errors, minimize dependencies on memory allocation
+ * and/or having a system valid state.
+ *
+ * For PANIC, if abort_on_panic is set, abort without any other action.
  */
 static_fatal_func die_hard(errflags true_type, errflags severity)
 {
     if (true_type < ERR_PANIC || !abort_on_panic) {
+        if (true_type < ERR_CRITICAL) {
+            /* FATAL shutdown, general cleanup actions are valid */
+            print_pass_report(true);
+            lfmt->cleanup();
+        }
+
         fflush(NULL);
 
         if (ofile) {
@@ -1887,10 +1914,15 @@ static_fatal_func die_hard(errflags true_type, errflags severity)
         if (severity & ERR_USAGE)
             usage();
 
-        /* Terminate immediately */
+        /* Terminate immediately (exit closes any still open files) */
         exit(true_type - ERR_FATAL + 1);
     }
 
+    /*
+     * abort() shouldn't ever return, but be paranoid about this,
+     * plus it helps some compilers clue in to the fact that this
+     * function can never, ever return.
+     */
     while (1)
         abort();
 }
@@ -1932,8 +1964,8 @@ fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args
     errflags true_type = severity & ERR_MASK;
     static bool been_here = false;
 
-    if (unlikely(been_here))
-        abort();                /* Recursive error... just die */
+    while (unlikely(been_here))
+        abort();                /* Recursive critical error... just die */
 
     been_here = true;
 
