@@ -1,1 +1,4 @@
+./travis/test/br3392392.asm:11: error: broadcast not permitted on this operand
+./travis/test/br3392392.asm:12: error: broadcast not permitted on this operand
+./travis/test/br3392392.asm:13: error: mask not permitted on this operand
 ./travis/test/br3392392.asm:14: error: broadcast not allowed with register operand

@@ -4,7 +4,8 @@
 ./travis/test/br3392531.asm:5: error: instruction expected, found `&'
 ./travis/test/br3392531.asm:7: error: `%macro' expects a parameter count
 ./travis/test/br3392531.asm:11: warning: unterminated string (missing ``') [-w+pp-open-string]
-./travis/test/br3392531.asm:14: error: instruction expected, found `ï¿½ %'
+./travis/test/br3392531.asm:14: error: instruction expected, found `Š %'
+./travis/test/br3392531.asm:16: error: invalid combination of opcode and operands
 ./travis/test/br3392531.asm:17: error: `%$LRG': context stack is empty
 ./travis/test/br3392531.asm:17: error: `%$LRG': context stack is empty
 ./travis/test/br3392531.asm:17: error: label, instruction or prefix expected at start of line, found `%'

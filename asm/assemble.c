@@ -634,6 +634,82 @@ static void out_reladdr(struct out_data *data, const struct operand *opx,
     out(data);
 }
 
+/* Issue an error message on match failure */
+static void no_match_error(enum match_result m, const insn *ins)
+{
+    /* No match */
+    switch (m) {
+    case MERR_INVALOP:
+        nasm_holderr("invalid combination of opcode and operands");
+        break;
+    case MERR_OPSIZEINVAL:
+        nasm_holderr("invalid operand sizes for instruction");
+        break;
+    case MERR_OPSIZEMISSING:
+        nasm_holderr("operation size not specified");
+        break;
+    case MERR_OPSIZEMISMATCH:
+        nasm_holderr("mismatch in operand sizes");
+        break;
+    case MERR_BRNOTHERE:
+        nasm_holderr("broadcast not permitted on this operand");
+        break;
+    case MERR_BRNUMMISMATCH:
+        nasm_holderr("mismatch in the number of broadcasting elements");
+        break;
+    case MERR_MASKNOTHERE:
+        nasm_holderr("mask not permitted on this operand");
+        break;
+    case MERR_DECONOTHERE:
+        nasm_holderr("unsupported mode decorator for instruction");
+        break;
+    case MERR_BADCPU:
+        nasm_holderr("no instruction for this cpu level");
+        break;
+    case MERR_BADMODE:
+        nasm_holderr("instruction not supported in %d-bit mode", ins->bits);
+        break;
+    case MERR_ENCMISMATCH:
+        if (!ins->prefixes[PPS_REX]) {
+            nasm_holderr("instruction not encodable without explicit prefix");
+        } else {
+            nasm_holderr("instruction not encodable with %s prefix",
+                          prefix_name(ins->prefixes[PPS_REX]));
+        }
+        break;
+    case MERR_BADBND:
+    case MERR_BADREPNE:
+        nasm_holderr("%s prefix is not allowed",
+                      prefix_name(ins->prefixes[PPS_REP]));
+        break;
+    case MERR_REGSETSIZE:
+        nasm_holderr("invalid register set size");
+        break;
+    case MERR_REGSET:
+        nasm_holderr("register set not valid for operand");
+        break;
+    case MERR_WRONGIMM:
+        nasm_holderr("operand/operator invalid for this instruction");
+        break;
+    case MERR_BADZU:
+        nasm_holderr("{zu} not applicable to this instruction");
+        break;
+    case MERR_MEMZU:
+        nasm_holderr("{zu} invalid for non-register destination");
+        break;
+    case MERR_BADNF:
+        nasm_holderr("{nf} not available for this instruction");
+        break;
+    case MERR_REQNF:
+        nasm_holderr("{nf} required for this instruction");
+        break;
+    default:
+        if (m < MOK_GOOD)
+            nasm_holderr("invalid use of instruction");
+        break;
+    }
+}
+
 /* This is a real hack. The jcc8 or jmp8 byte code must come first. */
 static enum match_result jmp_match(const struct itemplate *temp, const insn *ins)
 {
@@ -816,7 +892,6 @@ static int64_t assemble(insn *instruction)
     const struct itemplate *temp;
     enum match_result m;
     const int64_t start = instruction->loc.offset;
-    const int bits = instruction->bits;
 
     if (instruction->opcode == I_none)
         return 0;
@@ -999,75 +1074,7 @@ static int64_t assemble(insn *instruction)
 
             nasm_assert(data.loc.offset - start == data.inslen);
         } else {
-            /* No match */
-            switch (m) {
-            case MERR_INVALOP:
-            default:
-                nasm_nonfatal("invalid combination of opcode and operands");
-                break;
-            case MERR_OPSIZEINVAL:
-                nasm_nonfatal("invalid operand sizes for instruction");
-                break;
-            case MERR_OPSIZEMISSING:
-                nasm_nonfatal("operation size not specified");
-                break;
-            case MERR_OPSIZEMISMATCH:
-                nasm_nonfatal("mismatch in operand sizes");
-                break;
-            case MERR_BRNOTHERE:
-                nasm_nonfatal("broadcast not permitted on this operand");
-                break;
-            case MERR_BRNUMMISMATCH:
-                nasm_nonfatal("mismatch in the number of broadcasting elements");
-                break;
-            case MERR_MASKNOTHERE:
-                nasm_nonfatal("mask not permitted on this operand");
-                break;
-            case MERR_DECONOTHERE:
-                nasm_nonfatal("unsupported mode decorator for instruction");
-                break;
-            case MERR_BADCPU:
-                nasm_nonfatal("no instruction for this cpu level");
-                break;
-            case MERR_BADMODE:
-                nasm_nonfatal("instruction not supported in %d-bit mode", bits);
-                break;
-            case MERR_ENCMISMATCH:
-                if (!instruction->prefixes[PPS_REX]) {
-                    nasm_nonfatal("instruction not encodable without explicit prefix");
-                } else {
-                    nasm_nonfatal("instruction not encodable with %s prefix",
-                                  prefix_name(instruction->prefixes[PPS_REX]));
-                }
-                break;
-            case MERR_BADBND:
-            case MERR_BADREPNE:
-                nasm_nonfatal("%s prefix is not allowed",
-                              prefix_name(instruction->prefixes[PPS_REP]));
-                break;
-            case MERR_REGSETSIZE:
-                nasm_nonfatal("invalid register set size");
-                break;
-            case MERR_REGSET:
-                nasm_nonfatal("register set not valid for operand");
-                break;
-            case MERR_WRONGIMM:
-                nasm_nonfatal("operand/operator invalid for this instruction");
-                break;
-            case MERR_BADZU:
-                nasm_nonfatal("{zu} not applicable to this instruction");
-                break;
-            case MERR_MEMZU:
-                nasm_nonfatal("{zu} invalid for non-register destination");
-                break;
-            case MERR_BADNF:
-                nasm_nonfatal("{nf} not available for this instruction");
-                break;
-            case MERR_REQNF:
-                nasm_nonfatal("{nf} required for this instruction");
-                break;
-            }
-
+            no_match_error(m, instruction);
             instruction->times = 1; /* Avoid repeated error messages */
         }
     }
@@ -1285,8 +1292,10 @@ static int64_t insn_size(insn *instruction)
         insn_early_setup(instruction);
 
         m = find_match(&temp, instruction);
-        if (m < MOK_GOOD)
+        if (m < MOK_GOOD) {
+            no_match_error(m, instruction);
             return -1;              /* No match */
+        }
 
         isize = calcsize(instruction, temp);
         debug_set_type(instruction);
