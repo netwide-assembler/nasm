@@ -161,7 +161,7 @@ ZLIBOBJ = &
 
 LIBOBJ    = $(LIBOBJ_W) $(LIBOBJ_NW) $(ZLIB)
 ALLOBJ_W  = $(NASM) $(LIBOBJ_W)
-ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
+ALLOBJ    = $(PROGOBJ) $(LIBOBJ) $(LIBOBJ_DIS)
 SUBDIRS  = stdlib nasmlib include config output asm disasm x86 &
 	   common zlib macros misc
 XSUBDIRS = nsis win test doc editors
