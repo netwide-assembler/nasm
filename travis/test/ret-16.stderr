@@ -1,1 +1,6 @@
-./travis/test/ret.asm:18: error: expression syntax error
+./travis/test/ret.asm:16: error: instruction not supported in 16-bit mode
+./travis/test/ret.asm:17: error: instruction not supported in 16-bit mode
+./travis/test/ret.asm:18: error: instruction not supported in 16-bit mode
+./travis/test/ret.asm:56: error: instruction not supported in 16-bit mode
+./travis/test/ret.asm:57: error: instruction not supported in 16-bit mode
+./travis/test/ret.asm:58: error: instruction not supported in 16-bit mode

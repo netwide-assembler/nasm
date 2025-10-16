@@ -1,1 +1,2 @@
-./travis/test/ret.asm:53: error: expression syntax error
+./travis/test/ret.asm:51: error: instruction not supported in 64-bit mode
+./travis/test/ret.asm:52: error: instruction not supported in 64-bit mode

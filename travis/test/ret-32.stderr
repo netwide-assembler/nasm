@@ -1,1 +1,6 @@
-./travis/test/ret.asm:37: error: expression syntax error
+./travis/test/ret.asm:35: error: instruction not supported in 32-bit mode
+./travis/test/ret.asm:36: error: instruction not supported in 32-bit mode
+./travis/test/ret.asm:37: error: instruction not supported in 32-bit mode
+./travis/test/ret.asm:56: error: instruction not supported in 32-bit mode
+./travis/test/ret.asm:57: error: instruction not supported in 32-bit mode
+./travis/test/ret.asm:58: error: instruction not supported in 32-bit mode

@@ -1,7 +1,4 @@
 ;; All the flavors of RET
-%ifndef ERROR
-	%define ERROR 0
-%endif
 
 %ifdef TEST_BITS_16
 	bits 16
@@ -15,7 +12,7 @@
 	retd
 	retnd
 	retfd
-%if ERROR
+%ifdef ERROR
 	retq
 	retnq
 	retfq
@@ -34,7 +31,7 @@
 	retd
 	retnd
 	retfd
-%if ERROR
+%ifdef ERROR
 	retq
 	retnq
 	retfq
@@ -50,7 +47,7 @@
 	retw
 	retnw
 	retfw
-%if ERROR
+%ifdef ERROR
 	retd
 	retnd
 %endif
