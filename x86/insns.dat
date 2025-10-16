@@ -333,12 +333,12 @@ $wd   CALL	imm16:imm#|far			[ji:	o# 9a i# iw]				8086,OSIZE,AR1,NOLONG,ND
 ; This is an intentional "programmer friendliness" quirk.
 $wdq  CALL	mem#|far			[m:	o# ff /3]				8086,OSIZE,NWSIZE,(w:NOLONG)
 
-$zwdq RET%	void				[	nw o#  c3]				8086,BND,(d:NOLONG)
-$zwdq RET%	imm16				[i:	nw o#  c2 iw]				8086,BND,(d:NOLONG)
+$zwdq RET%	void				[	nw od# c3]				8086,BND,(d:NOLONG)
+$zwdq RET%	imm16				[i:	nw od# c2 iw]				8086,BND,(d:NOLONG)
 $zwdq RETF%	void				[	   od# cb]				8086
 $zwdq RETF%	imm16				[i:	   od# ca iw]				8086
-$zwdq RETN%	void				[	nw o#  c3]				8086,BND,ND,(d:NOLONG)
-$zwdq RETN%	imm16				[i:	nw o#  c2 iw]				8086,BND,ND,(d:NOLONG)
+$zwdq RETN%	void				[	nw od# c3]				8086,BND,ND,(d:NOLONG)
+$zwdq RETN%	imm16				[i:	nw od# c2 iw]				8086,BND,ND,(d:NOLONG)
 
 ;# Interrupts, system calls, and returns
 INT		imm8				[i:	cd ib,u]				8086
