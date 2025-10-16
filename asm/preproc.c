@@ -6464,7 +6464,7 @@ static SMacro *expand_one_smacro(Token ***tpp)
          */
         while (1) {
             if (!m) {
-                nasm_warn(WARN_PP_MACRO_PARAMS_SINGLE|ERR_HOLD,
+                nasm_warn(WARN_PP_MACRO_PARAMS_SINGLE,
                     "single-line macro `%s' exists, "
                     "but not taking %d parameter%s",
                     mname, nparam, (nparam == 1) ? "" : "s");

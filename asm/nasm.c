@@ -1870,13 +1870,12 @@ static errflags pure_func true_error_type(errflags severity)
 
     type = severity & ERR_MASK;
 
-    /* Promote warning to error? */
     if (type == ERR_WARNING) {
+        /* Promote warning to error? */
         uint8_t state = warning_state[WARN_IDX(severity)];
         if ((state & warn_is_err) == warn_is_err)
             type = ERR_NONFATAL;
     }
-
     return type;
 }
 
@@ -2125,6 +2124,7 @@ static void nasm_issue_error(struct nasm_errtext *et)
     const errflags severity  = et->severity;
     const errflags true_type = et->true_type;
     const struct src_location where = et->where;
+    bool buffer = true_type < ERR_NONFATAL || (severity & ERR_HOLD);
 
     if (severity & ERR_NO_SEVERITY)
         pfx = "";
@@ -2167,10 +2167,13 @@ static void nasm_issue_error(struct nasm_errtext *et)
             here = where.filename ? " here" : " in an unknown location";
         }
 
-        if (warn_list && true_type < ERR_NONFATAL) {
+        if (!warn_list)
+            buffer = false;
+
+        if (buffer) {
             /*
-             * Buffer up warnings until we either get an error
-             * or we are on the code-generation pass.
+             * Buffer up warnings and held errors until we either get
+             * an error or we are on the code-generation pass.
              */
             strlist_printf(warn_list, "%s%s%s%s%s%s%s",
                            file, linestr, errfmt->beforemsg,
@@ -2180,7 +2183,7 @@ static void nasm_issue_error(struct nasm_errtext *et)
              * Actually output an error.  If we have buffered
              * warnings, and this is a non-warning, output them now.
              */
-            if (true_type >= ERR_NONFATAL && warn_list) {
+            if (warn_list) {
                 strlist_write(warn_list, "\n", error_file);
                 strlist_free(&warn_list);
             }
@@ -2216,9 +2219,9 @@ static void nasm_issue_error(struct nasm_errtext *et)
     if (skip_this_pass(severity))
         goto done;
 
-    if (true_type >= ERR_FATAL)
+    if (true_type >= ERR_FATAL) {
         die_hard(true_type, severity);
-    else if (true_type >= ERR_NONFATAL) {
+    } else if (true_type >= ERR_NONFATAL && !buffer) {
         terminate_after_phase = true;
         errflags_never |= ERR_UNDEAD;
     }

@@ -85,6 +85,14 @@ void nasm_debug_(unsigned int level, const char *fmt, ...)
         nasm_do_error(ERR_DEBUG, LEVEL(level));
 }
 
+/*
+ * Convenience function for nasm_nonfatal(ERR_HOLD, ...)
+ */
+void nasm_holderr(const char *fmt, ...)
+{
+    nasm_do_error(ERR_NONFATAL, ERR_NONFATAL|ERR_HOLD);
+}
+
 fatal_func nasm_panic_from_macro(const char *func, const char *file, int line)
 {
     if (!func)

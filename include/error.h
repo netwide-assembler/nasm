@@ -28,6 +28,7 @@ void printf_func(2, 3) nasm_notef(errflags flags, const char *fmt, ...);
 void printf_func(2, 3) nasm_warn_(errflags flags, const char *fmt, ...);
 void printf_func(1, 2) nasm_nonfatal(const char *fmt, ...);
 void printf_func(2, 3) nasm_nonfatalf(errflags flags, const char *fmt, ...);
+void printf_func(1, 2) nasm_holderr(const char *fmt, ...);
 fatal_func printf_func(1, 2) nasm_fatal(const char *fmt, ...);
 fatal_func printf_func(2, 3) nasm_fatalf(errflags flags, const char *fmt, ...);
 fatal_func printf_func(1, 2) nasm_critical(const char *fmt, ...);
