@@ -563,11 +563,14 @@ static int matches(const uint8_t *data, const struct prefix_info *prefix,
             opx->segment |= SEG_SIGNED;
             break;
 
-        case4(020):
+        case4(0300):
+            if (!is_hint_nop(*data))
+                return 0;
             opx->offset = *data++;
             opx->disp_size = 8;
             break;
 
+        case4(020):
         case4(024):
             opx->offset = *data++;
             opx->disp_size = 8;
