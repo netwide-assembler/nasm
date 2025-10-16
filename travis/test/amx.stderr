@@ -1,0 +1,512 @@
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:59: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:60: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:61: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:63: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:64: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:65: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:67: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:68: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:69: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:71: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:72: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:73: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:75: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:77: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:78: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:79: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:81: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:82: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:83: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:85: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:86: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:87: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:89: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:90: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:91: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:93: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:94: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:95: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:96: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:97: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:98: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:100: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:59: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:60: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:61: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:63: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:64: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:65: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:67: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:68: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:69: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:71: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:72: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:73: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:75: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:77: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:78: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:79: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:81: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:82: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:83: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:85: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:86: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:87: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:89: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:90: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:91: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:93: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:94: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:95: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:96: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:97: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:98: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:100: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:59: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:60: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:61: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:63: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:64: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:65: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:67: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:68: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:69: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:71: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:72: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:73: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:75: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:77: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:78: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:79: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:81: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:82: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:83: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:85: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:86: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:87: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:89: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:90: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:91: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:93: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:94: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:95: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:96: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:97: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:98: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:100: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:59: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:60: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:61: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:63: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:64: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:65: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:67: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:68: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:69: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:71: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:72: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:73: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:75: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:77: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:78: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:79: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:81: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:82: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:83: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:85: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:86: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:87: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:89: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:90: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:91: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:93: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:94: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:95: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:96: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:97: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:98: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:100: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:59: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:60: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:61: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:63: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:64: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:65: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:67: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:68: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:69: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:71: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:72: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:73: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:75: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:77: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:78: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:79: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:81: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:82: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:83: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:85: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:86: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:87: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:89: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:90: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:91: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:93: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:94: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:95: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:96: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:97: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:98: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:100: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:59: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:60: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:61: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:63: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:64: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:65: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:67: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:68: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:69: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:71: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:72: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:73: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:75: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:77: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:78: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:79: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:81: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:82: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:83: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:85: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:86: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:87: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:89: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:90: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:91: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:93: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:94: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:95: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:96: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:97: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:98: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:100: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:59: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:60: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:61: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:63: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:64: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:65: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:67: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:68: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:69: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:71: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:72: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:73: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:75: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:77: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:78: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:79: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:81: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:82: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:83: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:85: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:86: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:87: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:89: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:90: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:91: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:93: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:94: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:95: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:96: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:97: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:98: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:100: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:59: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:60: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:61: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:63: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:64: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:65: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:67: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:68: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:69: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:71: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:72: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:73: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:75: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:77: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:78: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:79: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:81: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:82: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:83: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:85: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:86: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:87: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:89: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:90: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:91: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:93: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:94: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:95: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:96: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:97: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:98: ... from macro `amx' defined here
+./travis/test/amx.asm:113: warning: instruction never implemented and invalid on the target CPU [-w+obsolete-removed]
+./travis/test/amx.asm:100: ... from macro `amx' defined here
