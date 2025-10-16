@@ -4,7 +4,7 @@
 		"id": "align13",
 		"format": "bin",
 		"source": "align13.asm",
-		"option": "-Ox -o align13.bin",
+		"option": "-Ox",
 		"target": [
 			{ "stderr": "align13.stderr" }
 		],
@@ -13,13 +13,13 @@
 	{
 		"description": "Test of non-power-of-2 alignment (-O1)",
 		"ref": "align13",
-		"option": "-O1 -o align13.bin",
+		"option": "-O1",
 		"update": "false"
 	},
 	{
 		"description": "Test of non-power-of-2 alignment (-O0)",
 		"ref": "align13",
-		"option": "-O0 -o align13.bin",
+		"option": "-O0",
 		"update": "false"
 	}
 ]

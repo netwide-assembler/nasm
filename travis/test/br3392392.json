@@ -12,7 +12,7 @@
 	{
 		"description": "Test br3392392 (error)",
 		"ref": "br3392392",
-		"option": "-DERROR -o br3392392.bin",
+		"option": "-DERROR",
 		"target": [
 			{ "stderr": "br3392392.stderr" }
 		],

@@ -12,7 +12,7 @@
 	{
 		"description": "Test br2222615 (err)",
 		"ref": "br2222615",
-		"option": "-DERROR -o br2222615.bin",
+		"option": "-DERROR",
 		"target": [
 			{ "stderr": "br2222615.stderr" }
 		],

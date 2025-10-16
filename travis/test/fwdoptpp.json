@@ -21,7 +21,7 @@
 	{
 		"description": "Test error directive",
 		"ref": "fwdoptpp",
-		"option": "-O0 -DERROR -o fwdoptpp.null.bin",
+		"option": "-O0 -DERROR",
 		"target": [
 			{ "stderr": "fwdoptpp.error.stderr" }
 		],
@@ -30,7 +30,7 @@
 	{
 		"description": "Test fatal directive",
 		"ref": "fwdoptpp",
-		"option": "-O0 -DFATAL -o fwdoptpp.null.bin",
+		"option": "-O0 -DFATAL",
 		"target": [
 			{ "stderr": "fwdoptpp.fatal.stderr" }
 		],

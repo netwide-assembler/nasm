@@ -6,7 +6,7 @@
 		"source": "nasmformat.asm",
 		"option": "-E -Ox",
 		"target": [
-			{ "stdout": "nasmformat-bin.stdout" }
+			{ "output": "nasmformat-bin.out" }
 		]
 	},
 	{
@@ -14,7 +14,7 @@
 		"ref": "nasmformat",
 		"format": "elf32",
 		"target": [
-			{ "stdout": "nasmformat-elf32.stdout" }
+			{ "output": "nasmformat-elf32.out" }
 		]
 	},
 	{
@@ -22,7 +22,7 @@
 		"ref": "nasmformat",
 		"format": "elf64",
 		"target": [
-			{ "stdout": "nasmformat-elf64.stdout" }
+			{ "output": "nasmformat-elf64.out" }
 		]
 	},
 	{
@@ -30,7 +30,7 @@
 		"ref": "nasmformat",
 		"format": "macho32",
 		"target": [
-			{ "stdout": "nasmformat-macho32.stdout" }
+			{ "output": "nasmformat-macho32.out" }
 		]
 	},
 	{
@@ -38,7 +38,7 @@
 		"ref": "nasmformat",
 		"format": "macho64",
 		"target": [
-			{ "stdout": "nasmformat-macho64.stdout" }
+			{ "output": "nasmformat-macho64.out" }
 		]
 	},
 	{
@@ -46,7 +46,7 @@
 		"ref": "nasmformat",
 		"format": "aout",
 		"target": [
-			{ "stdout": "nasmformat-aout.stdout" }
+			{ "output": "nasmformat-aout.out" }
 		]
 	},
 	{
@@ -54,7 +54,7 @@
 		"ref": "nasmformat",
 		"format": "win32",
 		"target": [
-			{ "stdout": "nasmformat-win32.stdout" }
+			{ "output": "nasmformat-win32.out" }
 		]
 	},
 	{
@@ -62,7 +62,7 @@
 		"ref": "nasmformat",
 		"format": "win64",
 		"target": [
-			{ "stdout": "nasmformat-win64.stdout" }
+			{ "output": "nasmformat-win64.out" }
 		]
 	},
 	{
@@ -70,7 +70,7 @@
 		"ref": "nasmformat",
 		"format": "obj",
 		"target": [
-			{ "stdout": "nasmformat-obj.stdout" }
+			{ "output": "nasmformat-obj.out" }
 		]
 	},
 	{
@@ -78,7 +78,7 @@
 		"ref": "nasmformat",
 		"format": "ieee",
 		"target": [
-			{ "stdout": "nasmformat-ieee.stdout" }
+			{ "output": "nasmformat-ieee.out" }
 		]
 	}
 ]

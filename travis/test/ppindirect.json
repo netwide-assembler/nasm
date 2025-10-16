@@ -6,7 +6,7 @@
 		"source": "ppindirect.asm",
 		"option": "-E -Ox",
 		"target": [
-			{ "stdout": "ppindirect.stdout" }
+			{ "output": "ppindirect.out" }
 		]
 	}
 ]

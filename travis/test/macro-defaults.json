@@ -4,7 +4,7 @@
 		"id": "macro-defaults",
 		"format": "bin",
 		"source": "macro-defaults.asm",
-		"option": "-w+macro-defaults -o macro-defaults.bin",
+		"option": "-w+macro-defaults",
 		"target": [
 			{ "stderr": "macro-defaults-warn.stderr" }
 		]
@@ -12,7 +12,7 @@
 	{
 		"description": "Test warnings on macro default parameters (nowarn)",
 		"ref": "macro-defaults",
-		"option": "-w-macro-defaults -o macro-defaults.bin",
+		"option": "-w-macro-defaults",
 		"target": [
 			{ "stderr": "macro-defaults-nowarn.stderr" }
 		]

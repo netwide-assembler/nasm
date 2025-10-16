@@ -12,7 +12,7 @@
 	{
 		"description": "Test v4 instructions (error)",
 		"ref": "v4",
-		"option": "-DERROR -o v4.bin",
+		"option": "-DERROR",
 		"target": [
 			{ "stderr": "v4.stderr" }
 		],

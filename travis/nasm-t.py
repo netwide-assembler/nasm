@@ -147,6 +147,7 @@ def expand_templates(desc_array):
             for k, v in own.items():
                 desc_array[i][k] = v
             del desc_array[i]['id']
+        desc_array[i]['_seq'] = '.%d' % (i+1)
     return desc_array
 
 def prepare_desc(desc, basedir, name, path):
@@ -157,7 +158,10 @@ def prepare_desc(desc, basedir, name, path):
     desc['_base-dir'] = basedir
     desc['_json-file'] = name
     desc['_json-path'] = path
-    desc['_test-name'] = basedir + os.sep + name[:-5]
+    if not '_seq' in desc:
+        desc['_seq'] = ''
+    desc['_test-name'] = basedir + os.sep + name[:-5] + desc['_seq']
+
     #
     # If no target provided never update
     if 'target' not in desc:
@@ -338,19 +342,16 @@ def prepare_run_opts(desc):
         opts += ['-f', desc['format']]
     if 'option' in desc:
         opts += desc['option'].split(" ")
+    outfile = desc['_test-name'] + '.out'
     for t in desc['target']:
         if 'output' in t:
-            if 'option' in t:
-                opts += t['option'].split(" ")
-            else:
-                opts += ['-o']
             outfile = desc['_base-dir'] + os.sep + t['output']
-            opts += [outfile, '-L+', '-l', outfile + '.lst']
-        if 'stdout' in t or 'stderr' in t:
-            if 'option' in t:
-                opts += t['option'].split(" ")
+        if 'option' in t:
+            opts += t['option'].split(" ")
+    opts += ['-o', outfile, '-L+', '-l', outfile + '.lst']
     if 'source' in desc:
         opts += [desc['_base-dir'] + os.sep + desc['source']]
+
     return opts
 
 def exec_nasm(desc):
@@ -436,7 +437,7 @@ def test_run(desc):
             if f:
                 out_data = f_pat.sub(f_sub, out_data, 0)
             if cmp_std(match, match_data, 'stdout', out_data) == False:
-                return test_fail(desc['_test-name'], "Stdout mismatch")
+                return test_fail(desc['_test-name'], "stdout mismatch")
             else:
                 stdout = ""
         elif 'stderr' in t:
@@ -449,17 +450,17 @@ def test_run(desc):
             if f:
                 out_data = f_pat.sub(f_sub, out_data, 0)
             if cmp_std(match, match_data, 'stderr', out_data) == False:
-                return test_fail(desc['_test-name'], "Stderr mismatch")
+                return test_fail(desc['_test-name'], "stderr mismatch")
             else:
                 stderr = ""
 
     if stdout != "":
         show_std("stdout", stdout)
-        return test_fail(desc['_test-name'], "Stdout is not empty")
+        return test_fail(desc['_test-name'], "stdout is not empty")
 
     if stderr != "":
         show_std("stderr", stderr)
-        return test_fail(desc['_test-name'], "Stderr is not empty")
+        return test_fail(desc['_test-name'], "stderr is not empty")
 
     return test_pass(desc['_test-name'])
 

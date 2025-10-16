@@ -14,6 +14,7 @@
 *.ith
 *.lib
 *.lst
+*.log
 *.map
 *.mo32
 *.mo64
@@ -122,3 +123,4 @@ TAGS
 /autoconf/config.*
 /autoconf/install-sh
 /autoconf/clean.sh
+/travis/test/_version.stdout

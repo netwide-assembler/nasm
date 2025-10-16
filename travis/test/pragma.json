@@ -6,7 +6,7 @@
 		"source": "pragma.asm",
 		"option": "-Ox -E",
 		"target": [
-			{ "stdout": "pragma.stdout" }
+			{ "output": "pragma.out" }
 		]
 	}
 ]

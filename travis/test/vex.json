@@ -12,7 +12,7 @@
 	{
 		"description": "Test early REX/VEX prefix errors",
 		"ref": "vex",
-		"option": "-Ox -DERROR=1 -o vex1.bin.err",
+		"option": "-Ox -DERROR=1",
 		"target": [
 			{ "stderr": "vex1.stderr" }
 		],
@@ -21,7 +21,7 @@
 	{
 		"description": "Test late REX/VEX prefix errors",
 		"ref": "vex",
-		"option": "-Ox -DERROR=2 -o vex2.bin.err",
+		"option": "-Ox -DERROR=2",
 		"target": [
 			{ "stderr": "vex2.stderr" }
 		],

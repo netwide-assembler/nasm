@@ -4,7 +4,7 @@
 		"id": "mout",
 		"format": "bin",
 		"source": "mout.asm",
-		"option": "-o mout.bin -o mout.bin",
+		"option": "-o mout.bin",
 		"target": [
 			{ "stderr": "mout.stderr" }
 		],

@@ -22,7 +22,7 @@
 	{
 		"description": "Test of explicitly and implicitly sized operands (-Ox)",
 		"ref": "expimp",
-		"option": "-Ox -DERROR -o expimp-ox-error.bin",
+		"option": "-Ox -DERROR",
 		"target": [
 			{ "stderr": "expimp-ox-error.stderr" }
 		],
@@ -31,7 +31,7 @@
 	{
 		"description": "Test of explicitly and implicitly sized operands (-O0 error)",
 		"ref": "expimp",
-		"option": "-O0 -DERROR -o expimp-o0-error.bin",
+		"option": "-O0 -DERROR",
 		"target": [
 			{ "stderr": "expimp-o0-error.stderr" }
 		],

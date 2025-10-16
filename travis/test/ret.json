@@ -12,7 +12,7 @@
 	{
 		"description": "Test all the flavors of RET (err 16 bit)",
 		"ref": "ret",
-		"option": "-DERROR -DTEST_BITS_16 -o ret.bin",
+		"option": "-DERROR -DTEST_BITS_16",
 		"target": [
 			{ "stderr": "ret-16.stderr" }
 		],
@@ -21,7 +21,7 @@
 	{
 		"description": "Test all the flavors of RET (err 32 bit)",
 		"ref": "ret",
-		"option": "-DERROR -DTEST_BITS_32 -o ret.bin",
+		"option": "-DERROR -DTEST_BITS_32",
 		"target": [
 			{ "stderr": "ret-32.stderr" }
 		],
@@ -30,7 +30,7 @@
 	{
 		"description": "Test all the flavors of RET (err 64 bit)",
 		"ref": "ret",
-		"option": "-DERROR -DTEST_BITS_64 -o ret.bin",
+		"option": "-DERROR -DTEST_BITS_64",
 		"target": [
 			{ "stderr": "ret-64.stderr" }
 		],
