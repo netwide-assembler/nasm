@@ -1,9 +1,4 @@
 	;; All the flavors of RET
-%ifndef ERROR
- %define ERROR 0
-%endif
-
-
 	bits 16
 
 	ret
@@ -15,10 +10,19 @@
 	retd
 	retnd
 	retfd
-%if ERROR
+	o16 ret
+	o16 retn
+	o16 retf
+	o32 ret
+	o32 retn
+	o32 retf
+%ifdef ERROR
 	retq
 	retnq
 	retfq
+	o64 ret
+	o64 retn
+	o64 retf
 %endif
 
 	bits 32
@@ -32,10 +36,13 @@
 	retd
 	retnd
 	retfd
-%if ERROR
+%ifdef ERROR
 	retq
 	retnq
 	retfq
+	o64 ret
+	o64 retn
+	o64 retf
 %endif
 
 	bits 64
@@ -46,11 +53,20 @@
 	retw
 	retnw
 	retfw
-%if ERROR
+	o16 ret
+	o16 retn
+	o16 retf
+%ifdef ERROR
 	retd
 	retnd
+	o32 ret
+	o32 retn
 %endif
 	retfd
+	o32 retf
 	retq
 	retnq
 	retfq
+	o64 ret
+	o64 retn
+	o64 retf
