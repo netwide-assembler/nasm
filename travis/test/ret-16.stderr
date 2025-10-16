@@ -1,6 +1,6 @@
-./travis/test/ret.asm:16: error: instruction not supported in 16-bit mode
-./travis/test/ret.asm:17: error: instruction not supported in 16-bit mode
-./travis/test/ret.asm:18: error: instruction not supported in 16-bit mode
-./travis/test/ret.asm:56: error: instruction not supported in 16-bit mode
-./travis/test/ret.asm:57: error: instruction not supported in 16-bit mode
-./travis/test/ret.asm:58: error: instruction not supported in 16-bit mode
+./travis/test/ret.asm:26: error: instruction not supported in 16-bit mode
+./travis/test/ret.asm:27: error: instruction not supported in 16-bit mode
+./travis/test/ret.asm:28: error: instruction not supported in 16-bit mode
+./travis/test/ret.asm:29: error: invalid operands in 16-bit mode
+./travis/test/ret.asm:30: error: invalid operands in 16-bit mode
+./travis/test/ret.asm:31: error: invalid operands in 16-bit mode

@@ -36,6 +36,12 @@
 	retd
 	retnd
 	retfd
+	o16 ret
+	o16 retn
+	o16 retf
+	o32 ret
+	o32 retn
+	o32 retf
 %ifdef ERROR
 	retq
 	retnq
