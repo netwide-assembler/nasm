@@ -526,8 +526,9 @@ bool process_directives(char *directive)
                 push_warnings();
             else if (!nasm_stricmp(value, "pop"))
                 pop_warnings();
+        } else {
+            set_warning_status(value);
         }
-        set_warning_status(value);
         break;
 
     case D_CPU:         /* [CPU] */

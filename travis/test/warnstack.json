@@ -4,7 +4,7 @@
 		"id": "warnstack",
 		"format": "bin",
 		"source": "warnstack.asm",
-		"option": "-Ox",
+		"option": "-Ox -w+unknown-warning",
 		"target": [
 			{ "output": "warnstack.bin" },
 			{ "stderr": "warnstack.stderr" }
