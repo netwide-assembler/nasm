@@ -1883,7 +1883,7 @@ static void elf_write(void)
     ehdr.com.e_ident[EI_ABIVERSION] = elf_abiver;
     ehdr.com.e_type                 = htole16(ET_REL);
     ehdr.com.e_machine              = htole16(efmt->e_machine);
-    ehdr.com.e_version              = htole16(EV_CURRENT);
+    ehdr.com.e_version              = htole32(EV_CURRENT);
 
     if (!efmt->elf64) {
         ehdr.ehdr32.e_shoff         = htole32(sizeof ehdr);
