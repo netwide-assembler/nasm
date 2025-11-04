@@ -40,7 +40,7 @@ char *uncompress_stdmac(macros_t *sm)
     zs.zalloc    = nasm_z_alloc;
     zs.zfree     = nasm_z_free;
 
-    if (inflateInit2(&zs, 0) != Z_OK)
+    if (inflateInit2(&zs, 15) != Z_OK)
         panic();
 
     if (inflate(&zs, Z_FINISH) != Z_STREAM_END)
