@@ -18,41 +18,12 @@
 #include "sync.h"
 #include "disasm.h"
 
-static int bpl = 8;             /* bytes per line of hex dump */
+const char *_progname;
 
-static const char *help =
-    "usage: ndisasm [-aihlruvw] [-b bits] [-o origin] [-s sync...]\n"
-    "               [-e bytes] [-k start,bytes] [-p vendor] file\n"
-    "   -a or -i activates auto (intelligent) sync\n"
-    "   -b 16, -b 32 or -b 64 sets the processor mode\n"
-    "   -u same as -b 32\n"
-    "   -l same as -b 64\n"
-    "   -w wide output (avoids continuation lines)\n"
-    "   -h displays this text\n"
-    "   -r or -v displays the version number\n"
-    "   -e skips <bytes> bytes of header\n"
-    "   -k avoids disassembling <bytes> bytes from position <start>\n"
-    "   -p selects the preferred vendor instruction set (intel, amd, cyrix, idt)\n";
+static int bpl = 8;             /* bytes per line of hex dump */
 
 static void output_ins(uint64_t, const uint8_t *, int, const char *);
 static void skip(uint32_t dist, FILE * fp);
-
-void nasm_verror(errflags severity, const char *fmt, va_list val)
-{
-    severity &= ERR_MASK;
-
-    vfprintf(stderr, fmt, val);
-    if (severity >= ERR_FATAL)
-        exit(severity - ERR_FATAL + 1);
-}
-
-fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list val)
-{
-    nasm_verror(severity, fmt, val);
-    abort();
-}
-
-errflags errflags_never = 0;
 
 int main(int argc, char **argv)
 {
@@ -72,6 +43,9 @@ int main(int argc, char **argv)
     int64_t offset;
     FILE *fp;
 
+    _progname = argv[0];
+
+    reset_global_defaults(0);
     nasm_ctype_init();
     iflag_clear_all(&prefer);
 
@@ -90,7 +64,7 @@ int main(int argc, char **argv)
                     p++;
                     break;
                 case 'h':
-                    fputs(help, stderr);
+                    usage();
                     return 0;
                 case 'r':
                 case 'v':
@@ -253,8 +227,8 @@ int main(int argc, char **argv)
     }
 
     if (!filename) {
-        fprintf(stderr, help, pname);
-        return 0;
+        usage();
+        return 1;
     }
 
     if (strcmp(filename, "-")) {
@@ -268,6 +242,8 @@ int main(int argc, char **argv)
         nasm_set_binary_mode(stdin);
         fp = stdin;
     }
+
+    reset_global_defaults(bits);
 
     if (initskip > 0)
         skip(initskip, fp);

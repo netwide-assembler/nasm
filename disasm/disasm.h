@@ -87,4 +87,8 @@ const uint8_t *parse_prefixes(struct prefix_info *pf, const uint8_t *data,
             _op;                                            \
     } while (0)
 
+
+/* Error module */
+void usage(void);
+
 #endif

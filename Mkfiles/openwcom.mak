@@ -72,53 +72,21 @@ NDISASM = disasm\ndisasm.obj
 PROGOBJ = $(NASM) $(NDISASM)
 PROGS   = nasm$(X) ndisasm$(X)
 
-# Files dependent on warnings.dat
-WARNOBJ   = asm\warnings.obj
-WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
+# Objects for the local copy of zlib. The variable ZLIB is set to
+# $(ZLIBOBJ) if the internal version of zlib should be used.
+ZLIBOBJ = &
+	zlib\adler32.obj &
+	zlib\crc32.obj &
+	zlib\infback.obj &
+	zlib\inffast.obj &
+	zlib\inflate.obj &
+	zlib\inftrees.obj &
+	zlib\zutil.obj
 
-OUTPUTOBJ = &
-	output\outform.obj output\outlib.obj &
-	output\nulldbg.obj output\nullout.obj &
-	output\outbin.obj output\outaout.obj output\outcoff.obj &
-	output\outelf.obj &
-	output\outobj.obj output\outas86.obj &
-	output\outdbg.obj output\outieee.obj output\outmacho.obj &
-	output\codeview.obj
-
-# The source files for these objects are scanned for warnings
-LIBOBJ_W = &
-	nasmlib\readnum.obj &
-	&
-	asm\error.obj &
-	asm\floats.obj &
-	asm\directiv.obj &
-	asm\pragma.obj &
-	asm\assemble.obj asm\labels.obj asm\parser.obj &
-	asm\preproc.obj asm\quote.obj &
-	asm\listing.obj asm\eval.obj asm\exprlib.obj asm\exprdump.obj &
-	asm\stdscan.obj &
-	asm\getbool.obj &
-	asm\strfunc.obj &
-	asm\segalloc.obj &
-	asm\rdstrnum.obj &
-	asm\srcfile.obj &
-	&
-	$(OUTPUTOBJ)
-
-# The source files for these objects are NOT scanned for warnings;
-# normally this will include all generated files.
-# It is entirely possible that it may be necessary to move some of these
-# files to LIBOBJ_W, notably $(OUTPUTOBJ)
-LIBOBJ_NW = &
+# Common library objects
+LIBOBJ_COM = &
 	stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj &
 	stdlib\strnlen.obj stdlib\strrchrnul.obj &
-	&
-	asm\directbl.obj &
-	asm\pptok.obj &
-	asm\tokhash.obj &
-	asm\uncompress.obj &
-	&
-	macros\macros.obj &
 	&
 	nasmlib\ver.obj &
 	nasmlib\alloc.obj nasmlib\asprintf.obj &
@@ -133,35 +101,63 @@ LIBOBJ_NW = &
 	nasmlib\raa.obj nasmlib\saa.obj &
 	nasmlib\strlist.obj &
 	nasmlib\perfhash.obj nasmlib\badenum.obj &
+	nasmlib\readnum.obj &
 	&
-	common\common.obj &
+	common\common.obj common\errstubs.obj &
 	&
 	x86\insnsa.obj x86\insnsb.obj x86\insnsn.obj &
 	x86\regs.obj x86\regvals.obj x86\regflags.obj &
 	x86\iflag.obj &
 	&
-	$(WARNOBJ)
+	$(ZLIB)
+
+# Files dependent on warnings.dat
+WARNOBJ   = asm\warnings.obj
+WARNFILES = asm\warnings_c.h include\warnings.h doc\warnings.src
+
+OUTPUTOBJ = &
+	output\outform.obj output\outlib.obj &
+	output\nulldbg.obj output\nullout.obj &
+	output\outbin.obj output\outaout.obj output\outcoff.obj &
+	output\outelf.obj &
+	output\outobj.obj output\outas86.obj &
+	output\outdbg.obj output\outieee.obj output\outmacho.obj &
+	output\codeview.obj
+
+# Assembler-only library objects
+LIBOBJ_ASM = &
+	asm\error.obj &
+	asm\floats.obj &
+	asm\directiv.obj &
+	asm\pragma.obj &
+	asm\assemble.obj asm\labels.obj asm\parser.obj &
+	asm\preproc.obj asm\quote.obj &
+	asm\listing.obj asm\eval.obj asm\exprlib.obj asm\exprdump.obj &
+	asm\stdscan.obj &
+	asm\getbool.obj &
+	asm\strfunc.obj &
+	asm\segalloc.obj &
+	asm\rdstrnum.obj &
+	asm\srcfile.obj &
+	asm\directbl.obj &
+	asm\pptok.obj &
+	asm\tokhash.obj &
+	asm\uncompress.obj &
+	&
+	macros\macros.obj &
+	&
+	$(WARNOBJ) &
+	$(OUTPUTOBJ)
 
 # Objects which are only used for the disassembler
 LIBOBJ_DIS = &
 	disasm\disasm.obj disasm\sync.obj disasm\prefix.obj &
+	disasm\diserror.obj &
 	&
 	x86\insnsd.obj x86\regdis.obj
 
-# Objects for the local copy of zlib. The variable ZLIB is set to
-# $(ZLIBOBJ) if the internal version of zlib should be used.
-ZLIBOBJ = &
-	zlib\adler32.obj &
-	zlib\crc32.obj &
-	zlib\infback.obj &
-	zlib\inffast.obj &
-	zlib\inflate.obj &
-	zlib\inftrees.obj &
-	zlib\zutil.obj
-
-LIBOBJ    = $(LIBOBJ_W) $(LIBOBJ_NW) $(ZLIB)
-ALLOBJ_W  = $(NASM) $(LIBOBJ_W)
-ALLOBJ    = $(PROGOBJ) $(LIBOBJ) $(LIBOBJ_DIS)
+LIBOBJ    = $(LIBOBJ_COM) $(LIBOBJ_ASM) $(LIBOBJ_DIS)
+ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 SUBDIRS  = stdlib nasmlib include config output asm disasm x86 &
 	   common zlib macros misc
 XSUBDIRS = nsis win test doc editors
@@ -198,18 +194,22 @@ all: perlreq nasm$(X) ndisasm$(X) .SYMBOLIC
 #   cd rdoff && $(MAKE) all
 
 NASMLIB = nasm.lib
-NDISLIB = ndisasm.lib
+ASMLIB  = asm.lib
+DISLIB  = dis.lib
 
-nasm$(X): $(NASM) $(NASMLIB)
-    $(LD) $(LDFLAGS) name nasm$(X) libr {$(NASMLIB) $(LIBS)} file {$(NASM)}
+nasm$(X): $(NASM) $(ASMLIB) $(NASMLIB)
+    $(LD) $(LDFLAGS) name nasm$(X) libr {$(ASMLIB) $(NASMLIB) $(LIBS)} file {$(NASM)}
 
-ndisasm$(X): $(NDISASM) $(NDISLIB) $(NASMLIB)
-    $(LD) $(LDFLAGS) name ndisasm$(X) libr {$(NDISLIB) $(NASMLIB) $(LIBS)} file {$(NDISASM)}
+ndisasm$(X): $(NDISASM) $(DISLIB) $(NASMLIB)
+    $(LD) $(LDFLAGS) name ndisasm$(X) libr {$(DISLIB) $(NASMLIB) $(LIBS)} file {$(NDISASM)}
 
-nasm.lib: $(LIBOBJ)
-    wlib -q -b -n $@ $(LIBOBJ)
+nasm.lib: $(LIBOBJ_COM)
+    wlib -q -b -n $@ $(LIBOBJ_COM)
 
-ndisasm.lib: $(LIBOBJ_DIS)
+asm.lib: $(LIBOBJ_ASM)
+    wlib -q -b -n $@ $(LIBOBJ_ASM)
+
+dis.lib: $(LIBOBJ_DIS)
     wlib -q -b -n $@ $(LIBOBJ_DIS)
 
 # These are specific to certain Makefile syntaxes (what are they

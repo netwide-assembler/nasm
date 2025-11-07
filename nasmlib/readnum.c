@@ -8,18 +8,11 @@
 #include "compiler.h"
 
 #include "nctype.h"
-
 #include "nasmlib.h"
+#include "nasm.h"
 #include "error.h"
-#include "nasm.h"               /* For globl.dollarhex */
 
 #define lib_isnumchar(c)    (nasm_isalnum(c) || (c) == '$' || (c) == '_')
-
-void warn_dollar_hex(void)
-{
-    nasm_warn(WARN_NUMBER_DEPRECATED_HEX,
-              "$ prefix for hexadecimal is deprecated");
-}
 
 int64_t readnum(const char *str, bool *error)
 {
