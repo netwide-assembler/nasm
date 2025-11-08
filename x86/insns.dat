@@ -423,8 +423,8 @@ $wdq  INVLPGA	ax#,reg_ecx			[--:	a#  0f 01 df]				X86_64,AMD
       RDPMC	void				[	0f 33]					P6,NOAPX
       RDTSC	void				[	0f 31]					PENT,NOAPX
       RDTSCP	void				[	0f 01 f9]				X86_64
-$wdq  RDRAND	reg#				[m:	o# 0f c7 /6]				RDRAND
-$wdq  RDSEED	reg#				[m:	o# 0f c7 /7]				RDSEED
+$wdq  RDRAND	reg#				[m:	nof3 o# 0f c7 /6]			RDRAND
+$wdq  RDSEED	reg#				[m:	nof3 o# 0f c7 /7]			RDSEED
       RDPID	reg64				[m:	f3 0f c7 /7]				RDPID,LONG,OPT,ND
 $dq   RDPID	reg#				[m:	f3 !osp o# 0f c7 /7]			RDPID
 
@@ -1316,7 +1316,7 @@ MOVSLDUP	xmmreg,xmmrm128			[rm:	f3 0f 12 /r]				PRESCOTT,SSE3
 ;# VMX/SVM Instructions
 CLGI		void				[	0f 01 dd]				VMX,AMD
 STGI		void				[	0f 01 dc]				VMX,AMD
-VMCALL		void				[	0f 01 c1]				VMX
+VMCALL		void				[	norep 0f 01 c1]				VMX
 VMCLEAR		mem				[m:	66 0f c7 /6]				VMX
 VMFUNC		void				[	0f 01 d4]				VMX
 VMLAUNCH	void				[	0f 01 c2]				VMX
@@ -2936,14 +2936,14 @@ BNDMOV      bndreg,bndreg          [rm:         66 0f 1a /r ]  MPX
 BNDMOV      bndreg,mem             [rm:         66 0f 1a /r ]  MPX
 BNDMOV      bndreg,bndreg          [mr:         66 0f 1b /r ]  MPX
 BNDMOV      mem,bndreg             [mr:         66 0f 1b /r ]  MPX
-BNDLDX      bndreg,mem             [rm:            0f 1a /r ]  MPX,MIB
-BNDLDX      bndreg,mem,reg32       [rmx:           0f 1a /r ]  MPX,MIB,NOLONG
-BNDLDX      bndreg,mem,reg64       [rmx:           0f 1a /r ]  MPX,MIB,LONG
-BNDSTX      mem,bndreg             [mr:            0f 1b /r ]  MPX,MIB
-BNDSTX      mem,reg32,bndreg       [mxr:           0f 1b /r ]  MPX,MIB,NOLONG
-BNDSTX      mem,reg64,bndreg       [mxr:           0f 1b /r ]  MPX,MIB,LONG
-BNDSTX      mem,bndreg,reg32       [mrx:           0f 1b /r ]  MPX,MIB,NOLONG
-BNDSTX      mem,bndreg,reg64       [mrx:           0f 1b /r ]  MPX,MIB,LONG
+BNDLDX      bndreg,mem             [rm:         np 0f 1a /r ]  MPX,MIB
+BNDLDX      bndreg,mem,reg32       [rmx:        np 0f 1a /r ]  MPX,MIB,NOLONG
+BNDLDX      bndreg,mem,reg64       [rmx:        np 0f 1a /r ]  MPX,MIB,LONG
+BNDSTX      mem,bndreg             [mr:         np 0f 1b /r ]  MPX,MIB
+BNDSTX      mem,reg32,bndreg       [mxr:        np 0f 1b /r ]  MPX,MIB,NOLONG
+BNDSTX      mem,reg64,bndreg       [mxr:        np 0f 1b /r ]  MPX,MIB,LONG
+BNDSTX      mem,bndreg,reg32       [mrx:        np 0f 1b /r ]  MPX,MIB,NOLONG
+BNDSTX      mem,bndreg,reg64       [mrx:        np 0f 1b /r ]  MPX,MIB,LONG
 
 ;# Intel SHA acceleration instructions
 SHA1MSG1        xmmreg,xmmrm128                     [rm: 0f38 c9 /r ] SHA
@@ -5175,8 +5175,8 @@ VXORPS          zmmreg|mask|z,zmmreg*,zmmrm512|b32  [rvm:fv: evex.nds.512.0f.w0 
 ; MJC PUBLIC END
 
 ;# Intel memory protection keys for userspace (PKU aka PKEYs)
-RDPKRU		void				[	0f 01 ee]				PKU,LONG
-WRPKRU		void				[	0f 01 ef]				PKU,LONG
+RDPKRU		void				[	nof3 0f 01 ee]				PKU,LONG
+WRPKRU		void				[	nof3 0f 01 ef]				PKU,LONG
 
 ;# Read Processor ID
 
@@ -5335,9 +5335,9 @@ WRUSSD		mem32,reg32			[mr:	o32 66 0f38 f5 /r]			CET
 WRUSSD		mem32,reg32			[mr:	evex.nf0.nd0.l0.66.m4.w0 65 /r]		APX,CET
 WRUSSQ		mem64,reg64			[mr:	o64 66 0f38 f5 /r]			CET,LONG
 WRUSSQ		mem64,reg64			[mr:	evex.nf0.nd0.l0.66.m4.w1 65 /r]		APX,CET,LONG
-WRSSD		mem32,reg32			[mr:	o32 0f38 f6 /r]				CET
+WRSSD		mem32,reg32			[mr:	np o32 0f38 f6 /r]			CET
 WRSSD		mem32,reg32			[mr:	evex.nf0.nd0.l0.m4.w0 66 /r]		APX,CET
-WRSSQ		mem64,reg64			[mr:	o64 0f38 f6 /r]				CET,LONG
+WRSSQ		mem64,reg64			[mr:	np o64 0f38 f6 /r]			CET,LONG
 WRSSQ		mem64,reg64			[mr:	evex.nf0.nd0.l0.m4.w1 66 /r]		APX,CET,LONG
 
 ;# Instructions from ISE doc 319433-040, June 2020
