@@ -1,0 +1,16 @@
+[
+	{
+		"description": "Test debug-prefix-map on ELF files",
+		"id": "elfdebugprefix",
+		"format": "elf",
+		"source": "elfdebugprefix.asm",
+		"option": "-O0 --debug-prefix-map ./travis/test/elf=ELF",
+		"target": [
+			{
+				"output": "elfdebugprefix.o",
+				"validate": "readelf --wide --symbols {output} | grep 'FILE.*ELFdebugprefix.asm'"
+			}
+		]
+	}
+]
+

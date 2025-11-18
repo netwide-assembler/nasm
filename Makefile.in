@@ -149,7 +149,7 @@ ZLIBOBJ = \
 # Common library objects
 LIBOBJ_COM = \
 	stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
-	stdlib/strnlen.$(O) stdlib/strrchrnul.$(O) \
+	stdlib/strnlen.$(O) stdlib/strrchrnul.$(O) stdlib/strlcat.$(O) \
 	\
 	nasmlib/ver.$(O) \
 	nasmlib/alloc.$(O) nasmlib/asprintf.$(O) \

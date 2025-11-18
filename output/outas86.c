@@ -71,6 +71,7 @@ static struct SAA *strs;
 static size_t strslen;
 
 static int as86_reloc_size;
+static char filename[FILENAME_MAX];
 
 static void as86_write(void);
 static void as86_write_section(struct Section *, int);
@@ -101,7 +102,7 @@ static void as86_init(void)
     strslen = 0;
 
     /* as86 module name = input file minus extension */
-    as86_add_string(filename_set_extension(inname, ""));
+    as86_add_string(filename_debug_remap(filename, filename_set_extension(inname, ""), sizeof(filename)));
 }
 
 static void as86_cleanup(void)
