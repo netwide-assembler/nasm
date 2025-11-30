@@ -1569,6 +1569,7 @@ struct globalopt {
     bool dollarhex;             /* $-prefixed hexadecimal numbers? */
 };
 extern struct globalopt globl;
+void reset_global_defaults(int bits);
 
 extern const char *inname;	/* primary input filename */
 extern const char *outname;     /* output filename */

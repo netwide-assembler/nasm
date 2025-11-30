@@ -76,6 +76,7 @@ static int64_t assemble(insn *instruction);
 static int64_t insn_size(insn *instruction);
 
 static int64_t calcsize(insn *, const struct itemplate *);
+static int64_t calcsize_speculative(const insn *, const struct itemplate *);
 static int emit_prefixes(struct out_data *data, const insn *ins);
 static void gencode(struct out_data *data, insn *ins);
 static enum match_result find_match(const struct itemplate **tempp,
@@ -711,7 +712,8 @@ static void no_match_error(enum match_result m, const insn *ins)
 }
 
 /* This is a real hack. The jcc8 or jmp8 byte code must come first. */
-static enum match_result jmp_match(const struct itemplate *temp, const insn *ins)
+static enum match_result
+jmp_match(const insn *ins, const struct itemplate *temp)
 {
     const struct operand * const op0 = get_operand_const(ins, 0);
     int64_t delta;
@@ -752,34 +754,18 @@ static enum match_result jmp_match(const struct itemplate *temp, const insn *ins
      * instruction size.
      *
      * Note that the instruction size is to be *subtracted* from the
-     * initial (beginning-of-instruction) delta value.
+     * initial (beginning-of-instruction) delta value, or *added* to the
+     * limiting value compared to.
      */
     delta = op0->offset - ins->loc.offset;
-    if (delta - 2 < -128 || delta - 15 > 127) {
+    if (delta < -128 + 2 || delta > 127 + 15) {
         /* This cannot be a byte-sized jump */
         return MERR_INVALOP;
-    } else if (delta - 15 >= -128 && delta - 2 <= 127) {
+    } else if (delta >= -128 + 15 && delta <= 127 + 2) {
         /* It is guaranteed to be a valid byte-sized jump, no need to test */
     } else {
-        /*
-         * Need to do this the hard way.
-         *
-         * However, calcsize() can modify the instruction structure,
-         * but after a mismatch we have to revert to the original
-         * state, so make a copy here and hold error messages.
-         */
-        int64_t isize;
-        insn tmpins;
-        errhold hold;
-
-        tmpins = *ins;
-        tmpins.dummy = true;
-        hold = nasm_error_hold_push();
-
-        isize = calcsize(&tmpins, temp);
-
-        if (nasm_error_hold_pop(hold, false) >= ERR_NONFATAL)
-            return MERR_INVALOP;
+        /* Borderline: need to do this the hard way... */
+        int64_t isize = calcsize_speculative(ins, temp);
         if (isize < 0)
             return MERR_INVALOP;
         delta -= isize;
@@ -1380,11 +1366,46 @@ static int ea_evex_flags(insn *ins, const struct operand *opy)
     return 0;
 }
 
+/*
+ * Call calcsize() without modifying the source instruction, and without
+ * generating errors. This is used to answer the question "how long would
+ * this instruction be if it were to be generated at this point in the
+ * code." This is currently used by jmp_match() but may be used by other
+ * things in the future.
+ *
+ * Returns < 0 if generating the instruction would throw an error.
+ */
+static int64_t
+calcsize_speculative(const insn *ins, const struct itemplate * const temp)
+{
+    int64_t isize;
+    insn tmpins;
+    errhold hold;
+
+    tmpins = *ins;
+    tmpins.dummy = true;
+    hold = nasm_error_hold_push();
+
+    isize = calcsize(&tmpins, temp);
+
+    if (nasm_error_hold_pop(hold, false) >= ERR_NONFATAL)
+        return -1;
+
+    return isize;
+}
+
+
 /* Common construct */
 #define case3(x) case (x): case (x)+1: case (x)+2
 #define case4(x) case3(x): case (x)+3
 
-static int64_t calcsize(insn *ins, const struct itemplate * const temp)
+/*
+ * calcsize() is assumed to be processing a *confirmed* instruction for
+ * the purpose of code generation: it can modify *ins, and will throw
+ * errors for invalid code. Use calcsize_speculative() if it is necessary
+ * to calculate the size of a *potential* instruction.
+ */
+static int64_t calcsize(insn *ins, const struct itemplate *temp)
 {
     const int bits = ins->bits;
     const uint8_t *codes = temp->code;
@@ -3350,7 +3371,7 @@ static enum match_result matches(const struct itemplate * const itemp,
      * Check if special handling needed for relaxable jump
      */
     if (itemp_has(itemp, IF_JMP_RELAX))
-        return jmp_match(itemp, ins);
+        return jmp_match(ins, itemp);
 
     return MOK_GOOD;
 }

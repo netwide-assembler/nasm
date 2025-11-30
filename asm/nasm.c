@@ -27,6 +27,7 @@
 #include "iflag.h"
 #include "quote.h"
 #include "ver.h"
+#include "error.h"
 
 /*
  * This is the maximum number of optimization passes to do.  If we ever
@@ -45,21 +46,7 @@ const char *_progname;
 static void open_and_process_respfile(char *, int);
 static void parse_cmdline(int, char **, int);
 static void assemble_file(const char *, struct strlist *);
-static bool skip_this_pass(errflags severity);
-static void usage(void);
 static void help(FILE *out, const char *what);
-
-struct error_format {
-    const char *beforeline;     /* Before line number, if present */
-    const char *afterline;      /* After line number, if present */
-    const char *beforemsg;      /* Before actual message */
-};
-
-static const struct error_format errfmt_gnu  = { ":", "",  ": "  };
-static const struct error_format errfmt_msvc = { "(", ")", " : " };
-static const struct error_format *errfmt = &errfmt_gnu;
-static struct strlist *warn_list;
-static struct nasm_errhold *errhold_stack;
 
 static bool using_debug_info;
 static const char *debug_format;
@@ -91,7 +78,6 @@ const struct ofmt *ofmt = &OF_DEFAULT;
 const struct ofmt_alias *ofmt_alias = NULL;
 const struct dfmt *dfmt;
 
-static FILE *error_file;        /* Where to write error messages */
 errflags errflags_never = 0;	/* Error flags to unconditionally suppress */
 
 FILE *ofile = NULL;
@@ -125,8 +111,10 @@ static const char *depend_target = NULL;
 static const char *depend_file = NULL;
 struct strlist *depend_list;
 
-static bool want_usage;
-static bool terminate_after_phase;
+static inline bool terminate_after_phase(void)
+{
+    return erropt.worst >= ERR_NONFATAL;
+}
 
 static char *quote_for_pmake(const char *str);
 static char *quote_for_wmake(const char *str);
@@ -481,7 +469,7 @@ static void timestamp(void)
 int main(int argc, char **argv)
 {
     /* Do these as early as possible */
-    error_file = stderr;
+    erropt.file = stderr;
     _progname = argv[0];
     if (!_progname || !_progname[0])
         _progname = "nasm";
@@ -495,10 +483,9 @@ int main(int argc, char **argv)
 
     include_path = strlist_alloc(true);
 
+    reset_global_defaults(0);
     _pass_type = PASS_INIT;
     _passn = 0;
-
-    want_usage = terminate_after_phase = false;
 
     nasm_ctype_init();
     src_init();
@@ -516,11 +503,8 @@ int main(int argc, char **argv)
     operating_mode = OP_NORMAL;
 
     parse_cmdline(argc, argv, 1);
-    if (terminate_after_phase) {
-        if (want_usage)
-            usage();
+    if (terminate_after_phase())
         return 1;
-    }
 
     /* At this point we have ofmt and the name of the desired debug format */
     if (!using_debug_info) {
@@ -545,14 +529,11 @@ int main(int argc, char **argv)
     preproc_init(include_path);
 
     parse_cmdline(argc, argv, 2);
-    if (terminate_after_phase) {
-        if (want_usage)
-            usage();
+    if (terminate_after_phase())
         return 1;
-    }
 
     /* Save away the default state of warnings */
-    init_warnings();
+    error_init();
 
     /* Dependency filename if we are also doing other things */
     if (!depend_file && (operating_mode & ~OP_DEPEND)) {
@@ -580,8 +561,12 @@ int main(int argc, char **argv)
     if (!depend_target)
         depend_target = quote_for_make(outname);
 
+    reset_global_defaults(cmd_sb);
+
     if (!(operating_mode & (OP_PREPROCESS|OP_NORMAL))) {
             char *line;
+
+            error_pass_start(true);
 
             if (depend_missing_ok)
                 pp_include_path(NULL);    /* "assume generated" */
@@ -591,29 +576,28 @@ int main(int argc, char **argv)
             while ((line = pp_getline()))
                 nasm_free(line);
             pp_cleanup_pass();
-            reset_warnings();
+            error_pass_end();
     } else if (operating_mode & OP_PREPROCESS) {
             char *line;
             const char *file_name = NULL;
             char *quoted_file_name = nasm_quote_filename(file_name);
             int32_t linnum  = 0;
             int32_t lineinc = 0;
-            FILE *out;
 
             if (outname) {
                 ofile = nasm_open_write(outname, NF_TEXT);
                 if (!ofile)
-                    nasm_fatal("unable to open output file `%s'", outname);
-                out = ofile;
+                    nasm_fatalf(ERR_PERROR,
+                                "unable to open output file `%s'", outname);
             } else {
-                ofile = NULL;
-                out = stdout;
+                ofile = stdout;
             }
 
             location.known = false;
 
             _pass_type = PASS_PREPROC;
             pp_reset(inname, PP_PREPROC, depend_list);
+            error_pass_start(true);
 
             while ((line = pp_getline())) {
                 /*
@@ -629,7 +613,7 @@ int main(int argc, char **argv)
                 } else if (lineinc) {
                     if (linnum + lineinc == where.lineno) {
                         /* Add one blank line to account for increment */
-                        fputc('\n', out);
+                        fputc('\n', ofile);
                         linnum += lineinc;
                     } else if (linnum - lineinc == where.lineno) {
                         /*
@@ -649,59 +633,48 @@ int main(int argc, char **argv)
                     continue;
 
                 if (linnum != where.lineno) {
-                    fprintf(out, "%%line %"PRId32"%+"PRId32" %s\n",
+                    fprintf(ofile, "%%line %"PRId32"%+"PRId32" %s\n",
                             where.lineno, lineinc, quoted_file_name);
                 }
                 linnum = where.lineno + lineinc;
 
-                fputs(line, out);
-                fputc('\n', out);
+                fputs(line, ofile);
+                fputc('\n', ofile);
             }
 
             nasm_free(quoted_file_name);
 
             pp_cleanup_pass();
-            reset_warnings();
-            if (ofile)
-                fclose(ofile);
-            if (ofile && terminate_after_phase && !keep_all)
-                remove(outname);
-            ofile = NULL;
+            error_pass_end();
+            close_output(terminate_after_phase());
     }
 
     if (operating_mode & OP_NORMAL) {
         ofile = nasm_open_write(outname, (ofmt->flags & OFMT_TEXT) ? NF_TEXT : NF_BINARY);
         if (!ofile)
-            nasm_fatal("unable to open output file `%s'", outname);
+            nasm_fatalf(ERR_PERROR, "unable to open output file `%s'", outname);
 
         ofmt->init();
         dfmt->init();
 
         assemble_file(inname, depend_list);
 
-        if (!terminate_after_phase) {
+        if (!terminate_after_phase()) {
             ofmt->cleanup();
             cleanup_labels();
             fflush(ofile);
             if (ferror(ofile))
-                nasm_nonfatal("write error on output file `%s'", outname);
+                nasm_nonfatalf(ERR_PERROR,
+                               "write error on output file `%s'", outname);
         }
 
-        if (ofile) {
-            fclose(ofile);
-            if (terminate_after_phase && !keep_all)
-                remove(outname);
-            ofile = NULL;
-        }
+        close_output(terminate_after_phase());
     }
 
     pp_cleanup_session();
 
-    if (depend_list && !terminate_after_phase)
+    if (depend_list && !terminate_after_phase())
         emit_dependencies(depend_list);
-
-    if (want_usage)
-        usage();
 
     raa_free(offsets);
     saa_free(forwrefs);
@@ -710,7 +683,7 @@ int main(int argc, char **argv)
     src_free();
     strlist_free(&include_path);
 
-    return terminate_after_phase;
+    return terminate_after_phase();
 }
 
 /*
@@ -984,7 +957,7 @@ static bool process_arg(char *p, char *q, int pass)
             break;
         case 's':
             if (pass == 1)
-                error_file = stdout;
+                erropt.file = stdout;
             break;
 
         case 'o':       /* output file */
@@ -1030,7 +1003,7 @@ static bool process_arg(char *p, char *q, int pass)
                         case 'v':
                         case '+':
                         param++;
-                        opt_verbose_info++;
+                        erropt.verbose_info++;
                         break;
 
                         case 'x':
@@ -1039,7 +1012,8 @@ static bool process_arg(char *p, char *q, int pass)
                             break;
 
                         default:
-                            nasm_fatal("unknown optimization option -O%c\n",
+                            nasm_fatalf(ERR_USAGE,
+                                       "unknown optimization option -O%c\n",
                                        *param);
                             break;
                         }
@@ -1098,17 +1072,11 @@ static bool process_arg(char *p, char *q, int pass)
 
         case 'X':       /* specify error reporting format */
             if (pass == 1) {
-                if (!nasm_stricmp("vc", param) ||
-                    !nasm_stricmp("msvc", param) ||
-                    !nasm_stricmp("ms", param))
-                    errfmt = &errfmt_msvc;
-                else if (!nasm_stricmp("gnu", param) ||
-                         !nasm_stricmp("gcc", param))
-                    errfmt = &errfmt_gnu;
-                else
+                if (set_error_format(param)) {
                     nasm_fatalf(ERR_USAGE,
                                 "unrecognized error reporting format `%s'",
                                 param);
+                }
             }
             break;
 
@@ -1326,13 +1294,13 @@ static bool process_arg(char *p, char *q, int pass)
                     break;
                 case OPT_DEBUG:
                     if (pass == 1)
-                        debug_nasm = param ?
-                            strtoul(param, NULL, 10) : debug_nasm+1;
+                        erropt.debug_nasm = param ?
+                            strtoul(param, NULL, 10) : erropt.debug_nasm+1;
                     break;
                 case OPT_INFO:
                     if (pass == 1)
-                        opt_verbose_info = param ?
-                            strtoul(param, NULL, 10) : opt_verbose_info+1;
+                        erropt.verbose_info = param ?
+                            strtoul(param, NULL, 10) : erropt.verbose_info+1;
                     break;
                 case OPT_REPRODUCIBLE:
                     reproducible = true;
@@ -1476,7 +1444,7 @@ static void open_and_process_respfile(char *respfile, int pass)
         process_respfile(rfile, pass);
         fclose(rfile);
     } else {
-        nasm_nonfatalf(ERR_USAGE, "unable to open response file `%s'", respfile);
+        nasm_fatalf(ERR_PERROR, "unable to open response file `%s'", respfile);
     }
 }
 
@@ -1536,13 +1504,15 @@ static void parse_cmdline(int argc, char **argv, int pass)
              (outname && !strcmp(inname, outname)) ||
              (listname &&  !strcmp(inname, listname))  ||
              (depend_file && !strcmp(inname, depend_file)))
-        nasm_fatalf(ERR_USAGE, "will not overwrite input file");
+        nasm_fatal("will not overwrite input file");
 
     if (errname) {
-        error_file = nasm_open_write(errname, NF_TEXT);
-        if (!error_file) {
-            error_file = stderr;        /* Revert to default! */
-            nasm_fatalf(ERR_USAGE, "cannot open file `%s' for error messages", errname);
+        FILE *error_file = nasm_open_write(errname, NF_TEXT);
+        if (erropt.file) {
+            erropt.file = error_file;
+        } else {
+            nasm_fatalf(ERR_PERROR, "cannot open file `%s' for error messages",
+                       errname);
         }
     }
 }
@@ -1579,10 +1549,10 @@ static void forward_refs(insn *instruction)
     }
 }
 
-static void print_pass_report(bool failure)
+void print_final_report(bool failure)
 {
     /* This test is here to reduce the likelihood of a recursive failure */
-    if (unlikely(opt_verbose_info >= 1)) {
+    if (unlikely(erropt.verbose_info >= 1)) {
         enum pass_type t = pass_type();
 
         if (t >= PASS_FIRST) {
@@ -1624,7 +1594,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         remove(listname);
     }
 
-    while (!terminate_after_phase && !pass_final()) {
+    while (!terminate_after_phase() && !pass_final()) {
         _passn++;
         switch (pass_type()) {
         case PASS_INIT:
@@ -1639,30 +1609,15 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
             break;
         }
 
+        error_pass_start(pass_final());
         global_offset_changed = 0;
 
-	/*
-	 * Create a warning buffer list unless we are in
-         * pass 2 (everything will be emitted immediately in pass 2.)
-	 */
-	if (warn_list) {
-            if (warn_list->nstr || pass_final())
-                strlist_free(&warn_list);
-        }
-
-	if (!pass_final() && !warn_list)
-            warn_list = strlist_alloc(false);
-
         /* Suppress ERR_PASS2 unless we are actually in the final pass */
-        errflags_never = 0;
+        erropt.never = 0;
         if (!pass_final())
-            errflags_never |= ERR_PASS2;
+            erropt.never |= ERR_PASS2;
 
-        globl.bits      = cmd_sb;  /* set 'bits' to command line default */
-        globl.bnd       = false;
-        globl.rel       = 0;
-        globl.reldef    = EAF_FS|EAF_GS; /* For now, don't warn on fs:/gs: absolute */
-        globl.dollarhex = true;
+        reset_global_defaults(cmd_sb);
 
         cpu = cmd_cpu;
         if (listname) {
@@ -1723,9 +1678,6 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
         pp_cleanup_pass();
 
-        /* We better not be having an error hold still... */
-        nasm_assert(!errhold_stack);
-
         if (global_offset_changed) {
             switch (pass_type()) {
             case PASS_OPT:
@@ -1770,473 +1722,27 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
             }
         }
 
-        reset_warnings();
+        error_pass_end();
     }
 
-    if (terminate_after_phase || pass_final())
-        print_pass_report(terminate_after_phase);
+    print_final_report(terminate_after_phase());
 
     lfmt->cleanup();
-    strlist_free(&warn_list);
 }
 
-static bool skip_this_pass(errflags severity)
+void close_output(bool error)
 {
-    errflags type = severity & ERR_MASK;
-
-    /*
-     * See if it's a pass-specific error or warning which should be skipped.
-     * We can never skip fatal errors as by definition they cannot be
-     * resumed from.
-     */
-    if (type >= ERR_FATAL)
-        return false;
-
-    /*
-     * ERR_LISTMSG and ERR_NOTE messages are always skipped; the list
-     * file receives them anyway as this function is not consulted for
-     * sending to the list file.
-     */
-    if (type <= ERR_NOTE)
-        return true;
-
-    /*
-     * This message is not applicable unless it is the last pass we
-     * are going to execute; this can be either the final
-     * code-generation pass or the single pass executed in
-     * preproc-only mode.
-     */
-    return (severity & ERR_PASS2) && !pass_final_or_preproc();
-}
-
-/**
- * check for suppressed message (usually warnings or notes)
- *
- * @param severity the severity of the warning or error
- * @return true if we should abort error/warning printing
- */
-static bool is_suppressed(errflags flags)
-{
-    const errflags severity = flags & ERR_MASK;
-    const errflags level = WARN_IDX(flags);
-
-    if (severity >= ERR_FATAL) {
-        /* Fatal errors or higher can never be suppressed */
-        return false;
-    }
-
-    if (flags & errflags_never)
-        return true;
-
-    switch (severity) {
-    case ERR_WARNING:
-        if (!(warning_state[level] & WARN_ST_ENABLED))
-            return true;
-        break;
-
-    case ERR_INFO:
-        if (!info_level(level))
-            return true;
-        break;
-
-    case ERR_DEBUG:
-        if (!debug_level(level))
-            return true;
-        break;
-
-    default:
-        break;
-    }
-
-    /* Suppressed by the preprocessor? */
-    if (!(flags & ERR_PP_LISTMACRO))
-        return pp_suppress_error(flags);
-
-    return false;
-}
-
-/**
- * Return the true error type (the ERR_MASK part) of the given
- * severity, accounting for warnings that may need to be promoted to
- * error.
- *
- * @param severity the severity of the warning or error
- * @return true if we should error out
- */
-static errflags pure_func true_error_type(errflags severity)
-{
-    const uint8_t warn_is_err = WARN_ST_ENABLED|WARN_ST_ERROR;
-    int type;
-
-    type = severity & ERR_MASK;
-
-    if (type == ERR_WARNING) {
-        /* Promote warning to error? */
-        uint8_t state = warning_state[WARN_IDX(severity)];
-        if ((state & warn_is_err) == warn_is_err)
-            type = ERR_NONFATAL;
-    }
-    return type;
-}
-
-static const char no_file_name[] = "nasm"; /* What to print if no file name */
-
-/*
- * For fatal/critical/panic errors, kill this process.
- *
- * For FATAL errors doing cleanups, tidying up the list process,
- * and so in is acceptable.
- *
- * For CRITICAL errors, minimize dependencies on memory allocation
- * and/or having a system valid state.
- *
- * For PANIC, if abort_on_panic is set, abort without any other action.
- */
-static_fatal_func die_hard(errflags true_type, errflags severity)
-{
-    if (true_type < ERR_PANIC || !abort_on_panic) {
-        if (true_type < ERR_CRITICAL) {
-            /* FATAL shutdown, general cleanup actions are valid */
-            print_pass_report(true);
-            lfmt->cleanup();
-        }
-
-        fflush(NULL);
-
-        if (ofile) {
-            fclose(ofile);
-            if (!keep_all)
-                remove(outname);
-            ofile = NULL;
-        }
-
-        if (severity & ERR_USAGE)
-            usage();
-
-        /* Terminate immediately (exit closes any still open files) */
-        exit(true_type - ERR_FATAL + 1);
-    }
-
-    /*
-     * abort() shouldn't ever return, but be paranoid about this,
-     * plus it helps some compilers clue in to the fact that this
-     * function can never, ever return.
-     */
-    while (1)
-        abort();
-}
-
-/*
- * Returns the struct src_location appropriate for use, after some
- * potential filename mangling.
- */
-static struct src_location error_where(errflags severity)
-{
-    struct src_location where;
-
-    if (severity & ERR_NOFILE) {
-        where.filename = NULL;
-        where.lineno = 0;
-    } else {
-        where = src_where_error();
-
-        if (!where.filename) {
-            where.filename =
-            inname && inname[0] ? inname :
-                outname && outname[0] ? outname :
-                NULL;
-            where.lineno = 0;
-        }
-    }
-
-    return where;
-}
-
-/*
- * error reporting for critical and panic errors: minimize
- * the amount of system dependencies for getting a message out,
- * and in particular try to avoid memory allocations.
- */
-fatal_func nasm_verror_critical(errflags severity, const char *fmt, va_list args)
-{
-    struct src_location where;
-    errflags true_type = severity & ERR_MASK;
-    static bool been_here = false;
-
-    while (unlikely(been_here))
-        abort();                /* Recursive critical error... just die */
-
-    been_here = true;
-
-    where = error_where(severity);
-    if (!where.filename)
-        where.filename = no_file_name;
-
-    fputs(error_pfx(severity), error_file);
-    fputs(where.filename, error_file);
-    if (where.lineno) {
-        fprintf(error_file, "%s%"PRId32"%s",
-                errfmt->beforeline, where.lineno, errfmt->afterline);
-    }
-    fputs(errfmt->beforemsg, error_file);
-    vfprintf(error_file, fmt, args);
-    fputc('\n', error_file);
-
-    die_hard(true_type, severity);
-    unreachable();
-}
-
-/**
- * Stack of tentative error hold lists.
- */
-struct nasm_errtext {
-    struct nasm_errtext *next;
-    char *msg;                  /* Owned by this structure */
-    struct src_location where;  /* Owned by the srcfile system */
-    errflags severity;
-    errflags true_type;
-};
-struct nasm_errhold {
-    struct nasm_errhold *up;
-    struct nasm_errtext *head, **tail;
-};
-
-static void nasm_free_error(struct nasm_errtext *et)
-{
-    nasm_free(et->msg);
-    nasm_free(et);
-}
-
-static void nasm_issue_error(struct nasm_errtext *et);
-
-struct nasm_errhold *nasm_error_hold_push(void)
-{
-    struct nasm_errhold *eh;
-
-    nasm_new(eh);
-    eh->up = errhold_stack;
-    eh->tail = &eh->head;
-    errhold_stack = eh;
-
-    return eh;
-}
-
-/* Pop an error hold. Returns the highest severity issued or dropped. */
-errflags nasm_error_hold_pop(struct nasm_errhold *eh, bool issue)
-{
-    struct nasm_errtext *et, *etmp;
-    errflags worst = 0;
-
-    /*
-     * Allow calling with a null argument saying no hold in the first place.
-     */
-    if (!eh)
-        return worst;
-
-    /* This *must* be the current top of the errhold stack */
-    nasm_assert(eh == errhold_stack);
-
-    if (eh->head) {
-        if (issue) {
-            if (eh->up) {
-                /* Commit the current hold list to the previous level */
-                *eh->up->tail = eh->head;
-                eh->up->tail = eh->tail;
-            } else {
-                /* Issue errors */
-                list_for_each_safe(et, etmp, eh->head) {
-                    if (et->true_type > worst)
-                        worst = et->true_type;
-                    nasm_issue_error(et);
-                }
-            }
-        } else {
-            /* Free the list, drop errors */
-            list_for_each_safe(et, etmp, eh->head) {
-                if (et->true_type > worst)
-                    worst = et->true_type;
-                nasm_free_error(et);
-            }
-        }
-    }
-
-    errhold_stack = eh->up;
-    nasm_free(eh);
-    return worst;
-}
-
-/**
- * common error reporting
- * This is the common back end of the error reporting schemes currently
- * implemented.  It prints the nature of the warning and then the
- * specific error message to error_file and may or may not return.  It
- * doesn't return if the error severity is a "panic" or "debug" type.
- *
- * @param severity the severity of the warning or error
- * @param fmt the printf style format string
- */
-void nasm_verror(errflags severity, const char *fmt, va_list args)
-{
-    struct nasm_errtext *et;
-    errflags true_type = true_error_type(severity);
-
-    if (true_type >= ERR_CRITICAL) {
-        nasm_verror_critical(severity, fmt, args);
-        abort();
-    }
-
-    if (is_suppressed(severity))
+    if (!ofile)
         return;
 
-    nasm_new(et);
-    et->severity = severity;
-    et->true_type = true_type;
-    et->msg = nasm_vasprintf(fmt, args);
-    et->where = error_where(severity);
-
-    if (errhold_stack && true_type <= ERR_NONFATAL) {
-        /* It is a tentative error */
-        *errhold_stack->tail = et;
-        errhold_stack->tail = &et->next;
+    if (ofile == stdout || ofile == stdin) {
+        fflush(ofile);
     } else {
-        nasm_issue_error(et);
+        fclose(ofile);
+        if (error && !keep_all)
+            remove(outname);
     }
-
-    /*
-     * Don't do this before then, if we do, we lose messages in the list
-     * file, as the list file is only generated in the last pass.
-     */
-    if (skip_this_pass(severity))
-        return;
-
-    if (!(severity & (ERR_HERE|ERR_PP_LISTMACRO)))
-        pp_error_list_macros(severity);
-}
-
-/*
- * Actually print, list and take action on an error
- */
-static void nasm_issue_error(struct nasm_errtext *et)
-{
-    const char *pfx;
-    char warnsuf[64];           /* Warning suffix */
-    char linestr[64];           /* Formatted line number if applicable */
-    const errflags severity  = et->severity;
-    const errflags true_type = et->true_type;
-    const struct src_location where = et->where;
-    bool buffer = true_type < ERR_NONFATAL || (severity & ERR_HOLD);
-
-    if (severity & ERR_NO_SEVERITY)
-        pfx = "";
-    else
-        pfx = error_pfx(true_type);
-
-    *warnsuf = 0;
-    if (!(severity & (ERR_HERE|ERR_PP_LISTMACRO))) {
-        const unsigned int level = WARN_IDX(severity);
-
-        switch (severity & ERR_MASK) {
-        case ERR_WARNING:
-            snprintf(warnsuf, sizeof warnsuf, " [-w+%s%s]",
-                     (true_type >= ERR_NONFATAL) ? "error=" : "",
-                     warning_name[level]);
-            break;
-        case ERR_DEBUG:
-            snprintf(warnsuf, sizeof warnsuf, " [--debug=%u]", debug_nasm);
-            break;
-        case ERR_INFO:
-            snprintf(warnsuf, sizeof warnsuf, " [--info=%u]", opt_verbose_info);
-            break;
-        default:
-            /* Not WARNING, DEBUG or INFO, not suppressible */
-            break;
-        }
-    }
-
-    *linestr = 0;
-    if (where.lineno) {
-        snprintf(linestr, sizeof linestr, "%s%"PRId32"%s",
-                 errfmt->beforeline, where.lineno, errfmt->afterline);
-    }
-
-    if (!skip_this_pass(severity)) {
-        const char *file = where.filename ? where.filename : no_file_name;
-        const char *here = "";
-
-        if (severity & ERR_HERE) {
-            here = where.filename ? " here" : " in an unknown location";
-        }
-
-        if (!warn_list)
-            buffer = false;
-
-        if (buffer) {
-            /*
-             * Buffer up warnings and held errors until we either get
-             * an error or we are on the code-generation pass.
-             */
-            strlist_printf(warn_list, "%s%s%s%s%s%s%s",
-                           file, linestr, errfmt->beforemsg,
-                           pfx, et->msg, here, warnsuf);
-        } else {
-            /*
-             * Actually output an error.  If we have buffered
-             * warnings, and this is a non-warning, output them now.
-             */
-            if (warn_list) {
-                strlist_write(warn_list, "\n", error_file);
-                strlist_free(&warn_list);
-            }
-
-            fprintf(error_file, "%s%s%s%s%s%s%s\n",
-                    file, linestr, errfmt->beforemsg,
-                    pfx, et->msg, here, warnsuf);
-        }
-    }
-
-    /* Are we recursing from error_list_macros? */
-    if (severity & ERR_PP_LISTMACRO)
-        goto done;
-
-    /*
-     * Don't suppress this with skip_this_pass(), or we don't get
-     * pass1 or preprocessor warnings in the list file
-     */
-    if (severity & ERR_HERE) {
-        if (where.lineno)
-            lfmt->error(severity, "%s%s at %s:%"PRId32"%s",
-                        pfx, et->msg, where.filename, where.lineno, warnsuf);
-        else if (where.filename)
-            lfmt->error(severity, "%s%s in file %s%s",
-                        pfx, et->msg, where.filename, warnsuf);
-        else
-            lfmt->error(severity, "%s%s in an unknown location%s",
-                        pfx, et->msg, warnsuf);
-    } else {
-        lfmt->error(severity, "%s%s%s", pfx, et->msg, warnsuf);
-    }
-
-    if (skip_this_pass(severity))
-        goto done;
-
-    if (true_type >= ERR_FATAL) {
-        die_hard(true_type, severity);
-    } else if (true_type >= ERR_NONFATAL && !buffer) {
-        terminate_after_phase = true;
-        errflags_never |= ERR_UNDEAD;
-    }
-
-done:
-    nasm_free_error(et);
-}
-
-static void usage(void)
-{
-    fprintf(error_file,
-            "Usage: %s [-@ response_file] [options...] [--] filename\n"
-            "   For additional help:\n"
-            "       %s -h [run|topics|all|-option]\n",
-            _progname, _progname);
+    ofile = NULL;
 }
 
 enum help_with {

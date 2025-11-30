@@ -135,53 +135,21 @@ NDISASM = disasm/ndisasm.$(O)
 PROGOBJ = $(NASM) $(NDISASM)
 PROGS   = nasm$(X) ndisasm$(X)
 
-# Files dependent on warnings.dat
-WARNOBJ   = asm/warnings.$(O)
-WARNFILES = asm/warnings_c.h include/warnings.h doc/warnings.src
+# Objects for the local copy of zlib. The variable ZLIB is set to
+# $(ZLIBOBJ) if the internal version of zlib should be used.
+ZLIBOBJ = \
+	zlib/adler32.$(O) \
+	zlib/crc32.$(O) \
+	zlib/infback.$(O) \
+	zlib/inffast.$(O) \
+	zlib/inflate.$(O) \
+	zlib/inftrees.$(O) \
+	zlib/zutil.$(O)
 
-OUTPUTOBJ = \
-	output/outform.$(O) output/outlib.$(O) \
-	output/nulldbg.$(O) output/nullout.$(O) \
-	output/outbin.$(O) output/outaout.$(O) output/outcoff.$(O) \
-	output/outelf.$(O) \
-	output/outobj.$(O) output/outas86.$(O) \
-	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
-	output/codeview.$(O)
-
-# The source files for these objects are scanned for warnings
-LIBOBJ_W = \
-	nasmlib/readnum.$(O) \
-	\
-	asm/error.$(O) \
-	asm/floats.$(O) \
-	asm/directiv.$(O) \
-	asm/pragma.$(O) \
-	asm/assemble.$(O) asm/labels.$(O) asm/parser.$(O) \
-	asm/preproc.$(O) asm/quote.$(O) \
-	asm/listing.$(O) asm/eval.$(O) asm/exprlib.$(O) asm/exprdump.$(O) \
-	asm/stdscan.$(O) \
-	asm/getbool.$(O) \
-	asm/strfunc.$(O) \
-	asm/segalloc.$(O) \
-	asm/rdstrnum.$(O) \
-	asm/srcfile.$(O) \
-	\
-	$(OUTPUTOBJ)
-
-# The source files for these objects are NOT scanned for warnings;
-# normally this will include all generated files.
-# It is entirely possible that it may be necessary to move some of these
-# files to LIBOBJ_W, notably $(OUTPUTOBJ)
-LIBOBJ_NW = \
+# Common library objects
+LIBOBJ_COM = \
 	stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
 	stdlib/strnlen.$(O) stdlib/strrchrnul.$(O) \
-	\
-	asm/directbl.$(O) \
-	asm/pptok.$(O) \
-	asm/tokhash.$(O) \
-	asm/uncompress.$(O) \
-	\
-	macros/macros.$(O) \
 	\
 	nasmlib/ver.$(O) \
 	nasmlib/alloc.$(O) nasmlib/asprintf.$(O) \
@@ -196,35 +164,63 @@ LIBOBJ_NW = \
 	nasmlib/raa.$(O) nasmlib/saa.$(O) \
 	nasmlib/strlist.$(O) \
 	nasmlib/perfhash.$(O) nasmlib/badenum.$(O) \
+	nasmlib/readnum.$(O) \
 	\
-	common/common.$(O) \
+	common/common.$(O) common/errstubs.$(O) \
 	\
 	x86/insnsa.$(O) x86/insnsb.$(O) x86/insnsn.$(O) \
 	x86/regs.$(O) x86/regvals.$(O) x86/regflags.$(O) \
 	x86/iflag.$(O) \
 	\
-	$(WARNOBJ)
+	$(ZLIB)
+
+# Files dependent on warnings.dat
+WARNOBJ   = asm/warnings.$(O)
+WARNFILES = asm/warnings_c.h include/warnings.h doc/warnings.src
+
+OUTPUTOBJ = \
+	output/outform.$(O) output/outlib.$(O) \
+	output/nulldbg.$(O) output/nullout.$(O) \
+	output/outbin.$(O) output/outaout.$(O) output/outcoff.$(O) \
+	output/outelf.$(O) \
+	output/outobj.$(O) output/outas86.$(O) \
+	output/outdbg.$(O) output/outieee.$(O) output/outmacho.$(O) \
+	output/codeview.$(O)
+
+# Assembler-only library objects
+LIBOBJ_ASM = \
+	asm/error.$(O) \
+	asm/floats.$(O) \
+	asm/directiv.$(O) \
+	asm/pragma.$(O) \
+	asm/assemble.$(O) asm/labels.$(O) asm/parser.$(O) \
+	asm/preproc.$(O) asm/quote.$(O) \
+	asm/listing.$(O) asm/eval.$(O) asm/exprlib.$(O) asm/exprdump.$(O) \
+	asm/stdscan.$(O) \
+	asm/getbool.$(O) \
+	asm/strfunc.$(O) \
+	asm/segalloc.$(O) \
+	asm/rdstrnum.$(O) \
+	asm/srcfile.$(O) \
+	asm/directbl.$(O) \
+	asm/pptok.$(O) \
+	asm/tokhash.$(O) \
+	asm/uncompress.$(O) \
+	\
+	macros/macros.$(O) \
+	\
+	$(WARNOBJ) \
+	$(OUTPUTOBJ)
 
 # Objects which are only used for the disassembler
 LIBOBJ_DIS = \
 	disasm/disasm.$(O) disasm/sync.$(O) disasm/prefix.$(O) \
+	disasm/diserror.$(O) \
 	\
 	x86/insnsd.$(O) x86/regdis.$(O)
 
-# Objects for the local copy of zlib. The variable ZLIB is set to
-# $(ZLIBOBJ) if the internal version of zlib should be used.
-ZLIBOBJ = \
-	zlib/adler32.$(O) \
-	zlib/crc32.$(O) \
-	zlib/infback.$(O) \
-	zlib/inffast.$(O) \
-	zlib/inflate.$(O) \
-	zlib/inftrees.$(O) \
-	zlib/zutil.$(O)
-
-LIBOBJ    = $(LIBOBJ_W) $(LIBOBJ_NW) $(ZLIB)
-ALLOBJ_W  = $(NASM) $(LIBOBJ_W)
-ALLOBJ    = $(PROGOBJ) $(LIBOBJ) $(LIBOBJ_DIS)
+LIBOBJ    = $(LIBOBJ_COM) $(LIBOBJ_ASM) $(LIBOBJ_DIS)
+ALLOBJ    = $(PROGOBJ) $(LIBOBJ)
 SUBDIRS  = stdlib nasmlib include config output asm disasm x86 \
 	   common zlib macros misc
 XSUBDIRS = nsis win test doc editors
@@ -241,21 +237,27 @@ $(DIRS):
 	@$(MKDIR_P) $(SUBDIRS) $(XSUBDIRS)
 
 NASMLIB = libnasm.$(A)
-DISLIB  = libndis.$(A)
+ASMLIB  = libasm.$(A)
+DISLIB  = libdis.$(A)
 
-$(NASMLIB): $(LIBOBJ)
+$(NASMLIB): $(LIBOBJ_COM)
 	$(RM_F) $(NASMLIB)
-	$(AR) cq $(NASMLIB) $(LIBOBJ)
+	$(AR) cq $(NASMLIB) $(LIBOBJ_COM)
 	$(RANLIB) $(NASMLIB)
+
+$(ASMLIB): $(LIBOBJ_ASM)
+	$(RM_F) $(ASMLIB)
+	$(AR) cq $(ASMLIB) $(LIBOBJ_ASM)
+	$(RANLIB) $(ASMLIB)
 
 $(DISLIB): $(LIBOBJ_DIS)
 	$(RM_F) $(DISLIB)
 	$(AR) cq $(DISLIB) $(LIBOBJ_DIS)
 	$(RANLIB) $(DISLIB)
 
-nasm$(X): $(NASM) $(MANIFEST) $(NASMLIB)
+nasm$(X): $(NASM) $(MANIFEST) $(ASMLIB) $(NASMLIB)
 	$(CC) $(ALL_LDFLAGS) -o $@ $(NASM) $(MANIFEST) \
-		$(NASMLIB) $(LIBS)
+		$(ASMLIB) $(NASMLIB) $(LIBS)
 
 ndisasm$(X): $(NDISASM) $(MANIFEST) $(DISLIB) $(NASMLIB)
 	$(CC) $(ALL_LDFLAGS) -o $@ $(NDISASM) $(MANIFEST) \

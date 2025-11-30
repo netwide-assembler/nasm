@@ -199,6 +199,7 @@ if ($what eq 'c') {
     print $out "    const char *name;\n";
     print $out "    enum warn_index warning;\n";
     print $out "};\n\n";
+    printf $out "#define NUM_WARNINGS      %d\n", $#warn_noall + 2;
     printf $out "#define NUM_WARNING_ALIAS %d\n", scalar(keys %aliases);
 
     printf $out "extern const char * const warning_name[%d];\n",
@@ -206,10 +207,8 @@ if ($what eq 'c') {
     printf $out "extern const char * const warning_help[%d];\n",
 	$#warnings + 2;
     print $out "extern const struct warning_alias warning_alias[NUM_WARNING_ALIAS];\n";
-    printf $out "extern const uint8_t warning_default[%d];\n",
-	$#warn_noall + 2;
-    printf $out "extern uint8_t warning_state[%d];\n",
-	$#warn_noall + 2;
+    printf $out "extern const uint8_t warning_default[NUM_WARNINGS];\n",
+    printf $out "extern uint8_t warning_state[NUM_WARNINGS];\n",
     print $out "\n#endif /* $guard */\n";
 } elsif ($what eq 'doc') {
     my %wsec = ('on' => [], 'off' => [], 'err' => [],

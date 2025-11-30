@@ -477,4 +477,7 @@ static inline unsigned int watcom_switch_hack(uint64_t x)
 # endif
 #endif
 
+/* This should be set from main() */
+extern const char *_progname;
+
 #endif	/* NASM_COMPILER_H */

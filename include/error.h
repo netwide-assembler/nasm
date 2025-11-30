@@ -90,6 +90,7 @@ const char *error_pfx(errflags severity);
 #define ERR_PP_PRECOND		0x00000400	/* for preprocessor use */
 #define ERR_PP_LISTMACRO	0x00000800	/* from pp_error_list_macros() */
 #define ERR_HOLD		0x00001000      /* this error/warning can be held */
+#define ERR_PERROR		0x00002000      /* append strerror(errno) */
 
 /*
  * These codes define specific types of suppressible warning.
@@ -114,14 +115,28 @@ const char *error_pfx(errflags severity);
 #define WARN_INIT_ON		WARN_ST_ENABLED
 #define WARN_INIT_ERR		(WARN_ST_ENABLED|WARN_ST_ERROR)
 
+/* Options and status to/from the error module */
+struct errinfo {
+    FILE *file;                 /* Error output file pointer */
+    errflags worst;             /* Worst severity class encountered */
+    errflags never;             /* Error flags to unconditionally suppress */
+    unsigned int debug_nasm;    /* Debug message level */
+    unsigned int verbose_info;  /* Info message level */
+    bool abort_on_panic;        /* Call abort() on ERR_PANIC */
+};
+extern struct errinfo erropt;
+
+int set_error_format(const char *fmt);
+void error_init(void);
+void error_pass_start(bool final);
+void error_pass_end(void);
+
 /* Process a warning option or directive */
 bool set_warning_status(const char *value);
 
 /* Warning stack management */
 void push_warnings(void);
 void pop_warnings(void);
-void init_warnings(void);
-void reset_warnings(void);
 
 /*
  * Tentative error hold for warnings/errors indicated with ERR_HOLD.
@@ -147,10 +162,9 @@ errflags nasm_error_hold_pop(errhold hold, bool issue);
 #include "warnings.h"
 
 /* True if a warning is enabled, either as a warning or an error */
-extern errflags errflags_never;
 static inline bool warn_active(errflags warn)
 {
-    if (warn & errflags_never)
+    if (warn & erropt.never)
         return false;
 
     return !!(warning_state[WARN_IDX(warn)] & WARN_ST_ENABLED);
@@ -168,21 +182,19 @@ static inline bool warn_active(errflags warn)
 #endif
 
 /* Debug level checks */
-extern unsigned int debug_nasm;
 static inline bool debug_level(unsigned int level)
 {
     if (is_constant(level) && level > MAX_DEBUG)
         return false;
-    return unlikely(level <= debug_nasm);
+    return unlikely(level <= erropt.debug_nasm);
 }
 
 /* Info level checks */
-extern unsigned int opt_verbose_info;
 static inline bool info_level(unsigned int level)
 {
     if (is_constant(level) && level > MAX_INFO)
         return false;
-    return unlikely(level <= opt_verbose_info);
+    return unlikely(level <= erropt.verbose_info);
 }
 
 #ifdef HAVE_VARIADIC_MACROS
@@ -229,6 +241,12 @@ static inline bool info_level(unsigned int level)
 #endif
 
 #endif
+
+/* Callbacks from the error module */
+void print_final_report(bool failure);
+void close_output(bool failure);
+bool pp_suppress_error(errflags flags);
+void pp_error_list_macros(errflags flags);
 
 
 #endif /* NASM_ERROR_H */

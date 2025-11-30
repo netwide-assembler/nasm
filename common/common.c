@@ -15,6 +15,15 @@
  */
 struct globalopt globl;
 
+void reset_global_defaults(int bits)
+{
+    globl.bits      = bits;
+    globl.bnd       = false;
+    globl.rel       = 0;
+    globl.reldef    = EAF_FS|EAF_GS;
+    globl.dollarhex = true;
+}
+
 /*
  * Name of a register token, if applicable; otherwise NULL
  */
