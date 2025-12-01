@@ -1,0 +1,11 @@
+[
+    {
+        "description": "Test for GNU indirect function (STT_GNU_IFUNC) symbol emission",
+        "id": "gnu_ifunc",
+        "format": "elf64",
+        "source": "gnu_ifunc.asm",
+        "target": [
+            { "output": "gnu_ifunc.o" }
+        ]
+    }
+]

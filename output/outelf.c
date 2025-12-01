@@ -886,6 +886,8 @@ static void elf_deflabel(char *name, int32_t segment, int64_t offset,
             case 9:
                 if (!nasm_strnicmp(spcword, "protected", wlen))
                     sym->other = STV_PROTECTED;
+                else if (!nasm_strnicmp(spcword, "gnu_ifunc", wlen))
+                    type = STT_GNU_IFUNC;
                 else
                     ok = false;
                 break;
