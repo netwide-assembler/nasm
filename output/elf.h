@@ -232,6 +232,7 @@
 #define STT_COMMON	5	/* Symbol is a common data object */
 #define STT_TLS		6	/* Symbol is thread-local data object */
 #define STT_NUM		7	/* Number of defined types */
+#define STT_GNU_IFUNC   10      /* Symbol is indirect code object */
 
 /* Symbol visibilities */
 #define STV_DEFAULT	0	/* Default symbol visibility rules */
