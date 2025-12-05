@@ -167,14 +167,14 @@ static void cv8_linenum(const char *filename, int32_t linenumber,
     struct linepair *li;
     struct source_file *file;
 
-    file = register_file(filename);
-
     s = find_section(segto);
     if (s == NULL)
         return;
 
     if ((s->flags & IMAGE_SCN_MEM_EXECUTE) == 0)
         return;
+
+    file = register_file(filename);
 
     li = saa_wstruct(file->lines);
     li->file_offset = cv8_state.text_offset;
@@ -192,8 +192,16 @@ static void cv8_deflabel(char *name, int32_t segment, int64_t offset,
 
     (void)special;
 
+    /* Skip macro-local labels */
+    if (!strncmp(name, "..@", 3))
+        return;
+
     s = find_section(segment);
     if (s == NULL)
+        return;
+
+    /* MS linker errors on relocations to .pdata section, so skip such symbols */
+    if (!strcmp(s->name, ".pdata"))
         return;
 
     sym = saa_wstruct(cv8_state.symbols);
@@ -558,10 +566,10 @@ static void write_linenumber_table(struct coff_Section *const sect)
     section_write16(sect, 0); /* pad */
     section_write32(sect, s->len);
 
-    register_reloc(sect, ".text", field_base,
+    register_reloc(sect, s->name, field_base,
         win64 ? IMAGE_REL_AMD64_SECREL : IMAGE_REL_I386_SECREL);
 
-    register_reloc(sect, ".text", field_base + 4,
+    register_reloc(sect, s->name, field_base + 4,
         win64 ? IMAGE_REL_AMD64_SECTION : IMAGE_REL_I386_SECTION);
 
     list_for_each(file, cv8_state.source_files) {
