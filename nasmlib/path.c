@@ -69,15 +69,16 @@
 # define leaveonclean 0
 # define leave_leading 1
 #elif PATHSTYLE == PATH_VMS
-/*
- * VMS filenames may have ;version at the end.  Assume we should count that
- * as part of the filename anyway.
- */
 # define separators ":]"
 # define curdir "[]"
+# define postext ";"
 #else
 /* No idea what to do here, do nothing.  Feel free to add new ones. */
 # define curdir ""
+#endif
+
+#ifndef extsep
+# define extsep '.'
 #endif
 
 /*
@@ -86,20 +87,21 @@
  */
 static inline bool pure_func ismatch(const char *charset, char ch)
 {
-    const char *p;
-
-    for (p = charset; *p; p++) {
-        if (ch == *p)
-            return true;
+    if (charset && *charset) {
+        const char *p;
+        for (p = charset; *p; p++) {
+            if (ch == *p)
+                return true;
+        }
     }
 
     return false;
 }
 
-static const char * pure_func first_filename_char(const char *path)
+static inline const char * pure_func first_filename_char(const char *path)
 {
 #ifdef separators
-    const char *p = path + strlen(path);
+    const char *p = strchr(path, '\0');
 
     while (p > path) {
         if (ismatch(separators, p[-1]))
@@ -177,4 +179,49 @@ char *nasm_catfile(const char *dir, const char *file)
 
     return p;
 #endif
+}
+
+/*
+ * Add/modify a filename extension. Returns a newly allocated
+ * string buffer. If the extension is not an empty string, the first
+ * character is replaced by the appropriate extsep for the filesystem.
+ */
+const char *filename_set_extension(const char *inname, const char *extension)
+{
+    const char *nulp, *ep, *p;
+    char *outname, *q;
+    size_t elen = strlen(extension);
+    size_t baselen;
+
+    ep = nulp = strchr(inname, '\0');
+    for (p = nulp-1; p >= inname; p--) {
+        char c = *p;
+        if (c == extsep) {
+            /* Found the beginning of an existing extension */
+            ep = p;
+            break;
+        }
+        if (ismatch(separators, c)) {
+            /* Found the beginning of the file name */
+            ep = p+1;
+            break;
+        }
+#ifdef postext
+        if (ismatch(postext, c)) {
+            /* Found the beginning of a character sequence
+               that should be stripped off; keep searching from here */
+            ep = p;
+            continue;
+        }
+#endif
+    }
+    baselen = ep - inname;
+
+    q = outname = nasm_malloc(baselen + elen + 1);
+    q = mempcpy(q, inname, baselen);
+    if (*extension)
+        *q++ = extsep;
+    memcpy(q, extension+1, elen);
+
+    return outname;
 }

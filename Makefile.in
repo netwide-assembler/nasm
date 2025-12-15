@@ -149,14 +149,14 @@ ZLIBOBJ = \
 # Common library objects
 LIBOBJ_COM = \
 	stdlib/snprintf.$(O) stdlib/vsnprintf.$(O) stdlib/strlcpy.$(O) \
-	stdlib/strnlen.$(O) stdlib/strrchrnul.$(O) \
+	stdlib/strnlen.$(O) \
 	\
 	nasmlib/ver.$(O) \
 	nasmlib/alloc.$(O) nasmlib/asprintf.$(O) \
 	nasmlib/crc32b.$(O) nasmlib/crc64.$(O) nasmlib/md5c.$(O) \
 	nasmlib/string.$(O) nasmlib/nctype.$(O) \
 	nasmlib/file.$(O) nasmlib/fileio.$(O) nasmlib/mmap.$(O) \
-	nasmlib/realpath.$(O) nasmlib/path.$(O) nasmlib/filename.$(O) \
+	nasmlib/realpath.$(O) nasmlib/path.$(O) \
 	nasmlib/ilog2.$(O) nasmlib/numstr.$(O) \
 	nasmlib/rlimit.$(O) \
 	nasmlib/zerobuf.$(O) nasmlib/bsi.$(O) \

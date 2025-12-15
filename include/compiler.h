@@ -177,10 +177,6 @@ int vsnprintf(char *, size_t, const char *, va_list);
 size_t strlcpy(char *, const char *, size_t);
 #endif
 
-#if !defined(HAVE_STRCHRNUL) || !HAVE_DECL_STRCHRNUL
-char * pure_func strrchrnul(const char *, int);
-#endif
-
 /* C++ and C23 have bool, false, and true as proper keywords */
 #if !defined(__cplusplus) && (__STDC_VERSION__ < 202311L)
 # ifdef HAVE_STDBOOL_H

@@ -100,14 +100,14 @@ ZLIBOBJ = \
 # Common library objects
 LIBOBJ_COM = \
 	stdlib\snprintf.obj stdlib\vsnprintf.obj stdlib\strlcpy.obj \
-	stdlib\strnlen.obj stdlib\strrchrnul.obj \
+	stdlib\strnlen.obj \
 	\
 	nasmlib\ver.obj \
 	nasmlib\alloc.obj nasmlib\asprintf.obj \
 	nasmlib\crc32b.obj nasmlib\crc64.obj nasmlib\md5c.obj \
 	nasmlib\string.obj nasmlib\nctype.obj \
 	nasmlib\file.obj nasmlib\fileio.obj nasmlib\mmap.obj \
-	nasmlib\realpath.obj nasmlib\path.obj nasmlib\filename.obj \
+	nasmlib\realpath.obj nasmlib\path.obj \
 	nasmlib\ilog2.obj nasmlib\numstr.obj \
 	nasmlib\rlimit.obj \
 	nasmlib\zerobuf.obj nasmlib\bsi.obj \

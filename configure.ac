@@ -197,7 +197,6 @@ AC_CHECK_FUNCS(strcasecmp stricmp)
 AC_CHECK_FUNCS(strncasecmp strnicmp)
 AC_CHECK_FUNCS(strsep)
 AC_CHECK_FUNCS(strnlen)
-AC_CHECK_FUNCS(strrchrnul)
 AC_CHECK_FUNCS(iscntrl)
 AC_CHECK_FUNCS(isascii)
 AC_CHECK_FUNCS(mempcpy)
@@ -229,7 +228,6 @@ PA_HAVE_FUNC(__builtin_unreachable,())
 PA_FUNC_SNPRINTF
 PA_FUNC_VSNPRINTF
 AC_CHECK_FUNCS([strlcpy])
-AC_CHECK_FUNCS([strrchrnul])
 
 dnl These types are POSIX-specific, and Windows does it differently...
 AC_CHECK_TYPES([struct stat], [AC_CHECK_FUNCS([stat fstat])])
@@ -246,7 +244,6 @@ AC_CHECK_DECLS(strnicmp)
 AC_CHECK_DECLS(strsep)
 AC_CHECK_DECLS(strlcpy)
 AC_CHECK_DECLS(strnlen)
-AC_CHECK_DECLS(strrchrnul)
 
 dnl Check for missing types
 AC_TYPE_UINTMAX_T
