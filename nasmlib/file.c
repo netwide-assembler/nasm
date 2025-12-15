@@ -81,34 +81,23 @@ void fwritezero(off_t bytes, FILE *fp)
  * let the Windows kernel know that we are not limited to PATH_MAX
  * characters, but it breaks relative paths among other things, and
  * apparently Windows 10 contains a registry option to override this
- * limit anyway. One day maybe they will even implement UTF-8 as byte
- * characters so we can use the standard file API even on this OS.
+ * limit anyway... but only for the wide character interfaces.
  */
 
 os_filename os_mangle_filename(const char *filename)
 {
-    mbstate_t ps;
     size_t wclen;
     wchar_t *buf;
-    const char *p;
 
-    /*
-     * Note: mbsrtowcs() return (size_t)-1 on error, otherwise
-     * the length of the string *without* final NUL in wchar_t
-     * units. Thus we add 1 for the final NUL; the error value
-     * now becomes 0.
-     */
-    memset(&ps, 0, sizeof ps);  /* Begin in the initial state */
-    p = filename;
-    wclen = mbsrtowcs(NULL, &p, 0, &ps) + 1;
+    wclen = MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, -1, NULL, 0);
     if (!wclen)
         return NULL;
 
-    buf = nasm_malloc(wclen * sizeof(wchar_t));
+    /* wclen is in "characters" (UTF-16 code points) */
+    buf = nasm_malloc(wclen << 1);
 
-    memset(&ps, 0, sizeof ps);  /* Begin in the initial state */
-    p = filename;
-    if (mbsrtowcs(buf, &p, wclen, &ps) + 1 != wclen || p) {
+    wclen = MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, -1, buf, wclen);
+    if (!wclen) {
         nasm_free(buf);
         return NULL;
     }
