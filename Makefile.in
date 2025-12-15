@@ -155,10 +155,10 @@ LIBOBJ_COM = \
 	nasmlib/alloc.$(O) nasmlib/asprintf.$(O) \
 	nasmlib/crc32b.$(O) nasmlib/crc64.$(O) nasmlib/md5c.$(O) \
 	nasmlib/string.$(O) nasmlib/nctype.$(O) \
-	nasmlib/file.$(O) nasmlib/mmap.$(O) nasmlib/ilog2.$(O) \
-	nasmlib/realpath.$(O) nasmlib/path.$(O) \
-	nasmlib/filename.$(O) nasmlib/rlimit.$(O) \
-	nasmlib/numstr.$(O) \
+	nasmlib/file.$(O) nasmlib/fileio.$(O) nasmlib/mmap.$(O) \
+	nasmlib/realpath.$(O) nasmlib/path.$(O) nasmlib/filename.$(O) \
+	nasmlib/ilog2.$(O) nasmlib/numstr.$(O) \
+	nasmlib/rlimit.$(O) \
 	nasmlib/zerobuf.$(O) nasmlib/bsi.$(O) \
 	nasmlib/rbtree.$(O) nasmlib/hashtbl.$(O) \
 	nasmlib/raa.$(O) nasmlib/saa.$(O) \
