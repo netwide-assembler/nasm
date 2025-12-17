@@ -1,12 +1,25 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /* Copyright 1996-2017 The NASM Authors - All Rights Reserved */
 
-#include "file.h"
+#include "nasmlib.h"
 
 /* ----------------------------------------------------------------------- *
  *   Unix-style memory mapping, using mmap().
  * ----------------------------------------------------------------------- */
 #if defined(HAVE_FILENO) && defined(HAVE_MMAP)
+
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
 
 /*
  * System page size
