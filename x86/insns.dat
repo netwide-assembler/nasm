@@ -5971,6 +5971,14 @@ VMOVD             xmmrm32,xmmreg                      [mr:t1s: evex.128.66.0f.w0
 VMOVW             xmmreg,xmmrm16                      [rm:t1s: evex.128.f3.map5.w0 6e /r ]      AVX10_2
 VMOVW             xmmrm16,xmmreg                      [mr:t1s: evex.128.f3.map5.w0 7e /r ]      AVX10_2
 
+;# AVX512BMM
+VBMACOR16X16X16   ymmreg,ymmreg,ymmrm256              [rvm:fv: evex.256.np.map6.w0 80 /r ]      AVX512BMM
+VBMACOR16X16X16   zmmreg,zmmreg,zmmrm512              [rvm:fv: evex.512.np.map6.w0 80 /r ]      AVX512BMM
+VBMACXOR16X16X16  ymmreg,ymmreg,ymmrm256              [rvm:fv: evex.256.np.map6.w1 80 /r ]      AVX512BMM
+VBMACXOR16X16X16  zmmreg,zmmreg,zmmrm512              [rvm:fv: evex.512.np.map6.w1 80 /r ]      AVX512BMM
+VBITREV           xmmreg|mask|z,xmmrm128              [rm:fv: evex.128.np.map6.w0 81 /r ]       AVX512BMM
+VBITREV           ymmreg|mask|z,ymmrm256              [rm:fv: evex.256.np.map6.w0 81 /r ]       AVX512BMM
+VBITREV	          zmmreg|mask|z,zmmrm512              [rm:fv: evex.512.np.map6.w0 81 /r ]       AVX512BMM
 
 ;# Systematic names for the hinting nop instructions
 ; These should be last in the file
