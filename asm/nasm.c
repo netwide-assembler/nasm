@@ -50,6 +50,7 @@ static void help(FILE *out, const char *what);
 
 static bool using_debug_info;
 static const char *debug_format;
+static bool debug_format_owned;
 
 #ifndef ABORT_ON_PANIC
 # define ABORT_ON_PANIC 0
@@ -1066,7 +1067,10 @@ static bool process_arg(char *p, char *q, int pass)
         case 'F':       /* specify debug format */
             if (pass == 1) {
                 using_debug_info = true;
-                debug_format = param;
+                if (debug_format_owned && debug_format)
+                    nasm_free(debug_format);
+                debug_format = nasm_strdup(param);
+                debug_format_owned = true;
             }
             break;
 
@@ -1083,8 +1087,13 @@ static bool process_arg(char *p, char *q, int pass)
         case 'g':
             if (pass == 1) {
                 using_debug_info = true;
-                if (p[2])
-                    debug_format = nasm_skip_spaces(p + 2);
+                if (p[2]) {
+                    const char *s = nasm_skip_spaces(p + 2);
+                    if (debug_format_owned && debug_format)
+                        nasm_free(debug_format);
+                    debug_format = nasm_strdup(s);
+                    debug_format_owned = true;
+                }
             }
             break;
 
