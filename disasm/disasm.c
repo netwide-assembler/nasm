@@ -1516,7 +1516,7 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
                 slen += append_evex_reg_deco(output + slen, outbufsize - slen,
                                              deco, &prefix);
         } else if (t & IMMEDIATE) {
-            if (is_class(t, UNITY)) {
+            if (is_class(UNITY, t)) {
                 output[slen++] = '1';
             } else if (o->segment & SEG_DFV) {
                 int fl;
