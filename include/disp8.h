@@ -73,6 +73,12 @@ static inline unsigned int get_disp8_shift(const insn *ins)
 
         /* MOVDDUP */
     case DUP:
+        /*
+         * 128-bit vector case doesn't follow the same formula as 256- and
+         * 512-bit vectors.
+         */
+        if (!vectlen)
+            return 3;
         return vectlen + 4;
 
     default:
