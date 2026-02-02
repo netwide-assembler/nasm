@@ -1255,6 +1255,7 @@ restart_parse:
 
             if (!(eclass & ~(EC_RELOC | EC_UNKNOWN))) {
                 /* It is an immediate */
+		bool size_was_specified = false;
                 op->offset    = reloc_value(value);
                 op->segment   = reloc_seg(value);
                 op->wrt       = reloc_wrt(value);
@@ -1267,6 +1268,27 @@ restart_parse:
 
                 op->type |= IMM_NORMAL;
                 set_imm_flags(op, result->opt);
+
+		/*
+		 * Catch a missing size specifier when dealing with a label -
+		 * which might result in non-intentional handling of only part
+		 * of the label's address instead of the whole value.
+		 */
+		for(int j = 0 ; j <= opnum ; j++)
+		    size_was_specified |= !!(result->oprs[j].xsize & SIZE_MASK);
+
+		/*
+		 * Raise a 'label operation missing size specifier' error when:
+		 * 1. No size specifier was mentioned up to this point.
+		 * 2. One of the operands is a memory reference.
+		 * 3. The current operand is a label and not a simple immediate.
+		 */
+		if (!size_was_specified && (op->opflags & OPFLAG_FORWARD)) {
+		    for(int j = 0 ; j <= opnum ; j++) {
+			if ((result->oprs[j].type & OPTYPE_MASK) == MEMORY)
+			    nasm_fatal("size wasn't specified, some data may be omitted");
+		    }
+		}
 
                 /*
                  * Special hack: if the previous operand was a colon
