@@ -1017,7 +1017,7 @@ restart_parse:
                 break;
             case S_NEAR:
                 /* This is not legacy behavior, even if it perhaps should be */
-                /* result->opt |= OPTIM_NO_Jcc_RELAX | OPTIM_NO_JMP_RELAX; */
+                result->opt |= OPTIM_NO_Jcc_RELAX | OPTIM_NO_JMP_RELAX;
                 op->type |= NEAR;
                 break;
             case S_SHORT:
