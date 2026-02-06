@@ -69,7 +69,7 @@ $wdq  LEA	reg#,mem			[rm:	o# 8d /r]				8086
 $wdq  LEA	reg#,imm#			[rn:	o# 8d /r]				8086,ND
 
 ;# The basic 8 arithmetic operations
-$arith		nf=nf ADD OR nf=,ADC nf=,SBB AND SUB XOR nf=,!evex,CMP
+$arith		nf=nf ADD OR nf=,ADC nf=,SBB AND SUB XOR nf=,lock=,!evex,CMP
 
 ;# Bitwise testing
 $bwdq TEST	rm#,reg#			[mr:	o# 84# /r		]		8086,SM
