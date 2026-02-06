@@ -30,9 +30,9 @@ It is the production version of NASM since 2025.
 \> That \c{JMPE} has apparently been wrong all these years is probably
    as good of a hint as any how much it has been actually used, but it
    \e{does} have the possibility of breaking virtual environments. In
-   that case, please file a bug report to \W{https://bugs.nasm.us/}
-   with details about the virtual environment, and we will figure out
-   a suitable solution.
+   that case, please file a bug report to
+   \W{https://bugs.nasm.us/}\c{https://bugs.nasm.us} with details about the
+   virtual environment, and we will figure out a suitable solution.
 
 
 \S{cl-3.01} Version 3.01
