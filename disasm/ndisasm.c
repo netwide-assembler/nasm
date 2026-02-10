@@ -23,7 +23,7 @@ const char *_progname;
 static int bpl = 8;             /* bytes per line of hex dump */
 
 static void output_ins(uint64_t, const uint8_t *, int, const char *);
-static void skip(uint32_t dist, FILE * fp);
+static bool skip(off_t *posp, off_t dist, FILE *fp);
 
 int main(int argc, char **argv)
 {
@@ -32,15 +32,15 @@ int main(int argc, char **argv)
     char outbuf[256];
     char *pname = *argv;
     char *filename = NULL;
-    uint32_t nextsync, synclen, initskip = 0L;
-    int lenread;
-    int32_t lendis;
+    uint64_t nextsync, synclen;
+    size_t lenread;
     bool autosync = false;
     int bits = 16, b;
-    bool eof = false;
+    bool eof;
     iflag_t prefer;
     bool rn_error;
-    int64_t offset;
+    uint64_t offset, dataread, datamax;
+    off_t fileoffs, initskip;
     FILE *fp;
 
     _progname = argv[0];
@@ -49,7 +49,10 @@ int main(int argc, char **argv)
     nasm_ctype_init();
     iflag_clear_all(&prefer);
 
-    offset = 0;
+    offset   = 0;
+    datamax  = UINT64_C(-1);
+    initskip = 0;
+
     init_sync();
 
     while (--argc) {
@@ -85,6 +88,23 @@ int main(int argc, char **argv)
                     bpl = 16;
                     p++;
                     break;
+                case 'z':       /* max number of bytes to read */
+                    v = p[1] ? p + 1 : --argc ? *++argv : NULL;
+                    if (!v) {
+                        fprintf(stderr, "%s: `-z' requires an argument\n",
+                                pname);
+                        return 1;
+                    }
+                    datamax = readnum(v, &rn_error);
+                    if (rn_error) {
+                        fprintf(stderr,
+                                "%s: `-z' requires a numeric argument\n",
+                                pname);
+                        return 1;
+                    }
+                    p = "";     /* force to next argument */
+                    break;
+
                 case 'b':      /* bits */
                     v = p[1] ? p + 1 : --argc ? *++argv : NULL;
                     if (!v) {
@@ -245,8 +265,10 @@ int main(int argc, char **argv)
 
     reset_global_defaults(bits);
 
-    if (initskip > 0)
-        skip(initskip, fp);
+    fileoffs = 0;
+    dataread = 0;
+    if (!skip(&fileoffs, initskip, fp))
+        return 1;               /* EOF before header */
 
     /*
      * This main loop is really horrible, and wants rewriting with
@@ -256,35 +278,42 @@ int main(int argc, char **argv)
 
     q = p = buffer;
     nextsync = next_sync(offset, &synclen);
-    do {
-        int32_t to_read = buffer + sizeof(buffer) - p;
+    lenread = 0;
+    eof = false;
+
+    while (lenread > 0 || (dataread < datamax && !eof && !feof(fp))) {
+        size_t to_read = buffer + sizeof(buffer) - p;
 	if ((nextsync || synclen) &&
 	    to_read > nextsync - offset - (p - q))
             to_read = nextsync - offset - (p - q);
+        if (to_read > datamax - dataread)
+            to_read = datamax - dataread;
+
+        lenread = 0;
         if (to_read) {
             lenread = fread(p, 1, to_read, fp);
-            if (lenread == 0)
-                eof = true;     /* help along systems with bad feof */
-        } else
-            lenread = 0;
-        p += lenread;
-        if ((nextsync || synclen) &&
-	    (uint32_t)offset == nextsync) {
+            dataread += lenread;
+            fileoffs += lenread;
+            p += lenread;
+            eof |= !lenread; /* help along systems with bad feof */
+        }
+
+        if ((nextsync || synclen) && offset == nextsync) {
             if (synclen) {
-                fprintf(stdout, "%08"PRIX64"  skipping 0x%"PRIX32" bytes\n",
+                fprintf(stdout, "%08"PRIX64"  skipping 0x%"PRIX64" bytes\n",
 			offset, synclen);
                 offset += synclen;
-                skip(synclen, fp);
+                dataread += synclen;
+                eof |= skip(&fileoffs, synclen, fp);
             }
             q = p = buffer;
             nextsync = next_sync(offset, &synclen);
         }
         while (p > q && (p - q >= INSN_MAX || lenread == 0)) {
-            lendis = disasm(q, INSN_MAX, outbuf, sizeof(outbuf),
-			    bits, offset, autosync, &prefer);
-            if (!lendis || lendis > (p - q)
-                || ((nextsync || synclen) &&
-		    (uint32_t)lendis > nextsync - offset))
+            size_t lendis = disasm(q, INSN_MAX, outbuf, sizeof(outbuf),
+                                   bits, offset, autosync, &prefer);
+            if (!lendis || q + lendis > p ||
+                ((nextsync || synclen) && lendis > nextsync - offset))
                 lendis = eatbyte(*q, outbuf, sizeof(outbuf), bits);
             output_ins(offset, q, lendis, outbuf);
             q += lendis;
@@ -296,7 +325,7 @@ int main(int argc, char **argv)
             p -= (q - buffer);
             q = buffer;
         }
-    } while (lenread > 0 || !(eof || feof(fp)));
+    }
 
     if (fp != stdin)
         fclose(fp);
@@ -308,7 +337,8 @@ static void output_ins(uint64_t offset, const uint8_t *data,
                        int datalen, const char *insn)
 {
     int bytes;
-    fprintf(stdout, "%08"PRIX64"  ", offset);
+    int addrwidth;
+    addrwidth = fprintf(stdout, "%08"PRIX64"  ", offset);
 
     bytes = 0;
     while (datalen > 0 && bytes < bpl) {
@@ -317,42 +347,57 @@ static void output_ins(uint64_t offset, const uint8_t *data,
         datalen--;
     }
 
-    fprintf(stdout, "%*s%s\n", (bpl + 1 - bytes) * 2, "", insn);
+    fprintf(stdout, "%*s  %s\n", (bpl - bytes) << 1, "", insn);
 
     while (datalen > 0) {
-        fprintf(stdout, "         -");
+        fprintf(stdout, "%*s", addrwidth, "-");
         bytes = 0;
         while (datalen > 0 && bytes < bpl) {
             fprintf(stdout, "%02X", *data++);
             bytes++;
             datalen--;
         }
-        fprintf(stdout, "\n");
+        putchar('\n');
     }
 }
 
 /*
  * Skip a certain amount of data in a file, either by seeking if
  * possible, or if that fails then by reading and discarding.
+ * Returns true if successful, false on EOF; updates posp.
  */
-static void skip(uint32_t dist, FILE * fp)
+static bool skip(off_t *posp, off_t dist, FILE *fp)
 {
-    char buffer[256];           /* should fit on most stacks :-) */
+    if (!dist)
+        return true;
 
     /*
      * Got to be careful with fseek: at least one fseek I've tried
-     * doesn't approve of SEEK_CUR. So I'll use SEEK_SET and
-     * ftell... horrible but apparently necessary.
+     * doesn't approve of SEEK_CUR (WHICH ONE?). Weird...
      */
-    if (fseek(fp, dist + ftell(fp), SEEK_SET)) {
+    if (!fseeko(fp, *posp + dist, SEEK_SET)) {
+        *posp += dist;
+    } else {
+        off_t pos = ftello(fp);
+        if (pos != (off_t)-1) {
+            /* Possibly a partial seek? */
+            dist -= (pos - *posp);
+            *posp = pos;
+        }
+
         while (dist > 0) {
-            uint32_t len = (dist < sizeof(buffer) ?
-                                 dist : sizeof(buffer));
-            if (fread(buffer, 1, len, fp) < len) {
-                perror("fread");
-                exit(1);
-            }
-            dist -= len;
+            static char junk_buf[BUFSIZ];
+            size_t len = sizeof junk_buf;
+            size_t skipped;
+            if (dist < (off_t)len)
+                len = dist;
+            skipped = fread(junk_buf, 1, len, fp);
+            dist   -= skipped;
+            *posp  += skipped;
+            if (skipped < len)
+                return false;   /* EOF */
         }
     }
+
+    return true;
 }

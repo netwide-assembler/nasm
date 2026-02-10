@@ -11,9 +11,6 @@
 #include "nasmlib.h"
 #include "sync.h"
 
-#define SYNC_MAX_SHIFT          31
-#define SYNC_MAX_SIZE           (1U << SYNC_MAX_SHIFT)
-
 /* initial # of sync points (*must* be power of two)*/
 #define SYNC_INITIAL_CHUNK      (1U << 12)
 
@@ -24,12 +21,12 @@
 
 static struct Sync {
     uint64_t pos;
-    uint32_t length;
+    uint64_t length;
 } *synx;
 
-static uint32_t max_synx, nsynx;
+static size_t max_synx, nsynx;
 
-static inline void swap_sync(uint32_t dst, uint32_t src)
+static inline void swap_sync(size_t dst, size_t src)
 {
     struct Sync t = synx[dst];
     synx[dst] = synx[src];
@@ -43,31 +40,35 @@ void init_sync(void)
     nsynx = 0;
 }
 
-void add_sync(uint64_t pos, uint32_t length)
+void add_sync(uint64_t pos, uint64_t length)
 {
-    uint32_t i;
+    size_t i;
+    static bool synx_oom = false;
 
     if (nsynx >= max_synx) {
-        if (max_synx >= SYNC_MAX_SIZE) /* too many sync points! */
+        struct Sync *xsynx;
+        size_t xmaxsynx = max_synx << 1;
+        if (synx_oom || xmaxsynx < max_synx ||
+            !(xsynx = realloc(synx, (xmaxsynx + 1) * sizeof(*synx)))) {
+            synx_oom = true;
             return;
-        max_synx = (max_synx << 1);
-        synx = nasm_realloc(synx, (max_synx + 1) * sizeof(*synx));
+        }
     }
 
     nsynx++;
     synx[nsynx].pos = pos;
     synx[nsynx].length = length;
 
-    for (i = nsynx; i > 1; i /= 2) {
-        if (synx[i / 2].pos > synx[i].pos)
-            swap_sync(i / 2, i);
+    for (i = nsynx; i > 1; i >>= 1) {
+        if (synx[i >> 1].pos > synx[i].pos)
+            swap_sync(i >> 1, i);
     }
 }
 
-uint64_t next_sync(uint64_t position, uint32_t *length)
+uint64_t next_sync(uint64_t position, uint64_t *length)
 {
     while (nsynx > 0 && synx[1].pos + synx[1].length <= position) {
-        uint32_t i, j;
+        size_t i, j;
 
         swap_sync(nsynx, 1);
         nsynx--;
