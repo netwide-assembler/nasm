@@ -171,7 +171,7 @@ static void ieee_putascii(char *, ...);
 static void ieee_putcs(int);
 static int32_t ieee_putld(int32_t, int32_t, uint8_t *);
 static int32_t ieee_putlr(struct ieeeFixupp *);
-static void ieee_unqualified_name(char *, char *);
+static void ieee_unqualified_name(char *, char *, size_t);
 
 /*
  * pup init
@@ -923,7 +923,7 @@ static void ieee_write_file(void)
             attrib = 'M';
             break;
         }
-        ieee_unqualified_name(buf, seg->name);
+        ieee_unqualified_name(buf, seg->name, sizeof(buf));
         if (seg->align >= SEG_ABS) {
             ieee_putascii("ST%X,A,%02X%s.\n", seg->ieee_index,
                           strlen(buf), buf);
@@ -960,7 +960,7 @@ static void ieee_write_file(void)
     for (seg = seghead; seg; seg = seg->next) {
         for (pub = seg->pubhead; pub; pub = pub->next) {
             char buf[256];
-            ieee_unqualified_name(buf, pub->name);
+            ieee_unqualified_name(buf, pub->name, sizeof(buf));
             ieee_putascii("NI%X,%02X%s.\n", i, strlen(buf), buf);
             if (pub->segment == -1)
                 ieee_putascii("ASI%X,R%X,%lX,+.\n", i, pub->index,
@@ -981,7 +981,7 @@ static void ieee_write_file(void)
     i = 1;
     while (pub) {
         char buf[256];
-        ieee_unqualified_name(buf, pub->name);
+        ieee_unqualified_name(buf, pub->name, sizeof(buf));
         ieee_putascii("NI%X,%02X%s.\n", i, strlen(buf), buf);
         if (pub->segment == -1)
             ieee_putascii("ASI%X,R%X,%lX,+.\n", i, pub->index,
@@ -1005,7 +1005,7 @@ static void ieee_write_file(void)
     i = 1;
     while (ext) {
         char buf[256];
-        ieee_unqualified_name(buf, ext->name);
+        ieee_unqualified_name(buf, ext->name, sizeof(buf));
         ieee_putascii("NX%X,%02X%s.\n", i++, strlen(buf), buf);
         ext = ext->next;
     }
@@ -1032,7 +1032,7 @@ static void ieee_write_file(void)
     for (seg = seghead; seg && debuginfo; seg = seg->next) {
         for (loc = seg->lochead; loc; loc = loc->next) {
             char buf[256];
-            ieee_unqualified_name(buf, loc->name);
+            ieee_unqualified_name(buf, loc->name, sizeof(buf));
             ieee_putascii("NN%X,%02X%s.\n", i, strlen(buf), buf);
             if (loc->segment == -1)
                 ieee_putascii("ASN%X,R%X,%lX,+.\n", i, loc->index,
@@ -1242,14 +1242,20 @@ static int32_t ieee_putlr(struct ieeeFixupp *p)
 
 /* Dump all segment data (text and fixups )*/
 
-static void ieee_unqualified_name(char *dest, char *source)
+static void ieee_unqualified_name(char *dest, char *source, size_t destsize)
 {
+    size_t len = strlen(source);
+    if (len >= destsize)
+        len = destsize - 1;
     if (ieee_uppercase) {
-        while (*source)
-            *dest++ = toupper(*source++);
-        *dest = 0;
-    } else
-        strcpy(dest, source);
+        size_t i;
+        for (i = 0; i < len; i++)
+            dest[i] = toupper((unsigned char)source[i]);
+        dest[i] = '\0';
+    } else {
+        memcpy(dest, source, len);
+        dest[len] = '\0';
+    }
 }
 static void dbgls_init(void)
 {

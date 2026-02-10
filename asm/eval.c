@@ -614,6 +614,13 @@ static expr *expr5(void)
             nasm_nonfatal("division by zero");
             return NULL;
         }
+        if ((tto == TOKEN_SDIV || tto == TOKEN_SMOD) &&
+            !is_just_unknown(e) && !is_just_unknown(f) &&
+            (int64_t)reloc_value(e) == INT64_MIN &&
+            (int64_t)reloc_value(f) == -1) {
+            nasm_nonfatal("signed division overflow");
+            return NULL;
+        }
         switch (tto) {
         case '*':
             if (is_simple(e))

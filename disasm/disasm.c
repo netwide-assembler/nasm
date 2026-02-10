@@ -1448,14 +1448,26 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
 
     slen = 0;
 
+/*
+ * Macros to safely append to the output buffer.
+ * OUTBUF_CLAMP: clamp slen so it never exceeds outbufsize-1,
+ *   preventing snprintf return values from causing OOB access.
+ * OUTBUF_CHAR: safely write a single byte with bounds check.
+ */
+#define OUTBUF_CLAMP() do { if (slen >= outbufsize - 1) slen = outbufsize - 1; } while (0)
+#define OUTBUF_CHAR(c) do { if (slen < outbufsize - 1) output[slen++] = (c); } while (0)
+
     for (i = 0; i < MAXPREFIX; i++) {
         const char *pfx = prefix_name(ins.prefixes[i]);
-        if (pfx)
+        if (pfx) {
             slen += snprintf(output+slen, outbufsize-slen, "%s ", pfx);
+            OUTBUF_CLAMP();
+        }
     }
 
     slen += snprintf(output + slen, outbufsize - slen, "%s",
                      nasm_insn_names[ins.opcode]);
+    OUTBUF_CLAMP();
 
     remove_redundant_sizes(&ins);
 
@@ -1469,7 +1481,7 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
         int asize = seg_get_asize(o->segment);
         int nasize = 64 - asize; /* Address bits to mask off */
 
-        output[slen++] = separator;
+        OUTBUF_CHAR(separator);
 
         if (o->segment & SEG_RELATIVE) {
             /*
@@ -1505,33 +1517,41 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
         if ((t & (REGISTER | FPUREG)) ||
                 (o->segment & SEG_RMREG)) {
             enum reg_enum reg = o->basereg;
-            if (t & TO)
+            if (t & TO) {
                 slen += snprintf(output + slen, outbufsize - slen, "to ");
+                OUTBUF_CLAMP();
+            }
             slen += snprintf(output + slen, outbufsize - slen, "%s",
                              regname(reg));
-            if (t & REGSET_MASK)
+            OUTBUF_CLAMP();
+            if (t & REGSET_MASK) {
                 slen += snprintf(output + slen, outbufsize - slen, "+%d",
                                  (int)((t & REGSET_MASK) >> (REGSET_SHIFT-1))-1);
-            if (deco)
+                OUTBUF_CLAMP();
+            }
+            if (deco) {
                 slen += append_evex_reg_deco(output + slen, outbufsize - slen,
                                              deco, &prefix);
+                OUTBUF_CLAMP();
+            }
         } else if (t & IMMEDIATE) {
             if (is_class(t, UNITY)) {
-                output[slen++] = '1';
+                OUTBUF_CHAR('1');
             } else if (o->segment & SEG_DFV) {
                 int fl;
                 static const char dfv_flags[] = "czso";
                 const char *flsep = "";
-                memcpy(&output[slen], "{dfv=", 5);
-                slen += 5;
+                slen += snprintf(output + slen, outbufsize - slen, "{dfv=");
+                OUTBUF_CLAMP();
                 for (fl = 0; fl < 4; fl++) {
                     if (offs & (1 << fl)) {
                         slen += snprintf(output + slen, outbufsize - slen,
                                          "%s%cf", flsep, dfv_flags[fl]);
+                        OUTBUF_CLAMP();
                         flsep = ",";
                     }
                 }
-                output[slen++] = '}';
+                OUTBUF_CHAR('}');
                 separator = ' '; /* No comma after dfv */
             } else {
                 /* Immediates that will actually be printed as numbers */
@@ -1541,100 +1561,136 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
                 } else if (t & BITS8) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "byte ");
+                    OUTBUF_CLAMP();
                     if (o->segment & SEG_SIGNED) {
                         if (offs < 0) {
                             offs = -offs;
-                            output[slen++] = '-';
+                            OUTBUF_CHAR('-');
                         } else {
-                            output[slen++] = '+';
+                            OUTBUF_CHAR('+');
                         }
                     }
                 } else if (t & BITS16) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "word ");
+                    OUTBUF_CLAMP();
                 } else if (t & BITS32) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "dword ");
+                    OUTBUF_CLAMP();
                 } else if (t & BITS64) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "qword ");
+                    OUTBUF_CLAMP();
                 } else if (t & NEAR) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "near ");
+                    OUTBUF_CLAMP();
                 } else if (t & SHORT) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "short ");
+                    OUTBUF_CLAMP();
                 }
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "0x%"PRIx64"",
                              offs);
+                OUTBUF_CLAMP();
             }
         } else if (is_class(REGMEM, t)) {
             int started = false;
 
-            if (t & BITS8)
+            if (t & BITS8) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "byte ");
-            if (t & BITS16)
+                OUTBUF_CLAMP();
+            }
+            if (t & BITS16) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "word ");
-            if (t & BITS32)
+                OUTBUF_CLAMP();
+            }
+            if (t & BITS32) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "dword ");
-            if (t & BITS64)
+                OUTBUF_CLAMP();
+            }
+            if (t & BITS64) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "qword ");
-            if (t & BITS80)
+                OUTBUF_CLAMP();
+            }
+            if (t & BITS80) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "tword ");
+                OUTBUF_CLAMP();
+            }
             if (prefix.rex.b && (deco & BRDCAST_MASK)) {
                 /* when broadcasting, each element size should be used */
-                if (deco & BR_BITS16)
+                if (deco & BR_BITS16) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "word ");
-                else if (deco & BR_BITS32)
+                    OUTBUF_CLAMP();
+                } else if (deco & BR_BITS32) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "dword ");
-                else if (deco & BR_BITS64)
+                    OUTBUF_CLAMP();
+                } else if (deco & BR_BITS64) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "qword ");
+                    OUTBUF_CLAMP();
+                }
             } else {
-                if (t & BITS128)
+                if (t & BITS128) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "oword ");
-                if (t & BITS256)
+                    OUTBUF_CLAMP();
+                }
+                if (t & BITS256) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "yword ");
-                if (t & BITS512)
+                    OUTBUF_CLAMP();
+                }
+                if (t & BITS512) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "zword ");
+                    OUTBUF_CLAMP();
+                }
             }
-            if (t & FAR)
+            if (t & FAR) {
                 slen += snprintf(output + slen, outbufsize - slen, "far ");
-            if (t & NEAR)
+                OUTBUF_CLAMP();
+            }
+            if (t & NEAR) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "near ");
-            output[slen++] = '[';
+                OUTBUF_CLAMP();
+            }
+            OUTBUF_CHAR('[');
 
             if (prefix.segover) {
                 slen +=
                     snprintf(output + slen, outbufsize - slen, "%s:",
                              prefix_name(prefix.segover));
+                OUTBUF_CLAMP();
             }
             if (o->basereg) {
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
                                  regname(o->basereg));
+                OUTBUF_CLAMP();
                 started = true;
             }
             if (o->indexreg && !itemp_has(best_itemp, IF_MIB)) {
                 if (started)
-                    output[slen++] = '+';
+                    OUTBUF_CHAR('+');
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
                                  regname(o->indexreg));
-                if (o->scale > 1)
+                OUTBUF_CLAMP();
+                if (o->scale > 1) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "*%d",
                                 o->scale);
+                    OUTBUF_CLAMP();
+                }
                 started = true;
             }
 
@@ -1688,32 +1744,42 @@ int32_t disasm(const uint8_t *dp, int32_t data_size,
                 slen += snprintf(output + slen, outbufsize - slen,
                                  "%s%s%s0x%"PRIx64"",
                                  rel, sizename, sign, offset);
+                OUTBUF_CLAMP();
             }
 
             if (o->indexreg && itemp_has(best_itemp, IF_MIB)) {
-                output[slen++] = ',';
+                OUTBUF_CHAR(',');
                 slen += snprintf(output + slen, outbufsize - slen, "%s",
                                  regname(o->indexreg));
-                if (o->scale > 1)
+                OUTBUF_CLAMP();
+                if (o->scale > 1) {
                     slen +=
                         snprintf(output + slen, outbufsize - slen, "*%d",
                                 o->scale);
+                    OUTBUF_CLAMP();
+                }
                 started = true;
             }
 
-            output[slen++] = ']';
+            OUTBUF_CHAR(']');
 
-            if (deco)
+            if (deco) {
                 slen += append_evex_mem_deco(output + slen, outbufsize - slen,
                                              t, deco, &prefix);
+                OUTBUF_CLAMP();
+            }
         } else {
             slen +=
                 snprintf(output + slen, outbufsize - slen, "<operand%d>",
                         i);
+            OUTBUF_CLAMP();
         }
     }
     output[slen] = '\0';
     return length;
+
+#undef OUTBUF_CLAMP
+#undef OUTBUF_CHAR
 }
 
 /*
