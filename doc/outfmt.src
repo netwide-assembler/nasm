@@ -1415,6 +1415,15 @@ Declaring the type and size of global symbols is necessary when
 writing shared library code. For more information, see
 \k{picglobal}.
 
+NASM supports the GNU indirect function symbol type using the keyword
+\c{gnu_ifunc}. This marks the symbol as \c{STT_GNU_IFUNC} and causes the
+dynamic loader to call the symbol as a resolver at runtime. For example:
+
+\c    global  func_ifunc:function
+\c
+\c    global  func:gnu_ifunc
+\c    func    equ func_ifunc
+
 
 \S{elfextrn} \c{elf} Extensions to the \c{EXTERN} Directive\I{EXTERN,
 elf extensions to}\I{EXTERN, elf extensions to}
