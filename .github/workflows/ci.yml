@@ -1,0 +1,19 @@
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+  - cron: '0 6 * * 1'  # Each Monday at 06:00 UTC
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.x' 
+    - run: ./autogen.sh
+    - run: ./configure
+    - run: make all
+    - run: python ./travis/nasm-t.py run
