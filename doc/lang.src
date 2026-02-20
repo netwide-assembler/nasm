@@ -691,13 +691,13 @@ characters.
 
 \S{expbor}: \i\c{||}: \i{Boolean OR} Operator
 
-The \c{||} operator gives a boolean OR: it evaluates to 1 if both sides of
-the expression are nonzero, otherwise 0.
+The \c{||} operator gives a boolean OR: it evaluates to 1 if either side of
+the expression is nonzero, otherwise 0.
 
 
 \S{expbxor}: \i\c{^^}: \i{Boolean XOR} Operator
 
-The \c{^^} operator gives a boolean XOR: it evaluates to 1 if any one side of
+The \c{^^} operator gives a boolean XOR: it evaluates to 1 if exactly one side of
 the expression is nonzero, otherwise 0.
 
 
