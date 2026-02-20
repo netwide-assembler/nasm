@@ -356,7 +356,7 @@ SYSENTER	void				[	0f 34]					P6,NOAPX
 SYSEXIT		void				[	0f 35]					P6,PRIV,NOAPX
 SYSRET		void				[	0f 07]					P6,PRIV,AMD
 
-$zwdq IRET%	void				[	o# cf]					8086
+$zwdq IRET%	void				[	od# cf]					8086
 
 ERETS           void				[	f2 0f 01 ca		]		FRED,PRIV,LONG
 ERETU		void				[	f3 0f 01 ca		]		FRED,PRIV,LONG
@@ -378,8 +378,8 @@ LAHF		void				[	9f]					8086
 SAHF		void				[	9e]					8086
 SALC		void				[	d6]					8086,UNDOC,NOLONG
 
-$zwdq PUSHF%	void				[	nw o# 9c]				8086
-$zwdq POPF%	void				[	nw o# 9d]				8086
+$zwdq PUSHF%	void				[	nw od# 9c]				8086
+$zwdq POPF%	void				[	nw od# 9d]				8086
 
 ;# String instructions
 $bwdq CMPS%	void				[	repe o# a6#]				8086,NOAPX
