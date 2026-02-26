@@ -6,7 +6,7 @@
 
 top_srcdir  = .
 srcdir      = .
-VPATH       = $(srcdir)\asm;$(srcdir)\x86;asm;x86;$(srcdir)\macros;macros;$(srcdir)\output;$(srcdir)\lib;$(srcdir)\common;$(srcdir)\stdlib;$(srcdir)\nasmlib;$(srcdir)\disasm
+VPATH       = $(srcdir)\asm;$(srcdir)\x86;asm;x86;$(srcdir)\macros;macros;$(srcdir)\output;$(srcdir)\lib;$(srcdir)\common;$(srcdir)\stdlib;$(srcdir)\nasmlib;$(srcdir)\disasm;$(srcdir)\zlib
 prefix      = C:\Program Files\NASM
 exec_prefix = $(prefix)
 bindir      = $(prefix)\bin
