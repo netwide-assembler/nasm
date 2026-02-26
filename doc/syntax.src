@@ -12,7 +12,7 @@ operation.
 
 Near jumps are jumps within a single segment. Probably the most common way to
 use them is through labels, as explained in \k{locallab}. \i\c{APX} added a near
-jump instruction - \I\c{JMPABS}, that allows jumps to any \I{64-bit
+jump instruction - \i\c{JMPABS}, that allows jumps to any \I{64-bit
 immediate}64-bit address specified with an immediate operand. The instruction
 works with absolute addresses and the syntax options are shown in
 \k{jmpabs}.
@@ -88,6 +88,29 @@ NASM allows this instruction to be specified either as:
 The generated code is identical. The \c{ABS} is required regardless of
 the \c{DEFAULT} setting.
 
+\S{opt_jumps} Optimizing jump lengths and sizes
+
+\i\c{JMP} lengths can be specified using keywords such as \i\c{SHORT} and
+\i\c{NEAR}. The keyword used also has consequences in how many bytes will be
+emitted in the final assembled instruction. It's worth to note the behavior of
+\c{SHORT} and \c{NEAR} for example in 16 bit mode. If it's specifically required
+to emit a 3 byte encoding of the jump instruction, then the \c{NEAR} version
+shall always fulfill this requirement, even if the jump is made within a
+\c{SHORT} distance (so up to a byte away). If the optimized version is expected
+then it's best to not use a length specifier at all and let the assembler pick
+the relevant version by itself.
+
+Using size specifiers with jumps (and therefore with labels which are just
+immediates) will be optimized down to the shortest possible encoding since the
+size specifier is relevant to the operation size and not to the jump length.
+
+\c 00000000 EB09                    jmp label
+\c 00000002 EB07                    jmp SHORT label
+\c 00000004 E90400                  jmp NEAR label
+\c 00000007 EB02                    jmp BYTE label
+\c 00000009 EB00                    jmp WORD label
+\c
+\c                                  label:
 
 \H{shortnddnds} Compact \i{NDS}/\i{NDD} Operands
 

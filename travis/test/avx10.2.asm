@@ -48,17 +48,17 @@ testcase        {  0x62, 0xf5, 0x7f, 0x08, 0x6b, 0xca                           
 testcase        {  0x62, 0xf5, 0x7f, 0x28, 0x6b, 0xca                                        }, {  VCVTBF162IUBS ymm1, ymm2  }
 testcase        {  0x62, 0xf5, 0x7f, 0x48, 0x6b, 0xca                                        }, {  VCVTBF162IUBS zmm1, zmm2  }
 testcase        {  0x62, 0xf2, 0x7e, 0x08, 0x74, 0xca                                        }, {  VCVTPH2BF8 xmm1, xmm2  }
-testcase        {  0x62, 0xf2, 0x7e, 0x28, 0x74, 0xca                                        }, {  VCVTPH2BF8 ymm1, ymm2  }
-testcase        {  0x62, 0xf2, 0x7e, 0x48, 0x74, 0xca                                        }, {  VCVTPH2BF8 zmm1, zmm2  }
+testcase        {  0x62, 0xf2, 0x7e, 0x28, 0x74, 0xca                                        }, {  VCVTPH2BF8 xmm1, ymm2  }
+testcase        {  0x62, 0xf2, 0x7e, 0x48, 0x74, 0xca                                        }, {  VCVTPH2BF8 ymm1, zmm2  }
 testcase        {  0x62, 0xf5, 0x7e, 0x08, 0x74, 0xca                                        }, {  VCVTPH2BF8S xmm1, xmm2  }
-testcase        {  0x62, 0xf5, 0x7e, 0x28, 0x74, 0xca                                        }, {  VCVTPH2BF8S ymm1, ymm2  }
-testcase        {  0x62, 0xf5, 0x7e, 0x48, 0x74, 0xca                                        }, {  VCVTPH2BF8S zmm1, zmm2  }
+testcase        {  0x62, 0xf5, 0x7e, 0x28, 0x74, 0xca                                        }, {  VCVTPH2BF8S xmm1, ymm2  }
+testcase        {  0x62, 0xf5, 0x7e, 0x48, 0x74, 0xca                                        }, {  VCVTPH2BF8S ymm1, zmm2  }
 testcase        {  0x62, 0xf5, 0x7e, 0x08, 0x18, 0xca                                        }, {  VCVTPH2HF8 xmm1, xmm2  }
-testcase        {  0x62, 0xf5, 0x7e, 0x28, 0x18, 0xca                                        }, {  VCVTPH2HF8 ymm1, ymm2  }
-testcase        {  0x62, 0xf5, 0x7e, 0x48, 0x18, 0xca                                        }, {  VCVTPH2HF8 zmm1, zmm2  }
+testcase        {  0x62, 0xf5, 0x7e, 0x28, 0x18, 0xca                                        }, {  VCVTPH2HF8 xmm1, ymm2  }
+testcase        {  0x62, 0xf5, 0x7e, 0x48, 0x18, 0xca                                        }, {  VCVTPH2HF8 ymm1, zmm2  }
 testcase        {  0x62, 0xf5, 0x7e, 0x08, 0x1b, 0xca                                        }, {  VCVTPH2HF8S xmm1, xmm2  }
-testcase        {  0x62, 0xf5, 0x7e, 0x28, 0x1b, 0xca                                        }, {  VCVTPH2HF8S ymm1, ymm2  }
-testcase        {  0x62, 0xf5, 0x7e, 0x48, 0x1b, 0xca                                        }, {  VCVTPH2HF8S zmm1, zmm2  }
+testcase        {  0x62, 0xf5, 0x7e, 0x28, 0x1b, 0xca                                        }, {  VCVTPH2HF8S xmm1, ymm2  }
+testcase        {  0x62, 0xf5, 0x7e, 0x48, 0x1b, 0xca                                        }, {  VCVTPH2HF8S ymm1, zmm2  }
 testcase    { 0x62, 0xf2, 0x75, 0x08, 0x67, 0xc7                                           }, { {evex} VCVT2PS2PHX  xmm0, xmm1, xmm7                                         }
 testcase    { 0x62, 0xf2, 0x75, 0x08, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  xmm0, xmm1, oword [rax]                                  }
 testcase    { 0x62, 0xf2, 0x75, 0x18, 0x67, 0x00                                           }, { {evex} VCVT2PS2PHX  xmm0, xmm1, dword [rax]{1to4}                            }

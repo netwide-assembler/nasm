@@ -91,7 +91,7 @@ htmltarget=html/nasm00.html
 
 html: $(HTMLAUX)
 	$(MKDIR_P) html
-	for f in $(HTMLAUX); do $(CP_UF) "$(srcdir)/$$f" html/; done
+	for f in $(HTMLAUX); do $(CP_F) "$(srcdir)/$$f" html/; done
 	$(MAKE) $(htmltarget)
 
 RDSRC = $(RUNPERL) $(srcdir)/rdsrc.pl -I$(srcdir) -M$(@F).dep
