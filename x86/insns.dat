@@ -270,8 +270,8 @@ $bwd  CMPXCHG486 rm#,reg#			[mr:	o# 0f a6# /r]				486,SM,UNDOC,NOLONG,ND,LOCK,OB
 $br   JMP	short				[i:	os eb rel8]				8086,NOAPX,ND
 $br   JMP	near				[i:	jmp8 os eb rel8]			8086,NOAPX,JMP_RELAX
 $br   JMP	near				[i:	os e9 rel]				8086,BND
-$wdq  JMP	rm#|near			[m:	nw o# ff /4]				8086,BND,OSIZE
-$wdq  JMP	rm#				[m:	nw o# ff /4]				8086,BND,OSIZE
+$wdq  JMP	rm#|near			[m:	nw o# ff /4]				8086,BND,OSIZE,(wd:NOLONG)
+$wdq  JMP	rm#				[m:	nw o# ff /4]				8086,BND,OSIZE,(wd:NOLONG)
 
 $wd   JMP	imm#|far			[i:	o# ea iwd seg]				8086,OSIZE,ND,NOLONG
 ; These are hacks to support the legacy syntax "[d]word seg:offs" to mean "seg:[d]word offs"
