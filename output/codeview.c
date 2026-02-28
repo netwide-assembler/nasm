@@ -39,7 +39,7 @@ const struct dfmt df_cv8 = {
     NULL,                       /* .debug_mmacros */
     null_debug_directive,       /* .debug_directive */
     cv8_typevalue,              /* .debug_typevalue */
-    cv8_output,                 /* .debug_output */
+    NULL,                       /* .debug_output */
     cv8_cleanup,                /* .cleanup */
     NULL                        /* pragma list */
 };
@@ -59,13 +59,11 @@ struct source_file {
     uint32_t filetbl_off;
     uint32_t sourcetbl_off;
 
-    struct SAA *lines;
-    uint32_t num_lines;
-
     unsigned char md5sum[MD5_HASHBYTES];
 };
 
-struct linepair {
+struct line_info {
+    struct source_file *file;
     uint32_t file_offset;
     uint32_t linenumber;
 };
@@ -108,8 +106,6 @@ struct cv8_state {
     int symbol_sect;
     int type_sect;
 
-    uint32_t text_offset;
-
     struct source_file *source_files, **source_files_tail;
     const char *last_filename;
     struct source_file *last_source_file;
@@ -117,8 +113,7 @@ struct cv8_state {
     unsigned num_files;
     uint32_t total_filename_len;
 
-
-    unsigned total_lines;
+    struct SAA **lines;
 
     struct SAA *symbols;
     struct cv8_symbol *last_sym;
@@ -143,70 +138,72 @@ static void cv8_init(void)
     cv8_state.symbol_sect = coff_make_section(".debug$S", sect_flags);
     cv8_state.type_sect = coff_make_section(".debug$T", sect_flags);
 
-    cv8_state.text_offset = 0;
-
     cv8_state.source_files = NULL;
     cv8_state.source_files_tail = &cv8_state.source_files;
 
     cv8_state.num_files = 0;
     cv8_state.total_filename_len = 0;
 
-    cv8_state.total_lines = 0;
+    cv8_state.lines = NULL;
 
     cv8_state.symbols = saa_init(sizeof(struct cv8_symbol));
     cv8_state.last_sym = NULL;
 }
 
 static struct source_file *register_file(const char *filename);
-static struct coff_Section *find_section(int32_t segto);
+static int find_section(int32_t segto);
 
 static void cv8_linenum(const char *filename, int32_t linenumber,
         int32_t segto)
 {
-    struct coff_Section *s;
-    struct linepair *li;
+    struct line_info *li;
     struct source_file *file;
+    int i;
 
-    s = find_section(segto);
-    if (s == NULL)
+    i = find_section(segto);
+    if (i == -1)
         return;
 
-    if ((s->flags & IMAGE_SCN_MEM_EXECUTE) == 0)
+    if ((coff_sects[i]->flags & IMAGE_SCN_MEM_EXECUTE) == 0)
         return;
 
     file = register_file(filename);
 
-    li = saa_wstruct(file->lines);
-    li->file_offset = cv8_state.text_offset;
-    li->linenumber = linenumber;
+    if (!cv8_state.lines)
+        cv8_state.lines = nasm_calloc(coff_nsects, sizeof(*cv8_state.lines));
 
-    file->num_lines++;
-    cv8_state.total_lines++;
+    if (!cv8_state.lines[i])
+        cv8_state.lines[i] = saa_init(sizeof(struct line_info));
+
+    li = saa_wstruct(cv8_state.lines[i]);
+    li->file = file;
+    li->file_offset = coff_sects[i]->len;
+    li->linenumber = linenumber;
 }
 
 static void cv8_deflabel(char *name, int32_t segment, int64_t offset,
         int is_global, char *special)
 {
     struct cv8_symbol *sym;
-    struct coff_Section *s;
+    int i;
 
     (void)special;
 
     /* Skip macro-local labels */
-    if (!strncmp(name, "..@", 3))
+    if (name[0] == '.' && name[1] == '.' && name[2] == '@' && name[3] >= '0' && name[3] <= '9')
         return;
 
-    s = find_section(segment);
-    if (s == NULL)
+    i = find_section(segment);
+    if (i == -1)
         return;
 
     /* MS linker errors on relocations to .pdata section, so skip such symbols */
-    if (!strcmp(s->name, ".pdata"))
+    if (!strcmp(coff_sects[i]->name, ".pdata"))
         return;
 
     sym = saa_wstruct(cv8_state.symbols);
 
-    if (s->flags & IMAGE_SCN_MEM_EXECUTE)
+    if (coff_sects[i]->flags & IMAGE_SCN_MEM_EXECUTE)
         sym->type = is_global ? SYMTYPE_PROC : SYMTYPE_CODE;
     else
         sym->type = is_global ?  SYMTYPE_GDATA : SYMTYPE_LDATA;
@@ -269,17 +266,6 @@ static void cv8_typevalue(int32_t type)
     }
 }
 
-static void cv8_output(int type, void *param)
-{
-    struct coff_DebugInfo *dinfo = param;
-
-    (void)type;
-
-    if (dinfo->section && dinfo->section->name &&
-    !strncmp(dinfo->section->name, ".text", 5))
-        cv8_state.text_offset += dinfo->size;
-}
-
 static void build_symbol_table(struct coff_Section *const sect);
 static void build_type_table(struct coff_Section *const sect);
 
@@ -299,10 +285,17 @@ static void cv8_cleanup(void)
 
     list_for_each_safe(file, ftmp, cv8_state.source_files) {
         nasm_free(file->fullname);
-        saa_free(file->lines);
         nasm_free(file);
     }
     hash_free(&cv8_state.file_hash);
+
+    if (cv8_state.lines) {
+        int i;
+        for (i = 0; i < coff_nsects; i++)
+            if (cv8_state.lines[i])
+                saa_free(cv8_state.lines[i]);
+        nasm_free(cv8_state.lines);
+    }
 
     saa_rewind(cv8_state.symbols);
     while ((sym = saa_rstruct(cv8_state.symbols)))
@@ -383,7 +376,6 @@ static struct source_file *register_file(const char *filename)
         file->filename = filename;
         file->fullname = fullpath;
         file->fullnamelen = strlen(fullpath);
-        file->lines = saa_init(sizeof(struct linepair));
         *cv8_state.source_files_tail = file;
         cv8_state.source_files_tail = &file->next;
         calc_md5(fullpath, file->md5sum);
@@ -398,22 +390,19 @@ static struct source_file *register_file(const char *filename)
     return file;
 }
 
-static struct coff_Section *find_section(int32_t segto)
+static int find_section(int32_t segto)
 {
     int i;
 
-    for (i = 0; i < coff_nsects; i++) {
-        struct coff_Section *sec;
+    for (i = 0; i < coff_nsects; i++)
+        if (segto == coff_sects[i]->index)
+            return i;
 
-        sec = coff_sects[i];
-        if (segto == sec->index)
-            return sec;
-    }
-    return NULL;
+    return -1;
 }
 
 static void register_reloc(struct coff_Section *const sect,
-        char *sym, uint32_t addr, uint16_t type)
+        int reloc_sect, char *sym, uint32_t addr, uint16_t type)
 {
     struct coff_Reloc *r;
     struct coff_Section *sec;
@@ -428,14 +417,9 @@ static void register_reloc(struct coff_Section *const sect,
     r->symbase = SECT_SYMBOLS;
     r->type = type;
 
-    r->symbol = 0;
-    for (i = 0; i < (uint32_t)coff_nsects; i++) {
-        sec = coff_sects[i];
-        if (!strcmp(sym, sec->name)) {
-            return;
-        }
-        r->symbol += 2;
-    }
+    r->symbol = reloc_sect * 2;
+    if (reloc_sect < coff_nsects)
+        return;
 
     saa_rewind(coff_syms);
     for (i = 0; i < coff_nsyms; i++) {
@@ -539,53 +523,80 @@ static void write_linenumber_table(struct coff_Section *const sect)
     const uint32_t line_field_len = 8;
 
     int i;
-    uint32_t field_length = 0;
-    size_t field_base;
-    struct source_file *file;
-    struct coff_Section *s;
 
     for (i = 0; i < coff_nsects; i++) {
-        if (!strncmp(coff_sects[i]->name, ".text", 5))
-            break;
-    }
+        uint32_t field_length;
+        size_t field_base;
+        struct source_file *file;
+        struct coff_Section *s;
+        struct line_info *li;
+        unsigned num_files;
+        unsigned num_lines;
+        struct SAA *lines = cv8_state.lines[i];
 
-    if (i == coff_nsects)
-        return;
-    s = coff_sects[i];
+        if (!lines)
+            continue;
 
-    field_length = 12;
-    field_length += (cv8_state.num_files * file_field_len);
-    field_length += (cv8_state.total_lines * line_field_len);
-
-    section_write32(sect, 0x000000F2);
-    section_write32(sect, field_length);
-
-    field_base = sect->len;
-    section_write32(sect, 0); /* SECREL, updated by relocation */
-    section_write16(sect, 0); /* SECTION, updated by relocation*/
-    section_write16(sect, 0); /* pad */
-    section_write32(sect, s->len);
-
-    register_reloc(sect, s->name, field_base,
-        win64 ? IMAGE_REL_AMD64_SECREL : IMAGE_REL_I386_SECREL);
-
-    register_reloc(sect, s->name, field_base + 4,
-        win64 ? IMAGE_REL_AMD64_SECTION : IMAGE_REL_I386_SECTION);
-
-    list_for_each(file, cv8_state.source_files) {
-        struct linepair *li;
-
-        /* source mapping */
-        section_write32(sect, file->sourcetbl_off);
-        section_write32(sect, file->num_lines);
-        section_write32(sect, file_field_len + (file->num_lines * line_field_len));
-
-        /* the pairs */
-        saa_rewind(file->lines);
-        while ((li = saa_rstruct(file->lines))) {
-            section_write32(sect, li->file_offset);
-            section_write32(sect, li->linenumber |= 0x80000000);
+        num_files = 0;
+        num_lines = 0;
+        file = NULL;
+        saa_rewind(lines);
+        while ((li = saa_rstruct(lines))) {
+            num_lines++;
+            if (file != li->file) {
+                file = li->file;
+                num_files++;
+            }
         }
+
+        s = coff_sects[i];
+
+        field_length = 12;
+        field_length += (num_files * file_field_len);
+        field_length += (num_lines * line_field_len);
+
+        section_write32(sect, 0x000000F2);
+        section_write32(sect, field_length);
+
+        field_base = sect->len;
+        section_write32(sect, 0); /* SECREL, updated by relocation */
+        section_write16(sect, 0); /* SECTION, updated by relocation*/
+        section_write16(sect, 0); /* pad */
+        section_write32(sect, s->len);
+
+        register_reloc(sect, i, NULL, field_base,
+            win64 ? IMAGE_REL_AMD64_SECREL : IMAGE_REL_I386_SECREL);
+
+        register_reloc(sect, i, NULL, field_base + 4,
+            win64 ? IMAGE_REL_AMD64_SECTION : IMAGE_REL_I386_SECTION);
+
+        saa_rewind(lines);
+        li = saa_rstruct(lines);
+        do {
+            struct line_info *li2;
+            char **rblk = lines->rblk;
+            size_t rpos = lines->rpos;
+            size_t rptr = lines->rptr;
+            file = li->file;
+            for (num_lines = 1; (li2 = saa_rstruct(lines)); num_lines++)
+                if (li2->file != file)
+                    break;
+            lines->rblk = rblk;
+            lines->rpos = rpos;
+            lines->rptr = rptr;
+
+            /* source mapping */
+            section_write32(sect, file->sourcetbl_off);
+            section_write32(sect, num_lines);
+            section_write32(sect, file_field_len + (num_lines * line_field_len));
+
+            /* the pairs */
+            do {
+                section_write32(sect, li->file_offset);
+                section_write32(sect, li->linenumber |= 0x80000000);
+                li = saa_rstruct(lines);
+            } while (li && li->file == file);
+        } while (li);
     }
 }
 
@@ -693,10 +704,10 @@ static uint32_t write_symbolinfo_symbols(struct coff_Section *sect)
 
         section_wbytes(sect, sym->name, strlen(sym->name) + 1);
 
-        register_reloc(sect, sym->name, field_base,
+        register_reloc(sect, coff_nsects, sym->name, field_base,
             win64 ? IMAGE_REL_AMD64_SECREL :
                 IMAGE_REL_I386_SECREL);
-        register_reloc(sect, sym->name, field_base + 4,
+        register_reloc(sect, coff_nsects, sym->name, field_base + 4,
             win64 ? IMAGE_REL_AMD64_SECTION :
                 IMAGE_REL_I386_SECTION);
     }
