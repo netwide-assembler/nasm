@@ -894,7 +894,7 @@ $wdq  PUSH	sbyte#				[i:	nw o# 6a ib,s]				186,OSIZE
 $wdq  PUSH	imm#				[i:	nw o# 68 i#]				186,OSIZE
 
 $wdq  POP	reg#				[r:	nw o# 58+r]				8086
-$wdq  POP	rm#				[m:	nw o# 8f /0]				8086
+$wdq  POP	rm#				[m:	nw o# 8f /0]				8086,OSIZE
 
 $zwd  PUSHA%	void				[	o# 60]					186,NOLONG
 $zwd  POPA%	void				[	o# 61]					186,NOLONG
