@@ -1475,7 +1475,7 @@ static int64_t calcsize(insn *ins, const struct itemplate *temp)
             if (opx->type & (BITS16 | BITS32 | BITS64))
                 length += (opx->type & BITS16) ? 2 : 4;
             else
-                length += (bits == 16) ? 2 : 4;
+                length += (ins->op_size == 16) ? 2 : 4;
             break;
 
         case4(040):
@@ -1502,7 +1502,7 @@ static int64_t calcsize(insn *ins, const struct itemplate *temp)
             if (opx->type & (BITS16 | BITS32 | BITS64))
                 length += (opx->type & BITS16) ? 2 : 4;
             else
-                length += (bits == 16) ? 2 : 4;
+                length += (ins->op_size == 16) ? 2 : 4;
             break;
 
         case4(070):
@@ -2441,7 +2441,7 @@ static void gencode(struct out_data *data, insn *ins)
             if (opx->type & (BITS16 | BITS32))
                 size = (opx->type & BITS16) ? 2 : 4;
             else
-                size = (bits == 16) ? 2 : 4;
+                size = (ins->op_size == 16) ? 2 : 4;
             out_imm(data, opx, size, OUT_WRAP);
             break;
 
@@ -2477,7 +2477,7 @@ static void gencode(struct out_data *data, insn *ins)
             if (opx->type & (BITS16 | BITS32 | BITS64))
                 size = (opx->type & BITS16) ? 2 : 4;
             else
-                size = (bits == 16) ? 2 : 4;
+                size = (ins->op_size == 16) ? 2 : 4;
 
             out_reladdr(data, opx, size);
             break;
