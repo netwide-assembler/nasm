@@ -947,7 +947,8 @@ enum text_options {
     OPT_KEEP_ALL,
     OPT_NO_LINE,
     OPT_DEBUG,
-    OPT_REPRODUCIBLE
+    OPT_REPRODUCIBLE,
+    OPT_BITS
 };
 enum need_arg {
     ARG_NO,
@@ -980,6 +981,7 @@ static const struct textargs textopts[] = {
     {"no-line",  OPT_NO_LINE, ARG_NO, 0},
     {"debug",    OPT_DEBUG, ARG_MAYBE, 0},
     {"reproducible", OPT_REPRODUCIBLE, ARG_NO, 0},
+    {"bits",     OPT_BITS, ARG_YES, 0},
     {NULL, OPT_BOGUS, ARG_NO, 0}
 };
 
@@ -1349,6 +1351,18 @@ static bool process_arg(char *p, char *q, int pass)
                     break;
                 case OPT_REPRODUCIBLE:
                     reproducible = true;
+                    break;
+                case OPT_BITS:
+                    if (pass == 2) {
+                        int bits = strtoul(param, NULL, 10);
+                        if (bits != 16 && bits != 32 && bits != 64) {
+                            nasm_nonfatalf(ERR_USAGE, "invalid argument to --bits");
+                        } else {
+                            char cmdbuf[16];
+                            snprintf(cmdbuf,sizeof(cmdbuf),"[bits %d]", bits);
+                            pp_pre_command(NULL, cmdbuf);
+                        }
+                    }
                     break;
                 case OPT_HELP:
                     /* Allow --help topic without *requiring* topic */
