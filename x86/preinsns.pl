@@ -24,6 +24,7 @@ $macros{'arith'} = {
     'txt' => <<'EOL'
 $$bwdq $op	rm#,reg#			[mr:	$hle o# $00# /r				]	8086,FL,SM,$lock
 $$bwdq $op	reg#,rm#			[rm:	o# $02# /r				]	8086,FL,SM
+$op		reg_al,imm8			[-i:	o8 $04 ib				]	8086,FL,SM
 $op		rm8,imm8			[mi:	$hle 80 /$n ib				]	8086,FL,SM,$lock
 $op		rm16,sbyteword16		[mi:	$hle o16 83 /$n ib,s			]	8086,FL,SM,$lock
 $op		reg_ax,imm16			[-i:	o16 $05 iw				]	8086,FL,SM
