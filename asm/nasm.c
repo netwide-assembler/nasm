@@ -1052,10 +1052,8 @@ static bool process_arg(char *p, char *q, int pass)
             break;
 
         case 'L':        /* listing options */
-            if (pass == 2) {
-                while (*param)
-                    list_options |= list_option_mask(*param++);
-            }
+            if (pass == 2)
+                list_update_options(param, true);
             break;
 
         case 'Z':       /* error messages file */

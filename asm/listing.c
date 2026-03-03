@@ -349,29 +349,37 @@ static void list_set_offset(uint64_t offset)
     listoffset = offset;
 }
 
-static void list_update_options(const char *str)
+/*
+ * from_cmdline is passed in to handle -L+ -> LIST_PLUS_OPTIONS,
+ * and to prevent active_list_options from being set (that will
+ * be done when list_init() is called.)
+ *
+ * As listing options are assumed non-critical, ignore errors
+ * to help forward compatibility.
+ */
+void list_update_options(const char *str, bool from_cmdline)
 {
-    bool state = true;
     unsigned char c;
-    uint64_t mask;
+    uint64_t setmask = LIST_ALL_OPTIONS_MASK;
+    uint64_t amask   = from_cmdline ? 0 : setmask;
 
     while ((c = *str++)) {
+        uint64_t mask = 0;
         switch (c) {
         case '+':
-            state = true;
+            if (from_cmdline && setmask)
+                list_update_options(LIST_PLUS_OPTIONS, true);
+            setmask = LIST_ALL_OPTIONS_MASK;
             break;
         case '-':
-            state = false;
+            setmask = 0;
             break;
         default:
             mask = list_option_mask(c);
-            if (state) {
-                list_options |= mask;
-                active_list_options |= mask;
-            } else {
-                list_options &= ~mask;
-                active_list_options &= ~mask;
-            }
+            list_options = (list_options & ~mask) | (setmask & mask);
+            active_list_options =
+                (active_list_options & ~mask) |
+                (setmask & amask & mask);
             break;
         }
     }
@@ -381,7 +389,7 @@ enum directive_result list_pragma(const struct pragma *pragma)
 {
     switch (pragma->opcode) {
     case D_OPTIONS:
-        list_update_options(pragma->tail);
+        list_update_options(pragma->tail, false);
         return DIRR_OK;
 
     default:

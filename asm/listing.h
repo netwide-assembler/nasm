@@ -10,6 +10,9 @@
 
 #include "nasm.h"
 
+/* List options implied by -L+ */
+#define LIST_PLUS_OPTIONS "bdefFmps"
+
 /*
  * List-file generators should look like this:
  */
@@ -107,13 +110,10 @@ extern uint64_t list_options, active_list_options;
  * This isn't particularly efficient code, but just about every
  * instance of it should be fed a constant, so the entire function can
  * be precomputed at compile time. The only cases where the full
- * computation is needed is when parsing the -L option or %pragma list
- * options, neither of which is in any way performance critical.
- *
- * The character + represents ALL listing options except -Lw (flush
- * after every line.)
+ * computation is needed is in list_update_options(), which is not
+ * performance critical.
  */
-static inline const_func uint64_t list_option_mask_val(unsigned char x)
+static inline const_func uint64_t list_option_mask(unsigned char x)
 {
     if (x >= 'a') {
         if (x > 'z')
@@ -134,18 +134,7 @@ static inline const_func uint64_t list_option_mask_val(unsigned char x)
     return UINT64_C(1) << x;
 }
 
-static inline const_func uint64_t list_option_mask(unsigned char x)
-{
-    if (x == '+') {
-        const char *p = "bdefFmps";
-        uint64_t v = 0;
-        while (*p)
-            v |= list_option_mask_val(*p++);
-        return v;
-    } else {
-        return list_option_mask_val(x);
-    }
-}
+#define LIST_ALL_OPTIONS_MASK (~UINT64_C(3))
 
 /* Return true if the listing engine is active and a certain option is set. */
 static inline pure_func bool list_option(unsigned char x)
@@ -164,6 +153,9 @@ static inline pure_func bool list_active(void)
 {
     return (active_list_options & 1);
 }
+
+/* Change listing options */
+void list_update_options(const char *str, bool from_cmdline);
 
 /* Pragma handler */
 enum directive_result list_pragma(const struct pragma *);
