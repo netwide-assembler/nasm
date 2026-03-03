@@ -73,7 +73,7 @@ It is the production version of NASM since 2025.
 \b Whole bunch of minor fixes to operand sizes, operand size prefixes. Changes
    mostly return the behavior known from 2.16.03.
 
-\> \c{mov [mem], label} would be accepted without size specifiers
+\> \c{MOV [mem], label} would be accepted without size specifiers
    which could cause unintended consequences. Raise an error if no
    size was specified and one of the operands is a memory reference
    and another operands is a label.
@@ -85,6 +85,12 @@ It is the production version of NASM since 2025.
 
 \> Using redundant (or not) but valid operands size prefixes was fixed on
    instructions such as \c{IRET}, \c{PUSHF}, \c{POPF}, \c{PUSH} and \c{POP}.
+
+\> Using an operand size prefix on a \c{JMP} or \c{CALL} instruction
+   could generate an invalid instruction. This appears to have been a
+   long-standing bug. Specifying the operand size by specifying the
+   size of the immediate explicitly (e.g. \c{JMP DWORD label}) has
+   always worked correctly, however.
 
 \S{cl-3.01} Version 3.01
 
