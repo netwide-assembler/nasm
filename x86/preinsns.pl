@@ -24,9 +24,16 @@ $macros{'arith'} = {
     'txt' => <<'EOL'
 $$bwdq $op	rm#,reg#			[mr:	$hle o# $00# /r				]	8086,FL,SM,$lock
 $$bwdq $op	reg#,rm#			[rm:	o# $02# /r				]	8086,FL,SM
-$$wdq  $op	rm#,sbyte#			[mi:	$hle o# 83  /$n ib,s			]	8086,FL,SM,$lock
-$$bwdq $op	ax#,imm#			[-i:	o# $04# i#				]	8086,FL,SM
-$$bwdq $op	rm#,imm#			[mi:	$hle o# 80# /$n i#			]	8086,FL,SM,$lock
+$op		rm8,imm8			[mi:	$hle 80 /$n ib				]	8086,FL,SM,$lock
+$op		rm16,sbyteword16		[mi:	$hle o16 83 /$n ib,s			]	8086,FL,SM,$lock
+$op		reg_ax,imm16			[-i:	o16 $05 iw				]	8086,FL,SM
+$op		rm16,imm16			[mi:	$hle o16 81 /$n iw			]	8086,FL,SM,$lock
+$op		rm32,sbytedword32		[mi:	$hle o32 83 /$n ib,s			]	386,FL,SM,$lock,$zu
+$op		reg_eax,imm32			[-i:	o32 $05 id				]	386,FL,SM,$zu
+$op		rm32,imm32			[mi:	$hle o32 81 /$n id			]	386,FL,SM,$lock,$zu
+$op		rm64,sbytedword64		[mi:	$hle o64 83 /$n ib,s			]	X86_64,FL,LONG,SM,$lock,$zu
+$op		reg_rax,sdword64		[-i:	o64 $05 id,s				]	X86_64,FL,LONG,SM,$zu
+$op		rm64,sdword64			[mi:	$hle o64 81 /$n id,s			]	X86_64,FL,LONG,SM,$lock,$zu
 $$bwdq $op	reg#?,reg#,rm#			[vrm:	evex.ndx.$nf.l0.m4.o#     $02# /r	]	$evex,FL,APX,SM
 $$bwdq $op	reg#?,rm#,reg#			[vmr:	evex.ndx.$nf.l0.m4.o#     $00# /r	]	$evex,FL,APX,SM
 $$wdq  $op	reg#?,rm#,sbyte#		[vmi:	evex.ndx.$nf.l0.m4.o#     83 /$n ib,s	]	$evex,FL,APX,SM
