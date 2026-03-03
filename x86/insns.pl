@@ -888,7 +888,7 @@ sub format_insn($$$$) {
     $flagsindex = insns_flag_index(\%flags);
     die "$fname:$line: $opcode: error in flags $flags\n" unless (defined($flagsindex));
 
-    return ("{I_$opcode, $nops, {$operands}, $decorators, \@\@CODES-$codes\@\@, $flagsindex},", $nd);
+    return ("{I_$opcode, $nops, {$operands}, $decorators, \@\@CODES-$codes\@\@, $flagsindex, $line},", $nd);
 }
 
 #

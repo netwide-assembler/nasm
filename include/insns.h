@@ -20,6 +20,7 @@ struct itemplate {
     decoflags_t     deco[MAX_OPERANDS]; /* bit flags for operand decorators */
     const uint8_t   *code;              /* the code it assembles to */
     uint32_t        iflag_idx;          /* some flags referenced by index */
+    unsigned int    xdaline;            /* line # in insns.xda (for debug) */
 };
 
 /* Use this helper to test instruction template flags */
