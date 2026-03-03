@@ -10,7 +10,7 @@
 	vp4dpwssd zmm10+0,zmm11+3,[rax]
 
 %ifdef ERROR
-	v4dpwssd zmm10+1,zmm11+3,[rax]
-	v4dpwssd zmm10,zmm11+4,[rax]
-	v4dpwssd zmm10,zmm11+7,[rax]
+	vp4dpwssd zmm10+1,zmm11+3,[rax]
+	vp4dpwssd zmm10,zmm11+4,[rax]
+	vp4dpwssd zmm10,zmm11+7,[rax]
 %endif
