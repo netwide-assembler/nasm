@@ -136,10 +136,15 @@ static inline const_func uint64_t list_option_mask_val(unsigned char x)
 
 static inline const_func uint64_t list_option_mask(unsigned char x)
 {
-    if (x == '+')
-        return ~(list_option_mask_val('w') | 3);
-    else
+    if (x == '+') {
+        const char *p = "bdefFmps";
+        uint64_t v = 0;
+        while (*p)
+            v |= list_option_mask_val(*p++);
+        return v;
+    } else {
         return list_option_mask_val(x);
+    }
 }
 
 /* Return true if the listing engine is active and a certain option is set. */

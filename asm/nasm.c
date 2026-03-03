@@ -1932,6 +1932,7 @@ static void help(FILE *out, const char *what)
     }
     if (help_is(with, 'L')) {
         fputs(
+            "                -L flags for general usage:\n"
             "       -Lb         show builtin macro packages (standard and %use)\n"
             "       -Ld         show byte and repeat counts in decimal, not hex\n"
             "       -Le         show the preprocessed output\n"
@@ -1940,8 +1941,10 @@ static void help(FILE *out, const char *what)
             "       -Lm         show multi-line macro calls with expanded parameters\n"
             "       -Lp         output a list file every pass, in case of errors\n"
             "       -Ls         show all single-line macro definitions\n"
+            "       -L+         enable all of the above listing options (very verbose!)\n"
+            "                -L flags intended for debugging NASM:\n"
             "       -Lw         flush the output after every line (very slow!)\n"
-            "       -L+         enable all listing options except -Lw (very verbose!)\n"
+            "       -LX         list instruction pattern line numbers from insns.xda\n"
             , out);
     }
     if (help_optor(with, 'O')) {

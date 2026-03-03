@@ -872,6 +872,17 @@ static void out_eops(struct out_data *data, const extop *e)
 /* This is totally just a wild guess what is reasonable... */
 #define INCBIN_MAX_BUF (ZERO_BUF_SIZE * 16)
 
+static void
+list_add_template_info(const insn *ins, const struct itemplate *temp)
+{
+    char *buf;
+    (void)ins;
+
+    buf = nasm_asprintf(" ;;; matched insns.xda:%u", temp->xdaline);
+    lfmt->line(LIST_INFO, -1, buf);
+    nasm_free(buf);
+}
+
 static int64_t assemble(insn *instruction)
 {
     struct out_data data;
@@ -1012,6 +1023,9 @@ static int64_t assemble(insn *instruction)
 
         if (m >= MOK_GOOD) {
             /* Matches! */
+            if (list_option('X'))
+                list_add_template_info(instruction, temp);
+
             if (unlikely(itemp_has(temp, IF_OBSOLETE))) {
                 errflags warning;
                 const char *whathappened;
