@@ -34,6 +34,53 @@ It is the production version of NASM since 2025.
    \W{https://bugs.nasm.us/}\c{https://bugs.nasm.us} with details about the
    virtual environment, and we will figure out a suitable solution.
 
+\b Various build fixes. Fix the documentation not building on MacOS because
+   of the \c{cp} utility lacking \c{-u} there. Also fix not building generally due to
+   wrong link formatting. Another fix was a typo in \c{compiler.h} related to a C++
+   check.
+
+\b Corrections to assembling encodings:
+
+\> Fix \c{CMP} allowing \c{LOCK} which is illegal.
+
+\> Correct multiple \c{AVX512} instructions such as \c{VCVTSD2SI}, \c{VCVTSD2USI},
+   \c{VCVTSS2SI}, \c{VCVTSS2USI}, \c{VCVTTSD2SI}, \c{VCVTTSD2USI}, \c{VCVTTSS2SI},
+   \c{VCVTTSS2USI}, \c{VGETEXPSH}, \c{VGETMANTSH}, \c{MOVDDUP}, \c{VMOVDDUP}.
+
+\> Fixed other encodings or instruction formats for instructions \c{UWRMSR},
+   \c{CMPSD}, \c{VCMPSS}, \c{V4FMADDSS}, \c{V4FNMADDSS}, \c{VCVTDQ2PH},
+   \c{VCVTPD2PH}, \c{VCVTPH2UDQ}, \c{VCVTQQ2PH}, \c{VCVTUDQ2PH}, \c{VCVTUQQ2PH},
+   \c{VGETEXPSH}, \c{VGETMANTSH}, \c{VRCPPH}, \c{VRSQRTPH}, \c{VCVTPH2BF8},
+   \c{VCVTPH2BF8S}, \c{VCVTPH2HF8}, \c{VCVTPH2HF8S}.
+
+\> Fixed typos in \c{VP4DPWSSD} mnemonic.
+
+\> Fixed byte and word operands getting the same encoding on arithmetic instructions
+   such as \c{CMP}.
+
+\> Fixed \c{PUSH} not assembling when used with a \c{DWORD}.
+
+\b Corrections to disassembling:
+
+\> Shift instructions with the unity operand were getting disassembled to a zero
+   operand instead of one.
+
+\> \c{JMP}, \c{CALL} and \c{JMPE} disassembled incorrectly with the register operands.
+
+\b Whole bunch of minor fixes to operand sizes, operand size prefixes. Changes
+   mostly return the behavior known from 2.16.03.
+
+\> '\c{mov} [mem], label' would be accepted without size specifiers which could cause
+   unintended consequences. Raise an error if no size was specified and one of
+   the operands is a memory reference and another operands is a label.
+
+\> \c{jmp} \c{NEAR} is now the same as \c{jmp} \c{strict} \c{NEAR} as the strict
+   is redundant here. \c{jmp} \c{WORD} on the other hand is up for optimization as \c{NEAR}
+   and \c{WORD} relate to different things - jump lengths and operation sizes
+   respectively.
+
+\> Using redundant (or not) but valid operands size prefixes was fixed on
+   instructions such as \c{IRET}, \c{PUSHF}, \c{POPF}, \c{PUSH} and \c{POP}.
 
 \S{cl-3.01} Version 3.01
 
