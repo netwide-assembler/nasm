@@ -4,12 +4,6 @@
 
 %ifndef _TEST_INC
 
-%ifndef BITS
- %xdefine BITS __BITS__
-%endif
-
-	bits BITS
-
 %assign w __BITS__ == 16
 %assign d __BITS__ == 32
 %assign q __BITS__ == 64
