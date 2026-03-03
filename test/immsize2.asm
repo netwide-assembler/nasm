@@ -4,11 +4,6 @@
  %endif
 %endmacro
 
-%ifndef BITS
- %define BITS 32
-%endif
-	bits BITS
-
 	add edx,-1
 	add edx,byte -1
 	add edx,dword -1
