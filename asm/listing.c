@@ -260,7 +260,7 @@ static void list_output(const struct out_data *data)
     }
 }
 
-static void list_line(int type, int32_t lineno, const char *line)
+static void list_line(enum list_type type, int32_t lineno, const char *line)
 {
     (void)type;
 
@@ -279,7 +279,7 @@ static void list_line(int type, int32_t lineno, const char *line)
     listlevel_e = listlevel;
 }
 
-static void list_uplevel(int type, int64_t size)
+static void list_uplevel(enum list_type type, int64_t size)
 {
     if (!listfp)
         return;
@@ -305,7 +305,7 @@ static void list_uplevel(int type, int64_t size)
     }
 }
 
-static void list_downlevel(int type)
+static void list_downlevel(enum list_type type)
 {
     if (!listfp)
         return;

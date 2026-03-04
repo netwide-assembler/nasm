@@ -521,18 +521,6 @@ static inline char *nasm_skip_identifier(const char *str)
 }
 
 /*
- * Data-type flags that get passed to listing-file routines.
- */
-enum {
-    LIST_READ,
-    LIST_MACRO,
-    LIST_INFO,
-    LIST_INCLUDE,
-    LIST_INCBIN,
-    LIST_TIMES
-};
-
-/*
  * -----------------------------------------------------------
  * Format of the `insn' structure returned from `parser.c' and
  * passed into `assemble.c'

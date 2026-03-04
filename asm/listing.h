@@ -13,6 +13,18 @@
 /* List options implied by -L+ */
 #define LIST_PLUS_OPTIONS "bdefFmps"
 
+/* Listing type values flags */
+enum list_type {
+    /* Flags for lfmt->line() */
+    LIST_READ,
+    LIST_MACRO,
+    LIST_INFO,
+    /* Flags for lfmt->uplevel() */
+    LIST_INCLUDE,
+    LIST_INCBIN,
+    LIST_TIMES
+};
+
 /*
  * List-file generators should look like this:
  */
@@ -49,7 +61,7 @@ struct lfmt {
      * If a line number is provided, print it; if the line number is
      * -1 then use the same line number as the previous call.
      */
-    void (*line)(int type, int32_t lineno, const char *line);
+    void (*line)(enum list_type type, int32_t lineno, const char *line);
 
     /*
      * Called to change one of the various levelled mechanisms in the
@@ -65,12 +77,12 @@ struct lfmt {
      * macro, so anything under that level won't be expanded unless
      * it includes another file.
      */
-    void (*uplevel)(int type, int64_t size);
+    void (*uplevel)(enum list_type type, int64_t size);
 
     /*
      * Reverse the effects of uplevel.
      */
-    void (*downlevel)(int type);
+    void (*downlevel)(enum list_type type);
 
     /*
      * Called on a warning or error, with the error message.
