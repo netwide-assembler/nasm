@@ -75,12 +75,11 @@ enum match_result {
 static int64_t assemble(insn *instruction);
 static int64_t insn_size(insn *instruction);
 
-static int64_t calcsize(insn *, const struct itemplate *);
+static int64_t calcsize(insn *);
 static int64_t calcsize_speculative(const insn *, const struct itemplate *);
 static int emit_prefixes(struct out_data *data, const insn *ins);
 static void gencode(struct out_data *data, insn *ins);
-static enum match_result find_match(const struct itemplate **tempp,
-                                    insn *instruction);
+static enum match_result find_match(insn *instruction);
 static enum match_result matches(const struct itemplate *, const insn *);
 static opflags_t regflag(const operand *);
 static int32_t regval(const operand *);
@@ -873,12 +872,14 @@ static void out_eops(struct out_data *data, const extop *e)
 #define INCBIN_MAX_BUF (ZERO_BUF_SIZE * 16)
 
 static void
-list_add_template_info(const insn *ins, const struct itemplate *temp)
+list_add_template_info(const insn *ins)
 {
     char *buf;
     (void)ins;
 
-    buf = nasm_asprintf(" ;;; matched insns.xda:%u", temp->xdaline);
+    buf = nasm_asprintf(" ;;; used template %s:%d from insns.xda:%u",
+                        nasm_insn_names[ins->opcode], ins->itempindex,
+                        ins->itemp->xdaline);
     lfmt->line(LIST_INFO, -1, buf);
     nasm_free(buf);
 }
@@ -886,7 +887,6 @@ list_add_template_info(const insn *ins, const struct itemplate *temp)
 static int64_t assemble(insn *instruction)
 {
     struct out_data data;
-    const struct itemplate *temp;
     enum match_result m;
     const int64_t start = instruction->loc.offset;
 
@@ -1019,12 +1019,14 @@ static int64_t assemble(insn *instruction)
         /* Pre-match instruction structure update */
         insn_early_setup(instruction);
 
-        m = find_match(&temp, instruction);
+        m = find_match(instruction);
 
         if (m >= MOK_GOOD) {
+            const struct itemplate * const temp = instruction->itemp;
+
             /* Matches! */
             if (list_option('X'))
-                list_add_template_info(instruction, temp);
+                list_add_template_info(instruction);
 
             if (unlikely(itemp_has(temp, IF_OBSOLETE))) {
                 errflags warning;
@@ -1057,7 +1059,7 @@ static int64_t assemble(insn *instruction)
                           whathappened, validity);
             }
 
-            data.inslen = calcsize(instruction, temp);
+            data.inslen = calcsize(instruction);
 
             /* This can happen if the instruction generated an error */
             if (data.inslen <= 0)
@@ -1243,7 +1245,6 @@ static int64_t len_extops(const extop *e)
 
 static int64_t insn_size(insn *instruction)
 {
-    const struct itemplate *temp;
     enum match_result m;
     int64_t isize = 0;
 
@@ -1291,13 +1292,13 @@ static int64_t insn_size(insn *instruction)
         /* Pre-matching setup */
         insn_early_setup(instruction);
 
-        m = find_match(&temp, instruction);
+        m = find_match(instruction);
         if (m < MOK_GOOD) {
             no_match_error(m, instruction);
             return -1;              /* No match */
         }
 
-        isize = calcsize(instruction, temp);
+        isize = calcsize(instruction);
         debug_set_type(instruction);
         isize = merge_resb(instruction, isize);
 
@@ -1390,7 +1391,7 @@ static int ea_evex_flags(insn *ins, const struct operand *opy)
  * Returns < 0 if generating the instruction would throw an error.
  */
 static int64_t
-calcsize_speculative(const insn *ins, const struct itemplate * const temp)
+calcsize_speculative(const insn *ins, const struct itemplate *itemp)
 {
     int64_t isize;
     insn tmpins;
@@ -1398,9 +1399,10 @@ calcsize_speculative(const insn *ins, const struct itemplate * const temp)
 
     tmpins = *ins;
     tmpins.dummy = true;
+    tmpins.itemp = itemp;
     hold = nasm_error_hold_push();
 
-    isize = calcsize(&tmpins, temp);
+    isize = calcsize(&tmpins);
 
     if (nasm_error_hold_pop(hold, false) >= ERR_NONFATAL)
         return -1;
@@ -1419,8 +1421,9 @@ calcsize_speculative(const insn *ins, const struct itemplate * const temp)
  * errors for invalid code. Use calcsize_speculative() if it is necessary
  * to calculate the size of a *potential* instruction.
  */
-static int64_t calcsize(insn *ins, const struct itemplate *temp)
+static int64_t calcsize(insn *ins)
 {
+    const struct itemplate * const temp = ins->itemp;
     const int bits = ins->bits;
     const uint8_t *codes = temp->code;
     int64_t length = 0;
@@ -1440,8 +1443,6 @@ static int64_t calcsize(insn *ins, const struct itemplate *temp)
     ins->evex    = 0;		/* Ensure EVEX is reset */
     ins->vexreg  = 0;           /* No V register */
     ins->vex_cm  = 0;           /* No implicit map */
-    ins->bits    = bits;        /* Execution mode (default asize) */
-    ins->itemp   = temp;        /* Instruction template */
     eat = EA_SCALAR;            /* Expect a scalar EA */
 
     /* Default operand size (prefixes are handled in the byte code) */
@@ -2917,17 +2918,19 @@ static uint32_t op_evexflags(const operand * o, uint32_t mask)
     return evexflags(o->decoflags, mask);
 }
 
-static enum match_result find_match(const struct itemplate **tempp,
-                                    insn *instruction)
+static enum match_result find_match(insn *instruction)
 {
     const int bits = instruction->bits;
     const struct itemplate_list *templist;
     const struct itemplate *temp;
-    const struct itemplate *best = NULL;
+    const struct itemplate *best;
     enum match_result m, merr;
     int this_good;
     int rex = instruction->prefixes[PPS_REX];
-    unsigned int n;
+    int n, i, besti;
+
+    instruction->itemp = best = NULL;
+    instruction->itempindex = besti = -1;
 
     /* Impossible encoding request? */
     if (bits != 64) {
@@ -2936,17 +2939,17 @@ static enum match_result find_match(const struct itemplate **tempp,
     }
 
     merr = MERR_INVALOP;
-    best = NULL;
     this_good = 0;
 
     templist = &nasm_instructions[instruction->opcode];
     n    = templist->ntemp;
     temp = templist->temp;
 
-    while (n--) {
+    for (i = 0; i < n; i++) {
         m = matches(temp, instruction);
         if (m > merr) {
             best = temp;
+            besti = i;
             merr = m;
             this_good = 1;
             if (merr == MOK_GOOD)
@@ -2957,10 +2960,12 @@ static enum match_result find_match(const struct itemplate **tempp,
         temp++;
     }
 
-    if (merr >= MOK_FIRST)
-        merr = MOK_GOOD;        /* Fuzzy match but valid */
-
-    *tempp = best;
+    if (merr >= MOK_FIRST) {
+        /* If this was a fuzzy match it is confirmed now */
+        merr = MOK_GOOD;
+        instruction->itemp = best;
+        instruction->itempindex = besti;
+    }
     return merr;
 }
 

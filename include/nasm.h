@@ -899,6 +899,8 @@ typedef struct insn { /* an instruction itself */
     const struct itemplate *itemp;          /* Instruction template */
     const struct operand *evex_brerop;      /* BR/ER/SAE operand position */
     struct operand  oprs[MAX_OPERANDS];     /* the operands, defined as above */
+
+    int itempindex; /* For debug: instruction template index in insnsa.c */
 } insn;
 
 /* Instruction flags type: IF_* flags are defined in insns.h */
