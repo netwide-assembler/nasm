@@ -92,6 +92,11 @@ It is the production version of NASM since 2025.
    size of the immediate explicitly (e.g. \c{JMP DWORD label}) has
    always worked correctly, however.
 
+\b Add support for C2y-style \c{\\o} escape sequences, braced escape
+   sequences, and as a NASM extension, decimal escape sequences
+   (\c{\\d}). See \k{strings}.
+
+
 \S{cl-3.01} Version 3.01
 
 \b A new \c{obj2} version of the \c{obj} output format, intended for

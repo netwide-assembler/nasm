@@ -273,6 +273,22 @@ static inline unsigned int numvalue(unsigned char c)
     return c >= 'a' ? c - 'a' + 10 : c - '0';
 }
 
+/* The same except returns -1U for non-digits, so it can be directly
+ * compared against the base used to test for validity. */
+static inline unsigned int numvalue_chk(unsigned char c)
+{
+    unsigned int v;
+    v = c - '0';
+    if (v < 10)
+        return v;
+
+    v = (c | 0x20) - 'a';
+    if (v < 26)
+        return v + 10;
+
+    return -1U;
+}
+
 /*
  * Convert a string into a number, using NASM number rules. Sets
  * `*error' to true if an error occurs, and false otherwise.

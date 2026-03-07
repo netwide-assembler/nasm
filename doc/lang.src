@@ -442,7 +442,6 @@ quotes allows double quotes to appear within it and vice versa); the
 contents of those are represented verbatim.  Strings enclosed in
 backquotes support C-style \c{\\}-escapes for special characters.
 
-
 The following \i{escape sequences} are recognized by backquoted strings:
 
 \c       \'          single quote (')
@@ -463,6 +462,22 @@ The following \i{escape sequences} are recognized by backquoted strings:
 \c       \u1234      4 hexadecimal digits - Unicode character
 \c       \U12345678  8 hexadecimal digits - Unicode character
 
+NASM 3.02 added the following additional sequences:
+
+\c       \o377       Up to 3 octal digits - literal byte (from C2y)
+\c       \d255       Up to 3 decimal digits - literal byte (NASM extension)
+
+Since NASM 3.02, the numeric escape sequences starting with \c{\\x},
+\c{\\o}, \c{\\d} or \c{\\u} can have their argument enclosed in curly
+braces to delimit their length, instead of terminating after a certain
+number of digits or a non-digit another character:
+
+\c       \x{FF}      Hexadecimal, literal byte
+\c       \o{377}     Octal, literal byte
+\c       \d{255}     Decimal, literal byte
+\c       \u{1234}    Unicode character
+\c       \u{12345}   Unicode character
+
 All other escape sequences are reserved.  Note that \c{\\0}, meaning a
 \c{NUL} character (ASCII 0), is a special case of the octal escape
 sequence.
@@ -471,6 +486,8 @@ sequence.
 \i{UTF-8}.  For example, the following lines are all equivalent:
 
 \c       db `\u263a`            ; UTF-8 smiley face
+\c       db `\U0000263a`        ; UTF-8 smiley face
+\c       db `\u{263a}`          ; UTF-8 smiley face
 \c       db `\xe2\x98\xba`      ; UTF-8 smiley face
 \c       db 0E2h, 098h, 0BAh    ; UTF-8 smiley face
 

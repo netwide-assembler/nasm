@@ -269,36 +269,34 @@ char *nasm_quote_cstr(const char *str, size_t *lenp)
  * to indicate the lead marker of a quoted string. If it is '\"', then
  * '`' is not a special character at all.
  */
+enum unq_state {
+    st_start,
+    st_backslash,
+    st_byte,                /* Byte numeric sequence */
+    st_ucs,                 /* \u or \U */
+    st_done
+};
 
 size_t nasm_unquote_anystr(char *str, char **ep, const uint32_t badctl,
                            const char qstart)
 {
-    unsigned char bq;
-    const unsigned char *p;
-    const unsigned char *escp = NULL;
-    unsigned char *q;
+    const unsigned char bq = *str;
+    const unsigned char *p = (unsigned char *)str;
+    unsigned char *q = (unsigned char *)str;
     unsigned char c;
     uint32_t ctlmask = 0;       /* Mask of control characters seen */
-    enum unq_state {
-	st_start,
-	st_backslash,
-	st_hex,
-	st_oct,
-	st_ucs,
-        st_done
-    } state;
-    int ndig = 0;
-    uint32_t nval = 0;
-
-    p = q = (unsigned char *)str;
-
-    bq = *p++;
-    if (!bq)
-	return 0;
 
     if (bq == (unsigned char)qstart) {
-	/* `...` string */
-	state = st_start;
+	/* `...` string or "..." with C unquoting */
+        enum unq_state state = st_start;
+        unsigned int base = 0;      /* Base of numeric escape sequence */
+        uint64_t nval = 0;          /* Accumulated value of numeric sequence */
+        unsigned int v;
+        int ndig = 0;               /* Max digits of numeric sequence */
+        /* ndig < 0 means braced sequence */
+        const unsigned char *escp = NULL; /* Pointer to immediately after \ */
+
+        p++;                    /* Skip initial quote */
 
 	while (state != st_done) {
 	    c = *p++;
@@ -306,17 +304,18 @@ size_t nasm_unquote_anystr(char *str, char **ep, const uint32_t badctl,
 	    case st_start:
                 if (c == '\\') {
 		    state = st_backslash;
-                } else if ((c == '\0') | (c == bq)) {
+                } else if (c == '\0' || c == bq) {
                     state = st_done;
                 } else {
                     EMIT(c);
                 }
-		break;
+                break;
 
 	    case st_backslash:
 		state = st_start;
-		escp = p;	/* Beginning of argument sequence */
+		escp = p-1;
 		nval = 0;
+
 		switch (c) {
 		case 'a':
 		    nval = 7;
@@ -341,20 +340,28 @@ size_t nasm_unquote_anystr(char *str, char **ep, const uint32_t badctl,
 		    break;
 		case 'u':
 		    state = st_ucs;
+                    base = 16;
 		    ndig = 4;
-		    break;
+                    goto check_brace;
 		case 'U':
 		    state = st_ucs;
+                    base = 16;
 		    ndig = 8;
-		    break;
+                    goto check_brace;
 		case 'v':
 		    nval = 11;
 		    break;
 		case 'x':
 		case 'X':
-		    state = st_hex;
+		    state = st_byte;
+                    base = 16;
 		    ndig = 2;
-		    break;
+                    goto check_brace;
+                case 'd':       /* NASM extension: \d = decimal */
+                    state = st_byte;
+                    base = 10;
+                    ndig = 3;
+                    goto check_brace;
 		case '0':
 		case '1':
 		case '2':
@@ -363,10 +370,19 @@ size_t nasm_unquote_anystr(char *str, char **ep, const uint32_t badctl,
 		case '5':
 		case '6':
 		case '7':
-		    state = st_oct;
-		    ndig = 2;	/* Up to two more digits */
-		    nval = c - '0';
-		    break;
+                    /* Back up both p and escp, as if there had been an "o" */
+                    p = escp--;
+                    /* fall through */
+                case 'o':
+                    state = st_byte;
+                    ndig = 3;
+                    base = 8;
+                check_brace:    /* Is this the start of a braced sequence? */
+                    if (*p == '{') {
+                        p++;    /* Skip brace */
+                        ndig = -1;
+                    }
+                    break;
                 case '\0':
                     nval = '\\';
                     p--;        /* Reprocess; terminates string */
@@ -379,37 +395,36 @@ size_t nasm_unquote_anystr(char *str, char **ep, const uint32_t badctl,
                     EMIT(nval);
 		break;
 
-	    case st_oct:
-		if (c >= '0' && c <= '7') {
-		    nval = (nval << 3) + (c - '0');
-                    if (--ndig)
-                        break;  /* Might have more digits */
-                } else {
-		    p--;	/* Process this character again */
-                }
-                EMIT(nval);
-                state = st_start;
-                break;
-
-	    case st_hex:
+	    case st_byte:
             case st_ucs:
-		if (nasm_isxdigit(c)) {
-		    nval = (nval << 4) + numvalue(c);
+                if ((v = numvalue_chk(c)) < base) {
+                    nval = (nval * base) + v;
                     if (--ndig)
-                        break;  /* Might have more digits */
+                        break; /* Continue processing number, no output */
+                } else if (ndig < 0) {
+                    /* End of braced sequence */
+                    if (unlikely(c != '}'))
+                        goto rewind;
                 } else {
-		    p--;	/* Process this character again */
+                    p--;        /* Reprocess terminating character */
+                    if (unlikely(p == escp+1))
+                        goto rewind; /* No digits at all received */
                 }
 
-                if (unlikely(p <= escp))
-                    EMIT(escp[-1]);
-                else if (state == st_ucs)
+                /* Emit the output */
+                if (state == st_ucs)
                     EMIT_UTF8(nval);
                 else
                     EMIT(nval);
 
                 state = st_start;
 		break;
+
+                /* Rewind an entire sequence as invalid */
+            rewind:
+                p = escp;       /* Start over at character following \ */
+                state = st_start;
+                break;
 
             default:
                 panic();
@@ -421,10 +436,11 @@ size_t nasm_unquote_anystr(char *str, char **ep, const uint32_t badctl,
          * * any kind, including collapsing double quote marks.)
          * We obviously can't get here if qstart == '\"'.
          */
-        while ((c = *p++) && (c != bq))
+        p++;                    /* Skip initial quote */
+        while ((c = *p++) && c != bq)
             EMIT(c);
     } else {
-	/* Not a quoted string, just return the input... */
+	/* Not a quoted string, just return the input */
         while ((c = *p++))
             EMIT(c);
     }
@@ -435,8 +451,11 @@ size_t nasm_unquote_anystr(char *str, char **ep, const uint32_t badctl,
     if (ctlmask & badctl)
         nasm_nonfatal("control character in string not allowed here");
 
-    if (ep)
+    if (ep) {
+        /* Point at the terminating character */
 	*ep = (char *)p - 1;
+    }
+
     return (char *)q - str;
 }
 #undef EMIT
@@ -471,11 +490,7 @@ char *nasm_skip_string(const char *str)
     char bq;
     const char *p;
     char c;
-    enum unq_state {
-	st_start,
-	st_backslash,
-        st_done
-    } state;
+    enum unq_state state;
 
     bq = str[0];
     p = str+1;
@@ -515,6 +530,9 @@ char *nasm_skip_string(const char *str)
 		 * a backquote will force a return to the st_start state,
                  * and any possible multi-character state will terminate
                  * for any non-alphanumeric character.
+                 *
+                 * The only reason this is needed at all is to detect
+                 * the \` sequence.
 		 */
 		state = c ? st_start : st_done;
 		break;
