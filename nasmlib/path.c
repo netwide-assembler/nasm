@@ -219,9 +219,12 @@ const char *filename_set_extension(const char *inname, const char *extension)
 
     q = outname = nasm_malloc(baselen + elen + 1);
     q = mempcpy(q, inname, baselen);
-    if (*extension)
+    if (!elen) {
+        *q = '\0';
+    } else {
         *q++ = extsep;
-    memcpy(q, extension+1, elen);
+        memcpy(q, extension+1, elen); /* Includes final null */
+    }
 
     return outname;
 }
