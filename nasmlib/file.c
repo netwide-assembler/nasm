@@ -54,14 +54,16 @@ static os_filename os_mangle_filename(const char *filename)
     size_t wclen;
     wchar_t *buf;
 
-    wclen = MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, -1, NULL, 0);
+    wclen = MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, filename,
+                                -1, NULL, 0);
     if (!wclen)
         return NULL;
 
     /* wclen is in "characters" (UTF-16 code points) */
     buf = nasm_malloc(wclen << 1);
 
-    wclen = MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, -1, buf, wclen);
+    wclen = MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, filename,
+                                -1, buf, wclen);
     if (!wclen) {
         nasm_free(buf);
         return NULL;
