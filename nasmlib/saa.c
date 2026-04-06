@@ -3,6 +3,7 @@
 
 #include "compiler.h"
 #include "nasmlib.h"
+#include "ilog2.h"
 #include "saa.h"
 
 /* Aggregate SAA components smaller than this */
@@ -299,55 +300,57 @@ void saa_writeaddr(struct SAA *s, uint64_t v, size_t len)
     saa_wbytes(s, &v, len);
 }
 
-/* write unsigned LEB128 value to SAA */
-void saa_wleb128u(struct SAA *psaa, int value)
+/*
+ * Write an LEB128 value to an SAA. Each byte contains 7 bits of
+ * payload in littleendian order, with the topmost bit indicating
+ * continuation.
+ *
+ * For the signed format, the sign bit needs to be included, even if
+ * it zero, so may generate an encoding that would be invalid for
+ * the unsigned format, e.g 127:
+ *
+ * unsigned: 7F
+ * signed:   FF 00
+ *
+ * Thus, the >> 6 instead of >> 7 in the exit test for the signed
+ * version.
+ */
+void saa_wleb128u(struct SAA *s, uint64_t value)
 {
-    char temp[64], *ptemp;
+    uint8_t buf[sizeof(value)*2]; /* Very conservative allocation :) */
+    uint8_t *p = buf;
     uint8_t byte;
-    int len;
 
-    ptemp = temp;
-    len = 0;
-    do {
+    while (1) {
         byte = value & 127;
         value >>= 7;
-        if (value != 0)         /* more bytes to come */
-            byte |= 0x80;
-        *ptemp = byte;
-        ptemp++;
-        len++;
-    } while (value != 0);
-    saa_wbytes(psaa, temp, len);
+        if (!value) {
+            *p++ = byte;
+            break;
+        }
+        byte |= 0x80;
+        *p++ = byte;
+    }
+    saa_wbytes(s, buf, p-buf);
 }
 
-/* write signed LEB128 value to SAA */
-void saa_wleb128s(struct SAA *psaa, int value)
+/* write a signed LEB128 value to SAA */
+void saa_wleb128s(struct SAA *s, int64_t value)
 {
-    char temp[64], *ptemp;
+    uint8_t buf[sizeof(value)*2]; /* Very conservative allocation :) */
+    uint8_t *p = buf;
     uint8_t byte;
-    bool more, negative;
-    int size, len;
+    int64_t sign = value >> 63;
 
-    ptemp = temp;
-    more = 1;
-    negative = (value < 0);
-    size = sizeof(int) * 8;
-    len = 0;
-    while (more) {
-        byte = value & 0x7f;
+    while (1) {
+        byte = value & 127;
+        if ((value >> 6) == sign) {
+            *p++ = byte;
+            break;
+        }
         value >>= 7;
-        if (negative)
-            /* sign extend */
-            value |= -(1 << (size - 7));
-        /* sign bit of byte is second high order bit (0x40) */
-        if ((value == 0 && !(byte & 0x40)) ||
-            ((value == -1) && (byte & 0x40)))
-            more = 0;
-        else
-            byte |= 0x80;
-        *ptemp = byte;
-        ptemp++;
-        len++;
+        byte |= 0x80;
+        *p++ = byte;
     }
-    saa_wbytes(psaa, temp, len);
+    saa_wbytes(s, buf, p-buf);
 }

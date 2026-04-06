@@ -57,8 +57,8 @@ void saa_write8(struct SAA *s, uint8_t v);
 void saa_write16(struct SAA *s, uint16_t v);
 void saa_write32(struct SAA *s, uint32_t v);
 void saa_write64(struct SAA *s, uint64_t v);
-void saa_wleb128u(struct SAA *, int);   /* write unsigned LEB128 value */
-void saa_wleb128s(struct SAA *, int);   /* write signed LEB128 value */
-void saa_writeaddr(struct SAA *, uint64_t, size_t);
+void saa_wleb128u(struct SAA *, uint64_t v);   /* unsigned LEB128 value */
+void saa_wleb128s(struct SAA *, int64_t v);    /* signed LEB128 value */
+void saa_writeaddr(struct SAA *, uint64_t, size_t); /* specific size integer */
 
 #endif                          /* NASM_SAA_H */
