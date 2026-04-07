@@ -96,6 +96,9 @@ It is the production version of NASM since 2025.
    sequences, and as a NASM extension, decimal escape sequences
    (\c{\\d}). See \k{strings}.
 
+\b Fix generation of the short opcodes for \c{ADD}, \c{OR}, \c{ADC},
+   \c{SBB}, \c{AND}, \c{SUB}, \c{XOR}, and \c{CMP AL,imm8}.
+
 
 \S{cl-3.01} Version 3.01
 
