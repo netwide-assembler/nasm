@@ -45,6 +45,7 @@
  */
 #ifdef _WIN32
 #include <wchar.h>
+#include <stringapiset.h>
 
 typedef wchar_t *os_filename;
 typedef wchar_t  os_fopenflag;
