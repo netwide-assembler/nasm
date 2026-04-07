@@ -959,8 +959,11 @@ sub show_bytecodes($) {
 # Added as a comment to help debugging.
 sub show_iflags($) {
     my($s) = @_;
-    return undef unless ($s =~ /([0-9]+)\},$/);
-    return get_iflags($1);
+    $s =~ s/^\{//;
+    $s =~ s/\},$//;
+    $s =~ s/\{[^\}]+\}/{}/g;	# Array fields may have internal commas...
+    my @f = split(/\,\s*/, $s);
+    return get_iflags($f[5]);
 }
 
 #
