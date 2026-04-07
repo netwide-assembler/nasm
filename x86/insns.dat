@@ -456,9 +456,9 @@ $wdq  SMSW	reg#				[m:	o# 0f 01 /4]				286
 
 WRMSR		void				[	0f 30]					PRIV,PENT,NOAPX
 RDMSR		void				[	0f 32]					PRIV,PENT,NOAPX
-RDMSR		reg64,imm32			[mi:	vex+.128.f2.m7.w0 f6 /0 id]		PRIV,LONG,APX,MSR_IMM,FUTURE
+RDMSR		reg64,imm32			[mi:	vex+.128.f2.m7.w0 f6 /0 id]		PRIV,LONG,MSR_IMM,FUTURE
 WRMSRNS		void				[	np 0f 01 c6		]		PRIV,WRMSRNS,FUTURE
-WRMSRNS		imm32,reg64			[im:	vex+.128.f3.m7.w0 f6 /0 id]		PRIV,LONG,APX,MSR_IMM,FUTURE
+WRMSRNS		imm32,reg64			[im:	vex+.128.f3.m7.w0 f6 /0 id]		PRIV,LONG,MSR_IMM,FUTURE
 RDMSRLIST	void				[	f2 0f 01 c6		]		PRIV,MSRLIST,LONG
 WRMSRLIST	void				[	f3 0f 01 c6		]		PRIV,MSRLIST,LONG
 
