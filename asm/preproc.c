@@ -9015,7 +9015,7 @@ make_tok_num_radix(Token *next, int64_t val, char radix, bool uns)
         upper = !(radix & 0x20);
     }
 
-    p += numstr(p, 64, uval, -1, base, upper);
+    p += numstr(p, sizeof(numbuf)-2, uval, -1, base, upper);
     next = new_Token(next, TOKEN_NUM, numbuf, p - numbuf);
 
     if (minus)
