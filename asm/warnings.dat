@@ -308,7 +308,7 @@ prefix-lock-xchg [on] superfluous \c{LOCK} prefix on \c{XCHG} instruction
 
 prefix-opsize [on] invalid operand size prefix
     Warns that an operand prefix (\c{o16}, \c{o32}, \c{o64},
-    \c{osp}) invalid for the specified instruction has been specified.
+    \c{osp}) is invalid for the specified instruction has been specified.
     The operand prefix will be ignored by the assembler.
 
 prefix-seg [on] segment prefix ignored in 64-bit mode
