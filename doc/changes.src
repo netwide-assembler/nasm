@@ -99,6 +99,10 @@ It is the production version of NASM since 2025.
 \b Fix generation of the short opcodes for \c{ADD}, \c{OR}, \c{ADC},
    \c{SBB}, \c{AND}, \c{SUB}, \c{XOR}, and \c{CMP AL,imm8}.
 
+\b Fix truncation of the generated constant to 63 bits when invoking a
+   single-line macro when an argument is defined as \c{=/b} or
+   \c{=/ub}.
+
 
 \S{cl-3.01} Version 3.01
 
