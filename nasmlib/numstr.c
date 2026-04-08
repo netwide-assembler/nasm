@@ -29,7 +29,8 @@ int numstr(char *buf, size_t buflen, uint64_t n,
     char *p;
     int len;
 
-    if (base < 2 || base > NUMSTR_MAXBASE)
+    if (unlikely(base < 2) || unlikely(base > NUMSTR_MAXBASE) ||
+        unlikely(!buflen))
         return -1;
 
     if (moredigits)
