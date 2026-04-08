@@ -222,7 +222,7 @@ pp-open-string [on] unterminated string
     Warns that a quoted string without a closing quotation
     mark was encountered during preprocessing.
 
-pp-rep-negative [on] regative \c{%rep} count
+pp-rep-negative [on] negative \c{%rep} count
 =negative-rep
     Warns about a negative count given to the \c{%rep}
     preprocessor directive.
