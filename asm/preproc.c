@@ -8166,6 +8166,24 @@ stdmac_find(const SMacro *s, Token **params, int nparam)
     return make_tok_num(NULL, found);
 }
 
+static Token *
+stdmac_env(const SMacro *s, Token **params, int nparam)
+{
+    const char *env;
+    (void)s;
+    (void)nparam;
+
+    env = pp_getenv(params[0], false);
+    if (!env) {
+        if (nparam > 1)
+            return new_Token(NULL, tok_smac_param(1), "", 0);
+
+        env = "";               /* No fallback argument */
+    }
+
+    return make_tok_qstr(NULL, env);
+}
+
 /*
  * Wrapper around define_smacro() which also checks to see if it is
  * a preprocessor directive, so that pp_op_may_be_function[] needs to
@@ -8374,6 +8392,19 @@ static void pp_add_magic_miscfunc(void)
     tmpl.params[1].flags  = SPARM_STR|SPARM_CONDQUOTE|SPARM_OPTIONAL;
     tmpl.params[1].def    = make_tok_qstr_len(NULL, "", 0);
     define_magic("%b2hs", false, &tmpl);
+
+    /* %env() function */
+    for (i = 1; i <= 2; i++) {
+        nasm_zero(tmpl);
+        tmpl.nparam = i;
+        tmpl.expand = stdmac_env;
+        tmpl.recursive = true;
+        nasm_newn(tmpl.params, tmpl.nparam);
+        tmpl.params[0].flags  = SPARM_STR|SPARM_CONDQUOTE;
+        if (i > 1)
+            tmpl.params[1].flags  = SPARM_GREEDY;
+        define_magic("%env", false, &tmpl);
+    }
 
     /* %find[i]() functions */
     for (i = 0; i < 2; i++) {

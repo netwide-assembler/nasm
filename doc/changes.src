@@ -103,6 +103,9 @@ It is the production version of NASM since 2025.
    single-line macro when an argument is defined as \c{=/b} or
    \c{=/ub}.
 
+\b Add an \c{%env()} preprocessor function as a more robust and
+   flexible alternative to the \c{%!} construct. See \k{f_env}.
+
 
 \S{cl-3.01} Version 3.01
 
