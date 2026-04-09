@@ -156,9 +156,14 @@ static bool is_smac_param(enum token_type toktype)
  * We prohibit tokens of length > MAX_TEXT even though length here is
  * an unsigned int; this avoids problems if the length is passed
  * through an interface with type "int", and is absurdly large anyway.
+<<<<<<< Updated upstream
  * Use INT_MAX >> 2 to try to at least try to avoid risking wraparound
  * even in the fairly extreme case when "int" is incorrectly used and
  * two lengths are added. That is still 512GB with a 32-bit int...
+=======
+ * Use INT_MAX >> 1 to try to at least try to avoid risking wraparound
+ * even when "int" is incorrectly used.
+>>>>>>> Stashed changes
  *
  * Earlier versions of the source code incorrectly stated that
  * examining the text string alone can be unconditionally valid. This
@@ -2780,7 +2785,8 @@ static int read_param_count(const char *str)
         nasm_nonfatal("unable to parse parameter count `%s'", str);
         return 0;
     } else if (result > MAX_PARAM) {
-        nasm_nonfatal("parameter count `%s' is too large (max %d)", MAX_PARAM);
+        nasm_nonfatal("parameter count `%s' is too large (max %d)",
+                      str, MAX_PARAM);
         return 0;
     }
     return result;
