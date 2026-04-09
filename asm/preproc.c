@@ -148,23 +148,32 @@ static bool is_smac_param(enum token_type toktype)
 }
 
 /*
- * This is tuned so struct Token should be 64 bytes on 64-bit
- * systems and 32 bytes on 32-bit systems. It enables them
- * to be nicely cache aligned, and the text to still be kept
- * inline for nearly all tokens.
+ * This is tuned so struct Token should be 64 bytes on 64-bit systems
+ * and 32 bytes on 32-bit systems. It enables them to be nicely cache
+ * aligned, and the text to still be kept inline for nearly all
+ * tokens.
  *
- * We prohibit tokens of length > MAX_TEXT even though
- * length here is an unsigned int; this avoids problems
- * if the length is passed through an interface with type "int",
- * and is absurdly large anyway.
+ * We prohibit tokens of length > MAX_TEXT even though length here is
+ * an unsigned int; this avoids problems if the length is passed
+ * through an interface with type "int", and is absurdly large anyway.
+ * Use INT_MAX >> 2 to try to at least try to avoid risking wraparound
+ * even in the fairly extreme case when "int" is incorrectly used and
+ * two lengths are added. That is still 512GB with a 32-bit int...
  *
  * Earlier versions of the source code incorrectly stated that
  * examining the text string alone can be unconditionally valid. This
  * is incorrect, as some token types strip parts of the string,
  * e.g. indirect tokens.
+ *
+ * The pointer for out of line token strings are located at the end of
+ * the buffer to maximize the likelihood of incorrectly examining
+ * text.a or text.p.ptr giving a null-terminated empty string or a
+ * NULL pointer, respectively, rather than something more dangerous.
+ * It still not something that should happen.
  */
-#define INLINE_TEXT (7*sizeof(char *)-sizeof(enum token_type)-sizeof(unsigned int)-1)
-#define MAX_TEXT (INT_MAX-2)
+#define INLINE_TEXT (7*sizeof(char *)-sizeof(enum token_type) \
+                     -sizeof(unsigned int)-1)
+#define MAX_TEXT (INT_MAX >> 2)
 
 struct Token {
     Token *next;
@@ -2755,19 +2764,25 @@ restart:
     return false;
 }
 
-/* param should be a natural number [0; INT_MAX] */
+/*
+ * param should be a natural number [0,MAX_PARAM]; MAX_PARAM is a
+ * ridiculously high number already as defined here...
+ */
+#define MAX_PARAM	16383
+
 static int read_param_count(const char *str)
 {
-    int result;
+    int64_t result;
     bool err;
 
     result = readnum(str, &err);
-    if (result < 0 || result > INT_MAX) {
-        result = 0;
-        nasm_nonfatal("parameter count `%s' is out of bounds [%d; %d]",
-                      str, 0, INT_MAX);
-    } else if (err)
+    if (err || result < 0) {
         nasm_nonfatal("unable to parse parameter count `%s'", str);
+        return 0;
+    } else if (result > MAX_PARAM) {
+        nasm_nonfatal("parameter count `%s' is too large (max %d)", MAX_PARAM);
+        return 0;
+    }
     return result;
 }
 
