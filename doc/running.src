@@ -610,8 +610,8 @@ form can be used for compatibility with older versions of NASM.
 
 These options allows user to setup various maximum values after which
 NASM will terminate with a fatal error rather than consume arbitrary
-amount of compute time. Each limit can be set to a positive number or
-\c{unlimited}.
+amount of compute time. Each limit can be set to a positive number,
+\c{unlimited}, \c{maximum}, or \c{default}.
 
 \b\c{--limit-passes}: Number of maximum allowed passes. Default is
 \c{unlimited}.
@@ -636,6 +636,9 @@ expression length. Default is 8192 on most systems.
 
 \b\c{--limit-lines}: Total number of source lines allowed to be
 processed. Default is 2000000000.
+
+\b\c{--limit-params}: Maximum number of multi-line macro
+parameters. Default is 16383.
 
 For example, set the maximum line count to 1000:
 
