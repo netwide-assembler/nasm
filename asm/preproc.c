@@ -2769,12 +2769,6 @@ restart:
     return false;
 }
 
-/*
- * param should be a natural number [0,MAX_PARAM]; MAX_PARAM is a
- * ridiculously high number already as defined here...
- */
-#define MAX_PARAM	16383
-
 static int read_param_count(const char *str)
 {
     int64_t result;
@@ -2784,9 +2778,9 @@ static int read_param_count(const char *str)
     if (err || result < 0) {
         nasm_nonfatal("unable to parse parameter count `%s'", str);
         return 0;
-    } else if (result > MAX_PARAM) {
-        nasm_nonfatal("parameter count `%s' is too large (max %d)",
-                      str, MAX_PARAM);
+    } else if (result > nasm_limit[LIMIT_PARAMS]) {
+        nasm_nonfatal("parameter count `%s' is too large (max %"PRId64")",
+                      str, nasm_limit[LIMIT_PARAMS]);
         return 0;
     }
     return result;

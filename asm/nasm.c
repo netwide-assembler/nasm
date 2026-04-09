@@ -129,26 +129,75 @@ static char *(*quote_for_make)(const char *) = quote_for_pmake;
  * current age of the universe for this limit to be reached even on
  * much faster CPUs than currently exist.
 */
-#define LIMIT_MAX_VAL	(INT64_MAX >> 1)
+#define LIMIT_MAX_VAL	(INT64_MAX >> 1) /* Absolute maximum for any limit */
 
-int64_t nasm_limit[LIMIT_MAX+1];
+int64_t nasm_limit[LIMIT_MAX];
 
 struct limit_info {
     const char *name;
     const char *help;
-    int64_t default_val;
+    int64_t default_val;        /* Default, or 0 for maximum */
+    int64_t max_val;            /* Absolute maximum, or 0 for LIMIT_MAX_VAL */
 };
 /* The order here must match enum nasm_limit in nasm.h */
-static const struct limit_info limit_info[LIMIT_MAX+1] = {
-    { "passes", "total number of passes", LIMIT_MAX_VAL },
-    { "stalled-passes", "number of passes without forward progress", 1000 },
-    { "macro-levels", "levels of macro expansion", 10000 },
-    { "macro-tokens", "tokens processed during single-line macro expansion", 10000000 },
-    { "mmacros", "multi-line macros before final return", 100000 },
-    { "rep", "%rep count", 1000000 },
-    { "eval", "expression evaluation descent", 8192 },
-    { "lines", "total source lines processed", 2000000000 }
+static const struct limit_info limit_info[LIMIT_MAX] = {
+    { "passes", "total number of passes", 0, 0 },
+    { "stalled-passes", "number of passes without forward progress", 1000, 0 },
+    { "macro-levels", "levels of macro expansion", 10000, 0 },
+    { "macro-tokens", "tokens processed during single-line macro expansion",
+      10000000, 0 },
+    { "mmacros", "multi-line macros before final return",
+      100000, 0 },
+    { "rep", "%rep count", 1000000, 0 },
+    { "eval", "expression evaluation descent", 8192, 0 },
+    { "lines", "total source lines processed", 2000000000, 0 },
+    { "params", "multi-line macro parameter count", 16383, INT_MAX >> 1 }
 };
+
+static int64_t limit_default(enum nasm_limit limit)
+{
+    const struct limit_info *l;
+    int64_t v, m;
+
+    if (limit >= LIMIT_MAX)
+        return 0;
+    l = &limit_info[limit];
+
+    m = l->max_val;
+    if (!m || m > LIMIT_MAX_VAL)
+        m = LIMIT_MAX_VAL;
+
+    v = l->default_val;
+    return (!v || v > m) ? m : v;
+}
+
+static int64_t limit_max(enum nasm_limit limit)
+{
+    const struct limit_info *l;
+    int64_t m;
+
+    if (limit >= LIMIT_MAX)
+        return 0;
+    l = &limit_info[limit];
+
+    m = l->max_val;
+    if (!m || m > LIMIT_MAX_VAL)
+        m = LIMIT_MAX_VAL;
+
+    return m;
+}
+
+static const char *limit_str(int64_t limit_val)
+{
+    static char buf[3*sizeof(limit_val)+3]; /* Excessive but safe */
+
+    if (limit_val < LIMIT_MAX_VAL) {
+        snprintf(buf, sizeof buf, "%"PRId64, limit_val);
+        return buf;
+    } else {
+        return "unlimited";
+    }
+}
 
 static void set_default_limits(void)
 {
@@ -156,15 +205,15 @@ static void set_default_limits(void)
     size_t rl;
     int64_t new_limit;
 
-    for (i = 0; i <= LIMIT_MAX; i++)
-        nasm_limit[i] = limit_info[i].default_val;
+    for (i = 0; i < LIMIT_MAX; i++)
+        nasm_limit[i] = limit_default(i);
 
     /*
      * Try to set a sensible default value for the eval depth based
      * on the limit of the stack size, if knowable...
      */
     rl = nasm_get_stack_size_limit();
-    new_limit = rl / (128 * sizeof(void *)); /* Sensible heuristic */
+    new_limit = rl / (128 * sizeof(void *)); /* Sensible??? heuristic */
     if (new_limit < nasm_limit[LIMIT_EVAL])
         nasm_limit[LIMIT_EVAL] = new_limit;
 }
@@ -173,7 +222,7 @@ enum directive_result
 nasm_set_limit(const char *limit, const char *valstr)
 {
     int i;
-    int64_t val;
+    int64_t val, default_val, max_val;
     bool rn_error;
     int errlevel;
 
@@ -182,11 +231,11 @@ nasm_set_limit(const char *limit, const char *valstr)
     if (!valstr)
         valstr = "";
 
-    for (i = 0; i <= LIMIT_MAX; i++) {
+    for (i = 0; i < LIMIT_MAX; i++) {
         if (!nasm_stricmp(limit, limit_info[i].name))
             break;
     }
-    if (i > LIMIT_MAX) {
+    if (i >= LIMIT_MAX) {
         if (not_started())
             errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
         else
@@ -195,20 +244,40 @@ nasm_set_limit(const char *limit, const char *valstr)
         return DIRR_ERROR;
     }
 
-    if (!nasm_stricmp(valstr, "unlimited")) {
-        val = LIMIT_MAX_VAL;
+    max_val = limit_max(i);
+    default_val = limit_default(i);
+
+    if (!*valstr || !nasm_stricmp(valstr, "default")) {
+        val = default_val;
+    } else if (!nasm_stricmp(valstr, "unlimited") ||
+               !nasm_stricmp(valstr, "maximum") ||
+               !nasm_stricmp(valstr, "max")) {
+        val = max_val;
     } else {
+        if (not_started())
+            errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
+        else
+            errlevel = ERR_WARNING|WARN_PRAGMA_BAD;
+
         val = readnum(valstr, &rn_error);
         if (rn_error || val < 0) {
-            if (not_started())
-                errlevel = ERR_WARNING|WARN_OTHER|ERR_USAGE;
-            else
-                errlevel = ERR_WARNING|WARN_PRAGMA_BAD;
-            nasm_error(errlevel, "invalid limit value: `%s'", valstr);
+            nasm_error(errlevel, "invalid limit value: `%s %s'",
+                       limit, valstr);
             return DIRR_ERROR;
         }
-        if (val > LIMIT_MAX_VAL)
-            val = LIMIT_MAX_VAL;
+
+        if (!val)
+            val = default_val;
+
+        if (val > max_val) {
+            val = max_val;
+            if (max_val < LIMIT_MAX_VAL) {
+                nasm_error(errlevel,
+                           "excessive limit value `%s %s' capped to %"PRId64,
+                           limit, valstr, max_val);
+                /* ... but proceed after the warning ... */
+            }
+        }
     }
 
     nasm_limit[i] = val;
@@ -1767,7 +1836,8 @@ static void help(FILE *out, const char *what)
     int i;
     int with;
 
-#define SEE(x) (with == HW_OPT ? " (see -h " x ")" : "")
+#define SEEx(x,y) (with == HW_OPT ? " (see -h " x ")" : (y))
+#define SEE(x)    SEEx(x,"")
 
     with = HW_ERR;
 
@@ -2034,22 +2104,20 @@ static void help(FILE *out, const char *what)
             "    --reproducible attempt to produce run-to-run identical output\n"
             , out);
     }
-    if (help_optor(with, HW_LIMIT)) {
-        fprintf(out, "    --limit-X val  set execution limit X%s\n",
-                SEE("--limit"));
-    }
     if (help_is(with, HW_LIMIT)) {
-        fputs("      Defaults in brackets:\n", out);
-
-        for (i = 0; i <= LIMIT_MAX; i++) {
-            fprintf(out, "       %-20s %s [",
-                    limit_info[i].name, limit_info[i].help);
-            if (nasm_limit[i] < LIMIT_MAX_VAL) {
-                fprintf(out, "%"PRId64"]\n", nasm_limit[i]);
-            } else {
-                fputs("unlimited]\n", out);
-            }
+        fprintf(out, "    --limit-* val  set execution limit:\n");
+        for (i = 0; i < LIMIT_MAX; i++) {
+            fprintf(out,
+                    "       %-20s %s\n"
+                    "       %-20s [default %s",
+                    limit_info[i].name, limit_info[i].help,
+                    "", limit_str(limit_default(i)));
+            fprintf(out, ", max %s]\n",
+                    limit_str(limit_max(i)));
         }
+    } else if (help_optor(with, HW_LIMIT)) {
+        fprintf(out, "    --limit-* val  set execution limit%s\n",
+                SEE("--limit"));
     }
 #undef SEE
 }
