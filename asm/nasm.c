@@ -1633,10 +1633,10 @@ void print_final_report(bool failure)
 
 static void assemble_file(const char *fname, struct strlist *depend_list)
 {
+    static int64_t stall_count = 0; /* Make sure we make forward progress... */
     char *line;
     insn output_ins;
     uint64_t prev_offset_changed;
-    int64_t stall_count = 0; /* Make sure we make forward progress... */
 
     switch (cmd_sb) {
     case 16:
