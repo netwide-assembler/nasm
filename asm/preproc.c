@@ -8186,7 +8186,6 @@ stdmac_env(const SMacro *s, Token **params, int nparam)
 {
     const char *env;
     (void)s;
-    (void)nparam;
 
     env = pp_getenv(params[0], false);
     if (!env) {
