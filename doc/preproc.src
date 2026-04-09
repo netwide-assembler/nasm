@@ -888,6 +888,45 @@ Unlike the C \c{defined()} preprocessor construct, these functions are
 valid anywhere in the source code, not just in \c{%if} expressions.
 
 
+\S{f_limit} \i\c{%limit()} Function
+
+The \c{%limit()} function takes as its first argument an optionally
+quoted string which is matched against a resource limit as defined by
+the \c{--limit-} command line option or the \c{%pragma limit}
+directive (see \k{opt-limit}). The macro then expands to the value of
+that limit, or \c{0} if no limit with that name is known in the
+current version of NASM.
+
+An optional second argument can be set to one of the following
+optionally quoted strings:
+
+\b \c{current}: the current value for the limit. This is also the result
+   if no second argument is specified.
+
+\b \e{reset}: the initial value for the limit, set on the command line
+   or the default value if no such value is set; this is the value
+   that \c{%pragma limit} \e{limit-name} \c{reset} would set the limit
+   to.
+
+\b \e{default}: the default value for the limit. This is the
+   value that \c{%pragma limit} \e{limit-name} \c{default} would set
+   the limit to.
+
+\b \e{maximum}: the maximum permitted value for the limit. This is the
+    value that \c{%pragma limit} \e{limit-name} \c{maximum} would set
+    the limit to.
+
+The value \c{unlimited} is represented by a very large positive
+number. If the limit name is the empty string or \c{unlimited},
+\c{%limit()} returns this value for comparison purposes.
+
+The standard macro \c{__?NASM_LIMITS?__} expands to a comma-separated
+list of quoted strings representing all limits defined in the current
+version of NASM, see \k{nasm_limits}.
+
+The \c{%limit()} function was introduced in NASM 3.02.
+
+
 \S{f_map} \i\c{%map()} Function
 
 The \c{%map()} function takes as its first parameter the name of a

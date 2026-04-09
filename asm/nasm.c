@@ -129,9 +129,8 @@ static char *(*quote_for_make)(const char *) = quote_for_pmake;
  * current age of the universe for this limit to be reached even on
  * much faster CPUs than currently exist.
 */
-#define LIMIT_MAX_VAL	(INT64_MAX >> 1) /* Absolute maximum for any limit */
-
 int64_t nasm_limit[LIMIT_MAX];
+static int64_t nasm_limit_from_cmdline[LIMIT_MAX];
 
 struct limit_info {
     const char *name;
@@ -222,7 +221,7 @@ enum directive_result
 nasm_set_limit(const char *limit, const char *valstr)
 {
     int i;
-    int64_t val, default_val, max_val;
+    int64_t val, init_val, default_val, max_val;
     bool rn_error;
     int errlevel;
 
@@ -246,8 +245,15 @@ nasm_set_limit(const char *limit, const char *valstr)
 
     max_val = limit_max(i);
     default_val = limit_default(i);
+    init_val = nasm_limit_from_cmdline[i];
+    if (!init_val)
+        init_val = default_val;
 
-    if (!*valstr || !nasm_stricmp(valstr, "default")) {
+    if (!strcmp(valstr, "*") ||
+        !nasm_stricmp(valstr, "reset") ||
+        !nasm_stricmp(valstr, "init")) {
+        val = init_val;
+    } else if (!nasm_stricmp(valstr, "default")) {
         val = default_val;
     } else if (!nasm_stricmp(valstr, "unlimited") ||
                !nasm_stricmp(valstr, "maximum") ||
@@ -267,7 +273,7 @@ nasm_set_limit(const char *limit, const char *valstr)
         }
 
         if (!val)
-            val = default_val;
+            val = init_val;
 
         if (val > max_val) {
             val = max_val;
@@ -282,6 +288,43 @@ nasm_set_limit(const char *limit, const char *valstr)
 
     nasm_limit[i] = val;
     return DIRR_OK;
+}
+
+int64_t nasm_get_limit(const char *limit, enum get_limit_which which)
+{
+    int i;
+
+    for (i = 0; i < LIMIT_MAX; i++) {
+        if (!nasm_stricmp(limit, limit_info[i].name)) {
+            switch (which) {
+            case GET_LIMIT_CURRENT:
+                return nasm_limit[i];
+            case GET_LIMIT_INIT:
+                return nasm_limit_from_cmdline[i];
+            case GET_LIMIT_DEFAULT:
+                return limit_default(i);
+            case GET_LIMIT_MAX:
+                return limit_max(i);
+            default:
+                return 0;
+            }
+        }
+    }
+
+    return 0;
+}
+
+const char *nasm_limit_name(enum nasm_limit i)
+{
+    if (i >= LIMIT_MAX)
+        return NULL;
+
+    return limit_info[i].name;
+}
+
+static void reset_limits_before_pass(void)
+{
+    memcpy(nasm_limit, nasm_limit_from_cmdline, sizeof nasm_limit);
 }
 
 int64_t switch_segment(int32_t segment)
@@ -601,8 +644,9 @@ int main(int argc, char **argv)
     if (terminate_after_phase())
         return 1;
 
-    /* Save away the default state of warnings */
+    /* Save away the default states of warnings and limits */
     error_init();
+    memcpy(nasm_limit_from_cmdline, nasm_limit, sizeof nasm_limit);
 
     /* Dependency filename if we are also doing other things */
     if (!depend_file && (operating_mode & ~OP_DEPEND)) {
@@ -1637,6 +1681,8 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
     char *line;
     insn output_ins;
     uint64_t prev_offset_changed;
+
+    reset_limits_before_pass();
 
     switch (cmd_sb) {
     case 16:

@@ -8198,6 +8198,46 @@ stdmac_env(const SMacro *s, Token **params, int nparam)
     return make_tok_qstr(NULL, env);
 }
 
+static Token *
+stdmac_limit(const SMacro *s, Token **params, int nparam)
+{
+    const char *which_str, *limit;
+    enum get_limit_which which;
+    int64_t val = 0;
+
+    (void)s;
+    (void)nparam;
+
+    which_str = unquote_token(params[1]);
+
+    if (!*which_str || !nasm_stricmp(which_str, "current")) {
+        which = GET_LIMIT_CURRENT;
+    } else if (!strcmp(which_str, "*") ||
+               !nasm_stricmp(which_str, "reset") ||
+               !nasm_stricmp(which_str, "init")) {
+        which = GET_LIMIT_INIT;
+    } else if (!nasm_stricmp(which_str, "default")) {
+        which = GET_LIMIT_DEFAULT;
+    } else if (!nasm_stricmp(which_str, "unlimited") ||
+               !nasm_stricmp(which_str, "maximum") ||
+               !nasm_stricmp(which_str, "max")) {
+        which = GET_LIMIT_MAX;
+    } else {
+        nasm_nonfatal("invalid second argument `%s' to %s()",
+                      which_str, s->name);
+        goto err;
+    }
+
+    limit = unquote_token(params[0]);
+    if (!*limit || !nasm_stricmp(limit, "unlimited"))
+        val = LIMIT_MAX_VAL;
+    else
+        val = nasm_get_limit(limit, which);
+
+err:
+    return make_tok_num(NULL, val);
+}
+
 /*
  * Wrapper around define_smacro() which also checks to see if it is
  * a preprocessor directive, so that pp_op_may_be_function[] needs to
@@ -8407,6 +8447,16 @@ static void pp_add_magic_miscfunc(void)
     tmpl.params[1].def    = make_tok_qstr_len(NULL, "", 0);
     define_magic("%b2hs", false, &tmpl);
 
+    /* %limit() function */
+    nasm_zero(tmpl);
+    tmpl.nparam = 2;
+    tmpl.expand = stdmac_limit;
+    tmpl.recursive = true;
+    nasm_newn(tmpl.params, tmpl.nparam);
+    tmpl.params[0].flags  = SPARM_STR|SPARM_CONDQUOTE;
+    tmpl.params[1].flags  = SPARM_STR|SPARM_CONDQUOTE|SPARM_OPTIONAL;
+    define_magic("%limit", false, &tmpl);
+
     /* %env() function */
     for (i = 1; i <= 2; i++) {
         nasm_zero(tmpl);
@@ -8469,6 +8519,20 @@ static void pp_start_stdmac(void)
     }
 }
 
+static void pp_add_limits_stdmac(void)
+{
+    int i;
+    Token *t = NULL;
+
+    for (i = LIMIT_MAX-1; i > 0; i--) {
+        t = make_tok_qstr(t, nasm_limit_name(i));
+        t = make_tok_char(t, ',');
+    }
+    t = make_tok_qstr(t, nasm_limit_name(0));
+
+    define_smacro("__?NASM_LIMITS?__", true, t, NULL);
+}
+
 static void pp_reset_stdmac(enum preproc_mode mode)
 {
     int apass;
@@ -8483,6 +8547,8 @@ static void pp_reset_stdmac(enum preproc_mode mode)
     pp_add_stdmac(&nasm_stdmac_nasm);
     pp_add_stdmac(&nasm_stdmac_version);
     pp_add_stdmac(ofmt->stdmac);
+
+    pp_add_limits_stdmac();
 
     do_predef = true;
 

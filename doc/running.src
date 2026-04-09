@@ -649,6 +649,14 @@ example:
 
 \c %pragma limit lines 1000
 
+Specifying the limit value as \c{*} or \c{reset} resets the limit to
+the value specified on the command line or the default value, undoing
+any previous \c{%pragma limit}.
+
+See also the \c{%limit()} preprocessor function (\k{f_limit}) and the
+\c{__?NASM_LIMITS?__} standard macro (\k{nasm_limits}).
+
+
 \IR{--keep-all} \c{--keep-all} option
 
 \S{opt-keep-all} The \i\c{--keep-all} Option

@@ -184,6 +184,20 @@ clock:
 \c       __?UTC_TIME_NUM?__     210042
 \c       __?POSIX_TIME?__       1262293242
 
+
+\H{nasm_limits} \i\c{__?NASM_LIMITS?__}: List of Resource Limits
+
+The standard macro \c{__?NASM_LIMITS?__} is defined as a
+comma-separated list of quoted strings corresponding to all resource
+limits defined in the current version of NASM. It also indicates the
+availability of the \c{%limit()} function and the keywords
+\c{default}, \c{maximum}, and \c{reset} for \c{%pragma limit}.
+
+See \k{opt-limit} and \c{f_limit}.
+
+\c{__?NASM_LIMITS?__} is defined since NASM 3.02.
+
+
 \H{has_ifdirective} \i\c{__?NASM_HAS_IFDIRECTIVE?__}: Directive
 Probing Support
 

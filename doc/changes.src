@@ -110,7 +110,8 @@ It is the production version of NASM since 2025.
    configurable limit. See \k{opt-limit}.
 
 \b The \c{--limit-} options and \c{%pragma limit} now accept the
-   keywords \c{default} and \c{maximum}. See \k{opt-limit}.
+   keywords \c{default}, \c{maximum}, and \c{reset}. See
+   \k{opt-limit}.
 
 \S{cl-3.01} Version 3.01
 

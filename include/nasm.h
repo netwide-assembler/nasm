@@ -964,8 +964,19 @@ enum nasm_limit {
     LIMIT_MAX                   /* Must be at end */
 };
 
+#define LIMIT_MAX_VAL	(INT64_MAX >> 1) /* Absolute maximum for any limit */
+
 extern int64_t nasm_limit[LIMIT_MAX];
 extern enum directive_result nasm_set_limit(const char *, const char *);
+
+enum get_limit_which {
+    GET_LIMIT_CURRENT,
+    GET_LIMIT_INIT,
+    GET_LIMIT_DEFAULT,
+    GET_LIMIT_MAX
+};
+extern int64_t nasm_get_limit(const char *, enum get_limit_which);
+extern const char *nasm_limit_name(enum nasm_limit);
 
 /*
  * The data structure defining an output format driver, and the
