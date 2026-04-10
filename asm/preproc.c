@@ -5204,7 +5204,8 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
     case PP_EXITREP:
     {
         MMacro *m = do_exit_macro(dname, false);
-        m->in_progress = 1;     /* No more repeats */
+        if (m)
+            m->in_progress = 1;     /* No more repeats */
         break;
     }
 
