@@ -759,12 +759,14 @@ static void build_symbol_table(struct coff_Section *const sect)
 {
     section_write32(sect, 0x00000004);
 
-    write_filename_table(sect);
-    align4_table(sect);
-    write_sourcefile_table(sect);
-    align4_table(sect);
-    write_linenumber_table(sect);
-    align4_table(sect);
+    if (cv8_state.source_files) {
+        write_filename_table(sect);
+        align4_table(sect);
+        write_sourcefile_table(sect);
+        align4_table(sect);
+        write_linenumber_table(sect);
+        align4_table(sect);
+    }
     write_symbolinfo_table(sect);
     align4_table(sect);
 }
