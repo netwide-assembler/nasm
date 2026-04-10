@@ -2283,12 +2283,11 @@ static int ppscan(void *private_data, struct tokenval *tokval)
     txt = tok_text(tline);
     tokval->t_start = txt;
     tokval->t_len = tline->len;
-    tokval->t_charptr = (char *)txt; /* Fix this */
+    tokval->t_charptr = (char *)txt; /* Fix needing const removal here */
 
     switch (tline->type) {
     default:
         break;
-        return tokval->t_type = tline->type;
 
     case TOKEN_ID:
         if (txt[0] == '$') {
