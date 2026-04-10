@@ -466,6 +466,8 @@ NASM 3.02 added the following additional sequences:
 
 \c       \o377       Up to 3 octal digits - literal byte (from C2y)
 \c       \d255       Up to 3 decimal digits - literal byte (NASM extension)
+\c       \^?         ASCII DEL (\d127, \177)
+\c       \^X         Convert X to a control character (e.g. \cA = \ca = \001)
 
 Since NASM 3.02, the numeric escape sequences starting with \c{\\x},
 \c{\\o}, \c{\\d} or \c{\\u} can have their argument enclosed in curly

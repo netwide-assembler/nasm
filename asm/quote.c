@@ -274,6 +274,7 @@ enum unq_state {
     st_backslash,
     st_byte,                /* Byte numeric sequence */
     st_ucs,                 /* \u or \U */
+    st_ctrl,                /* \c */
     st_done
 };
 
@@ -338,6 +339,9 @@ size_t nasm_unquote_anystr(char *str, char **ep, const uint32_t badctl,
 		case 't':
 		    nval = 9;
 		    break;
+                case '^':
+                    state = st_ctrl;
+                    break;
 		case 'u':
 		    state = st_ucs;
                     base = 16;
@@ -419,6 +423,17 @@ size_t nasm_unquote_anystr(char *str, char **ep, const uint32_t badctl,
 
                 state = st_start;
 		break;
+
+            case st_ctrl:
+                if (!c)
+                    goto rewind;
+                else if (c == '?')
+                    c = 0177;   /* DEL */
+                else
+                    c &= 0x9f;  /* Any thing else */
+                EMIT(c);
+                state = st_start;
+                break;
 
                 /* Rewind an entire sequence as invalid */
             rewind:
@@ -524,16 +539,20 @@ char *nasm_skip_string(const char *str)
 
 	    case st_backslash:
 		/*
-		 * Note: for the purpose of finding the end of the string,
-		 * all successor states to st_backslash are functionally
-		 * equivalent to st_start, since either a backslash or
-		 * a backquote will force a return to the st_start state,
-                 * and any possible multi-character state will terminate
-                 * for any non-alphanumeric character.
+		 * Note: for the purpose of finding the end of the
+		 * string, all successor states to st_backslash except
+		 * st_ctrl are functionally equivalent to st_start,
+		 * since either a backslash or a backquote will force
+		 * a return to the st_start state, and any possible
+		 * multi-character state will terminate for any
+		 * non-alphanumeric character.
                  *
-                 * The only reason this is needed at all is to detect
-                 * the \` sequence.
+                 * This state is necessary to prevent \` and \^` from
+                 * being treated as a terminator, or \^\ from being treated
+                 * as an escape (\^\` *is* an end of string terminator.)
 		 */
+                if (c == '^')
+                    c = *p++;
 		state = c ? st_start : st_done;
 		break;
 
