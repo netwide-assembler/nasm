@@ -3298,12 +3298,13 @@ list_smacro_def(enum preproc_token op, const Context *ctx, const SMacro *m)
 
     if (m->nparam) {
         /*
-         * Space for ( and either , or ) around each
-         * parameter, plus up to 5 flags + /ux
+         * Space for "(" at the beginning, then up to 5 flags "=&&!+"
+         * + "/ux" + terminal "," or ")" per parameter, plus the parameter
+         * name, if any.
          */
         int i;
 
-        size += 1 + 8 * m->nparam;
+        size += 1 + (5+3+1) * m->nparam;
         for (i = 0; i < m->nparam; i++)
             size += m->params[i].name.len;
     }
