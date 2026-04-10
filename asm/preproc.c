@@ -8642,6 +8642,36 @@ void pp_init(enum preproc_opt opt)
     nasm_newn(use_loaded, use_package_count);
 }
 
+static Include *pop_include_stack(void)
+{
+    Include *i = istk;
+
+    if (i->fp)
+        fclose(i->fp);
+    if (i->conds) {
+        /*
+         * This should never happen for a builtin macro package,
+         *  but if it does, at least get an error message out...
+         */
+        nasm_fatal("expected `%%endif' before end of %s",
+                   i->fp ? "file" : "macro package");
+    }
+
+    istk = i->next;
+
+    if (!i->nolist)
+        lfmt->downlevel(LIST_INCLUDE);
+    if (!i->noline) {
+        struct src_location whereto
+            = istk ? istk->where : src_nowhere();
+        if (ppdbg & PDBG_INCLUDE)
+            dfmt->debug_include(false, whereto, i->where);
+        src_update(whereto);
+    }
+
+    return i;
+}
+
 /*
  * Get a line of tokens. If we popped the macro expansion/include stack,
  * we return a pointer to the dummy token tok_pop; at that point if
@@ -8809,25 +8839,8 @@ static Token *pp_tokline(void)
             /*
              * The current file/input has ended; work down the istk
              */
-            Include *i = istk;
+            Include *i = pop_include_stack();
 
-            if (i->fp)
-                fclose(i->fp);
-            if (i->conds)
-                nasm_fatal("expected `%%endif' before end of file");
-
-            istk = i->next;
-
-            if (!i->nolist)
-                lfmt->downlevel(LIST_INCLUDE);
-            if (!i->noline) {
-                struct src_location whereto
-                    = istk ? istk->where : src_nowhere();
-                if (ppdbg & PDBG_INCLUDE)
-                    dfmt->debug_include(false, whereto, i->where);
-                if (istk)
-                    src_update(istk->where);
-            }
 
             put_mmacro(&i->mstk.mstk);
             put_mmacro(&i->mstk.mmac);
@@ -8942,10 +8955,10 @@ void pp_cleanup_pass(void)
 {
     if (defining) {
         if (defining->name) {
-            nasm_nonfatal("end of file while still defining macro `%s'",
+            nasm_nonfatal("end of input while still defining macro `%s'",
                           defining->name);
         } else {
-            nasm_nonfatal("end of file while still in %%rep");
+            nasm_nonfatal("end of input while still in %%rep");
         }
 
         free_mmacro(defining);
@@ -8955,19 +8968,8 @@ void pp_cleanup_pass(void)
     while (cstk)
         ctx_pop();
     free_macros();
-    while (istk) {
-        Include *i = istk;
-        istk = istk->next;
-        fclose(i->fp);
-        if (!istk && (ppdbg & PDBG_INCLUDE)) {
-            /* Signal closing the top-level input file */
-            dfmt->debug_include(false, src_nowhere(), i->where);
-        }
-        nasm_free(i);
-    }
-    while (cstk)
-        ctx_pop();
-    src_set_fname(NULL);
+    while (istk)
+        nasm_free(pop_include_stack());
 
     if (ppdbg & PDBG_MMACROS)
         debug_macro_output();
