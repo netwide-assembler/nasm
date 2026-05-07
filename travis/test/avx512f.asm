@@ -2475,15 +2475,15 @@ testcase	{ 0x62, 0x61, 0x17, 0x00, 0x2a, 0xb2, 0x00, 0x02, 0x00, 0x00           
 testcase	{ 0x62, 0x61, 0x17, 0x00, 0x2a, 0x72, 0x80                               }, { vcvtsi2sd xmm30,xmm29,DWORD [rdx-0x200]                      }
 testcase	{ 0x62, 0x61, 0x17, 0x00, 0x2a, 0xb2, 0xfc, 0xfd, 0xff, 0xff             }, { vcvtsi2sd xmm30,xmm29,DWORD [rdx-0x204]                      }
 testcase	{ 0x62, 0x61, 0x97, 0x00, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,rax                                    }
-testcase	{ 0x62, 0x61, 0x97, 0x10, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,{rn-sae},rax                           }
-testcase	{ 0x62, 0x61, 0x97, 0x50, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,{ru-sae},rax                           }
-testcase	{ 0x62, 0x61, 0x97, 0x30, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,{rd-sae},rax                           }
-testcase	{ 0x62, 0x61, 0x97, 0x70, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,{rz-sae},rax                           }
+testcase	{ 0x62, 0x61, 0x97, 0x10, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,rax,{rn-sae}                           }
+testcase	{ 0x62, 0x61, 0x97, 0x50, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,rax,{ru-sae}                           }
+testcase	{ 0x62, 0x61, 0x97, 0x30, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,rax,{rd-sae}                           }
+testcase	{ 0x62, 0x61, 0x97, 0x70, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,rax,{rz-sae}                           }
 testcase	{ 0x62, 0x41, 0x97, 0x00, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,r8                                     }
-testcase	{ 0x62, 0x41, 0x97, 0x10, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,{rn-sae},r8                            }
-testcase	{ 0x62, 0x41, 0x97, 0x50, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,{ru-sae},r8                            }
-testcase	{ 0x62, 0x41, 0x97, 0x30, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,{rd-sae},r8                            }
-testcase	{ 0x62, 0x41, 0x97, 0x70, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,{rz-sae},r8                            }
+testcase	{ 0x62, 0x41, 0x97, 0x10, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,r8,{rn-sae}                            }
+testcase	{ 0x62, 0x41, 0x97, 0x50, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,r8,{ru-sae}                            }
+testcase	{ 0x62, 0x41, 0x97, 0x30, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,r8,{rd-sae}                            }
+testcase	{ 0x62, 0x41, 0x97, 0x70, 0x2a, 0xf0                                     }, { vcvtsi2sd xmm30,xmm29,r8,{rz-sae}                            }
 testcase	{ 0x62, 0x61, 0x97, 0x00, 0x2a, 0x31                                     }, { vcvtsi2sd xmm30,xmm29,QWORD [rcx]                            }
 testcase	{ 0x62, 0x21, 0x97, 0x00, 0x2a, 0xb4, 0xf0, 0x23, 0x01, 0x00, 0x00       }, { vcvtsi2sd xmm30,xmm29,QWORD [rax+r14*8+0x123]                }
 testcase	{ 0x62, 0x61, 0x97, 0x00, 0x2a, 0x72, 0x7f                               }, { vcvtsi2sd xmm30,xmm29,QWORD [rdx+0x3f8]                      }
@@ -2491,20 +2491,20 @@ testcase	{ 0x62, 0x61, 0x97, 0x00, 0x2a, 0xb2, 0x00, 0x04, 0x00, 0x00           
 testcase	{ 0x62, 0x61, 0x97, 0x00, 0x2a, 0x72, 0x80                               }, { vcvtsi2sd xmm30,xmm29,QWORD [rdx-0x400]                      }
 testcase	{ 0x62, 0x61, 0x97, 0x00, 0x2a, 0xb2, 0xf8, 0xfb, 0xff, 0xff             }, { vcvtsi2sd xmm30,xmm29,QWORD [rdx-0x408]                      }
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,eax                                    }
-testcase	{ 0x62, 0x61, 0x16, 0x10, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{rn-sae},eax                           }
-testcase	{ 0x62, 0x61, 0x16, 0x50, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{ru-sae},eax                           }
-testcase	{ 0x62, 0x61, 0x16, 0x30, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{rd-sae},eax                           }
-testcase	{ 0x62, 0x61, 0x16, 0x70, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{rz-sae},eax                           }
+testcase	{ 0x62, 0x61, 0x16, 0x10, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,eax,{rn-sae}                           }
+testcase	{ 0x62, 0x61, 0x16, 0x50, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,eax,{ru-sae}                           }
+testcase	{ 0x62, 0x61, 0x16, 0x30, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,eax,{rd-sae}                           }
+testcase	{ 0x62, 0x61, 0x16, 0x70, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,eax,{rz-sae}                           }
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,ebp                                    }
-testcase	{ 0x62, 0x61, 0x16, 0x10, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,{rn-sae},ebp                           }
-testcase	{ 0x62, 0x61, 0x16, 0x50, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,{ru-sae},ebp                           }
-testcase	{ 0x62, 0x61, 0x16, 0x30, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,{rd-sae},ebp                           }
-testcase	{ 0x62, 0x61, 0x16, 0x70, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,{rz-sae},ebp                           }
+testcase	{ 0x62, 0x61, 0x16, 0x10, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,ebp,{rn-sae}                           }
+testcase	{ 0x62, 0x61, 0x16, 0x50, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,ebp,{ru-sae}                           }
+testcase	{ 0x62, 0x61, 0x16, 0x30, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,ebp,{rd-sae}                           }
+testcase	{ 0x62, 0x61, 0x16, 0x70, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,ebp,{rz-sae}                           }
 testcase	{ 0x62, 0x41, 0x16, 0x00, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,r13d                                   }
-testcase	{ 0x62, 0x41, 0x16, 0x10, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,{rn-sae},r13d                          }
-testcase	{ 0x62, 0x41, 0x16, 0x50, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,{ru-sae},r13d                          }
-testcase	{ 0x62, 0x41, 0x16, 0x30, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,{rd-sae},r13d                          }
-testcase	{ 0x62, 0x41, 0x16, 0x70, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,{rz-sae},r13d                          }
+testcase	{ 0x62, 0x41, 0x16, 0x10, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,r13d,{rn-sae}                          }
+testcase	{ 0x62, 0x41, 0x16, 0x50, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,r13d,{ru-sae}                          }
+testcase	{ 0x62, 0x41, 0x16, 0x30, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,r13d,{rd-sae}                          }
+testcase	{ 0x62, 0x41, 0x16, 0x70, 0x2a, 0xf5                                     }, { vcvtsi2ss xmm30,xmm29,r13d,{rz-sae}                          }
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x2a, 0x31                                     }, { vcvtsi2ss xmm30,xmm29,DWORD [rcx]                            }
 testcase	{ 0x62, 0x21, 0x16, 0x00, 0x2a, 0xb4, 0xf0, 0x23, 0x01, 0x00, 0x00       }, { vcvtsi2ss xmm30,xmm29,DWORD [rax+r14*8+0x123]                }
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x2a, 0x72, 0x7f                               }, { vcvtsi2ss xmm30,xmm29,DWORD [rdx+0x1fc]                      }
@@ -2512,15 +2512,15 @@ testcase	{ 0x62, 0x61, 0x16, 0x00, 0x2a, 0xb2, 0x00, 0x02, 0x00, 0x00           
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x2a, 0x72, 0x80                               }, { vcvtsi2ss xmm30,xmm29,DWORD [rdx-0x200]                      }
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x2a, 0xb2, 0xfc, 0xfd, 0xff, 0xff             }, { vcvtsi2ss xmm30,xmm29,DWORD [rdx-0x204]                      }
 testcase	{ 0x62, 0x61, 0x96, 0x00, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,rax                                    }
-testcase	{ 0x62, 0x61, 0x96, 0x10, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{rn-sae},rax                           }
-testcase	{ 0x62, 0x61, 0x96, 0x50, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{ru-sae},rax                           }
-testcase	{ 0x62, 0x61, 0x96, 0x30, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{rd-sae},rax                           }
-testcase	{ 0x62, 0x61, 0x96, 0x70, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{rz-sae},rax                           }
+testcase	{ 0x62, 0x61, 0x96, 0x10, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,rax,{rn-sae}                           }
+testcase	{ 0x62, 0x61, 0x96, 0x50, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,rax,{ru-sae}                           }
+testcase	{ 0x62, 0x61, 0x96, 0x30, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,rax,{rd-sae}                           }
+testcase	{ 0x62, 0x61, 0x96, 0x70, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,rax,{rz-sae}                           }
 testcase	{ 0x62, 0x41, 0x96, 0x00, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,r8                                     }
-testcase	{ 0x62, 0x41, 0x96, 0x10, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{rn-sae},r8                            }
-testcase	{ 0x62, 0x41, 0x96, 0x50, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{ru-sae},r8                            }
-testcase	{ 0x62, 0x41, 0x96, 0x30, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{rd-sae},r8                            }
-testcase	{ 0x62, 0x41, 0x96, 0x70, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,{rz-sae},r8                            }
+testcase	{ 0x62, 0x41, 0x96, 0x10, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,r8,{rn-sae}                            }
+testcase	{ 0x62, 0x41, 0x96, 0x50, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,r8,{ru-sae}                            }
+testcase	{ 0x62, 0x41, 0x96, 0x30, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,r8,{rd-sae}                            }
+testcase	{ 0x62, 0x41, 0x96, 0x70, 0x2a, 0xf0                                     }, { vcvtsi2ss xmm30,xmm29,r8,{rz-sae}                            }
 testcase	{ 0x62, 0x61, 0x96, 0x00, 0x2a, 0x31                                     }, { vcvtsi2ss xmm30,xmm29,QWORD [rcx]                            }
 testcase	{ 0x62, 0x21, 0x96, 0x00, 0x2a, 0xb4, 0xf0, 0x23, 0x01, 0x00, 0x00       }, { vcvtsi2ss xmm30,xmm29,QWORD [rax+r14*8+0x123]                }
 testcase	{ 0x62, 0x61, 0x96, 0x00, 0x2a, 0x72, 0x7f                               }, { vcvtsi2ss xmm30,xmm29,QWORD [rdx+0x3f8]                      }
@@ -6199,15 +6199,15 @@ testcase	{ 0x62, 0x61, 0x17, 0x00, 0x7b, 0xb2, 0x00, 0x02, 0x00, 0x00           
 testcase	{ 0x62, 0x61, 0x17, 0x00, 0x7b, 0x72, 0x80                               }, { vcvtusi2sd xmm30,xmm29,DWORD [rdx-0x200]                     }
 testcase	{ 0x62, 0x61, 0x17, 0x00, 0x7b, 0xb2, 0xfc, 0xfd, 0xff, 0xff             }, { vcvtusi2sd xmm30,xmm29,DWORD [rdx-0x204]                     }
 testcase	{ 0x62, 0x61, 0x97, 0x00, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,rax                                   }
-testcase	{ 0x62, 0x61, 0x97, 0x10, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,{rn-sae},rax                          }
-testcase	{ 0x62, 0x61, 0x97, 0x50, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,{ru-sae},rax                          }
-testcase	{ 0x62, 0x61, 0x97, 0x30, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,{rd-sae},rax                          }
-testcase	{ 0x62, 0x61, 0x97, 0x70, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,{rz-sae},rax                          }
+testcase	{ 0x62, 0x61, 0x97, 0x10, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,rax,{rn-sae}                          }
+testcase	{ 0x62, 0x61, 0x97, 0x50, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,rax,{ru-sae}                          }
+testcase	{ 0x62, 0x61, 0x97, 0x30, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,rax,{rd-sae}                          }
+testcase	{ 0x62, 0x61, 0x97, 0x70, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,rax,{rz-sae}                          }
 testcase	{ 0x62, 0x41, 0x97, 0x00, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,r8                                    }
-testcase	{ 0x62, 0x41, 0x97, 0x10, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,{rn-sae},r8                           }
-testcase	{ 0x62, 0x41, 0x97, 0x50, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,{ru-sae},r8                           }
-testcase	{ 0x62, 0x41, 0x97, 0x30, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,{rd-sae},r8                           }
-testcase	{ 0x62, 0x41, 0x97, 0x70, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,{rz-sae},r8                           }
+testcase	{ 0x62, 0x41, 0x97, 0x10, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,r8,{rn-sae}                           }
+testcase	{ 0x62, 0x41, 0x97, 0x50, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,r8,{ru-sae}                           }
+testcase	{ 0x62, 0x41, 0x97, 0x30, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,r8,{rd-sae}                           }
+testcase	{ 0x62, 0x41, 0x97, 0x70, 0x7b, 0xf0                                     }, { vcvtusi2sd xmm30,xmm29,r8,{rz-sae}                           }
 testcase	{ 0x62, 0x61, 0x97, 0x00, 0x7b, 0x31                                     }, { vcvtusi2sd xmm30,xmm29,QWORD [rcx]                           }
 testcase	{ 0x62, 0x21, 0x97, 0x00, 0x7b, 0xb4, 0xf0, 0x23, 0x01, 0x00, 0x00       }, { vcvtusi2sd xmm30,xmm29,QWORD [rax+r14*8+0x123]               }
 testcase	{ 0x62, 0x61, 0x97, 0x00, 0x7b, 0x72, 0x7f                               }, { vcvtusi2sd xmm30,xmm29,QWORD [rdx+0x3f8]                     }
@@ -6215,20 +6215,20 @@ testcase	{ 0x62, 0x61, 0x97, 0x00, 0x7b, 0xb2, 0x00, 0x04, 0x00, 0x00           
 testcase	{ 0x62, 0x61, 0x97, 0x00, 0x7b, 0x72, 0x80                               }, { vcvtusi2sd xmm30,xmm29,QWORD [rdx-0x400]                     }
 testcase	{ 0x62, 0x61, 0x97, 0x00, 0x7b, 0xb2, 0xf8, 0xfb, 0xff, 0xff             }, { vcvtusi2sd xmm30,xmm29,QWORD [rdx-0x408]                     }
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,eax                                   }
-testcase	{ 0x62, 0x61, 0x16, 0x10, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{rn-sae},eax                          }
-testcase	{ 0x62, 0x61, 0x16, 0x50, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{ru-sae},eax                          }
-testcase	{ 0x62, 0x61, 0x16, 0x30, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{rd-sae},eax                          }
-testcase	{ 0x62, 0x61, 0x16, 0x70, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{rz-sae},eax                          }
+testcase	{ 0x62, 0x61, 0x16, 0x10, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,eax,{rn-sae}                          }
+testcase	{ 0x62, 0x61, 0x16, 0x50, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,eax,{ru-sae}                          }
+testcase	{ 0x62, 0x61, 0x16, 0x30, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,eax,{rd-sae}                          }
+testcase	{ 0x62, 0x61, 0x16, 0x70, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,eax,{rz-sae}                          }
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,ebp                                   }
-testcase	{ 0x62, 0x61, 0x16, 0x10, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,{rn-sae},ebp                          }
-testcase	{ 0x62, 0x61, 0x16, 0x50, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,{ru-sae},ebp                          }
-testcase	{ 0x62, 0x61, 0x16, 0x30, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,{rd-sae},ebp                          }
-testcase	{ 0x62, 0x61, 0x16, 0x70, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,{rz-sae},ebp                          }
+testcase	{ 0x62, 0x61, 0x16, 0x10, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,ebp,{rn-sae}                          }
+testcase	{ 0x62, 0x61, 0x16, 0x50, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,ebp,{ru-sae}                          }
+testcase	{ 0x62, 0x61, 0x16, 0x30, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,ebp,{rd-sae}                          }
+testcase	{ 0x62, 0x61, 0x16, 0x70, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,ebp,{rz-sae}                          }
 testcase	{ 0x62, 0x41, 0x16, 0x00, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,r13d                                  }
-testcase	{ 0x62, 0x41, 0x16, 0x10, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,{rn-sae},r13d                         }
-testcase	{ 0x62, 0x41, 0x16, 0x50, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,{ru-sae},r13d                         }
-testcase	{ 0x62, 0x41, 0x16, 0x30, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,{rd-sae},r13d                         }
-testcase	{ 0x62, 0x41, 0x16, 0x70, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,{rz-sae},r13d                         }
+testcase	{ 0x62, 0x41, 0x16, 0x10, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,r13d,{rn-sae}                         }
+testcase	{ 0x62, 0x41, 0x16, 0x50, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,r13d,{ru-sae}                         }
+testcase	{ 0x62, 0x41, 0x16, 0x30, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,r13d,{rd-sae}                         }
+testcase	{ 0x62, 0x41, 0x16, 0x70, 0x7b, 0xf5                                     }, { vcvtusi2ss xmm30,xmm29,r13d,{rz-sae}                         }
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x7b, 0x31                                     }, { vcvtusi2ss xmm30,xmm29,DWORD [rcx]                           }
 testcase	{ 0x62, 0x21, 0x16, 0x00, 0x7b, 0xb4, 0xf0, 0x23, 0x01, 0x00, 0x00       }, { vcvtusi2ss xmm30,xmm29,DWORD [rax+r14*8+0x123]               }
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x7b, 0x72, 0x7f                               }, { vcvtusi2ss xmm30,xmm29,DWORD [rdx+0x1fc]                     }
@@ -6236,15 +6236,15 @@ testcase	{ 0x62, 0x61, 0x16, 0x00, 0x7b, 0xb2, 0x00, 0x02, 0x00, 0x00           
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x7b, 0x72, 0x80                               }, { vcvtusi2ss xmm30,xmm29,DWORD [rdx-0x200]                     }
 testcase	{ 0x62, 0x61, 0x16, 0x00, 0x7b, 0xb2, 0xfc, 0xfd, 0xff, 0xff             }, { vcvtusi2ss xmm30,xmm29,DWORD [rdx-0x204]                     }
 testcase	{ 0x62, 0x61, 0x96, 0x00, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,rax                                   }
-testcase	{ 0x62, 0x61, 0x96, 0x10, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{rn-sae},rax                          }
-testcase	{ 0x62, 0x61, 0x96, 0x50, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{ru-sae},rax                          }
-testcase	{ 0x62, 0x61, 0x96, 0x30, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{rd-sae},rax                          }
-testcase	{ 0x62, 0x61, 0x96, 0x70, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{rz-sae},rax                          }
+testcase	{ 0x62, 0x61, 0x96, 0x10, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,rax,{rn-sae}                          }
+testcase	{ 0x62, 0x61, 0x96, 0x50, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,rax,{ru-sae}                          }
+testcase	{ 0x62, 0x61, 0x96, 0x30, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,rax,{rd-sae}                          }
+testcase	{ 0x62, 0x61, 0x96, 0x70, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,rax,{rz-sae}                          }
 testcase	{ 0x62, 0x41, 0x96, 0x00, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,r8                                    }
-testcase	{ 0x62, 0x41, 0x96, 0x10, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{rn-sae},r8                           }
-testcase	{ 0x62, 0x41, 0x96, 0x50, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{ru-sae},r8                           }
-testcase	{ 0x62, 0x41, 0x96, 0x30, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{rd-sae},r8                           }
-testcase	{ 0x62, 0x41, 0x96, 0x70, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,{rz-sae},r8                           }
+testcase	{ 0x62, 0x41, 0x96, 0x10, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,r8,{rn-sae}                           }
+testcase	{ 0x62, 0x41, 0x96, 0x50, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,r8,{ru-sae}                           }
+testcase	{ 0x62, 0x41, 0x96, 0x30, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,r8,{rd-sae}                           }
+testcase	{ 0x62, 0x41, 0x96, 0x70, 0x7b, 0xf0                                     }, { vcvtusi2ss xmm30,xmm29,r8,{rz-sae}                           }
 testcase	{ 0x62, 0x61, 0x96, 0x00, 0x7b, 0x31                                     }, { vcvtusi2ss xmm30,xmm29,QWORD [rcx]                           }
 testcase	{ 0x62, 0x21, 0x96, 0x00, 0x7b, 0xb4, 0xf0, 0x23, 0x01, 0x00, 0x00       }, { vcvtusi2ss xmm30,xmm29,QWORD [rax+r14*8+0x123]               }
 testcase	{ 0x62, 0x61, 0x96, 0x00, 0x7b, 0x72, 0x7f                               }, { vcvtusi2ss xmm30,xmm29,QWORD [rdx+0x3f8]                     }
