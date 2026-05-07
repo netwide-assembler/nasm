@@ -7,6 +7,6 @@
 		"option": "-O0 -DSRC",
 		"target": [
 			{ "output": "avx512f.bin" }
-		],
+		]
 	}
 ]
