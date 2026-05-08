@@ -285,9 +285,7 @@ struct mstk {
 
 struct MMacro {
     MMacro *next;
-#if 0
-    MMacroInvocation *prev;     /* previous invocation */
-#endif
+    struct MMacroInvocation *prev;     /* previous invocation */
     size_t refcnt;              /* references to this macro */
 #if DEBUG_MMACRO_REFCOUNTS
     struct {
@@ -327,19 +325,17 @@ struct MMacro {
 /* Store the definition of a multi-line macro, as defined in a
  * previous recursive macro expansion.
  */
-#if 0
-
 struct MMacroInvocation {
-    MMacroInvocation *prev;     /* previous invocation */
+    struct MMacroInvocation *prev;     /* previous invocation */
     Token **params;             /* actual parameters */
     Token *iline;               /* invocation line */
+    char *iname;                /* invocation name */
+    struct mstk mstk;           /* saved mstk for proper exit */
     unsigned int nparam, rotate;
     int *paramlen;
     uint64_t unique;
     uint64_t condcnt;
 };
-
-#endif
 
 #if DEBUG_MMACRO_REFCOUNTS
 static void check_mmacro_refcounts(void);
@@ -389,6 +385,15 @@ static MMacro *pop_mmacro(MMacro **mp, MMacro *next)
 static void put_mmacro(MMacro **mp)
 {
     pop_mmacro(mp, NULL);
+}
+
+/* Decrement refcount without changing pointer - for recursive macro exit */
+static void unref_mmacro(MMacro *m)
+{
+    if (m) {
+        nasm_assert(m->refcnt > 0);
+        m->refcnt--;
+    }
 }
 
 static void pop_mstk(struct mstk *msp, MMacro *nextp)
@@ -4717,7 +4722,9 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
                 } else {
                     nasm_nonfatal("invalid option to %s: %s", dname, txt);
                     t = NULL;
+                    break;
                 }
+                t = t->next;
             }
         }
 
@@ -6944,20 +6951,20 @@ static MMacro *is_mmacro(Token * tline, int *nparamp, Token ***paramsp)
 }
 
 
-#if 0
-
 /*
  * Save MMacro invocation specific fields in
  * preparation for a recursive macro expansion
  */
 static void push_mmacro(MMacro *m)
 {
-    MMacroInvocation *i;
+    struct MMacroInvocation *i;
 
-    i = nasm_malloc(sizeof(MMacroInvocation));
+    i = nasm_malloc(sizeof(struct MMacroInvocation));
     i->prev = m->prev;
     i->params = m->params;
     i->iline = m->iline;
+    i->iname = m->iname;
+    i->mstk = m->mstk;
     i->nparam = m->nparam;
     i->rotate = m->rotate;
     i->paramlen = m->paramlen;
@@ -6971,15 +6978,21 @@ static void push_mmacro(MMacro *m)
  * Restore MMacro invocation specific fields that were
  * saved during a previous recursive macro expansion
  */
-static void pop_mmacro(MMacro *m)
+static void pop_rmacro(MMacro *m)
 {
-    MMacroInvocation *i;
+    struct MMacroInvocation *i;
 
     if (m->prev) {
+        /* First, clean up the current invocation */
+        clear_mmacro(m);
+
+        /* Now restore the previous invocation */
         i = m->prev;
         m->prev = i->prev;
         m->params = i->params;
         m->iline = i->iline;
+        m->iname = i->iname;
+        m->mstk = i->mstk;
         m->nparam = i->nparam;
         m->rotate = i->rotate;
         m->paramlen = i->paramlen;
@@ -6988,8 +7001,6 @@ static void pop_mmacro(MMacro *m)
         nasm_free(i);
     }
 }
-
-#endif
 
 /*
  * List an mmacro call with arguments (-Lm option)
@@ -7333,10 +7344,8 @@ static int expand_mmacro(Token * tline)
      * Save the previous MMacro expansion in the case of
      * macro recursion
      */
-#if 0
     if (m->max_depth && m->in_progress)
         push_mmacro(m);
-#endif
 
     m->in_progress++;
     m->params = params;
@@ -8723,10 +8732,6 @@ static Token *pp_tokline(void)
                 l = istk->expansion;
                 continue;
             } else {
-                MMacro *m = istk->mstk.mstk;
-
-                nasm_assert(m == fm);
-
                 /*
                  * Check whether a `%rep' was started and not ended
                  * within this macro expansion. This can happen and
@@ -8737,16 +8742,12 @@ static Token *pp_tokline(void)
                 if (defining) {
                     if (defining->name)
                         nasm_panic("defining with name in expansion");
-                    else if (m->name)
+                    else if (fm->name)
                         nasm_fatal("`%%rep' without `%%endrep' within"
-				   " expansion of macro `%s'", m->name);
+				   " expansion of macro `%s'", fm->name);
                 }
 
-                /*
-                 * FIXME:  investigate the relationship at this point between
-                 * istk->mstk.mstk and fm
-                 */
-                if (m->name) {
+                if (fm->name) {
                     /*
                      * This was a real macro call, not a %rep, and
                      * therefore the parameter information needs to
@@ -8763,39 +8764,60 @@ static Token *pp_tokline(void)
                         nasm_zero(mmacro_deadman); /* Clear all counters */
                     }
 
-#if 0
-                    if (m->prev) {
-                        pop_mmacro(m);
-                        fm->in_progress --;
-                    } else
-#endif
-                    {
-                        clear_mmacro(m);
+                    /*
+                     * Per-invocation cleanup: balance what expand_mmacro did.
+                     * Each invocation increments nolist/noline and calls
+                     * uplevel/debug_macro_start, so we must undo per exit.
+                     */
+                    if (fm->nolist & NL_LINE) {
+                        istk->noline--;
+                    } else if (!istk->noline) {
+                        MMacro *sm = (MMacro *)src_macro_current();
+                        if (sm == fm) {
+                            src_macro_pop();
+                            put_mmacro(&sm);
+                        }
+                        src_update(l->where);
+                    }
+
+                    if (fm->nolist & NL_LIST) {
+                        istk->nolist--;
+                    } else if (!istk->nolist) {
+                        lfmt->downlevel(LIST_MACRO);
+                        if ((ppdbg & PDBG_MMACROS) && fm->name)
+                            debug_macro_end(fm);
+                    }
+
+                    if (fm->prev) {
+                        /*
+                         * Recursive exit: restore istk->mstk from fm->mstk.
+                         * Unref fm twice for the refs added by expand_mmacro
+                         * (lines 7361-7362).
+                         */
+                        unref_mmacro(fm);
+                        unref_mmacro(fm);
+                        istk->mstk = fm->mstk;
+                        pop_rmacro(fm);
+                        fm->in_progress--;
+                    } else {
+                        clear_mmacro(fm);
                         fm->in_progress = 0;
+                        /* Final exit: restore location and pop mstk */
+                        istk->where = l->where;
+                        pop_mstk(&istk->mstk, fm);
                     }
+                } else {
+                    /*
+                     * %rep final exit: restore istk->mstk.mstk from fm->mstk.
+                     * Release the %rep from mstk and restore the saved value.
+                     * Also release the ref that %rep holds in fm->mstk (from
+                     * line 5159 get_mmacro) since it won't be released by
+                     * free_mmacro.
+                     */
+                    put_mmacro(&istk->mstk.mstk);  /* Release %rep */
+                    istk->mstk.mstk = fm->mstk.mstk;  /* Restore saved */
+                    put_mmacro(&fm->mstk.mstk);  /* Release the saved ref */
                 }
-
-                if (fm->nolist & NL_LINE) {
-                    istk->noline--;
-                } else if (!istk->noline) {
-                    MMacro *sm = (MMacro *)src_macro_current();
-                    if (sm == fm) {
-                        src_macro_pop();
-                        put_mmacro(&sm);
-                    }
-                    src_update(l->where);
-                }
-
-                if (fm->nolist & NL_LIST) {
-                    istk->nolist--;
-                } else if (!istk->nolist) {
-                    lfmt->downlevel(LIST_MACRO);
-                    if ((ppdbg & PDBG_MMACROS) && fm->name)
-                        debug_macro_end(fm);
-                }
-
-                istk->where = l->where;
-                pop_mstk(&istk->mstk, m);
             }
             check_mmacro_refcounts();
 
