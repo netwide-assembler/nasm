@@ -900,12 +900,16 @@ coff_directives(enum directive directive, char *value)
     {
         static int sxseg=-1;
         int i;
+        int32_t ignseg;
+        int64_t ignoff;
 
         if (!win32) /* Only applicable for -f win32 */
             return DIRR_UNKNOWN;
 
         if (!value)
             return DIRR_OK;
+
+        lookup_label(value, &ignseg, &ignoff); /* prevent extern elimination */
 
         if (sxseg == -1) {
             for (i = 0; i < coff_nsects; i++)
