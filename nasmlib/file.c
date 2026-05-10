@@ -45,6 +45,7 @@
  */
 #ifdef _WIN32
 #include <wchar.h>
+#include <windows.h> /* stringapiset.h doesn't work without this in the w11 SDK. */
 #include <stringapiset.h>
 
 typedef wchar_t *os_filename;
