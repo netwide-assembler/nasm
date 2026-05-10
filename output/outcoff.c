@@ -539,15 +539,17 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
     int pos, section;
     struct coff_Symbol *sym;
 
-    if (special)
-        nasm_nonfatal("COFF format does not support any"
-                      " special symbol types");
+    nasm_debug(2, " coff_deflabel: %s, seg=%"PRIx32", off=%"PRIx64", is_global=%d, %s, coff_nsyms=%"PRIu32"\n",
+               name, segment, offset, is_global, special, coff_nsyms);
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
         if (strcmp(name,WRT_IMAGEBASE))
             nasm_nonfatal("unrecognized special symbol `%s'", name);
         return;
     }
+
+    if (is_global == 3)    /* discard special-retry from pass two. */
+        return;
 
     if (segment == NO_SEG)
         section = -1;      /* absolute symbol */
@@ -597,6 +599,20 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
         sym->value = offset;
     else
         sym->value = (sym->section == 0 ? 0 : offset);
+
+    if (special) {
+        special = nasm_skip_spaces(special);
+        while (*special) {
+            const char *wend = nasm_skip_word(special);
+            size_t wlen = wend - special;
+            if (wlen == 8 && !nasm_strnicmp(special, "function", 8))
+                sym->type = 0x20; /* DT_FCN */
+            else
+                nasm_nonfatal("unrecognised symbol type `%*.*s' on `%s'",
+                              (int)wlen, (int)wlen, special, name);
+            special = nasm_skip_spaces(wend);
+        }
+    }
 
     /*
      * define the references from external-symbol segment numbers
