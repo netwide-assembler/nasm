@@ -1939,7 +1939,7 @@ static Token *tokenize(const char *line)
  *
  * alloc_Token() returns a zero-initialized token structure.
  */
-#define TOKEN_BLOCKSIZE 0 /* 4096 */ /* Number of tokens, not bytes */
+#define TOKEN_BLOCKSIZE 4096 /* Number of tokens, not bytes */
 
 #if TOKEN_BLOCKSIZE
 
