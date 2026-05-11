@@ -62,6 +62,78 @@ static void list_emit(void)
     const struct strlist_entry *e;
 
     if (listlinep || *listdata) {
+#if 1
+        static char const s_digits[] = "0123456789ABCDEF";
+        char line[LIST_MAX_LEN * 2];
+        size_t len;
+        int off;
+        unsigned lineno = (unsigned)listlineno;
+
+        if (lineno >= 100000) {
+            off = strlen(itoa(listlineno, line, 10));
+        } else {
+            line[0] = line[1] = line[2] = line[3] = line[4] = ' ';
+            if (lineno < 10) {
+                line[5] = s_digits[listlineno];
+            } else if (lineno < 100) {
+                line[4] = s_digits[listlineno / 10];
+                line[5] = s_digits[listlineno % 10];
+            } else {
+                off = (unsigned)listlineno < 1000  ? 3
+                    : (unsigned)listlineno < 10000 ? 2 : 1;
+                itoa(listlineno, &line[off], 10);
+            }
+            off = 6;
+        }
+        line[off++] = ' ';
+
+        if (listdata[0]) {
+            line[off++] = s_digits[(listoffset >> 28) & 0xf];
+            line[off++] = s_digits[(listoffset >> 24) & 0xf];
+            line[off++] = s_digits[(listoffset >> 20) & 0xf];
+            line[off++] = s_digits[(listoffset >> 16) & 0xf];
+            line[off++] = s_digits[(listoffset >> 12) & 0xf];
+            line[off++] = s_digits[(listoffset >>  8) & 0xf];
+            line[off++] = s_digits[(listoffset >>  4) & 0xf];
+            line[off++] = s_digits[ listoffset        & 0xf];
+            line[off++] = ' ';
+            len = strlen(listdata);
+            memcpy(&line[off], listdata, len);
+            off += len;
+            while (len++ < LIST_HEXBIT + 1)
+                line[off++] = ' ';
+        } else {
+            memset(&line[off], ' ', LIST_HEXBIT + 10);
+            off += LIST_HEXBIT + 10;
+        }
+
+        if (listlevel_e) {
+            if (listlevel < 10)
+                line[off++] = ' ';
+            line[off++] = '<';
+            if ((unsigned)listlevel_e < 10)
+                line[off++] = s_digits[listlevel_e];
+            else
+                off += strlen(itoa(listlevel_e, &line[off], 10));
+            line[off++] = '>';
+        } else if (listlinep) {
+            line[off++] = ' ';
+            line[off++] = ' ';
+            line[off++] = ' ';
+            line[off++] = ' ';
+        }
+
+        if (listlinep) {
+            len = strlen(listline);
+            line[off++] = ' ';
+            memcpy(&line[off], listline, len);
+            off += len;
+        }
+
+        line[off++] = '\n';
+        fwrite(line, off, 1, listfp);
+
+#else
         fprintf(listfp, "%6"PRId32" ", listlineno);
 
         if (listdata[0])
@@ -80,6 +152,7 @@ static void list_emit(void)
             fprintf(listfp, " %s", listline);
 
         putc('\n', listfp);
+#endif
         listlinep = false;
         listdata[0] = '\0';
     }
