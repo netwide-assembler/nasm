@@ -32,8 +32,17 @@ struct stdscan_state {
     enum stdscan_scan_state sstate;
 };
 
+#define STDSCAN_KEEP_ALLOC
+
 static struct stdscan_state scan;
+#ifdef STDSCAN_KEEP_ALLOC
+static struct stdscan_tempentry {
+    void *bufptr;
+    size_t bufsize;
+} *stdscan_tempstorage = NULL;
+#else
 static char **stdscan_tempstorage = NULL;
+#endif
 static int stdscan_tempsize = 0, stdscan_templen = 0;
 #define STDSCAN_TEMP_DELTA 256
 
@@ -58,7 +67,11 @@ char *stdscan_tell(void)
 
 static void stdscan_pop(void)
 {
+#ifdef STDSCAN_KEEP_ALLOC
+    --stdscan_templen;
+#else
     nasm_free(stdscan_tempstorage[--stdscan_templen]);
+#endif
 }
 
 static void stdscan_pushback_pop(void)
@@ -72,8 +85,12 @@ static void stdscan_pushback_pop(void)
 
 void stdscan_reset(char *buffer)
 {
+#ifdef STDSCAN_KEEP_ALLOC
+    stdscan_templen = 0;
+#else
     while (stdscan_templen > 0)
         stdscan_pop();
+#endif
 
     while (scan.pushback)
         stdscan_pushback_pop();
@@ -89,11 +106,34 @@ void stdscan_reset(char *buffer)
 void stdscan_cleanup(void)
 {
     stdscan_reset(NULL);
+#ifdef STDSCAN_KEEP_ALLOC
+    while (stdscan_tempsize > 0)
+        nasm_free(stdscan_tempstorage[--stdscan_tempsize].bufptr);
+#endif
     nasm_free(stdscan_tempstorage);
 }
 
 static void *stdscan_alloc(size_t bytes)
 {
+#ifdef STDSCAN_KEEP_ALLOC
+    int const idx = stdscan_templen;
+    void *buf;
+    if (idx >= stdscan_tempsize) {
+        stdscan_tempsize += STDSCAN_TEMP_DELTA;
+        stdscan_tempstorage = nasm_realloc(stdscan_tempstorage,
+                                           stdscan_tempsize *
+                                           sizeof(stdscan_tempstorage[0]));
+        nasm_zeron(&stdscan_tempstorage[idx], STDSCAN_TEMP_DELTA);
+    }
+    buf = stdscan_tempstorage[idx].bufptr;
+    if (bytes > stdscan_tempstorage[idx].bufsize) {
+        nasm_free(buf);
+        bytes = (bytes + 31) & ~(size_t)31;
+        stdscan_tempstorage[idx].bufsize = bytes;
+        stdscan_tempstorage[idx].bufptr  = buf = nasm_malloc(bytes);
+    }
+    stdscan_templen = idx + 1;
+#else
     void *buf = nasm_malloc(bytes);
     if (stdscan_templen >= stdscan_tempsize) {
         stdscan_tempsize += STDSCAN_TEMP_DELTA;
@@ -102,6 +142,7 @@ static void *stdscan_alloc(size_t bytes)
                                            sizeof(char *));
     }
     stdscan_tempstorage[stdscan_templen++] = buf;
+#endif
 
     return buf;
 }
