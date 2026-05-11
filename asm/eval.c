@@ -20,11 +20,16 @@
 
 #define TEMPEXPRS_DELTA 128
 #define TEMPEXPR_DELTA 8
+#define TEMPEXPRS_KEEP
 
 static scanner scanfunc;        /* Address of scanner routine */
 static void *scpriv;            /* Scanner private pointer */
 
+#ifdef TEMPEXPRS_KEEP
+static struct { expr *array; int size; } *tempexprs = NULL;
+#else
 static expr **tempexprs = NULL;
+#endif
 static int ntempexprs;
 static int tempexprs_size = 0;
 
@@ -48,8 +53,13 @@ static int64_t deadman;
  */
 void eval_cleanup(void)
 {
+#ifdef TEMPEXPRS_KEEP
+    while (tempexprs_size > 0)
+        nasm_free(tempexprs[--tempexprs_size].array);
+#else
     while (ntempexprs)
         nasm_free(tempexprs[--ntempexprs]);
+#endif
     nasm_free(tempexprs);
 }
 
@@ -58,6 +68,18 @@ void eval_cleanup(void)
  */
 static void begintemp(void)
 {
+#ifdef TEMPEXPRS_KEEP
+    if ((unsigned)ntempexprs < (unsigned)tempexprs_size) {
+        tempexpr = tempexprs[ntempexprs].array;
+        if (tempexpr) {
+            tempexpr_size = tempexprs[ntempexprs].size;
+            tempexprs[ntempexprs].array = NULL;
+            tempexprs[ntempexprs].size  = 0;
+            ntempexpr = 0;
+            return;
+        }
+    }
+#endif
     tempexpr = NULL;
     tempexpr_size = ntempexpr = 0;
 }
@@ -77,11 +99,28 @@ static expr *finishtemp(void)
 {
     addtotemp(0L, 0L);          /* terminate */
     while (ntempexprs >= tempexprs_size) {
+#ifdef TEMPEXPRS_KEEP
+        int idx = tempexprs_size;
+#endif
         tempexprs_size += TEMPEXPRS_DELTA;
         tempexprs = nasm_realloc(tempexprs,
                                  tempexprs_size * sizeof(*tempexprs));
+#ifdef TEMPEXPRS_KEEP
+        while (idx < tempexprs_size) {
+            tempexprs[idx].array = NULL;
+            tempexprs[idx++].size = 0;
+        }
+#endif
     }
+#ifdef TEMPEXPRS_KEEP
+    if (tempexprs[ntempexprs].array)
+        nasm_free(tempexprs[ntempexprs].array);
+    tempexprs[ntempexprs].array = tempexpr;
+    tempexprs[ntempexprs++].size = tempexpr_size;
+    return tempexpr;
+#else
     return tempexprs[ntempexprs++] = tempexpr;
+#endif
 }
 
 /*
@@ -995,8 +1034,12 @@ expr *evaluate(scanner sc, void *scprivate, struct tokenval *tv,
     tokval = tv;
     opflags = fwref;
 
+#ifdef TEMPEXPRS_KEEP
+    ntempexprs = 0;             /* initialize temporary storage */
+#else
     while (ntempexprs)          /* initialize temporary storage */
         nasm_free(tempexprs[--ntempexprs]);
+#endif
 
     tt = tokval->t_type;
     if (tt == TOKEN_INVALID)
