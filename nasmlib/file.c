@@ -279,6 +279,9 @@ FILE *nasm_open_write(const char *filename, enum file_flags flags)
         setvbuf(f, NULL, _IOFBF, 0);
         break;
     default:
+#ifdef _MSC_VER /* More agressive buffering. */
+        setvbuf(f, NULL, _IOFBF, 0x10000);
+#endif
         break;
     }
 
