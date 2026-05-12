@@ -101,6 +101,7 @@ char * safe_alloc nasm_strdup(const char *);
 char * safe_alloc nasm_strndup(const char *, size_t);
 char * safe_alloc nasm_strcat(const char *one, const char *two);
 char * safe_alloc end_with_null nasm_strcatn(const char *one, ...);
+void lookaside_allocator_cleanup(void);
 
 /*
  * nasm_[v]asprintf() are variants of the semi-standard [v]asprintf()

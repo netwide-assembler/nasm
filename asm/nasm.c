@@ -795,6 +795,7 @@ int main(int argc, char **argv)
     stdscan_cleanup();
     src_free();
     strlist_free(&include_path);
+    lookaside_allocator_cleanup();
 
     return terminate_after_phase();
 }
