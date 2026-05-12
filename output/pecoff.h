@@ -457,6 +457,7 @@ struct coff_Section {
     int32_t namepos;            /* Offset of name into the strings table */
     int32_t pos, relpos;
     int64_t pass_last_seen;
+    struct coff_SymIdxReloc *symidx_reloc_head;
 
     /* comdat-related members */
     char *comdat_name;
@@ -476,6 +477,13 @@ struct coff_Reloc {
         REAL_SYMBOLS
     } symbase;                  /* relocation for symbol number :) */
     int16_t type;
+};
+
+struct coff_SymIdxReloc {
+    struct coff_SymIdxReloc *next;
+    uint32_t symbol;            /* symbol number */
+    uint32_t offset;            /* byte offset into the secetion. */
+    uint32_t size;              /* the size of the area to fix up */
 };
 
 struct coff_Symbol {

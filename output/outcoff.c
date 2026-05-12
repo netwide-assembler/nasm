@@ -74,6 +74,9 @@ bool win32, win64;
 static int32_t imagebase_sect;
 #define WRT_IMAGEBASE "..imagebase"
 
+static int32_t symtab_sect;
+#define WRT_SYMTAB    "..symtab"
+
 /*
  * Some common section flags by default
  */
@@ -192,6 +195,8 @@ static void coff_gen_init(void)
     coff_strs = saa_init(1);
     strslen = 0;
     def_seg = seg_alloc();
+    symtab_sect = seg_alloc()+1;
+    backend_label(WRT_SYMTAB, symtab_sect, 0);
 }
 
 static void coff_cleanup(void)
@@ -209,6 +214,11 @@ static void coff_cleanup(void)
             r = coff_sects[i]->head;
             coff_sects[i]->head = coff_sects[i]->head->next;
             nasm_free(r);
+        }
+        while (coff_sects[i]->symidx_reloc_head) {
+            struct coff_SymIdxReloc * const ir = coff_sects[i]->symidx_reloc_head;
+            coff_sects[i]->symidx_reloc_head = ir->next;
+            nasm_free(ir);
         }
         nasm_free(coff_sects[i]->name);
         nasm_free(coff_sects[i]->comdat_name);
@@ -544,7 +554,7 @@ static void coff_deflabel(char *name, int32_t segment, int64_t offset,
                       " special symbol types");
 
     if (name[0] == '.' && name[1] == '.' && name[2] != '@') {
-        if (strcmp(name,WRT_IMAGEBASE))
+        if (strcmp(name,WRT_IMAGEBASE) && strcmp(name, WRT_SYMTAB))
             nasm_nonfatal("unrecognized special symbol `%s'", name);
         return;
     }
@@ -649,6 +659,50 @@ static int32_t coff_add_reloc(struct coff_Section *sect, int32_t segment,
     return 0;
 }
 
+/* Helper for coff_out handling wrt ..symtab addressing. */
+static uint32_t coff_out_get_symbol_idx(int32_t tsegment, int64_t offset)
+{
+    /* No better way of doing this? */
+    int section;
+    if (tsegment == NO_SEG) {
+        section = -1;
+    } else {
+        for (section = 0; section < coff_nsects; section++)
+            if (tsegment == coff_sects[section]->index)
+                break;
+        section++;
+    }
+
+    /* Do symbol table lookup (unless it is external). */
+    if (section <= coff_nsects) {
+        uint32_t symidx = UINT32_MAX;
+        int n;
+        saa_rewind(coff_syms);
+        for (n = 0; n < coff_nsyms; n++) {
+            struct coff_Symbol *sym = saa_rstruct(coff_syms);
+            nasm_try_static_assert(sizeof(sym->value) == sizeof(int32_t));
+            if (sym->section == section && sym->value == (int32_t)offset) {
+                if (sym->type & 0x30) /* N_TMASK */
+                    return n; /* Prefer symbol with non-NULL type. */
+                if (symidx == UINT32_MAX)
+                    symidx = n;
+            }
+        }
+        if (symidx == UINT32_MAX)
+            nasm_nonfatal("wrt ..symtab: Unable to find symbol for %s:%#" PRIx64,
+                          section > 0 ? coff_sects[section - 1]->name : "ABS", offset);
+        return symidx;
+    }
+
+    /* External symbols. */
+    if (tsegment != NO_SEG)
+        return raa_read(bsym, tsegment);
+
+    nasm_nonfatal("wrt ..symtab: Unable to find symbol for %#"PRIx32":%#" PRIx64,
+                  tsegment, offset);
+    return UINT32_MAX;
+}
+
 static void coff_out(const struct out_data *out)
 {
     OUT_LEGACY(out,segto,data,type,size,segment,wrt);
@@ -656,7 +710,7 @@ static void coff_out(const struct out_data *out)
     uint8_t mydata[8], *p;
     int i;
 
-    if (wrt != NO_SEG && !win64) {
+    if (wrt != NO_SEG && wrt != symtab_sect && !win64) {
         wrt = NO_SEG;           /* continue to do _something_ */
         nasm_nonfatal("WRT not supported by COFF output formats");
     }
@@ -716,7 +770,25 @@ static void coff_out(const struct out_data *out)
         coff_sect_write(s, data, size);
     } else if (type == OUT_ADDRESS) {
         int asize = abs((int)size);
-        if (!win64) {
+        if (wrt == symtab_sect) {
+            /* Emit internal fixup since the table starts with sections and
+               stuff that can be added to after this statement.  */
+            struct coff_SymIdxReloc *ir;
+            nasm_new(ir);
+            ir->offset = s->len;
+            ir->size = (uint8_t)asize;
+            ir->symbol = coff_out_get_symbol_idx(segment, out->toffset);
+            ir->next = s->symidx_reloc_head;
+            s->symidx_reloc_head = ir;
+            nasm_assert(asize <= sizeof(mydata));
+            coff_sect_write(s, mydata, asize);
+            if (asize > 4)
+                nasm_warn(WARN_OTHER, "zero extending 'wrt "WRT_SYMTAB
+                          "' (32-bit) to %u-bit", asize * 8);
+            else if (asize < 4)
+                nasm_warn(WARN_OTHER, "truncating 'wrt "WRT_SYMTAB
+                          "' (32-bit) to %u-bit", asize * 8);
+        } else if (!win64) {
             if (asize != 4 && (segment != NO_SEG || wrt != NO_SEG)) {
                 nasm_nonfatal("COFF format does not support non-32-bit"
                               " relocations");
@@ -1102,6 +1174,15 @@ static void coff_write(void)
      */
     for (i = 0; i < coff_nsects; i++)
         if (coff_sects[i]->data) {
+            /* Apply symbol table index fixups before writing */
+            struct coff_SymIdxReloc *ir;
+            for (ir = coff_sects[i]->symidx_reloc_head; ir; ir = ir->next) {
+                uint8_t mydata[4];
+                setu32(mydata, ir->symbol + initsym);
+                saa_fwrite(coff_sects[i]->data, ir->offset,
+                           mydata, ir->size >= 4 ? 4 : ir->size);
+            }
+
             saa_fpwrite(coff_sects[i]->data, ofile);
             coff_write_relocs(coff_sects[i]);
 
