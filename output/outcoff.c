@@ -691,8 +691,7 @@ static uint32_t coff_out_get_symbol_idx(int32_t tsegment, int64_t offset)
 
     /* Do symbol table lookup (unless it is external). */
     if (section <= coff_nsects) {
-        uint32_t symidx = UINT32_MAX;
-        int n;
+        uint32_t n, symidx = UINT32_MAX;
         saa_rewind(coff_syms);
         for (n = 0; n < coff_nsyms; n++) {
             struct coff_Symbol *sym = saa_rstruct(coff_syms);
@@ -796,7 +795,7 @@ static void coff_out(const struct out_data *out)
             ir->symbol = coff_out_get_symbol_idx(segment, out->toffset);
             ir->next = s->symidx_reloc_head;
             s->symidx_reloc_head = ir;
-            nasm_assert(asize <= sizeof(mydata));
+            nasm_assert((unsigned)asize <= sizeof(mydata));
             coff_sect_write(s, mydata, asize);
             if (asize > 4)
                 nasm_warn(WARN_OTHER, "zero extending 'wrt "WRT_SYMTAB
