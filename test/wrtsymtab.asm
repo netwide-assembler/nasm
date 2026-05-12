@@ -1,5 +1,5 @@
-;Testname=win32;  Arguments=-fwin32  -owrtsymtab.o -Ox; Files=stdout stderr wrtsymtab.o
-;Testname=win64;  Arguments=-fwin64  -owrtsymtab.o -Ox; Files=stdout stderr wrtsymtab.o
+;Testname=win32;  Arguments=-fwin32  -owrtsymtab.o -Ox --reproducible; Files=stdout stderr wrtsymtab.o
+;Testname=win64;  Arguments=-fwin64  -owrtsymtab.o -Ox --reproducible; Files=stdout stderr wrtsymtab.o
 
 ; Just some symbols & code to work with.
 abs_sym1 equ 0x12345678
