@@ -62,7 +62,7 @@ static void list_emit(void)
     const struct strlist_entry *e;
 
     if (listlinep || *listdata) {
-#if 1
+#ifdef _MSC_VER
         static char const s_digits[] = "0123456789ABCDEF";
         char line[LIST_MAX_LEN * 2];
         size_t len;
