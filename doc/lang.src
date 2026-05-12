@@ -992,6 +992,7 @@ NASM has the capacity to define other special symbols beginning with
 a double period: for example, \c{..start} is used to specify the
 entry point in the \c{obj} output format (see \k{dotdotstart}),
 \c{..imagebase} is used to find out the offset from a base address
-of the current image in the \c{win64} output format (see \k{win64pic}).
+of the current image in the \c{win64} output format (see \k{win64pic}),
+\c{..symtab} is used to emit the COFF symbol table index (see \k{win32wrt}).
 So just keep in mind that symbols beginning with a double period are
 special.
