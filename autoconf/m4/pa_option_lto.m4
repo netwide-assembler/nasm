@@ -13,7 +13,7 @@ dnl If not, do it now to prevent it from getting down further down.
 dnl Do it unconditionally to avoid inconsistent behavior with or
 dnl without --enable-lto.
 AS_IF([test -z "$AR"], [AC_CHECK_TOOL(AR, ar)])
-AS_IF([test -z "$RANLIB"], [AC_CHECK_TOOL(RANLIB, ranlib)])
+AS_IF([test -z "$RANLIB"], [AC_CHECK_TOOL(RANLIB, ranlib, :)])
 
 PA_ARG_BOOL([lto],
  [Try to enable link-time optimization for this compiler],
