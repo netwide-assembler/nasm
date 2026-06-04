@@ -6268,7 +6268,6 @@ static Token **parse_smacro_args(Token **tp, int *nparamp, const SMacro *m)
     int brackets = 0;
     int paren;
     bool bracketed = false;
-    bool bad_bracket = false;
     int i;
     enum sparmflags flags;
     const struct smac_param *mparm;
@@ -6366,8 +6365,6 @@ static Token **parse_smacro_args(Token **tp, int *nparamp, const SMacro *m)
 
         if (!skip) {
             Token *tt;
-
-            bad_bracket |= bracketed && !brackets;
 
             if (white) {
                 *pep = tt = new_White(NULL);
