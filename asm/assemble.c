@@ -2925,7 +2925,6 @@ static enum match_result find_match(insn *instruction)
     const struct itemplate *temp;
     const struct itemplate *best;
     enum match_result m, merr;
-    int this_good;
     int rex = instruction->prefixes[PPS_REX];
     int n, i, besti;
 
@@ -2939,7 +2938,6 @@ static enum match_result find_match(insn *instruction)
     }
 
     merr = MERR_INVALOP;
-    this_good = 0;
 
     templist = &nasm_instructions[instruction->opcode];
     n    = templist->ntemp;
@@ -2951,11 +2949,8 @@ static enum match_result find_match(insn *instruction)
             best = temp;
             besti = i;
             merr = m;
-            this_good = 1;
             if (merr == MOK_GOOD)
                 break;
-        } else if (m == merr) {
-            this_good++;
         }
         temp++;
     }

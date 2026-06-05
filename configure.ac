@@ -149,7 +149,7 @@ AC_SUBST([NSIS])
 dnl Check for host compiler tools
 AC_CHECK_TOOL(AR, ar)
 AC_CHECK_TOOL(RANLIB, ranlib, :)
-AC_CHECK_TOOL(STRIP, strip)
+AC_CHECK_TOOL(STRIP, strip, :)
 
 dnl
 dnl NOTE: the tests for header files and library functions use constructs
