@@ -725,7 +725,8 @@ static struct {
     int64_t pass_seen;
     uint8_t *cur_was_near;
     uint8_t *prev_was_near;
-} jmp_track = { 0, 0, -1, NULL, NULL };
+    uint8_t *spec_used;         /* persistent: speculated short at least once */
+} jmp_track = { 0, 0, -1, NULL, NULL, NULL };
 
 static int64_t jmp_track_alloc(void)
 {
@@ -737,8 +738,10 @@ static int64_t jmp_track_alloc(void)
         size_t new_bytes = (size_t)(new_nalloc - jmp_track.nalloc);
         jmp_track.prev_was_near = nasm_realloc(jmp_track.prev_was_near, (size_t)new_nalloc);
         jmp_track.cur_was_near = nasm_realloc(jmp_track.cur_was_near, (size_t)new_nalloc);
+        jmp_track.spec_used = nasm_realloc(jmp_track.spec_used, (size_t)new_nalloc);
         memset(jmp_track.prev_was_near + jmp_track.nalloc, 0, new_bytes);
         memset(jmp_track.cur_was_near + jmp_track.nalloc, 0, new_bytes);
+        memset(jmp_track.spec_used + jmp_track.nalloc, 0, new_bytes);
         jmp_track.nalloc = new_nalloc;
     }
     return i;
@@ -762,8 +765,10 @@ void jmp_track_cleanup(void)
 {
     nasm_free(jmp_track.cur_was_near);
     nasm_free(jmp_track.prev_was_near);
+    nasm_free(jmp_track.spec_used);
     jmp_track.cur_was_near = NULL;
     jmp_track.prev_was_near = NULL;
+    jmp_track.spec_used = NULL;
     jmp_track.nalloc = 0;
     jmp_track.nused = 0;
     jmp_track.pass_seen = -1;
@@ -778,6 +783,35 @@ static void jmp_track_record(int64_t i, bool was_near)
 {
     if (jmp_track.cur_was_near && i < jmp_track.nalloc)
         jmp_track.cur_was_near[i] = was_near;
+}
+
+/*
+ * Bounded-speculation latch. The forward self-shrink re-check predicts
+ * the post-shrink displacement assuming the span between the jump and
+ * its target shifts rigidly. That holds for plain code, but an "align"
+ * (or any position-dependent padding) between the jump and the target
+ * makes the prediction wrong: shrinking the jump changes the padding,
+ * so the speculative SHORT does not actually fit. Left unchecked the
+ * jump oscillates NEAR<->SHORT forever and the relaxation never
+ * converges.
+ *
+ * To guarantee termination we let each jump speculate at most once for
+ * the whole assembly. After its single attempt it falls back to the
+ * baseline current-layout test, which is convergent. If the speculative
+ * SHORT was a true fixed point (rigid span) the baseline keeps it short;
+ * if not, the baseline grows it back to NEAR and -- speculation now
+ * spent -- it stays there. This bit therefore persists across passes
+ * and is never cleared at pass boundaries.
+ */
+static bool jmp_track_spec_used(int64_t i)
+{
+    return jmp_track.spec_used && i < jmp_track.nalloc && jmp_track.spec_used[i];
+}
+
+static void jmp_track_mark_spec_used(int64_t i)
+{
+    if (jmp_track.spec_used && i < jmp_track.nalloc)
+        jmp_track.spec_used[i] = 1;
 }
 
 /* This is a real hack. The jcc8 or jmp8 byte code must come first. */
@@ -866,7 +900,7 @@ jmp_match(const insn *ins, const struct itemplate *temp)
              * stably short in the previous pass that have since grown
              * past 127 -- which then emit an out-of-range rel8.
              */
-            if (!prev_near || post_delta <= 0) {
+            if (!prev_near || post_delta <= 0 || jmp_track_spec_used(idx)) {
                 jmp_track_record(idx, true);
                 return MERR_INVALOP;
             }
@@ -880,6 +914,8 @@ jmp_match(const insn *ins, const struct itemplate *temp)
                 jmp_track_record(idx, true);
                 return MERR_INVALOP;
             }
+            /* Speculative SHORT accepted; spend this jump's one attempt. */
+            jmp_track_mark_spec_used(idx);
         }
     }
     jmp_track_record(idx, false);
