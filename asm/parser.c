@@ -1108,17 +1108,7 @@ restart_parse:
                  */
             } else if (mref || !far_jmp_ok) {
                 /* segment override? */
-                if (!mref && (!ok_reg || !IS_SREG(value->type))) {
-		 	i = stdscan(NULL, &tokval);
-			goto mref_more;	
-		} else {
-			mref = true;
-			if (!ok_reg || !IS_SREG(value->type)) {
-				nasm_nonfatal("invalid segment override");
-			}
-			i = stdscan(NULL, &tokval);
-			goto mref_more;
-		}
+                mref = true;
 
                 /*
                  * Process the segment override.
