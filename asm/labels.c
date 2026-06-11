@@ -415,6 +415,7 @@ static bool declare_label_lptr(union label *lptr,
     } else if (is_extern(oldtype) && is_global(type)) {
         /* EXTERN or REQUIRED can be replaced with GLOBAL or COMMON */
         lptr->defn.type = type;
+        lptr->defn.defined = 0;
 
         /* Override special unconditionally */
         if (special)
