@@ -793,6 +793,7 @@ int main(int argc, char **argv)
     raa_free(offsets);
     saa_free(forwrefs);
     eval_cleanup();
+    jmp_track_cleanup();
     stdscan_cleanup();
     src_free();
     strlist_free(&include_path);

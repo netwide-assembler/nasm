@@ -1,0 +1,12 @@
+[
+	{
+		"description": "Forward jcc/jmp self-shrink convergence with align in span",
+		"id": "jccshrinkalign",
+		"format": "bin",
+		"source": "jccshrinkalign.asm",
+		"option": "-Ox",
+		"target": [
+			{ "output": "jccshrinkalign.bin" }
+		]
+	}
+]
