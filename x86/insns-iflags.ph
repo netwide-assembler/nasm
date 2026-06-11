@@ -248,7 +248,7 @@ sub merge_flags($;$) {
 
     clean_flags(\%flags);
 
-    my @flagslist = sort { $flag_byname{$a} <=> $flag_byname{$b} }
+    my @flagslist = sort { $flag_byname{$a}->[0] <=> $flag_byname{$b}->[0] }
 	grep { !/^(\s*|\!.*)$/ } keys(%$flags);
 
     if ($human) {
