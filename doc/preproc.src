@@ -146,6 +146,31 @@ running in preprocessor-only mode, to the output file (see \k{opt-E});
 if necessary prefixed by a newly inserted \i\c{%line} directive.
 
 
+\H{ppcaveats} \i{Preprocessor caveats}\I{caveats, preprocessor}
+
+\S{ppcase} Case Insensitivity\I{case sensitivity, preprocessor}
+
+The NASM preprocessor allows the user to create case-insensitive
+macros using directives prefixed with \c{%i} for 'insensitive'
+(\i\c{%idefine}, \i\c{%imacro}, etc.) However, this is limited by NASM
+inherently not being aware of the character set used in either the
+source code nor the output object code.
+
+The primary intended use for case-insensitive macros is to override
+NASM keywords or instructions. Therefore, \e{NASM case insensitivity
+is limited to the ASCII character range only.} NASM does permit
+non-ASCII characters (bytes with values above 127) in macros (and
+labels), but treats them as opaque bytes that can only be matched
+exactly.
+
+In general, it is recommended to avoid using case insensitive macros
+unless you have specific reasons to need them.
+
+The same caveat applies to any other case-insensitive matching: the
+\i\c{%ifidni} and \i\c{%elifidni} directives and the \i\c{%isidni()}
+and \i\c{%findi()} functions.
+
+
 \H{slmacro} \i{Single-Line Macros}
 
 Single-line macros are expanded inline, much like macros in the C
@@ -185,13 +210,13 @@ Otherwise it will be treated as an expansion. For example:
 \c    %define bar(a,b)                ; two arguments, empty expansion
 
 
-Macros defined with \c{%define} are \i{case sensitive}: after
+Macros defined with \c{%define} are case sensitive: after
 \c{%define foo bar}, only \c{foo} will expand to \c{bar}: \c{Foo} or
 \c{FOO} will not. By using \c{%idefine} instead of \c{%define} (the
 `i' stands for `insensitive') you can define all the case variants
 of a macro at once, so that \c{%idefine foo bar} would cause
 \c{foo}, \c{Foo}, \c{FOO}, \c{fOO} and so on all to expand to
-\c{bar}.
+\c{bar}. See however \k{ppcase}.
 
 There is a mechanism which detects when a macro call has occurred as
 a result of a previous expansion of the same macro, to guard against
@@ -291,7 +316,7 @@ To have a reference to an embedded single-line macro resolved at the
 time that the embedding macro is \e{defined}, as opposed to when the
 embedding macro is \e{expanded}, you need a different mechanism to the
 one offered by \c{%define}. The solution is to use \c{%xdefine}, or
-it's \I{case sensitive}case-insensitive counterpart \c{%ixdefine}.
+it's case-insensitive counterpart \c{%ixdefine}.
 
 Suppose you have the following code:
 
@@ -486,7 +511,7 @@ command-line using the `-u' option on the NASM command line: see
 \S{assign} \i{Preprocessor Variables}: \i\c{%assign}
 
 An alternative way to define single-line macros is by means of the
-\c{%assign} command (and its \I{case sensitive}case-insensitive
+\c{%assign} command (and its case-insensitive
 counterpart \i\c{%iassign}, which differs from \c{%assign} in
 exactly the same way that \c{%idefine} differs from \c{%define}).
 
@@ -818,7 +843,7 @@ by an optional list. These are turned into quoted strings if
 necessary, and then compared as if by the \i\c{%isidn()} or
 \i\c{%isidni()} functions, respectively (see \k{ifidn}) \- the
 \c{%find()} function compares case sensitively, and \c{%findi()} case
-insensitively.
+insensitively; see however \k{ppcase}.
 
 The functions then expand to \c{0} if none of the strings in the list
 match the first string, or the position in the list where the first
@@ -1856,7 +1881,8 @@ to be assembled if and only if \c{text1} and \c{text2}, after
 expanding single-line macros, are identical pieces of text.
 Differences in white space are not counted.
 
-\c{%ifidni} is similar to \c{%ifidn}, but is \i{case-insensitive}.
+\c{%ifidni} is similar to \c{%ifidn}, but is case-insensitive; see
+however \k{ppcase}.
 
 For example, the following macro pushes a register or number on the
 stack, and allows you to treat \c{IP} as a real register:
