@@ -4685,8 +4685,16 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
             /* Emulate legacy behavior */
             do_clear(CLEAR_DEFINE|CLEAR_MMACRO, false);
         } else {
-            while ((t = skip_white(t)) && t->type == TOKEN_ID) {
+            while (tok_is(t, TOKEN_ID)) {
                 const char *txt = tok_text(t);
+
+                /*
+                 * Advance to the next token, skipping whitespace
+                 * and optional comma separators.
+                 */
+                while ((t = skip_white(t->next)) && tok_is(t, ','))
+                    ;
+
                 if (!nasm_stricmp(txt, "all")) {
                     do_clear(CLEAR_ALL, context);
                 } else if (!nasm_stricmp(txt, "define") ||
@@ -4717,6 +4725,7 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
                 } else {
                     nasm_nonfatal("invalid option to %s: %s", dname, txt);
                     t = NULL;
+                    break;
                 }
             }
         }
