@@ -116,6 +116,8 @@ It is the production version of NASM since 2025.
 
 \b Fix parsing of \c{seg:offs}-style \c{FAR} pointers in \c{EQU}.
 
+\b Fix the \c{%clear} preprocessor directive hanging when given parameters.
+
 
 \S{cl-3.01} Version 3.01
 
