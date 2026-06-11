@@ -227,6 +227,15 @@ pp-rep-negative [on] negative \c{%rep} count
     Warns about a negative count given to the \c{%rep}
     preprocessor directive.
 
+pp-reserved [on] reserved unimplemented preprocessor directive
+    Warns that a preprocessor directive which was inadvertently
+    permitted in earlier versions of NASM without having been properly
+    implemented was seen in the source code. This currently applies to
+    the \i\c{%rmacro} (treated as \c{%macro}) and \i\c{%irmacro}
+    (treated as \c{%imacro}) directives. These directive names are
+    reserved and may be properly implemented in the future, changing
+    the meaning of the source code.  directive is
+
 pp-sel-range [on] \c{%sel()} argument out of range
     Warns that the \c{%sel()} preprocessor function was passed
     a value less than 1 or larger than the number of available

@@ -4956,6 +4956,13 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
         break;
 
     case PP_RMACRO:
+    {
+        op = PP_MACRO;
+        nasm_warn(WARN_PP_RESERVED,
+                  "reserved directive `%s', treating as '%s'",
+                  dname, pp_directives[op + !casesense]);
+    }
+    /* fall through */
     case PP_MACRO:
     {
         MMacro *def;
@@ -4964,8 +4971,10 @@ static int do_directive(Token *tline, Token **output, bool suppressed)
         def = new_mmacro();
         def->casesense = casesense;
 
+#if 0
         if (op == PP_RMACRO)
             def->max_depth = nasm_limit[LIMIT_MACRO_LEVELS];
+#endif
         if (!parse_mmacro_spec(tline, def, dname)) {
             free_mmacro(def);
             goto done;
