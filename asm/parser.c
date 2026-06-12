@@ -1106,7 +1106,7 @@ restart_parse:
                  * as if it had ended in a comma, but sets the COLON flag
                  * on the operand further down.
                  */
-            } else if (mref || !far_jmp_ok) {
+            } else if (mref || (ok_reg && IS_SREG(value->type))) {
                 /* segment override? */
                 mref = true;
 
