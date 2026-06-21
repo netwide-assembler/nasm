@@ -1386,27 +1386,24 @@ static uint64_t get_uleb128(const char **pp)
 static char *line_from_stdmac(void)
 {
     static const char *stdmacpos = NULL;
-    static char *stdmacbuf = NULL;
+    static void *stdmacbuf = NULL;
     char *line;
     size_t len = 0;
 
     if (!stdmacpos || !*stdmacpos) {
         macros_t *next = *stdmaclist;
 
-        stdmacpos = NULL;
-        nasm_delete(stdmacbuf);
+        nasm_free(stdmacbuf);
 
         if (!next) {
+            stdmacpos = stdmacbuf = NULL;
             if (do_predef)
                 inject_predefs();
             return NULL;
         }
 
         *stdmaclist++ = NULL;
-        if (next->dsize == next->zsize)
-            stdmacpos = next->zdata; /* Incompressible */
-        else
-            stdmacpos = stdmacbuf = uncompress_stdmac(next);
+        stdmacpos = get_zdata(&next->zdata, &stdmacbuf);
     }
 
     /* Length encoded using uleb128 encoding */

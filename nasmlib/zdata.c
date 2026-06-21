@@ -27,16 +27,16 @@ static void nasm_z_free(void *opaque, void *ptr)
     nasm_free(ptr);
 }
 
-char *uncompress_stdmac(macros_t *sm)
+static void *do_uncompress_zdata(const struct zdata *zdata)
 {
     z_stream zs;
-    void *buf = nasm_malloc(sm->dsize);
+    void *buf = nasm_malloc(zdata->dsize);
 
     nasm_zero(zs);
-    zs.next_in   = (void *)sm->zdata;
-    zs.avail_in  = sm->zsize;
+    zs.next_in   = (void *)zdata->zdata;
+    zs.avail_in  = zdata->zsize;
     zs.next_out  = buf;
-    zs.avail_out = sm->dsize;
+    zs.avail_out = zdata->dsize;
     zs.zalloc    = nasm_z_alloc;
     zs.zfree     = nasm_z_free;
 
@@ -48,4 +48,22 @@ char *uncompress_stdmac(macros_t *sm)
 
     inflateEnd(&zs);
     return buf;
+}
+
+void *uncompress_zdata(const struct zdata *zdata)
+{
+    if (zdata->zsize == zdata->dsize)
+        return nasm_memdup(zdata->zdata, zdata->dsize);
+    else
+        return do_uncompress_zdata(zdata);
+}
+
+const void *get_zdata(const struct zdata *zdata, void **buf)
+{
+    if (zdata->zsize == zdata->dsize) {
+        *buf = NULL;
+        return zdata->zdata;
+    } else {
+        return *buf = do_uncompress_zdata(zdata);
+    }
 }

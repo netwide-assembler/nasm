@@ -9,8 +9,8 @@
 use strict;
 use integer;
 use bytes;
-use Compress::Zlib;
 
+require 'zdata.ph';
 require 'phash.ph';
 
 my $fname;
@@ -18,24 +18,6 @@ my $line = 0;
 my @pname;
 
 my $dump_text = 1;
-
-#
-# Print out a string as a byte array
-#
-sub print_data($$) {
-    my($o, $s) = @_;
-    my $perline = 8;
-
-    for (my $ix = 0; $ix < length($s); $ix += $perline) {
-	my $ss = substr($s, $ix, $perline);
-	print $o '    ';
-	foreach my $b (unpack('C*', $ss)) {
-	    printf $o '0x%02x,', $b;
-	}
-	print $o "\n";
-    }
-    print $o "};\n";
-}
 
 #
 # Prefix a string with its length in uleb128 encoding
@@ -104,21 +86,14 @@ sub flush_mac($$)
     }
     $data .= pack('C', 0);	# End of blob marker
 
-    my $dlen = length($data);
-    my $zblob = Compress::Zlib::compress($data, 9);
-    my $zlen = length($zblob);
+    my $zdata = make_zdata($data);
 
-    if ($zlen >= $dlen) {
-	$zblob = $data;
-	$zlen = $dlen;
-    }
+    my $var = $name.'_blob';
+    printf $out "static const uint8_t %s[%d] = {\n", $var, $zdata->{zsize};
+    print_data($out, $zdata->{zdata});
 
-    printf $out "static const unsigned char %s_blob[%d] = {\n", $name, $zlen;
-    print_data($out, $zblob);
-
-    printf $out "\n%smacros_t %s = {\n    %d, %d, %s_blob\n};\n",
-	$mac->{'static'} ? 'static ' : '',
-	$name, $dlen, $zlen, $name;
+    printf $out "\n%smacros_t %s = {\n    %s\n};\n",
+	$mac->{'static'} ? 'static ' : '', $name, zdata_def($var, $zdata);
 
     print $out "#endif\n" if (scalar(@$ifdefs));
     return $init;

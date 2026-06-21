@@ -9,15 +9,13 @@
 #define NASM_MACROS_H
 
 #include "compiler.h"
+#include "zdata.h"
 
 /* Builtin macro set */
 struct builtin_macros {
-    unsigned int dsize, zsize;
-    const void *zdata;
+    const struct zdata zdata;
 };
 typedef const struct builtin_macros macros_t;
-
-char *uncompress_stdmac(macros_t *sm);
 
 /* --- From standard.mac via macros.pl -> macros.c --- */
 

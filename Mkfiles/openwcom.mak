@@ -113,6 +113,7 @@ LIBOBJ_COM = &
 	nasmlib/strlist.obj &
 	nasmlib/perfhash.obj nasmlib/badenum.obj &
 	nasmlib/readnum.obj &
+	nasmlib/zdata.obj &
 	&
 	common/common.obj common/errstubs.obj &
 	&
@@ -153,7 +154,6 @@ LIBOBJ_ASM = &
 	asm/directbl.obj &
 	asm/pptok.obj &
 	asm/tokhash.obj &
-	asm/uncompress.obj &
 	&
 	macros/macros.obj &
 	&
@@ -299,7 +299,8 @@ nsis/version.nsh: version version.pl $(DIRS)
 # This source file is generated from the standard macros file
 # `standard.mac' by another Perl script. Again, it's part of the
 # standard distribution.
-macros/macros.c: macros/macros.pl asm/pptok.ph version.mac &
+macros/macros.c: $(srcdir)/macros/macros.pl asm/pptok.ph version.mac &
+	$(srcdir)/perllib/zdata.ph &
 	$(srcdir)/macros/*.mac $(srcdir)/output/*.mac
 	$(RUNPERL) $(srcdir)/macros/macros.pl version.mac &
 		$(srcdir)/macros/*.mac $(srcdir)/output/*.mac
