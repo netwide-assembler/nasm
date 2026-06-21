@@ -334,15 +334,15 @@ asm\directbl.c: asm\directiv.dat nasmlib\perfhash.pl perllib\phash.ph
 		$(srcdir)\asm\directiv.dat asm\directbl.c
 
 # Editor token files
-editors\nasmtok.el: editors\emacstok.pl asm\tokhash.c asm\pptok.c \
+editors\nasmtok.el: editors\nasmtok.pl asm\tokhash.c asm\pptok.c \
 		 asm\directiv.dat macros\macros.c editors\builtin.mac \
 		 version.mak
-	$(RUNPERL) $(srcdir)\editors\emacstok.pl -el $@ $(srcdir) $(objdir)
+	$(RUNPERL) $(srcdir)\editors\nasmtok.pl -el $@ $(srcdir) $(objdir)
 
-editors\nasmtok.json: editors\emacstok.pl asm\tokhash.c asm\pptok.c \
+editors\nasmtok.json: editors\nasmtok.pl asm\tokhash.c asm\pptok.c \
 		 asm\directiv.dat macros\macros.c editors\builtin.mac \
 		 version.mak
-	$(RUNPERL) $(srcdir)\editors\emacstok.pl -json $@ $(srcdir) $(objdir)
+	$(RUNPERL) $(srcdir)\editors\nasmtok.pl -json $@ $(srcdir) $(objdir)
 
 editors: $(EDITORS) $(PHONY)
 
