@@ -97,6 +97,7 @@ void * safe_malloc(1) nasm_zalloc(size_t);
 void * safe_malloc2(1,2) nasm_calloc(size_t, size_t);
 void * safe_realloc(2) nasm_realloc(void *, size_t);
 void nasm_free(void *);
+void * safe_malloc(2) nasm_memdup(const void *, size_t);
 char * safe_alloc nasm_strdup(const char *);
 char * safe_alloc nasm_strndup(const char *, size_t);
 char * safe_alloc nasm_strcat(const char *one, const char *two);

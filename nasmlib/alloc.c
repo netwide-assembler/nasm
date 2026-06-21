@@ -78,14 +78,18 @@ void nasm_free(void *q)
         free(q);
 }
 
+void *nasm_memdup(const void *s, size_t size)
+{
+    void *p = nasm_malloc(size);
+    return memcpy(p, s, size);
+}
+
 char *nasm_strdup(const char *s)
 {
-    char *p;
     const size_t size = strlen(s) + 1;
 
     _nasm_last_string_size = size;
-    p = nasm_malloc(size);
-    return memcpy(p, s, size);
+    return (char *)nasm_memdup(s, size);
 }
 
 char *nasm_strndup(const char *s, size_t len)
