@@ -388,6 +388,7 @@ bool process_directives(char *directive)
     {
         bool validid;
         int64_t size = 0;
+        char *fullvalue = value; /* Including leading $ if present */
         char *sizestr;
         bool rn_error;
 
@@ -411,7 +412,7 @@ bool process_directives(char *directive)
         }
         if (!validid) {
             nasm_nonfatal("identifier expected after %s, got `%s'",
-			  directive, value);
+			  directive, fullvalue);
             break;
         }
 
