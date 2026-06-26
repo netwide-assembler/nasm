@@ -10,9 +10,8 @@
 tmp="$(mktemp -d)"
 [ -n "$tmp" ] || exit 1
 
-if [ -n "$1" ]; then
-    NASM="$1"
-fi
+NASM="${NASM:-../nasm}"
+NASM="${1:-$NASM}"
 
 : > "$tmp/junk.asm"
 "$NASM" -f bin -o "$tmp/junk.bin" -Lsb -l "$tmp/junk.lst" "$tmp/junk.asm"
