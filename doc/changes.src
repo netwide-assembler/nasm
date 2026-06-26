@@ -122,6 +122,14 @@ It is the production version of NASM since 2025.
 
 \b Fix the \c{%clear} preprocessor directive hanging when given parameters.
 
+\b The never properly implemented (or documented) preprocessor
+   directives \c{%rmacro} and \c{%irmacro} are now properly disabled; to
+   avoid breaking existing code, they fall back to \c{%macro} and
+   \c{%imacro} with a suitable warning.
+
+\> Programmers should \e{not} rely on this behavior: in the future,
+   these directives might actually be (properly) implemented.
+
 
 \S{cl-3.01} Version 3.01
 
