@@ -63,12 +63,16 @@ It is the production version of NASM since 2025.
    mode. This is not a recommended syntax as the operand size is still
    64 bits, but was permitted by earlier versions of NASM.
 
+\> Fix parsing of \c{$}-escaped symbols in directives (\c{GLOBAL},
+   \c{STATIC}, \c{EXTERN}, \c{REQUIRED}, \c{COMMON}).
+
 \b Corrections to disassembling:
 
 \> Shift instructions with the unity operand were getting disassembled to a zero
    operand instead of one.
 
-\> \c{JMP}, \c{CALL} and \c{JMPE} disassembled incorrectly with the register operands.
+\> \c{JMP}, \c{CALL} and \c{JMPE} disassembled incorrectly with the
+   register operands.
 
 \b Whole bunch of minor fixes to operand sizes, operand size prefixes. Changes
    mostly return the behavior known from 2.16.03.
