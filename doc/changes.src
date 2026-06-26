@@ -114,6 +114,11 @@ It is the production version of NASM since 2025.
    keywords \c{default}, \c{maximum}, and \c{reset}. See
    \k{opt-limit}.
 
+\b Fix parsing of \c{seg:offs}-style \c{FAR} pointers in \c{EQU}.
+
+\b Fix the \c{%clear} preprocessor directive hanging when given parameters.
+
+
 \S{cl-3.01} Version 3.01
 
 \b A new \c{obj2} version of the \c{obj} output format, intended for

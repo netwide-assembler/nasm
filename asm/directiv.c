@@ -388,6 +388,7 @@ bool process_directives(char *directive)
     {
         bool validid;
         int64_t size = 0;
+        char *fullvalue = value; /* Including leading $ if present */
         char *sizestr;
         bool rn_error;
 
@@ -395,7 +396,7 @@ bool process_directives(char *directive)
             value++;        /* skip escaping $ if present */
             validid = nasm_isidchar(*value);
             if (globl.dollarhex)
-                validid &= !nasm_isnumchar(*value);
+                validid &= !nasm_isnumstart(value[1]);
         } else {
             validid = nasm_isidstart(*value);
         }
@@ -411,7 +412,7 @@ bool process_directives(char *directive)
         }
         if (!validid) {
             nasm_nonfatal("identifier expected after %s, got `%s'",
-			  directive, value);
+			  directive, fullvalue);
             break;
         }
 

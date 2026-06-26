@@ -11,3 +11,5 @@ global_after:
 extern_after:
 	nop
 	extern extern_after
+	extern $foo
+	jmp foo

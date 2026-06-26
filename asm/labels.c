@@ -210,6 +210,9 @@ static union label *find_label(const char *label, bool create, bool *created)
     if (lptr || !create) {
         if (created)
             *created = false;
+        if (label_str)
+            nasm_free(label_str);
+
         return lptr;
     }
 
@@ -415,6 +418,7 @@ static bool declare_label_lptr(union label *lptr,
     } else if (is_extern(oldtype) && is_global(type)) {
         /* EXTERN or REQUIRED can be replaced with GLOBAL or COMMON */
         lptr->defn.type = type;
+        lptr->defn.defined = 0;
 
         /* Override special unconditionally */
         if (special)

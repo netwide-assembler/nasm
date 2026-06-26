@@ -120,7 +120,7 @@ operands.  Semantically it works by passing another operand to the
 instruction so that none of the source operands are modified as a
 result of the operation.
 
-Syntatically NASM allows both the obvious format mentioned above and a
+Syntactically NASM allows both the obvious format mentioned above and a
 \i{compact format} - compact meaning that if a user passes two
 operands instead of three, one of them is simply copied to be used as
 the source or destination.  Thereby these instructions have exactly

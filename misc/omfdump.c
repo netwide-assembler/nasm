@@ -92,6 +92,7 @@ static void *nulldie(void *ptr)
     fprintf(stderr, "%s: memory allocation error\n", progname);
     exit(1);
     abort();                    /* This should never happen */
+    return NULL; /* make compiler happy */
 }
 
 static void *xmalloc(size_t size)
@@ -110,7 +111,7 @@ static void *expand_buffer(void *buf, size_t *bufsizep, size_t datasize,
 {
     size_t bufsize = *bufsizep;
 
-    if (likely(bufsize < datasize))
+    if (likely(bufsize > datasize))
         return buf;
 
     if (bufsize < BUFSIZ)
@@ -159,12 +160,12 @@ static void hexdump_data(unsigned int offset, const uint8_t *data,
         printf("   %04x: ", i + offset);
         for (j = 0; j < 16; j++) {
             char sep = (j == 7) ? '-' : ' ';
-            if (i + j < field)
-                printf("%02x%c", data[i + j], sep);
-            else if (i + j < n)
-                printf("xx%c", sep);    /* Beyond end of... */
-            else
+            if (i + j >= n)
                 printf("   ");  /* No separator */
+            else if (i + j < field)
+                printf("%02x%c", data[i + j], sep);
+            else
+                printf("xx%c", sep);    /* Beyond end of... */
         }
         printf(" :  ");
         for (j = 0; j < 16; j++) {

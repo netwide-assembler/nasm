@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Automatically produce some tables useful for a NASM major mode
+# Automatically produce some tables useful for an emacs NASM major mode
 #
 
 use integer;
@@ -317,7 +317,7 @@ sub write_output_el {
     # Generate a list of all the token type lists.
     print $out "\n(defconst nasm-token-lists\n";
     print $out "  \'(";
-    print $out make_lines(78, 4, map { "'nasm-$_" } sort keys(%tokens));
+    print $out make_lines(78, 4, map { "nasm-$_" } sort keys(%tokens));
     print $out ")\n";
     print $out "  \"List of all ${whoami} token type lists.\")\n";
 

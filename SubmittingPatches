@@ -33,7 +33,7 @@ There are at least two ways to make it right.
     at all.
 
  2) Use "diff -up"
- 
+
     Use "diff -up" or "diff -uprN" to create patches.
 
 Signing your work
@@ -86,8 +86,10 @@ An example of patch message
 From: Random J Developer <random@developer.example.org>
 Subject: [PATCH] Short patch description
 
-Long patch description (could be skipped if patch
-is trivial enough)
+Long patch description:
+
+Explain the problem you are fixing, the consequences of that problem,
+and why your patch is the correct way to fix it.
 
 Signed-off-by: Random J Developer <random@developer.example.org>
 ---

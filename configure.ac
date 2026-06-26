@@ -91,7 +91,6 @@ AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AC_PROG_MKDIR_P
 
-AC_CHECK_PROGS([NROFF],    nroff,    false)
 AC_CHECK_PROGS([ASCIIDOC], asciidoc, false)
 AC_CHECK_PROGS([XMLTO],    xmlto,    false)
 AC_CHECK_PROGS([XZ],       xz,       false)

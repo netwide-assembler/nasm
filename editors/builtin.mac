@@ -62,8 +62,12 @@
 %idefine %substr(&&,=,=)
 %idefine %ord(&&,=,=)
 %idefine %b2hs(&&,&&)
+%idefine %limit(&&,&&)
+%idefine %env(&&)
+%idefine %env(&&,+)
 %idefine %findi(&&,+)
 %idefine %find(&&,+)
+%define __?NASM_LIMITS?__
 %define __?PASS?__
 %define __?SECT?__
 %defalias __SECT__
