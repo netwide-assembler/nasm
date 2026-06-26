@@ -396,7 +396,7 @@ bool process_directives(char *directive)
             value++;        /* skip escaping $ if present */
             validid = nasm_isidchar(*value);
             if (globl.dollarhex)
-                validid &= !nasm_isnumstart(value[1]);
+                validid &= !nasm_isnumstart(*value);
         } else {
             validid = nasm_isidstart(*value);
         }
