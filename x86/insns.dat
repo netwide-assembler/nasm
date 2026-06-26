@@ -951,6 +951,9 @@ $wdq  UD2	reg#,rm#			[rm:	o# 0f 0b /r]				186,ND,SM
 $wdq  UD2A	reg#,rm#			[rm:	o# 0f 0b /r]				186,ND
 ; UDB: 64-bit mode only, single byte
       UDB       void                            [       d6]                                     X86_64,LONG
+; sandpile.org calls this UDW. Accept it as such. When (and if) a formal mnemonic
+; is allocated, this will take precendence in disassembly, of course.
+      UDW	void                            [       ff ff]					186,UNDOC
 
 FWAIT		void				[	wait]					8086
 
