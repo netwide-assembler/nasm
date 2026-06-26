@@ -136,8 +136,25 @@ static inline size_t nasm_last_string_size(void)
     return _nasm_last_string_size;
 }
 
-/* Statically assert the argument is a pointer without evaluating it */
-#define nasm_assert_pointer(p) ((void)sizeof(*(p)))
+/*
+ * All zero data buffer
+ */
+#define ZERO_BUF_SIZE 65536     /* Default value */
+#if defined(BUFSIZ) && (BUFSIZ > ZERO_BUF_SIZE)
+# undef ZERO_BUF_SIZE
+# define ZERO_BUF_SIZE BUFSIZ
+#endif
+extern const uint8_t zero_buffer[ZERO_BUF_SIZE];
+
+/*
+ * Statically assert the argument is a pointer without evaluating it.
+ * ? : requires that the types on both sides are compatible, and
+ * const volatile void * is compatible with any pointer type.
+ * Avoid a simple cast from NULL because it might make some compilers
+ * confused; a pointer to any object works there.
+ */
+#define nasm_assert_pointer(p) \
+    ((void)sizeof(1 ? (p) : (const volatile void *)&zero_buffer))
 
 #define nasm_new(p) ((p) = nasm_zalloc(sizeof(*(p))))
 #define nasm_newn(p,n) ((p) = nasm_calloc((n), sizeof(*(p))))
@@ -485,13 +502,6 @@ void nasm_set_binary_mode(FILE *f);
 
 /* Probe for existence of a file */
 bool nasm_file_exists(const char *filename);
-
-#define ZERO_BUF_SIZE 65536     /* Default value */
-#if defined(BUFSIZ) && (BUFSIZ > ZERO_BUF_SIZE)
-# undef ZERO_BUF_SIZE
-# define ZERO_BUF_SIZE BUFSIZ
-#endif
-extern const uint8_t zero_buffer[ZERO_BUF_SIZE];
 
 /* Missing fseeko/ftello */
 #ifndef HAVE_FSEEKO
