@@ -130,6 +130,8 @@ It is the production version of NASM since 2025.
 \> Programmers should \e{not} rely on this behavior: in the future,
    these directives might actually be (properly) implemented.
 
+\b Fix a crash when \c{-M} directives were used in response files.
+
 
 \S{cl-3.01} Version 3.01
 

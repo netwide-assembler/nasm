@@ -108,8 +108,8 @@ static unsigned int operating_mode;
 /* Dependency flags */
 static bool depend_emit_phony = false;
 static bool depend_missing_ok = false;
-static const char *depend_target = NULL;
-static const char *depend_file = NULL;
+static char *depend_target = NULL;
+static char *depend_file = NULL;
 struct strlist *depend_list;
 
 static inline bool terminate_after_phase(void)
@@ -796,6 +796,8 @@ int main(int argc, char **argv)
     stdscan_cleanup();
     src_free();
     strlist_free(&include_path);
+    nasm_free(depend_file);
+    nasm_free(depend_target);
 
     return terminate_after_phase();
 }
@@ -837,7 +839,8 @@ static void copy_filename(const char **dst, const char *src, const char *what)
 }
 
 /*
- * Convert a string to a POSIX make-safe form
+ * Convert a string to a POSIX make-safe form; returns a newly allocated
+ * string.
  */
 static char *quote_for_pmake(const char *str)
 {
@@ -917,7 +920,8 @@ static char *quote_for_pmake(const char *str)
 }
 
 /*
- * Convert a string to a Watcom make-safe form
+ * Convert a string to a Watcom make-safe form; returns a newly allocated
+ * string.
  */
 static char *quote_for_wmake(const char *str)
 {
@@ -1276,20 +1280,20 @@ static bool process_arg(char *p, char *q, int pass)
                 case 'D':
                     operating_mode |= OP_DEPEND;
                     if (q && (q[0] != '-' || q[1] == '\0')) {
-                        depend_file = q;
+                        nasm_strdupto(&depend_file, q);
                         advance = true;
                     }
                     break;
                 case 'F':
-                    depend_file = q;
+                    nasm_strdupto(&depend_file, q);
                     advance = true;
                     break;
                 case 'T':
-                    depend_target = q;
+                    nasm_strdupto(&depend_target, q);
                     advance = true;
                     break;
                 case 'Q':
-                    depend_target = quote_for_make(q);
+                    nasm_strto(&depend_target, quote_for_make(q));
                     advance = true;
                     break;
                 case 'W':
