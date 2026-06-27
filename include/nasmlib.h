@@ -368,9 +368,10 @@ static inline const char *nasm_digit_chars(bool ucase)
 int32_t seg_alloc(void);
 
 /*
- * Add/replace or remove an extension to the end of a filename
+ * Add/replace or remove an extension to the end of a filename;
+ * returns a newly allocated buffer with the modified filename.
  */
-const char *filename_set_extension(const char *inname, const char *extension);
+char *filename_set_extension(const char *inname, const char *extension);
 
 /*
  * Utility macros...

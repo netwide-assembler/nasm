@@ -186,7 +186,7 @@ char *nasm_catfile(const char *dir, const char *file)
  * string buffer. If the extension is not an empty string, the first
  * character is replaced by the appropriate extsep for the filesystem.
  */
-const char *filename_set_extension(const char *inname, const char *extension)
+char *filename_set_extension(const char *inname, const char *extension)
 {
     const char *nulp, *ep, *p;
     char *outname, *q;
