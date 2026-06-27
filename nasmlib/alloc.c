@@ -99,6 +99,17 @@ char *nasm_strndup(const char *s, size_t len)
     return memcpy(p, s, len);
 }
 
+char *nasm_strdupto(char **ptrp, const char *str)
+{
+    char *ptr = *ptrp;
+    if (str) {
+        if (ptr)
+            nasm_free(ptr);
+        *ptrp = ptr = nasm_strdup(str);
+    }
+    return ptr;
+}
+
 char *nasm_strcat(const char *one, const char *two)
 {
     char *rslt;

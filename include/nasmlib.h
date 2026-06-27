@@ -103,6 +103,29 @@ char * safe_alloc nasm_strcat(const char *one, const char *two);
 char * safe_alloc end_with_null nasm_strcatn(const char *one, ...);
 
 /*
+ * Replace a string in a string pointer variable with a nasm_strdup()
+ * copy of the argument on the right, freeing the contents of the
+ * previous contents of the variable if non-NULL.
+ *
+ * If *str is NULL, simply return the old value of *ptrp.
+ */
+char *nasm_strdupto(char **ptrp, const char *str);
+
+/*
+ * Similar, but the new pointer must already have been heap allocated
+ * by the creating function.
+ */
+static inline char *nasm_strto(char **ptrp, char *str)
+{
+    char *ptr = *ptrp;
+    if (!str)
+        return ptr;
+    if (ptr)
+        nasm_free(ptr);
+    return *ptrp = str;
+}
+
+/*
  * nasm_[v]asprintf() are variants of the semi-standard [v]asprintf()
  * functions, except that we return the pointer instead of a count.
  * The size of the string (including the final NUL!) is available
