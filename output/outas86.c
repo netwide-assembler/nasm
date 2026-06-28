@@ -80,6 +80,8 @@ static void as86_sect_write(struct Section *, const uint8_t *,
 
 static void as86_init(void)
 {
+    char *module_name;
+
     stext.data = saa_init(1L);
     stext.datalen = 0L;
     stext.head = stext.last = NULL;
@@ -101,7 +103,9 @@ static void as86_init(void)
     strslen = 0;
 
     /* as86 module name = input file minus extension */
-    as86_add_string(filename_set_extension(inname, ""));
+    module_name = filename_set_extension(inname, "");
+    as86_add_string(module_name);
+    nasm_free(module_name);
 }
 
 static void as86_cleanup(void)
