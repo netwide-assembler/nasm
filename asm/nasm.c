@@ -722,8 +722,8 @@ int main(int argc, char **argv)
                     file_name = where.filename;
                     linnum = -1; /* Force a new %line statement */
                     lineinc = file_name ? 1 : 0;
-                    nasm_free(quoted_file_name);
-                    quoted_file_name = nasm_quote_filename(file_name);
+                    nasm_strto(&quoted_file_name,
+                               nasm_quote_filename(file_name));
                 } else if (lineinc) {
                     if (linnum + lineinc == where.lineno) {
                         /* Add one blank line to account for increment */
@@ -743,17 +743,16 @@ int main(int argc, char **argv)
                 }
 
                 /* Skip blank lines if we will need a %line anyway */
-                if (linnum == -1 && !line[0])
-                    continue;
-
-                if (linnum != where.lineno) {
-                    fprintf(ofile, "%%line %"PRId32"%+"PRId32" %s\n",
-                            where.lineno, lineinc, quoted_file_name);
+                if (*line || linnum != -1) {
+                    if (linnum != where.lineno) {
+                        fprintf(ofile, "%%line %"PRId32"%+"PRId32" %s\n",
+                                where.lineno, lineinc, quoted_file_name);
+                    }
+                    linnum = where.lineno + lineinc;
+                    fputs(line, ofile);
+                    fputc('\n', ofile);
                 }
-                linnum = where.lineno + lineinc;
-
-                fputs(line, ofile);
-                fputc('\n', ofile);
+                nasm_free(line);
             }
 
             nasm_free(quoted_file_name);
