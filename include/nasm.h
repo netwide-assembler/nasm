@@ -1575,9 +1575,6 @@ struct globalopt {
 extern struct globalopt globl;
 void reset_global_defaults(int bits);
 
-extern const char *inname;	/* primary input filename */
-extern const char *outname;     /* output filename */
-
 /*
  * Switch to a different segment and return the current offset
  */

@@ -10,6 +10,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "files.h"
 #include "error.h"
 #include "saa.h"
 #include "raa.h"
@@ -510,10 +511,11 @@ static void elf64_init(void)
 
 static void elf_populate_dirs(void)
 {
-    char *cur_path = nasm_realpath(inname);
+    const char * const infile = get_filename(FN_INFILE);
+    char *cur_path = nasm_realpath(infile);
     char *dir_name = nasm_dirname(cur_path);
 
-    strlcpy(elf_module, inname, sizeof(elf_module));
+    strlcpy(elf_module, infile, sizeof(elf_module));
     strlcpy(elf_dir, dir_name, sizeof(elf_dir));
 
     nasm_free(dir_name);

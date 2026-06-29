@@ -17,6 +17,7 @@
 #include "error.h"
 #include "stdscan.h"
 #include "eval.h"
+#include "files.h"
 #include "ver.h"
 
 #include "outform.h"
@@ -656,7 +657,7 @@ static const char *get_default_class(const char *segment)
 
 static void obj_init(void)
 {
-    strlcpy(obj_infile, inname, sizeof(obj_infile));
+    strlcpy(obj_infile, get_filename(FN_INFILE), sizeof(obj_infile));
     first_seg = seg_alloc();
     any_segs = false;
     fpubhead = NULL;

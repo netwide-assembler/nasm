@@ -14,6 +14,7 @@
 #include "nasmlib.h"
 #include "ilog2.h"
 #include "labels.h"
+#include "files.h"
 #include "error.h"
 #include "saa.h"
 #include "raa.h"
@@ -324,7 +325,7 @@ static int32_t macho_gotpcrel_sect;
 
 static void macho_init(void)
 {
-    module_name = inname;
+    module_name = get_filename(FN_INFILE);
     sects = NULL;
     sectstail = &sects;
 

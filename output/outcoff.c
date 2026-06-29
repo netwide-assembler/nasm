@@ -15,6 +15,7 @@
 #include "nasm.h"
 #include "nasmlib.h"
 #include "ilog2.h"
+#include "files.h"
 #include "error.h"
 #include "saa.h"
 #include "raa.h"
@@ -1341,7 +1342,7 @@ static void coff_write_symbols(void)
     if (reproducible)
         memset(filename, 0, 18);
     else
-        strncpy(filename, inname, 18);
+        strncpy(filename, get_filename(FN_INFILE), 18);
     nasm_write(filename, 18, ofile);
 
     /*

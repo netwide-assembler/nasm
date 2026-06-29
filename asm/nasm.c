@@ -27,6 +27,7 @@
 #include "iflag.h"
 #include "quote.h"
 #include "ver.h"
+#include "files.h"
 #include "error.h"
 
 /*
@@ -68,11 +69,6 @@ int64_t _passn;
 
 struct compile_time official_compile_time;
 
-const char *inname;
-const char *outname;
-static const char *listname;
-static const char *errname;
-
 static int64_t globallineno;    /* for forward-reference tracking */
 
 const struct ofmt *ofmt = &OF_DEFAULT;
@@ -109,7 +105,6 @@ static unsigned int operating_mode;
 static bool depend_emit_phony = false;
 static bool depend_missing_ok = false;
 static char *depend_target = NULL;
-static char *depend_file = NULL;
 struct strlist *depend_list;
 
 static inline bool terminate_after_phase(void)
@@ -439,6 +434,7 @@ static void emit_dependencies(struct strlist *list)
     bool wmake = (quote_for_make == quote_for_wmake);
     const char *wrapstr, *nulltarget;
     const struct strlist_entry *l;
+    const char * const depend_file = get_filename(FN_DEPENDFILE);
 
     if (!list)
         return;
@@ -579,6 +575,59 @@ static void timestamp(void)
     }
 }
 
+static const char *fix_outfile_name(void)
+{
+    const char * const outname = get_filename(FN_OUTFILE);
+    const char *inname;
+    char *newname;
+
+    if (outname)
+        return outname;         /* Output file already set */
+
+    if (operating_mode & OP_PREPROCESS)
+        return NULL;            /* Preprocessing to stdout */
+
+    /*
+     * No filename specified, and not in preprocessing mode, create
+     * a default output file name.
+     */
+    inname = get_filename(FN_INFILE);
+    newname = filename_set_extension(inname, ofmt->extension);
+    if (!strcmp(newname, inname)) {
+        nasm_strdupto(&newname, "nasm.out");
+        nasm_warn(WARN_OTHER,
+                  "default output file same as input, using `%s' for output\n",
+                  newname);
+    }
+    return set_filename(FN_OUTFILE, newname);
+}
+
+static const char *fix_dependfile_name(void)
+{
+    const char * const depend_file = get_filename(FN_DEPENDFILE);
+    const char *outname, *inname;
+    char *newname;
+
+    if (depend_file)
+        return depend_file;
+
+    if (!(operating_mode & ~OP_DEPEND))
+        return NULL;            /* ONLY doing dependencies -> stdout */
+
+    outname = get_filename(FN_OUTFILE);
+    if (outname) {
+        newname = nasm_strcat(outname, ".d");
+    } else {
+        inname = get_filename(FN_INFILE);
+        if (inname)
+            newname = filename_set_extension(inname, ".d");
+        else
+            newname = nasm_strdup("nasm.d");
+    }
+
+    return set_filename(FN_DEPENDFILE, newname);
+}
+
 int main(int argc, char **argv)
 {
     /* Do these as early as possible */
@@ -649,31 +698,18 @@ int main(int argc, char **argv)
     error_init();
     memcpy(nasm_limit_from_cmdline, nasm_limit, sizeof nasm_limit);
 
-    /* Dependency filename if we are also doing other things */
-    if (!depend_file && (operating_mode & ~OP_DEPEND)) {
-        if (outname)
-            depend_file = nasm_strcat(outname, ".d");
-        else
-            depend_file = filename_set_extension(inname, ".d");
-    }
-
     /*
-     * If no output file name provided and this
-     * is preprocess mode, we're perfectly
-     * fine to output into stdout.
+     * Set output and depend file names to defaults as needed.
+     * Call fix_dependfile_name() first - its defaults depend on
+     * whether or not the outfile name is a generated default.
      */
-    if (!outname && !(operating_mode & OP_PREPROCESS)) {
-        outname = filename_set_extension(inname, ofmt->extension);
-        if (!strcmp(outname, inname)) {
-            outname = "nasm.out";
-            nasm_warn(WARN_OTHER, "default output file same as input, using `%s' for output\n", outname);
-        }
-    }
+    fix_dependfile_name();
+    fix_outfile_name();
 
     depend_list = (operating_mode & OP_DEPEND) ? strlist_alloc(true) : NULL;
 
     if (!depend_target)
-        depend_target = quote_for_make(outname);
+        depend_target = quote_for_make(get_filename(FN_OUTFILE));
 
     reset_global_defaults(cmd_sb);
 
@@ -685,7 +721,7 @@ int main(int argc, char **argv)
             if (depend_missing_ok)
                 pp_include_path(NULL);    /* "assume generated" */
 
-            pp_reset(inname, PP_DEPS, depend_list);
+            pp_reset(get_filename(FN_INFILE), PP_DEPS, depend_list);
             ofile = NULL;
             while ((line = pp_getline()))
                 nasm_free(line);
@@ -697,6 +733,7 @@ int main(int argc, char **argv)
             char *quoted_file_name = nasm_quote_filename(file_name);
             int32_t linnum  = 0;
             int32_t lineinc = 0;
+            const char *outname = get_filename(FN_OUTFILE);
 
             if (outname) {
                 ofile = nasm_open_write(outname, NF_TEXT);
@@ -710,7 +747,7 @@ int main(int argc, char **argv)
             location.known = false;
 
             _pass_type = PASS_PREPROC;
-            pp_reset(inname, PP_PREPROC, depend_list);
+            pp_reset(get_filename(FN_INFILE), PP_PREPROC, depend_list);
             error_pass_start(true);
 
             while ((line = pp_getline())) {
@@ -763,6 +800,7 @@ int main(int argc, char **argv)
     }
 
     if (operating_mode & OP_NORMAL) {
+        const char *outname = get_filename(FN_OUTFILE);
         ofile = nasm_open_write(outname, (ofmt->flags & OFMT_TEXT) ? NF_TEXT : NF_BINARY);
         if (!ofile)
             nasm_fatalf(ERR_PERROR, "unable to open output file `%s'", outname);
@@ -770,7 +808,7 @@ int main(int argc, char **argv)
         ofmt->init();
         dfmt->init();
 
-        assemble_file(inname, depend_list);
+        assemble_file(get_filename(FN_INFILE), depend_list);
 
         if (!terminate_after_phase()) {
             ofmt->cleanup();
@@ -795,7 +833,7 @@ int main(int argc, char **argv)
     stdscan_cleanup();
     src_free();
     strlist_free(&include_path);
-    nasm_free(depend_file);
+    cleanup_filenames();
     nasm_free(depend_target);
 
     return terminate_after_phase();
@@ -824,17 +862,6 @@ static char *get_param(char *p, char *q, bool *advance)
     if (!r)
         nasm_nonfatalf(ERR_USAGE, "option `-%c' requires an argument", p[1]);
     return r;
-}
-
-/*
- * Copy a filename
- */
-static void copy_filename(const char **dst, const char *src, const char *what)
-{
-    if (*dst)
-        nasm_fatal("more than one %s file specified: %s\n", what, src);
-
-    *dst = nasm_strdup(src);
 }
 
 /*
@@ -1079,7 +1106,7 @@ static bool process_arg(char *p, char *q, int pass)
 
         case 'o':       /* output file */
             if (pass == 2)
-                copy_filename(&outname, param, "output");
+                copy_filename(FN_OUTFILE, param);
             break;
 
         case 'f':       /* output format */
@@ -1165,7 +1192,7 @@ static bool process_arg(char *p, char *q, int pass)
 
         case 'l':       /* listing file */
             if (pass == 2)
-                copy_filename(&listname, param, "listing");
+                copy_filename(FN_LISTFILE, param);
             break;
 
         case 'L':        /* listing options */
@@ -1175,7 +1202,7 @@ static bool process_arg(char *p, char *q, int pass)
 
         case 'Z':       /* error messages file */
             if (pass == 1)
-                copy_filename(&errname, param, "error");
+                copy_filename(FN_ERRFILE, param);
             break;
 
         case 'F':       /* specify debug format */
@@ -1279,12 +1306,12 @@ static bool process_arg(char *p, char *q, int pass)
                 case 'D':
                     operating_mode |= OP_DEPEND;
                     if (q && (q[0] != '-' || q[1] == '\0')) {
-                        nasm_strdupto(&depend_file, q);
+                        copy_filename(FN_DEPENDFILE, q);
                         advance = true;
                     }
                     break;
                 case 'F':
-                    nasm_strdupto(&depend_file, q);
+                    copy_filename(FN_DEPENDFILE, q);
                     advance = true;
                     break;
                 case 'T':
@@ -1449,8 +1476,12 @@ static bool process_arg(char *p, char *q, int pass)
             break;
         }
     } else if (pass == 2) {
-        /* In theory we could allow multiple input files... */
-        copy_filename(&inname, p, "input");
+        /*
+         * In theory we could allow multiple input files, but that
+         * would require making this a list, and probably would require
+         * some other more complicated changes.
+         */
+        copy_filename(FN_INFILE, p);
     }
 
     return advance;
@@ -1571,6 +1602,23 @@ static void open_and_process_respfile(char *respfile, int pass)
     }
 }
 
+static void open_errfile(const char *errfile)
+{
+    if (!errfile || !*errfile)
+        return;
+
+    if (errfile[0] == '-' && !errfile[1]) {
+        erropt.file = stdout;
+        return;
+    }
+
+    erropt.file = nasm_open_write(errfile, NF_TEXT);
+    if (!erropt.file) {
+        nasm_fatalf(ERR_PERROR, "cannot open file `%s' for error messages",
+                    errfile);
+    }
+}
+
 static void parse_cmdline(int argc, char **argv, int pass)
 {
     char *envreal, *envcopy = NULL;
@@ -1621,23 +1669,12 @@ static void parse_cmdline(int argc, char **argv, int pass)
     if (pass != 2)
         return;
 
-    if (!inname)
+    if (!get_filename(FN_INFILE))
         nasm_fatalf(ERR_USAGE, "no input file specified");
-    else if ((errname && !strcmp(inname, errname)) ||
-             (outname && !strcmp(inname, outname)) ||
-             (listname &&  !strcmp(inname, listname))  ||
-             (depend_file && !strcmp(inname, depend_file)))
-        nasm_fatal("will not overwrite input file");
 
-    if (errname) {
-        FILE *error_file = nasm_open_write(errname, NF_TEXT);
-        if (erropt.file) {
-            erropt.file = error_file;
-        } else {
-            nasm_fatalf(ERR_PERROR, "cannot open file `%s' for error messages",
-                       errname);
-        }
-    }
+    check_overwrite_files();
+
+    open_errfile(get_filename(FN_ERRFILE));
 }
 
 static void forward_refs(insn *instruction)
@@ -1714,12 +1751,13 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
 
     prev_offset_changed = INT64_MAX;
 
-    if (listname && !keep_all) {
-        /* Remove the list file in case we die before the output pass */
-        remove(listname);
-    }
+    /* Remove the list file in case we die before the output pass */
+    if (!keep_all)
+        nasm_remove(get_filename(FN_LISTFILE));
 
     while (!terminate_after_phase() && !pass_final()) {
+        const char *listname;
+
         _passn++;
         switch (pass_type()) {
         case PASS_INIT:
@@ -1745,6 +1783,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
         reset_global_defaults(cmd_sb);
 
         cpu = cmd_cpu;
+        listname = get_filename(FN_LISTFILE);
         if (listname) {
             if (list_on_this_pass()) {
                 /*
@@ -1758,7 +1797,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
                  */
                 lfmt->cleanup();
                 if (!keep_all)
-                    remove(listname);
+                    nasm_remove(listname);
             }
         }
 
@@ -1865,7 +1904,7 @@ void close_output(bool error)
     } else {
         fclose(ofile);
         if (error && !keep_all)
-            remove(outname);
+            nasm_remove(get_filename(FN_OUTFILE));
     }
     ofile = NULL;
 }

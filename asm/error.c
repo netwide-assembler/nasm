@@ -8,6 +8,7 @@
 #include "compiler.h"
 #include "nasmlib.h"
 #include "error.h"
+#include "files.h"
 #include "listing.h"
 #include "srcfile.h"
 #include "strlist.h"
@@ -411,10 +412,14 @@ static struct src_location error_where(errflags severity)
         where = src_where_error();
 
         if (!where.filename) {
-            where.filename =
-            inname && inname[0] ? inname :
-                outname && outname[0] ? outname :
-                NULL;
+            enum filenames fn;
+            for (fn = FN_INFILE; fn <= FN_OUTFILE; fn++) {
+                const char *name = get_filename(fn);
+                if (name && *name) {
+                    where.filename = name;
+                    break;
+                }
+            }
             where.lineno = 0;
         }
     }

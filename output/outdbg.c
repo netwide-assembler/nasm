@@ -13,6 +13,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "files.h"
 #include "outform.h"
 #include "outlib.h"
 #include "insns.h"
@@ -36,8 +37,8 @@ static void dbg_init(void)
 {
     dbgsect = NULL;
     fprintf(ofile, "NASM Output format debug dump\n");
-    fprintf(ofile, "input file  = %s\n", inname);
-    fprintf(ofile, "output file = %s\n", outname);
+    fprintf(ofile, "input file  = %s\n", get_filename(FN_INFILE));
+    fprintf(ofile, "output file = %s\n", get_filename(FN_OUTFILE));
     init_seg = seg_alloc();
 }
 

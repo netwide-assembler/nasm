@@ -117,7 +117,7 @@ LIBOBJ_COM = \
 	nasmlib\perfhash.obj nasmlib\badenum.obj \
 	nasmlib\readnum.obj \
 	\
-	common\common.obj common\errstubs.obj \
+	common\common.obj common\errstubs.obj common\files.obj \
 	\
 	x86\insnsa.obj x86\insnsb.obj x86\insnsn.obj \
 	x86\regs.obj x86\regvals.obj x86\regflags.obj \

@@ -45,6 +45,7 @@
 #include "nasmlib.h"
 #include "asmutil.h"
 #include "error.h"
+#include "files.h"
 #include "ver.h"
 
 #include "outform.h"
@@ -178,7 +179,7 @@ static void ieee_unqualified_name(char *, char *);
  */
 static void ieee_init(void)
 {
-    strlcpy(ieee_infile, inname, sizeof(ieee_infile));
+    strlcpy(ieee_infile, get_filename(FN_INFILE), sizeof(ieee_infile));
     any_segs = false;
     fpubhead = NULL;
     fpubtail = &fpubhead;

@@ -11,6 +11,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "files.h"
 #include "error.h"
 #include "preproc.h"
 #include "saa.h"
@@ -277,7 +278,7 @@ static void cv8_cleanup(void)
     struct coff_Section *symbol_sect = coff_sects[cv8_state.symbol_sect];
     struct coff_Section *type_sect = coff_sects[cv8_state.type_sect];
 
-    cv8_state.outfile.name = nasm_realpath(outname);
+    cv8_state.outfile.name = nasm_realpath(get_filename(FN_OUTFILE));
     cv8_state.outfile.namebytes = strlen(cv8_state.outfile.name) + 1;
 
     build_symbol_table(symbol_sect);

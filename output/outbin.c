@@ -49,6 +49,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "files.h"
 #include "error.h"
 #include "saa.h"
 #include "stdscan.h"
@@ -543,7 +544,7 @@ static void bin_cleanup(void)
         for (h = 63; h; h--)
             fputc('-', rf);
         fprintf(rf, "\n\nSource file:  %s\nOutput file:  %s\n\n",
-                inname, outname);
+                get_filename(FN_INFILE), get_filename(FN_OUTFILE));
 
         if (map_control & MAP_ORIGIN) { /* Display program origin. */
             fprintf(rf, "-- Program origin ");

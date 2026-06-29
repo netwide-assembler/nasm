@@ -12,6 +12,7 @@
 
 #include "nasm.h"
 #include "nasmlib.h"
+#include "files.h"
 #include "error.h"
 #include "saa.h"
 #include "raa.h"
@@ -25,7 +26,7 @@ struct Piece {
     int type;                   /* 0 = absolute, 1 = seg, 2 = sym */
     int32_t offset;		/* relative offset */
     int number;			/* symbol/segment number (4=bss) */
-    int32_t bytes;	        /* size of reloc or of absolute data */
+    int32_t bytes;              /* size of reloc or of absolute data */
     bool relative;		/* relative address? */
 };
 
@@ -103,7 +104,7 @@ static void as86_init(void)
     strslen = 0;
 
     /* as86 module name = input file minus extension */
-    module_name = filename_set_extension(inname, "");
+    module_name = filename_set_extension(get_filename(FN_INFILE), "");
     as86_add_string(module_name);
     nasm_free(module_name);
 }
