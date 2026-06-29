@@ -7,6 +7,20 @@
 %define reg_fpu0 st0
 %define reg_fpu st1
 
+%macro src 2
+	%1	%2
+	%1	reg_fpu0,%2
+%endmacro
+%macro dst 2
+	%1	to %2
+	%1	%2,reg_fpu0
+%endmacro
+%macro dsp 2
+	%1	%2
+	%1	%2,reg_fpu0
+	%1
+%endmacro
+
 ; no operands instead of one operand:
 
   ; F(U)COM(P), FCOM2, FCOMP3, FCOMP5
@@ -57,45 +71,45 @@
 
   ; FADD, FMUL, FSUB, FSUBR, FDIV, FDIVR
 
-    FADD            reg_fpu
-    FMUL            reg_fpu
-    FSUB            reg_fpu
-    FSUBR           reg_fpu
-    FDIV            reg_fpu
-    FDIVR           reg_fpu
+src    FADD            , reg_fpu
+src    FMUL            , reg_fpu
+src    FSUB            , reg_fpu
+src    FSUBR           , reg_fpu
+src    FDIV            , reg_fpu
+src    FDIVR           , reg_fpu
 
   ; FADD, FMUL, FSUBR, FSUB, FDIVR, FDIV (with TO qualifier)
 
-    FADD            to reg_fpu
-    FMUL            to reg_fpu
-    FSUBR           to reg_fpu
-    FSUB            to reg_fpu
-    FDIVR           to reg_fpu
-    FDIV            to reg_fpu
+dst    FADD            , reg_fpu
+dst    FMUL            , reg_fpu
+dst    FSUBR           , reg_fpu
+dst    FSUB            , reg_fpu
+dst    FDIVR           , reg_fpu
+dst    FDIV            , reg_fpu
 
   ; FADDP, FMULP, FSUBRP, FSUBP, FDIVRP, FDIVP
 
-    FADDP           reg_fpu
-    FMULP           reg_fpu
-    FSUBRP          reg_fpu
-    FSUBP           reg_fpu
-    FDIVRP          reg_fpu
-    FDIVP           reg_fpu
+dsp FADDP           , reg_fpu
+dsp FMULP           , reg_fpu
+dsp FSUBRP          , reg_fpu
+dsp FSUBP           , reg_fpu
+dsp FDIVRP          , reg_fpu
+dsp FDIVP           , reg_fpu
 
   ; FCMOV(N)B, FCMOV(N)E, FCMOV(N)BE, FCMOV(N)U, and F(U)COMI(P)
 
-    FCMOVB          reg_fpu
-    FCMOVNB         reg_fpu
-    FCMOVE          reg_fpu
-    FCMOVNE         reg_fpu
-    FCMOVBE         reg_fpu
-    FCMOVNBE        reg_fpu
-    FCMOVU          reg_fpu
-    FCMOVNU         reg_fpu
-    FCOMI           reg_fpu
-    FCOMIP          reg_fpu
-    FUCOMI          reg_fpu
-    FUCOMIP         reg_fpu
+src FCMOVB          , reg_fpu
+src FCMOVNB         , reg_fpu
+src FCMOVE          , reg_fpu
+src FCMOVNE         , reg_fpu
+src FCMOVBE         , reg_fpu
+src FCMOVNBE        , reg_fpu
+src FCMOVU          , reg_fpu
+src FCMOVNU         , reg_fpu
+src FCOMI           , reg_fpu
+src FCOMIP          , reg_fpu
+src FUCOMI          , reg_fpu
+src FUCOMIP         , reg_fpu
 
 ; two operands instead of one operand:
 
