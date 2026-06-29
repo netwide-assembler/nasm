@@ -1737,6 +1737,10 @@ obj_directive(enum directive directive, char *value)
                      */
                     continue;
                 }
+		if (grp->nentries >= GROUP_MAX) {
+                    nasm_nonfatal("too many segments in a group");
+                    return DIRR_ERROR;
+                }
                 for (seg = seghead; seg; seg = seg->next)
                     if (!strcmp(seg->name, p))
                         break;
