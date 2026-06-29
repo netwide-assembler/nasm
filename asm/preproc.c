@@ -1991,6 +1991,9 @@ static Token *free_Token(Token *t)
     nasm_assert(t->type != TOKEN_FREE);
 
     next = t->next;
+    if (t->len > INLINE_TEXT)
+        nasm_free(t->text.p.ptr);
+
     nasm_zero(*t);
     t->type = TOKEN_FREE;
     t->next = freeTokens;
@@ -2021,6 +2024,8 @@ static inline Token *alloc_Token(void)
 static Token *free_Token(Token *t)
 {
     Token *next = t->next;
+    if (t->len > INLINE_TEXT)
+        nasm_free(t->text.p.ptr);
     nasm_free(t);
     return next;
 }
