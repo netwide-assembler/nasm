@@ -80,6 +80,7 @@ static inline void os_free_filename(os_filename filename)
 
 # define os_fopen  _wfopen
 # define os_access _waccess
+# define os_remove _wremove
 
 /*
  * On Win32/64, we have to use the _wstati64() function. Note that
@@ -120,6 +121,7 @@ static inline void os_set_binary_mode(FILE *f) {
 }
 
 # define os_fopen  fopen
+# define os_remove remove
 
 #if defined(HAVE_FACCESSAT) && defined(AT_EACCESS)
 static inline int os_access(os_filename pathname, int mode)
@@ -401,4 +403,25 @@ bool nasm_file_time(time_t *t, const char *pathname)
 #else
     return false;               /* No idea how to do this on this OS */
 #endif
+}
+
+/*
+ * Delete a file (allows NULL as input -> do nothing)
+ */
+int nasm_remove(const char *pathname)
+{
+    int rv;
+    os_filename osfname;
+
+    if (!pathname || !*pathname)
+        return 0;
+
+    osfname = os_mangle_filename(pathname);
+    if (!osfname)
+        return false;
+
+    rv = os_remove(osfname);
+    os_free_filename(osfname);
+
+    return rv;
 }

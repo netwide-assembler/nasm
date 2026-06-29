@@ -548,6 +548,9 @@ off_t nasm_file_size_by_path(const char *pathname);
 bool nasm_file_time(time_t *t, const char *pathname);
 void fwritezero(off_t bytes, FILE *fp);
 
+/* Remove a file; explicitly defined to ignore a NULL or empty pathname */
+int nasm_remove(const char *pathname);
+
 /* Sign-extend a value to an arbitrary number of bits */
 static inline int64_t const_func sext(int64_t value, unsigned int bits)
 {
