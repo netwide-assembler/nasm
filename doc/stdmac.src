@@ -227,6 +227,20 @@ For example, if the \c{altreg} package is included (see
 
 See also the \c{%ifusable} and \c{%ifusing} directives, \k{ifusing}.
 
+
+\H{list_options_macro} \i\c{__?LIST_OPTIONS?__}: Current Listing Options
+
+Contains a quoted string with the listing options currently in
+effect. See \k{opt-L}.
+
+
+\H{list_options_default_macro} \i\c{__?LIST_OPTIONS_DEFAULT?__}:
+Default Listing Options
+
+Contains a quoted string with the listing options originally specified
+by the user on the command line.  See \k{opt-L}.
+
+
 \H{pass_macro} \i\c{__?PASS?__}: Assembly Pass
 
 The macro \c{__?PASS?__} is defined to be \c{1} on preparatory passes,

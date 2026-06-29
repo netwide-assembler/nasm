@@ -133,10 +133,17 @@ It is the production version of NASM since 2025.
 \b Fix a crash when \c{-M} directives were used in response files.
 
 \b New listing option \c{-Lc} to include the contents of \c{INCBIN}
-   files.
+   files, see \k{opt-L}.
 
 \b New listing option \c{-Lt} to include the output from every
-   iteration of \c{TIMES} and \c{ALIGN} directives.
+   iteration of \c{TIMES} and \c{ALIGN} directives, see \k{opt-L}.
+
+\b The \c{%pragma list options} directive now support resetting
+   options to their command-line default, see \k{opt-L}.
+
+\b New predefined macros \c{__?LIST_OPTIONS?__} and
+   \c{__?LIST_OPTIONS_DEFAULT?__} to query the active and command-line
+   default listing options. See \k{opt-L}.
 
 
 \S{cl-3.01} Version 3.01

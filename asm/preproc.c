@@ -8258,6 +8258,37 @@ err:
 }
 
 /*
+ * Given the currently default or command-line default listing options
+ */
+static Token *
+get_list_options(uint64_t optmask)
+{
+    static const char optchars[63] =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    char optbuf[65], *p;
+    unsigned int i;
+
+    p = optbuf;
+    for (i = 0; i < 62; i++) {
+        if (optmask & 4)
+            *p++ = optchars[i];
+        optmask >>= 1;
+    }
+    *p = '\0';
+
+    return make_tok_qstr_len(NULL, optbuf, p-optbuf);
+}
+
+static Token *
+stdmac_list_options(const SMacro *s, Token **params, int nparam)
+{
+    (void)s;
+    (void)params;
+    (void)nparam;
+    return get_list_options(active_list_options);
+}
+
+/*
  * Wrapper around define_smacro() which also checks to see if it is
  * a preprocessor directive, so that pp_op_may_be_function[] needs to
  * be set.
@@ -8295,6 +8326,7 @@ static void pp_add_magic_simple(void)
         { "__?BITS?__",  true, 0, 0, stdmac_bits },
         { "__?PTR?__",   true, 0, 0, stdmac_ptr },
         { "__?DEFAULT?__", true, 0, 0, stdmac_default },
+        { "__?LIST_OPTIONS?__", true, 0, 0, stdmac_list_options },
         { "%abs",        false, 1, SPARM_EVAL, stdmac_abs },
         { "%chr",        false, 1, SPARM_EVAL|SPARM_OPTIONAL|SPARM_VARADIC, stdmac_chr },
         { "%count",      false, 1, SPARM_VARADIC, stdmac_count },
@@ -8552,6 +8584,12 @@ static void pp_add_limits_stdmac(void)
     define_smacro("__?NASM_LIMITS?__", true, t, NULL);
 }
 
+static void pp_add_list_options_default_stdmac(void)
+{
+    define_smacro("__?LIST_OPTIONS_DEFAULT?__", true,
+                  get_list_options(cmdline_list_options), NULL);
+}
+
 static void pp_reset_stdmac(enum preproc_mode mode)
 {
     int apass;
@@ -8569,6 +8607,7 @@ static void pp_reset_stdmac(enum preproc_mode mode)
 
     pp_add_limits_stdmac();
 
+    pp_add_list_options_default_stdmac();
     do_predef = true;
 
     /*

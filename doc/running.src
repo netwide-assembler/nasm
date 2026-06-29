@@ -138,24 +138,52 @@ bug reporting), and not likely to be otherwise useful:
 
 \b \c{-L!} enable \e{all} listing options including debugging ones
 
+For forward compatility reasons, an undefined flag will be
+ignored. Thus, a new flag introduced in a newer version of NASM can be
+specified without breaking older versions. Listing flags will always
+be a single alphanumeric character and are case sensitive.
+
 These options can be enabled or disabled at runtime using the
 \c{%pragma list options} directive:
 
-\c %pragma list options [+|-]flags...
+\c %pragma list options [+|-|*]{!|flags}...
+
+\c{+}, \c{-} and \c{*} adds, removes, or restores to the command-line
+default the flags that follow.
 
 For example, to turn on the \c{d} and \c{m} flags but disable the
 \c{s} flag:
 
 \c %pragma list options +dm -s
 
-The \c{+} and \c{!} shorthands available in on the command line are
+The \c{+} and \c{++} shorthands available in on the command line are
 not available when using \c{%pragma list options}; each listing option
-needs to be specified explicitly.
+needs to be specified explicitly, or \c{!} can be used to specify all
+options.
 
-For forward compatility reasons, an undefined flag will be
-ignored. Thus, a new flag introduced in a newer version of NASM can be
-specified without breaking older versions. Listing flags will always
-be a single alphanumeric character and are case sensitive.
+Spaces, quotation marks, and commas in the argument are explicitly
+ignored; thus, specifying the options as one or more quoted strings is
+valid.
+
+The built-in macros \i\c{__?LIST_OPTIONS?__} and
+\i\c{__?LIST_OPTIONS_DEFAULT?__} contain the currently active and the
+command-line default listing options, respectively, as quoted strings.
+
+To save and restore the listing options, one can use:
+
+\c %macro ...
+\c %define %%saved_list_options __?LIST_OPTIONS?__
+\c ; ... do stuff with special listing options ...
+\c %pragma list options -! +%%saved_list_options
+\c %endmacro
+
+The statement:
+
+\c %pragma list options -! +__?LIST_OPTIONS_DEFAULT?__
+
+... is exactly equivalent to ...
+
+\c %pragma list options *!
 
 \S{opt-M} The \i\c{-M} Option: Generate \i{Makefile Dependencies}
 
