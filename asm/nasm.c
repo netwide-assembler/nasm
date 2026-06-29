@@ -2060,6 +2060,7 @@ static void help(FILE *out, const char *what)
         fputs(
             "                -L flags for general usage:\n"
             "       -Lb         show builtin macro packages (standard and %use)\n"
+            "       -Lc         list the data contents of INCBIN files\n"
             "       -Ld         show byte and repeat counts in decimal, not hex\n"
             "       -Le         show the preprocessed output\n"
             "       -Lf         ignore .nolist (force output)\n"
@@ -2067,10 +2068,13 @@ static void help(FILE *out, const char *what)
             "       -Lm         show multi-line macro calls with expanded parameters\n"
             "       -Lp         output a list file every pass, in case of errors\n"
             "       -Ls         show all single-line macro definitions\n"
-            "       -L+         enable all of the above listing options (very verbose!)\n"
+            "       -Lt         list the full output from TIMES and ALIGN directives\n"
+            "       -L+         equivalent to -LbdefFmps\n"
+            "       -L++        equivalent to -L+ -Lct\n"
             "                -L flags intended for debugging NASM:\n"
             "       -Lw         flush the output after every line (very slow!)\n"
             "       -LX         list instruction pattern line numbers from insns.xda\n"
+            "       -L!         enable ALL listing options including debugging\n"
             , out);
     }
     if (help_optor(with, 'O')) {

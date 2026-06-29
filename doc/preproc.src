@@ -1666,7 +1666,7 @@ however, \c{%-1} will report an error if passed either of these,
 because no inverse condition code exists.
 
 
-\S{nolist} \i{Disabling Listing Expansion}\I\c{.nolist}
+\S{nolist} \i{Disabling Listing Expansion}\i\c{.nolist}
 
 When NASM is generating a listing file from your program, it will
 generally expand multi-line macros by means of writing the macro

@@ -19,6 +19,19 @@
 #define LIST_INDENT  40
 #define LIST_HEXBIT  18
 
+/*
+ * The options to enable by increasing levels of -L+ on the command line.
+ * Each string is inclusive of the previous level; there is no need to
+ * duplicate characters. "" *is* allowed to mean that a level should have
+ * no impact, e.g. because an option has been made obsolete or a level is
+ * reserved for future use.
+ */
+static const char * const list_plus_options[] = {
+    "bdefFmps",                 /* -L+ */
+    "ct",                       /* -L++ */
+    NULL
+};
+
 static const char xdigit[] = "0123456789ABCDEF";
 
 #define HEX(a,b) (*(a)=xdigit[((b)>>4)&15],(a)[1]=xdigit[(b)&15])
@@ -286,13 +299,17 @@ static void list_uplevel(enum list_type type, int64_t size)
 
     switch (type) {
     case LIST_INCBIN:
-        suppress |= 1;
-        list_size(listoffset, "bin", size);
+        if (!list_option('c')) {
+            suppress |= 1;
+            list_size(listoffset, "bin", size);
+        }
         break;
 
     case LIST_TIMES:
-        suppress |= 2;
-        list_size(listoffset, "rep", size);
+        if (!list_option('t')) {
+            suppress |= 2;
+            list_size(listoffset, "rep", size);
+        }
         break;
 
     case LIST_INCLUDE:
@@ -350,7 +367,7 @@ static void list_set_offset(uint64_t offset)
 }
 
 /*
- * from_cmdline is passed in to handle -L+ -> LIST_PLUS_OPTIONS,
+ * from_cmdline is passed in to handle -L+... -> list_plus_options[],
  * and to prevent active_list_options from being set (that will
  * be done when list_init() is called.)
  *
@@ -362,18 +379,27 @@ void list_update_options(const char *str, bool from_cmdline)
     unsigned char c;
     uint64_t setmask = LIST_ALL_OPTIONS_MASK;
     uint64_t amask   = from_cmdline ? 0 : setmask;
+    const char * const *cmdline_next_plus =
+        &list_plus_options[from_cmdline ? 0 : ARRAY_SIZE(list_plus_options)-1];
 
     while ((c = *str++)) {
         uint64_t mask = 0;
         switch (c) {
         case '+':
-            if (from_cmdline && setmask)
-                list_update_options(LIST_PLUS_OPTIONS, true);
+            if (*cmdline_next_plus)
+                list_update_options(*cmdline_next_plus++, true);
             setmask = LIST_ALL_OPTIONS_MASK;
             break;
+
         case '-':
             setmask = 0;
             break;
+
+        case '!':
+            if (from_cmdline)
+                list_options |= LIST_ALL_OPTIONS_MASK;
+            break;
+
         default:
             mask = list_option_mask(c);
             list_options = (list_options & ~mask) | (setmask & mask);

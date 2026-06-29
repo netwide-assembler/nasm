@@ -195,6 +195,8 @@
 \IR{boolean or} boolean, OR
 \IR{boolean xor} boolean, XOR
 \IR{netbsd} NetBSD
+\IA{.nolist}{nolist}
+\IR{nolist} \c{.nolist}
 \IR{nsis} NSIS
 \IR{nullsoft scriptable installer} Nullsoft Scriptable Installer
 \IA{.OBJ}{.obj}

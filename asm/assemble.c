@@ -903,6 +903,7 @@ static int64_t assemble(insn *instruction)
         const char *fname = instruction->eops->val.string.data;
         FILE *fp;
         size_t t = instruction->times; /* INCBIN handles TIMES by itself */
+        bool need_downlevel_times;
         off_t base = 0;
         off_t len;
         const void *map = NULL;
@@ -941,7 +942,6 @@ static int64_t assemble(insn *instruction)
         }
 
         lfmt->set_offset(data.loc.offset);
-        lfmt->uplevel(LIST_INCBIN, len);
 
         if (!len)
             goto end_incbin;
@@ -953,6 +953,7 @@ static int64_t assemble(insn *instruction)
             buf = nasm_malloc(blk);
         }
 
+        need_downlevel_times = false;
         while (t--) {
             /*
              * Consider these irrelevant for INCBIN, since it is fully
@@ -965,6 +966,8 @@ static int64_t assemble(insn *instruction)
             data.insoffs = 0;
             data.inslen = 0;
 
+            lfmt->uplevel(LIST_INCBIN, len);
+
             if (map) {
                 out_rawdata(&data, map, len);
             } else if ((off_t)m == len) {
@@ -975,31 +978,39 @@ static int64_t assemble(insn *instruction)
                 if (fseeko(fp, base, SEEK_SET) < 0 || ferror(fp)) {
                     nasm_nonfatal("`incbin': unable to seek on file `%s'",
                                   fname);
-                    goto end_incbin;
-                }
-                while (l > 0) {
-                    m = fread(buf, 1, l < (off_t)blk ? (size_t)l : blk, fp);
-                    if (!m || feof(fp)) {
-                        /*
-                         * This shouldn't happen unless the file
-                         * actually changes while we are reading
-                         * it.
-                         */
-                        nasm_nonfatal("`incbin': unexpected EOF while"
-                                      " reading file `%s'", fname);
-                        goto end_incbin;
+                    t = 0;      /* No more iterations */
+                } else {
+                    while (l > 0) {
+                        m = fread(buf, 1, l < (off_t)blk ? (size_t)l : blk, fp);
+                        if (!m || feof(fp)) {
+                            /*
+                             * This shouldn't happen unless the file
+                             * actually changes while we are reading
+                             * it.
+                             */
+                            nasm_nonfatal("`incbin': unexpected EOF while"
+                                          " reading file `%s'", fname);
+                            t = 0;      /* No more iterations */
+                            break;
+                        } else {
+                            out_rawdata(&data, buf, m);
+                            l -= m;
+                        }
                     }
-                    out_rawdata(&data, buf, m);
-                    l -= m;
                 }
             }
+
+            lfmt->downlevel(LIST_INCBIN);
+
+            if (t && !need_downlevel_times) {
+                lfmt->uplevel(LIST_TIMES, instruction->times);
+                need_downlevel_times = true;
+            }
         }
-    end_incbin:
-        lfmt->downlevel(LIST_INCBIN);
-        if (instruction->times > 1) {
-            lfmt->uplevel(LIST_TIMES, instruction->times);
+        if (need_downlevel_times)
             lfmt->downlevel(LIST_TIMES);
-        }
+
+    end_incbin:
         if (ferror(fp)) {
             nasm_nonfatal("`incbin': error while"
                           " reading file `%s'", fname);

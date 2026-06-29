@@ -102,28 +102,41 @@ sections of interest, avoiding excessively long listings.
 
 Use this option to specify listing output details.
 
-Supported options are:
+\c{-L} options for general use are:
 
-\b \c{-Lb} show builtin macro packages (standard and \c{%use})
+\b \c{-Lb} show builtin macro packages (standard and \c{%use}, see \k{use})
+
+\b \c{-Lc} list the data from \c{INCBIN} files (see \k{incbin})
 
 \b \c{-Ld} show byte and repeat counts in decimal, not hex
 
-\b \c{-Le} show the preprocessed input
+\b \c{-Le} show the preprocessed output
 
-\b \c{-Lf} ignore \c{.nolist} and force listing output
+\b \c{-Lf} ignore \c{.nolist} (force output) (see \k{nolist})
 
-\b \c{-LF} ignore \c{[LIST]} directives (see \k{LIST})
+\b \c{-LF} ignore \c{[LIST -]} directives (force output) (see \k{LIST})
 
 \b \c{-Lm} show multi-line macro calls with expanded parameters
 
-\b \c{-Lp} output a list file in every pass, in case of errors
+\b \c{-Lp} output a list file every pass, in case of errors
 
 \b \c{-Ls} show all single-line macro definitions
 
-\b \c{-Lw} flush the output after every line (very slow, mainly useful
-to debug NASM crashes)
+\b \c{-Lt} list the full output from \c{TIMES} and \c{ALIGN}
+    directives
 
-\b \c{-L+} enable \e{all} listing options except \c{-Lw} (very verbose)
+\b \c{-L+} equivalent to \c{-LbdefFmps}
+
+\b \c{-L++} equivalent to \c{-L+} \c{-Lct}
+
+\c{-L} options intended for the debugging of NASM itself (including
+bug reporting), and not likely to be otherwise useful:
+
+\b \c{-Lw} flush the output after every line (very slow!)
+
+\b \c{-LX} list instruction pattern line numbers from \c{insns.xda}
+
+\b \c{-L!} enable \e{all} listing options including debugging ones
 
 These options can be enabled or disabled at runtime using the
 \c{%pragma list options} directive:
@@ -134,6 +147,10 @@ For example, to turn on the \c{d} and \c{m} flags but disable the
 \c{s} flag:
 
 \c %pragma list options +dm -s
+
+The \c{+} and \c{!} shorthands available in on the command line are
+not available when using \c{%pragma list options}; each listing option
+needs to be specified explicitly.
 
 For forward compatility reasons, an undefined flag will be
 ignored. Thus, a new flag introduced in a newer version of NASM can be
