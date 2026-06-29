@@ -108,7 +108,7 @@ extern bool user_nolist;
  * These are simple bitmasks of ASCII-64 mapping directly to option
  * letters.
  */
-extern uint64_t list_options, active_list_options;
+extern uint64_t list_options, active_list_options, cmdline_list_options;
 
 /*
  * This maps the characters a-z, A-Z and 0-9 onto a 64-bit bitmask.

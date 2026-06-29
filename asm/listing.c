@@ -36,7 +36,7 @@ static const char xdigit[] = "0123456789ABCDEF";
 
 #define HEX(a,b) (*(a)=xdigit[((b)>>4)&15],(a)[1]=xdigit[(b)&15])
 
-uint64_t list_options, active_list_options;
+uint64_t list_options, active_list_options, cmdline_list_options;
 bool user_nolist;
 
 static char listline[LIST_MAX_LEN];
@@ -367,9 +367,11 @@ static void list_set_offset(uint64_t offset)
 }
 
 /*
- * from_cmdline is passed in to handle -L+... -> list_plus_options[],
- * and to prevent active_list_options from being set (that will
- * be done when list_init() is called.)
+ * from_cmdline has the following effects:
+ * 1. It treats + as -L+... -> list_plus_options[] as opposed to a modifier;
+ * 2. It disallows the * modifier (= set to command line default);
+ * 3. It suppresses setting active_list_options (that will
+ *    be done when list_init() is called.)
  *
  * As listing options are assumed non-critical, ignore errors
  * to help forward compatibility.
@@ -395,20 +397,30 @@ void list_update_options(const char *str, bool from_cmdline)
             setmask = 0;
             break;
 
+        case '*':
+            if (!from_cmdline)
+                setmask = cmdline_list_options;
+            break;
+
         case '!':
-            if (from_cmdline)
-                list_options |= LIST_ALL_OPTIONS_MASK;
+            mask = LIST_ALL_OPTIONS_MASK;
             break;
 
         default:
             mask = list_option_mask(c);
+            break;
+        }
+
+        if (mask) {
             list_options = (list_options & ~mask) | (setmask & mask);
             active_list_options =
                 (active_list_options & ~mask) |
                 (setmask & amask & mask);
-            break;
         }
     }
+
+    if (from_cmdline)
+        cmdline_list_options = list_options;
 }
 
 enum directive_result list_pragma(const struct pragma *pragma)
