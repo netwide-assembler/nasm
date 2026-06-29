@@ -172,9 +172,10 @@ command-line default listing options, respectively, as quoted strings.
 To save and restore the listing options, one can use:
 
 \c %macro ...
-\c %define %%saved_list_options __?LIST_OPTIONS?__
-\c ; ... do stuff with special listing options ...
-\c %pragma list options -! +%%saved_list_options
+\c   %xdefine %%saved_list_options __?LIST_OPTIONS?__
+\c   %pragma list options ; ... changing the options
+\c   ; ... do stuff with special listing options ...
+\c   %pragma list options -! +%%saved_list_options
 \c %endmacro
 
 The statement:
