@@ -1295,6 +1295,8 @@ bin_directive(enum directive directive, char *args)
                     else if (!nasm_stricmp(p, "stderr"))
                         rf = stderr;
                     else {          /* Must be a filename. */
+                        copy_filename(FN_MAPFILE, p);
+                        check_overwrite_files();
                         rf = nasm_open_write(p, NF_TEXT);
                         if (!rf) {
                             nasm_nonfatal("unable to open map file `%s'", p);

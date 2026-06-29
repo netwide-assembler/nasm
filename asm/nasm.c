@@ -1903,8 +1903,10 @@ void close_output(bool error)
         fflush(ofile);
     } else {
         fclose(ofile);
-        if (error && !keep_all)
+        if (error && !keep_all) {
             nasm_remove(get_filename(FN_OUTFILE));
+            nasm_remove(get_filename(FN_MAPFILE));
+        }
     }
     ofile = NULL;
 }

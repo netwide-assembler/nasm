@@ -19,6 +19,7 @@ enum filenames {
     FN_ERRFILE,                 /* Error message file */
     FN_LISTFILE,                /* Listing file */
     FN_DEPENDFILE,              /* Dependency file */
+    FN_MAPFILE,                 /* Map file (outbin) */
     FN_NFILES
 };
 
