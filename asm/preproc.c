@@ -2039,7 +2039,7 @@ static inline void free_Blocks(void)
 
 static Token *do_delete_Token(Token **tp)
 {
-    if (tp)
+    if (tp && *tp)
         return *tp = free_Token(*tp);
     else
         return NULL;
