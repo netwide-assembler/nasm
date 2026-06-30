@@ -57,6 +57,7 @@ required
 sectalign
 section
 segment
+sse2avx
 static
 warning
 
@@ -112,9 +113,6 @@ uppercase			; outieee, outobj
 ; --- The following are tokens used in pragmas, not actual directives.
 ;     They will not be accepted as directives.
 #special pragma_tokens
-
-; --- Assembler pragmas
-limit
 
 ; --- Listing pragmas
 options

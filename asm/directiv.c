@@ -32,8 +32,8 @@ struct cpunames {
 
 static void iflag_set_cpu(iflag_t *a, unsigned int lvl)
 {
-    a->field[0] = 0;     /* Not applicable to the CPU type */
-    iflag_set_all_features(a);    /* All feature masking bits set for now */
+    a->field[0] = 0;            /* Not applicable to the CPU type */
+    iflag_set_all_features(a);	/* All feature masking bits set for now */
     if (lvl >= IF_ANY) {
         /* This is a hack for now */
         iflag_set(a, IF_LATEVEX);
@@ -85,6 +85,7 @@ void set_cpu(const char *value)
         { "apx", IF_APX },
         { "evex", IF_EVEX },
         { "vex", IF_VEX },
+        { "sse2avx", IF_SSE2AVX },
         { NULL, 0 }
     };
 
@@ -624,6 +625,10 @@ bool process_directives(char *directive)
 
     case D_DOLLARHEX:
         get_boolean_option(value, &globl.dollarhex);
+        break;
+
+    case D_SSE2AVX:
+        get_boolean_option(value, &globl.sse2avx);
         break;
 
     case D_PRAGMA:

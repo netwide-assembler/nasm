@@ -56,14 +56,14 @@ enum match_result {
     MOK_FIRST,                  /* First successful anything */
 
     MOK_FUZZY8,
-    MOK_FUZZY7,                 /* Matching unconditionally OK */
+    MOK_FUZZY7,
     MOK_FUZZY6,
     MOK_FUZZY5,
     MOK_FUZZY4,
     MOK_FUZZY3,
     MOK_FUZZY2,
     MOK_FUZZY1,
-    MOK_GOOD
+    MOK_GOOD                    /* Matching unconditionally OK */
 };
 
 #define GEN_SIB(scale, index, base)                 \
@@ -3351,6 +3351,12 @@ static enum match_result matches(const struct itemplate * const itemp,
      */
     if (itemp_has(itemp, (bits == 64 ? IF_NOLONG : IF_LONG)))
         return MERR_BADMODE;
+
+    /*
+     * Verify SSE2AVX flag
+     */
+    if (itemp_has(itemp, globl.sse2avx ? IF_NOSSE2AVX : IF_SSE2AVX))
+        return MERR_INVALOP;
 
     /*
      * If we have a HLE prefix, look for the NOHLE flag

@@ -54,8 +54,13 @@ while (<F>) {
   my @nflags;
   undef $isavx512;
   undef @avx512fl;
+  my $skip = 0;
   for my $fl (@flags) {
-      next if ($fl =~ /^(ignore|SB|SM|SM2|SQ|AR2|FUTURE)$/);
+      next if ($fl =~ /^(ignore|S[BWDQOYZM]|SM[0-9].*|AR[0-9].*|FUTURE|NOSSE2AVX)$/);
+      if ($fl =~ /^(SSE2AVX|SKIPMAN)$/) {
+	  $skip = 1;
+	  last;
+      }
 
       if ($fl =~ /^AVX512(.*)$/) {
 	  $isavx512 = 1;
@@ -64,6 +69,8 @@ while (<F>) {
 	  push(@nflags,$fl);
       }
   }
+
+  next if ($skip);
 
   if ($isavx512) {
       unshift(@nflags, "AVX512".join('/', @avx512fl));

@@ -219,7 +219,7 @@ PERLREQ_CLEANABLE = \
 	  x86\insnsb.c x86\insnsa.c x86\insnsd.c x86\insnsi.h x86\insnsn.c \
 	  x86\regs.c x86\regs.h x86\regflags.c x86\regdis.c x86\regdis.h \
 	  x86\regvals.c asm\tokhash.c asm\tokens.h asm\pptok.h asm\pptok.c \
-	  x86\iflag.c x86\iflaggen.h \
+	  x86\iflag.c x86\iflaggen.h x86\insns.xd1 \
 	  macros\macros.c \
 	  asm\pptok.ph asm\directbl.c asm\directiv.h \
 	  $(WARNFILES) \
@@ -229,8 +229,11 @@ PERLREQ = $(PERLREQ_CLEANABLE)
 
 INSDEP = x86\insns.xda x86\insns.pl x86\insns-iflags.ph x86\iflags.ph
 
-x86\insns.xda: x86\insns.dat x86\preinsns.pl $(DIRS)
-	$(RUNPERL) $(srcdir)\x86\preinsns.pl $(srcdir)\x86\insns.dat $@
+x86\insns.xd1: x86\insns.dat x86\preinsns.pl $(DIRS)
+	$(RUNPERL) $(srcdir)\x86\preinsns.pl $(srcdir)\x86\insns.dat x86\insns.xd1
+
+x86\insns.xda: x86\insns.xd1 x86\sse2avx.pl $(DIRS)
+	$(RUNPERL) $(srcdir)\x86\sse2avx.pl x86\insns.xda x86\insns.xd1
 
 x86\iflag.c: $(INSDEP)
 	$(RUNPERL) $(srcdir)\x86\insns.pl -fc \

@@ -366,8 +366,6 @@ sub apx_evex_forms(@) {
     return @field_list;
 }
 
-print STDERR "Reading insns.dat...\n";
-
 @args   = ();
 undef $output;
 foreach $arg ( @ARGV ) {
@@ -385,6 +383,7 @@ foreach $arg ( @ARGV ) {
 die if (scalar(@args) != 2);	# input output
 ($fname, $oname) = @args;
 
+print STDERR "Reading $fname...\n";
 open(F, '<', $fname) || die "unable to open $fname";
 
 @bytecode_list = ();

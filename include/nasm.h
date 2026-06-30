@@ -1571,6 +1571,7 @@ struct globalopt {
     enum ea_flags reldef;       /* default rel/abs explicitly defined? */
     bool bnd;                   /* default to using bnd prefix? */
     bool dollarhex;             /* $-prefixed hexadecimal numbers? */
+    bool sse2avx;               /* SSE2AVX mode */
 };
 extern struct globalopt globl;
 void reset_global_defaults(int bits);

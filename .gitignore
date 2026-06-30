@@ -35,6 +35,7 @@
 *.time
 *.win32
 *.win64
+*.xd1
 *.xda
 *.xml
 .*swo

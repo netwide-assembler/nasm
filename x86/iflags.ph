@@ -79,6 +79,7 @@ if_("FL",                "Instruction modifies the flags");
 if_("MOPVEC",		 "M operand is a vector"); # Autodetected
 if_("SCC",		 "EVEX[27:24] is special condition code");
 if_("BESTDIS",           "Preferred disassembly pattern");
+if_("SKIPMAN",           "Don't list in the NASM manual");
 
 #
 # Special immediates types like {dfv=}
@@ -96,6 +97,9 @@ if_align('FEATURE');
 #
 if_("VEX",               "VEX or XOP encoded instruction");
 if_("EVEX",              "EVEX encoded instruction");
+
+if_("NOSSE2AVX",         "Avoid this pattern in SSE-to-AVX mode");
+if_("SSE2AVX",           "Pattern for SSE-to-AVX mode");
 
 #
 # Feature filtering flags
@@ -146,7 +150,7 @@ if_("AVX512VPOPCNTDQ",   "AVX-512 VPOPCNTD/VPOPCNTQ");
 if_("AVX5124FMAPS",      "AVX-512 4-iteration multiply-add");
 if_("AVX5124VNNIW",      "AVX-512 4-iteration dot product");
 if_("AVX512FP16",        "AVX-512 FP16 instructions");
-if_("AVX512BMM",         "AVX-512 BMM instructions");	
+if_("AVX512BMM",         "AVX-512 BMM instructions");
 if_("F16C",              "F16C instructions");
 if_("SGX",               "Intel Software Guard Extensions (SGX)");
 if_("CET",               "Intel Control-Flow Enforcement Technology (CET)");
