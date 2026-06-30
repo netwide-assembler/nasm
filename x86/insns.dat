@@ -1,5 +1,5 @@
 ;; SPDX-License-Identifier: BSD-2-Clause
-;; Copyright 1996-2025 The NASM Authors - All Rights Reserved
+;; Copyright 1996-2026 The NASM Authors - All Rights Reserved
 
 ;
 ; insns.dat    table of instructions for the Netwide Assembler
@@ -5431,7 +5431,7 @@ TDPHBF8PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.map5.w0 fd /r]		AMXFP8
 TDPHF8PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.map5.w0 fd /r]		AMXFP8
 TILEMOVROW	zmmreg,tmmreg,imm8		[rmi:	evex.512.66.0f3a.w0 07 /r ib]		AMXAVX512
 TILEMOVROW	zmmreg,tmmreg,reg32		[rmv:	evex.512.66.0f38.w0 4a /r]		AMXAVX512
-TMMULTF32PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 48 /r]		AMXTF32
+TMMULTF32PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.66.0f38.w0 48 /r]		NEVER,AMXTF32
 TTCMMIMFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f2.0f38.w0 6b /r]		NEVER,AMXTRANSPOSE
 TTCMMRLFP16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 6b /r]		NEVER,AMXTRANSPOSE
 TTDPBF16PS	tmmreg,tmmreg,tmmreg		[rmv:	vex.128.f3.0f38.w0 6c /r]		NEVER,AMXTRANSPOSE
