@@ -371,5 +371,5 @@ dnl
 PA_CHECK_BAD_STDC_INLINE
 PA_C_TYPEOF
 
-AC_CONFIG_FILES([Makefile doc/Makefile misc/Makefile test/Makefile])
+AC_CONFIG_FILES([Makefile doc/Makefile misc/Makefile test/Makefile travis.mk])
 AC_OUTPUT

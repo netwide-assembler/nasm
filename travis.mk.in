@@ -1,0 +1,73 @@
+# -*- makefile -*-
+# SPDX-License-Identifier: BSD-2-Clause
+#
+# Makefile wrapper to parallelize running travis
+#
+# Run from the main Makefile with "make travis"
+# This Makefile, unlike the main one, assumes GNU make or equivalent
+#
+
+srcdir		 = @srcdir@
+objdir		 = @builddir@
+VPATH		 = @srcdir@
+
+PYTHON3		= @PYTHON3@
+GREP		= grep
+
+tools		= $(srcdir)/tools
+
+PERL		= perl
+PERLFLAGS	= -I$(srcdir)/perllib
+RUNPERL         = $(PERL) $(PERLFLAGS)
+
+NASM		= $(objdir)/nasm$(X)
+
+PERL		= perl
+RUNPERL		= $(PERL)
+
+PYTHON3		= @PYTHON3@
+GREP		= grep
+
+travistools	= $(tools)/travis
+TRAVIS		= $(travistools)/nasm-t.py
+testdir		= travis
+
+tests := $(shell $(RUNPERL) $(travistools)/findtests.pl $(srcdir) $(objdir) $(testdir))
+logs   = $(tests:.json=.log)
+
+all: travis.log
+	@ ! $(GREP) FAIL travis.log && echo '=== All tests PASS ==='
+
+.PRECIOUS: travis.log
+travis.log: $(logs)
+	@cat $(logs) > travis.log
+
+.PRECIOUS: %.log
+%.log: $(NASM) %.json
+	@echo 'Running: $(@D)'
+	@$(PYTHON3) $(TRAVIS) -d $(srcdir)/$(@D) \
+		--nasm $(NASM) run --stop=n > $@
+
+.PHONY: update
+update: $(tests:.json=.update)
+
+.PHONY: %.update
+%.update:
+	@echo 'Updating: $(@D)'
+	@$(PYTHON3) $(TRAVIS) -d $(srcdir)/$(@D) --nasm $(NASM) update
+
+#
+# Generated files needed for some specific tests
+# (If this ends up being a longer list, consider making subdirectory-
+# specific Makefiles).
+#
+GENFILES = $(testdir)/_version/_version.stdout
+
+$(testdir)/_version/_version.stdout: version
+	printf 'NASM version %s compiled on ?\n' `cat version` > $@
+
+$(testdir)/_version/_version.log: $(testdir)/_version/_version.stdout
+
+# XXX: need to clean up build artifacts, too
+clean:
+	rm -f travis.log $(logs)

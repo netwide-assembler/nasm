@@ -574,15 +574,14 @@ golden: $(PROGS)
 #
 # Travis tests
 #
-travis_version = travis/_version/_version.stdout
+travis: $(PROGS)
+	$(MAKE) -f travis.mk all
 
-$(travis_version): version
-	printf 'NASM version %s compiled on ?\n' `cat version` > $@
+clean-travis travis-clean:
+	$(MAKE) -f travis.mk clean
 
-travis: $(PROGS) $(travis_version)
-	-$(PYTHON3) tools/travis/nasm-t.py run --stop=n > travis.log
-	@if $(GREP) FAIL travis.log; then exit 1; else \
-		echo '=== All tests PASS ==='; fi
+update-travis travis-update:
+	$(MAKE) -f travis.mk update
 
 #
 # Rules to run autogen if necessary
