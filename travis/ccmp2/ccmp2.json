@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/ccmp2.asm",
+  "id": "ccmp2",
+  "format": "bin",
+  "source": "ccmp2.asm",
+  "target": [
+   {
+    "output": "ccmp2.bin",
+    "match": "ccmp2.bin.t"
+   }
+  ]
+ }
+]

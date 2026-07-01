@@ -1,0 +1,17 @@
+[
+ {
+  "description": "Migrated from test/dtbcd.asm",
+  "id": "dtbcd",
+  "format": "bin",
+  "source": "dtbcd.asm",
+  "target": [
+   {
+    "output": "dtbcd.bin",
+    "match": "dtbcd.bin.t"
+   },
+   {
+    "stderr": "dtbcd.stderr"
+   }
+  ]
+ }
+]

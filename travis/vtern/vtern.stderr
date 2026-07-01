@@ -1,0 +1,1 @@
+./travis/vtern/vtern.asm:5: error: instruction expected, found `vptermlogd zmm3'

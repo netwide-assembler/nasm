@@ -1,0 +1,3 @@
+./travis/wrtsymtab/wrtsymtab.asm:56: warning: truncating 'wrt ..symtab' (32-bit) to 8-bit [-w+other]
+./travis/wrtsymtab/wrtsymtab.asm:58: warning: truncating 'wrt ..symtab' (32-bit) to 16-bit [-w+other]
+./travis/wrtsymtab/wrtsymtab.asm:62: warning: 64-bit unsigned relocation zero-extended from 32 bits [-w+zext-reloc]

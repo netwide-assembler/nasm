@@ -1,3 +1,0 @@
-./travis/test/br3392442.asm:2: warning: byte exceeds bounds [-w+number-overflow]
-./travis/test/br3392442.asm:3: warning: byte exceeds bounds [-w+number-overflow]
-./travis/test/br3392442.asm:4: warning: byte exceeds bounds [-w+number-overflow]

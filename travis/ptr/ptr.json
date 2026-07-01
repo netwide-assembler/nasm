@@ -1,0 +1,17 @@
+[
+ {
+  "description": "Migrated from test/ptr.asm",
+  "id": "ptr",
+  "format": "bin",
+  "source": "ptr.asm",
+  "target": [
+   {
+    "output": "ptr.bin",
+    "match": "ptr.bin.t"
+   },
+   {
+    "stderr": "ptr.stderr"
+   }
+  ]
+ }
+]

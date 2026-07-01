@@ -1,0 +1,17 @@
+[
+ {
+  "description": "Migrated from test/relocs.asm",
+  "id": "relocs",
+  "format": "elf64",
+  "source": "relocs.asm",
+  "target": [
+   {
+    "output": "relocs.o",
+    "match": "relocs.o.t"
+   },
+   {
+    "stderr": "relocs.stderr"
+   }
+  ]
+ }
+]

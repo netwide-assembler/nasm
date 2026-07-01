@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/avx-ne-convert-64.asm",
+  "id": "avx-ne-convert-64",
+  "format": "bin",
+  "source": "avx-ne-convert-64.asm",
+  "target": [
+   {
+    "output": "avx-ne-convert-64.bin",
+    "match": "avx-ne-convert-64.bin.t"
+   }
+  ]
+ }
+]

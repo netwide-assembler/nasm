@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/isizeerr.asm",
+  "id": "isizeerr",
+  "format": "bin",
+  "source": "isizeerr.asm",
+  "target": [
+   {
+    "output": "isizeerr.bin",
+    "match": "isizeerr.bin.t"
+   }
+  ]
+ }
+]

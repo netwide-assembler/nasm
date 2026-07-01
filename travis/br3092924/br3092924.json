@@ -1,0 +1,15 @@
+[
+ {
+  "description": "Migrated from test/br3092924.asm",
+  "id": "br3092924",
+  "format": "obj",
+  "source": "br3092924.asm",
+  "target": [
+   {
+    "output": "br3092924.obj",
+    "match": "br3092924.obj.t",
+    "compress": { "delta": 4 }
+   }
+  ]
+ }
+]

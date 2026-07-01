@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/segerr.asm",
+  "id": "segerr",
+  "format": "bin",
+  "source": "segerr.asm",
+  "error": "expected",
+  "target": [
+   {
+    "stderr": "segerr.stderr"
+   }
+  ]
+ }
+]

@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/join.asm",
+  "id": "join",
+  "format": "bin",
+  "source": "join.asm",
+  "target": [
+   {
+    "output": "join.bin",
+    "match": "join.bin.t"
+   }
+  ]
+ }
+]

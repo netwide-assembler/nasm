@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/changed.asm",
+  "id": "changed",
+  "format": "bin",
+  "source": "changed.asm",
+  "target": [
+   {
+    "output": "changed.bin",
+    "match": "changed.bin.t"
+   }
+  ]
+ }
+]

@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/map.asm",
+  "id": "map",
+  "format": "bin",
+  "source": "map.asm",
+  "target": [
+   {
+    "output": "map.bin",
+    "match": "map.bin.t"
+   }
+  ]
+ }
+]

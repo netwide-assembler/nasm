@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/numtest.asm",
+  "id": "numtest",
+  "format": "bin",
+  "source": "numtest.asm",
+  "target": [
+   {
+    "output": "numtest.bin",
+    "match": "numtest.bin.t"
+   }
+  ]
+ }
+]

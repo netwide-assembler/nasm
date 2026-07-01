@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/vtern.asm",
+  "id": "vtern",
+  "format": "bin",
+  "source": "vtern.asm",
+  "error": "expected",
+  "target": [
+   {
+    "stderr": "vtern.stderr"
+   }
+  ]
+ }
+]

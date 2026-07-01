@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/ilog2.asm",
+  "id": "ilog2",
+  "format": "bin",
+  "source": "ilog2.asm",
+  "target": [
+   {
+    "output": "ilog2.bin",
+    "match": "ilog2.bin.t"
+   }
+  ]
+ }
+]

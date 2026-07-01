@@ -1,0 +1,16 @@
+[
+ {
+  "description": "Migrated from test/mostsecs.asm",
+  "id": "mostsecs",
+  "format": "elf64",
+  "source": "mostsecs.asm",
+  "option": "-I./travis/manysecs/",
+  "target": [
+   {
+    "output": "mostsecs.o",
+    "match": "mostsecs.o.t",
+    "compress": { "delta": 192 }
+   }
+  ]
+ }
+]

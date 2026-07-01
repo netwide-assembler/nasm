@@ -1,0 +1,8 @@
+./travis/expimp/expimp.asm:17: warning: signed byte exceeds bounds [-w+number-overflow]
+./travis/expimp/expimp.asm:24: warning: signed byte exceeds bounds [-w+number-overflow]
+./travis/expimp/expimp.asm:31: warning: signed byte exceeds bounds [-w+number-overflow]
+./travis/expimp/expimp.asm:38: warning: signed byte exceeds bounds [-w+number-overflow]
+./travis/expimp/expimp.asm:59: error: short jump is out of range
+./travis/expimp/expimp.asm:59: warning: signed byte exceeds bounds [-w+number-overflow]
+./travis/expimp/expimp.asm:77: error: short jump is out of range
+./travis/expimp/expimp.asm:77: warning: signed byte exceeds bounds [-w+number-overflow]

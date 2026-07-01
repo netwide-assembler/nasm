@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/subsection.asm",
+  "id": "subsection",
+  "format": "macho32",
+  "source": "subsection.asm",
+  "target": [
+   {
+    "output": "subsection.o",
+    "match": "subsection.o.t"
+   }
+  ]
+ }
+]

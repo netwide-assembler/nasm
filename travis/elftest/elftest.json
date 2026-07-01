@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/elftest.asm",
+  "id": "elftest",
+  "format": "elf32",
+  "source": "elftest.asm",
+  "target": [
+   {
+    "output": "elftest.o",
+    "match": "elftest.o.t"
+   }
+  ]
+ }
+]

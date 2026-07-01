@@ -1,0 +1,5 @@
+./travis/dtbcd/dtbcd.asm:71: warning: too many digits in BCD constant [-w+user]
+./travis/dtbcd/dtbcd.asm:33: ... from macro `dtbcd' defined here
+./travis/dtbcd/dtbcd.asm:71: warning: negative `%rep' count: -1 [-w+pp-rep-negative]
+./travis/dtbcd/dtbcd.asm:50: ... from macro `dtbcd' defined here
+./travis/dtbcd/dtbcd.asm:72: warning: packed BCD truncated to 18 digits [-w+other]

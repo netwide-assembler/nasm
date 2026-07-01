@@ -1,2 +1,0 @@
-./travis/test/ret.asm:76: error: instruction not supported in 64-bit mode
-./travis/test/ret.asm:77: error: instruction not supported in 64-bit mode

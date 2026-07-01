@@ -1,0 +1,2 @@
+./travis/ptr/ptr.asm:3: warning: `ptr' is not a NASM keyword [-w+ptr]
+./travis/ptr/ptr.asm:4: warning: `ptr' is not a NASM keyword [-w+ptr]

@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/baddq.asm",
+  "id": "baddq",
+  "format": "bin",
+  "source": "baddq.asm",
+  "target": [
+   {
+    "output": "baddq.bin",
+    "match": "baddq.bin.t"
+   }
+  ]
+ }
+]

@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/k_test.asm",
+  "id": "k_test",
+  "format": "elf64",
+  "source": "k_test.asm",
+  "target": [
+   {
+    "output": "k_test.o",
+    "match": "k_test.o.t"
+   }
+  ]
+ }
+]

@@ -1,0 +1,3 @@
+./travis/br3392667/br3392667.asm:2: warning: label `u' alone on a line without a colon might be in error [-w+label-orphan]
+./travis/br3392667/br3392667.asm:4: error: expression too long
+./travis/br3392667/br3392667.asm:33: fatal: expected `%endif' before end of file

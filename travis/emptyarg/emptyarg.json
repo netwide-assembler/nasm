@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/emptyarg.asm",
+  "id": "emptyarg",
+  "format": "bin",
+  "source": "emptyarg.asm",
+  "error": "expected",
+  "target": [
+   {
+    "stderr": "emptyarg.stderr"
+   }
+  ]
+ }
+]

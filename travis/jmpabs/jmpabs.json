@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/jmpabs.asm",
+  "id": "jmpabs",
+  "format": "bin",
+  "source": "jmpabs.asm",
+  "target": [
+   {
+    "output": "jmpabs.bin",
+    "match": "jmpabs.bin.t"
+   }
+  ]
+ }
+]

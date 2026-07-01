@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/pshuf.asm",
+  "id": "pshuf",
+  "format": "bin",
+  "source": "pshuf.asm",
+  "target": [
+   {
+    "output": "pshuf.bin",
+    "match": "pshuf.bin.t"
+   }
+  ]
+ }
+]

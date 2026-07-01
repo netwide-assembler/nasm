@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/br3392418.asm",
+  "id": "br3392418",
+  "format": "macho64",
+  "source": "br3392418.asm",
+  "target": [
+   {
+    "output": "br3392418.o",
+    "match": "br3392418.o.t"
+   }
+  ]
+ }
+]

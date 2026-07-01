@@ -1,0 +1,15 @@
+[
+ {
+  "description": "Migrated from test/cv8struc.asm",
+  "id": "cv8struc",
+  "format": "win32",
+  "source": "cv8struc.asm",
+  "option": "-gcv8",
+  "target": [
+   {
+    "output": "cv8struc.obj",
+    "match": "cv8struc.obj.t"
+   }
+  ]
+ }
+]

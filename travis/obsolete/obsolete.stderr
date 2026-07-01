@@ -1,0 +1,3 @@
+./travis/obsolete/obsolete.asm:4: warning: instruction obsolete but valid on the target CPU [-w+obsolete-valid]
+./travis/obsolete/obsolete.asm:8: warning: instruction obsolete and removed from the target CPU [-w+obsolete-removed]
+./travis/obsolete/obsolete.asm:12: warning: instruction never implemented and is a noop on the target CPU [-w+obsolete-nop]

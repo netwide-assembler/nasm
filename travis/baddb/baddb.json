@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/baddb.asm",
+  "id": "baddb",
+  "format": "bin",
+  "source": "baddb.asm",
+  "error": "expected",
+  "target": [
+   {
+    "stderr": "baddb.stderr"
+   }
+  ]
+ }
+]

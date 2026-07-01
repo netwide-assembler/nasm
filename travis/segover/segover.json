@@ -1,0 +1,17 @@
+[
+ {
+  "description": "Migrated from test/segover.asm",
+  "id": "segover",
+  "format": "bin",
+  "source": "segover.asm",
+  "target": [
+   {
+    "output": "segover.bin",
+    "match": "segover.bin.t"
+   },
+   {
+    "stderr": "segover.stderr"
+   }
+  ]
+ }
+]

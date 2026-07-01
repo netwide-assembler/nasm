@@ -1,0 +1,17 @@
+[
+ {
+  "description": "Migrated from test/jcchint.asm",
+  "id": "jcchint",
+  "format": "bin",
+  "source": "jcchint.asm",
+  "target": [
+   {
+    "output": "jcchint.bin",
+    "match": "jcchint.bin.t"
+   },
+   {
+    "stderr": "jcchint.stderr"
+   }
+  ]
+ }
+]

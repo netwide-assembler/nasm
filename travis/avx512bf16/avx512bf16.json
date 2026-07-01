@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/avx512bf16.asm",
+  "id": "avx512bf16",
+  "format": "bin",
+  "source": "avx512bf16.asm",
+  "target": [
+   {
+    "output": "avx512bf16.bin",
+    "match": "avx512bf16.bin.t"
+   }
+  ]
+ }
+]

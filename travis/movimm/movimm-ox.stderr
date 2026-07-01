@@ -1,0 +1,7 @@
+./travis/movimm/movimm.asm:6: warning: dword exceeds bounds [-w+number-overflow]
+./travis/movimm/movimm.asm:7: warning: signed dword exceeds bounds [-w+number-overflow]
+./travis/movimm/movimm.asm:9: warning: dword exceeds bounds [-w+number-overflow]
+./travis/movimm/movimm.asm:10: warning: signed dword exceeds bounds [-w+number-overflow]
+./travis/movimm/movimm.asm:11: warning: dword exceeds bounds [-w+number-overflow]
+./travis/movimm/movimm.asm:12: warning: signed dword exceeds bounds [-w+number-overflow]
+./travis/movimm/movimm.asm:15: warning: dword exceeds bounds [-w+number-overflow]

@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/elf64so.asm",
+  "id": "elf64so",
+  "format": "elf64",
+  "source": "elf64so.asm",
+  "target": [
+   {
+    "output": "elf64so.o",
+    "match": "elf64so.o.t"
+   }
+  ]
+ }
+]

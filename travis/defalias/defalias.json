@@ -1,0 +1,9 @@
+[
+ {
+  "description": "Migrated from test/defalias.asm",
+  "id": "defalias",
+  "format": "bin",
+  "source": "defalias.asm",
+  "update": false
+ }
+]

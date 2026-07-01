@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/prefixsym.asm",
+  "id": "prefixsym",
+  "format": "elf64",
+  "source": "prefixsym.asm",
+  "target": [
+   {
+    "output": "prefixsym.o",
+    "match": "prefixsym.o.t"
+   }
+  ]
+ }
+]

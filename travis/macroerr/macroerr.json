@@ -1,0 +1,18 @@
+[
+ {
+  "description": "Migrated from test/macroerr.asm",
+  "id": "macroerr",
+  "format": "bin",
+  "source": "macroerr.asm",
+  "option": "-I./travis/macroerr/",
+  "target": [
+   {
+    "output": "macroerr.bin",
+    "match": "macroerr.bin.t"
+   },
+   {
+    "stderr": "macroerr.stderr"
+   }
+  ]
+ }
+]

@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/times.asm",
+  "id": "times",
+  "format": "elf64",
+  "source": "times.asm",
+  "target": [
+   {
+    "output": "times.o",
+    "match": "times.o.t"
+   }
+  ]
+ }
+]

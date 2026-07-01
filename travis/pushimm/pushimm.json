@@ -1,0 +1,41 @@
+[
+ {
+  "description": "Migrated from test/pushimm.asm",
+  "id": "pushimm16",
+  "format": "bin",
+  "source": "pushimm.asm",
+  "option": "--bits 16 -I./travis/pushimm/",
+  "target": [
+   {
+    "output": "pushimm16.bin",
+    "match": "pushimm16.bin.t"
+   }
+  ]
+ },
+ {
+  "description": "Migrated from test/pushimm.asm",
+  "id": "pushimm32",
+  "format": "bin",
+  "source": "pushimm.asm",
+  "option": "--bits 32 -I./travis/pushimm/",
+  "target": [
+   {
+    "output": "pushimm32.bin",
+    "match": "pushimm32.bin.t"
+   }
+  ]
+ },
+ {
+  "description": "Migrated from test/pushimm.asm",
+  "id": "pushimm64",
+  "format": "bin",
+  "source": "pushimm.asm",
+  "option": "--bits 64 -I./travis/pushimm/",
+  "target": [
+   {
+    "output": "pushimm64.bin",
+    "match": "pushimm64.bin.t"
+   }
+  ]
+ }
+]

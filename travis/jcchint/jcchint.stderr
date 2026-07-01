@@ -1,0 +1,4 @@
+./travis/jcchint/jcchint.asm:7: warning: es segment override will be ignored in 64-bit mode [-w+prefix-seg]
+./travis/jcchint/jcchint.asm:8: warning: ss segment override will be ignored in 64-bit mode [-w+prefix-seg]
+./travis/jcchint/jcchint.asm:11: warning: invalid branch hint prefix dropped [-w+prefix-hint-dropped]
+./travis/jcchint/jcchint.asm:12: warning: invalid branch hint prefix dropped [-w+prefix-hint-dropped]

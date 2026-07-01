@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/mapi.asm",
+  "id": "mapi",
+  "format": "bin",
+  "source": "mapi.asm",
+  "target": [
+   {
+    "output": "mapi.bin",
+    "match": "mapi.bin.t"
+   }
+  ]
+ }
+]

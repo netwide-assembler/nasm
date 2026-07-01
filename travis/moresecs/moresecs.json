@@ -1,0 +1,16 @@
+[
+ {
+  "description": "Migrated from test/moresecs.asm",
+  "id": "moresecs",
+  "format": "elf64",
+  "source": "moresecs.asm",
+  "option": "-I./travis/manysecs/",
+  "target": [
+   {
+    "output": "moresecs.o",
+    "match": "moresecs.o.t",
+    "compress": { "delta": 192 }
+   }
+  ]
+ }
+]

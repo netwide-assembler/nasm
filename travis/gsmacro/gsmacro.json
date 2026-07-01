@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/gsmacro.asm",
+  "id": "gsmacro",
+  "format": "bin",
+  "source": "gsmacro.asm",
+  "target": [
+   {
+    "output": "gsmacro.bin",
+    "match": "gsmacro.bin.t"
+   }
+  ]
+ }
+]

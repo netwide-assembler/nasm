@@ -1,0 +1,9 @@
+[
+ {
+  "description": "Migrated from test/memleak.asm",
+  "id": "memleak",
+  "format": "bin",
+  "source": "memleak.asm",
+  "update": false
+ }
+]

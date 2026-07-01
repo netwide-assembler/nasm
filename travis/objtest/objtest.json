@@ -1,0 +1,18 @@
+[
+ {
+  "description": "Migrated from test/objtest.asm",
+  "id": "objtest",
+  "format": "obj",
+  "source": "objtest.asm",
+  "option": "-O0",
+  "target": [
+   {
+    "output": "objtest.obj",
+    "match": "objtest.obj.t"
+   },
+   {
+    "stderr": "objtest.stderr"
+   }
+  ]
+ }
+]

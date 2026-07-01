@@ -1,0 +1,3 @@
+./travis/jmpfar/jmpfar.asm:22: error: binary output format does not support segment base references
+./travis/jmpfar/jmpfar.asm:37: error: binary output format does not support segment base references
+./travis/jmpfar/jmpfar.asm:49: error: binary output format does not support segment base references

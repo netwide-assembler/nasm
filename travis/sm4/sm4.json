@@ -1,0 +1,15 @@
+[
+ {
+  "description": "Migrated from test/sm4.asm",
+  "id": "sm4",
+  "format": "elf",
+  "source": "sm4.asm",
+  "option": "-O0",
+  "target": [
+   {
+    "output": "sm4.o",
+    "match": "sm4.o.t"
+   }
+  ]
+ }
+]

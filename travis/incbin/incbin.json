@@ -1,0 +1,15 @@
+[
+ {
+  "description": "Migrated from test/incbin.asm",
+  "id": "incbin",
+  "format": "bin",
+  "source": "incbin.asm",
+  "option": "-I./travis/incbin/",
+  "error": "expected",
+  "target": [
+   {
+    "stderr": "incbin.stderr"
+   }
+  ]
+ }
+]

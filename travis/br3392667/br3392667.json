@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/br3392667.asm",
+  "id": "br3392667",
+  "format": "bin",
+  "source": "br3392667.asm",
+  "error": "expected",
+  "target": [
+   {
+    "stderr": "br3392667.stderr"
+   }
+  ]
+ }
+]

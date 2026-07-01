@@ -1,0 +1,17 @@
+[
+ {
+  "description": "Migrated from test/evalerr.asm",
+  "id": "evalerr",
+  "format": "bin",
+  "source": "evalerr.asm",
+  "target": [
+   {
+    "output": "evalerr.bin",
+    "match": "evalerr.bin.t"
+   },
+   {
+    "stderr": "evalerr.stderr"
+   }
+  ]
+ }
+]

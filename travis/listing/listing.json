@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/listing.asm",
+  "id": "listing",
+  "format": "bin",
+  "source": "listing.asm",
+  "target": [
+   {
+    "output": "listing.bin",
+    "match": "listing.bin.t"
+   }
+  ]
+ }
+]

@@ -1,0 +1,6 @@
+./travis/ret/ret.asm:54: error: instruction not supported in 32-bit mode
+./travis/ret/ret.asm:55: error: instruction not supported in 32-bit mode
+./travis/ret/ret.asm:56: error: instruction not supported in 32-bit mode
+./travis/ret/ret.asm:57: error: invalid operands in 32-bit mode
+./travis/ret/ret.asm:58: error: invalid operands in 32-bit mode
+./travis/ret/ret.asm:59: error: invalid operands in 32-bit mode

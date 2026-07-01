@@ -1,0 +1,10 @@
+./travis/macroerr/macroerr.asm:8: warning: `ptr' is not a NASM keyword [-w+ptr]
+./travis/macroerr/macroerr.asm:4: ... from macro `bluttan' defined here
+./travis/macroerr/macroerr.asm:8: warning: `ptr' is not a NASM keyword [-w+ptr]
+./travis/macroerr/macroerr.asm:5: ... from macro `bluttan' defined here
+./travis/macroerr/macroerr.inc:2: ... from macro `blej' defined here
+./travis/macroerr/macroerr.asm:9: warning: `ptr' is not a NASM keyword [-w+ptr]
+./travis/macroerr/macroerr.inc:2: ... from macro `blej' defined here
+./travis/macroerr/macroerr.asm:10: warning: `ptr' is not a NASM keyword [-w+ptr]
+./travis/macroerr/macroerr.asm:10: warning: `ptr' is not a NASM keyword [-w+ptr]
+./travis/macroerr/macroerr.asm:12: warning: `ptr' is not a NASM keyword [-w+ptr]

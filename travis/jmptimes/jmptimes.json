@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/jmptimes.asm",
+  "id": "jmptimes",
+  "format": "bin",
+  "source": "jmptimes.asm",
+  "target": [
+   {
+    "output": "jmptimes.bin",
+    "match": "jmptimes.bin.t"
+   }
+  ]
+ }
+]

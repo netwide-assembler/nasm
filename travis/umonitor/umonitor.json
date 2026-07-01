@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/umonitor.asm",
+  "id": "umonitor",
+  "format": "bin",
+  "source": "umonitor.asm",
+  "target": [
+   {
+    "output": "umonitor.bin",
+    "match": "umonitor.bin.t"
+   }
+  ]
+ }
+]

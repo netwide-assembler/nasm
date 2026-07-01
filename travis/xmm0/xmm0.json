@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/xmm0.asm",
+  "id": "xmm0",
+  "format": "bin",
+  "source": "xmm0.asm",
+  "target": [
+   {
+    "output": "xmm0.bin",
+    "match": "xmm0.bin.t"
+   }
+  ]
+ }
+]

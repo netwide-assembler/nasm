@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/binoverflow.asm",
+  "id": "binoverflow",
+  "format": "bin",
+  "source": "binoverflow.asm",
+  "target": [
+   {
+    "output": "binoverflow.bin",
+    "match": "binoverflow.bin.t"
+   }
+  ]
+ }
+]

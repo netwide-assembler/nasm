@@ -1,0 +1,13 @@
+[
+ {
+  "description": "Migrated from test/ifenv.asm",
+  "id": "ifenv",
+  "format": "bin",
+  "source": "ifenv.asm",
+  "target": [
+   {
+    "stderr": "ifenv.stderr"
+   }
+  ]
+ }
+]

@@ -1,0 +1,15 @@
+[
+ {
+  "description": "Migrated from test/manysecs.asm",
+  "id": "manysecs",
+  "format": "elf64",
+  "source": "manysecs.asm",
+  "target": [
+   {
+    "output": "manysecs.o",
+    "match": "manysecs.o.t",
+    "compress": { "delta": 192 }
+   }
+  ]
+ }
+]

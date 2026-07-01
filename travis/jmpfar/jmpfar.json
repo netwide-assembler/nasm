@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/jmpfar.asm",
+  "id": "jmpfar",
+  "format": "bin",
+  "source": "jmpfar.asm",
+  "error": "expected",
+  "target": [
+   {
+    "stderr": "jmpfar.stderr"
+   }
+  ]
+ }
+]

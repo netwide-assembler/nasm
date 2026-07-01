@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/pextrw.asm",
+  "id": "pextrw",
+  "format": "bin",
+  "source": "pextrw.asm",
+  "target": [
+   {
+    "output": "pextrw.bin",
+    "match": "pextrw.bin.t"
+   }
+  ]
+ }
+]

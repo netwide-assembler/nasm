@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/br3392626.asm",
+  "id": "br3392626",
+  "format": "bin",
+  "source": "br3392626.asm",
+  "target": [
+   {
+    "output": "br3392626.bin",
+    "match": "br3392626.bin.t"
+   }
+  ]
+ }
+]

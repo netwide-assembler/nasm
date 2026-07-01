@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/br3392661.asm",
+  "id": "br3392661",
+  "format": "elf64",
+  "source": "br3392661.asm",
+  "target": [
+   {
+    "output": "br3392661.o",
+    "match": "br3392661.o.t"
+   }
+  ]
+ }
+]

@@ -1,0 +1,9 @@
+[
+ {
+  "description": "Migrated from test/br3392660.asm",
+  "id": "br3392660",
+  "format": "bin",
+  "source": "br3392660.asm",
+  "update": false
+ }
+]

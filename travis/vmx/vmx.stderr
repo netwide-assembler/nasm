@@ -1,0 +1,1 @@
+./travis/vmx/vmx.asm:6: warning: implicit DEFAULT ABS is deprecated [-w+implicit-abs-deprecated]

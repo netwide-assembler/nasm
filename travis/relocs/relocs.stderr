@@ -1,0 +1,2 @@
+./travis/relocs/relocs.asm:4: warning: implicit DEFAULT ABS is deprecated [-w+implicit-abs-deprecated]
+./travis/relocs/relocs.asm:10: warning: displacement size ignored on absolute address [-w+ea-dispsize]

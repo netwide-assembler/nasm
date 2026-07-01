@@ -1,0 +1,2 @@
+./travis/br3392640/br3392640.asm:4: error: invalid combination of opcode and operands
+./travis/br3392640/br3392640.asm:2: ... from macro `mac' defined here

@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/dollar.asm",
+  "id": "dollar",
+  "format": "bin",
+  "source": "dollar.asm",
+  "target": [
+   {
+    "output": "dollar.bin",
+    "match": "dollar.bin.t"
+   }
+  ]
+ }
+]

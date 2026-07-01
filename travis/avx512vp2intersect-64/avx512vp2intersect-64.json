@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/avx512vp2intersect-64.asm",
+  "id": "avx512vp2intersect-64",
+  "format": "bin",
+  "source": "avx512vp2intersect-64.asm",
+  "target": [
+   {
+    "output": "avx512vp2intersect-64.bin",
+    "match": "avx512vp2intersect-64.bin.t"
+   }
+  ]
+ }
+]

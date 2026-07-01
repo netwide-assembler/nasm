@@ -1,0 +1,17 @@
+[
+ {
+  "description": "Migrated from test/dup.asm",
+  "id": "dup",
+  "format": "bin",
+  "source": "dup.asm",
+  "target": [
+   {
+    "output": "dup.bin",
+    "match": "dup.bin.t"
+   },
+   {
+    "stderr": "dup.stderr"
+   }
+  ]
+ }
+]

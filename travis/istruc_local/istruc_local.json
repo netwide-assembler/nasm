@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/istruc_local.asm",
+  "id": "istruc_local",
+  "format": "bin",
+  "source": "istruc_local.asm",
+  "target": [
+   {
+    "output": "istruc_local.bin",
+    "match": "istruc_local.bin.t"
+   }
+  ]
+ }
+]

@@ -123,4 +123,4 @@ TAGS
 /autoconf/config.*
 /autoconf/install-sh
 /autoconf/clean.sh
-/travis/test/_version.stdout
+/travis/_version/_version.stdout

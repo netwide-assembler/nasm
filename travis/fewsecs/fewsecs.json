@@ -1,0 +1,15 @@
+[
+ {
+  "description": "Migrated from test/fewsecs.asm",
+  "id": "fewsecs",
+  "format": "elf64",
+  "source": "fewsecs.asm",
+  "option": "-I./travis/manysecs/",
+  "target": [
+   {
+    "output": "fewsecs.o",
+    "match": "fewsecs.o.t"
+   }
+  ]
+ }
+]

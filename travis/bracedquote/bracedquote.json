@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/bracedquote.asm",
+  "id": "bracedquote",
+  "format": "bin",
+  "source": "bracedquote.asm",
+  "target": [
+   {
+    "output": "bracedquote.bin",
+    "match": "bracedquote.bin.t"
+   }
+  ]
+ }
+]

@@ -1,0 +1,8 @@
+./travis/paste/paste.asm:12: error: `{a}' is not a valid brace token
+./travis/paste/paste.asm:5: ... from macro `bug' defined here
+./travis/paste/paste.asm:12: error: instruction expected, found `..@0.top_ {a}'
+./travis/paste/paste.asm:5: ... from macro `bug' defined here
+./travis/paste/paste.asm:12: error: `{a}' is not a valid brace token
+./travis/paste/paste.asm:7: ... from macro `bug' defined here
+./travis/paste/paste.asm:12: error: comma, colon, decorator or end of line expected after operand
+./travis/paste/paste.asm:7: ... from macro `bug' defined here

@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/extern.asm",
+  "id": "extern",
+  "format": "elf64",
+  "source": "extern.asm",
+  "target": [
+   {
+    "output": "extern.o",
+    "match": "extern.o.t"
+   }
+  ]
+ }
+]

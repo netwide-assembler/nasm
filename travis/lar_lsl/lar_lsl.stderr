@@ -1,0 +1,2 @@
+./travis/lar_lsl/lar_lsl.asm:98: warning: implicit DEFAULT ABS is deprecated [-w+implicit-abs-deprecated]
+./travis/lar_lsl/lar_lsl.asm:81: ... from macro `m' defined here

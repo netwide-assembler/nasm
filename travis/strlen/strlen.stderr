@@ -1,0 +1,2 @@
+./travis/strlen/strlen.asm:5: error: `%strlen' requires string as second parameter
+./travis/strlen/strlen.asm:2: ... from macro `strlen_test' defined here

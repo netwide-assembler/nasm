@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/ldtilecfg.asm",
+  "id": "ldtilecfg",
+  "format": "bin",
+  "source": "ldtilecfg.asm",
+  "target": [
+   {
+    "output": "ldtilecfg.bin",
+    "match": "ldtilecfg.bin.t"
+   }
+  ]
+ }
+]

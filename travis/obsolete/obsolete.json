@@ -1,0 +1,17 @@
+[
+ {
+  "description": "Migrated from test/obsolete.asm",
+  "id": "obsolete",
+  "format": "bin",
+  "source": "obsolete.asm",
+  "target": [
+   {
+    "output": "obsolete.bin",
+    "match": "obsolete.bin.t"
+   },
+   {
+    "stderr": "obsolete.stderr"
+   }
+  ]
+ }
+]

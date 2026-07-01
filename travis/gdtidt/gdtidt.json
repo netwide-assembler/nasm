@@ -1,0 +1,41 @@
+[
+ {
+  "description": "Migrated from test/gdtidt.asm",
+  "id": "gdtidt16",
+  "format": "bin",
+  "source": "gdtidt.asm",
+  "option": "--bits 16",
+  "target": [
+   {
+    "output": "gdtidt16.bin",
+    "match": "gdtidt16.bin.t"
+   }
+  ]
+ },
+ {
+  "description": "Migrated from test/gdtidt.asm",
+  "id": "gdtidt32",
+  "format": "bin",
+  "source": "gdtidt.asm",
+  "option": "--bits 32",
+  "target": [
+   {
+    "output": "gdtidt32.bin",
+    "match": "gdtidt32.bin.t"
+   }
+  ]
+ },
+ {
+  "description": "Migrated from test/gdtidt.asm",
+  "id": "gdtidt64",
+  "format": "bin",
+  "source": "gdtidt.asm",
+  "option": "--bits 64",
+  "target": [
+   {
+    "output": "gdtidt64.bin",
+    "match": "gdtidt64.bin.t"
+   }
+  ]
+ }
+]

@@ -1,0 +1,2 @@
+./travis/addr64x/addr64x.asm:5: warning: byte displacement exceeds bounds [-w+number-overflow]
+./travis/addr64x/addr64x.asm:6: warning: byte displacement exceeds bounds [-w+number-overflow]

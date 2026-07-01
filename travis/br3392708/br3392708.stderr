@@ -1,0 +1,17 @@
+./travis/br3392708/br3392708.asm:3: warning: label `a�d' alone on a line without a colon might be in error [-w+label-orphan]
+./travis/br3392708/br3392708.asm:4: error: instruction expected, found `�y Files'
+./travis/br3392708/br3392708.asm:6: error: label, instruction or prefix expected at start of line, found `'
+./travis/br3392708/br3392708.asm:7: warning: label `tan' alone on a line without a colon might be in error [-w+label-orphan]
+./travis/br3392708/br3392708.asm:9: error: `%$local���e': context stack is empty
+./travis/br3392708/br3392708.asm:11: error: `%stacksize' missing size parameter
+./travis/br3392708/br3392708.asm:14: warning: label `d' alone on a line without a colon might be in error [-w+label-orphan]
+./travis/br3392708/br3392708.asm:15: error: `%$localsize': context stack is empty
+./travis/br3392708/br3392708.asm:15: error: expression syntax error
+./travis/br3392708/br3392708.asm:16: error: label, instruction or prefix expected at start of line, found `%'
+./travis/br3392708/br3392708.asm:18: warning: label `m' alone on a line without a colon might be in error [-w+label-orphan]
+./travis/br3392708/br3392708.asm:19: error: instruction expected, found `d eax'
+./travis/br3392708/br3392708.asm:20: error: expecting ] at end of memory operand
+./travis/br3392708/br3392708.asm:21: error: label, instruction or prefix expected at start of line, found `('
+./travis/br3392708/br3392708.asm:22: error: instruction expected, found `�ov ['
+./travis/br3392708/br3392708.asm:23: error: instruction expected, found `�ov ['
+./travis/br3392708/br3392708.asm:24: error: instruction expected, found `Sv '

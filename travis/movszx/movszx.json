@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/movszx.asm",
+  "id": "movszx",
+  "format": "bin",
+  "source": "movszx.asm",
+  "target": [
+   {
+    "output": "movszx.bin",
+    "match": "movszx.bin.t"
+   }
+  ]
+ }
+]

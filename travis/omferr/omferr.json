@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/omferr.asm",
+  "id": "omferr",
+  "format": "obj",
+  "source": "omferr.asm",
+  "target": [
+   {
+    "output": "omferr.obj",
+    "match": "omferr.obj.t"
+   }
+  ]
+ }
+]

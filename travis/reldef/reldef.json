@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/reldef.asm",
+  "id": "reldef",
+  "format": "elf64",
+  "source": "reldef.asm",
+  "target": [
+   {
+    "output": "reldef.o",
+    "match": "reldef.o.t"
+   }
+  ]
+ }
+]

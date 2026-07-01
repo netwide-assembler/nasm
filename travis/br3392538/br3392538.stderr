@@ -1,0 +1,3 @@
+./travis/br3392538/br3392538.asm:19: warning: label `foo' alone on a line without a colon might be in error [-w+label-orphan]
+./travis/br3392538/br3392538.asm:21: error: invalid combination of opcode and operands
+./travis/br3392538/br3392538.asm:23: warning: signed byte exceeds bounds [-w+number-overflow]

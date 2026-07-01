@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/directive.asm",
+  "id": "directive",
+  "format": "bin",
+  "source": "directive.asm",
+  "target": [
+   {
+    "output": "directive.bin",
+    "match": "directive.bin.t"
+   }
+  ]
+ }
+]

@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/immsize.asm",
+  "id": "immsize",
+  "format": "bin",
+  "source": "immsize.asm",
+  "target": [
+   {
+    "output": "immsize.bin",
+    "match": "immsize.bin.t"
+   }
+  ]
+ }
+]

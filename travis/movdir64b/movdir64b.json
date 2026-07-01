@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/movdir64b.asm",
+  "id": "movdir64b",
+  "format": "bin",
+  "source": "movdir64b.asm",
+  "target": [
+   {
+    "output": "movdir64b.bin",
+    "match": "movdir64b.bin.t"
+   }
+  ]
+ }
+]

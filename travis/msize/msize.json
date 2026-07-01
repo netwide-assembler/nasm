@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/msize.asm",
+  "id": "msize",
+  "format": "bin",
+  "source": "msize.asm",
+  "target": [
+   {
+    "output": "msize.bin",
+    "match": "msize.bin.t"
+   }
+  ]
+ }
+]

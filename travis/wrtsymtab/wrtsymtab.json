@@ -1,0 +1,34 @@
+[
+ {
+  "description": "Migrated from test/wrtsymtab.asm",
+  "id": "wrtsymtab_win32",
+  "format": "win32",
+  "source": "wrtsymtab.asm",
+  "option": "-Ox --reproducible",
+  "target": [
+   {
+    "output": "wrtsymtab_win32.obj",
+    "match": "wrtsymtab_win32.obj.t"
+   },
+   {
+    "stderr": "wrtsymtab_win32.stderr"
+   }
+  ]
+ },
+ {
+  "description": "Migrated from test/wrtsymtab.asm",
+  "id": "wrtsymtab_win64",
+  "format": "win64",
+  "source": "wrtsymtab.asm",
+  "option": "-Ox --reproducible",
+  "target": [
+   {
+    "output": "wrtsymtab_win64.obj",
+    "match": "wrtsymtab_win64.obj.t"
+   },
+   {
+    "stderr": "wrtsymtab_win64.stderr"
+   }
+  ]
+ }
+]

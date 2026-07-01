@@ -1,0 +1,4 @@
+./travis/gotoff64/gotoff64.asm:9: error: ELF64 requires ..gotoff references to be qword absolute
+./travis/gotoff64/gotoff64.asm:10: error: ELF64 requires ..gotoff references to be qword absolute
+./travis/gotoff64/gotoff64.asm:19: error: ELF64 requires ..gotoff references to be qword
+./travis/gotoff64/gotoff64.asm:20: error: ELF64 requires ..gotoff references to be qword

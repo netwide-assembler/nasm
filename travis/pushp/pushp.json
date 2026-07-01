@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/pushp.asm",
+  "id": "pushp",
+  "format": "bin",
+  "source": "pushp.asm",
+  "target": [
+   {
+    "output": "pushp.bin",
+    "match": "pushp.bin.t"
+   }
+  ]
+ }
+]

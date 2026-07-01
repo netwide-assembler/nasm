@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/evalmacro.asm",
+  "id": "evalmacro",
+  "format": "bin",
+  "source": "evalmacro.asm",
+  "target": [
+   {
+    "output": "evalmacro.bin",
+    "match": "evalmacro.bin.t"
+   }
+  ]
+ }
+]

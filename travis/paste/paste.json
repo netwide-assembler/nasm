@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/paste.asm",
+  "id": "paste",
+  "format": "bin",
+  "source": "paste.asm",
+  "error": "expected",
+  "target": [
+   {
+    "stderr": "paste.stderr"
+   }
+  ]
+ }
+]

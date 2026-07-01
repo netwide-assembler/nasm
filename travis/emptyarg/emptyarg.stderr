@@ -1,0 +1,278 @@
+./travis/emptyarg/emptyarg.asm:67: warning: multi-line macro `nothing' exists, but not taking 1 parameter [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:67: error: instruction expected, found `nothing 1'
+./travis/emptyarg/emptyarg.asm:71: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:41: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:42: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: warning: multi-line macro `nothing' exists, but not taking 1 parameter [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: error: label `nothing' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: info: label `nothing' originally defined here
+./travis/emptyarg/emptyarg.asm:71: error: instruction expected, found `nothing 1'
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: warning: multi-line macro `nothing' exists, but not taking 1 parameter [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:46: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: error: instruction expected, found `nothing 2'
+./travis/emptyarg/emptyarg.asm:46: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:49: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:71: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:50: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: warning: improperly calling multi-line macro `bar' with 0 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:39: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:41: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:42: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: warning: dropping trailing empty parameter in call to multi-line macro `baz' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:43: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: warning: multi-line macro `nothing' exists, but not taking 1 parameter [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: error: label `nothing' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: info: label `nothing' originally defined here
+./travis/emptyarg/emptyarg.asm:72: error: instruction expected, found `nothing 3'
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: error: label `xyzzy' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: info: label `xyzzy' originally defined here
+./travis/emptyarg/emptyarg.asm:72: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:49: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:72: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:50: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:73: warning: multi-line macro `bar' exists, but not taking 0 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:73: warning: label `bar' alone on a line without a colon might be in error [-w+label-orphan]
+./travis/emptyarg/emptyarg.asm:74: warning: improperly calling multi-line macro `bar' with 0 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:75: warning: dropping trailing empty parameter in call to multi-line macro `foo' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:75: warning: improperly calling multi-line macro `bar' with 0 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:39: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:41: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:42: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: warning: dropping trailing empty parameter in call to multi-line macro `baz' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:43: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: warning: multi-line macro `nothing' exists, but not taking 1 parameter [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: error: label `nothing' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: info: label `nothing' originally defined here
+./travis/emptyarg/emptyarg.asm:75: error: instruction expected, found `nothing 6'
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: error: label `xyzzy' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: info: label `xyzzy' originally defined here
+./travis/emptyarg/emptyarg.asm:75: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:49: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:75: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:50: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: warning: dropping trailing empty parameter in call to multi-line macro `foo' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:76: warning: improperly calling multi-line macro `bar' with 0 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:39: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:41: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:42: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: warning: dropping trailing empty parameter in call to multi-line macro `baz' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:43: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: warning: multi-line macro `nothing' exists, but not taking 1 parameter [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: error: label `nothing' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: info: label `nothing' originally defined here
+./travis/emptyarg/emptyarg.asm:76: error: instruction expected, found `nothing 6'
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: error: label `xyzzy' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: info: label `xyzzy' originally defined here
+./travis/emptyarg/emptyarg.asm:76: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:49: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:76: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:50: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: warning: dropping trailing empty parameter in call to multi-line macro `foo' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:77: warning: improperly calling multi-line macro `bar' with 0 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:39: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:41: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:42: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: warning: dropping trailing empty parameter in call to multi-line macro `baz' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:43: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: warning: multi-line macro `nothing' exists, but not taking 1 parameter [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: error: label `nothing' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: info: label `nothing' originally defined here
+./travis/emptyarg/emptyarg.asm:77: error: instruction expected, found `nothing 6'
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: error: label `xyzzy' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: info: label `xyzzy' originally defined here
+./travis/emptyarg/emptyarg.asm:77: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:49: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:77: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:50: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:78: warning: dropping trailing empty parameter in call to multi-line macro `baz' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:79: warning: improperly calling multi-line macro `bar' with 0 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:39: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:41: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:42: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: warning: dropping trailing empty parameter in call to multi-line macro `baz' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:43: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: warning: multi-line macro `nothing' exists, but not taking 1 parameter [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: error: label `nothing' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: info: label `nothing' originally defined here
+./travis/emptyarg/emptyarg.asm:79: error: instruction expected, found `nothing 6'
+./travis/emptyarg/emptyarg.asm:45: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: error: label `xyzzy' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: info: label `xyzzy' originally defined here
+./travis/emptyarg/emptyarg.asm:79: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:49: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:79: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:50: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: error: expression syntax error
+./travis/emptyarg/emptyarg.asm:38: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:41: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: warning: improperly calling multi-line macro `bar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:42: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: error: expression syntax error
+./travis/emptyarg/emptyarg.asm:43: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:8: ... from macro `baz' defined here
+./travis/emptyarg/emptyarg.asm:80: error: expression syntax error
+./travis/emptyarg/emptyarg.asm:44: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:8: ... from macro `baz' defined here
+./travis/emptyarg/emptyarg.asm:80: warning: multi-line macro `nothing' exists, but not taking 1 parameter [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:46: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: error: label `nothing' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:46: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: info: label `nothing' originally defined here
+./travis/emptyarg/emptyarg.asm:80: error: instruction expected, found `nothing 5'
+./travis/emptyarg/emptyarg.asm:46: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: error: label `xyzzy' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: info: label `xyzzy' originally defined here
+./travis/emptyarg/emptyarg.asm:80: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:47: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: error: instruction expected, found `xyzzy meep'
+./travis/emptyarg/emptyarg.asm:48: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:49: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:80: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:50: ... from macro `foo' defined here
+./travis/emptyarg/emptyarg.asm:82: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:82: error: label `xyzzy' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:47: info: label `xyzzy' originally defined here
+./travis/emptyarg/emptyarg.asm:82: error: instruction expected, found `xyzzy 13'
+./travis/emptyarg/emptyarg.asm:83: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:83: error: instruction expected, found `xyzzy 13'
+./travis/emptyarg/emptyarg.asm:85: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:86: warning: improperly calling multi-line macro `xyzzy' with 3 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:87: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:87: error: label `xyzzy' inconsistently redefined
+./travis/emptyarg/emptyarg.asm:82: info: label `xyzzy' originally defined here
+./travis/emptyarg/emptyarg.asm:87: error: instruction expected, found `xyzzy 26'
+./travis/emptyarg/emptyarg.asm:88: warning: multi-line macro `xyzzy' exists, but not taking 4 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:88: error: instruction expected, found `xyzzy 28'
+./travis/emptyarg/emptyarg.asm:92: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:94: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:95: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:96: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:97: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:99: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:100: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:101: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:102: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:106: warning: improperly calling multi-line macro `ivar' with 0 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:107: warning: improperly calling multi-line macro `ivar' with 2 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:108: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:34: ... from macro `ivar' defined here
+./travis/emptyarg/emptyarg.asm:110: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:34: ... from macro `ivar' defined here
+./travis/emptyarg/emptyarg.asm:111: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:34: ... from macro `ivar' defined here
+./travis/emptyarg/emptyarg.asm:112: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:34: ... from macro `ivar' defined here
+./travis/emptyarg/emptyarg.asm:113: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:34: ... from macro `ivar' defined here
+./travis/emptyarg/emptyarg.asm:115: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:34: ... from macro `ivar' defined here
+./travis/emptyarg/emptyarg.asm:116: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:34: ... from macro `ivar' defined here
+./travis/emptyarg/emptyarg.asm:117: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:34: ... from macro `ivar' defined here
+./travis/emptyarg/emptyarg.asm:118: warning: dropping trailing empty parameter in call to multi-line macro `vararg' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:34: ... from macro `ivar' defined here
+./travis/emptyarg/emptyarg.asm:120: warning: improperly calling multi-line macro `defargs' with 0 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:120: error: expression syntax error
+./travis/emptyarg/emptyarg.asm:30: ... from macro `defargs' defined here
+./travis/emptyarg/emptyarg.asm:126: warning: dropping trailing empty parameter in call to multi-line macro `defargs' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:126: error: expression syntax error
+./travis/emptyarg/emptyarg.asm:30: ... from macro `defargs' defined here
+./travis/emptyarg/emptyarg.asm:127: warning: dropping trailing empty parameter in call to multi-line macro `defargs' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:128: warning: dropping trailing empty parameter in call to multi-line macro `defargs' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:129: warning: dropping trailing empty parameter in call to multi-line macro `defargs' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:130: warning: dropping trailing empty parameter in call to multi-line macro `defargs' [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:131: warning: improperly calling multi-line macro `defargs' with 6 parameters [-w+pp-macro-params-legacy]
+./travis/emptyarg/emptyarg.asm:133: warning: multi-line macro `prange1' exists, but not taking 1 parameter [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:133: error: instruction expected, found `prange1 101'
+./travis/emptyarg/emptyarg.asm:146: warning: multi-line macro `orange' exists, but not taking 2 parameters [-w+pp-macro-params-multi]
+./travis/emptyarg/emptyarg.asm:146: error: instruction expected, found `orange 130'

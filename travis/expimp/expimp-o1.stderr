@@ -1,0 +1,4 @@
+./travis/expimp/expimp.asm:17: warning: signed byte exceeds bounds [-w+number-overflow]
+./travis/expimp/expimp.asm:24: warning: signed byte exceeds bounds [-w+number-overflow]
+./travis/expimp/expimp.asm:31: warning: signed byte exceeds bounds [-w+number-overflow]
+./travis/expimp/expimp.asm:38: warning: signed byte exceeds bounds [-w+number-overflow]

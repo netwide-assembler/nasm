@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/chrord.asm",
+  "id": "chrord",
+  "format": "bin",
+  "source": "chrord.asm",
+  "target": [
+   {
+    "output": "chrord.bin",
+    "match": "chrord.bin.t"
+   }
+  ]
+ }
+]

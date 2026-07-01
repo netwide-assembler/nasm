@@ -1,0 +1,15 @@
+[
+ {
+  "description": "Migrated from test/sm3.asm",
+  "id": "sm3",
+  "format": "elf",
+  "source": "sm3.asm",
+  "option": "-O0",
+  "target": [
+   {
+    "output": "sm3.o",
+    "match": "sm3.o.t"
+   }
+  ]
+ }
+]

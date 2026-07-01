@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/include-self.asm",
+  "id": "include-self",
+  "format": "bin",
+  "source": "include-self.asm",
+  "error": "expected",
+  "target": [
+   {
+    "stderr": "include-self.stderr"
+   }
+  ]
+ }
+]

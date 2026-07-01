@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/limits.asm",
+  "id": "limits",
+  "format": "bin",
+  "source": "limits.asm",
+  "target": [
+   {
+    "output": "limits.bin",
+    "match": "limits.bin.t"
+   }
+  ]
+ }
+]

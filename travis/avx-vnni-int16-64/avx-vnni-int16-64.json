@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/avx-vnni-int16-64.asm",
+  "id": "avx-vnni-int16-64",
+  "format": "bin",
+  "source": "avx-vnni-int16-64.asm",
+  "target": [
+   {
+    "output": "avx-vnni-int16-64.bin",
+    "match": "avx-vnni-int16-64.bin.t"
+   }
+  ]
+ }
+]

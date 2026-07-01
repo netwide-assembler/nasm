@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/require.asm",
+  "id": "require",
+  "format": "bin",
+  "source": "require.asm",
+  "target": [
+   {
+    "output": "require.bin",
+    "match": "require.bin.t"
+   }
+  ]
+ }
+]

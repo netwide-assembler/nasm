@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/latevex.asm",
+  "id": "latevex",
+  "format": "bin",
+  "source": "latevex.asm",
+  "target": [
+   {
+    "output": "latevex.bin",
+    "match": "latevex.bin.t"
+   }
+  ]
+ }
+]

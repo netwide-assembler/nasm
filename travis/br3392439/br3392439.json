@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/br3392439.asm",
+  "id": "br3392439",
+  "format": "obj",
+  "source": "br3392439.asm",
+  "target": [
+   {
+    "output": "br3392439.obj",
+    "match": "br3392439.obj.t"
+   }
+  ]
+ }
+]

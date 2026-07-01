@@ -1,0 +1,4 @@
+./travis/pcrel/pcrel.asm:25: warning: absolute address can not be RIP-relative [-w+ea-absolute]
+./travis/pcrel/pcrel.asm:32: warning: absolute address can not be RIP-relative [-w+ea-absolute]
+./travis/pcrel/pcrel.asm:39: error: invalid use of self-relative expression
+./travis/pcrel/pcrel.asm:42: error: invalid use of self-relative expression

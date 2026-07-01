@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/pcrel.asm",
+  "id": "pcrel",
+  "format": "bin",
+  "source": "pcrel.asm",
+  "error": "expected",
+  "target": [
+   {
+    "stderr": "pcrel.stderr"
+   }
+  ]
+ }
+]

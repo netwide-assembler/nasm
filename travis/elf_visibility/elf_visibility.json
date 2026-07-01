@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/elf_visibility.asm",
+  "id": "elf_visibility",
+  "format": "elf64",
+  "source": "elf_visibility.asm",
+  "target": [
+   {
+    "output": "elf_visibility.o",
+    "match": "elf_visibility.o.t"
+   }
+  ]
+ }
+]

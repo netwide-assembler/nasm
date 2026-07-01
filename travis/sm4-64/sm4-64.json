@@ -1,0 +1,15 @@
+[
+ {
+  "description": "Migrated from test/sm4-64.asm",
+  "id": "sm4-64",
+  "format": "elf",
+  "source": "sm4-64.asm",
+  "option": "-O0",
+  "target": [
+   {
+    "output": "sm4-64.o",
+    "match": "sm4-64.o.t"
+   }
+  ]
+ }
+]

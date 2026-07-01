@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/badrep.asm",
+  "id": "badrep",
+  "format": "bin",
+  "source": "badrep.asm",
+  "target": [
+   {
+    "output": "badrep.bin",
+    "match": "badrep.bin.t"
+   }
+  ]
+ }
+]

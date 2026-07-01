@@ -1,0 +1,4 @@
+./travis/ifenv/ifenv.asm:11: warning: No PROJECTBASEDIR defined [-w+user]
+./travis/ifenv/ifenv.asm:17: warning: No PROJECTBASEDIR defined [-w+user]
+./travis/ifenv/ifenv.asm:23: warning: No PROJECTBASEDIR defined [-w+user]
+./travis/ifenv/ifenv.asm:29: warning: No PROJECTBASEDIR defined [-w+user]

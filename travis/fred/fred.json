@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/fred.asm",
+  "id": "fred",
+  "format": "elf64",
+  "source": "fred.asm",
+  "target": [
+   {
+    "output": "fred.o",
+    "match": "fred.o.t"
+   }
+  ]
+ }
+]

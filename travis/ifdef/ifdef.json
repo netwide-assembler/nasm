@@ -1,0 +1,14 @@
+[
+ {
+  "description": "Migrated from test/ifdef.asm",
+  "id": "ifdef",
+  "format": "bin",
+  "source": "ifdef.asm",
+  "target": [
+   {
+    "output": "ifdef.bin",
+    "match": "ifdef.bin.t"
+   }
+  ]
+ }
+]
