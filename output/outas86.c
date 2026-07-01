@@ -104,7 +104,7 @@ static void as86_init(void)
     strslen = 0;
 
     /* as86 module name = input file minus extension */
-    module_name = filename_set_extension(get_filename(FN_INFILE), "");
+    module_name = filename_set_extension(get_filename(FN_MAPPED_INFILE), "");
     as86_add_string(module_name);
     nasm_free(module_name);
 }

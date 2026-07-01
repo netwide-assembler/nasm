@@ -147,6 +147,10 @@ OPTIONS
 	Prepend or append (respectively) the given argument to all global or
 	extern variables.
 
+--debug-prefix-map 'BASE=DEST'::
+    Map file names beginning with 'BASE' to 'DEST' when encoding them in
+    output object files.
+
 SYNTAX
 ------
 This man page does not fully describe the syntax of *nasm*'s assembly language,

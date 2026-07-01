@@ -14,6 +14,7 @@
 enum filenames {
     /* These two entries must be first, in this order */
     FN_INFILE,                  /* Primary input file */
+    FN_MAPPED_INFILE,           /* Debug mapped input file */
     FN_OUTFILE,                 /* Primary output file */
 
     FN_ERRFILE,                 /* Error message file */

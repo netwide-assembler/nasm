@@ -443,6 +443,12 @@ def test_run(desc):
             if match_data != out_data:
                 show_diff(desc['_test-name'], match, match_data, output, out_data)
                 return test_fail(desc['_test-name'], match + " and " + output + " files are different")
+            if 'validate' in t:
+                pvalidate = subprocess.run(t['validate'].format(output=output), shell=True,
+                                                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if pvalidate.returncode != 0:
+                    return test_fail(desc['_test-name'], "Validation failed with %d:\nSTDOUT: %s\nSTDERR: %s" % (pvalidate.returncode, pvalidate.stdout, pvalidate.stderr))
+
         elif 'stdout' in t:
             print("\tComparing stdout")
             match = desc['_base-dir'] + os.sep + t['stdout']

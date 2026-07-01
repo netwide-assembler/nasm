@@ -1342,7 +1342,7 @@ static void coff_write_symbols(void)
     if (reproducible)
         memset(filename, 0, 18);
     else
-        strncpy(filename, get_filename(FN_INFILE), 18);
+        strncpy(filename, get_filename(FN_MAPPED_INFILE), 18);
     nasm_write(filename, 18, ofile);
 
     /*

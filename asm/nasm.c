@@ -42,11 +42,17 @@ struct forwrefinfo {            /* info held on forward refs. */
     int operand;
 };
 
+struct debug_prefix_list {
+    struct debug_prefix_list *next;
+    char *base;
+    char *dest;
+};
+
 const char *_progname;
 
 static void open_and_process_respfile(char *, int);
 static void parse_cmdline(int, char **, int);
-static void assemble_file(const char *, struct strlist *);
+static void assemble_file(const char *, char const *, struct strlist *);
 static void help(FILE *out, const char *what);
 
 static bool using_debug_info;
@@ -80,6 +86,8 @@ errflags errflags_never = 0;	/* Error flags to unconditionally suppress */
 FILE *ofile = NULL;
 enum optimization optimizing = OPTIM_DEFAULT;
 static int cmd_sb = 16;    /* by default */
+
+static struct debug_prefix_list *debug_prefixes = NULL;
 
 iflag_t cpu, cmd_cpu;
 
@@ -721,7 +729,7 @@ int main(int argc, char **argv)
             if (depend_missing_ok)
                 pp_include_path(NULL);    /* "assume generated" */
 
-            pp_reset(get_filename(FN_INFILE), PP_DEPS, depend_list);
+            pp_reset(get_filename(FN_INFILE), get_filename(FN_MAPPED_INFILE), PP_DEPS, depend_list);
             ofile = NULL;
             while ((line = pp_getline()))
                 nasm_free(line);
@@ -747,7 +755,7 @@ int main(int argc, char **argv)
             location.known = false;
 
             _pass_type = PASS_PREPROC;
-            pp_reset(get_filename(FN_INFILE), PP_PREPROC, depend_list);
+            pp_reset(get_filename(FN_INFILE), get_filename(FN_MAPPED_INFILE), PP_PREPROC, depend_list);
             error_pass_start(true);
 
             while ((line = pp_getline())) {
@@ -808,7 +816,7 @@ int main(int argc, char **argv)
         ofmt->init();
         dfmt->init();
 
-        assemble_file(get_filename(FN_INFILE), depend_list);
+        assemble_file(get_filename(FN_INFILE), get_filename(FN_MAPPED_INFILE), depend_list);
 
         if (!terminate_after_phase()) {
             ofmt->cleanup();
@@ -862,6 +870,30 @@ static char *get_param(char *p, char *q, bool *advance)
     if (!r)
         nasm_nonfatalf(ERR_USAGE, "option `-%c' requires an argument", p[1]);
     return r;
+}
+
+/*
+ * Apply debug prefix mappings to a path buffer
+ */
+static char *debug_prefix_remap(char const* path)
+{
+    struct debug_prefix_list *d;
+    size_t n;
+
+    for (d = debug_prefixes; d != NULL; d = d->next) {
+        n = strlen(d->base);
+        if (strncmp(path, d->base, n) == 0) {
+            size_t prefix_len = strlen(d->dest);
+            size_t suffix_len = strlen(path) - n;
+            size_t len = prefix_len + suffix_len + 1;
+            char* out = nasm_malloc(len);
+            strlcpy(out, d->dest, len);
+            strlcpy(&out[prefix_len], &path[n], len - prefix_len);
+            return out;
+        }
+    }
+
+    return nasm_strdup(path);
 }
 
 /*
@@ -1030,7 +1062,8 @@ enum text_options {
     OPT_DEBUG,
     OPT_INFO,
     OPT_REPRODUCIBLE,
-    OPT_BITS
+    OPT_BITS,
+    OPT_DEBUG_PREFIX_MAP
 };
 enum need_arg {
     ARG_NO,
@@ -1069,6 +1102,7 @@ static const struct textargs textopts[] = {
     {"debug",    OPT_DEBUG, ARG_MAYBE, 0},
     {"reproducible", OPT_REPRODUCIBLE, ARG_NO, 0},
     {"bits",     OPT_BITS, ARG_YES, 0},
+    {"debug-prefix-map", OPT_DEBUG_PREFIX_MAP, ARG_YES, 0},
     {NULL, OPT_BOGUS, ARG_NO, 0}
 };
 
@@ -1455,6 +1489,26 @@ static bool process_arg(char *p, char *q, int pass)
                 case OPT_REPRODUCIBLE:
                     reproducible = true;
                     break;
+                case OPT_DEBUG_PREFIX_MAP: {
+                    struct debug_prefix_list *d;
+                    char *c;
+                    c = strchr(param, '=');
+
+                    if (!c) {
+                        nasm_error(ERR_NONFATAL | ERR_NOFILE | ERR_USAGE,
+                                   "option `--%s' must be of the form `BASE=DEST'", p);
+                        break;
+                    }
+
+                    *c = '\0';
+                    d = nasm_malloc(sizeof(*d));
+                    d->next = debug_prefixes;
+                    d->base = nasm_strdup(param);
+                    d->dest = nasm_strdup(c + 1);
+                    debug_prefixes = d;
+                    *c = '=';
+                    }
+                    break;
                 case OPT_HELP:
                     /* Allow --help topic without *requiring* topic */
                     if (!param)
@@ -1672,6 +1726,8 @@ static void parse_cmdline(int argc, char **argv, int pass)
     if (!get_filename(FN_INFILE))
         nasm_fatalf(ERR_USAGE, "no input file specified");
 
+    set_filename(FN_MAPPED_INFILE, debug_prefix_remap(get_filename(FN_INFILE)));
+
     check_overwrite_files();
 
     open_errfile(get_filename(FN_ERRFILE));
@@ -1724,7 +1780,7 @@ void print_final_report(bool failure)
     }
 }
 
-static void assemble_file(const char *fname, struct strlist *depend_list)
+static void assemble_file(const char *fname, char const* mapped_fname, struct strlist *depend_list)
 {
     static int64_t stall_count = 0; /* Make sure we make forward progress... */
     char *line;
@@ -1814,7 +1870,7 @@ static void assemble_file(const char *fname, struct strlist *depend_list)
             location.known = true;
         ofmt->reset();
         switch_segment(ofmt->section(NULL, &globl.bits));
-        pp_reset(fname, PP_NORMAL, depend_list);
+        pp_reset(fname, mapped_fname, PP_NORMAL, depend_list);
 
         globallineno = 0;
 
@@ -2205,6 +2261,8 @@ static void help(FILE *out, const char *what)
             "    --lprefix str  prepend the given string to local symbols\n"
             "    --lpostfix str append the given string to local symbols\n"
             "    --reproducible attempt to produce run-to-run identical output\n"
+            "    --debug-prefix-map base=dest\n"
+            "                   remap paths starting with 'base' to 'dest' in output files\n"
             , out);
     }
     if (help_is(with, HW_LIMIT)) {
