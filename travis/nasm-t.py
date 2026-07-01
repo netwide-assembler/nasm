@@ -3,9 +3,9 @@
 import subprocess
 import argparse
 import difflib
-import filecmp
 import fnmatch
 import json
+import lzma
 import sys
 import re
 import os
@@ -115,11 +115,22 @@ if args.cmd == None:
     parser.print_help()
     sys.exit(64)
 
+#
+# Read a reference/golden file, transparently decompressing it if
+# only a "<path>.xz" variant is present.  This lets very large but
+# highly repetitive reference files (e.g. object files with tens of
+# thousands of sections) be stored compressed instead of bloating
+# the git repository.
+def read_ref_file(path):
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return f.read()
+    xz_path = path + '.xz'
+    with lzma.open(xz_path, "rb") as f:
+        return f.read()
+
 def read_stdfile(path):
-    with open(path, "rb") as f:
-        data = f.read().decode("utf-8","replace")
-        f.close()
-        return data
+    return read_ref_file(path).decode("utf-8","replace")
 
 #
 # Check if descriptor has mandatory fields
@@ -265,30 +276,32 @@ def test_updated(test):
     print("=== Test %s UPDATED ===" % (test))
     return True
 
-def hexdump(path):
+def hexdump(data):
     dump = ''
     addr = 0
-    with open(path, 'rb') as f:
-        while b := f.read(16):
-            dump += "%08x  " % (addr)
-            for i in range(16):
-                if (i == 8):
-                    dump += " -"
-                if (i >= len(b)):
-                    dump += "   "
-                else:
-                    dump += " %02x" % b[i]
-            dump += "  |"
-            for i in range(16):
-                if (i >= len(b)):
-                    c = ord(' ')
-                else:
-                    c = b[i]
-                if (c < 32 or c > 126):
-                    c = ord('.')
-                dump += chr(c)
-            dump += "|\n";
-            addr += 16
+    pos = 0
+    while pos < len(data):
+        b = data[pos:pos+16]
+        dump += "%08x  " % (addr)
+        for i in range(16):
+            if (i == 8):
+                dump += " -"
+            if (i >= len(b)):
+                dump += "   "
+            else:
+                dump += " %02x" % b[i]
+        dump += "  |"
+        for i in range(16):
+            if (i >= len(b)):
+                c = ord(' ')
+            else:
+                c = b[i]
+            if (c < 32 or c > 126):
+                c = ord('.')
+            dump += chr(c)
+        dump += "|\n";
+        addr += 16
+        pos += 16
     return dump
 
 def show_std(stdname, data):
@@ -314,12 +327,9 @@ def cmp_std(from_name, from_data, match_name, match_data):
         return False
     return True
 
-def show_diff(test, patha, pathb):
-    try:
-        sa = hexdump(patha)
-        sb = hexdump(pathb)
-    except OSError:
-        return test_fail(test, "Can't create dumps")
+def show_diff(test, patha, adata, pathb, bdata):
+    sa = hexdump(adata)
+    sb = hexdump(bdata)
 
     print("\t--- hexdump %s" % (patha))
     for i in sa.split("\n"):
@@ -424,8 +434,14 @@ def test_run(desc):
             if desc['_wait'] == 1:
                 continue
             print("\tComparing %s %s" % (output, match))
-            if filecmp.cmp(match, output) == False:
-                show_diff(desc['_test-name'], match, output)
+            try:
+                match_data = read_ref_file(match)
+                with open(output, "rb") as f:
+                    out_data = f.read()
+            except OSError:
+                return test_fail(desc['_test-name'], "Can't read " + match + " or " + output)
+            if match_data != out_data:
+                show_diff(desc['_test-name'], match, match_data, output, out_data)
                 return test_fail(desc['_test-name'], match + " and " + output + " files are different")
         elif 'stdout' in t:
             print("\tComparing stdout")
@@ -465,6 +481,38 @@ def test_run(desc):
     return test_pass(desc['_test-name'])
 
 #
+# Compress data for a reference file, trying a couple of xz filter
+# chains suited to different kinds of content (plain text/binary vs.
+# highly repetitive fixed-stride records), and keep whichever is
+# smallest.
+def compress_ref_data(data):
+    candidates = [lzma.compress(data, preset = 9 | lzma.PRESET_EXTREME)]
+    if len(data) >= 4096:
+        filters = [
+            {'id': lzma.FILTER_DELTA, 'dist': 256},
+            {'id': lzma.FILTER_LZMA2, 'preset': 9 | lzma.PRESET_EXTREME},
+        ]
+        try:
+            candidates.append(lzma.compress(data, format = lzma.FORMAT_XZ,
+                                             filters = filters))
+        except lzma.LZMAError:
+            pass
+    return min(candidates, key = len)
+
+#
+# Write out a reference file.  If a compressed "<path>.xz" copy is
+# already checked in (and no plaintext copy exists), keep storing it
+# compressed; otherwise write plaintext as before.
+def write_ref_file(path, data):
+    xz_path = path + '.xz'
+    if os.path.exists(xz_path) and not os.path.exists(path):
+        with open(xz_path, "wb") as f:
+            f.write(compress_ref_data(data))
+    else:
+        with open(path, "wb") as f:
+            f.write(data)
+
+#
 # Compile sources and generate new targets
 def test_update(desc):
     print("=== Updating %s ===" % (desc['_test-name']))
@@ -483,19 +531,18 @@ def test_update(desc):
             output = desc['_base-dir'] + os.sep + t['output']
             match = desc['_base-dir'] + os.sep + t['match']
             print("\tMoving %s to %s" % (output, match))
-            os.rename(output, match)
+            with open(output, "rb") as f:
+                data = f.read()
+            os.remove(output)
+            write_ref_file(match, data)
         if 'stdout' in t:
             match = desc['_base-dir'] + os.sep + t['stdout']
             print("\tMoving %s to %s" % ('stdout', match))
-            with open(match, "wb") as f:
-                f.write(stdout.encode("utf-8"))
-                f.close()
+            write_ref_file(match, stdout.encode("utf-8"))
         if 'stderr' in t:
             match = desc['_base-dir'] + os.sep + t['stderr']
             print("\tMoving %s to %s" % ('stderr', match))
-            with open(match, "wb") as f:
-                f.write(stderr.encode("utf-8"))
-                f.close()
+            write_ref_file(match, stderr.encode("utf-8"))
 
     return test_updated(desc['_test-name'])
 
