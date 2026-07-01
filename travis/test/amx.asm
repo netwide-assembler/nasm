@@ -36,7 +36,12 @@
 	tcmmimfp16ps		treg, treg2, treg3			;AMX-COMPLEX
 	tcmmrlfp16ps		treg, treg2, treg3			;AMX-COMPLEX
 
+	; TMMULTF32PS was retagged 'NEVER' (no longer implemented), but keep the
+	; test case and suppress the resulting warning, like the AMX-TRANSPOSE
+	; instructions below.
+	[warning -obsolete-removed]
 	tmmultf32ps			treg, treg2, treg3			;AMX_TF32
+	[warning *obsolete-removed]
 
 	tdpbf8ps			treg, treg2, treg3			;AMX-FP8
 	tdpbhf8ps			treg, treg2, treg3			;AMX-FP8
