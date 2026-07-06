@@ -289,6 +289,29 @@ If no debug information is currently implemented in the selected output
 format, \c{-g} is \e{silently ignored}.
 
 
+\S{opt-debug-prefix-map} The \i\c{--debug-prefix-map} Option: Remapping \i{Source File Paths} in Debug Info
+
+This option remaps source file path prefixes when encoding filenames in
+the output object file's debug information.  It takes a single argument
+of the form \c{BASE=DEST}: any source path that begins with \c{BASE} has
+that prefix replaced with \c{DEST} before the path is written into the
+output.  This is useful when building in a different directory from the
+one referenced in the source, or when producing \i{reproducible builds}
+by stripping machine-specific path components.
+
+For example:
+
+\c nasm -f elf64 -g -F dwarf --debug-prefix-map /home/user/src=/usr/src myfile.asm
+
+causes paths beginning with \c{/home/user/src} to appear as \c{/usr/src}
+in the generated DWARF debug information.  Multiple \c{--debug-prefix-map}
+options may be given; they are applied in the order specified and the
+first matching prefix wins.
+
+The option requires an argument of the form \c{BASE=DEST}; omitting the
+\c{=} separator is a fatal usage error.
+
+
 \S{opt-X} The \i\c{-X} Option: Selecting an \i{Error Reporting Format}
 
 This option can be used to select an error reporting format for any
@@ -574,6 +597,8 @@ You will need the version number if you report a bug.
 For command-line compatibility with Yasm, the form \i\c{--v} is also
 accepted for this option starting in NASM version 2.11.05.
 
+
+\IR{--debug-prefix-map} \c{--debug-prefix-map} option
 
 \IR{--prefix} \c{--prefix} option
 \IC{--prefix}{--gprefix} \c{--gprefix} option
