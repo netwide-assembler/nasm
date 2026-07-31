@@ -3442,7 +3442,7 @@ static void dwarf_generate(void)
     /* File Name Table */
     ftentry = dwarf_flist;
     for (indx = 0; indx < dwarf_numfiles; indx++) {
-        saa_wbytes(plines, ftentry->filename, (int32_t)(strlen(ftentry->filename) + 1));
+        saa_wbytes(plines, ftentry->filename, strlen(ftentry->filename) + 1);
         saa_write8(plines,0);       /* directory  LEB128u */
         saa_write8(plines,0);       /* time LEB128u */
         saa_write8(plines,0);       /* size LEB128u */
