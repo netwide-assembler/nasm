@@ -532,7 +532,7 @@ static void elf_init(void)
     elf_populate_dirs();
     sects = NULL;
     nsects = sectlen = 0;
-    syms = saa_init((int32_t)sizeof(struct elf_symbol));
+    syms = saa_init(sizeof(struct elf_symbol));
     nlocals = nglobs = ndebugs = 0;
     bsym = raa_init();
     strs = saa_init(1L);
