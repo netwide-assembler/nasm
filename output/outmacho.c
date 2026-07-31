@@ -1179,7 +1179,7 @@ static void macho_layout_symbols (uint32_t *numsyms,
 
 	if((sym->type & N_EXT) == 0) {
 	    sym->strx = *strtabsize;
-	    saa_wbytes (strs, sym->name, (int32_t)(strlen (sym->name) + 1));
+	    saa_wbytes (strs, sym->name, strlen(sym->name) + 1);
 	    *strtabsize += strlen(sym->name) + 1;
 	}
 	else {
