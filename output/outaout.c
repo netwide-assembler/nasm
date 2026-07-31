@@ -132,7 +132,7 @@ static void aoutg_init(void)
     sdata.index = seg_alloc();
     sbss.index = seg_alloc();
     stext.asym = sdata.asym = sbss.asym = NULL;
-    syms = saa_init((int32_t)sizeof(struct Symbol));
+    syms = saa_init(sizeof(struct Symbol));
     nsyms = 0;
     bsym = raa_init();
     strs = saa_init(1L);
