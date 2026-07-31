@@ -85,8 +85,8 @@ enum symbol_type {
 };
 
 struct cv8_symbol {
-    enum symbol_type type;
     char *name;
+    enum symbol_type type;
 
     uint32_t secrel;
     uint16_t section;
