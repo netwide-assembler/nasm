@@ -1016,8 +1016,7 @@ static int64_t assemble(insn *instruction)
                           " reading file `%s'", fname);
         }
     close_done:
-        if (buf)
-            nasm_free(buf);
+        nasm_free(buf);
         if (map)
             nasm_unmap_file(map, len);
         fclose(fp);

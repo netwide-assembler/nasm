@@ -950,7 +950,6 @@ static const char *pp_getenv(const Token *t, bool warn)
 	v = "";
     }
 
-    if (buf)
 	nasm_free(buf);
 
     return v;

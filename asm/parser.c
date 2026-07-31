@@ -618,8 +618,7 @@ static int parse_eops(extop **result, bool critical, int elem)
     return oper_num;
 
 fail:
-    if (eop)
-        nasm_free(eop);
+    nasm_free(eop);
     return -1;
 }
 
