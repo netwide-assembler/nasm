@@ -87,7 +87,7 @@ static int float_multiply(fp_limb *to, fp_limb *from)
             fp_2limb n;
             n = (fp_2limb) to[i] * (fp_2limb) from[j];
             temp[i + j] += n >> LIMB_BITS;
-            temp[i + j + 1] += (fp_limb)n;
+            temp[i + j + 1] += n;
         }
     }
 
