@@ -1153,7 +1153,7 @@ static void macho_layout_symbols (uint32_t *numsyms,
 	       to check for it here instead of just
 	       adding the symbol to the string table.  */
 	    sym->strx = *strtabsize;
-	    saa_wbytes (strs, sym->name, (int32_t)(strlen(sym->name) + 1));
+	    saa_wbytes (strs, sym->name, strlen(sym->name) + 1);
 	    *strtabsize += strlen(sym->name) + 1;
 	}
 	symp = &(sym->next);
