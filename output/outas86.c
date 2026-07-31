@@ -97,7 +97,7 @@ static void as86_init(void)
     stext.index = seg_alloc();
     sdata.index = seg_alloc();
     bssindex = seg_alloc();
-    syms = saa_init((int32_t)sizeof(struct Symbol));
+    syms = saa_init(sizeof(struct Symbol));
     nsyms = 0;
     bsym = raa_init();
     strs = saa_init(1L);
