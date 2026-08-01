@@ -48,11 +48,19 @@ void add_sync(uint64_t pos, uint64_t length)
     if (nsynx >= max_synx) {
         struct Sync *xsynx;
         size_t xmaxsynx = max_synx << 1;
-        if (synx_oom || xmaxsynx < max_synx ||
-            !(xsynx = realloc(synx, (xmaxsynx + 1) * sizeof(*synx)))) {
+        if (synx_oom || xmaxsynx < max_synx) {
             synx_oom = true;
             return;
         }
+
+        xsynx = realloc(synx, (xmaxsynx + 1) * sizeof(*synx));
+        if (!xsynx) {
+            synx_oom = true;
+            return;
+        }
+
+        synx = xsynx;
+        max_synx = xmaxsynx;
     }
 
     nsynx++;
