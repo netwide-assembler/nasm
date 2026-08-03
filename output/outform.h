@@ -16,7 +16,7 @@
  * OF_name                -- ensure that output format 'name' is included
  * OF_NO_name             -- remove output format 'name'
  * OF_DOS                 -- ensure that 'obj', 'obj2', 'bin', 'win32' & 'win64' are included.
- * OF_UNIX                -- ensure that 'aout', 'aoutb', 'coff', 'elf32' & 'elf64' are in.
+ * OF_UNIX                -- ensure that 'aout', 'aoutb', 'aout2', 'coff', 'elf32' & 'elf64' are in.
  * OF_OTHERS              -- ensure that 'bin', 'as86', 'rdf' 'macho32' & 'macho64' are in.
  * OF_ALL                 -- ensure that all formats are included.
  *                           note that this doesn't include 'dbg', which is
@@ -56,7 +56,7 @@
 
 /* ====configurable info begins here==== */
 /* formats configurable:
- * bin,obj,obj2,elf32,elf64,aout,aoutb,coff,win32,as86,rdf2,macho32,macho64 */
+ * bin,obj,obj2,elf32,elf64,aout,aoutb,aout2coff,win32,as86,rdf2,macho32,macho64 */
 
 /* process options... */
 
@@ -93,6 +93,9 @@
 #endif
 #ifndef OF_AOUTB
 #define OF_AOUTB
+#endif
+#ifndef OF_AOUT2
+#define OF_AOUT2
 #endif
 #ifndef OF_WIN32
 #define OF_WIN32
@@ -145,6 +148,9 @@
 #endif
 #ifndef OF_AOUTB
 #define OF_AOUTB
+#endif
+#ifndef OF_AOUT2
+#define OF_AOUT2
 #endif
 #ifndef OF_COFF
 #define OF_COFF
@@ -203,6 +209,9 @@
 #ifdef OF_NO_AOUTB
 #undef OF_AOUTB
 #endif
+#ifdef OF_NO_AOUT2
+#undef OF_AOUT2
+#endif
 #ifdef OF_NO_COFF
 #undef OF_COFF
 #endif
@@ -237,6 +246,7 @@ extern const struct ofmt of_ith;
 extern const struct ofmt of_srec;
 extern const struct ofmt of_aout;
 extern const struct ofmt of_aoutb;
+extern const struct ofmt of_aout2;
 extern const struct ofmt of_coff;
 extern const struct ofmt of_elf32;
 extern const struct ofmt of_elfx32;
@@ -269,6 +279,9 @@ static const struct ofmt * const drivers[] = {
 #endif
 #ifdef OF_AOUTB
     &of_aoutb,
+#endif
+#ifdef OF_AOUT2
+    &of_aout2,
 #endif
 #ifdef OF_COFF
     &of_coff,

@@ -20,7 +20,7 @@
 #include "outform.h"
 #include "outlib.h"
 
-#if defined OF_AOUT || defined OF_AOUTB
+#if defined OF_AOUT || defined OF_AOUTB || defined OF_AOUT2
 
 #define RELTYPE_ABSOLUTE 0x00
 #define RELTYPE_RELATIVE 0x01
@@ -64,6 +64,7 @@ struct Symbol {
  * More flags used in Symbol.type.
  */
 #define SYM_GLOBAL 1            /* it's a global symbol */
+#define SYM_EXPORT 0x6C         /* it's an exported symbol on OS/2 */
 #define SYM_DATA 0x100          /* used for shared libs */
 #define SYM_FUNCTION 0x200      /* used for shared libs */
 #define SYM_WITH_SIZE 0x4000    /* not output; internal only */
@@ -283,7 +284,10 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
     sym = saa_wstruct(syms);
 
     sym->strpos = pos;
-    sym->type = is_global ? SYM_GLOBAL : 0;
+    if (is_global == 4)
+        sym->type = SYM_EXPORT;
+    else
+        sym->type = is_global ? SYM_GLOBAL : 0;
     sym->segment = segment;
     if (segment == NO_SEG)
         sym->type |= SECT_ABS;
@@ -310,7 +314,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
             sbss.asym = sym;
     } else
         sym->type = SYM_GLOBAL;
-    if (is_global == 2)
+    if (is_global == 2 || is_global == 4)
         sym->value = offset;
     else
         sym->value = (sym->type == SYM_GLOBAL ? 0 : offset);
@@ -838,9 +842,80 @@ static void aout_sect_write(struct Section *sect,
     sect->len += len;
 }
 
-extern macros_t aout_stdmac[];
+#ifdef OF_AOUT2
 
-#endif                          /* OF_AOUT || OF_AOUTB */
+static enum directive_result
+aout2_directive(enum directive directive, char *value)
+{
+    switch (directive) {
+    case D_EXPORT:
+        /* Is pass_first() really correct? */
+        if (value && pass_first()) {
+            char *q, *extname, *intname, *v;
+            unsigned int ordinal = 0;
+            bool err;
+            /* .stabs "<exportname>,<ordinal>=<asmname>,<code|data>", 0x6C,0,0,-42 */
+            char export[255 + 1 + 5 + 1 + 255 + 1 + 4 + 1];
+
+            intname = q = value;
+            while (*q && !nasm_isspace(*q))
+                q++;
+            if (nasm_isspace(*q)) {
+                *q++ = '\0';
+                while (*q && nasm_isspace(*q))
+                    q++;
+            }
+
+            extname = q;
+            while (*q && !nasm_isspace(*q))
+                q++;
+            if (nasm_isspace(*q)) {
+                *q++ = '\0';
+                while (*q && nasm_isspace(*q))
+                    q++;
+            }
+
+            if (!*intname) {
+                nasm_nonfatal("`export' directive requires export name");
+                return DIRR_ERROR;
+            }
+            if (!*extname)
+                extname = intname;
+            while (*q) {
+                v = q;
+                while (*q && !nasm_isspace(*q))
+                    q++;
+                if (nasm_isspace(*q)) {
+                    *q++ = '\0';
+                    while (*q && nasm_isspace(*q))
+                        q++;
+                }
+                err = false;
+                ordinal = readnum(v, &err);
+                if (err) {
+                    nasm_nonfatal("invalid ordinal `%s'", v);
+                    return DIRR_ERROR;
+                }
+            }
+            /* assume function */
+            snprintf(export, sizeof(export), "%s,%d=%s,%s",
+                     extname, ordinal, intname, "code");
+            aout_deflabel(export, stext.index, -42, 4, NULL);
+        }
+        return DIRR_OK;
+
+    default:
+        return DIRR_UNKNOWN;
+    }
+}
+
+#endif
+
+#if defined(OF_AOUT) || defined(OF_AOUTB)
+extern macros_t aout_stdmac[];
+#endif
+
+#endif                          /* OF_AOUT || OF_AOUTB || OF_AOUT2 */
 
 #ifdef OF_AOUT
 
@@ -888,6 +963,34 @@ const struct ofmt of_aoutb = {
     null_sectalign,
     null_segbase,
     null_directive,
+    aout_cleanup,
+    NULL                        /* pragma list */
+};
+
+#endif
+
+#ifdef OF_AOUT2
+
+extern macros_t aout2_stdmac[];
+
+const struct ofmt of_aout2 = {
+    "OS/2 a.out",
+    "aout2",
+    ".o",
+    0,
+    32,
+    null_debug_arr,
+    &null_debug_form,
+    aout2_stdmac,
+    aout_init,
+    null_reset,
+    aout_out,
+    aout_deflabel,
+    aout_section_names,
+    NULL,
+    null_sectalign,
+    null_segbase,
+    aout2_directive,
     aout_cleanup,
     NULL                        /* pragma list */
 };
