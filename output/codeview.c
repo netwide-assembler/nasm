@@ -109,7 +109,7 @@ struct cv8_symbol {
     } symtype;
 };
 
-struct cv8_state {
+struct {
     int symbol_sect;
     int type_sect;
 
@@ -130,8 +130,7 @@ struct cv8_state {
         char *name;
         size_t namebytes;
     } outfile;
-};
-struct cv8_state cv8_state;
+} cv8_state;
 
 static void cv8_init(void)
 {
@@ -559,21 +558,22 @@ static void write_linenumber_table(struct coff_Section *const sect)
         register_reloc(sect, i, NULL, field_base + 4,
             win64 ? IMAGE_REL_AMD64_SECTION : IMAGE_REL_I386_SECTION);
 
-        list_for_each(file, cv8_state.source_files) {
-            struct linepair *li;
+        list_for_each(file, cv8_state.source_files)
+            if (file->sects[i].num_lines) {
+                struct linepair *li;
 
-            /* source mapping */
-            section_write32(sect, file->sourcetbl_off);
-            section_write32(sect, file->sects[i].num_lines);
-            section_write32(sect, file_field_len + (file->sects[i].num_lines * line_field_len));
+                /* source mapping */
+                section_write32(sect, file->sourcetbl_off);
+                section_write32(sect, file->sects[i].num_lines);
+                section_write32(sect, file_field_len + (file->sects[i].num_lines * line_field_len));
 
-            /* the pairs */
-            saa_rewind(file->sects[i].lines);
-            while ((li = saa_rstruct(file->sects[i].lines))) {
-                section_write32(sect, li->file_offset);
-                section_write32(sect, li->linenumber |= 0x80000000);
+                /* the pairs */
+                saa_rewind(file->sects[i].lines);
+                while ((li = saa_rstruct(file->sects[i].lines))) {
+                    section_write32(sect, li->file_offset);
+                    section_write32(sect, li->linenumber |= 0x80000000);
+                }
             }
-        }
     }
 }
 
