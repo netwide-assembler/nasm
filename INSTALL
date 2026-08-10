@@ -42,7 +42,7 @@ $ make everything
 
 to build the former plus the docs.
 
-You can decrease the size of produces executables by stripping off
+You can decrease the size of produced executables by stripping off
 unnecessary information, to achieve this run
 
 $ make strip
