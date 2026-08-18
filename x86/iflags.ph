@@ -186,7 +186,7 @@ if_("AVX10_2",           "AVX 10.2 instructions");
 if_("AVX10_VNNIINT",     "AVX Vector Neural Network integer instructions");
 if_("ADX",               "ADCX and ADOX instructions");
 if_("PKU",		 "Protection key for user mode");
-if_("RDPKU",             "RDPRU instruction");
+if_("RDPRU",             "RDPRU instruction");
 if_("MONITOR",		 "MONITOR and MWAIT");
 if_("MONITORX",		 "MONITORX and MWAITX");
 if_("WAITPKG",           "User wait instruction package");
