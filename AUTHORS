@@ -52,8 +52,8 @@ D: RDOFF support
 
 N: H. Peter Anvin
 E: hpa@zytor.com
-D: Primary maintainer for the 0.98, late 0.98.x and 2.x releases.
-C: Contributions since 2008-12-15 are Copyright Intel Corporation.
+D: Primary maintainer for the 0.98, late 0.98.x and 2+ releases.
+C: Contributions from 2008-12-15 to 2026-08-15 are Copyright Intel Corporation.
 
 N: John Fine
 E: johnfine@earthlink.net
