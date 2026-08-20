@@ -6101,6 +6101,7 @@ expand_smacro_with_params(SMacro *m, Token *mstart, Token **params,
 
     tup = tline = NULL;
     cond_comma = false;
+    size_t mlen = m->name ? strlen(m->name) : 0;
 
     while (t) {
         enum token_type type = t->type;
@@ -6117,7 +6118,6 @@ expand_smacro_with_params(SMacro *m, Token *mstart, Token **params,
         case TOKEN_PREPROC_QQ:
         case TOKEN_PREPROC_SQQ:
         {
-            size_t mlen = strlen(m->name);
 	    size_t len;
             char *p, *from;
 
