@@ -5187,6 +5187,7 @@ VXORPS          zmmreg|mask|z,zmmreg*,zmmrm512|b32  [rvm:fv: evex.nds.512.0f.w0 
 ;# Intel memory protection keys for userspace (PKU aka PKEYs)
 RDPKRU		void				[	0f 01 ee]				PKU,LONG
 WRPKRU		void				[	0f 01 ef]				PKU,LONG
+RDPRU           void                            [       0f 01 fd]                               RDPRU
 
 ;# Read Processor ID
 
