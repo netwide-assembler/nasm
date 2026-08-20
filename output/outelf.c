@@ -595,6 +595,8 @@ static void elf_cleanup(void)
             sects[i]->head = sects[i]->head->next;
             nasm_free(r);
         }
+        nasm_free(sects[i]->name);
+        nasm_free(sects[i]);
     }
     hash_free(&section_by_name);
     raa_free(section_by_index);
