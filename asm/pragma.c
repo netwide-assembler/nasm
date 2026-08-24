@@ -222,6 +222,15 @@ void process_pragma(char *str)
      * interior spaces.
      */
     p = nasm_zap_spaces_fwd(p);
+    if (p == NULL) {
+        /* Missing opname and/or options; avoid a NULL-pointer
+         * dereference in strlen() below.  Report it explicitly
+         * instead of crashing. */
+        nasm_error(ERR_NONFATAL, "bad argument to %%pragma %s: missing opname",
+                   pragma.facility_name ? pragma.facility_name : "");
+        pragma.tail = NULL;
+        return;
+    }
     pragma.tail = p;
     p += strlen(p);
     while (p > pragma.tail && nasm_isspace(p[-1]))
