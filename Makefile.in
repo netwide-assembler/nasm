@@ -536,7 +536,7 @@ dist:
 	$(MAKE) editor_builtin
 	$(MAKE) editors $(MANPAGES)
 	$(MAKE) distclean
-	$(SHELL) autogen.sh --clearenv
+	cd "$(top_srcdir)" && $(SHELL) autogen.sh --clearenv
 
 tar: dist
 	tar -cv --exclude CVS --exclude .git -C .. -f - `basename \`pwd\`` | \
@@ -579,7 +579,7 @@ update-travis travis-update golden:
 # Rules to run autogen if necessary
 #
 configure: configure.ac autoconf/aclocal.m4
-	sh autogen.sh --recheck
+	cd "$(top_srcdir)" && sh autogen.sh --recheck
 
 config.status: configure
 	@if [ ! -f config.status ]; then \
