@@ -74,8 +74,7 @@ void *nasm_realloc(void *q, size_t size)
 
 void nasm_free(void *q)
 {
-    if (q)
-        free(q);
+    free(q);
 }
 
 char *nasm_strdup(const char *s)
@@ -103,8 +102,7 @@ char *nasm_strdupto(char **ptrp, const char *str)
 {
     char *ptr = *ptrp;
     if (str) {
-        if (ptr)
-            nasm_free(ptr);
+        nasm_free(ptr);
         *ptrp = ptr = nasm_strdup(str);
     }
     return ptr;

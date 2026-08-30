@@ -210,8 +210,7 @@ static union label *find_label(const char *label, bool create, bool *created)
     if (lptr || !create) {
         if (created)
             *created = false;
-        if (label_str)
-            nasm_free(label_str);
+        nasm_free(label_str);
 
         return lptr;
     }
@@ -232,8 +231,7 @@ static union label *find_label(const char *label, bool create, bool *created)
     nasm_zero(*lfree);
     lfree->defn.label     = perm_copy(label);
     lfree->defn.subsection = NO_SEG;
-    if (label_str)
-        nasm_free(label_str);
+    nasm_free(label_str);
 
     hash_add(&ip, lfree->defn.label, lfree);
     return lfree++;
