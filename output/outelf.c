@@ -3212,7 +3212,7 @@ static void dwarf_generate(void)
             totlen += plinep->datalen;
             /* range table relocation entry */
             saa_write64(parangesrel, paranges->datalen + 4);
-            saa_write64(parangesrel, ((uint64_t) (psect->section + 2) << 32) +  R_X86_64_64);
+            saa_write64(parangesrel, (((uint64_t)psect->section + 2) << 32) +  R_X86_64_64);
             saa_write64(parangesrel, (uint64_t) 0);
             /* range table entry */
             saa_write64(paranges,0x0000);		/* range start */
@@ -3343,11 +3343,11 @@ static void dwarf_generate(void)
         saa_write8(pinfo,8);			/* pointer size */
         saa_write8(pinfo,1);			/* abbrviation number LEB128u */
         saa_write64(pinforel, pinfo->datalen + 4);
-        saa_write64(pinforel, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
+        saa_write64(pinforel, (((uint64_t)dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
         saa_write64(pinforel, 0);
         saa_write64(pinfo,0);			/* DW_AT_low_pc */
         saa_write64(pinforel, pinfo->datalen + 4);
-        saa_write64(pinforel, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
+        saa_write64(pinforel, (((uint64_t)dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
         saa_write64(pinforel, highaddr);
         saa_write64(pinfo,0);			/* DW_AT_high_pc */
         saa_write64(pinforel, pinfo->datalen + 4);
@@ -3360,7 +3360,7 @@ static void dwarf_generate(void)
         saa_write16(pinfo,DW_LANG_Mips_Assembler);
         saa_write8(pinfo,2);			/* abbrviation number LEB128u */
         saa_write64(pinforel, pinfo->datalen + 4);
-        saa_write64(pinforel, ((uint64_t)(dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
+        saa_write64(pinforel, (((uint64_t)dwarf_fsect->section + 2) << 32) +  R_X86_64_64);
         saa_write64(pinforel, 0);
         saa_write64(pinfo,0);			/* DW_AT_low_pc */
         saa_write8(pinfo,0);			/* DW_AT_frame_base */
@@ -3495,7 +3495,7 @@ static void dwarf_generate(void)
         nasm_assert(is_elf64());
         for (indx = 0; indx < dwarf_nsections; indx++) {
             saa_write64(plinesrel, linepoff);
-            saa_write64(plinesrel, ((uint64_t) (psect->section + 2) << 32) +  R_X86_64_64);
+            saa_write64(plinesrel, (((uint64_t)psect->section + 2) << 32) +  R_X86_64_64);
             saa_write64(plinesrel, (uint64_t) 0);
             plinep = psect->psaa;
             saalen = plinep->datalen;
