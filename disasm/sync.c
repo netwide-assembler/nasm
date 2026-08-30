@@ -53,6 +53,8 @@ void add_sync(uint64_t pos, uint64_t length)
             synx_oom = true;
             return;
         }
+        synx = xsynx;
+        max_synx = xmaxsynx;
     }
 
     nsynx++;
