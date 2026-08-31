@@ -5664,10 +5664,6 @@ VREDUCEPH	xmmreg|mask|z,xmmrm128|b16,imm8		[rmi:fv: evex.128.np.0f3a.w0 56 /r ib
 VREDUCEPH	ymmreg|mask|z,ymmrm256|b16,imm8		[rmi:fv: evex.256.np.0f3a.w0 56 /r ib]	AVX512FP16,AVX512VL
 VREDUCEPH	zmmreg|mask|z,zmmrm512|b16|sae,imm8	[rmi:fv: evex.512.np.0f3a.w0 56 /r ib]	AVX512FP16
 VREDUCESH	xmmreg|mask|z,xmmreg*,xmmrm16|sae,imm8	[rvmi:t1s: evex.nds.lig.np.0f3a.w0 57 /r ib]	AVX512FP16
-VENDSCALEPH	xmmreg|mask|z,xmmrm128|b16,imm8		[rmi:fv: evex.128.np.0f3a.w0 08 /r ib]	AVX512FP16,AVX512VL
-VENDSCALEPH	ymmreg|mask|z,ymmrm256|b16,imm8		[rmi:fv: evex.256.np.0f3a.w0 08 /r ib]	AVX512FP16,AVX512VL
-VENDSCALEPH	zmmreg|mask|z,zmmrm512|b16|sae,imm8	[rmi:fv: evex.512.np.0f3a.w0 08 /r ib]	AVX512FP16
-VENDSCALESH	xmmreg|mask|z,xmmreg*,xmmrm16|sae,imm8	[rvmi:t1s: evex.nds.lig.np.0f3a.w0 0a /r ib]	AVX512FP16
 VRSQRTPH	xmmreg|mask|z,xmmrm128|b16		[rm:fv: evex.128.66.map6.w0 4e /r]	AVX512FP16,AVX512VL
 VRSQRTPH	ymmreg|mask|z,ymmrm256|b16		[rm:fv: evex.256.66.map6.w0 4e /r]	AVX512FP16,AVX512VL
 VRSQRTPH	zmmreg|mask|z,zmmrm512|b16|sae		[rm:fv: evex.512.66.map6.w0 4e /r]	AVX512FP16
