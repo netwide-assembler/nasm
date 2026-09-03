@@ -277,7 +277,7 @@ static void aout_deflabel(char *name, int32_t segment, int64_t offset,
         return;                 /* it wasn't an important one */
     }
 
-    saa_wbytes(strs, name, (int32_t)(1 + strlen(name)));
+    saa_wbytes(strs, name, 1 + strlen(name));
     strslen += 1 + strlen(name);
 
     sym = saa_wstruct(syms);
