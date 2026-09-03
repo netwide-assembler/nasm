@@ -1,0 +1,12 @@
+[
+	{
+		"description": "Forward jcc/jmp self-shrink in jmp_match",
+		"id": "jccshrink",
+		"format": "bin",
+		"source": "jccshrink.asm",
+		"option": "-Ox",
+		"target": [
+			{ "output": "jccshrink.bin" }
+		]
+	}
+]

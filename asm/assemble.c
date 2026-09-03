@@ -710,12 +710,118 @@ static void no_match_error(enum match_result m, const insn *ins)
     }
 }
 
+/*
+ * Per-pass tracking: for each relaxable jcc/jmp instance encountered
+ * (in source order), record whether the previous pass emitted it as
+ * NEAR (true) or SHORT (false). Used by jmp_match() to correctly
+ * account for self-shrink when evaluating whether a forward jcc/jmp
+ * can shrink to SHORT.
+ *
+ * Pass change detected via _passn (defined in asm/nasm.c).
+ */
+static struct {
+    int64_t nalloc;
+    int64_t nused;
+    int64_t pass_seen;
+    uint8_t *cur_was_near;
+    uint8_t *prev_was_near;
+    uint8_t *spec_used;         /* persistent: speculated short at least once */
+} jmp_track = { 0, 0, -1, NULL, NULL, NULL };
+
+static int64_t jmp_track_alloc(void)
+{
+    int64_t i = jmp_track.nused++;
+    if (i >= jmp_track.nalloc) {
+        int64_t new_nalloc = jmp_track.nalloc ? jmp_track.nalloc * 2 : 256;
+        while (new_nalloc <= i)
+            new_nalloc *= 2;
+        size_t new_bytes = (size_t)(new_nalloc - jmp_track.nalloc);
+        jmp_track.prev_was_near = nasm_realloc(jmp_track.prev_was_near, (size_t)new_nalloc);
+        jmp_track.cur_was_near = nasm_realloc(jmp_track.cur_was_near, (size_t)new_nalloc);
+        jmp_track.spec_used = nasm_realloc(jmp_track.spec_used, (size_t)new_nalloc);
+        memset(jmp_track.prev_was_near + jmp_track.nalloc, 0, new_bytes);
+        memset(jmp_track.cur_was_near + jmp_track.nalloc, 0, new_bytes);
+        memset(jmp_track.spec_used + jmp_track.nalloc, 0, new_bytes);
+        jmp_track.nalloc = new_nalloc;
+    }
+    return i;
+}
+
+static void jmp_track_check_new_pass(void)
+{
+    if (_passn == jmp_track.pass_seen)
+        return;
+
+    uint8_t *tmp = jmp_track.prev_was_near;
+    jmp_track.prev_was_near = jmp_track.cur_was_near;
+    jmp_track.cur_was_near = tmp;
+    if (jmp_track.cur_was_near && jmp_track.nalloc > 0)
+        memset(jmp_track.cur_was_near, 0, (size_t)jmp_track.nalloc);
+    jmp_track.nused = 0;
+    jmp_track.pass_seen = _passn;
+}
+
+void jmp_track_cleanup(void)
+{
+    nasm_free(jmp_track.cur_was_near);
+    nasm_free(jmp_track.prev_was_near);
+    nasm_free(jmp_track.spec_used);
+    jmp_track.cur_was_near = NULL;
+    jmp_track.prev_was_near = NULL;
+    jmp_track.spec_used = NULL;
+    jmp_track.nalloc = 0;
+    jmp_track.nused = 0;
+    jmp_track.pass_seen = -1;
+}
+
+static bool jmp_track_prev_near(int64_t i)
+{
+    return jmp_track.prev_was_near && i < jmp_track.nalloc && jmp_track.prev_was_near[i];
+}
+
+static void jmp_track_record(int64_t i, bool was_near)
+{
+    if (jmp_track.cur_was_near && i < jmp_track.nalloc)
+        jmp_track.cur_was_near[i] = was_near;
+}
+
+/*
+ * Bounded-speculation latch. The forward self-shrink re-check predicts
+ * the post-shrink displacement assuming the span between the jump and
+ * its target shifts rigidly. That holds for plain code, but an "align"
+ * (or any position-dependent padding) between the jump and the target
+ * makes the prediction wrong: shrinking the jump changes the padding,
+ * so the speculative SHORT does not actually fit. Left unchecked the
+ * jump oscillates NEAR<->SHORT forever and the relaxation never
+ * converges.
+ *
+ * To guarantee termination we let each jump speculate at most once for
+ * the whole assembly. After its single attempt it falls back to the
+ * baseline current-layout test, which is convergent. If the speculative
+ * SHORT was a true fixed point (rigid span) the baseline keeps it short;
+ * if not, the baseline grows it back to NEAR and -- speculation now
+ * spent -- it stays there. This bit therefore persists across passes
+ * and is never cleared at pass boundaries.
+ */
+static bool jmp_track_spec_used(int64_t i)
+{
+    return jmp_track.spec_used && i < jmp_track.nalloc && jmp_track.spec_used[i];
+}
+
+static void jmp_track_mark_spec_used(int64_t i)
+{
+    if (jmp_track.spec_used && i < jmp_track.nalloc)
+        jmp_track.spec_used[i] = 1;
+}
+
 /* This is a real hack. The jcc8 or jmp8 byte code must come first. */
 static enum match_result
 jmp_match(const insn *ins, const struct itemplate *temp)
 {
     const struct operand * const op0 = get_operand_const(ins, 0);
     int64_t delta;
+    int64_t idx;
+    bool prev_near;
 
     if (op0->type & STRICT)
         return MERR_INVALOP;
@@ -736,13 +842,19 @@ jmp_match(const insn *ins, const struct itemplate *temp)
         }
     }
 
+    jmp_track_check_new_pass();
+    idx = jmp_track_alloc();
+    prev_near = jmp_track_prev_near(idx);
+
     if (op0->opflags & OPFLAG_UNKNOWN) {
         /* Be optimistic in pass 1 */
+        jmp_track_record(idx, false);
         return MOK_GOOD;
     }
 
     if (op0->segment != ins->loc.segment) {
         /* Cross-segment jump */
+        jmp_track_record(idx, true);
         return MERR_INVALOP;
     }
 
@@ -759,19 +871,54 @@ jmp_match(const insn *ins, const struct itemplate *temp)
     delta = op0->offset - ins->loc.offset;
     if (delta < -128 + 2 || delta > 127 + 15) {
         /* This cannot be a byte-sized jump */
+        jmp_track_record(idx, true);
         return MERR_INVALOP;
-    } else if (delta >= -128 + 15 && delta <= 127 + 2) {
-        /* It is guaranteed to be a valid byte-sized jump, no need to test */
-    } else {
+    }
+    if (delta < -128 + 15 || delta > 127 + 2) {
         /* Borderline: need to do this the hard way... */
         int64_t isize = calcsize_speculative(ins, temp);
-        if (isize < 0)
+        int64_t post_delta;
+        if (isize < 0) {
+            jmp_track_record(idx, true);
             return MERR_INVALOP;
-        delta -= isize;
-        if ((int8_t)delta != delta)
-            return MERR_INVALOP;
+        }
+        post_delta = delta - isize;
+        if ((int8_t)post_delta != post_delta) {
+            /*
+             * Doesn't fit at the current short encoding. Forward
+             * jcc/jmp self-shrink fallback: if the previous pass
+             * emitted this instance as NEAR, switching to SHORT will
+             * shift the (forward) target near_size - short_size bytes
+             * closer in the current layout, so the real post-shrink
+             * rel8 is (delta - near_size), not (delta - short_size).
+             * Re-check against the post-shrink displacement before
+             * rejecting.
+             *
+             * Restricted to (prev_near && post_delta > 0): backward
+             * jumps and already-short jumps don't self-shrink. Without
+             * the prev_near guard this would accept SHORT for jumps
+             * stably short in the previous pass that have since grown
+             * past 127 -- which then emit an out-of-range rel8.
+             */
+            if (!prev_near || post_delta <= 0 || jmp_track_spec_used(idx)) {
+                jmp_track_record(idx, true);
+                return MERR_INVALOP;
+            }
+            const uint8_t c = temp->code[0];
+            int rel_bytes = (isize == 2)
+                ? (ins->bits == 16 ? 2 : 4)
+                : (ins->bits == 16 ? 4 : 2);
+            int savings = (c == 0370) ? rel_bytes : (rel_bytes - 1);
+            int64_t post_shrink = post_delta - savings;
+            if (post_shrink < -128 || post_shrink > 127) {
+                jmp_track_record(idx, true);
+                return MERR_INVALOP;
+            }
+            /* Speculative SHORT accepted; spend this jump's one attempt. */
+            jmp_track_mark_spec_used(idx);
+        }
     }
-
+    jmp_track_record(idx, false);
     return MOK_GOOD;
 }
 
