@@ -487,14 +487,14 @@ struct coff_SymIdxReloc {
 };
 
 struct coff_Symbol {
-    char name[9];
     int32_t strpos;             /* string table position of name */
     int32_t value;              /* address, or COMMON variable size */
     int section;                /* section number where it's defined
                                  * - in COFF codes, not NASM codes */
-    bool is_global;             /* is it a global symbol or not? */
-    int16_t type;               /* 0 - notype, 0x20 - function */
     int32_t namlen;             /* full name length */
+    char name[9];
+    int16_t type;               /* 0 - notype, 0x20 - function */
+    bool is_global;             /* is it a global symbol or not? */
 };
 
 struct coff_DebugInfo {
