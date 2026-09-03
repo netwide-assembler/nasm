@@ -667,7 +667,7 @@ int main(int argc, char **argv)
     init_labels();
 
     offsets = raa_init();
-    forwrefs = saa_init((int32_t)sizeof(struct forwrefinfo));
+    forwrefs = saa_init(sizeof(struct forwrefinfo));
 
     operating_mode = OP_NORMAL;
 
