@@ -447,24 +447,24 @@
 struct coff_Section {
     struct SAA *data;
     uint32_t len;
-    int nrelocs;
     int32_t index;
     struct coff_Reloc *head, **tail;
+    int nrelocs;
     uint32_t flags;             /* section flags */
     uint32_t align_flags;       /* user-specified alignment flags */
     uint32_t sectalign_flags;   /* minimum alignment from sectalign */
     char *name;
-    int32_t namepos;            /* Offset of name into the strings table */
     int32_t pos, relpos;
     int64_t pass_last_seen;
     struct coff_SymIdxReloc *symidx_reloc_head;
+    int32_t namepos;            /* Offset of name into the strings table */
 
     /* comdat-related members */
-    char *comdat_name;
     uint32_t checksum;          /* set only for comdat sections */
+    char *comdat_name;
+    int32_t comdat_associated;  /* associated section for selection==5 */
     int8_t comdat_selection;
     int8_t comdat_symbol;       /* is the "comdat name" in symbol table? */
-    int32_t comdat_associated;  /* associated section for selection==5 */
 };
 
 struct coff_Reloc {
