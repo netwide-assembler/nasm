@@ -3205,7 +3205,7 @@ static enum match_result matches(const struct itemplate * const itemp,
 
     nasm_static_assert(SIZE_SHIFT >= IF_SB);
     nasm_static_assert((BITS8 >> SIZE_SHIFT) == 1);
-    arsize = (arflag & IF_TSMASK) << (SIZE_SHIFT - IF_SB);
+    arsize = (opflags_t)(arflag & IF_TSMASK) << (SIZE_SHIFT - IF_SB);
 
     if (arflag & IFM_OSIZE)
         arsize = opsize;
