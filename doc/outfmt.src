@@ -1535,6 +1535,21 @@ directive as \c{elf} does: see \k{elfglob} for documentation of
 this.
 
 
+\H{aout2fmt} \i\c{aout2}: \i{OS/2}
+\I{a.out, OS/2 version}\c{a.out} Object Files
+
+The \c{aout2} output format is the same as \c{aout}. In addition,
+
+\c{aout2} provides \c{EXPORT} to export DLL symbols like \c{obj}. See \k{export}.
+However, \c{aout2} supports \e{external} name and \e{ordinal} only.
+
+For example:
+
+\c     export  myfunc
+\c     export  myfunc TheRealMoreFormalLookingFunctionName
+\c     export  myfunc myfunc 1234  ; export by ordinal
+
+
 \H{as86fmt} \c{as86}: \i{Minix}/Linux\I{linux, as86} \i\c{as86} Object Files
 
 The Minix/Linux 16-bit assembler \c{as86} has its own non-standard
