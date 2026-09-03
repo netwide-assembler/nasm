@@ -328,7 +328,7 @@ static const uint8_t *do_ea(const uint8_t *data, int modrm,
             break;
         case 1:
             op->segment |= SEG_DISP8;
-            op->offset = gets8(data) << get_disp8_shift(ins);
+            op->offset = (int64_t)gets8(data) << get_disp8_shift(ins);
             op->disp_size = 8;
             data++;
             break;
@@ -410,7 +410,7 @@ static const uint8_t *do_ea(const uint8_t *data, int modrm,
         case 1:
             op->segment |= SEG_DISP8;
             op->disp_size = 8;
-            op->offset = gets8(data) << get_disp8_shift(ins);
+            op->offset = (int64_t)gets8(data) << get_disp8_shift(ins);
             data++;
             break;
         case 2:
