@@ -9,6 +9,7 @@
  */
 
 #include "compiler.h"
+#include "ilog2.h"
 
 
 #include "nasm.h"
@@ -2977,20 +2978,18 @@ static enum match_result find_match(insn *instruction)
 
 static uint8_t get_broadcast_num(opflags_t opflags, opflags_t brsize)
 {
+    static const uint16_t size_bits[8] = { 8, 16, 32, 64, 80, 128, 256, 512 };
     unsigned int opsize = (opflags & SIZE_MASK) >> SIZE_SHIFT;
-    uint8_t brcast_num;
+    unsigned int brsize_idx;
 
     if (brsize > BITS64)
         nasm_fatal("size of broadcasting element is greater than 64 bits");
 
-    /*
-     * The shift term is to take care of the extra BITS80 inserted
-     * between BITS64 and BITS128.
-     */
-    brcast_num = ((opsize / (BITS64 >> SIZE_SHIFT)) * (BITS64 / brsize))
-        >> (opsize > (BITS64 >> SIZE_SHIFT));
+    brsize_idx = (brsize & SIZE_MASK) >> SIZE_SHIFT;
+    if (!opsize || !brsize_idx)
+        return 0;
 
-    return brcast_num;
+    return size_bits[ilog2_32(opsize)] / size_bits[ilog2_32(brsize_idx)];
 }
 
 static enum match_result matches(const struct itemplate * const itemp,
