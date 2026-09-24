@@ -962,10 +962,12 @@ XLAT		void				[	d7]					8086,ND
 
 $bwdq CCMPscc	spec4,rm#,reg#			[wmr:	evex.scc.dfv.l0.m4.o# 38# /r	]	APX,SM1-2
 $bwdq CCMPscc	spec4,reg#,rm#			[wrm:   evex.scc.dfv.l0.m4.o# 3a# /r	]	APX,SM1-2
+      CCMPscc	spec4,rm8,imm8			[wmi:	evex.scc.dfv.l0.m4.o8 80  /7	ib   ]	APX,SM1-2
 $wdq  CCMPscc	spec4,rm#,sbyte#		[wmi:	evex.scc.dfv.l0.m4.o# 83  /7	ib,s ]	APX,SM1-2
-$bwdq CCMPscc	spec4,rm#,imm#			[wmi:	evex.scc.dfv.l0.m4.o# 80# /7	i#   ]	APX,SM1-2
+$wdq  CCMPscc	spec4,rm#,imm#			[wmi:	evex.scc.dfv.l0.m4.o# 81  /7	i#   ]	APX,SM1-2
 
 $bwdq CTESTscc	spec4,rm#,reg#			[wmr:	evex.scc.dfv.l0.m4.o# 84# /r	]	APX,SM1-2
+$bwdq CTESTscc	spec4,reg#,mem#			[wrm:	evex.scc.dfv.l0.m4.o# 84# /r	]	APX,SM1-2,ND
 $bwdq CTESTscc	spec4,rm#,imm#			[wmi:	evex.scc.dfv.l0.m4.o# f6# /0	i#   ]	APX,SM1-2
 $bwdq CTESTscc	spec4,rm#,imm#			[wmi:	evex.scc.dfv.l0.m4.o# f6# /1	i#   ]	APX,SM1-2
 
