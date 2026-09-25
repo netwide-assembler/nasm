@@ -20,7 +20,7 @@
 # NASM_MAJOR_VER
 # NASM_MINOR_VER
 # NASM_SUBMINOR_VER	-- this is zero if no subminor
-# NASM_PATCHLEVEL_VER	-- this is zero is no patchlevel
+# NASM_PATCHLEVEL_VER	-- this is zero if no patchlevel
 # NASM_SNAPSHOT		-- if snapshot
 # NASM_VERSION_ID       -- version number encoded
 # NASM_VER		-- whole version number as a string
