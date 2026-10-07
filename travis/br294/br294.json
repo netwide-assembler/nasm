@@ -1,0 +1,18 @@
+[
+	{
+		"description": "Issue #294: leading and consecutive %+ tokens in preprocessor",
+		"format": "bin",
+		"source": "br294.asm",
+		"target": [
+			{ "output": "br294.bin" }
+		]
+	},
+	{
+		"description": "Issue #294: literal reports and consecutive/empty-expansion pastes",
+		"source": "br294-paste.asm",
+		"option": "-E",
+		"target": [
+			{ "output": "br294-paste.i" }
+		]
+	}
+]

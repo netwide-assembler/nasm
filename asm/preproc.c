@@ -5616,6 +5616,10 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
             if (!t) {
                 /* Nothing to actually paste, just zapping the paste */
                 *prev_next = tok = next;
+                if (tok_white(tok) || tok_is(tok, TOKEN_PASTE))
+                    prev_nonspace = NULL;
+                else
+                    prev_nonspace = prev_next;
                 break;
             }
 
@@ -5695,10 +5699,9 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
         if (did_paste) {
             pasted = true;
         } else {
-            prev_next = &tok->next;
-            if (next && next->type != TOKEN_WHITESPACE &&
-                next->type != TOKEN_PASTE)
+            if (!tok_white(tok) && !tok_is(tok, TOKEN_PASTE))
                 prev_nonspace = prev_next;
+            prev_next = &tok->next;
         }
         tok = next;
     }
