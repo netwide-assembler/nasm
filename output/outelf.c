@@ -3057,7 +3057,7 @@ static void dwarf_output(int type, void *param)
     /* check for file change */
     if (!(inx == dwarf_csect->file)) {
         saa_write8(plinep,DW_LNS_set_file);
-        saa_write8(plinep,inx);
+        saa_wleb128u(plinep,inx);
         dwarf_csect->file = inx;
     }
     /* check for line change */

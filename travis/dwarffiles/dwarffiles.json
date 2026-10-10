@@ -1,0 +1,15 @@
+[
+	{
+		"description": "DWARF line program set_file operand ULEB128 (>127 files)",
+		"id": "dwarffiles",
+		"format": "elf64",
+		"source": "dwarffiles.asm",
+		"option": "-g -O0 --debug-prefix-map ./travis/dwarffiles/dwarffiles.asm=main.asm",
+		"target": [
+			{
+				"output": "dwarffiles.o",
+				"validate": "readelf --debug-dump=rawline {output} | grep -q 'Set File Name to entry 130 in the File Name Table'"
+			}
+		]
+	}
+]

@@ -2019,7 +2019,7 @@ static void macho_dbg_generate(void)
 
         list_for_each(p_file, dw_head_file) {
             saa_wcstring(p_lines, p_file->file_name);
-            saa_write8(p_lines, p_file->dir->dir); /* directory id */
+            saa_wleb128u(p_lines, p_file->dir->dir); /* directory id */
             saa_write8(p_lines, 0); /* time */
             saa_write8(p_lines, 0); /* size */
         }
@@ -2330,7 +2330,7 @@ static void macho_dbg_output(int type, void *param)
 
         if(cur_file != dw_cur_sect->file) {
             saa_write8(p_linep, DW_LNS_set_file);
-            saa_write8(p_linep, cur_file);
+            saa_wleb128u(p_linep, cur_file);
             dw_cur_sect->file = cur_file;
         }
 
