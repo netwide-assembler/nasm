@@ -1,0 +1,14 @@
+[
+  {
+    "description": "Check scalar FP16 conversion compressed displacements and preserve integer-source tuple widths",
+    "id": "avx512fp16-scalar-convert",
+    "format": "bin",
+    "source": "avx512fp16-scalar-convert.asm",
+    "target": [
+      {
+        "output": "avx512fp16-scalar-convert.bin",
+        "match": "avx512fp16-scalar-convert.bin.t"
+      }
+    ]
+  }
+]

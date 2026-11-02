@@ -5495,12 +5495,12 @@ VCVTQQ2PH	xmmreg|mask|z,xmmrm128|b64	[rm:fv: evex.128.np.map5.w1 5b /r]	AVX512FP
 VCVTQQ2PH	xmmreg|mask|z,ymmrm256|b64	[rm:fv: evex.256.np.map5.w1 5b /r]	AVX512FP16,AVX512VL
 VCVTQQ2PH	xmmreg|mask|z,zmmrm512|b64|er	[rm:fv: evex.512.np.map5.w1 5b /r]	AVX512FP16,AVX512VL
 VCVTSD2SH	xmmreg|mask|z,xmmreg*,xmmrm64|er [rvm:t1s: evex.nds.lig.f2.map5.w1 5a /r]	AVX512FP16
-VCVTSH2SD	xmmreg,xmmreg*,xmmrm16|sae	[rvm:t1s: evex.nds.lig.f3.map5.w0 5a /r]	AVX512FP16
-VCVTSH2SI	reg32,xmmrm16|er		[rm:t1s:evex.lig.f3.map5.w0 2d /r]	AVX512FP16
-VCVTSH2SI	reg64,xmmrm16|er		[rm:t1s:evex.lig.f3.map5.w1 2d /r]	AVX512FP16
-VCVTSH2SS	xmmreg|mask|z,xmmreg*,xmmrm16|sae [rvm:t1s: evex.nds.lig.map6.w0 13 /r]	AVX512FP16
-VCVTSH2USI	reg32,xmmrm16|er		[rm:t1s:evex.lig.f3.map5.w0 79 /r]	AVX512FP16
-VCVTSH2USI	reg64,xmmrm16|er		[rm:t1s:evex.lig.f3.map5.w1 79 /r]	AVX512FP16
+VCVTSH2SD	xmmreg,xmmreg*,xmmrm16|sae	[rvm:t1s16: evex.nds.lig.f3.map5.w0 5a /r]	AVX512FP16
+VCVTSH2SI	reg32,xmmrm16|er		[rm:t1s16:evex.lig.f3.map5.w0 2d /r]	AVX512FP16
+VCVTSH2SI	reg64,xmmrm16|er		[rm:t1s16:evex.lig.f3.map5.w1 2d /r]	AVX512FP16
+VCVTSH2SS	xmmreg|mask|z,xmmreg*,xmmrm16|sae [rvm:t1s16: evex.nds.lig.map6.w0 13 /r]	AVX512FP16
+VCVTSH2USI	reg32,xmmrm16|er		[rm:t1s16:evex.lig.f3.map5.w0 79 /r]	AVX512FP16
+VCVTSH2USI	reg64,xmmrm16|er		[rm:t1s16:evex.lig.f3.map5.w1 79 /r]	AVX512FP16
 VCVTSI2SH	xmmreg,xmmreg*,rm32|er		[rvm:t1s: evex.nds.lig.f3.map5.w0 2a /r]	AVX512FP16
 VCVTSI2SH	xmmreg,xmmreg*,rm64|er		[rvm:t1s: evex.nds.lig.f3.map5.w1 2a /r]	AVX512FP16
 VCVTSS2SH	xmmreg,xmmreg*,xmmrm32|er	[rvm:t1s: evex.nds.lig.np.map5 1d /r]	AVX512FP16
@@ -5522,10 +5522,10 @@ VCVTTPH2UW	zmmreg|mask|z,zmmrm512|b16|sae	[rm:fv:	evex.512.np.map5.w0 7c /r]	AVX
 VCVTTPH2W	xmmreg|mask|z,xmmrm128|b16	[rm:fv:	evex.128.66.map5.w0 7c /r]	AVX512FP16,AVX512VL
 VCVTTPH2W	ymmreg|mask|z,ymmrm256|b16	[rm:fv:	evex.256.66.map5.w0 7c /r]	AVX512FP16,AVX512VL
 VCVTTPH2W	zmmreg|mask|z,zmmrm512|b16|sae	[rm:fv:	evex.512.66.map5.w0 7c /r]	AVX512FP16
-VCVTTSH2SI	reg32,xmmrm16|sae		[rm:t1s:evex.lig.f3.map5.w0 2c /r]	AVX512FP16
-VCVTTSH2SI	reg64,xmmrm16|sae		[rm:t1s:evex.lig.f3.map5.w1 2c /r]	AVX512FP16
-VCVTTSH2USI	reg32,xmmrm16|sae		[rm:t1s:evex.lig.f3.map5.w0 78 /r]	AVX512FP16
-VCVTTSH2USI	reg64,xmmrm16|sae		[rm:t1s:evex.lig.f3.map5.w1 78 /r]	AVX512FP16
+VCVTTSH2SI	reg32,xmmrm16|sae		[rm:t1s16:evex.lig.f3.map5.w0 2c /r]	AVX512FP16
+VCVTTSH2SI	reg64,xmmrm16|sae		[rm:t1s16:evex.lig.f3.map5.w1 2c /r]	AVX512FP16
+VCVTTSH2USI	reg32,xmmrm16|sae		[rm:t1s16:evex.lig.f3.map5.w0 78 /r]	AVX512FP16
+VCVTTSH2USI	reg64,xmmrm16|sae		[rm:t1s16:evex.lig.f3.map5.w1 78 /r]	AVX512FP16
 VCVTUDQ2PH	xmmreg|mask|z,xmmrm128|b32	[rm:fv:	evex.128.f2.map5.w0 7a /r]	AVX512FP16,AVX512VL
 VCVTUDQ2PH	xmmreg|mask|z,ymmrm256|b32	[rm:fv:	evex.256.f2.map5.w0 7a /r]	AVX512FP16,AVX512VL
 VCVTUDQ2PH	ymmreg|mask|z,zmmrm512|b32	[rm:fv:	evex.512.f2.map5.w0 7a /r]	AVX512FP16
