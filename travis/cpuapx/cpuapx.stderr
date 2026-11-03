@@ -1,0 +1,9 @@
+./travis/cpuapx/cpuapx.asm:6: error: no instruction for this cpu level
+./travis/cpuapx/cpuapx.asm:7: error: no instruction for this cpu level
+./travis/cpuapx/cpuapx.asm:8: error: no instruction for this cpu level
+./travis/cpuapx/cpuapx.asm:9: error: no instruction for this cpu level
+./travis/cpuapx/cpuapx.asm:10: error: no instruction for this cpu level
+./travis/cpuapx/cpuapx.asm:11: error: no instruction for this cpu level
+./travis/cpuapx/cpuapx.asm:12: error: no instruction for this cpu level
+./travis/cpuapx/cpuapx.asm:13: error: no instruction for this cpu level
+./travis/cpuapx/cpuapx.asm:14: error: invalid operands in non-APX mode

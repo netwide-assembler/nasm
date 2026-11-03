@@ -3346,6 +3346,9 @@ static enum match_result matches(const struct itemplate * const itemp,
     if (iflag_cmp_cpu_level(&insns_flags[itemp->iflag_idx], &cpu) > 0)
         return MERR_BADCPU;
 
+    if (itemp_has(itemp, IF_APX) && !iflag_test(&cpu, IF_APX))
+        return MERR_BADCPU;
+
     /*
      * Verify the appropriate long mode flag.
      */

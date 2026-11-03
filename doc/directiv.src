@@ -544,8 +544,8 @@ Currently available flags are:
 \b\c{EVEX} - Enable generation of EVEX (AVX-512) encoded instructions
 without an explicit \c{\{evex\}} prefix. Default on.
 
-\b\c\{VEX} - Enable generation of VEX (AVX) or XOP encoded
-instructions without an explict \c{\{vex\}} prefix. Default on.
+\b\c{VEX} - Enable generation of VEX (AVX) or XOP encoded
+instructions without an explicit \c{\{vex\}} prefix. Default on.
 
 \b\c{LATEVEX} - Enable generation of VEX (AVX) encoding of
 instructions where the VEX instructions forms were introduced
@@ -553,6 +553,12 @@ instructions where the VEX instructions forms were introduced
 requiring an explicit \c{\{vex\}} prefix. This is implicit if the
 \c{EVEX} flag is disabled and the \c{VEX} flag is enabled. Default
 off.
+
+\b\c{APX} - Enable generation of APX (Advanced Performance
+Extensions) encoded instructions in 64-bit mode. This covers the
+extended registers \c{R16}-\c{R31}, new data destination and
+\c{\{nf\}} forms, and the APX-only instructions such as \c{PUSH2},
+\c{CCMP} and \c{JMPABS}. Default on.
 
 
 \H{dollarhex} \i\c{[DOLLARHEX]}: Enable or disable \c{$} hexadecimal syntax
