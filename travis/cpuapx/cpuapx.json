@@ -1,0 +1,14 @@
+[
+ {
+  "description": "cpu noapx rejects APX-only encodings",
+  "id": "cpuapx",
+  "format": "bin",
+  "source": "cpuapx.asm",
+  "error": "expected",
+  "target": [
+   {
+    "stderr": "cpuapx.stderr"
+   }
+  ]
+ }
+]
