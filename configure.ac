@@ -44,7 +44,7 @@ AC_ARG_WITH([zlib],
 [AS_HELP_STRING([--with-zlib=path], [specify location of external zlib library])],
 [AS_IF([test "x$with_zlib" = xno],
  [ac_cv_search_inflate=no],
- [AS_IF([test -d "x$with_zlib"],
+ [AS_IF([test -d "$with_zlib"],
   [for p in "$with_zlib"/include "$with_zlib"
    do
      AS_IF([test -d "$p"], [CPPFLAGS="$CPPFLAGS -I$p"])
