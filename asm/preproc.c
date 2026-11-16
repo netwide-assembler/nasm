@@ -2614,7 +2614,8 @@ static FILE *inc_fopen(const char *file,
             (fhe->full->include_pass >= pass);
 
         if (!skip_open) {
-            fp = nasm_open_read(path, fmode);
+            if (!fp)
+                fp = nasm_open_read(path, fmode);
 
             if (fp)
                 fhe->full->include_pass = pass;
