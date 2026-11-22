@@ -1,0 +1,3 @@
+./travis/vex2alt/vex2alt.asm:16: error: instruction not encodable with {vex2} prefix
+./travis/vex2alt/vex2alt.asm:17: error: instruction not encodable with {vex2} prefix
+./travis/vex2alt/vex2alt.asm:18: error: instruction not encodable with {vex2} prefix

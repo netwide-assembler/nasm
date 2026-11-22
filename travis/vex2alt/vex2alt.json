@@ -1,0 +1,21 @@
+[
+	{
+		"description": "Test {vex2} choosing the form of an instruction that fits VEX2",
+		"id": "vex2alt",
+		"format": "bin",
+		"source": "vex2alt.asm",
+		"option": "-Ox",
+		"target": [
+			{ "output": "vex2alt.bin" }
+		]
+	},
+	{
+		"description": "Test {vex2} errors when no form fits VEX2",
+		"ref": "vex2alt",
+		"option": "-Ox -DERROR",
+		"target": [
+			{ "stderr": "vex2alt.stderr" }
+		],
+		"error": "expected"
+	}
+]

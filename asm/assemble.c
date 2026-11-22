@@ -2935,9 +2935,10 @@ static enum match_result find_match(insn *instruction)
     const struct itemplate_list *templist;
     const struct itemplate *temp;
     const struct itemplate *best;
+    const struct itemplate *novex2 = NULL;
     enum match_result m, merr;
     int rex = instruction->prefixes[PPS_REX];
-    int n, i, besti;
+    int n, i, besti, novex2i = -1;
 
     instruction->itemp = best = NULL;
     instruction->itempindex = besti = -1;
@@ -2956,6 +2957,22 @@ static enum match_result find_match(insn *instruction)
 
     for (i = 0; i < n; i++) {
         m = matches(temp, instruction);
+        if (m == MOK_GOOD && rex == P_VEX2 &&
+            calcsize_speculative(instruction, temp) < 0) {
+            /*
+             * {vex2}, but this form cannot be encoded with a 2-byte VEX
+             * prefix. Another form of the same instruction may be: the
+             * store form of a register move puts the high register in
+             * ModRM.reg, which VEX2 can extend. Keep looking; if no form
+             * fits, use this one, which reports the error.
+             */
+            if (!novex2) {
+                novex2 = temp;
+                novex2i = i;
+            }
+            temp++;
+            continue;
+        }
         if (m > merr) {
             best = temp;
             besti = i;
@@ -2964,6 +2981,12 @@ static enum match_result find_match(insn *instruction)
                 break;
         }
         temp++;
+    }
+
+    if (merr < MOK_FIRST && novex2) {
+        best = novex2;
+        besti = novex2i;
+        merr = MOK_GOOD;
     }
 
     if (merr >= MOK_FIRST) {
