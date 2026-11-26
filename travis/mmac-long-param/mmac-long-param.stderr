@@ -1,0 +1,4 @@
+./travis/mmac-long-param/mmac-long-param.asm:4: error: condition code `cxz' is not invertible
+./travis/mmac-long-param/mmac-long-param.asm:2: ... from macro `f' defined here
+./travis/mmac-long-param/mmac-long-param.asm:4: error: instruction expected, found `j x'
+./travis/mmac-long-param/mmac-long-param.asm:2: ... from macro `f' defined here

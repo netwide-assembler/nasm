@@ -5676,6 +5676,15 @@ static bool paste_tokens(Token **head, const struct concat_mask *m,
             *prev_next = tok = t = tokenize(buf);
             nasm_free(buf);
 
+            if (unlikely(!t)) {
+                /*
+                 * The pasted text produced no tokens, which happens when the
+                 * paste was the result of an error recovery path. Substitute
+                 * an empty whitespace token so that we can safely append to it.
+                 */
+                *prev_next = tok = t = new_White(NULL);
+            }
+
             /*
              * Connect pasted into original stream,
              * ie A -> new-tokens -> B
@@ -5886,6 +5895,7 @@ static Token *expand_mmac_params(Token * tline)
                     if (unlikely(ncc == -1)) {
                         nasm_nonfatal("condition code `%s' is not invertible",
                                       conditions[cc]);
+                        text = NULL;
                         break;
                     }
                     cc = ncc;

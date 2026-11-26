@@ -1,0 +1,12 @@
+[
+	{
+		"description": "Non-invertible condition code in `%m%-` must not crash the preprocessor (issue #344)",
+		"id": "br3392792",
+		"format": "bin",
+		"source": "br3392792.asm",
+		"error": "expected",
+		"target": [
+			{ "stderr": "br3392792.stderr" }
+		]
+	}
+]
