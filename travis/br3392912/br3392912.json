@@ -1,0 +1,11 @@
+[
+	{
+		"description": "Implicit paste producing no tokens (issue #344)",
+		"id": "br3392912",
+		"format": "bin",
+		"source": "br3392912.asm",
+		"target": [
+			{ "output": "br3392912.bin", "match": "br3392912.bin.t" }
+		]
+	}
+]

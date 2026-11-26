@@ -1,0 +1,12 @@
+[
+	{
+		"description": "Over-long macro parameter on the non-invertible condition code path must not use freed storage (issue #344)",
+		"id": "mmac-long-param",
+		"format": "bin",
+		"source": "mmac-long-param.asm",
+		"error": "expected",
+		"target": [
+			{ "stderr": "mmac-long-param.stderr" }
+		]
+	}
+]

@@ -1,0 +1,4 @@
+./travis/br3392792/br3392792.asm:4: error: condition code `cxz' is not invertible
+./travis/br3392792/br3392792.asm:2: ... from macro `f' defined here
+./travis/br3392792/br3392792.asm:4: error: label, instruction or prefix expected at start of line, found `%'
+./travis/br3392792/br3392792.asm:2: ... from macro `f' defined here
